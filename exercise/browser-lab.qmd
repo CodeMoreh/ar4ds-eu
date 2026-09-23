@@ -140,7 +140,7 @@ euframes <- read.csv("data/EUframes_cy.csv")
                  ch$my_measure, setdiff(names(.measures_for), ch$my_predictor), ch$my_predictor,
                  paste(.measures_for[[ch$my_predictor]], collapse = " | ")), call. = FALSE)
   if (ch$my_family == "beta" && !.canonical_measurement(ch))
-    stop("The beta family is pre-computed at the canonical measurement settings only: construction = \"share\" or \"rate\" (a count is not a proportion), noop = \"zero\", item_set = \"all\", cell_weight = \"unweighted\", measure = the World Bank series.",
+    stop("The beta family is pre-computed only with the measurement held fixed: construction = \"share\" or \"rate\" (a count is not a proportion), noop = \"zero\", item_set = \"all\", cell_weight = \"unweighted\", measure = the World Bank series.",
          call. = FALSE)
   if (ch$my_family == "beta" && ch$my_estimator == "re" && ch$my_se == "clustered")
     stop("Clustered errors are not available for the beta random-effects fit. Use se = \"conventional\" with that pairing.",
@@ -149,7 +149,7 @@ euframes <- read.csv("data/EUframes_cy.csv")
       !(ch$my_construction == "share" && ch$my_item_set == "all" &&
         ch$my_cell_weight == "unweighted" && ch$my_measure == "wb_nat" &&
         ch$my_predictor == "unemp" && ch$my_pred_form == "raw" && ch$my_family == "gaussian"))
-    stop("The imputed no-opinion options were pre-computed for the unemployment arm at the canonical measurement and estimation settings only (share, all items, unweighted cells, World Bank series, raw form, gaussian).",
+    stop("The imputed no-opinion options were pre-computed only for the unemployment arm, with the measurement and estimation held fixed (share, all items, unweighted cells, World Bank series, raw form, gaussian).",
          call. = FALSE)
   ch
 }
@@ -239,7 +239,7 @@ euframes <- read.csv("data/EUframes_cy.csv")
          ch$my_cell_weight, ", ", ch$my_measure, " | ", ch$my_family, ", se:", ch$my_se, "]")
 }
 
-# Where a result sits in the canonical 840: the share of that universe that
+# Where a result sits in the grid of 840: the share of that universe that
 # supports the claim more strongly (a more negative aligned r).
 .placement <- function(r_ca) {
   if (!file.exists("data/grid/canonical_rca.csv")) return(NA_real_)
@@ -258,7 +258,7 @@ euframes <- read.csv("data/EUframes_cy.csv")
   cat(sprintf("  claim-aligned partial r = %.3f   (below zero supports the claim)\n", hit$r_ca))
   pl <- .placement(hit$r_ca)
   if (!is.na(pl))
-    cat(sprintf("  placement: %.0f%% of the canonical 840 specifications support the claim more strongly than this one\n",
+    cat(sprintf("  placement: %.0f%% of the grid of 840 specifications support the claim more strongly than this one\n",
                 100 * pl))
   if (startsWith(ch$my_noop, "mi_"))
     cat(sprintf("  (pooled over 10 imputations by Rubin's rules; fraction of missing information %.3f)\n", hit$fmi))
@@ -970,7 +970,7 @@ try_spec(
                                  # growth: wb_growth | es_growth
   # Level 3 – Estimation
   pred_form    = "raw",          # raw | log   (growth: raw only)
-  family       = "gaussian",     # gaussian | beta   (canonical measurement settings only)
+  family       = "gaussian",     # gaussian | beta   (standard measurement settings only)
   se           = "conventional"  # conventional | clustered
 )
 ```
@@ -1040,7 +1040,7 @@ my_measure      <- "wb_nat"       # unemp:  wb_nat | es_1574_act | es_2064_pop |
 my_pred_form    <- "raw"          # raw | log   (growth: raw only; centring or z-scaling
                                   #              would leave t, r and p unchanged)
 my_family       <- "gaussian"     # gaussian | beta   (logit link on the cell means; beta
-                                  #                    reports z; canonical measurement only)
+                                  #                    reports z; standard measurement only)
 my_se           <- "conventional" # conventional | clustered   (clustered by country)
 
 claim_align     <- TRUE           # the course convention, applied automatically
@@ -1078,7 +1078,7 @@ When the model is accepted, run it. Every specification on the menu is pre-compu
 run_spec(my_model)
 ```
 
-Read the output like an analyst: the coefficient and its claim-aligned partial *r* (below zero supports the claim), and your placement – what share of the canonical 840-specification grid supports the claim more strongly than your choice does. The five Multi100 analysts run from about the 16th percentile (the most strongly claim-supporting) to about the 68th (near the null), and your dot is about to join theirs.
+Read the output like an analyst: the coefficient and its claim-aligned partial *r* (below zero supports the claim), and your placement – what share of the grid of 840 specifications supports the claim more strongly than your choice does. The five Multi100 analysts run from about the 16th percentile (the most strongly claim-supporting) to about the 68th (near the null), and your dot is about to join theirs.
 
 Now send it to the room. The result travels straight from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** rather than exploratory.
 

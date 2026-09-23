@@ -52,7 +52,7 @@ The `data/` directory holds the committed course datasets and their codebooks, s
 | `spec_grid_full.csv` | 2,520 specifications, adding GDP growth as a claim-carrying predictor |
 | `grid/` | The maximal fourteen-axis grid, one gzipped file per estimand cell (named by the six Level 1 choices), with `manifest.csv`, `axes.csv`, `canonical_rca.csv` and `cells_summary.csv` alongside; the browser lab and the estimand choices page read these |
 | `spec_grid_mi.csv` | Pooled multiple-imputation results for the no-opinion axis (mice and Amelia, ten imputations each), with `mi_diagnostics.csv` |
-| `spec_grid_measure.csv`, `spec_grid_weights.csv` | The measure axis and the weighting axes fitted around the canonical menu |
+| `spec_grid_measure.csv`, `spec_grid_weights.csv` | The measure axis and the weighting axes fitted around the grid of 840 |
 | `teney_panel_measurement.csv` | The country-year panel under every measurement variant: outcome construction, item set, no-opinion rule, cell weighting |
 | `teney_panel_weights.csv` | Per-cell respondent counts, effective sample sizes, no-opinion counts and adult population |
 | `macro/predictor_measures.csv` | The published unemployment and growth series that the measure axis chooses between |

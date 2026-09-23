@@ -7,19 +7,19 @@
 #                claim-carrying predictor (predictor = "growth"), in one form
 #                (raw annual %, World Bank series already in the panel), alone
 #                or with raw unemployment as co-predictor – the mirror of the
-#                canonical grid's unemployment-with-growth cells. A workshop
+#                unemployment-with-growth cells in the grid of 840. A workshop
 #                extension: Multi100's Task 2 fixed unemployment as the
 #                measure; Task 1 shows three of the five analysts freely chose
 #                GDP measures. Affine forms (centred, z) of either variable
 #                are deliberately not fitted: they leave t, p and partial r
 #                exactly unchanged, so on an r-ranked curve they would only
 #                ever duplicate a point that is already there (set ADD_Z_FORM
-#                to TRUE to mirror the canonical grid's inert-pair pedagogy).
+#                to TRUE to mirror the inert-pair pedagogy of the grid of 840).
 #                Claim direction for growth predictors is reversed relative to
 #                unemployment: the claim predicts POSITIVE growth coefficients
 #                on the positive framings. Estimator, weight, df and
 #                significance conventions mirror build_family_grid.R and the
-#                canonical grid script (RR repo, R/01_spec_grid.R).
+#                article grid script (RR repo, R/01_spec_grid.R).
 # Reads        : data/EUframes_cy.csv, data/spec_grid_family.csv
 # Writes       : data/spec_grid_full.csv (2,520 rows)
 # Author       : Chris Moreh
@@ -69,7 +69,7 @@ fit_one <- function(row) {
     if (row$family == "gaussian") {
       d$w <- if (row$weights == "n_cy") d$n_cy else rep(1, nrow(d))
       if (row$estimator == "re") {
-        # plm-style RE via feols is unavailable; mirror the canonical grid,
+        # plm-style RE via feols is unavailable; mirror the grid of 840,
         # which fits RE through plm
         m <- plm::plm(as.formula(paste("y ~", fml_rhs)), data = d,
                       index = c("cntry", "year"), model = "random")

@@ -413,8 +413,8 @@ problem = cell === undefined
   ? "That pairing is not in the universe: the random-effects estimator is never fitted with regression weights. Set the weight to none or choose another estimator."
   : hit === undefined
     ? (family === "beta" && construction === "count" ? "A count of items is not a proportion, so it has no beta twin. Choose the per-item rate, which is the count divided by the number of items in the set, or the linear family."
-       : family === "beta" ? "The beta family was pre-computed only at the canonical measurement settings: the share or the per-item rate of all 13 items, no-opinion respondents scored zero, cells as interviewed, the World Bank series."
-       : noop.startsWith("mi_") ? "The imputed options were pre-computed only for the unemployment arm at the canonical settings: share of all 13 items, cells as interviewed, World Bank series, raw form, linear family."
+       : family === "beta" ? "The beta family was pre-computed only with the measurement held fixed: the share or the per-item rate of all 13 items, no-opinion respondents scored zero, cells as interviewed, the World Bank series."
+       : noop.startsWith("mi_") ? "The imputed options were pre-computed only for the unemployment arm, with everything else held fixed: share of all 13 items, cells as interviewed, World Bank series, raw form, linear family."
        : "That combination was not fitted.")
     : null
 placement = hit === undefined ? NaN : d3.mean(questions, d => d.median_rca < hit.r_ca ? 1 : 0)

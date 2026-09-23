@@ -13,9 +13,9 @@
 #                companion article the aggregated family grid is disclosed as
 #                Phase-1 prior work and a person-level family twin is
 #                registered; this workshop copy is the verified sibling of the
-#                canonical build (RR repo, R/07_family_grid.R), retained so
+#                article build (RR repo, R/07_family_grid.R), retained so
 #                the workshop pipeline stands alone.
-#                Conventions mirror the canonical grid script (RR repo,
+#                Conventions mirror the article grid script (RR repo,
 #                R/01_spec_grid.R): same six axes (outcome, pred_form,
 #                copredictor, estimator, sample, weights), same re-with-weights
 #                exclusion, statistic/df under each estimator's own definition,

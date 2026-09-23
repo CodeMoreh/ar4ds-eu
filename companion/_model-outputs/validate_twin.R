@@ -67,17 +67,17 @@ twin_file <- Sys.getenv("TWIN_FILE", TWIN_DEFAULT)
 twin <- prep(read_csv(twin_file, show_col_types = FALSE))
 
 # The committed comparison table describes the committed twin, and only that.
-# Pointing $TWIN_FILE at a candidate build and letting it write to the canonical
+# Pointing $TWIN_FILE at a candidate build and letting it write to the committed
 # path leaves the site publishing one dataset's numbers under another's
 # description - which happened once, and was caught by a git diff rather than by
-# anything here. A non-default input writes beside the canonical file instead.
+# anything here. A non-default input writes beside the committed file instead.
 out_file <- if (identical(twin_file, TWIN_DEFAULT)) {
   "companion/_model-outputs/twin_validation.csv"
 } else {
   f <- file.path("companion/_model-outputs",
                  paste0("twin_validation_", tools::file_path_sans_ext(basename(twin_file)), ".csv"))
   cat("NOTE: non-default twin, writing to", f,
-      "and leaving the canonical table alone\n")
+      "and leaving the committed table alone\n")
   f
 }
 
