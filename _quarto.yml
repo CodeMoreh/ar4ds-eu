@@ -1,9 +1,12 @@
 project:
   type: website
   output-dir: _site
+  # Anchored to the project root: an unanchored pattern such as `data/` matches
+  # every folder of that name at any depth, including the licensed microdata
+  # under _planning/.
   resources:
-    - data/
-    - assets/
+    - /data/
+    - /assets/
   render:
     - "*.qmd"
     - "data/*.md"
