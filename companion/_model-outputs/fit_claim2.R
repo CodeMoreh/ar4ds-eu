@@ -8,8 +8,10 @@
 #               model with its cross-level interactions, respondents inside
 #               country-waves inside countries, which is the model behind
 #               Table 3 Model 1 of the paper. The same interaction with country
-#               and year fixed effects, where the level of unemployment is
-#               absorbed and only its difference between bands is estimated.
+#               and year fixed effects, which absorb the stable differences
+#               between countries and the common year pattern, and leave both
+#               the slope of unemployment and its difference between bands to
+#               be estimated.
 #               And the aggregate route on the committed education-band panel,
 #               which anyone can refit, so the page can show that the two
 #               levels answer the same interaction question. Every table is an

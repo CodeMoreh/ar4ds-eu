@@ -10,7 +10,7 @@ bibliography: ../references.bib
 ```{r}
 #| include: false
 # The per-cell summary of the maximal grid: one row for each estimand cell that
-# the six Level 1 choices define, with the number of measurement and estimation
+# the seven Level 1 choices define, with the number of measurement and estimation
 # variants fitted inside it and where their claim-aligned partial correlations
 # sit. Written by R/17 in the article repository alongside the shards under
 # data/grid/, which this page fetches one at a time.
@@ -197,7 +197,8 @@ cell = cells.find(d => cellKey(d) === cellId && d.construction === construction)
 // linear family, so it is not counted as a question of its own
 questions = cells.filter(d => d.construction !== "rate")
 
-// One shard per question, fetched when the Level 1 choices settle on it. The file
+// One shard per combination of six Level 1 choices (the scoring rule picks rows
+// inside it), fetched when the Level 1 choices settle on it. The file
 // is gzipped; the browser inflates it unless the server already did.
 async function readCsvGz(url) {
   const res = await fetch(url);
@@ -307,7 +308,7 @@ verdict = hit === undefined ? null
   : ["against", "against the direction of the claim"]
 statLabel = family === "beta" ? "z" : "t"
 
-// The six Level 1 choices in the order the sidebar uses: the variables, then
+// The seven Level 1 choices in the order the sidebar uses: the variables, then
 // whom the question is about, then how they are compared. The cluster colours
 // are those of the ring version of this page (dial-sketches.qmd).
 level1 = [
@@ -439,7 +440,7 @@ Plot.plot({
 })
 ```
 
-<p class="caption">One row for every option of every Level 1 choice, grouped by choice in the order of the sidebar. The orange dots are the six options chosen now. Each other dot is what the median answer to the question becomes if that one choice is switched to that option and the other five are left as they are: blue for the three choices that name the variables, teal for the two that say whom the question is about, bronze for the estimator. The shaded band covers the middle 80% of the answers to the current question, across every combination of the Level 2 and Level 3 options. A dot outside the band means that switching that one choice moves the answer further than all the measurement and estimation decisions together can. Hover over a dot for the range of answers to that question and the share of them that is significant.</p>
+<p class="caption">One row for every option of every Level 1 choice, grouped by choice in the order of the sidebar. The orange dots are the seven options chosen now. Each other dot is what the median answer to the question becomes if that one choice is switched to that option and the other six are left as they are: blue for the four choices that name the variables, teal for the two that say whom the question is about, bronze for the estimator. The shaded band covers the middle 80% of the answers to the current question, across every combination of the Level 2 and Level 3 options. A dot outside the band means that switching that one choice moves the answer further than all the measurement and estimation decisions together can. Hover over a dot for the range of answers to that question and the share of them that is significant.</p>
 
 :::
 
@@ -472,7 +473,7 @@ Plot.plot({
 <div class="small" style="max-width:75ch">
 <p><b>The statement</b> is how the course tests whether two analyses ask the same question. Change a Level 1 choice and the statement changes, because a different question is now being asked of the data; two analysts who set it differently were not disagreeing about method. Change a Level 2 choice and only the green words change, while a Level 3 choice leaves the statement as it is. The Level 1 choices are listed in three groups. The frame set, the scoring rule, the predictor and the adjustment set name the variables. The sample and the weight say whom the question is about, and the estimator says how the country-years are compared.</p>
 <p><b>The answers to this question</b> ranks every answer to the question that is fixed by the Level 1 choices, one for each combination of the Level 2 and Level 3 options in the pre-computed grid, from most to least claim-supporting. Dark blue dots are significant at the five per cent level, grey ones are not, and the orange ring is the chosen specification. Colour the dots by one choice to find out where each of its options falls.</p>
-<p><b>One Level 1 choice at a time</b> shows what each alternative option of a Level 1 choice would do to the answer, holding the other five as they are. Each dot is the median answer to the question that the switch produces, the orange dots mark the chosen question, and the shaded band behind them covers the middle 80% of the answers to the current question. A dot outside the band means that switching that one choice moves the answer further than every Level 2 and Level 3 choice together.</p>
+<p><b>One Level 1 choice at a time</b> shows what each alternative option of a Level 1 choice would do to the answer, holding the other six as they are. Each dot is the median answer to the question that the switch produces, the orange dots mark the chosen question, and the shaded band behind them covers the middle 80% of the answers to the current question. A dot outside the band means that switching that one choice moves the answer further than every Level 2 and Level 3 choice together.</p>
 <p><b>All the questions</b> places the current question among every question that the menu can ask, each summarised by its median answer. The per-item rate, which rescales the count, is not counted as a question of its own.</p>
 <p>The <a href="spec-menu.qmd">specification menu</a> gives, for every choice, the share of the variation in results that is attributed to it and how often changing that choice alone takes a result across p = .05. The <a href="../companion/weighting.qmd">weighting</a> and <a href="../companion/missingness.qmd">missing-answers</a> pages examine two of the Level 2 choices in detail.</p>
 </div>

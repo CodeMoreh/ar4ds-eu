@@ -43,4 +43,4 @@ Three different regimes apply to the three layers of this file.
 
 - **Derived aggregate data** (this file): CC BY 4.0.
 - **Underlying microdata**: GESIS Eurobarometer terms apply, and nothing individual-level may be redistributed.
-- **Macro indicators**: World Bank Open Data (CC BY 4.0).
+- **Macro indicators**: World Bank Open Data (CC BY 4.0) for `growth` and `unemp`. The `bailout` indicator is coded from European Commission records of EU financial assistance programmes.

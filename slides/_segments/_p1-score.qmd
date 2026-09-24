@@ -65,38 +65,44 @@ First, reproducibility – the gentlest test of the three. The design in one bre
 #| label: miske-waterfall
 #| fig-width: 8.5
 #| fig-height: 3.6
-# Waterfall from 600 sampled -> 143 assessable, inline data from the content
-# bank (Miske et al. 2026). Illustrative staged counts.
+# Published counts from Miske et al. (2026, abstract): 600 papers sampled; the
+# authors supplied data for 144 (24.0%); source data rebuilt 38 more, making
+# 182 datasets in hand; 143 of those 182 were assessed.
 mw <- tibble::tribble(
   ~stage,                 ~n,
   "Sampled",              600,
-  "Data available\n(24.0%)", 144,
-  "Assessable",           143
+  "Author data\n(24.0%)",   144,
+  "In hand\n(+38 rebuilt)",  182,
+  "Assessed",             143
 )
 mw <- mw |> dplyr::mutate(stage = factor(stage, levels = stage))
 ggplot(mw, aes(stage, n, fill = stage)) +
   geom_col(width = 0.65) +
   geom_text(aes(label = n), vjust = -0.4, fontface = "bold",
             colour = ncl_blue, size = 6) +
-  scale_fill_manual(values = c(ncl_blue, orange, green)) +
+  scale_fill_manual(values = c(ncl_blue, orange, grey_mid, green)) +
   ylim(0, 660) +
   labs(x = NULL, y = "papers") +
   theme_slide(16)
 ```
 
 ::: {.small}
-- Of the **143 assessable**: **53.6%** reproduced precisely, **73.5%** approximately
+- Of the **143 assessed**: **53.6%** reproduced precisely, **73.5%** at least approximately
 - Counting the unassessable, only about **18%** reproduce
 :::
 
+::: {.src}
+@MiskeEtAl2026InvestigatingReproducibilitySocial. Published counts: the 143 assessed papers come from 182 datasets, 38 of them rebuilt from source data.
+:::
+
 ::: notes
-Read it left to right. Six hundred papers sampled. Data were available for twenty-four per cent of them – for nearly three quarters there was neither data nor code. That leaves 143 papers you can actually assess. Of those, just over half reproduce precisely, and about three quarters at least approximately. Which sounds respectable, until you count the papers that nobody could check as failures, and then the overall rate falls to roughly eighteen per cent. Most of the loss happens at the first step, getting hold of the data.
+Read it left to right. Six hundred papers sampled. Data were available for twenty-four per cent of them – for nearly three quarters there was neither data nor code. The team rebuilt thirty-eight more datasets from source data, which made a hundred and eighty-two, and assessed 143 of them. Of those, just over half reproduce precisely, and about three quarters at least approximately. Which sounds respectable, until you count the papers that nobody could check as failures, and then the overall rate falls to roughly eighteen per cent. Most of the loss happens at the first step, getting hold of the data.
 :::
 
 ## Why some fields do better
 
 ::: {.small}
-- Journals requiring data sharing: **87.5–100%** availability vs **16.0%** without
+- Journals with a sharing policy: **66.2–100%** data availability vs **16.0%** without
 - Political science **54.1%** data availability vs education **2.9%**
 - With data *and* code: **90.9%** approx-reproducible vs **38.1%** from rebuilt source
 :::
@@ -112,7 +118,7 @@ Read it left to right. Six hundred papers sampled. Data were available for twent
 :::
 
 ::: notes
-And access follows policy. Where journals mandate data sharing, availability is between about ninety and one hundred per cent; without a mandate, it is sixteen. Political science and economics built the habit early and are far ahead of the rest. The first quote is the conclusion of the paper itself – the biggest barrier was simply that the data were not there. The second quote is the one to remember: "reproducibility success does not mean that the finding is correct." Reproducing a number tells you that the computation was faithful, and nothing about whether the claim about the world is true.
+And access follows policy. Where journals have a data-sharing policy, availability runs from about two thirds to one hundred per cent, depending on the policy; without one, it is sixteen. Political science and economics built the habit early and are far ahead of the rest. The first quote is the conclusion of the paper itself – the biggest barrier was simply that the data were not there. The second quote is the one to remember: "reproducibility success does not mean that the finding is correct." Reproducing a number tells you that the computation was faithful, and nothing about whether the claim about the world is true.
 :::
 
 ## Robustness – Aczel et al. (Multi100)
@@ -152,9 +158,9 @@ Free, justifiable choices on the same data move the answer a long way. Only abou
 ## Replicability – Tyner et al.
 
 ::: {.small}
-- **274 claims** from 164 papers, tested on **new data**
+- **274 claims** from 164 papers, tested on **independent data** (newly collected for 128, existing for 146)
 - Median statistical power **99.6%**; preregistered; original authors consulted
-- The strictest test: does the effect reappear in a fresh sample?
+- The strictest test: does the effect reappear in data that the original study did not use?
 :::
 
 ::: {.src}
@@ -162,7 +168,7 @@ Free, justifiable choices on the same data move the answer a long way. Only abou
 :::
 
 ::: notes
-The third paper is the strictest test, because each claim is checked against new data. Two hundred and seventy-four claims, each replicated to a preregistered, peer-reviewed protocol, often with the original authors consulted, and with a median statistical power of ninety-nine point six per cent. At that power a real effect would be very hard to miss, so a claim that fails here cannot be put down to a study too small to detect it.
+The third paper is the strictest test, because each claim is checked against data that the original study did not use – newly collected for 128 claims, existing data for the other 146. Two hundred and seventy-four claims, each replicated to a preregistered, peer-reviewed protocol, often with the original authors consulted, and with a median statistical power of ninety-nine point six per cent. At that power an effect as large as the original one would be very hard to miss, so a claim that fails here cannot be put down to a study too small to detect it.
 :::
 
 ## Effect sizes halve even when claims replicate {#even-success-shrinks}

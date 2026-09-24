@@ -54,10 +54,10 @@ euframes <- read.csv("data/EUframes_cy.csv")
 # with try_spec(), my_experiments(), submit_exploration(), prereg(),
 # build_model(), run_spec() and report_result(). Every result they print is
 # read from the pre-computed maximal grid, which the site serves as one small
-# file per estimand cell: the six Level 1 choices (the question) name the file,
-# and the eight Level 2 and 3 choices (the measurement and the estimation) pick
-# the row inside it. No model is fitted in the browser, so none of the
-# estimation packages is downloaded. Shards are fetched on demand from the
+# file for each combination of six of the seven Level 1 choices (the question).
+# The other eight choices – the scoring rule and the seven Level 2 and 3
+# choices (the measurement and the estimation) – pick the row inside that file. These helpers fit no model in the browser, so the only
+# estimation package on the page is fixest, which Task 3 uses for the reproduction. Shards are fetched on demand from the
 # published site – an absolute address, because a relative one would resolve
 # against the WebAssembly worker rather than this page.
 .site <- "https://codemoreh.github.io/applied-replication"
@@ -170,7 +170,8 @@ euframes <- read.csv("data/EUframes_cy.csv")
 }
 
 # --- the pre-computed universe ---------------------------------------------
-# One file per estimand cell, named by the six Level 1 choices. A shard is
+# One file for each combination of the six Level 1 choices other than the
+# scoring rule, which the file carries as a column. A shard is
 # fetched the first time a cell is asked for and kept for the session; the
 # manifest (mounted with the page) says how many rows a complete shard has.
 .shards <- new.env(parent = emptyenv())
@@ -228,8 +229,9 @@ euframes <- read.csv("data/EUframes_cy.csv")
   (if (ch$my_outcome %in% .neg_framings) -1 else 1) *
   (if (ch$my_predictor == "growth") -1 else 1)
 
-# The one-line spec label that the class chart reads: the six Level 1 choices,
-# then the measurement and estimation choices in brackets.
+# The one-line spec label that the class chart reads: six of the seven Level 1
+# choices, then in brackets the scoring rule and the measurement and estimation
+# choices.
 .spec_line <- function(ch) {
   neg <- ch$my_outcome %in% .neg_framings
   paste0(ch$my_outcome, if (neg) "_ca" else "", " ~ ", ch$my_predictor, "(", ch$my_pred_form, ")",
@@ -1005,7 +1007,7 @@ Preregistration means committing to a choice **before** you see what it does, wh
 *Each numbered comment maps to a question in the OSF "Preregistration Template from AsPredicted.org" (the eight-question short form). Because you are reanalysing data that already exist, field 2 also stands in for the prior-knowledge section of the secondary-data template (van den Akker et al. 2021) – the part that AsPredicted leaves out.*
 :::
 
-Make one choice on each of the fourteen axes of the [specification menu](spec-menu.qmd), complete the dotted lines, then run the cell. The six Level 1 choices fix the question you are asking, the five Level 2 choices fix how that question is measured, and the three Level 3 choices fix how it is estimated. Every axis is live. `claim_align <- TRUE` is the course convention, applied automatically: negative framings are reverse-coded (1 − y) and the claim-expected sign for growth is flipped, so 'supports the claim' reads as a negative sign for everyone.
+Make one choice on each of the fourteen axes of the [specification menu](spec-menu.qmd), complete the dotted lines, then run the cell. The seven Level 1 choices fix the question you are asking, the four Level 2 choices fix how that question is measured, and the three Level 3 choices fix how it is estimated. Every axis is live. `claim_align <- TRUE` is the course convention, applied automatically: negative framings are reverse-coded (1 − y) and the claim-expected sign for growth is flipped, so 'supports the claim' reads as a negative sign for everyone.
 
 ```{webr}
 #| autorun: false
@@ -1071,7 +1073,7 @@ my_model <- build_model(______ ~ ______, estimator = "______")
 The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For the baseline declaration it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"`, `"fe_country"`, `"re"` or `"pooled_cl"`. You do not write the fixed-effects or clustering syntax here – the estimator code stands for it, and Task 3 showed what it expands to. Apart from the log form, the Level 2 and Level 3 choices never appear in the formula. They select which version of the panel the result was computed on and which fitting convention was used.
 :::
 
-When the model is accepted, run it. Every specification on the menu is pre-computed. The six Level 1 choices name a small file that the page fetches from the site, and the other eight pick one row inside it. These are the same numbers that a live fit produces, and you get them without downloading the estimation packages into your browser:
+When the model is accepted, run it. Every specification on the menu is pre-computed. Six of the seven Level 1 choices name a small file that the page fetches from the site, and the other eight, which are the scoring rule and the seven Level 2 and Level 3 choices, pick one row inside it. These are the same numbers that a live fit produces, and you get them without downloading the estimation packages into your browser:
 
 ```{webr}
 #| autorun: false
@@ -1095,10 +1097,10 @@ If you want a second declared specification, edit the preregistration cell, reru
 
 ## Taking it home
 
-On this page you ran the whole analysis without installing anything. Putting your own work under version control and publishing the rendered report is the natural next step. The [Git and GitHub self-study](../companion/git-github.qmd) module explains it click by click.
+This page keeps nothing once you refresh it, so work you want to keep belongs in the downloadable workspace. Putting that work under version control and publishing the rendered report is the natural next step. The [Git and GitHub self-study](../companion/git-github.qmd) module explains it click by click.
 
 ::: {.callout-tip icon="false"}
-## After the workshop – the full pipeline
+## The downloadable workspace
 
-Everything on this page also exists in the downloadable workspace: a folder you open in your IDE, edit, and render offline. If you want the version with `osfr` data-fetching and an automated publish step, start from the [exercise overview](index.qmd) – the [`replication-lab` workspace](https://github.com/CodeMoreh/replication-lab) is yours to reuse.
+The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE, edit and render offline, and in which everyone taking the course works. The same folder holds `R/get_data.R`, an optional script that fetches the panel from the OSF with `osfr`, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab`](https://github.com/CodeMoreh/replication-lab) repository, and it is yours to reuse.
 :::

@@ -61,11 +61,11 @@ Positron is a data-science IDE from Posit, built on the same open-source foundat
 - **macOS** 11 or later, with separate downloads for Apple silicon and Intel machines. Open the `.dmg` and drag Positron to Applications.
 - **Linux** with `.deb` packages for Ubuntu 20 and later and Debian, and `.rpm` packages for Red Hat 9 and Fedora, on x64 and ARM64.
 
-When Positron first opens it finds the R you installed in step 1 on its own, looking in the standard locations for your system and, on Windows, in the registry entry that the R installer wrote. Its welcome page shows an environment card that checks whether R is ready and offers to fix what it finds. The Quarto extension and R language support are built in, so there is nothing to add. If you are coming from RStudio, open the settings, search for "RStudio key mappings" and tick the box, so that the keyboard shortcuts you know carry over.
+When Positron first opens it finds the R you installed in step 1 on its own, looking in the standard locations for your system and, on Windows, in the registry entry that the R installer wrote. Its welcome page shows an environment card that checks whether R is ready and offers to fix what it finds. The Quarto extension and R language support are built in, so there is nothing to add. If you are coming from RStudio, open the settings, search for "RStudio keybindings", tick the box and restart Positron, so that the keyboard shortcuts you know carry over.
 
 ### RStudio
 
-RStudio is the IDE that most R users learned on, and if it is already on your machine you can use it as it is. Install R first, then download RStudio Desktop from [posit.co](https://posit.co/download/rstudio-desktop/). The current release is 2026.08. It runs on Windows 11, on macOS 14 or later, and on Ubuntu 22 and later, Debian 13, Red Hat 9 and 10 and Fedora, as an `.exe`, a `.dmg` or a `.deb` and `.rpm` package. RStudio finds R on its own and includes a copy of Quarto, so steps 1 and 3 are all it needs. Open the workspace as a project (step 4).
+RStudio is the IDE that most R users learned on, and if it is already on your machine you can use it as it is. Install R first, then download RStudio Desktop from [posit.co](https://posit.co/download/rstudio-desktop/). In September 2026 the current release is 2026.09. It runs on Windows 11, on macOS 14 or later, and on Ubuntu 22 and later, Debian 13, Red Hat 9 and 10 and Fedora, as an `.exe`, a `.dmg` or a `.deb` and `.rpm` package. RStudio finds R on its own and includes a copy of Quarto, so steps 1 and 3 are all it needs. Open the workspace as a project (step 4).
 
 ### VS Code
 
@@ -89,10 +89,10 @@ Open the folder in your IDE. In **Positron** and in **VS Code**, choose **File �
 
 ## 5. Check that it works
 
-In the folder, open `R/check_setup.R` and run it: click **Run** or **Source** in your IDE, or type `source("R/check_setup.R")` in the R console. The script prints a short OK or FAIL report covering your R version, Quarto, the packages that the course uses and access to the data. If any package is missing it offers to install it for you, so say yes. Quarto is the one item that the script cannot install for itself. If the report says that Quarto is not found, install it (step 2) and run the script again in a fresh session. Fix any FAIL before the day.
+In the folder, open `R/check_setup.R` and run it: click **Run** or **Source** in your IDE, or type `source("R/check_setup.R")` in the R console. The script prints a short OK or FAIL report covering your R version, Quarto, the packages that the course uses and access to the data. If any package is missing, the report prints a line of R that installs all the missing packages at once, so run that line and then run the script again. Quarto cannot be installed from R in this way. If the report says that Quarto is not found, install it (step 2) and run the script again in a fresh session. Fix any FAIL before the day.
 
 ::: {.callout-note}
-The course uses a set of standard R packages, for tidying data, fitting models, drawing causal graphs and making tables. You do not need to install these by hand, because the check script installs them. All are free and come from CRAN, the official package archive for R.
+The course uses a set of standard R packages, for tidying data, fitting models, drawing causal graphs and making tables. You do not need to look them up one by one, because the check script prints the line that installs whichever are missing. All are free and come from CRAN, the official package archive for R.
 :::
 
 If something fails and the report does not say why, the [help page](help.qmd) lists the problems that other participants have met, with their fixes and with prompts you can give an AI assistant. If you get stuck, come along anyway and use the browser lab.
@@ -140,7 +140,7 @@ The day needs no accounts or sign-ups. In particular, you do **not** need:
 
 When the workshop runs online, you will get the most out of it with a little room to work:
 
-- **A second window or device.** Join the video call on one screen (or one device), and keep a second window or a second device free for your own work – your IDE, or the browser lab if you are following along without an installation. That way you can follow the shared screen and do the hands-on tasks side by side, without one covering the other.
+- **A second window or device.** Join the video call on one screen (or one device), and keep a second window or a second device free for your own work – your IDE, or the browser lab if your machine fails on the day. That way you can follow the shared screen and do the hands-on tasks side by side, without one covering the other.
 - **Joining links.** The call link, and any session-specific links, come to you with the joining details. You do not need to hunt for anything in advance beyond the setup on this page.
 
 ---

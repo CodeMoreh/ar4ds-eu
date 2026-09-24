@@ -73,8 +73,8 @@ an effect on what a respondent answers. Every individual-level effect in the
 file is estimated. The three govern who enters the sample and how many: the
 cell size as a fraction of the real respondent count (0.10), the fieldwork
 selection tilt that gives `w1` something to correct (0.15 per decade below the
-mean age), and the switch that makes that tilt vary with the unemployment rate
-in a cell (0 by default).
+mean age), and the surplus of respondents drawn before
+that tilt thins the sample (2.2 times the cell size).
 
 ## Variables
 

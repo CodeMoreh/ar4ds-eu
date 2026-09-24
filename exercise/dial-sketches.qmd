@@ -10,7 +10,7 @@ bibliography: ../references.bib
 ```{r}
 #| include: false
 # The per-cell summary of the maximal grid: one row for each estimand cell that
-# the six Level 1 choices define, with the number of measurement and estimation
+# the seven Level 1 choices define, with the number of measurement and estimation
 # variants fitted inside it and where their claim-aligned partial correlations
 # sit. Written by R/17 in the article repository alongside the shards under
 # data/grid/, which this page fetches one at a time. This page is the ring
@@ -240,7 +240,7 @@ ringDial = ({rings, value, size = 560, ringW = 26, gapIn = 3, gapOut = 11, fontS
   return el;
 }
 
-// The six Level 1 choices in the order the choices page uses: the variables in
+// The seven Level 1 choices in the order the choices page uses: the variables in
 // blues, whom the question is about in teals, how they are compared in bronze.
 palette1 = {
   return {outcome: "#0e3b6a", construction: "#1f4c7c", predictor: "#35659a", copredictor: "#5484b3", sample: "#0f6b6b", reg_weight: "#2b8585", estimator: "#8c5a10"};
@@ -257,7 +257,7 @@ rings1 = [
 // the published series behind each predictor: five for unemployment, two for growth
 unempSeries = [{label: "WB national", value: "wb_nat"}, {label: "ES 15–74 active", value: "es_1574_act"}, {label: "ES 20–64 pop.", value: "es_2064_pop"}, {label: "ES 25–64 LFS", value: "es_2564_lfs"}, {label: "ES 15–74 tips", value: "es_1574_tips"}]
 growthSeries = [{label: "WB growth", value: "wb_growth"}, {label: "ES growth", value: "es_growth"}]
-// Level 2 in greens: four rings that build the outcome, then the series ring
+// Level 2 in greens: three rings that build the outcome, then the series ring
 rings2 = pred => [
   {key: "noop", label: "No opinion", cluster: "outcome", colour: "#3f6d35", levels: [{label: "scored zero", value: "zero"}, {label: "dropped", value: "drop"}, {label: "split", value: "split"}, {label: "imputed, mice", value: "mi_mice"}, {label: "imputed, Amelia", value: "mi_amelia"}]},
   {key: "item_set", label: "Items", cluster: "outcome", colour: "#4a7a3f", levels: [{label: "all 13 items", value: "all"}, {label: "without 'unemployment'", value: "un"}]},
@@ -314,7 +314,8 @@ cell = cells.find(d => cellKey(d) === cellId && d.construction === construction)
 // linear family, so it is not counted as a question of its own
 questions = cells.filter(d => d.construction !== "rate")
 
-// One shard per question, fetched when the Level 1 choices settle on it. The file
+// One shard per combination of six Level 1 choices (the scoring rule picks rows
+// inside it), fetched when the Level 1 choices settle on it. The file
 // is gzipped; the browser inflates it unless the server already did.
 async function readCsvGz(url) {
   const res = await fetch(url);
@@ -424,7 +425,7 @@ verdict = hit === undefined ? null
   : ["against", "against the direction of the claim"]
 statLabel = family === "beta" ? "z" : "t"
 
-// The six Level 1 choices in the order of the rings, with the ring colours.
+// The seven Level 1 choices in the order of the rings, with the colour of each cluster.
 level1 = [
   {key: "outcome", label: "Frames", cluster: "variables", levels: {mcosmo: "cosmopolitan", mutil: "utilitarian", mpos: "all positive", mcomm: "communitarian", mlib: "libertarian", mneg: "all negative"}},
   {key: "construction", label: "Scored as", cluster: "variables", levels: {share: "share of mentions", count: "count of items", rate: "count per item"}},
@@ -554,7 +555,7 @@ Plot.plot({
 })
 ```
 
-<p class="caption">One row for every option on every ring of the Level 1 dial, grouped by ring from the outside in. The orange dots are the six options under the index now. Each other dot is what the median answer to the question becomes if that one ring is turned to that option and the other five are left as they are, drawn in the colour of its ring: blue for the three rings that name the variables, teal for the two that say whom the question is about, bronze for the estimator. The shaded band covers the middle 80% of the answers to the current question, across every combination of the Level 2 and Level 3 options. A dot outside the band means that turning that one ring moves the answer further than all the measurement and estimation decisions together can. Hover over a dot for the range of answers to that question and the share of them that is significant.</p>
+<p class="caption">One row for every option on every ring of the Level 1 dial, grouped by ring from the outside in. The orange dots are the seven options under the index now. Each other dot is what the median answer to the question becomes if that one ring is turned to that option and the other six are left as they are, drawn in the colour of its group of rings: blue for the four rings that name the variables, teal for the two that say whom the question is about, bronze for the estimator. The shaded band covers the middle 80% of the answers to the current question, across every combination of the Level 2 and Level 3 options. A dot outside the band means that turning that one ring moves the answer further than all the measurement and estimation decisions together can. Hover over a dot for the range of answers to that question and the share of them that is significant.</p>
 
 :::
 
@@ -587,7 +588,7 @@ Plot.plot({
 <div class="small" style="max-width:75ch">
 <p><b>The three dials</b> hold the fourteen choices, one ring each, and the option under the red index at twelve o'clock is the one chosen. Click a segment to turn its ring. <b>The statement</b> is how the course tests whether two analyses ask the same question. Turn a ring of the Level 1 dial and the statement changes, because a different question is now being asked of the data; two analysts who set it differently were not disagreeing about method. Turn a ring of the Level 2 dial and only the green words change, while turning a ring of the Level 3 dial leaves the statement as it is. The Level 1 rings come in three groups. From the outside in, the frame set, the scoring rule, the predictor and the adjustment set name the variables. The sample and the weight say whom the question is about, and the estimator says how the country-years are compared.</p>
 <p><b>The answers to this question</b> ranks every answer to the question that is fixed by the Level 1 dial, one for each combination of the Level 2 and Level 3 options in the pre-computed grid, from most to least claim-supporting. Dark blue dots are significant at the five per cent level, grey ones are not, and the orange ring is the chosen specification. Colour the dots by one choice to find out where each of its options falls.</p>
-<p><b>One ring at a time</b> shows what each alternative option on a Level 1 ring would do to the answer, holding the other five as they are. Each dot is the median answer to the question that the turn produces, the orange dots mark the chosen question, and the shaded band behind them covers the middle 80% of the answers to the current question. A dot outside the band means that turning that one ring moves the answer further than every Level 2 and Level 3 choice together.</p>
+<p><b>One ring at a time</b> shows what each alternative option on a Level 1 ring would do to the answer, holding the other six as they are. Each dot is the median answer to the question that the turn produces, the orange dots mark the chosen question, and the shaded band behind them covers the middle 80% of the answers to the current question. A dot outside the band means that turning that one ring moves the answer further than every Level 2 and Level 3 choice together.</p>
 <p><b>All the questions</b> places the current question among every question that the menu can ask, each summarised by its median answer. The per-item rate, which rescales the count, is not counted as a question of its own.</p>
 <p>The <a href="spec-menu.qmd">specification menu</a> gives, for every choice, the share of the variation in results that is attributed to it and how often changing that choice alone takes a result across p = .05. The <a href="../companion/weighting.qmd">weighting</a> and <a href="../companion/missingness.qmd">missing-answers</a> pages examine two of the Level 2 choices in detail.</p>
 </div>

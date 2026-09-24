@@ -2,7 +2,7 @@
 
 This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page (`results.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
 
-You do all of this; participants do nothing except click one link.
+You do all of this; participants do nothing except open the pre-filled link that each of their two submissions prints, and press Send.
 
 ------------------------------------------------------------------------
 
@@ -23,12 +23,12 @@ You do all of this; participants do nothing except click one link.
                           adds CORS header
         ◄──────────────  CSV + Access-Control-Allow-Origin: *
         ▼
- orange dot appears on the chart
+ a dot appears on the chart
 ```
 
 Why the Worker exists: a browser will only read a remote file if that file is served with an `Access-Control-Allow-Origin` (CORS) header. Google Sheets does **not** reliably send that header to a third-party site like `codemoreh.github.io`, and the URL it does serve redirects across origins, which browsers block. The Worker is a tiny relay that you control: the browser talks to the Worker, the Worker fetches the Sheet server-to-server (no browser, no CORS on that hop), and hands the CSV back with the right header. This removes the single biggest live-demo risk. It is \~20 lines and runs free.
 
-**Design note (prereg + format).** This system handles the **results** submission only. Preregistration is kept off it (in the workspace the declaration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a declaration and a result separately. If you would rather make prereg fully digital and timestamped too, see section 9.
+**Design note (prereg + format).** This system handles the **results** submissions only. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `results.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the workspace the declaration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a declaration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
 
 ------------------------------------------------------------------------
 
@@ -158,15 +158,15 @@ wrangler deploy
 
 ## 4. Step 3 – wire the IDs into the repo
 
-There are four edits. Two have a literal `PASTE_…` marker in the code (items 1 and 2). Item 3 (the template repo) has no marker because that file is in a different repo and is structured differently – replace its "section 4" as shown below. Item 4 is a value in `_variables.yml`.
+There are four edits. All four places already hold the live values – the Worker URL in `results.qmd`, the Form ID and entry codes in the `.submit()` helper of the browser lab and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
 
-1.  **`results.qmd`** – in the `live-multiverse` cell, set:
+1.  **`results.qmd`** – in the `live-multiverse-setup` cell, set:
 
     ``` r
     worker_url <- "https://class-results.YOUR-SUBDOMAIN.workers.dev"
     ```
 
-2.  **`exercise/browser-lab.qmd`** – in `report_result()`, set the Form ID and the seven entry codes:
+2.  **`exercise/browser-lab.qmd`** – in the `.submit()` helper, which `submit_exploration()` and `report_result()` both call, set the Form ID and the seven entry codes:
 
     ``` r
     FORM_ID <- "1FAIpQLSxxxxxxxx"
@@ -175,7 +175,7 @@ There are four edits. Two have a literal `PASTE_…` marker in the code (items 1
                r = "entry.777777")
     ```
 
-3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `report_result()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout.)
+3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, which sits in this project as the nested folder `_template/`.)
 
     [**ACTUAL: I CAN'T LOCATE THAT !!!**]{.underline}
 
@@ -197,7 +197,7 @@ git commit -m "Wire live class-results Form + Worker"
 git push
 ```
 
-`_freeze/` must be committed (CI deploys without R). A full `quarto render` before pushing is safest.
+`_freeze/` must be committed (CI executes R only for the landing page and takes every other page from the cache). A full `quarto render` before pushing is safest.
 
 > Note: the `worker_url` is baked into the page at render time, so changing it means a re-render + push, which you need to do only once, before the workshop.
 
@@ -208,7 +208,7 @@ git push
 The chart reads a column literally named **`r`** (case/space-tolerant). The other columns are kept for the record, but only `r` positions the dot.
 
 - Live path: the Worker serves the header row of the Sheet as CSV headers, which come from your Form question titles – so titling the question `r` (step 2.1) is what makes this work.
-- Archive path (section 7): the committed `data/class_results.csv` must also have a column named `r`.
+- Archive path (section 9): the committed `data/class_results.csv` must also have a column named `r`.
 
 ------------------------------------------------------------------------
 
@@ -231,7 +231,7 @@ If the morning test fails, you still have two fallbacks (section 8) and the stat
 
 1.  Project the live Multiverse page.
 2.  As results arrive, press **Run Code** on the Class-results chart to pull the latest dots. Press it again every minute or so – each press re-fetches (the URL is cache-busted, so you always get the freshest rows).
-3.  Talk through the chart: where the class landed, who flipped the sign, which choice moved the estimate most. The five analysts are the dashed lines, the pre-computed menu is the grey cloud and the orange dots are the class submissions.
+3.  Talk through the chart: where the class landed, who flipped the sign, which choice moved the estimate most. The five analysts and the published coefficient of the original author (OA) are the labelled blue triangles, the 2,520 pre-computed specifications are the two muted curves (grey for the gaussian family, green-grey for the beta family), and the class submissions are the numbered black circles – open for an exploratory result from Task 4, filled for a declared one from Task 5.
 
 If the live fetch ever stalls during the session, fall back to the static spec curve on the slide "The class multiverse" – it is the same chart minus the live dots.
 
@@ -262,6 +262,6 @@ If the live fetch ever stalls during the session, fall back to the static spec c
 | CORS error in the browser console | Talking to Google directly, not the Worker; or wrong Worker URL | Confirm `worker_url` is the `*.workers.dev` URL, re-render (4) |
 | Dots do not appear, no error | No column named `r`, or empty `r` values | Title the question `r` (2.1); check the pre-fill maps `r` correctly (2.4) |
 | Dots in the wrong place | `r` holding the wrong number | `r` must be the partial correlation `t/sqrt(t^2+df)`; `report_result()` computes it |
-| Pre-filled link 404s or is blank | Wrong `FORM_ID` or `entry.NNN` codes | Re-derive from "Get pre-filled link" (2.4); update both copies of `report_result()` (4) |
+| Pre-filled link 404s or is blank | Wrong `FORM_ID` or `entry.NNN` codes | Re-derive from "Get pre-filled link" (2.4); update both copies of `.submit()` (4) |
 | New rows slow to show | Using Publish-to-web CSV (cached) | Switch to the Worker (gviz, uncached) |
 | Everything dead on the day | wifi / Google outage | Facilitator local render (section 8) |

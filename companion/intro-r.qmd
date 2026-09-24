@@ -6,7 +6,7 @@ bibliography: [../references.bib, ../references-new.bib]
 
 This is the first module of the [companion curriculum](index.qmd), and it is written for the person who arrives with no R at all: a student, a professional from another field, or anyone curious about how the course analysis is built. It does not assume you have programmed before. By the end you will know what R is, what the editor around it does, how to store and reshape data, how to draw figures from it and read the ones that the course shows you, how the package system of R and its main dialects fit together, and where the course materials pick up from here.
 
-As in the other companion modules, every command below is **shown on the page and left for you to run**. R is a language you learn by typing into it and watching what comes back, so the way to use this page is to try each snippet yourself, either in the zero-install [browser lab](../exercise/browser-lab.qmd) or in your own copy of R. Nothing on this page executes when it renders.
+As in the Quarto module, every command below is **shown on the page and left for you to run**. R is a language you learn by typing into it and watching what comes back, so the way to use this page is to try each snippet yourself, either in the zero-install [browser lab](../exercise/browser-lab.qmd) or in your own copy of R. Nothing on this page executes when it renders.
 
 ## 1. R and the IDE {#sec-what}
 
@@ -19,7 +19,7 @@ You do not strictly need an IDE to use R – R has its own bare console – but 
 ::: {.callout-tip}
 ## Try it
 
-You do not have to install anything to begin. Open the [browser lab](../exercise/browser-lab.qmd): a full copy of R starts up inside the tab after a few seconds, with no editor and no install to manage. Everything in the sections below can be typed straight into it, which makes it the fastest way to follow along on a first read.
+You do not have to install anything to begin. Open the [browser lab](../exercise/browser-lab.qmd): a full copy of R starts up inside the tab after a few seconds, with no editor and no install to manage. Most of the sections below can be typed straight into it, which makes it the fastest way to follow along on a first read. The lab holds the panel `data/EUframes_cy.csv` but not `data/analysts5.csv` or `data/spec_grid.csv`, so the snippets that read those two files, in sections 5 and 9, will not run there.
 :::
 
 ## 2. The console and the script {#sec-surfaces}
@@ -96,7 +96,7 @@ In the course workspace, the script `R/check_setup.R` checks every package that 
 ::: {.callout-tip}
 ## Try it
 
-Run `library(fakepackagename)` and read the error carefully, then run `library(readr)` (preinstalled in the browser lab) and notice that success is silent. Learning to read error messages calmly is part of learning R. This one says nothing more alarming than 'not on the shelf', and it is the message you will see most often.
+Run `library(fakepackagename)` and read the error carefully, then run `library(ggplot2)` (installed by the setup check in the workspace, and preinstalled in the browser lab) and notice that success is silent. Learning to read error messages calmly is part of learning R. This one says nothing more alarming than 'not on the shelf', and it is the message you will see most often.
 :::
 
 ## 5. Reading data {#sec-reading}
@@ -266,7 +266,7 @@ Write a chain on `euframes` that keeps only Greece (`filter(country == "Greece")
 
 ## 8. The grammar of graphics {#sec-ggplot}
 
-Section 7 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Every figure that the course shows you is built with it – the slides, the live class chart on the results page, the small country panels in the browser lab – so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows.
+Section 7 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart that the course draws from its own data is built with it – the charts on the slides, the live class chart on the results page, the small country panels in the browser lab – so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The exceptions are the interactive charts on the [estimand choices page](../exercise/estimand-dial.qmd), which Observable Plot draws in the browser, and two figures in the [statistics module](stats-methods.qmd): the rotating plane of section 2, drawn with rgl, and the forest plot of section 10, drawn by metafor.
 
 The name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts, much as a grammar describes how words combine into sentences. ggplot2 therefore has no separate function for each chart type. It splits a figure into parts that recombine freely: the data, the mapping from columns to visual properties, the geometric shapes drawn, the scales that decide what those shapes look like, the panels that the plot is divided into, and last the labels and the styling. A scatterplot and a bar chart are two fillings of the same slots, and once you know the slots you can read the figures on this site, including kinds you have not met yet.
 
@@ -437,7 +437,7 @@ Where two figures belong side by side, the **patchwork** package composes whole 
 ::: {.callout-tip}
 ## Try it
 
-Build a chain that keeps the crisis years, groups by `year`, and reports the mean of `mcosmo` and the mean of `mneg` per year, then pipe it into a plot with two `geom_line()` layers in different colours. You will find yourself wanting a legend and not getting one, because both colours were set rather than mapped. The remedy is to reshape the data into long form, which the [statistical methods module](stats-methods.qmd) takes up.
+Build a chain that keeps the crisis years, groups by `year`, and reports the mean of `mcosmo` and the mean of `mneg` per year, then pipe it into a plot with two `geom_line()` layers in different colours. You will find yourself wanting a legend and not getting one, because both colours were set rather than mapped. The remedy is to reshape the data into long form, with one row per year and outcome, using `pivot_longer()` from the tidyr package, and then to map `colour` to the column that names the outcome.
 :::
 
 ## 9. Reading the class chart {#sec-speccurve}
@@ -539,9 +539,9 @@ An expected outcome under each condition, a slope, a contrast between scenarios:
 
 Everything above is preparation for the workspace in which the day's work is done, and for the browser lab page on which it can be tried first.
 
-**The workspace.** You install R and an IDE and download a single zip file, a ready-made project folder holding the data, a set of short `R/` scripts, and a report skeleton called `index.qmd`. That report skeleton is your first real script. It is a Quarto document you open, read, and fill in as the day goes, running its chunks and rendering it to a finished report. The smaller scripts around it do one job each – `R/check_setup.R` confirms your installation works, `R/get_data.R` fetches the data, `R/report_result.R` submits your result – and reading them is a gentle way to see the vocabulary of this module used in earnest. The [setup page](../setup.qmd) has the download and the step-by-step.
+**The workspace.** You install R and an IDE and download a single zip file, a ready-made project folder holding the data, a set of short `R/` scripts, and a report skeleton called `index.qmd`. That report skeleton is your first real script. It is a Quarto document you open, read, and fill in as the day goes, running its chunks and rendering it to a finished report. The smaller scripts around it do one job each – `R/check_setup.R` confirms your installation works, `R/get_data.R` fetches the data, `R/spec_tools.R` holds the helpers that fit your specifications and submit your results – and reading them is a gentle way to see the vocabulary of this module used in earnest. The [setup page](../setup.qmd) has the download and the step-by-step.
 
-**The browser lab.** The [browser lab](../exercise/browser-lab.qmd) runs the same exercise inside a web tab, with a full copy of R that starts up on its own and the data already in place. It is the place to try everything on this page before you have installed anything, the page that the facilitator drives on the shared screen, and the fallback if your installation fails on the day. It gives the same numbers as the workspace.
+**The browser lab.** The [browser lab](../exercise/browser-lab.qmd) runs the same exercise inside a web tab, with a full copy of R that starts up on its own and the data already in place. It is the place to try most of this page before you have installed anything, the page that the facilitator drives on the shared screen, and the fallback if your installation fails on the day. It gives the same numbers as the workspace.
 
 In either place, the sequence is the one you have just practised on a small scale: read the data, reshape it with a few verbs, draw it to see what you are dealing with, then fit a model and read what it says. The rest of the course repeats that sequence, with more care taken over each step.
 

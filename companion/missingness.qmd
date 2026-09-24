@@ -53,7 +53,7 @@ delta_zero <- -weighted.mean(ans$m_ans, ans$n_noop)
 ```
 
 The [specification menu](../exercise/spec-menu.qmd) has an axis called **no-opinion
-handling** with four settings, and this module explains why it is there. Of the
+handling** with five settings, and this module explains why it is there. Of the
 `r big(n_all)` respondents in the EU-frames data, `r big(n_noop)`
 (`r pct(n_noop / n_all)`) answered the question "What does the EU mean to you
 personally?" by mentioning none of the thirteen things on the list, so that on every
@@ -128,11 +128,11 @@ and disengagement is not in the data.
 
 Item non-response on the outcome battery is the case that this module works through, but the same
 structure recurs at two other levels of this analysis, and the [weighting
-module](weighting.qmd) covers the other two. Inside a country, some people are harder to
+module](weighting.qmd) covers the first of them, unit non-response. Inside a country, some people are harder to
 reach or more likely to refuse the whole interview, which is unit non-response, and the
 Eurobarometer W1 design weight is the standard correction for the imbalance it leaves.
 Above the country, one reanalyst's Eurostat table had no United Kingdom row and nothing
-before 2009 for any country but France, so half the country-year cells were missing from
+before 2009 for any country but France and Sweden, so half the country-year cells were missing from
 that analysis before a single respondent was considered. Non-response rates on their own
 predict little about the bias that results [@Groves2006Nonresponse; @Groves2008Impact;
 @Hendra2018Rethinking]; what matters is whether the missing units differ from the
@@ -143,7 +143,7 @@ observed ones on the quantity of interest, which is the same question at every l
 The menu has three deterministic rules, which code every silent respondent in the same
 way without fitting a model, and each is a statement about what the silent
 respondents mean. **Zero** treats them as people with no framing of any kind, which is
-the reanalysis convention. **Drop** treats them as people who did not answer the
+the convention of most of the reanalyses. **Drop** treats them as people who did not answer the
 question, which is what OA's code did. **Split** takes the three codes
 at their word: "don't know" and blank are dropped as non-response, and "other" is kept
 at zero on the reasoning that an answer off the list is still an answer that contains no
@@ -244,7 +244,8 @@ Amelia imputes by drawing from that model, and the imputed values can fall outsi
 unit interval and are then clipped.
 Both condition on age, sex, education and the country and year of interview. Each of the
 ten completed respondent files is aggregated to country-year means and every one of the
-1,560 estimand cells of the menu is fitted on each, then pooled.
+780 estimand cells that have unemployment as the predictor and the answers scored
+as shares is fitted on each, at the standard measurement settings, then pooled.
 
 ```{r}
 #| label: tbl-mi

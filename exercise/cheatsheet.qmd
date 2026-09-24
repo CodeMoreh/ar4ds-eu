@@ -42,7 +42,7 @@ You submit twice, and the two are different in kind. The browser lab and the wor
 
 4. **Preregister.** Make one choice on every axis in the preregistration cell (`claim_align <- TRUE` is already set for you), then run `prereg()`. That declaration is your commitment – copy the whole cell into your notes.
 5. **`build_model(...)`** – write your specification as a formula. It accepts only code that matches your preregistration and tells you what is off when it does not.
-6. **`run_spec(my_model)`** – computes your specification and shows the coefficient, its claim-aligned partial *r* (below zero supports the claim), and your placement against the grid of 840 specifications.
+6. **`run_spec(my_model)`** – computes your specification and shows the coefficient, its claim-aligned partial *r* (below zero supports the claim), and, on the browser lab page, your placement against the grid of 840 specifications.
 7. **`report_result()`** – no arguments. It builds your submission from the preregistration and prints a clickable, pre-filled form link; open it and press **Send**.
 
 If any of that stalls, work down the list below.
@@ -56,11 +56,11 @@ The browser lab runs R inside your browser tab, and browsers occasionally baulk.
 1. **Hard reload, then rerun.** Reload the page clearing the cache (Ctrl+Shift+R / Cmd+Shift+R), wait for R to restart, and **rerun the chunks above** the one that failed – webR needs the earlier chunks to have run in this session before a later one will work.
 2. **Switch browser.** If a chunk still will not run, open the browser lab in a different browser (Chrome, Edge, or Firefox). A fresh browser clears most stubborn webR problems.
 3. **Follow the shared screen – the 'buddy chunk'.** If your machine simply will not cooperate, watch the facilitator run the same chunk on the shared screen and read your numbers from there. You miss no step by doing this.
-4. **Read your numbers to the facilitator.** If `run_spec()` or `report_result()` printed your result but the form link will not open – or a cell simply refuses to run – read the printed `b`, `se`, `t` (or `z` for a beta family), `df`, `n` and claim-aligned `r` to the facilitator, who adds the dot to the chart for you. The lab has already applied the claim-alignment convention, so there is nothing to convert, and no working form link is needed at your end.
+4. **Read your numbers to the facilitator.** If `submit_exploration()` or `report_result()` printed your result but the form link will not open, read the printed `b`, `se`, `t` (or `z` for a beta family), `df`, `n` and claim-aligned `r` to the facilitator, who adds the dot to the chart for you. The lab has already applied the claim-alignment convention, so there is nothing to convert, and no working form link is needed at your end. If a cell refuses to run at all, nothing is printed and there are no numbers to read, so give the facilitator your fourteen choices instead, and the facilitator reads the result off the grid by hand (the note below).
 
 ::: {.callout-note}
 ## The by-hand grid lookup
-Last resort, facilitator-side, if a participant's cells will not run at all: every menu specification is a row in one of the files under `data/grid/`. The file is named by the six Level 1 choices joined with double underscores, in the order outcome, predictor, co-predictor, estimator, sample, weights – the baseline is `mcosmo__unemp__none__fe_twoway__all__none.csv.gz` – and the row inside it is picked by the eight Level 2 and Level 3 choices (`construction`, `noop`, `item_set`, `cell_weight`, `measure`, `pred_form`, `family`, `se`). A beta-family row reports `z` in place of `t`. Read off `b`, `se`, `t`/`z`, `df` and `n`, and take `r` from the `r_ca` column, which is already claim-aligned. Then apply to `b` and `t`/`z` only the flips that the lab applies automatically. Reverse their sign for a negative framing (`mcomm`, `mlib`, `mneg`), and again for a GDP-growth predictor. Enter those into the [form]({{< var results-form-url >}}), and the dot appears without anything being fitted.
+Last resort, facilitator-side, if a participant's cells will not run at all: every menu specification is a row in one of the files under `data/grid/`. The file is named by the six Level 1 choices other than the scoring rule, joined with double underscores, in the order outcome, predictor, co-predictor, estimator, sample, weights – the baseline is `mcosmo__unemp__none__fe_twoway__all__none.csv.gz` – and the row inside it is picked by the scoring rule and the seven Level 2 and Level 3 choices (`construction`, `noop`, `item_set`, `cell_weight`, `measure`, `pred_form`, `family`, `se`). A beta-family row reports `z` in place of `t`. Read off `estimate` (the b), `std_error`, `statistic` (the t or z), `df` and `n`, and take `r` from the `r_ca` column, which is already claim-aligned. Then apply to `b` and `t`/`z` only the flips that the lab applies automatically. Reverse their sign for a negative framing (`mcomm`, `mlib`, `mneg`), and again for a GDP-growth predictor. Enter those into the [form]({{< var results-form-url >}}), and the dot appears without anything being fitted.
 :::
 
 ---
@@ -69,7 +69,7 @@ Last resort, facilitator-side, if a participant's cells will not run at all: eve
 
 | If ... | Then ... |
 |---|---|
-| A package will not load, or `feols` / `plm` is "not found" | Run the checker again – `source("R/check_setup.R")` – and let it install what is missing; or install by hand, e.g. `install.packages("fixest")`. |
+| A package will not load, or `feols` / `plm` is "not found" | Run the checker again – `source("R/check_setup.R")` – and run the install line that it prints; or install by hand, e.g. `install.packages("fixest")`. |
 | The `renv` / `pak` restore stalls or half-finishes | Restart R (Session menu), then run the restore again; a second pass usually completes what the first left. |
 | "Permission denied" while installing a package | Let R use a personal library it can write to – accept the offer from R to create a personal library, then reinstall. |
 | A data file is "not found" | Check you opened the unzipped **folder** in your IDE (File → Open Folder in Positron and VS Code; the `.Rproj` file in RStudio), not a single file – the paths in the code are relative to that folder. |

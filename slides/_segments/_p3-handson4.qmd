@@ -38,10 +38,9 @@ Measured on the 270-row panel, on an ordinary laptop:
 **Every fit is fast.** A participant who is waiting is waiting for a package **download**:
 
 - browser lab, `ggdag` for the Task 2 graph: **≈ 23 MB**, one slow moment on poor wifi. The `adjustmentSets()` answer itself needs none of it
-- browser lab, `glmmTMB` for beta random effects: a heavy wasm download, installed on demand
 - the workspace, first run: the whole package set installs once
 :::
 
 ::: notes
-[Facilitator slide, hidden in the deck – for answering "how long should this take?" without guessing.] Every fit on this panel is effectively instantaneous, including the beta models. Nobody is waiting for a model. What people do wait for is a package download: ggdag in the browser lab is about twenty-three megabytes, which is one slow moment on a bad connection, and glmmTMB is a heavy wasm download if somebody picks beta random effects. The first run in the workspace installs the whole set once. So if someone reports that it is stuck, ask what it is stuck on before assuming the model is the problem.
+[Facilitator slide, hidden in the deck – for answering "how long should this take?" without guessing.] Every fit on this panel is effectively instantaneous, including the beta models. Nobody is waiting for a model. What people do wait for is a package download: ggdag in the browser lab is about twenty-three megabytes, which is one slow moment on a bad connection. The browser lab reads every menu result from the pre-computed grid, so no choice on the menu triggers a package download there. The first run in the workspace installs the whole set once. So if someone reports that it is stuck, ask what it is stuck on before assuming the model is the problem.
 :::

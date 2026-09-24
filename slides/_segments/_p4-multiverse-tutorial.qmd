@@ -61,11 +61,11 @@ ggplot() +
 ```
 
 ::: {.small}
-Four binary choices give sixteen analyses. **Eight axes with several options each give hundreds.** The published paper reports one red line and no tree.
+Four binary choices give sixteen analyses. **Fourteen axes with several options each give hundreds of thousands.** The published paper reports one red line and no tree.
 :::
 
 ::: notes
-Here is the structure of the problem, drawn. Four choices, two options each, and you already have sixteen distinct analyses. Our menu has fourteen axes and most of them have more than two options, which is how you get from hundreds to hundreds of thousands. And the point of the picture is the red line: what a published paper reports is one route through this tree, with no indication that the tree exists. The reader sees a coefficient and a standard error, and the standard error describes uncertainty from sampling – it contains no information about the fifteen other branches. Gelman and Loken's phrase for this is the garden of forking paths, and their sharp observation, which we met this morning, is that you do not have to walk every path for this to be a problem. Walking one path that you chose after seeing the data is enough.
+Here is the structure of the problem, drawn. Four choices, two options each, and you already have sixteen distinct analyses. Our menu has fourteen axes and half of them have more than two options, which is how you get from sixteen to hundreds of thousands. And the point of the picture is the red line: what a published paper reports is one route through this tree, with no indication that the tree exists. The reader sees a coefficient and a standard error, and the standard error describes uncertainty from sampling – it contains no information about the fifteen other branches. Gelman and Loken's phrase for this is the garden of forking paths, and their sharp observation, which we met earlier, is that you do not have to walk every path for this to be a problem. Walking one path that you chose after seeing the data is enough.
 :::
 
 ## Justifiable, not merely possible {.smaller .deepdive run="multiverse"}
@@ -125,10 +125,10 @@ So how do you build the set? Two strategies, and both have a real cost. Enumerat
 ::: {.small}
 Our menu, multiplied out:
 
-- 6 outcomes × 2 predictor forms × 3 copredictors × 4 estimators × 5 samples × 2 weightings, minus the combinations that are not defined → **840** distinct analyses
+- 6 outcomes × 2 predictor forms × 2 copredictor settings × 4 estimators × 5 samples × 2 weightings, minus the combinations that are not defined → **840** distinct analyses
 - Add the **outcome family** axis → the family universe of **1,680**
 - Add **GDP growth** as the claim carrier → **2,520**, the universe on the results page
-- Open the four regression weights and the five **measurement** decisions – how the outcome is built, what happens to no-opinion respondents, which items, design-weighted cells or not, which published series – and the standard-error convention → **449,280** linear fits, **457,080** rows once the beta twins and two imputation engines are in
+- Open the four regression weights, the scoring rule, the four **measurement** decisions – what happens to no-opinion respondents, which items, design-weighted cells or not, which published series – and the standard-error convention → **449,280** linear specifications, **461,760** rows once the beta twins and the two imputation engines are in
 - Open the **unit of analysis** as well – person level or aggregate – and the arithmetic doubles again
 :::
 
@@ -137,7 +137,7 @@ Two consequences. **Compute stops being free**, so somebody must decide what is 
 :::
 
 ::: notes
-Now multiply the menu out. Six outcomes, two predictor forms, three copredictor settings, four estimators, five samples, two weightings – minus the combinations that are not defined, like random effects with weights – and you land on eight hundred and forty distinct analyses. Add the outcome family axis and it doubles to one thousand six hundred and eighty, the family universe. Add GDP growth as an alternative claim carrier and it is two and a half thousand. And if you also opened the unit of analysis, person level or aggregate, the menu arithmetic runs past five thousand. Two consequences follow. First, compute stops being free, so somebody has to decide what is worth running, and that decision is not neutral. Second, and more practically, you cannot look at two and a half thousand numbers. You need a picture, and you need a way of asking which axis is actually doing the work.
+Now multiply the menu out. Six outcomes, two predictor forms, two copredictor settings, four estimators, five samples, two weightings – minus the combinations that are not defined, like random effects with weights – and you land on eight hundred and forty distinct analyses. Add the outcome family axis and it doubles to one thousand six hundred and eighty, the family universe. Add GDP growth as an alternative claim carrier and it is two and a half thousand. Open the other regression weights, the scoring rule, the four measurement decisions and the standard-error convention, and the linear specifications alone come to four hundred and forty-nine thousand. And if you also opened the unit of analysis, person level or aggregate, the arithmetic would double again. Two consequences follow. First, compute stops being free, so somebody has to decide what is worth running, and that decision is not neutral. Second, and more practically, you cannot look at four hundred and fifty thousand numbers. You need a picture, and you need a way of asking which axis is actually doing the work.
 :::
 
 ## What is a multiverse *for*? {.smaller .deepdive run="multiverse"}
@@ -180,7 +180,7 @@ On this claim, the answer surprises almost everybody – which is why you are go
 :::
 
 ::: notes
-This analysis only becomes possible once you have hundreds of estimates and a record of which choices produced each one. You can turn the grid itself into a dataset – one row per analysis, the eight axes as factors, the estimate as the outcome – and decompose the variance across axes. How much of the spread does each fork account for? I think that is the most useful thing a multiverse produces, and it is much more useful than the curve itself, because it tells you where to spend your argument. An axis that moves nothing does not need defending in your paper; you can say so in a sentence and move on. An axis that moves everything needs a paragraph of justification, and probably a sensitivity analysis. On this claim the answer surprises nearly everybody, which is why in a moment I am going to make you bet on it before I show you.
+This analysis only becomes possible once you have hundreds of estimates and a record of which choices produced each one. You can turn the grid itself into a dataset – one row per analysis, the six axes of the grid of 840 as factors, the estimate as the outcome – and decompose the variance across axes. How much of the spread does each fork account for? I think that is the most useful thing a multiverse produces, and it is much more useful than the curve itself, because it tells you where to spend your argument. An axis that moves nothing does not need defending in your paper; you can say so in a sentence and move on. An axis that moves everything needs a paragraph of justification, and probably a sensitivity analysis. On this claim the answer surprises nearly everybody, which is why in a moment I am going to make you bet on it before I show you.
 :::
 
 ## Reading a specification curve {.smaller .deepdive run="multiverse"}

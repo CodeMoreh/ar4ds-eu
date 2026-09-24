@@ -30,7 +30,7 @@ am  <- \(it, link, contrast) ame$estimate[ame$item == it & ame$link == link & am
 n_resp <- prev$n[prev$item == "it9" & prev$by == "year"] |> sum()
 ```
 
-This module of the [companion curriculum](index.qmd) fits the simplest generalised linear model there is, a model for a yes-or-no outcome, on the simplest outcome in the course: one item of the question that asks what the European Union means to the respondent personally. Every framing scale on the specification menu is built from thirteen such items, so an item is the rung of the data ladder below every scale, and a model for one item is the building block under everything that the [statistics module](stats-methods.qmd) fits to the scales and that the [items module](measurement.qmd) says about how they hang together. The page follows two items: "Unemployment", the answer that shares its content with the predictor of the whole case, and "Peace", the most-named positive answer.
+This module of the [companion curriculum](index.qmd) fits the simplest generalised linear model there is, a model for a yes-or-no outcome, on the simplest outcome in the course: one item of the question that asks what the European Union means to the respondent personally. Every framing scale on the specification menu is built from thirteen such items, so an item is the rung of the data ladder below every scale, and a model for one item is the building block under everything that the [statistics module](stats-methods.qmd) fits to the scales and that the [items module](measurement.qmd) says about how they hang together. The page follows two items: "Unemployment", the answer that shares its content with the predictor of the whole case, and "Peace", the most-named positive answer after freedom to travel.
 
 Everything here was fitted on the real respondents, the `r big(n_resp)` people in the file that the build script of the workspace produces from the sixteen GESIS surveys, and written out as the aggregate tables that the page reads; the [respondent codebook](../data/eb_respondents_codebook.md) describes the variables. The script that fitted them, `companion/_model-outputs/fit_items_glm.R`, runs on that file, so anyone who has built it can refit every model on this page. The module assumes only the [R module](intro-r.qmd) and section 2 of the statistics module, on the first linear model.
 
@@ -55,7 +55,7 @@ prev |>
   tt()
 ```
 
-The low-educated name unemployment almost twice as often as the high-educated, `r pct(pv("it9", "education", "low"))` against `r pct(pv("it9", "education", "high"))`, and the high-educated name peace more often than the low-educated, `r pct(pv("it1", "education", "high"))` against `r pct(pv("it1", "education", "low"))`. Before any model has been fitted, those two differences are the raw material of the second hypothesis of the original paper, that the high-educated frame the EU more positively and less negatively.
+The low-educated name unemployment almost twice as often as the high-educated, `r pct(pv("it9", "education", "low"))` against `r pct(pv("it9", "education", "high"))`, and the high-educated name peace more often than the low-educated, `r pct(pv("it1", "education", "high"))` against `r pct(pv("it1", "education", "low"))`. Before any model has been fitted, those two differences are the raw material of the first part of the second hypothesis of the original paper, H2a, that the high-educated frame the EU more positively and less negatively.
 
 ```{r}
 #| label: fig-prev-year
@@ -151,7 +151,7 @@ The predictor in the case is the unemployment rate of the country in the survey 
 
 ```{r}
 #| label: tbl-macro
-#| tbl-cap: "The centred national unemployment rate on the log-odds of naming each item, with the respondent characteristics of section 3, pooled and with country and year fixed effects; standard errors clustered by country-year."
+#| tbl-cap: "The centred national unemployment rate on the log-odds of naming each item, with the respondent characteristics of section 3 and the education × unemployment interaction of section 7, pooled and with country and year fixed effects; standard errors clustered by country-year. With the interaction in the model, each coefficient is the slope for the lowest education band."
 inter |>
   filter(term == "unemp_c") |>
   mutate(item = if_else(item == "it9", "Unemployment", "Peace")) |>
@@ -163,7 +163,7 @@ For "Unemployment" the pooled comparison finds almost nothing, `r num(inter$esti
 
 ## 7. The education gap and the rate together {#sec-interaction}
 
-The second hypothesis of the paper states that the high-educated respond to unemployment more strongly than the low-educated, and the [individual-level module](individual-level.qmd#sec-claim2) tests it on the scales. On a single item the test is a product term, education band times the unemployment rate, and the table gives it under both designs.
+The second part of the second hypothesis of the paper, H2b, states that the high-educated are more strongly affected by an economic downturn than the low-educated, and the [individual-level module](individual-level.qmd#sec-claim2) tests it on the scales with the unemployment rate as the measure of the downturn. On a single item the test is a product term, education band times the unemployment rate, and the table gives it under both designs.
 
 ```{r}
 #| label: tbl-interaction
@@ -200,7 +200,7 @@ if (is.null(rnd)) {
 }
 ```
 
-The variance components show how much of the variation in naming unemployment lies between countries and between country-years once the respondent characteristics are in the model. The fixed part of the model, the coefficients that are common to all country-years, gives the same result as section 6, with the cluster modelled instead of corrected for in the standard errors. Which of the two treatments to prefer is taken up in the multilevel section of the statistics module, and the answer does not depend on the link.
+The variance components show how much of the variation in naming unemployment lies between countries and between country-years once the respondent characteristics are in the model. The fixed part of the model, the coefficients that are common to all country-years, gives much the same result as the models with country and year fixed effects in sections 6 and 7, with the cluster modelled instead of corrected for in the standard errors. In the lowest education band the log-odds of naming unemployment rise by `r num(rnd$estimate[rnd$term == "unemp_c"], 3)` per point of the national rate, against `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("fixed", inter$model)], 3)` with the fixed effects, and neither education × unemployment term reaches conventional significance. Which of the two treatments to prefer is taken up in the multilevel section of the statistics module, and the answer does not depend on the link.
 
 ## 9. Where this leads {#sec-next}
 

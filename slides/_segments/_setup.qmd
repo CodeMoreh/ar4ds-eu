@@ -87,7 +87,7 @@ repeatability_matrix <- function(highlight = NULL) {
 # r_ca is the claim-aligned partial r – the day's convention: negative framings
 # (mcomm, mlib, mneg) reverse-coded, so 'supports the claim' = negative sign
 # for every outcome. All Part 4 curve/placement slides work on this scale;
-# the class chart and the percentile cell in the browser lab use the same one.
+# the class chart and the placement line that try_spec() and run_spec() print in the browser lab use the same one.
 spec_grid <- readr::read_csv("../data/spec_grid.csv", show_col_types = FALSE) |>
   dplyr::mutate(r_ca = ifelse(positive_outcome, r, -r))
 analysts5 <- readr::read_csv("../data/analysts5.csv", show_col_types = FALSE)

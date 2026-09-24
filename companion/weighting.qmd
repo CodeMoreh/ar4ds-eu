@@ -69,7 +69,7 @@ correlate at `r round(cor(pw$w_mcosmo, cy$mcosmo[match(paste(pw$cntry, pw$year),
 ::: {.callout-important title="Choosing among Eurobarometer weights"}
 A Eurobarometer file contains several weight variables, and they are not
 interchangeable. The **national** weight (`W1`) makes the sample from each
-country representative *of that country*. The **European** weights (`W3`, `W4` and their
+country representative *of that country*. The **European** weights (`W5` onwards, "WEIGHT EU6" to "WEIGHT EU27" and their
 relatives) additionally scale each country by its population, so that pooling all
 respondents together gives an estimate for the EU population as a whole. An
 **extrapolation factor** (`WEX`) grosses the sample up to population counts.
@@ -205,9 +205,11 @@ are small enough that choosing it over `n_cell` does not change the conclusion.
 When asked what the EU means to them,
 `r format(sum(pw$n_noop), big.mark = ",")` respondents, `r pct(sum(pw$n_noop) / sum(pw$n_cy))`
 of the sample, mentioned nothing at all. How they are scored is a decision that no weight can change.
-The original paper and every reanalysis of it scored those respondents **0** on all four
-framing scales rather than dropping them, so a person with no opinion enters the data
-as a person with no cosmopolitan framing.
+The code of the original paper dropped those respondents, as the [missing answers module](missingness.qmd)
+explains, and so did one of the five Multi100 reanalyses. The other four, among them the one
+that produced the recorded t of −3.804, kept them at zero, and the course panel follows them,
+scoring those respondents **0** on all four framing scales, so a person with no opinion enters
+the data as a person with no cosmopolitan framing.
 
 That would be a defensible convention if the no-opinion rate were the same
 everywhere, but it differs widely between countries.
@@ -320,7 +322,7 @@ collapse cosmo util, by(cntry year)    // unweighted country-year means
 xtreg cosmo unemployment, fe           // = the within estimator of section 4 of the statistics module
 ```
 
-The `collapse` command averages every respondent equally, so the design weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cy` option on the menu switches on and off. (The Stata–R correspondence continues here too: `xtreg, fe` after `xtset cntry_num year` is the within estimator in `plm`.) Across the grid, the weighting choices on the menu contribute less than one per cent of the specification variance.
+The `collapse` command averages every respondent equally, so the design weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option on the menu switches on and off. (The Stata–R correspondence continues here too: `xtreg, fe` after `xtset cntry_num year` is the within estimator in `plm`.) Across the grid, the weighting choices on the menu contribute less than one per cent of the specification variance.
 
 
 ## What to take away

@@ -61,4 +61,4 @@ The euro item (`it8`) is kept in the file but not scored in any of the scales us
 | `teney_panel_weights.csv` | 270 | Design-weighted and count-built cell means, effective sample sizes, no-opinion counts, population denominators |
 | `teney_panel_measurement.csv` | 38,880 | Cell means under every combination of scoring rule, item set, no-opinion rule and cell weighting |
 
-All four are aggregates of at least several hundred respondents per cell and are released under CC BY 4.0.
+The three files by country and year are aggregates of at least several hundred respondents per cell, and the file by education band of at least 43 respondents per cell, with most of its cells over several hundred. All four are released under CC BY 4.0.

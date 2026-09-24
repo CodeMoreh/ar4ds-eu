@@ -51,8 +51,8 @@ marginals; how each of those characteristics moves a respondent's framing
 composition and their propensity to mention anything at all; and the
 individual-level dispersion behind the Dirichlet concentration. The raw
 microdata are GESIS-licensed and cannot be redistributed in any form, which is
-why this file is simulated rather than sampled. The [repositories
-module](../companion/repositories.qmd#sec-gesis) explains that regime. The
+why this file is simulated rather than sampled. The [data sources
+module](../companion/data-sources.qmd#sec-gesis) explains that regime. The
 generator itself reads no microdata: only the committed summaries and the
 public panel.
 

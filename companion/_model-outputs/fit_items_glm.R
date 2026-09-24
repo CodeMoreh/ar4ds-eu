@@ -45,7 +45,7 @@ d <- d |>
   mutate(unemp_c = unemp - mean(panel$unemp))
 
 # Two items carry the page: "unemployment" (it9), the item that shares content
-# with the predictor, and "peace" (it1), the most-named positive item.
+# with the predictor, and "peace" (it1), the most-named positive item after freedom to travel.
 items <- c(it9 = "Unemployment", it1 = "Peace")
 
 # --- 1. prevalence ------------------------------------------------------------
@@ -124,9 +124,10 @@ message("average marginal effects written ", format(Sys.time(), "%H:%M:%S"))
 # fixed effects its coefficient compares countries with one another; with
 # country and year fixed effects it compares each country with itself over
 # time, net of what all countries share in a year. The interaction with
-# education asks whether that within-country movement differs by band: the
-# main effect of unemployment is identified across cells, the interaction
-# within them.
+# education asks how the gap between the bands moves with the rate. Under
+# fixed effects that gap is compared across all cells, between countries as
+# well as within them, because the country effects are the same for every
+# band, so the interaction is not confined to within-country movement.
 interaction <- imap(items, \(lab, it) {
   f_pooled <- as.formula(paste(it, "~ unemp_c * edu3 + age_c + female + ses + urban"))
   f_fe     <- as.formula(paste(it, "~ unemp_c * edu3 + age_c + female + ses + urban | cntry + year"))

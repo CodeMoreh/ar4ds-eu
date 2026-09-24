@@ -16,11 +16,11 @@
 :::
 
 ::: {.fragment .small}
-The claim says "decrease positive dimensions" – `mpos` is the more literal reading, `mcosmo` is what was instructed. That one disagreement is worth roughly **half** the variance in the grid.
+The claim says "decrease positive dimensions" – `mpos` is the more literal reading, `mcosmo` is what was instructed. Across all six scales, the outcome carries roughly **half** the variance in the grid as estimated, most of it because positive and negative framings take opposite signs. The `mpos`-against-`mcosmo` disagreement on its own carries **0.15%**.
 :::
 
 ::: notes
-Start with the outcome, because it turns out to matter more than everything else combined. One survey question – what does the EU mean to you personally – with thirteen response options, which the paper sorts into four scales. Cosmopolitan: peace, democracy, free movement, diversity, a stronger voice in the world. Utilitarian: prosperity and social protection. Communitarian: unemployment, loss of identity, crime, border control. Libertarian: bureaucracy and waste of money. And then two composites, all the positive items and all the negative ones. Notice the third column, because it trips people up: for the negative framings the claim predicts a positive coefficient, not a negative one. And notice the fragment. The words of the claim itself are "decrease positive dimensions", which points at the composite rather than at cosmopolitan alone. That one disagreement is worth about half the variance in the entire grid.
+Start with the outcome. On the grid as estimated it carries about half the variance, more than all the other choices put together, though most of that half comes from positive and negative framings pointing in opposite directions. Once the framings are claim-aligned, the estimator carries more. One survey question – what does the EU mean to you personally – with thirteen response options, which the paper sorts into four scales. Cosmopolitan: peace, democracy, free movement, diversity, a stronger voice in the world. Utilitarian: prosperity and social protection. Communitarian: unemployment, loss of identity, crime, border control. Libertarian: bureaucracy and waste of money. And then two composites, all the positive items and all the negative ones. Notice the third column, because it trips people up: for the negative framings the claim predicts a positive coefficient, not a negative one. And notice the fragment. The words of the claim itself are "decrease positive dimensions", which points at the composite rather than at cosmopolitan alone. On its own, that disagreement carries less than one per cent of the variance in the grid.
 :::
 
 ## Building a scale: mean, sum or share? {.smaller .deepdive run="methods"}
@@ -96,11 +96,11 @@ Here is a proper methodological question. Our outcome is a proportion – it lie
 The abstract says "poor economic performances". That names at least two things:
 
 - **Unemployment rate** – what Task 2 instructed. Higher is worse
-- **GDP growth** – what three of the five analysts chose in their free phase. Higher is *better*, so the claim predicts a **positive** coefficient on positive framings
+- **GDP growth** – what four of the five analysts used in their free phase, two of them beside unemployment. Higher is *better*, so the claim predicts a **positive** coefficient on positive framings
 :::
 
 ::: {.fragment .small}
-Fitted on our panel, the growth mirror of the baseline gives **b = +0.00167, t = 1.59**, in the direction predicted by the claim but not significant.
+Refitted on our panel, the free-phase model of analyst C6HJR (`mpos ~ growth + unemp`, two-way fixed effects) puts the growth coefficient at **b = +0.00167, t = 1.59**, in the direction predicted by the claim but not significant.
 :::
 
 ::: {.fragment .small}
@@ -108,7 +108,7 @@ Across all the growth specifications in the grid, **70.5%** point in the directi
 :::
 
 ::: notes
-Which variable is the claim actually about? The abstract says "poor economic performances", and that phrase names at least two different things. The unemployment rate, which is what task two instructed and where higher means worse. Or GDP growth, which is what three of the five of us reached for when we were free to choose, and where higher means better – so the claim predicts a positive coefficient on the positive framings, not a negative one. Fit the growth mirror of our baseline on this panel and you get plus point zero zero one seven with a t of one point six: right direction, not significant. And across all the growth specifications in the grid, seventy per cent in the direction predicted by the claim but only forty-seven per cent significant. That is direction without significance, which is a materially different kind of support from what the unemployment specifications offer, and a reader deserves to be told which one they are getting.
+Which variable is the claim actually about? The abstract says "poor economic performances", and that phrase names at least two different things. The unemployment rate, which is what task two instructed and where higher means worse. Or GDP growth, which is what four of the five of us reached for when we were free to choose, and where higher means better – so the claim predicts a positive coefficient on the positive framings, not a negative one. Refit my own free-phase model on this panel, the positive framings on growth and unemployment with two-way fixed effects, and the growth coefficient comes out at plus point zero zero one seven with a t of one point six: right direction, not significant. And across all the growth specifications in the grid, seventy per cent in the direction predicted by the claim but only forty-seven per cent significant. That is direction without significance, which is a materially different kind of support from what the unemployment specifications offer, and a reader deserves to be told which one they are getting.
 :::
 
 ## Predictor form, and a warning {.smaller .deepdive run="methods"}
@@ -180,11 +180,11 @@ Four estimators, and the thing to hold on to is that they do not answer the same
 ::::
 
 ::: {.fragment .small}
-This is the same statement as the DAG you drew before lunch. `adjustmentSets()` on the committed graph returns country and year, which are what two-way fixed effects absorb, so **the graph and the baseline model make the same claim.**
+This is the same statement as the DAG from Task 2. `adjustmentSets()` on its solid part, before any of the pale nodes is wired in, returns country and year, which are what two-way fixed effects absorb, so **the graph and the baseline model make the same claim.**
 :::
 
 ::: notes
-Worth being precise about what fixed effects buy, because they are often treated as a general-purpose cure. They absorb anything stable about a country across the decade – institutions, history, size, whatever the country already thought about the EU in 2004. And they absorb anything common to a year across all countries: the crisis itself, a treaty, a Europe-wide media cycle. What they do not touch is anything that varies within a country over time, which is where the interesting confounders are – a national bailout programme, a change of government, a domestic scandal. They do nothing about reverse causation, where today's framing moves tomorrow's unemployment. And nothing about measurement error or selection. Then the fragment: run adjustmentSets on the graph you built before lunch and it returns country and year. The graph and the baseline model are making the same claim.
+Worth being precise about what fixed effects buy, because they are often treated as a general-purpose cure. They absorb anything stable about a country across the decade – institutions, history, size, whatever the country already thought about the EU in 2004. And they absorb anything common to a year across all countries: the crisis itself, a treaty, a Europe-wide media cycle. What they do not touch is anything that varies within a country over time, which is where the interesting confounders are – a national bailout programme, a change of government, a domestic scandal. They do nothing about reverse causation, where today's framing moves tomorrow's unemployment. And nothing about measurement error or selection. Then the fragment: run adjustmentSets on the solid part of the graph from Task 2, before you wired in any of the pale nodes, and it returns country and year. The graph and the baseline model are making the same claim.
 :::
 
 ## Copredictor: control, or second exposure? {.smaller .deepdive run="methods"}
