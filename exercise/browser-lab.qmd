@@ -328,7 +328,7 @@ submit_exploration <- function() {
 prereg <- function() {
   ch  <- .check_choices()
   neg <- ch$my_outcome %in% .neg_framings
-  cat("DECLARED – one specification, recorded before seeing its result:\n\n")
+  cat("DECLARED – your preregistered specification, fixed before you run it:\n\n")
   cat("  The question (Level 1)\n")
   cat("    outcome    :", ch$my_outcome,
       if (neg) "(negative framing – reverse-coded automatically)" else "", "\n")
@@ -442,7 +442,7 @@ report_result <- function() {
 
 Five analysts reanalysed a claim from the EU-frames case [@Teney2016DoesEUEconomic] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. Read the full task description, the claim, and the five-analyst table of findings on the [Exercise overview](index.qmd) page (the broader context of the project is set out in the [course slides](../slides/index.qmd)).
 
-The five tasks take you from a setup check to two dots on the live class chart, one submitted while you explore and one declared in advance.
+The five tasks take you from a setup check to two dots on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it.
 
 
 
@@ -552,7 +552,7 @@ Before fitting anything, say what you are trying to estimate, in words. A templa
 
 > The **unit-specific quantity** is the change in mean cosmopolitan EU framing within a country-year associated with a one-point change in that country's unemployment rate. The **target population** is EU member states over 2004–2013. The **aggregation** is the average of those unit-specific effects, holding fixed each country's time-invariant traits and each year's EU-wide shocks.
 
-That last clause is a causal claim, and a directed acyclic graph makes it checkable. A DAG is a diagram of what causes what: variables are nodes, arrows run from cause to effect, and the rules for reading the graph then identify which variables have to be adjusted for if the arrow you care about is to be read cleanly. The graph below is the one that this exercise commits to.
+That last clause is a causal claim, and a directed acyclic graph makes it checkable. A DAG is a diagram of what causes what: variables are nodes, arrows run from cause to effect, and the rules for reading the graph then identify which variables have to be adjusted for if the arrow you care about is to be read cleanly. The graph below draws the five arrows that this exercise takes as given, which the rest of this page calls the committed arrows. Further down you decide which of the arguable arrows to add to them.
 
 ```{r}
 #| label: dag-reference
@@ -928,7 +928,7 @@ In Task 2 you named the quantity you are after and drew the graph from which you
 
 ## Task 4 – Work the menu {#task-4-explore}
 
-This task is **exploratory**. You try several specifications, look at what each one does, and get a feel for which choices move the estimate and which barely touch it. Nothing here commits you to anything; the commitment comes in Task 5.
+This task is **exploratory**. You try several specifications, look at what each one does, and get a feel for which choices move the estimate and which barely touch it. Nothing in this task is preregistered; the preregistration comes in Task 5.
 
 `try_spec()` takes one argument per axis of the [specification menu](spec-menu.qmd), and every argument defaults to the baseline that you have just reproduced. So changing one thing means changing one argument, and everything you do not name stays at baseline.
 
@@ -994,12 +994,12 @@ submit_exploration()
 ::: {.callout-note collapse="true"}
 ## Why 'exploratory'?
 
-Because you chose this specification after seeing what several specifications do, it lacks the guarantee that comes with a declared choice – no one can rule out that it might have been chosen *because* of its result. This is something we almost never know in the case of published papers, unless their analysis has been preregistered and departures from the preregistration documented. In this course exploration is a natural step, and you also practise preregistering the analysis that you choose, so you submit twice, once here and once in Task 5.
+Because you chose this specification after seeing what several specifications do, it lacks the guarantee that comes with a choice declared in a preregistration before its result is known – no one can rule out that it might have been chosen *because* of its result. This is something we almost never know in the case of published papers, unless their analysis has been preregistered and departures from the preregistration documented. In this course exploration is a natural step, and you also practise preregistering the analysis that you choose, so you submit twice, once here and once in Task 5.
 :::
 
 ## Task 5 – Preregistration {#task-5-my-preregistration}
 
-Preregistration means committing to a choice **before** you see what it does, which stops you from quietly picking the specification that happens to give the answer you wanted. Here the commitment binds mechanically as well: the session remembers the choices you declare in this cell, and every later cell reads them from here. The model builder refuses code that departs from them.
+Preregistration means setting out your choice in a plan **before** you see what it does, which stops you from quietly picking the specification that happens to give the answer you wanted. On this page the plan is the preregistration cell below, and it binds mechanically as well: the session remembers the choices that you declare in that cell, and every later cell reads them from there. The model builder refuses code that departs from them.
 
 ::: {.callout-important icon="false"}
 ## A shortened preregistration
@@ -1051,7 +1051,7 @@ claim_align     <- TRUE           # the course convention, applied automatically
 # 5. Supported if the claim-aligned coefficient is negative and p < .05;
 #    undermined if non-significant or positive. I will report what I get.
 
-prereg()   # checks every choice against the menu and records the declaration
+prereg()   # checks every choice against the menu and prints your preregistration
 ```
 
 An optional mirror form collects preregistrations from the class, and its link is shared in the session. It is not required. The cell above, copied into your notes, is your preregistration record.
@@ -1091,7 +1091,7 @@ report_result()
 
 If the form will not open on your machine, read the printed numbers to the facilitator, who adds your dot to the chart.
 
-If you want a second declared specification, edit the preregistration cell, rerun `prereg()`, rebuild and rerun. The chart will still label it declared, so be clear with yourself about what the second one is. Your first declaration was made without knowing its result. Anything after it was not, which puts it back in the same category as Task 4, and you should say so when you report it.
+If you want a second declared specification, edit the preregistration cell, rerun `prereg()`, rebuild and rerun. The chart will still label it declared, so be clear with yourself about what the second one is. Your first declaration was made without knowing its result. Anything after it was not, which puts it back in the same category as Task 4, and you should say so wherever you write about the result.
 
 
 

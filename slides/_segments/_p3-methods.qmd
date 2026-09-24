@@ -236,7 +236,7 @@ Each cell is a mean of very different numbers of respondents. Weighting by `n_cy
 :::
 
 ::: {.fragment .small}
-That changes the estimand, which is why the course convention is to declare it.
+That changes the estimand, which is why the weight is one of the fourteen axes of the menu, beside the outcome and the estimator.
 :::
 
 ::: {.fragment .small}
@@ -244,7 +244,7 @@ Practical note: random effects are never fitted with weights in the grid – the
 :::
 
 ::: notes
-Weights. Each cell in the panel is a mean over a very different number of respondents, so weighting by that count says a country-year built from two thousand people should count for more than one built from five hundred. That sounds like a purely technical refinement, but it changes what you are studying. Unweighted, every country-year is one observation and you are studying countries – Malta counts as much as Germany. Weighted, cells count in proportion to the people behind them, and you have moved a long way towards studying people. That is a change of estimand, which is why the convention in this course is that you declare it instead of leaving it as an argument to the fitting function. One practical note: random effects are never fitted with weights in our grid, because the combination is not well defined for this design, so those rows simply do not exist.
+Weights. Each cell in the panel is a mean over a very different number of respondents, so weighting by that count says a country-year built from two thousand people should count for more than one built from five hundred. That sounds like a purely technical refinement, but it changes what you are studying. Unweighted, every country-year is one observation and you are studying countries – Malta counts as much as Germany. Weighted, cells count in proportion to the people behind them, and you have moved a long way towards studying people. That is a change of estimand, which is why in this course the weight is one of the fourteen axes of the menu, chosen like the outcome or the estimator, instead of being left as an argument to the fitting function. One practical note: random effects are never fitted with weights in our grid, because the combination is not well defined for this design, so those rows simply do not exist.
 :::
 
 ## Making the axes comparable {.smaller .deepdive run="methods"}
@@ -258,7 +258,7 @@ A coefficient from a beta model on a share and one from a weighted pooled model 
 :::
 
 ::: {.fragment .small}
-Every specification in the class, and all 840 in the grid, can then be placed on one axis. `report_result()` does the conversion for you.
+Every specification in the class, and all 840 in the grid, can then be placed on one axis. `submit_exploration()` in Task 4 and `report_result()` in Task 5 do the conversion for you.
 :::
 
 ::: {.fragment .small}
@@ -270,7 +270,7 @@ Silberzahn's teams faced the same problem: four of the twenty-nine reported a co
 :::
 
 ::: notes
-Last, the conversion that puts every result on the class chart. A coefficient from a beta model on a share and one from a weighted pooled model on a sum are not on the same scale, so an axis that holds both tells you nothing. Multi100, and this course after it, take the test statistic and its degrees of freedom, convert them to a partial correlation, and then apply claim alignment so that the sign means the same thing everywhere. A partial r is the association between predictor and outcome net of everything else in the model, on a fixed scale from minus one to plus one, and report underscore result does the conversion for you. Comparable is not the same as equivalent, though. Two analyses that estimate different quantities remain different once they sit side by side, which is the estimand problem from the red-card study again. Silberzahn and colleagues faced the same difficulty when four of their twenty-nine teams reported something other than an odds ratio. They converted everything to one scale and reported the median, which gives one number where a curve gives the whole distribution.
+Last, the conversion that puts every result on the class chart. A coefficient from a beta model on a share and one from a weighted pooled model on a sum are not on the same scale, so an axis that holds both tells you nothing. Multi100, and this course after it, take the test statistic and its degrees of freedom, convert them to a partial correlation, and then apply claim alignment so that the sign means the same thing everywhere. A partial r is the association between predictor and outcome net of everything else in the model, on a fixed scale from minus one to plus one, and submit underscore exploration and report underscore result do the conversion for you. Comparable is not the same as equivalent, though. Two analyses that estimate different quantities remain different once they sit side by side, which is the estimand problem from the red-card study again. Silberzahn and colleagues faced the same difficulty when four of their twenty-nine teams reported something other than an odds ratio. They converted everything to one scale and reported the median, which gives one number where a curve gives the whole distribution.
 :::
 
 <!-- DEEP DIVE END -->

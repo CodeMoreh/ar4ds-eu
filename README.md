@@ -17,7 +17,7 @@ The session covers four topics. The first is the three Rs – reproducibility, r
 
 Participants install R and an IDE (Positron, RStudio, VS Code, etc.) and download the workspace as a zip from the companion repository [`CodeMoreh/replication-lab`](https://github.com/CodeMoreh/replication-lab), unzip it, and open the folder in their IDE. None of this involves git or an account. The folder holds the working script, the helper functions, the data and a report skeleton containing Tasks 1–5 and the preregistration block. Models are fitted live.
 
-The [browser lab](exercise/browser-lab.qmd) holds the same Tasks 1–5 on webR and quarto-live, with the data pre-loaded and nothing installed, reading its results from the pre-computed grid. It is the page that the facilitator uses on a shared screen, a place for anyone to try the exercise without an installation, and the fallback when a machine fails. Both submit results through the same one-click links, `submit_exploration()` for the exploratory result and `report_result()` for the declared one, and each adds a point to the live [Multiverse](results.qmd) chart.
+The [browser lab](exercise/browser-lab.qmd) holds the same Tasks 1–5 on webR and quarto-live, with the data pre-loaded and nothing installed, reading its results from the pre-computed grid. It is the page that the facilitator uses on a shared screen, a place for anyone to try the exercise without an installation, and the fallback when a machine fails. Both submit results through the same one-click links, `submit_exploration()` for the exploratory result of Task 4 and `report_result()` for the preregistered result of Task 5, and each adds a point to the live [Multiverse](results.qmd) chart.
 
 ## Repository layout
 

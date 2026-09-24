@@ -170,7 +170,7 @@ tibble(design = c("country-year panel", "individual"),
   mutate(across(where(is.numeric), \(x) signif(x, 3)))
 ```
 
-On the panel, unemployment has almost no association with libertarian framing, while at individual level the association is clear. When an effect appears under one defensible design and not under another, that is a strong argument for declaring the design before looking at the results.
+On the panel, unemployment has almost no association with libertarian framing, while at individual level the association is clear. When an effect appears under one defensible design and not under another, that is a strong argument for fixing the design in a preregistration before any model is fitted.
 
 ## 6. Levels and evidence {#sec-levels}
 
@@ -304,7 +304,7 @@ claim2 |>
   tt()
 ```
 
-**A replication exercise of your own.** The pieces for a second exercise in the style of the first are all on this page: a claim card, an estimand statement, a public dataset on which the aggregate design runs in the browser lab or the workspace, the respondent file for anyone who built it, and OA's published values to reproduce. The menu is smaller than the one for the first claim, and each of its axes is a decision that you can defend or not. The axes are the frame set, the scoring rule, the rule for the respondents who named nothing, the education coding (the published three bands, or the four bands that keep students separate), the estimator (random intercepts, fixed effects, or cells), the sample, the weight, and whether growth enters beside unemployment. Declare one specification before you run it, run it, and set the interaction you get against the rows of the table above. The table already shows that two of those decisions, the design and the no-opinion rule, decide whether the claim is found.
+**A replication exercise of your own.** The pieces for a second exercise in the style of the first are all on this page: a claim card, an estimand statement, a public dataset on which the aggregate design runs in the browser lab or the workspace, the respondent file for anyone who built it, and OA's published values to reproduce. The menu is smaller than the one for the first claim, and each of its axes is a decision that you can defend or not. The axes are the frame set, the scoring rule, the rule for the respondents who named nothing, the education coding (the published three bands, or the four bands that keep students separate), the estimator (random intercepts, fixed effects, or cells), the sample, the weight, and whether growth enters beside unemployment. Fix one specification in a preregistration, as in Task 5, then run it and set the interaction you get against the rows of the table above. The table already shows that two of those decisions, the design and the no-opinion rule, decide whether the claim is found.
 
 ::: {.callout-tip}
 ## Try it
