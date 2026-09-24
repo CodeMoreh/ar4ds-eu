@@ -14,9 +14,9 @@ cheap, so re-executing it on every render costs nothing. -->
 
 {{< include _includes/next-delivery.qmd >}}
 
-This is a course with a workshop at its centre. The workshop runs as a single day of four 90-minute parts. The same case and the same exercise also carry longer deliveries, over three days or across a semester, and a reader working alone can work through them at their own pace. The tracks below set out the four scales and say what to do at each.
+This is a course with a workshop at its centre. The workshop runs as a single day of four 90-minute parts. The same case and the same exercise are also used in longer deliveries, over three days or across a semester, and a reader studying alone can work through them at their own pace. The tracks below set out the four scales and say what to do at each.
 
-The main aim of the course is to introduce technical skills for modern empirical data analysis: retrieving data from an online repository, working with code so that another person (or your future self) can reproduce your steps, committing to your analytical choices before you make them, and writing a live report that carries both code and text.
+The main aim of the course is to introduce technical skills for modern empirical data analysis: retrieving data from an online repository, working with code so that another person (or your future self) can reproduce your steps, committing to your analytical choices before you run the analysis, and writing a live report that combines code and text.
 
 These skills are taught through an applied 'replication' exercise. Participants reproduce one of the reanalyses that made up the Multi100 project, whose results appeared in *Nature* [@AczelEtAl2026InvestigatingAnalyticalRobustness]. The reanalysis focuses on selected results from a *European Sociological Review* article by @Teney2016DoesEUEconomic, testing the statistical robustness of a claim made by the original author (OA).
 
@@ -26,10 +26,10 @@ These skills are taught through an applied 'replication' exercise. Participants 
 2. **See why five analysts got five different answers.** When you run the same code, you should get the same results; but there are different analysis options to choose from, and the five analysts each made different choices. Working through different analysis options involves engaging with and choosing between various statistical methods.
 3. **State an _estimand_ and draw a causal graph.** Often, variation in methods and therefore results is driven by having an imprecise understanding of the *quantity* that the study is trying to estimate. That quantity is the *estimand*. Thinking about estimands is, first of all, a conceptual matter, as is thinking about the real-life relationships between the variables in your dataset. Causal graphs, or directed acyclic graphs or DAGs, are a useful way to visualise these relationships and decide what variables to adjust for.
 4. **Preregister one specification.** Pick one defensible analysis from a menu of choices, then write down what you expect in a shortened version of a real preregistration template, before you run anything.
-5. **Run it and watch the multiverse grow.** Submit your result and see it land on a live chart, beside the five published analysts and, in a taught session, beside everyone else in the room.
-6. **Read a specification curve.** Work out what a thousand-plus results together can, and cannot, tell you.
+5. **Run it and submit the result.** Your result appears as a point on a live chart, beside the five published analysts and, in a taught session, beside everyone else in the class.
+6. **Read a specification curve.** Work out what more than a thousand results, taken together, can and cannot establish.
 
-The exercise is a miniature version of Multi100 itself: same claim, many analysts, explicit choices, comparable results.
+The exercise follows the design of Multi100 on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared.
 
 ---
 
@@ -39,36 +39,36 @@ The exercise is a miniature version of Multi100 itself: same claim, many analyst
 |---|---|
 | [One day – open science and replication](tracks/one-day-replication/index.qmd) | A group with a day and a facilitator, and the reproducibility of published research as the reason for meeting. Four 90-minute parts with breaks between them – the format for which the course was built. |
 | [One day – social data science tools](tracks/one-day-tools/index.qmd) | The same day with the toolchain in the foreground: the IDE, the document format, packages, version control and where finished work is archived, with a first session in R inside the day. |
-| [One day – the statistical methods](tracks/one-day-methods/index.qmd) | The same day with the statistics in the foreground: the causal graph in full, every axis of the specification menu shown doing something to an estimate, and the multiverse read properly. |
+| [One day – the statistical methods](tracks/one-day-methods/index.qmd) | The same day with the statistics in the foreground: the causal graph in full, every axis of the specification menu shown doing something to an estimate, and the multiverse read in detail. |
 | [Three days](tracks/three-days/index.qmd) | A group that wants the tools underneath the exercise and the methods behind it. A tools day, then the workshop, then a methods day. |
-| [Semester](tracks/semester/index.qmd) | A taught module or a research-training programme that runs across a term. Ten sessions, with the workshop day sitting inside the term as its practical core rather than as its opening. |
+| [Semester](tracks/semester/index.qmd) | A taught module or a research-training programme that runs across a term. Ten sessions, with the workshop day placed partway through the term as its practical core. |
 | [Self-study](tracks/self-study/index.qmd) | A reader working alone, at their own pace. The companion modules and the exercise ordered into a route that needs neither a facilitator nor a cohort. |
 
-Each track is an ordered route through pages that this site already holds, with a sidebar of its own and the slide deck it runs on embedded at the end of it. What changes between them is the pace, the balance, and how much of the surrounding material comes with the workshop. A scheduled delivery can name one of these six tracks, and when it does, the callout at the top of this page links to that track.
+Each track is an ordered route through pages already on this site, with a sidebar of its own and, at the end, the slide deck that the track uses. What changes between them is the pace, the balance, and how much of the surrounding material comes with the workshop. A scheduled delivery can name one of these six tracks, and when it does, the callout at the top of this page links to that track.
 
 ---
 
 ## Running the analyses {#two-routes-one-destination}
 
-The exercise is the same in every track, and it is worked in R. Install R and an IDE (Positron, RStudio, VS Code, etc.) once, before the day, then download a ready-made workspace – a single zip file holding the analysis code, the data and a report to fill in. There is nothing to configure and no account to create, so you open the folder and start working, and the workspace is yours to keep afterwards. The [Setup](setup.qmd) page walks you through the installation in plain steps.
+The exercise is the same in every track, and it is done in R. Install R and an IDE (Positron, RStudio, VS Code, etc.) once, before the day, then download a ready-made workspace – a single zip file holding the analysis code, the data and a report to fill in. There is nothing to configure and no account to create, so you open the folder and start working, and the workspace is yours to keep afterwards. The [Setup](setup.qmd) page walks you through the installation in plain steps.
 
-The [Browser lab](exercise/browser-lab.qmd) page holds the same exercise and the same data on a version of R that runs inside a browser tab, with nothing installed. It is the page on which the facilitator demonstrates on a shared screen, the place to try R and the data before you have installed anything, and the fallback if a machine gives up on the day, and anyone can use it whether or not they are taking the course.
+The [Browser lab](exercise/browser-lab.qmd) page holds the same exercise and the same data on a version of R that runs inside a browser tab, with nothing installed. It is the page on which the facilitator demonstrates on a shared screen, the place to try R and the data before you have installed anything, and the fallback if a machine fails on the day. Anyone can use it, whether or not they are taking the course.
 
 ---
 
 ## The workshop day {#four-blocks-ninety-minutes-each}
 
-The workshop keeps this shape wherever it sits, whether it fills a day of its own or forms the practical core of a longer delivery. Two breaks and a lunch sit between the parts. When a delivery is scheduled, the callout at the top of this page gives its clock times.
+The workshop has this structure whether it fills a day of its own or forms the practical core of a longer delivery. Two breaks and a lunch separate the parts. When a delivery is scheduled, the callout at the top of this page gives its clock times.
 
 | Part | Length | Focus |
 |---|---|---|
-| Part 1 – "Why any of this, and with what tools" | 90 minutes | What social science is for and why people say it is in crisis; what open research proposes; the three Rs (reproducibility, robustness, replicability) and the evidence on each; and the computational toolchain that makes any of it checkable. |
+| Part 1 – Credibility and tools | 90 minutes | What social science is for and why people say it is in crisis; what open research proposes; the three Rs (reproducibility, robustness, replicability) and the evidence on each; and the computational toolchain that makes any of it checkable. |
 | Break | | |
-| Part 2 – "The question underneath" | 90 minutes | The EU-frames paper in full, and why analysts who look like they disagree are often answering different questions. Estimands, causal graphs, and the case's own DAG, which you finish yourself. |
+| Part 2 – The claim and its estimand | 90 minutes | The EU-frames paper in full, and why analysts who look like they disagree are often answering different questions. Estimands, causal graphs, and a DAG for the EU-frames case, which you finish yourself. |
 | Lunch | | |
-| Part 3 – "What you can actually do" | 90 minutes | Reproducing the published result exactly, then working through the specification menu: what each analytical choice does, and what happens to the estimate when you change one. |
+| Part 3 – Reproduction and exploration | 90 minutes | Reproducing the published result exactly, then working through the specification menu: what each analytical choice does, and what happens to the estimate when you change one. |
 | Break | | |
-| Part 4 – "Reading the multiverse, choosing one path" | 90 minutes | Reading the class's results against the full specification curve and the five published analysts; what a curve can and cannot establish; and settling on the one analysis you would defend, declared before you run it. |
+| Part 4 – Multiverse and preregistration | 90 minutes | Reading the results from the class against the full specification curve and the five published analysts; what a curve can and cannot establish; and settling on the one analysis you would defend, declared before you run it. |
 
 ---
 
@@ -76,6 +76,6 @@ The workshop keeps this shape wherever it sits, whether it fills a day of its ow
 
 The [companion curriculum](companion/index.qmd) holds the teaching material of the course, arranged in three strands: computational tools, reproducibility and collaboration, and statistical methods. Every module keeps its own page and stands on its own, so you can read one for the skill it covers or take it in the place that a track gives it.
 
-A single day has room for the exercise and very little else, which is why the one-day track points at the modules rather than working through them. The longer tracks are built out of them. The three-day track spends a day on the tools underneath the exercise and a day on the methods behind it, the semester track spreads the same modules across a term, and the self-study track puts them in an order that needs no facilitator at all.
+A single day has room for the exercise and very little else, which is why a one-day track points to the modules rather than working through them. The longer tracks are built out of them. The three-day track spends a day on the tools underneath the exercise and a day on the methods behind it, the semester track spreads the same modules across a term, and the self-study track puts them in an order that needs no facilitator at all.
 
 ---

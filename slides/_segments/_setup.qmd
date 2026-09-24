@@ -3,7 +3,7 @@
 #| include: false
 # All figures on these slides are generated here from the course data files
 # (../data/*.csv) or from small inline tribbles of published summary values –
-# no images of the Nature papers' figures are used (copyright + everything must
+# no images of figures from the Nature papers are used (copyright + everything must
 # stay editable). Palette mirrors style/cgm-slides.scss.
 suppressPackageStartupMessages({
   library(readr)
@@ -87,7 +87,7 @@ repeatability_matrix <- function(highlight = NULL) {
 # r_ca is the claim-aligned partial r – the day's convention: negative framings
 # (mcomm, mlib, mneg) reverse-coded, so 'supports the claim' = negative sign
 # for every outcome. All Part 4 curve/placement slides work on this scale;
-# the class chart and the lab's percentile cell use the same one.
+# the class chart and the percentile cell in the browser lab use the same one.
 spec_grid <- readr::read_csv("../data/spec_grid.csv", show_col_types = FALSE) |>
   dplyr::mutate(r_ca = ifelse(positive_outcome, r, -r))
 analysts5 <- readr::read_csv("../data/analysts5.csv", show_col_types = FALSE)
@@ -107,10 +107,10 @@ tidy_approach <- function(x) {
 }
 
 # Shared multiverse base layer, mirroring the build-time chart on the
-# Multiverse page (results.qmd) so the room sees one visual grammar in the
-# deck and on the page collecting its dots: the full universe of 2,520
+# Multiverse page (results.qmd) so the class sees one visual grammar in the
+# deck and on the page that collects the class submissions: the full universe of 2,520
 # specifications (data/spec_grid_full.csv), each family ranked within itself;
-# colour carries the outcome family, the marker the claim-carrying predictor,
+# colour marks the outcome family, the marker the predictor that the claim is about,
 # faded points miss 5% significance, and the shaded band above zero runs
 # against the claim. Claim alignment matches the page too: negative framings
 # reverse-coded, growth predictors sign-flipped on top (their claim-expected

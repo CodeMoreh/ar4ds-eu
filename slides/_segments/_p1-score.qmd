@@ -3,12 +3,12 @@
 ::: {.small}
 - DARPA-funded programme to gauge the credibility of social-science claims
 - **62 journals**, papers from **2009–2018**, stratified sample
-- Each paper's central claim traced from abstract to the supporting statistic
+- The central claim of each paper traced from the abstract to the statistic that supports it
 - Thousands of researchers; three repetition studies built on the same frame
 :::
 
 ::: notes
-Where do these numbers come from? All three papers sit on one programme, SCORE – funded by DARPA, oddly enough, who wanted to know whether you could predict which findings hold up. The backbone is a stratified sample from sixty-two journals, papers published between 2009 and 2018, with each paper's central claim traced from the abstract down to the exact statistic that supports it. The three studies then took that same frame and each asked one of our three questions. So when the numbers land in a moment, they are about the same body of literature, asked three different things.
+The three papers we look at next all come from one programme, SCORE, funded – oddly enough – by DARPA, which wanted to know whether you could predict which findings hold up. It starts from a stratified sample of papers from sixty-two journals, published between 2009 and 2018, and traces the central claim of each paper from the abstract down to the statistic that supports it. The three studies then took that same sampling frame and each asked one of our three questions. So the numbers you are about to hear all describe the same body of literature, asked three different things.
 :::
 
 ## Three corners, three studies
@@ -40,7 +40,7 @@ Where do these numbers come from? All three papers sit on one programme, SCORE �
 :::
 
 ::: notes
-Same four-cell map you have just learned – but now each box carries the actual disciplinary breakdown from its study. Three of the four corners have a SCORE paper behind them: reproduction top-left, replication top-right, reanalysis bottom-left. The fourth, generalisation, we set aside today. Notice the pattern jumps out by discipline rather than by concept: economics and political science sit at the top of reproduction, sociology lags; replication hovers around half almost everywhere; and reanalysis holds the original conclusion three times in four. Same data on the wall, three very different questions.
+This is the four-cell map you have just learned, but each box now shows the disciplinary breakdown from its study. Three of the four corners have a SCORE paper behind them: reproduction top-left, replication top-right, reanalysis bottom-left. The fourth, generalisation, we set aside today. Economics and political science lead on reproduction while sociology lags, replication hovers around half almost everywhere, and reanalysis holds the original conclusion three times in four.
 :::
 
 ## Reproducibility – Miske et al.
@@ -56,7 +56,7 @@ Same four-cell map you have just learned – but now each box carries the actual
 :::
 
 ::: notes
-First, reproducibility – the gentlest test of the three. The design in one breath: take six hundred papers, ask the authors for their data and code, and try to recompute the central reported result. Same data, same analysis: do you get the same number? Before we even ask how often that works, the first finding is about how rarely you can even start.
+First, reproducibility – the gentlest test of the three. The design in one breath: take six hundred papers, ask the authors for their data and code, and try to recompute the central reported result from the same data with the same analysis. Before we ask how often that works, the first finding is about how rarely you can even start.
 :::
 
 ## Most papers cannot be checked at all {#most-papers-never-reach-the-starting-line}
@@ -66,7 +66,7 @@ First, reproducibility – the gentlest test of the three. The design in one bre
 #| fig-width: 8.5
 #| fig-height: 3.6
 # Waterfall from 600 sampled -> 143 assessable, inline data from the content
-# bank (Miske et al. 2026). Illustrative staged counts, clearly labelled.
+# bank (Miske et al. 2026). Illustrative staged counts.
 mw <- tibble::tribble(
   ~stage,                 ~n,
   "Sampled",              600,
@@ -90,7 +90,7 @@ ggplot(mw, aes(stage, n, fill = stage)) +
 :::
 
 ::: notes
-Read it left to right. Six hundred papers sampled. Data were available for twenty-four per cent of them – for nearly three quarters there was neither data nor code. That leaves 143 papers you can actually assess. Of those, just over half reproduce precisely, and about three quarters at least approximately. Which sounds respectable – until you notice what happens if you count the papers nobody could check as failures: the overall rate falls to roughly eighteen per cent. The barrier is access to the data, not the arithmetic.
+Read it left to right. Six hundred papers sampled. Data were available for twenty-four per cent of them – for nearly three quarters there was neither data nor code. That leaves 143 papers you can actually assess. Of those, just over half reproduce precisely, and about three quarters at least approximately. Which sounds respectable, until you count the papers that nobody could check as failures, and then the overall rate falls to roughly eighteen per cent. Most of the loss happens at the first step, getting hold of the data.
 :::
 
 ## Why some fields do better
@@ -112,7 +112,7 @@ Read it left to right. Six hundred papers sampled. Data were available for twent
 :::
 
 ::: notes
-And access follows policy. Where journals mandate data sharing, availability sits between about ninety and one hundred per cent; without a mandate, sixteen. Political science and economics built the habit early and are far ahead of the rest. The first quote is the paper's own conclusion – the biggest barrier was simply that the data were not there. The second quote is the one to remember: "reproducibility success does not mean that the finding is correct." Reproducing a number tells you the computation was faithful. It does not tell you the claim about the world is true.
+And access follows policy. Where journals mandate data sharing, availability is between about ninety and one hundred per cent; without a mandate, it is sixteen. Political science and economics built the habit early and are far ahead of the rest. The first quote is the conclusion of the paper itself – the biggest barrier was simply that the data were not there. The second quote is the one to remember: "reproducibility success does not mean that the finding is correct." Reproducing a number tells you that the computation was faithful, and nothing about whether the claim about the world is true.
 :::
 
 ## Robustness – Aczel et al. (Multi100)
@@ -129,7 +129,7 @@ And access follows policy. Where journals mandate data sharing, availability sit
 :::
 
 ::: notes
-The middle paper – the one I was in. One hundred studies, and for each one at least five analysts working independently: no teams, original authors barred, everyone handed the same data and the same claim. You were free to analyse it any way you could justify, and a peer panel later judged whether your pipeline was appropriate. Two things worth knowing about the design. The hundred studies had already passed a reproducibility check – so robustness was being measured on the reproducible subset, the best-case material. And we were not blinded: every analyst saw the full original article, published estimates and all, so if anything we were pulled towards the original answer.
+The middle paper – the one I was in. One hundred studies, and for each one at least five analysts working independently: no teams, original authors barred, everyone handed the same data and the same claim. You were free to analyse it any way you could justify, and a peer panel later judged whether your pipeline was appropriate. The hundred studies had already passed a reproducibility check, so robustness was being measured on the reproducible subset, the best-case material. And we were not blinded: every analyst read the full original article, published estimates and all, so if anything we were pulled towards the original answer.
 :::
 
 ## Same data, five analysts, different answers
@@ -146,7 +146,7 @@ The middle paper – the one I was in. One hundred studies, and for each one at 
 :::
 
 ::: notes
-So what do free, justifiable choices do to the same data? They move the answer – a lot. Only about a third of the reanalyses landed within five hundredths of a Cohen's d of the original, and in just five studies out of ninety-five did all the analysts land that close. Conclusions held up better than magnitudes: three quarters of reanalyses agreed with the original conclusion. But the effect sizes shrank, from a mean d of point seven three down to point four nine. And the finding I keep coming back to: the spread across analysts is typically larger than the statistical uncertainty inside any single analysis. The analyst, in other words, is a bigger source of noise than the sample. One more detail to hold for later: observational studies – which is what we work on today – came out less robust than experiments.
+Free, justifiable choices on the same data move the answer a long way. Only about a third of the reanalyses fell within five hundredths of a Cohen's d of the original, and in just five studies out of ninety-five did all the analysts come that close. Conclusions held up better than magnitudes, with three quarters of reanalyses agreeing with the original conclusion. But the effect sizes shrank, from a mean d of point seven three down to point four nine. The finding I keep coming back to is that the spread across analysts is typically larger than the statistical uncertainty inside any single analysis. The analyst, in other words, is a bigger source of noise than the sample. One more detail: observational studies, which is what we work on today, came out less robust than experiments.
 :::
 
 ## Replicability – Tyner et al.
@@ -162,7 +162,7 @@ So what do free, justifiable choices do to the same data? They move the answer �
 :::
 
 ::: notes
-The third paper is the strictest test: not the same data analysed differently, but genuinely new data. Two hundred and seventy-four claims, each replicated to a preregistered, peer-reviewed protocol, often with the original authors consulted, and with a median statistical power of ninety-nine point six per cent. That last number matters: these studies were built so that a real effect would be very hard to miss. So whatever fails here is not failing for lack of trying.
+The third paper is the strictest test, because each claim is checked against new data. Two hundred and seventy-four claims, each replicated to a preregistered, peer-reviewed protocol, often with the original authors consulted, and with a median statistical power of ninety-nine point six per cent. At that power a real effect would be very hard to miss, so a claim that fails here cannot be put down to a study too small to detect it.
 :::
 
 ## Effect sizes halve even when claims replicate {#even-success-shrinks}
@@ -201,7 +201,7 @@ ggplot(sh, aes(r, y = 1)) +
 :::
 
 ::: notes
-And this is what comes back. The median effect size halves: point two five in the originals, point one zero in the replications. By the significance criterion, fifty-five per cent of claims replicate. But notice that "did it replicate?" is not even one question – the team scored the same studies against thirteen reasonable success criteria and got answers ranging from twenty-nine to seventy-five per cent. Two sentences from the paper are worth carrying around. "Strictly speaking, there is no such thing as exact replication." And: "The problem to solve is not unreplicability per se, it is overconfidence."
+And this is what comes back. The median effect size halves: point two five in the originals, point one zero in the replications. By the significance criterion, fifty-five per cent of claims replicate. But notice that "did it replicate?" is not even one question – the team scored the same studies against thirteen reasonable success criteria and got answers ranging from twenty-nine to seventy-five per cent. As the paper puts it: "Strictly speaking, there is no such thing as exact replication." And: "The problem to solve is not unreplicability per se, it is overconfidence."
 :::
 
 ## The three Rs do not travel together
@@ -219,5 +219,5 @@ So there is no single number for 'trust'. You have to ask *which* repetition you
 ::::
 
 ::: notes
-Now the bit that genuinely surprised me. You would hope these three properties travel together – that a reproducible finding is more likely to be robust, and a robust one more likely to replicate. Across SCORE, they do not. Measured on the same body of papers, the three indicators are essentially uncorrelated – knowing one tells you almost nothing about the others. So there is no single trust score for a finding. "Is it reliable?" is an incomplete question until you say which kind of repetition you mean. Hold that thought, because we are about to watch all three play out on one single paper.
+You would hope these three properties go together – that a reproducible finding is more likely to be robust, and a robust one more likely to replicate. Across SCORE, and to my surprise, they do not. Measured on the same body of papers, the three indicators are essentially uncorrelated – knowing one tells you almost nothing about the others. So there is no single trust score for a finding. "Is it reliable?" is an incomplete question until you say which kind of repetition you mean. Next we follow all three on one single paper.
 :::

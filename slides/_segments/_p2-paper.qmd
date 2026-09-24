@@ -34,7 +34,7 @@ Back to OA's paper, and this time properly. Sixteen Eurobarometer waves, 2004 to
 :::
 
 ::: notes
-This is, word for word, the claim every Multi100 analyst was handed: "poor economic performances decrease positive dimensions of EU framing". And this is the published number behind it, from Table 3, Model 1 – the unemployment coefficient on cosmopolitan framing: minus point zero zero three four, t of minus four. Keep one wrinkle in mind for later. In the paper's own Model 2, with more controls in, that same coefficient drops by more than half and loses significance. The robustness question is already alive inside the original paper.
+This is, word for word, the claim that every Multi100 analyst was handed: "poor economic performances decrease positive dimensions of EU framing". And this is the published number behind it, from Table 3, Model 1 – the unemployment coefficient on cosmopolitan framing: minus point zero zero three four, t of minus four. Keep one wrinkle in mind for later. In Model 2 of the same paper, with more controls in, that same coefficient drops by more than half and loses significance, so the robustness question arises inside the original paper itself.
 :::
 
 
@@ -69,7 +69,7 @@ So what is under the bonnet? The unit of analysis is a person – around three h
 :::
 
 ::: {.fragment .small}
-Two models, one paper, and support for the claim depends on which one you read. The paper reports both, which is more than many do.
+Within one paper, support for the claim depends on which of the two models you read. The paper reports both, which is more than many do.
 :::
 
 ::: {.fragment .small}
@@ -77,7 +77,7 @@ For today, that matters because the sixth analyst's problem – *which defensibl
 :::
 
 ::: notes
-This next point is easy to miss, and it reframes the whole exercise. Look at what happens inside OA's own paper. Model one gives the published coefficient: minus point zero zero three four, t of minus four, comfortably significant. Model two, which adds further controls, takes that same coefficient, more than halves it, and loses significance. Two models, one paper, and whether the claim is supported depends on which of them you read. To be fair to OA, the paper reports both – which is more than a great many papers do. But notice what it means for us. The problem you will face this afternoon, as the sixth analyst – which of several defensible specifications do I report, and on what grounds? – was already live inside the original study, before any re-analyst was anywhere near it.
+Look at what happens inside OA's own paper. Model one gives the published coefficient: minus point zero zero three four, t of minus four, comfortably significant. Model two, which adds further controls, takes that same coefficient, more than halves it, and loses significance. Whether the claim is supported depends on which of the two models you read. To be fair to OA, the paper reports both – which is more than a great many papers do. For us, it means that the problem you will face this afternoon, as the sixth analyst – which of several defensible specifications do I report, and on what grounds? – was already live inside the original study, before any re-analyst was anywhere near it.
 :::
 
 ## What we work on instead {.smaller}
@@ -106,11 +106,11 @@ This next point is easy to miss, and it reframes the whole exercise. Look at wha
 ::::
 
 ::: {.fragment .small}
-The aggregate answers the **contextual** question directly: does a country's framing move when its unemployment moves? What it cannot answer is the **compositional** one – whether it is the same people framing differently, or a different mix of people. There is a companion module that takes that up on simulated individual data.
+The aggregate panel addresses the **contextual** question directly: does a country's framing move when its unemployment moves? It cannot address the **compositional** one, which asks whether the same people are framing differently or the mix of people has changed. There is a companion module that takes that up on simulated individual data.
 :::
 
 ::: notes
-Now, a practical matter with a conceptual point behind it. OA's data is Eurobarometer microdata under GESIS licence, which I am not permitted to redistribute – and, as you will see in a moment, that constraint is exactly what wrecked the first reproduction attempt on this paper. So what you get today is an aggregate I built from it and am allowed to share: two hundred and seventy country-years, one row each, with the framing scales averaged within each cell. It ships with the workspace and the browser lab, and it fits in milliseconds. The conceptual point is on the fragment. The aggregate answers the contextual question directly – does a country's framing move when its unemployment moves. What it cannot answer is the compositional one: whether the same people are framing differently, or the mix of people has changed. If that interests you, there is a companion module on the site that takes it up on simulated individual data.
+Now, the data. OA's data is Eurobarometer microdata under GESIS licence, which I am not permitted to redistribute – and, as you will see in a moment, that constraint is what wrecked the first reproduction attempt on this paper. So what you get today is an aggregate I built from it and am allowed to share: two hundred and seventy country-years, one row each, with the framing scales averaged within each cell. It ships with the workspace and the browser lab, and it fits in milliseconds. [advance] The aggregate answers the contextual question directly – does a country's framing move when its unemployment moves. What it cannot answer is the compositional one, whether the same people are framing differently, or the mix of people has changed. If that interests you, there is a companion module on the site that takes it up on simulated individual data.
 :::
 ## Reproducibility: two attempts, two failures
 
@@ -131,7 +131,7 @@ Now, a practical matter with a conceptual point behind it. OA's data is Eurobaro
 :::
 
 ::: notes
-So what happened when SCORE tried to reproduce this paper? Two attempts, two different failures. And let me be fair to OA here: there was no public archive with the paper, but OA did supply their two Stata do-files when asked – what OA could not share was the data, because GESIS terms do not allow it. Even with OA's code in hand, the push-button reproduction failed, and the wording of the report is instructive – the file names in the code did not correspond to the files you could actually download; sixteen datasets listed, eighteen referenced. The second attempt rebuilt the data from source, and could not recover the published effect size at all. So this claim entered the robustness study already carrying two failed reproductions, of two different kinds.
+So what happened when SCORE tried to reproduce this paper? Two attempts, two different failures. And let me be fair to OA here. There was no public archive with the paper, but OA did supply their two Stata do-files when asked; what OA could not share was the data, because the GESIS terms do not allow it. Even with OA's code in hand, the push-button reproduction failed, because the file names in the code did not correspond to the files you could actually download. The website listed sixteen datasets, and the code referenced eighteen files. The second attempt rebuilt the data from source, and could not recover the published effect size at all. So this claim entered the robustness study with two failed reproductions already behind it, of two different kinds.
 :::
 
 ## Replication: the coefficient flips sign
@@ -200,7 +200,7 @@ ggplot(sb, aes(x = 1, y = ord)) +
 :::
 
 ::: notes
-Put the whole dossier together – every artefact here is public, the link is on the slide. Reproduction: failed, twice, in two different ways. Robustness: mixed – five analysts, one sign, sizes spanning two orders of magnitude. And replication: a preregistered study took the same question to new Eurobarometer data, three hundred and fifty-two thousand observations – and the coefficient flipped sign. Positive, just significant, the wrong way round. So: one paper, three Rs, three different verdicts. That is the uncorrelated-indicators result from part one, embodied in a single case. Asking "is this paper reliable?" gets you nowhere; asking "reliable in which sense?" gets you all of this. Now – of the three, the middle one is where five careful people disagreed with each other, and it is the only one of the three we can do anything about today. So the rest of this part is about what they were disagreeing over.
+Put the whole dossier together – every artefact here is public, the link is on the slide. Reproduction: failed, twice, in two different ways. Robustness: mixed – five analysts, one sign, sizes spanning two orders of magnitude. And replication: a preregistered study took the same question to new Eurobarometer data, three hundred and fifty-two thousand observations – and the coefficient flipped sign, coming out positive, just significant, and the wrong way round. So the one paper has received three different verdicts, one for each R. Part one showed that the three indicators are uncorrelated, and here that result turns up in a single case. Asking whether this paper is reliable gets you nowhere. The useful question is in which sense it is reliable. Now – of the three, the middle one is where five careful people disagreed with each other, and it is the only one of the three we can do anything about today. So the rest of this part is about what they were disagreeing over.
 :::
 
 ## Same verdict, five different questions {.smaller}
@@ -222,9 +222,9 @@ Put the whole dossier together – every artefact here is public, the link is on
 :::
 
 ::: {.src}
-Free-phase records: the public Multi100 dataset (osf.io/q5h2c) – categorical verdicts and free-text reports only; the models themselves read from the analysts' public code.
+Free-phase records: the public Multi100 dataset (osf.io/q5h2c), which contains only categorical verdicts and free-text reports. The models themselves were read from the analysts' public code.
 :::
 
 ::: notes
-This is the layer underneath, and it is the sharpest illustration I have of this morning's point. Multi100 ran in two phases, and this table is the first one – months before the constrained task, complete freedom. Look at what freedom produced. GDP per capita for one analyst, GDP growth for another, a whole battery of GDP measures at three levels for a third – and three of the five of us never touched the unemployment rate at all. Different outcomes too: a mean, a sum, a share, three separate shares. Five different questions, in other words. And every single one of us recorded the same verdict: evidence for the claim. Then the constrained task arrived, manufactured one common question, and the five comparable answers ran from minus point zero zero six to minus point four five. Conclusions agreed in words while the numbers disagreed by two orders of magnitude. Now, that is five people on one paper. What happens when it is twenty-nine teams?
+This table is what lay underneath those five estimates, and it is the sharpest illustration I have of this morning's point. Multi100 ran in two phases, and this table is the first one – months before the constrained task, complete freedom. Look at what freedom produced. GDP per capita for one analyst, GDP growth for another, a whole battery of GDP measures at three levels for a third – and three of the five of us never touched the unemployment rate at all. Different outcomes too: a mean, a sum, a share, three separate shares. Five different questions, in other words. And every single one of us recorded the same verdict: evidence for the claim. Then the constrained task arrived, manufactured one common question, and the five comparable answers ran from minus point zero zero six to minus point four five. Conclusions agreed in words while the numbers disagreed by two orders of magnitude. Now, that is five people on one paper, and this morning you met twenty-nine teams working on one dataset.
 :::

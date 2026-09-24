@@ -16,7 +16,7 @@ coll <- ggdag::dagify(C ~ X + Y, Y ~ X,
   coords = list(x = c(X = 0, Y = 2, C = 1), y = c(X = 0, Y = 0, C = -1)))
 
 # Edges are coloured by role: the X -> Y causal effect (the estimand) is GREEN
-# in every panel; the secondary structure carries an accent – RED where it
+# in every panel; the secondary structure is drawn in an accent – RED where it
 # biases the naive estimate (the confounder fork, the collider edges) and AMBER
 # for the indirect path through the mediator, which is part of the total effect
 # rather than bias. The accent is passed per panel; green is constant so the eye
@@ -52,7 +52,7 @@ gg <- function(d, ttl, cap, accent = d_red) {
     gg(conf, "Confounder Z",
        "Common cause of X and Y.\nADJUST – or the estimate is biased.", d_red),
     gg(med,  "Mediator M",
-       "Sits on the path X → Y.\nDON'T adjust for the total effect.", orange),
+       "Lies on the path X → Y.\nDON'T adjust if you want the total effect.", orange),
     gg(coll, "Collider C",
        "Caused by both X and Y.\nNEVER adjust – it opens a spurious path.", d_red),
     nrow = 1)
@@ -63,7 +63,7 @@ X = predictor, Y = outcome. **Green** = the causal effect you want; **coloured**
 :::
 
 ::: notes
-All the graph theory you need today, in three small pictures. In every panel the green arrow is the same thing – the effect you are actually after, X on Y. What changes is the coloured structure around it. A confounder is a common cause of your predictor and your outcome – that red fork is a back-door path, and if you leave it open you are biased, so you adjust to close it. A mediator sits on the causal path between them – the amber path is real, it is part of the total effect, so if the total effect is what you want you do not adjust for it, or you remove part of the very thing you are measuring. And a collider is caused by both sides – those edges are harmless until you condition on the collider, which opens a spurious path that was not there before. So the rulebook is short: adjust confounders, leave mediators alone for total effects, and never condition on a collider. That is the entire toolkit – the next four slides just give it a bit more depth before you use it.
+These three small graphs cover all the graph theory you need today. In every panel the green arrow is the same thing, the effect of X on Y that you are actually after. What changes is the coloured structure around it. A confounder is a common cause of your predictor and your outcome – that red fork is a back-door path, and if you leave it open you are biased, so you adjust to close it. A mediator lies on the causal path between them. The amber path is real and part of the total effect, so if the total effect is what you want you do not adjust for it, or you remove part of the very thing you are measuring. And a collider is caused by both sides – those edges are harmless until you condition on the collider, which opens a spurious path that was not there before. So the rulebook is short: adjust confounders, leave mediators alone for total effects, and never condition on a collider. The next four slides add a little depth to those three rules before you use them.
 :::
 
 ## One number, many stories {.smaller}
@@ -102,13 +102,13 @@ The same slope fits four different stories:
 - a common cause inflates it – **confounding**
 :::
 ::: {.fragment}
-- we are seeing a selected sample – **collider / selection**
+- the sample itself is selected – **collider / selection**
 :::
 ::: {.fragment}
 - Y causes X (**reverse causation**), or it is **chance**
 :::
 ::: {.fragment}
-The data look identical in all four. Only an assumption about *how the data arose* tells them apart – that is what a DAG writes down.
+The data look identical in all four. Only an assumption about *how the data arose* can tell them apart, and a DAG is where you write that assumption down.
 :::
 :::
 :::
@@ -119,7 +119,7 @@ The data look identical in all four. Only an assumption about *how the data aros
 :::
 
 ::: notes
-Here is a strong correlation – r of about nought point six. Before you reach for a model, consider that this single number is consistent with at least four different stories. Maybe X really does cause Y, and the slope is the effect. Maybe a common cause is inflating it. Maybe we are quietly looking at a selected sample, and the association is an artefact of who got in. Maybe Y causes X, or it is simply chance. The data cannot choose between these – the scatter looks identical in every case. Only a claim about how the data were generated can. That claim is what a DAG writes down, and it is why we draw one before we fit anything.
+Here is a strong correlation – r of about nought point six. Before you reach for a model, consider that this single number is consistent with at least four different stories. Maybe X really does cause Y, and the slope is the effect. Maybe a common cause is inflating it. Maybe we are quietly looking at a selected sample, and the association is an artefact of who got in. Maybe Y causes X, or it is simply chance. Nothing in the data can decide between these, because the scatter looks identical in every case. Only a claim about how the data were generated can do that. A DAG is where you write that claim down, and that is why we draw one before we fit anything.
 :::
 
 ## Reading a DAG: open and closed paths {.smaller}
@@ -165,10 +165,10 @@ patchwork::wrap_plots(path_panel(FALSE), path_panel(TRUE), nrow = 1)
 ```
 
 ::: {.small}
-Association flows along **every open path**, not only along the causal arrow. A fork or a chain is open until you adjust the variable sitting on it. A collider is the reverse: shut by default, and opened by the very act of adjusting for it.
+Association flows along **every open path**, not only along the causal arrow. A fork or a chain is open until you adjust for the variable in its middle. A collider is the reverse: shut by default, and opened when you adjust for it.
 
 - **Back-door criterion**: close every path that enters X from behind, keep the causal X → Y path open
-- That adjustment set – and only that set – earns a causal reading
+- Only an adjustment set that does this supports a causal reading
 :::
 
 ::: {.src}
@@ -176,7 +176,7 @@ Association flows along **every open path**, not only along the causal arrow. A 
 :::
 
 ::: notes
-A DAG is read through its paths. Association does not only travel down the causal arrow – it flows along every open path between X and Y. So the job is to work out which paths are open and shut the ones you do not want. Two rules do all the work. A path through a fork or a chain is open, and you close it by adjusting the variable in the middle – that is the red back-door fork on the left. A path through a collider is the opposite: shut by default, and you open it by adjusting. The back-door criterion just packages this: close every path that sneaks into X from behind, leave the causal X-to-Y path alone. The set that does that – and only that set – is what you are allowed to read as causal.
+A DAG is read through its paths. Association flows along every open path between X and Y, not only down the causal arrow. So the job is to work out which paths are open and shut the ones you do not want. Two rules do all the work. A path through a fork or a chain is open, and you close it by adjusting the variable in the middle – that is the red back-door fork on the left. A path through a collider is the opposite. It is shut by default, and you open it by adjusting. The back-door criterion puts the two rules together: close every path that sneaks into X from behind, and leave the causal X-to-Y path alone. Only an adjustment set that does that gives you an estimate you are allowed to read as causal.
 :::
 
 ## Total effect or direct effect {#which-effect-do-you-even-want .smaller}
@@ -216,7 +216,7 @@ ggplot2::ggplot(td,
 ::: {.small}
 - **Total** = direct (green) + indirect (amber)
 - Adjust for the mediator M → you estimate the **direct** effect only – a *different* estimand
-- 'Control for everything' silently answers a question you never asked
+- 'Control for everything' can switch you to an estimand you never chose
 - **Table 2 fallacy**: the other coefficients in your model are *not* all causal effects
 :::
 :::
@@ -227,7 +227,7 @@ ggplot2::ggplot(td,
 :::
 
 ::: notes
-Now the question that the estimand discussion was circling. Suppose M sits between your predictor and outcome. The total effect is the green arrow plus the amber route through M. The direct effect is just the green arrow. These are different numbers and different questions – and which one you get depends entirely on whether you put M in the model. Drop a mediator in as just another 'control' and you have silently switched to the direct effect without telling anyone, including yourself. This is why 'control for everything' is bad advice. And it has a famous corollary – the Table 2 fallacy: when you print a regression table, usually only one coefficient has a clean causal reading. The coefficients on the control variables are not little causal effects of their own.
+Suppose M lies between your predictor and your outcome. The total effect is the green arrow plus the amber route through M. The direct effect is just the green arrow. These are different numbers and different questions – and which one you get depends entirely on whether you put M in the model. Drop a mediator in as just another 'control' and you have silently switched to the direct effect without telling anyone, including yourself. This is why 'control for everything' is bad advice. And it has a famous corollary, the Table 2 fallacy. When you print a regression table, usually only one coefficient has a clean causal reading. The coefficients on the control variables are not little causal effects of their own.
 :::
 
 ## Selection and feedback {#spurious-by-design-selection-feedback .smaller}
@@ -299,5 +299,5 @@ patchwork::wrap_plots(p_sel, p_clp, nrow = 1)
 :::
 
 ::: notes
-Two last ways a relationship can be spurious, and both of them apply to our case. The first is selection, or collider bias. If you condition on – or merely sample on – something that both your variables cause, you manufacture a correlation out of nothing. A lot of the early COVID risk-factor findings were exactly this: conclusions drawn from people who had been tested, which is a selected group. The second is reverse causation and feedback. Our data are a panel, and in a panel today's outcome can feed tomorrow's predictor. Two-way fixed effects – which is the model we are about to draw – soak up stable differences between countries and shocks common to a year. They do not, on their own, fix a time-varying confounder or a feedback loop. Keep that in mind when we build the graph for our own paper.
+Two last ways a relationship can be spurious, and both of them apply to our case. The first is selection, or collider bias. If you condition on – or merely sample on – something that both your variables cause, you manufacture a correlation out of nothing. A lot of the early COVID risk-factor findings were of this kind, drawn from people who had been tested, which is a selected group. The second is reverse causation and feedback. Our data are a panel, and in a panel today's outcome can feed tomorrow's predictor. Two-way fixed effects – which is the model we are about to draw – soak up stable differences between countries and shocks common to a year. They do not, on their own, fix a time-varying confounder or a feedback loop. Keep that in mind when we build the graph for our own paper.
 :::

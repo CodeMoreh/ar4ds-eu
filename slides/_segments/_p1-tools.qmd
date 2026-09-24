@@ -3,7 +3,7 @@
 ::: {.toolgrid style="--cols: 4"}
 <div class="grouphead">Analyse</div>
 <div class="tool ours"><img src="pics/tools/r.svg" alt="R"><span class="name">R</span><span class="what">statistics-first language</span></div>
-<div class="tool"><img src="pics/tools/python.png" alt="Python"><span class="name">Python</span><span class="what">general purpose, strong ML</span></div>
+<div class="tool"><img src="pics/tools/python.png" alt="Python"><span class="name">Python</span><span class="what">general purpose, good for machine learning</span></div>
 <div class="tool"><img src="pics/tools/julia.png" alt="Julia"><span class="name">Julia</span><span class="what">fast numerics</span></div>
 <div class="tool"><span class="pair"><img src="pics/tools/stata.svg" alt="Stata"><img src="pics/tools/spss.svg" alt="SPSS"></span><span class="name">Stata / SPSS</span><span class="what">proprietary, still standard in places</span></div>
 
@@ -16,22 +16,22 @@
 <div class="grouphead">Publish and share</div>
 <div class="tool ours"><img src="pics/tools/quarto.png" alt="Quarto"><span class="name">Quarto</span><span class="what">text + code → anything</span></div>
 <div class="tool"><img src="pics/tools/git.svg" alt="Git"><span class="name">Git</span><span class="what">every version, dated</span></div>
-<div class="tool"><img src="pics/tools/github.svg" alt="GitHub"><span class="name">GitHub</span><span class="what">where the repository lives</span></div>
+<div class="tool"><img src="pics/tools/github.svg" alt="GitHub"><span class="name">GitHub</span><span class="what">where the repository is hosted</span></div>
 <div class="tool"><span class="pair"><img src="pics/tools/osf.png" alt="OSF"><img src="pics/tools/zenodo.svg" alt="Zenodo"></span><span class="name">OSF / Zenodo</span><span class="what">archive with a DOI</span></div>
 :::
 
 ::: {.fragment .small}
-Ringed in orange: what today runs on. The rest is the map, so you know what you are choosing between.
+Ringed in orange: the tools we use today. The others are there so that you know what you are choosing between.
 :::
 
 ::: notes
-The whole set of tools fits on one slide once you sort it by job rather than by brand family. First, something to analyse with – R, which is what we use, but Python and Julia are entirely reasonable homes for this work, and Stata and SPSS are still the default in a lot of departments. Second, somewhere to write it: Positron is what I will be driving today, RStudio is the one most of you will already know, VS Code does everything if you are willing to configure it, Jupyter is the notebook world. Third, the part that people skip: publishing and sharing. Quarto turns text and code into a document; git records every version with a date; GitHub is where the repository lives so others can reach it; and OSF or Zenodo give the whole thing a permanent address with a DOI. Ringed in orange is what today runs on. The rest is the map.
+The whole set of tools fits on one slide once you sort it by job rather than by brand family. First, something to analyse with – R, which is what we use, but Python and Julia are entirely reasonable choices for this work, and Stata and SPSS are still the default in a lot of departments. Second, somewhere to write it: Positron is what I will be driving today, RStudio is the one most of you will already know, VS Code does everything if you are willing to configure it, Jupyter is the notebook world. Third, publishing and sharing, which is the part that people skip. Quarto turns text and code into a document; git records every version with a date; GitHub hosts the repository so others can reach it; and OSF or Zenodo give the whole thing a permanent address with a DOI. Ringed in orange is what we use today, and the rest is there so you know the alternatives.
 :::
 
 ## Languages: what you are actually choosing {.smaller .deepdive run="tools"}
 
 ::: {.toolgrid style="--cols: 4"}
-<div class="tool ours"><img src="pics/tools/r.svg" alt="R"><span class="name">R</span><span class="what">Built by statisticians for data analysis. Unbeatable for models, tables and figures; the ecosystem is the reason.</span></div>
+<div class="tool ours"><img src="pics/tools/r.svg" alt="R"><span class="name">R</span><span class="what">Built by statisticians for data analysis. Hard to beat for models, tables and figures, thanks to its packages.</span></div>
 <div class="tool"><img src="pics/tools/python.png" alt="Python"><span class="name">Python</span><span class="what">A general language that also does data. Better for pipelines, scraping, text and machine learning.</span></div>
 <div class="tool"><img src="pics/tools/julia.png" alt="Julia"><span class="name">Julia</span><span class="what">Fast, young, small ecosystem. Worth it when your model takes hours.</span></div>
 <div class="tool"><img src="pics/tools/stata.svg" alt="Stata"><span class="name">Stata</span><span class="what">Excellent panel and survey estimators, superb docs, one syntax. Costs money and hides its source.</span></div>
@@ -42,7 +42,7 @@ You do not have to choose once and forever. Quarto runs R, Python and Julia chun
 :::
 
 ::: notes
-A slower look at the languages, because people agonise about this and mostly should not. R was built by statisticians for data analysis, and that is still where it wins – models, tables, figures, and above all the ecosystem: whatever obscure estimator your literature uses, someone has written the package. Python is a general-purpose language that also does data, so it is the better home for pipelines, scraping, text and machine learning. Julia is fast and young with a small ecosystem, and earns its place when a model takes hours rather than seconds. Stata deserves respect – genuinely excellent panel and survey estimators, the best documentation in the business, one consistent syntax – and it costs money and hides its source. The reassuring part is that this is not a life choice. Quarto will run R, Python and Julia chunks in the same document.
+A slower look at the languages, because people agonise about this and mostly should not. R was built by statisticians for data analysis, and that is still where it wins, in models, tables and figures. Most of that comes from the package ecosystem: whatever obscure estimator your literature uses, someone has written the package. Python is a general-purpose language that also does data, so it is the better choice for pipelines, scraping, text and machine learning. Julia is fast and young with a small ecosystem, and earns its place when a model takes hours rather than seconds. Stata deserves respect – excellent panel and survey estimators, the best documentation in the business, one consistent syntax – and it costs money and hides its source. And none of this is a life choice, because Quarto will run R, Python and Julia chunks in the same document.
 :::
 
 ## Where you write it {.smaller .deepdive run="tools"}
@@ -52,13 +52,13 @@ A slower look at the languages, because people agonise about this and mostly sho
 <div class="tool"><img src="pics/tools/rstudio.svg" alt="RStudio"><span class="name">RStudio</span><span class="what">Still excellent, still supported. If it is what you know, use it.</span></div>
 <div class="tool"><img src="pics/tools/vscode.png" alt="VS Code"><span class="name">VS Code</span><span class="what">Does anything, once configured. Big extension ecosystem.</span></div>
 <div class="tool"><img src="pics/tools/jupyter.png" alt="Jupyter"><span class="name">Jupyter</span><span class="what">Notebook-first. Beware: cells can run out of order.</span></div>
-<div class="tool"><img src="pics/tools/neovim.png" alt="Neovim"><span class="name">Neovim</span><span class="what">For the keyboard-only. Steep, and very fast once climbed.</span></div>
+<div class="tool"><img src="pics/tools/neovim.png" alt="Neovim"><span class="name">Neovim</span><span class="what">For the keyboard-only. Steep to learn, and very fast once learned.</span></div>
 :::
 
 ::: {.fragment .small}
-The editor is the least consequential choice on this slide. It changes how *you* work; it changes nothing about what a reader receives.
+Of the choices in the toolchain, the editor matters least. It changes how *you* work and nothing about what a reader receives.
 
-**Trap worth naming:** a notebook lets you run cells out of order, so it can show output that no clean run would produce. Restart and run everything before you believe it.
+**A trap:** a notebook lets you run cells out of order, so it can show output that no clean run would produce. Restart and run everything before you believe it.
 :::
 
 ::: {.src}
@@ -66,24 +66,24 @@ Positron and RStudio are both from Posit; both are free, and RStudio is open sou
 :::
 
 ::: notes
-The editor is genuinely the least consequential choice here, so I will be quick. Positron is the newer environment from Posit, built on VS Code, treating R and Python as equals – it is what I will be driving today. RStudio is still excellent and still supported, and if it is what you know, there is no reason to move. VS Code will do anything once you have configured it. Jupyter is notebook-first and Python-first. Neovim is for people who never want to touch a mouse. What matters is the trap in the second box, and it applies to every notebook-style tool including Quarto's interactive mode: you can run cells out of order, which means the output on your screen may be output that no clean run would ever produce. Restart the session and run everything, top to bottom, before you believe a number.
+The editor is the least consequential choice in the toolchain, so I will be quick. Positron is the newer environment from Posit, built on VS Code, treating R and Python as equals – it is what I will be driving today. RStudio is still excellent and still supported, and if it is what you know, there is no reason to move. VS Code will do anything once you have configured it. Jupyter is notebook-first and Python-first. Neovim is for people who never want to touch a mouse. What matters is the trap in the second box, and it applies to every notebook-style tool including the interactive mode in Quarto: you can run cells out of order, which means the output on your screen may be output that no clean run would ever produce. Restart the session and run everything, top to bottom, before you believe a number.
 :::
 
 ## Plain text is the format that survives {.smaller}
 
 ::: {.toolgrid style="--cols: 4"}
-<div class="tool"><img src="pics/tools/terminal.png" alt="R script"><span class="name">.R</span><span class="what">Code only. Comments carry the prose.</span></div>
+<div class="tool"><img src="pics/tools/terminal.png" alt="R script"><span class="name">.R</span><span class="what">Code only, with prose in comments.</span></div>
 <div class="tool"><img src="pics/tools/markdown.png" alt="Markdown"><span class="name">.md</span><span class="what">Prose only. Headings, lists, links – no code.</span></div>
 <div class="tool"><img src="pics/tools/rmarkdown.png" alt="R Markdown"><span class="name">.Rmd</span><span class="what">Prose + R, rendered together. R only.</span></div>
 <div class="tool ours"><img src="pics/tools/quarto.png" alt="Quarto"><span class="name">.qmd</span><span class="what">Prose + R, Python or Julia. Today's format.</span></div>
 :::
 
 ::: {.fragment .small}
-Every one of these is a **plain text file**. You can open it in anything, diff it, email it, and read it in twenty years. A `.docx` with pasted output is none of those things – and it has no idea which numbers came from which code.
+Every one of these is a **plain text file**. You can open it in anything, compare two versions of it line by line, email it, and read it in twenty years. A `.docx` with pasted output is not plain text, and nothing in it records which numbers came from which code.
 :::
 
 ::: notes
-This is the slide I would keep if I could keep only one from this segment. Four file types, in increasing order of what they hold. A dot-R file is code with comments. A markdown file is prose with no code. An R Markdown file is prose and R together, rendered into one document. And a Quarto file is the same idea, except the code can be R or Python or Julia. What they have in common is the thing that matters: every one is a plain text file. You can open it in any editor, see exactly what changed between two versions, email it, and still read it in twenty years. Compare that with a Word document holding numbers you pasted in from somewhere. It looks the same on the page, and it has no idea which number came from which line of code. That gap is why a number you have since recomputed can still be sitting in the paper.
+Four file types, in increasing order of what they hold. A dot-R file is code with comments. A markdown file is prose with no code. An R Markdown file is prose and R together, rendered into one document. And a Quarto file is the same idea, except the code can be R or Python or Julia. What they have in common is that every one is a plain text file. You can open it in any editor, see exactly what changed between two versions, email it, and still read it in twenty years. Compare that with a Word document holding numbers you pasted in from somewhere. It looks the same on the page, but nothing in it records which number came from which line of code. That is how the old value of a number you have since recomputed can still be sitting in the paper.
 :::
 
 ## What happens when you render {#how-a-document-becomes-a-document}
@@ -91,11 +91,11 @@ This is the slide I would keep if I could keep only one from this segment. Four 
 ![](pics/tools/render-pipeline.png){fig-align="center" width="72%"}
 
 ::: {.small}
-You write **one** source file. The rendering step runs your code, drops the results in, and produces whatever output you asked for – all from the same source.
+You write **one** source file. Rendering runs your code, inserts the results, and produces whatever output you asked for from that one source.
 :::
 
 ::: notes
-And this is what happens when you press render. You write one source file: prose and code together. Knitr – or Jupyter, if you are working in Python – runs every chunk of code in a fresh session and replaces it with its actual output, giving a plain markdown file. Pandoc then turns that into whatever you asked for: a Word document for your co-author, a PDF for the journal, a web page for your project site, slides like these. Notice what this buys you. There is exactly one place where a number is computed, and every output carries the same number, because they were all produced from the same source in the same run. When a reviewer asks you to drop three countries, you change one line and re-render, and the table, the figure and the sentence in the text all move together. That is worth learning for its own sake, quite apart from anything about credibility.
+And this is what happens when you press render. You write one source file, with prose and code together. Knitr – or Jupyter, if you are working in Python – runs every chunk of code in a fresh session and replaces it with its actual output, giving a plain markdown file. Pandoc then turns that into whatever you asked for: a Word document for your co-author, a PDF for the journal, a web page for your project site, slides like these. So there is one place where a number is computed, and every output shows the same number, because they were all produced from the same source in the same run. When a reviewer asks you to drop three countries, you change one line and re-render, and the table, the figure and the sentence in the text all change together. That alone makes rendering worth learning, quite apart from anything to do with credibility.
 :::
 
 ## The package layer {.smaller .deepdive run="tools"}
@@ -108,11 +108,11 @@ And this is what happens when you press render. You write one source file: prose
 :::
 
 ::: {.fragment .small}
-Today also loads **`fixest`** (fast fixed effects – the estimator behind our baseline), **`dagitty`** and **`ggdag`** (causal graphs). The full setup is on the setup page; the browser lab has it all preloaded.
+Today we also load **`fixest`** (fast fixed effects – the estimator behind our baseline), **`dagitty`** and **`ggdag`** (causal graphs). The full setup is on the setup page; the browser lab has it all preloaded.
 :::
 
 ::: notes
-A word about packages, because this is where R's advantage actually sits. The tidyverse gives you one consistent grammar for reading data, reshaping it and plotting it, so once you have learned the verbs they work everywhere. Easystats turns model output back into tidy data – coefficients, fit statistics, effect sizes – instead of the printed blob that summary gives you. Modelsummary builds publication-ready regression tables straight from fitted model objects, so your table cannot disagree with your model. And marginaleffects computes predictions, contrasts and marginal effects from almost any model you can fit, which is how you get from a coefficient to a statement in the units that your reader thinks in. Today we also use fixest for fast fixed effects – that is the estimator behind our baseline – and dagitty and ggdag for the causal graphs. browser lab people have all of it already.
+A word about packages, because this is where the advantage of R actually lies. The tidyverse gives you one consistent grammar for reading data, reshaping it and plotting it, so once you have learned the verbs they work everywhere. Easystats turns model output back into tidy data – coefficients, fit statistics, effect sizes – instead of the printed blob that summary gives you. Modelsummary builds publication-ready regression tables straight from fitted model objects, so your table cannot disagree with your model. And marginaleffects computes predictions, contrasts and marginal effects from almost any model you can fit, which is how you get from a coefficient to a statement in the units that your reader thinks in. Today we also use fixest for fast fixed effects – that is the estimator behind our baseline – and dagitty and ggdag for the causal graphs. Anyone in the browser lab has all of it already.
 :::
 
 ## Version control, in one slide {.smaller .deepdive run="tools"}
@@ -138,28 +138,28 @@ What it gives you that a folder of `final_v3_REALLY_final.R` cannot:
 ::::
 
 ::: {.fragment .small}
-We use **none of it today** – deliberately. There is a companion module on the site, and your workspace folder is the ideal thing to practise on.
+We use **none of it today**. There is a companion module on the site, and your workspace folder is the ideal thing to practise on.
 :::
 
 ::: notes
-Version control is the tool I have deliberately kept out of today, so let me at least name it properly. Git is a program that runs on your machine: every time you tell it to, it records a complete dated snapshot of your project, and it never forgets one. GitHub is a website that hosts those snapshots so other people can reach them – and it is worth knowing that GitHub is not the only one, there is GitLab, there is Codeberg, and your university may run its own. What does that give you that a folder full of final-version-three-really-final does not? Every past state recoverable exactly, a written reason attached to every change, a public timestamped trail of when you knew what – which, notice, is a preregistration mechanism in itself – and a way for two people to work on one file without one silently overwriting the other. There is a companion module on the site.
+Version control is the one tool I have kept out of today, so let me at least name it properly. Git is a program that runs on your machine: every time you tell it to, it records a complete dated snapshot of your project, and it never forgets one. GitHub is a website that hosts those snapshots so other people can reach them. It is not the only one: there is GitLab, there is Codeberg, and your university may run its own. What does that give you that a folder full of final-version-three-really-final does not? Every past state recoverable exactly, a written reason attached to every change, a public timestamped trail of when you knew what – which, notice, is a preregistration mechanism in itself – and a way for two people to work on one file without one silently overwriting the other. There is a companion module on the site.
 :::
 
 ## Where data and code are archived {#where-data-and-code-go-to-live .smaller}
 
 ::: {.toolgrid style="--cols: 4"}
-<div class="tool ours"><img src="pics/tools/osf.png" alt="OSF"><span class="name">OSF</span><span class="what">Projects, files, and registrations. Free, and where our case's trail lives.</span></div>
+<div class="tool ours"><img src="pics/tools/osf.png" alt="OSF"><span class="name">OSF</span><span class="what">Projects, files, and registrations. Free, and it hosts the public record of our case.</span></div>
 <div class="tool"><img src="pics/tools/zenodo.svg" alt="Zenodo"><span class="name">Zenodo</span><span class="what">CERN-run archive. Gives a DOI; takes a GitHub release directly.</span></div>
 <div class="tool"><img src="pics/tools/dataverse.svg" alt="Dataverse"><span class="name">Dataverse</span><span class="what">Institutional data archives with proper metadata and curation.</span></div>
-<div class="tool"><span class="badge" style="--tint:#4a6741">XYZ</span><span class="name">Your domain's archive</span><span class="what">GESIS, UK Data Service, ICPSR – licensed access to survey microdata.</span></div>
+<div class="tool"><span class="badge" style="--tint:#4a6741">XYZ</span><span class="name">Domain archives</span><span class="what">GESIS, UK Data Service, ICPSR – licensed access to survey microdata.</span></div>
 :::
 
 ::: {.fragment .small}
-**A repository is not an archive.** GitHub can be force-pushed, renamed, or deleted tomorrow. An archived deposit gets a **DOI**, a fixed version, and a commitment to keep serving it. Serious work usually needs both.
+**A repository is not an archive.** A GitHub repository can have its history rewritten, be renamed, or be deleted tomorrow. An archived deposit gets a **DOI**, a fixed version, and a commitment to keep serving it. Serious work usually needs both.
 :::
 
 ::: notes
-And the last group: where things go so they are still there in ten years. OSF is free, holds projects and files and registrations, and it is where our case's whole public trail lives – you will be reading it after lunch. Zenodo is run by CERN, gives you a DOI, and will take a GitHub release directly, which makes archiving a one-click habit. Dataverse is the institutional data-archive world with proper metadata and curation. And then the domain archives – GESIS, the UK Data Service, ICPSR – which is where licensed survey microdata lives, including the Eurobarometer data behind our paper. Now the distinction that people get wrong, and it is on the slide. A repository is not an archive. A GitHub repository can be force-pushed, renamed or deleted tomorrow, and the link in your paper dies. An archived deposit has a DOI, a fixed version and an institution committed to serving it. Serious work usually needs both.
+And the last group: where things go so they are still there in ten years. OSF is free, holds projects and files and registrations, and the whole public record of our case is kept there – you will be reading it after lunch. Zenodo is run by CERN, gives you a DOI, and will take a GitHub release directly, which makes archiving a one-click habit. Dataverse is the institutional data-archive world with proper metadata and curation. And then the domain archives – GESIS, the UK Data Service, ICPSR – which is where licensed survey microdata is held, including the Eurobarometer data behind our paper. Now the distinction that people get wrong, and it is on the slide. A repository is not an archive. A GitHub repository can have its history rewritten, be renamed or be deleted tomorrow, and the link in your paper dies. An archived deposit has a DOI, a fixed version and an institution committed to serving it. Serious work usually needs both.
 :::
 
 ## Licences, briefly {.smaller .deepdive run="tools"}
@@ -174,9 +174,9 @@ And the last group: where things go so they are still there in ten years. OSF is
 :::
 
 ::: {.fragment .small}
-"No licence" is not a neutral default. It means **all rights reserved** – legally, nobody may reuse it at all.
+Publishing with no licence is not a neutral default. It means **all rights reserved** – legally, nobody may reuse the work at all.
 :::
 
 ::: notes
-Licensing gets skipped and then bites. Four rows. For code, MIT says use it however you like, GPL says use it and share your changes back. For data, CC-zero puts it in the public domain and CC-BY asks for attribution. For text and figures and slides, CC-BY or CC-BY with a non-commercial clause. And the fourth row is the one that constrains our day: when the data are not yours, their terms govern. The Eurobarometer microdata behind our paper is GESIS-licensed – I am not allowed to redistribute it, which is why you will be working on an aggregate I built and am allowed to share, and it is also, as you will see, the reason why the original reproduction attempt on this paper ran into trouble. And the line at the bottom: putting no licence on your repository is not generosity. Legally it means all rights reserved, so nobody may reuse it at all.
+Licensing gets skipped and then bites. Four rows. For code, MIT says use it however you like, GPL says use it and share your changes back. For data, CC-zero puts it in the public domain and CC-BY asks for attribution. For text and figures and slides, CC-BY or CC-BY with a non-commercial clause. And the fourth row is the one that constrains our day: when the data are not yours, their terms govern. The Eurobarometer microdata behind our paper is GESIS-licensed – I am not allowed to redistribute it, which is why you will be working on an aggregate I built and am allowed to share, and it is also the reason why the original reproduction attempt on this paper ran into trouble. And the line at the bottom: leaving a repository without a licence does not make it free to use. Legally it means all rights reserved, so nobody may reuse it at all.
 :::

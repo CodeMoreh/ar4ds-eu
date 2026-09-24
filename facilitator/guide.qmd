@@ -12,32 +12,32 @@ execute:
 ---
 
 ::: {.callout-note}
-**This document is for the facilitator's eyes only.** It renders as part of the site but sits outside the navbar, so nothing on the site points at it. It carries the full run sheet, the answer keys, the crib facts and every contingency ladder for the one-day replication format, the deck `slides/one-day-replication.qmd`. The other five formats, their decks and what each may drop are on [Running the tracks](tracks.qmd).
+**This document is for the facilitator's eyes only.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. It contains the full run sheet, the answer keys, the crib facts and every contingency ladder for the one-day replication format, which runs on the deck `slides/one-day-replication.qmd`. The other five formats, their decks and what each may drop are on [Running the tracks](tracks.qmd).
 :::
 
 ---
 
 ## The delivery lifecycle {#delivery-lifecycle}
 
-The site is evergreen between deliveries. Scheduling one is a four-step edit; resetting after one is a two-step export.
+Between deliveries the landing page advertises no upcoming delivery. Scheduling a delivery takes the four steps below, and resetting after one takes two.
 
 **Scheduling.**
 
-- [ ] Fill the `delivery:` block in `_variables.yml` (date, venue/platform, event, mode, registration URL) and set `active: 'true'`. Re-render and push; the landing page grows a "Next delivery" callout. Set `active: 'false'` again afterwards.
+- [ ] Fill the `delivery:` block in `_variables.yml` (date, venue/platform, event, mode, registration URL) and set `active: 'true'`. Re-render and push, and the landing page shows a "Next delivery" callout. Set `active: 'false'` again afterwards.
 - [ ] Decide the extended-universe option at **T-2 weeks** against the go/no-go checklist in `_planning/extended-universe-spec.md`. If GO, the opt-in text there goes into the joining email.
 - [ ] Decide recording. If recording: talk segments only, announced at the start of each recorded stretch, paused for hands-on and chat-heavy segments. Nothing in the day depends on the recording either way.
-- [ ] Optionally create the prereg mirror form from `_planning/prereg-form-spec.md` and paste its URL into `_variables.yml`. The rendered declaration block is the primary record; the form is a silent secondary. Skipping it costs nothing.
+- [ ] Optionally create the prereg mirror form from `_planning/prereg-form-spec.md` and paste its URL into `_variables.yml`. The rendered declaration block is the primary record and the form only a backup, so skipping the form loses nothing.
 
 **Resetting, before the next one.**
 
 - [ ] Export the responses Sheet (File → Download → CSV) and commit it as a date-stamped snapshot (e.g. `data/class_results_2026-06-16.csv`); refresh `data/class_results.csv` per `facilitator/live-results-setup.md` if you want the archived cohort visible on the evergreen site.
-- [ ] Clear (or archive to a second tab) the old rows in the live Sheet so the next cohort's chart opens near-empty. **Do not touch the Form, the Worker, or the field schema** – the pipeline is working; only the rows rotate.
+- [ ] Clear (or archive to a second tab) the old rows in the live Sheet so that the chart opens almost empty for the next cohort. **Do not touch the Form, the Worker, or the field schema.** The pipeline works, and only the rows change from one cohort to the next.
 
 ---
 
 ## The week before
 
-- [ ] Click once through the Part 3–4 tab choreography (deck → the spec-menu page → the results page and back) so the switching order is in your fingers – it is the one sequence that the day performs live several times.
+- [ ] Click once through the tab switching for Parts 3–4 (deck → the spec-menu page → the results page and back), so that the order is familiar on the day. It is the one sequence that you run live several times during the day.
 - [ ] Send joining instructions: setup page link, the two-window/two-device tip, the optional pre-reading (listed on the setup page), and – if GO – the extended-universe opt-in text.
 - [ ] Confirm the Multi100 slide in the deck against the registered protocol at osf.io/7snkz (the note on that slide asks for the actual wording of the registration, not a paraphrase).
 
@@ -75,80 +75,80 @@ Times in the part tables are part-relative: 0:00 is the start of that part. The 
 | Break | 16:00–16:30 | 14:00–14:30 |
 | Part 4 – Multiverse and preregistration | 16:30–18:00 | 14:30–16:00 |
 
-You are two hours behind the room all day: the room's 10:00 start is your 08:00. Everything you post in chat should carry the Romanian clock, because that is the one that the summer school published.
+You are two hours behind the class all day, so its 10:00 start is your 08:00. Everything you post in chat should give Romanian times, because those are the times that the summer school published.
 
-**Three stretches of the deck are optional depth**, marked on screen and skippable in one keystroke: the R tutorial (Part 2, 10 slides), the methodological tutorial (Part 3, 12 slides) and the multiverse tutorial (Part 4, 8 slides). Five slides in the tools segment of Part 1 carry the same mark. Decide on the day how much of each the room wants. The timings below assume you walk roughly half of each; walking all three in full costs about 25 minutes you do not have, and skipping all three entirely leaves the hands-on tasks with more room than they need.
+**Three stretches of the deck are optional depth**, marked on screen and skippable in one keystroke: the R tutorial (Part 2, 10 slides), the methodological tutorial (Part 3, 12 slides) and the multiverse tutorial (Part 4, 8 slides). Five slides in the tools segment of Part 1 have the same mark. Decide on the day how much of each the class wants. The timings below assume you walk roughly half of each; walking all three in full costs about 25 minutes you do not have, and skipping all three entirely leaves the hands-on tasks with more room than they need.
 
 ### Driving 148 slides {#deck-navigation}
 
 | Key | What it does |
 |---|---|
-| space · right arrow · clicker | next slide. **Always exactly one slide** – the deck is in linear mode on purpose, so nothing that a clicker sends can skip a segment |
-| **`d`** | switch between the **extended** and the **lean** deck, live. In lean mode the optional slides leave entirely: every key skips them and the count drops from 148 to 113 |
-| **`]`** and **`[`** | jump to the **next / previous part**. Four parts, four jumps |
+| space · right arrow · clicker | next slide. **Always exactly one slide** – the deck is set to linear mode so that no clicker press can skip a segment |
+| **`d`** | switch between the **extended** and the **lean** deck, live. In lean mode the optional slides are taken out of the deck: every key skips them and the count drops from 148 to 113 |
+| **`]`** and **`[`** | jump to the **next / previous part** |
 | **`g`** | **jump bar**: type a few letters of any slide title, press Enter |
 | **`s`** | speaker view (notes, timer, next slide) |
 | **`f`** · **`esc`** | fullscreen · slide overview |
 
-**The readout, top right.** Two lines. The first names the part and gives both positions – `PART 3 · 8/24 · 90/148`. The second is a badge that is always present, so the state of the deck is never a guess:
+**The readout, top right,** has two lines. The first names the part and gives both positions (`PART 3 · 8/24 · 90/148`). The second is a badge that is always present and shows the state of the deck:
 
 | Badge | Means |
 |---|---|
 | green **extended** | the full deck, and this slide is part of the main flow |
 | burgundy **optional** | the full deck, and this slide belongs to an optional run. The figure beside it is your position inside that run – `3/12` |
 | amber **lean** | the optional runs are switched off |
-| a burgundy **dot** before the amber badge | lean mode, and an optional run has been lifted out right here – either the slide you are on is the last before it, or the first after it. Press `d` if the room wants it |
+| a burgundy **dot** before the amber badge | lean mode, and an optional run has been lifted out right here – either the slide you are on is the last before it, or the first after it. Press `d` if the class wants it |
 
-The readout steps aside on the title slide, the part dividers and the break slides, where it would sit over the dark background beside the brand mark.
+The readout is hidden on the title slide, the part dividers and the break slides, where it would otherwise overlap the dark background beside the brand mark.
 
-**Opening the lean deck directly.** Add `?depth=0` to the address and the optional runs are gone before the first slide appears – useful if you already know the room. Without it the deck opens complete. If you follow a link to a slide that is hidden in lean mode, you land on the slide that the run lets out onto, not on a blank.
+**Opening the lean deck directly.** Add `?depth=0` to the address and the optional runs are gone before the first slide appears – useful if you already know the class. Without it the deck opens complete. If you follow a link to a slide that is hidden in lean mode, you land on the first slide after the hidden run.
 
-**The escape hatch on screen.** The first slide of each optional run carries a small grey link at the top right saying how many slides the run costs and where it lets out. Clicking it jumps straight there, which is the mouse equivalent of `d` for one run rather than all of them.
+**The escape hatch on screen.** The first slide of each optional run has a small grey link at the top right, which says how many slides the run contains and where the main flow resumes. Clicking it jumps straight there, so it does with the mouse for one run what `d` does for all of them.
 
 ### Part 1 – Credibility and tools (90′)
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | Welcome + the two kinds of aim + what you do not need (6′) | Premise in two sentences ("*Nature* asked three times whether social science holds up – I was inside one of the papers; today you sit where I sat"). Walk the two-column aims slide. "Open the lab tab / your workspace NOW." | Open lab tab (engine warms) or Positron workspace; type one word in chat for why they came. | Late joiners: greet in chat, never restart. Two-device tip again. |
-| 0:06 | Talk: what science is for, and why it is called a crisis (10′) | What a claim is for; the three findings that made people nervous (Simmons, Gelman & Loken, Breznau); why it is structural rather than fraud. End on "you cannot solve it by hiring better people – so suppose you did". | Listen. | This segment is untimed in the room. |
-| 0:16 | Talk: the first many-analysts study (4′) | Silberzahn's red-card study, which is the answer to the question that the previous slide just asked: the question, the dataset, the design – twenty-nine teams reviewing each other's approaches before anyone saw a result. Then all twenty-nine estimates, grouped by the response distribution that each team assumed. End on the left column: "hold on to that grouping, we come back to it twice". | Watch. | Do not narrate the 29 rows. The two things to land are the blind peer-review step and the distribution grouping; everything else is scenery. This is the only place where the study gets a proper telling – Part 2 shows it again in one line, as a reminder. |
+| 0:00 | Welcome + the two kinds of aim + what you do not need (6′) | Premise in two sentences ("*Nature* asked three times whether social science holds up – I was inside one of the papers; today you sit where I sat"). Walk the two-column aims slide. "Open the lab tab / your workspace NOW." | Open lab tab (engine warms) or their workspace in their IDE (Positron, RStudio, VS Code, etc.); type one word in chat for why they came. | Late joiners: greet in chat, never restart. Two-device tip again. |
+| 0:06 | Talk: what science is for, and why it is called a crisis (10′) | What a claim is for; the three findings that made people nervous (Simmons, Gelman & Loken, Breznau); why it is structural rather than fraud. End on "you cannot solve it by hiring better people – so suppose you did". | Listen. | This segment is untimed in the class. |
+| 0:16 | Talk: the first many-analysts study (4′) | Silberzahn's red-card study, which answers the question raised at the end of the previous segment: the question, the dataset and the design, in which twenty-nine teams reviewed each other's approaches before anyone saw a result. Then all twenty-nine estimates, grouped by the response distribution that each team assumed. End on the left column: "hold on to that grouping, we come back to it twice". | Watch. | Do not narrate the 29 rows. The two points that must get across are the blind peer-review step and the distribution grouping, and the rest is background. This is the only place where the study is told in full; Part 2 shows it again in one line, as a reminder. |
 | 0:20 | Talk: the vocabulary, and what open research fixes (8′) | Why 'replication' covers three different operations; the data × analysis matrix; credibility is not truth; what open research proposes and what it does not fix. | The matrix is the one slide to copy down. | If it runs long, the open-research practices table compresses to one sentence per row. The red-card study is what makes the vocabulary problem concrete – refer back to it rather than re-arguing it. |
 | 0:28 | Talk: SCORE and its three studies (20′) | The programme; the three corners; Miske → Aczel → Tyner, each with its result; the three Rs are uncorrelated; the credibility-in-the-wild quiz pair. | Chat waterfalls on the quiz. | If behind, cut the Miske moderators slide to one line. |
 | 0:48 | Talk: Multi100 from the inside (14′) | What an analyst was sent; the paper in one slide (define OA here); the two tasks and why that order; how a hundred studies become one number; then the five-analyst forest **one row at a time**, ending on "look at the labels". | Watch the reveal. | Never rush the forest reveal. The software column sets up the tools segment – do not talk over it. |
 | 1:02 | Stretch (2′) | Cameras off, stand up. | Stretch. | Actually stop talking. |
-| 1:04 | Talk: the tools (18′) | What open source buys you; the toolchain wall; languages and editors (optional depth); plain text and the render pipeline; packages; version control; where data and code are archived; licences; what we use today; what the tools cannot do. | Note what they might switch to. | The timing here is tight. The per-tool slides are the compressible part. The two that must land are **plain text is the format that survives** and **what the tools cannot do** – the second leads into Part 2. |
-| 1:22 | Task 1 launch + break (8′) | Set the setup task: "get to the point where a line of R runs and the data are in front of you – take the break for it if you need to". Post break-return time; countdown slide. Stay on the call through the break for STUCKs. | Start Task 1; break. | This is the only part of the day where a broken machine can be fixed without costing anyone content. Use it. |
+| 1:04 | Talk: the tools (18′) | What open source buys you; the toolchain wall; languages and editors (optional depth); plain text and the render pipeline; packages; version control; where data and code are archived; licences; what we use today; what the tools cannot do. | Note what they might switch to. | The timing here is tight. The per-tool slides are the compressible part. The two that must be covered in full are **plain text is the format that survives** and **what the tools cannot do** – the second leads into Part 2. |
+| 1:22 | Task 1 launch + break (8′) | Set the setup task: "get to the point where a line of R runs and the data are in front of you – take the break for it if you need to". Post break-return time; countdown slide. Stay on the call through the break for STUCKs. | Start Task 1; break. | This is the only part of the day where a broken machine can be fixed without costing anyone content. |
 
 ### Part 2 – The claim and its estimand (90′)
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | Talk: the paper, in full (20′) | The four framing scales; what OA actually fitted; the robustness question already inside the paper (Model 1 vs Model 2); what we work on instead and what the aggregate cannot answer; the two failed reproductions; the sign-flipped replication; the three-Rs scoreboard; then the five free-phase questions table. | Listen; ask. | The Model 1 / Model 2 slide is the one that people remember – give it its beat. |
-| 0:20 | Talk: estimands (25′) | "Two studies to set beside our five" – Silberzahn's 29 estimates return as a one-line strip, so this is a reminder and not a retelling → "they were not answering the same question" → A&B's four estimands → **fix the estimand and the spread collapses** → the vague-research-questions slide → Lundberg's three steps. | Listen; ask. | The contrast figure is the pay-off of this segment: the top row is the real 29 estimates, and its spread is carried by two outliers. Say so – it is the difference between a scary picture and an argument. |
+| 0:00 | Talk: the paper, in full (20′) | The four framing scales; what OA actually fitted; the robustness question already inside the paper (Model 1 vs Model 2); what we work on instead and what the aggregate cannot answer; the two failed reproductions; the sign-flipped replication; the three-Rs scoreboard; then the five free-phase questions table. | Listen; ask. | The Model 1 / Model 2 slide is the one that people remember, so give it time. |
+| 0:20 | Talk: estimands (25′) | "Two studies to set beside our five" – Silberzahn's 29 estimates reappear as a one-line strip, a reminder of Part 1 → "they were not answering the same question" → A&B's four estimands → **fix the estimand and the spread collapses** → the vague-research-questions slide → Lundberg's three steps. | Listen; ask. | The contrast figure is the main point of this segment. Its top row is the 29 published estimates, and its spread comes from two outliers. Point this out to the class, because without it the figure is only an alarming picture. |
 | 0:45 | Stretch (2′) | Cameras off, stand up. | Stretch. | Actually stop talking. |
-| 0:47 | Talk: DAG crash course (25′) | Confounder/mediator/collider; open/closed paths; total effect or direct effect; selection and feedback; then ***Revenons à nos moutons*** – back to our own claim, and the chat exercise. Estimand waterfall there: read 3–4 aloud, point at the spread. Then **why draw the graph when identification is out of reach**; publishing the estimand and the graph; end on the half-built graph and its `dagify()` code panel. | Type their one-sentence estimand; hold; send on "go". | *Revenons* sits here on purpose: it is the return to our own data after the digression through somebody else's football match, and it lands harder for having waited. Silent room: name two people gently, or take reactions; two answers from twenty is a proceed. The estimand waterfall is never compressed. The two slides on drawing the graph without identification are what stop this segment feeling like a bait-and-switch on an observational panel. |
-| 1:12 | Hands-on 2: Task 2 (18′) | Optionally walk part of the **R tutorial** first (10 optional-depth slides) – pitch it at whoever is least confident. Then: meet the panel, write the estimand, uncomment the arrows they believe and run `adjustmentSets()`. | Look at the data; write the estimand; finish the DAG; two-sentence FE note. | **Trigger at 1:22:** if the room is behind, switch to demo-only – run it on my screen, they note the output. The picture cell in the lab installs `ggdag` (~23 MB, one slow moment on poor wifi); the adjustment set itself needs none of it. |
+| 0:47 | Talk: DAG crash course (25′) | Confounder/mediator/collider; open/closed paths; total effect or direct effect; selection and feedback; then ***Revenons à nos moutons*** – back to our own claim, and the chat exercise. Estimand waterfall there: read 3–4 aloud, point at the spread. Then **why draw the graph when identification is out of reach**; publishing the estimand and the graph; end on the half-built graph and its `dagify()` code panel. | Type their one-sentence estimand; hold; send on "go". | *Revenons* is placed here because it brings the class back to our own data after the digression through somebody else's football match, and the chat exercise works better once that digression is over. Silent class: name two people gently, or take reactions. Two answers from twenty are enough to proceed. The estimand waterfall is never compressed. The two slides on drawing the graph without identification are what stop this segment feeling like a bait-and-switch on an observational panel. |
+| 1:12 | Hands-on 2: Task 2 (18′) | Optionally walk part of the **R tutorial** first (10 optional-depth slides) – pitch it at whoever is least confident. Then: meet the panel, write the estimand, uncomment the arrows they believe and run `adjustmentSets()`. | Look at the data; write the estimand; finish the DAG; two-sentence FE note. | **Trigger at 1:22:** if the class is behind, switch to demo-only – run it on my screen, they note the output. The picture cell in the lab installs `ggdag` (~23 MB, one slow moment on poor wifi); the adjustment set itself needs none of it. |
 | 1:30 | Lunch launch | Achievement line; lunch slide; post return time. | Lunch. | Lunch is a hard stop. Anything unfinished in Task 2 can be finished over lunch. |
 
 ### Part 3 – Reproduction and exploration (90′)
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | Re-entry + what the constrained task assumed (12′) | "Raise hand" roll-call; paste the catch-up card. Then the three Multi100 instructions verbatim, what each one assumes, and the columns of the panel. | Rejoin; late returners follow the card. | Do not wait past 0:05 – the card carries stragglers. |
+| 0:00 | Re-entry + what the constrained task assumed (12′) | "Raise hand" roll-call; paste the catch-up card. Then the three Multi100 instructions verbatim, what each one assumes, and the columns of the panel. | Rejoin; late returners follow the card. | Do not wait past 0:05, because the card lets stragglers catch up. |
 | 0:12 | You are analyst no. 6 (3′) | The aim, the model, the number on record. | Watch. | – |
-| 0:15 | Hands-on 3: Task 3, reproduce (22′) | Drive Positron / the browser lab on the shared screen alongside them; monitor chat + help doc at 0:25 and 0:33; buddy-chunk any STUCK on my screen. Then the waterfall: "type your t, hold, go". | Fill the gaps, fit the model, land **t = −3.804**, waterfall the t. | The wall of identical −3.804s is the payoff – wait for a critical mass before "go". Dead compute → cheatsheet ladder. |
-| 0:37 | One number, thirty people (5′) | Everyone landed the same t because everyone ran the same code – and the five published analysts, each writing their own, disagreed. None was careless. | Name the achievement. | Do not answer the question yet – the menu answers it. |
-| 0:42 | Spec menu (15′) | Walk the one menu, every axis first-class – outcome, family, predictor, predictor form, copredictor, estimator, sample, weights; the historical provenance (the constrained task fixed unemployment and, implicitly, the gaussian scale; the free phase shows three of five analysts choosing GDP measures; beta fits report z, not t); **what the constrained task left open, including the unit of analysis**; the one-deviation rule; the **claim-alignment convention**. | Listen; start thinking about which axis interests them. | The unit-of-analysis slide is the one that earns the afternoon. Do not rush it. |
-| 0:57 | Methodological tutorial (13′, optional depth) | 12 slides on what each axis actually does. Pitch by the room: the outcome, claim alignment and the estimator slides are the core; family, form, copredictor, sample, weights and the partial *r* are the extension. | Listen; ask. | This is the compressible segment. If Task 3 overran, take it from here, not from Task 4. |
-| 1:10 | Hands-on 4: Task 4, work the menu (20′) | "Try several, look at what each does, then submit the one you would defend." Keep the Multiverse page shared; press *Run Code* at ~1:18 and ~1:26 as the exploratory dots land. Check help doc at 1:20. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone lands an exploratory dot. Watch for people treating this as the preregistration – say out loud, twice, that this one is exploration and Task 5 is the commitment. |
+| 0:15 | Hands-on 3: Task 3, reproduce (22′) | Drive the workspace / the browser lab on the shared screen alongside them; monitor chat + help doc at 0:25 and 0:33; buddy-chunk any STUCK on my screen. Then the waterfall: "type your t, hold, go". | Fill the gaps, fit the model, land **t = −3.804**, waterfall the t. | The wall of identical −3.804s is the point of this beat, so wait until most people have a number before "go". If a machine fails, use the cheatsheet ladder. |
+| 0:37 | One number, thirty people (5′) | Everyone landed the same t because everyone ran the same code – and the five published analysts, each writing their own, disagreed. None was careless. | Name the achievement. | Leave the question open until the spec-menu segment that follows. |
+| 0:42 | Spec menu (15′) | Walk the one menu, every axis first-class – outcome, family, predictor, predictor form, copredictor, estimator, sample, weights; the historical provenance (the constrained task fixed unemployment and, implicitly, the gaussian scale; the free phase shows three of five analysts choosing GDP measures; beta fits report z, not t); **what the constrained task left open, including the unit of analysis**; the one-deviation rule; the **claim-alignment convention**. | Listen; start thinking about which axis interests them. | The unit-of-analysis slide sets up the rest of the afternoon, so do not rush it. |
+| 0:57 | Methodological tutorial (13′, optional depth) | 12 slides on what each axis actually does. Pitch it to the class: the outcome, claim alignment and the estimator slides are the core; family, form, copredictor, sample, weights and the partial *r* are the extension. | Listen; ask. | This is the compressible segment. If Task 3 overran, take it from here, not from Task 4. |
+| 1:10 | Hands-on 4: Task 4, work the menu (20′) | "Try several, look at what each does, then submit the one you would defend." Keep the Multiverse page shared; press *Run Code* at ~1:18 and ~1:26 as the exploratory dots land. Check help doc at 1:20. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits an exploratory dot. Watch for people treating this as the preregistration – say out loud, twice, that this one is exploration and Task 5 is the commitment. |
 | 1:30 | Break | Post break time; countdown slide; leave the Multiverse page open. | Break. | – |
 
 ### Part 4 – Multiverse and preregistration (90′)
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | You built a small multiverse + class chart debrief (10′) | Name what Task 4 was; then the class multiverse + the five-analyst overlay; question bank. | Discuss; find their dot against the analysts. | If submissions are few, the 2,520-spec backdrop + analysts still carries it. |
-| 0:10 | Prediction → fork importance → analysts → flips (16′) | "Place your bet" waterfall FIRST; then the 49.7% reveal; the placement chart (person-level analysts at the extremes); where the sign flips concentrate. | Bet; watch the reveals; connect to their own axis choice. | The bet must come before the reveal – do not skip it to save time; it is what makes the 49.7% land. |
+| 0:00 | You built a small multiverse + class chart debrief (10′) | Name what Task 4 was; then the class multiverse + the five-analyst overlay; question bank. | Discuss; find their dot against the analysts. | If there are few submissions, the 2,520-spec backdrop and the analysts are enough for the debrief. |
+| 0:10 | Prediction → fork importance → analysts → flips (16′) | "Place your bet" waterfall FIRST; then the 49.7% reveal; the placement chart (person-level analysts at the extremes); where the sign flips concentrate. | Bet; watch the reveals; connect to their own axis choice. | The bet must come before the reveal. Do not skip it to save time, because people who have placed a bet take far more notice of the 49.7%. |
 | 0:26 | Find your percentile (7′) | Point at the percentile cell in the **browser lab** – everyone uses it there (the workspace report has no percentile section); waterfall the results. | Compute their percentile; waterfall it. | Participants without a submission use the baseline (−3.804) – percentile ≈ 49.6% on the claim-aligned scale. |
 | 0:33 | Multiverse tutorial + what the curve leaves out (10′, part optional depth) | Where the idea comes from; the forking-paths picture; justifiable-not-merely-possible; enumerate or curate; what a multiverse is for; then **what the curve leaves out**, which is not optional. | Listen. | The 8 tutorial slides are optional; the four-point 'what the curve leaves out' slide is not – it is what stops the chart being read as complete. |
 | 0:43 | Inference literacy (12′) | Two jobs; not-840-tests; the permutation design; how to read B = 500; the **discussion beat** ("70.7% – strong evidence? against what null?"): 2′ think, chat, harvest; then what-stands-without-the-test. | Think; argue in chat. | The target answer: "we can't say until we know what chance produces on these dependent data." Someone will get there – let them say it. |
@@ -160,7 +160,7 @@ The readout steps aside on the title slide, the part dividers and the break slid
 
 ## Online and in-person cue sheet {#online--in-person-cue-sheet}
 
-The materials are identical in both rooms. What changes is the mechanics of answering, of flagging trouble and of pairing up, so the table below is a swap list.
+The materials are identical online and in person. What changes is how people answer, flag trouble and pair up, and the table below lists what to swap.
 
 | Beat | Online (Teams) | In person |
 |---|---|---|
@@ -180,9 +180,9 @@ The materials are identical in both rooms. What changes is the mechanics of answ
 
 **Waterfall:** "Type your answer now but DON'T send – hold it. … Go." Holding the answers back keeps each one independent of the others, and releasing them together is what produces the wall-of-identical-values beats.
 
-**Help:** a STUCK in chat is the first flag. The standing **help doc** – a shared editable doc whose link goes into the chat at open – is the second surface, and the place where errors get pasted. Check it at the minutes that the run sheet names, not continuously. Rescues run in the main room by buddy-chunk: their spec, my webR or Positron, and everyone watching learns from it.
+**Help:** a STUCK in chat is the first flag. The standing **help doc**, a shared editable document whose link goes into the chat at the start, is the second place to look and the place where errors get pasted. Check it at the minutes that the run sheet names, not continuously. Rescues run in the main room by buddy-chunk: their spec, my webR or IDE, and everyone watching learns from it.
 
-**Silent room:** wait 20 seconds, then take reactions (thumbs) as the minimal response, and name one or two people gently ("Sam, what did you get?"). Two substantive answers from twenty participants is a proceed, not a failure.
+**Silent class:** wait 20 seconds, then take reactions (thumbs) as the minimal response, and name one or two people gently ("Sam, what did you get?"). Two substantive answers from twenty participants are enough to proceed.
 
 **Catch-up card (paste at Part 3 re-entry):**
 
@@ -196,12 +196,12 @@ The materials are identical in both rooms. What changes is the mechanics of answ
 
 ## The cutting order {#compression-ladders-with-trigger-times}
 
-Every optional-depth run is a compression lever before anything else is. Take time from a tutorial before taking it from a task.
+When time runs short, cut from the optional-depth runs before anything else, so that the time comes out of a tutorial before it comes out of a task.
 
 - **Part 1** – trigger 0:30: cut the Miske moderators slide to one line and compress the open-research practices table to one sentence per row. Trigger 1:05: drop the two per-tool optional-depth slides (languages, editors) and the licences slide; keep plain-text-survives and what-the-tools-cannot-do.
 - **Part 2** – trigger 0:50 (running long after estimands): the DAG crash course drops the selection-and-feedback slide to one sentence and reaches the half-built graph sooner. Trigger 1:12: skip the R tutorial entirely and go straight into Task 2. Trigger 1:22: Task 2 to demo-only – run it on my screen, they note the output and finish over lunch. The estimand waterfall is never compressed.
 - **Part 3** – trigger 0:57: the methodological tutorial drops to its three core slides (outcome, claim alignment, estimators). Trigger 1:10: Task 4 shortens to two `try_spec()` calls and a submission – but everybody still submits, because Part 4 opens on those dots.
-- **Part 4** – trigger 0:33: skip the multiverse tutorial, keep 'what the curve leaves out'. Trigger 0:55: drop the scavenger beat and lean the inference module on the reading. The class-chart debrief, the fork-importance reveal and the preregistration moment are never compressed.
+- **Part 4** – trigger 0:33: skip the multiverse tutorial, keep 'what the curve leaves out'. Trigger 0:55: drop the scavenger beat and shorten the inference module, leaving the detail to the reading. The class-chart debrief, the fork-importance reveal and the preregistration moment are never compressed.
 
 **Never cut:** the five-analyst reveal and its software column · the estimand waterfall · the half-built DAG and its adjustment set · the reproduction waterfall · the Task 4 submission · the preregistration moment · the fork-importance reveal.
 
@@ -209,18 +209,18 @@ Every optional-depth run is a compression lever before anything else is. Take ti
 
 ## Contingencies {#contingency-table}
 
-Each row names the first move, not the only one, and every ladder ends at a point from which the session can carry on. Nothing in the table stops the day.
+Each row names the first move, not the only one, and every ladder ends at a point from which the session can carry on.
 
 | Situation | What to do |
 |---|---|
-| **A participant's webR fails mid-task** | The cheatsheet ladder: hard reload + rerun chunks above → second browser → buddy-chunk on my screen → grid lookup + hand submission (any spec looks up in `data/spec_grid_full.csv`, the full 2,520-row universe). Everyone lands a dot. |
+| **A participant's webR fails mid-task** | The cheatsheet ladder: hard reload + rerun chunks above → second browser → buddy-chunk on my screen → grid lookup + hand submission (any spec looks up in `data/spec_grid_full.csv`, the full 2,520-row universe). Everyone still submits a dot. |
 | **A participant's installation breaks** | Switch them to the browser lab, which holds the whole exercise; their workspace survives for later. |
-| **The live chart fails during the day** (Form, Worker, CORS) | Rung 1: `results.qmd` falls back to the committed `data/class_results.csv` automatically. Rung 2: pull the Sheet CSV, commit, re-render locally, share my screen. Rung 3: the static 840-spec curve + five-analyst slides still carry the debrief. Submissions are safe in the Sheet regardless – nothing upstream blocks on the chart. |
-| **Breakout rooms unavailable** | Every pair moment has a scripted chat variant. Zero structural cost. |
-| **OSF slow/unreachable during the scavenger** | Show h7432 on my screen; the beat survives. Data never depends on OSF live – it ships with the workspace and the browser lab. |
+| **The live chart fails during the day** (Form, Worker, CORS) | Rung 1: `results.qmd` falls back to the committed `data/class_results.csv` automatically. Rung 2: pull the Sheet CSV, commit, re-render locally, share my screen. Rung 3: the static 840-spec curve and the five-analyst slides are enough for the debrief. Submissions are safe in the Sheet whatever happens to the chart, because nothing upstream depends on it. |
+| **Breakout rooms unavailable** | Every pair moment has a scripted chat variant. |
+| **OSF slow/unreachable during the scavenger** | Show h7432 on my screen and the beat still works. The data never depend on OSF being reachable, because they ship with the workspace and the browser lab. |
 | **My connection drops** | The standing order in chat: participants continue the current task or break early; I rejoin. The pipeline keeps collecting – it is entirely independent of the call. |
 | **A participant cannot speak/hear** | Everything essential is chat-and-screen; deliver any spoken instruction in chat on request. |
-| **Recording objections** | Recording is optional by design – stop it; nothing depends on it. |
+| **Recording objections** | Recording is optional, so stop it; nothing depends on it. |
 | **Prereg mirror form fails** | The rendered block is the record; carry on. |
 
 ---
@@ -228,11 +228,11 @@ Each row names the first move, not the only one, and every ladder ends at a poin
 ## Expected numbers {#answer-keys-and-expected-numbers}
 
 - Warm-up matrix question set: 1 = reproducibility (a failed attempt is still reproducibility) · 2 = the grey area between reproducibility and robustness – argue both ways · 3 = replicability · 4 = generalisability.
-- Task 3 (the workspace and the browser lab, unchanged): b = −0.00347, SE = 0.00091, **t = −3.804**, df = 233, N = 270 (`EUframes_cy.csv`) – the value on record for C6HJR, reproduced directly from `euframes`.
+- Task 3 (the same in the workspace and the browser lab): b = −0.00347, SE = 0.00091, **t = −3.804**, df = 233, N = 270 (`EUframes_cy.csv`) – the value on record for C6HJR, reproduced directly from `euframes`.
 - The data-preparation material is off the running order and out of the deck. If you want to raise it on the day, the facts, the withdrawn slides and their speaker notes are in `_planning/block2-error-story-withdrawn-2026-07-30.md`, local to your machine – paste any block straight back into the deck.
 - Family axis (a first-class menu axis; not part of the Multi100 Task-2 menu, which fixed unemployment and, implicitly, the gaussian scale): beta submissions report **z**, not t. In the browser lab every spec, beta included, is read from the pre-computed grid, so `report_result()` takes no fit; the workspace fits beta live. Grid-lookup fallback: any spec looks up in its shard under `data/grid/` – the file is named by the six Level 1 choices, the row by the other eight; the cheatsheet has the recipe. The beta family is pre-computed at the standard measurement settings only. Beta twin of C6HJR's published Multi100 specification: b(logit) = −0.01399, **z = −4.075**, r = −0.258 (C6HJR's Gaussian r = −0.242: same direction, still significant, slightly stronger).
-- Claim-alignment (the room's convention, set on the spec menu): negative framings (`mcomm`, `mlib`, `mneg`) reverse-coded 1 − y before fitting; sign of b, t and r flips, magnitudes and p untouched (exactly so for beta too). Aligned r runs **−0.70 to +0.24** (gaussian; beta reaches +0.29) – so a class dot above ≈ +0.25 is almost certainly an **un-recoded negative framing**, not a genuine contrary result; name that in the debrief. One caveat from the growth-predictor axis: legitimately aligned growth-predictor dots can reach ≈ +0.37 – check the declared spec before calling it.
-- Analyst placement (share of grid more negative, claim-aligned): KEVF1 15.8% · KQXUE 21.5% · C6HJR 49.6% · 018OL 63.1% · PRL47 67.9%. The two person-level analysts (KEVF1, PRL47) sit at the extremes; the constrained baseline lands almost exactly at the median of the aligned grid.
+- Claim-alignment (the class convention, set on the spec menu): negative framings (`mcomm`, `mlib`, `mneg`) reverse-coded 1 − y before fitting; sign of b, t and r flips, magnitudes and p untouched (exactly so for beta too). Aligned r runs **−0.70 to +0.24** (gaussian; beta reaches +0.29) – so a class dot above ≈ +0.25 is almost certainly an **un-recoded negative framing**, not a genuine contrary result; name that in the debrief. One caveat from the growth-predictor axis: legitimately aligned growth-predictor dots can reach ≈ +0.37 – check the declared spec before calling it.
+- Analyst placement (share of grid more negative, claim-aligned): KEVF1 15.8% · KQXUE 21.5% · C6HJR 49.6% · 018OL 63.1% · PRL47 67.9%. The two person-level analysts (KEVF1, PRL47) sit at the extremes; the constrained baseline falls almost exactly at the median of the aligned grid.
 - Task-1 layer (slide after analyst placement): free phase = five different questions – 018OL GDP p.c. level, KEVF1 growth, PRL47 a GDP battery; only KQXUE and C6HJR used unemployment – with one shared recorded verdict ('evidence for the claim'). No standardised Task-1 effect sizes exist in the public Multi100 data (verdict + free text only). My own Task 1 (`mposframe ~ growth + unemp`, two-way FE, World Bank series) reproduces from the committed as-submitted panel: unemployment t = −4.72, growth ns – standardisation *weakened* my result.
 - Predictor axis (a first-class menu axis; menu + lab lookup in the `data/grid/` shards; at the standard measurement settings the growth half is 840 cells across both families; not part of the Multi100 Task-2 menu, though Task 1 shows three of five analysts freely chose GDP measures): GDP growth as claim carrier, raw form only – affine forms are t-inert (centred≡raw, log-z≡log), which is why the deduplicated grid holds 840 distinct analyses. Growth predictor (840 rows in the full grid): 70.5% claim-direction / 46.9% significant, aligned max +0.37 – direction without significance, matching KQXUE's Task-1 growth null. Growth mirror of my Task-1 model on the EU-frames panel: b = +0.00167, t = 1.59, ns. Growth polarity: claim-aligned reporting flips the sign (lab lookup does it).
 - Fork importance: outcome 49.7% · residual/interactions 49.2% · sample 0.7 · estimator 0.4 · predictor form/copredictor/weights ≈ 0.
@@ -263,4 +263,4 @@ Choose by what the class chart actually shows, not by the order below.
 
 - [ ] Run the reset procedure from the top of this guide: export + commit the date-stamped snapshot, rotate the Sheet rows.
 - [ ] Export the feedback form responses.
-- [ ] Improvement log – record: which segment ran longest; did the estimand idea land (could people write one, did the waterfall show real spread); did the extra room in Part 2 let the DAGs breathe or expose thin material; how many declarations before the proceed rule fired; did every participant land a dot (which ladder rungs fired); did webR hold on home connections; Teams frictions (chat scale, breakouts, share switching).
+- [ ] Improvement log – record: which segment ran longest; did the estimand idea land (could people write one, did the waterfall show real spread); did the extra time in Part 2 give the DAG segment the space it needed, or expose thin material; how many declarations before the proceed rule fired; did every participant submit a dot (which ladder rungs fired); did webR hold on home connections; Teams frictions (chat scale, breakouts, share switching).

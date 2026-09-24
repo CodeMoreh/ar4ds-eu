@@ -28,7 +28,7 @@ You do all of this; participants do nothing except click one link.
 
 Why the Worker exists: a browser will only read a remote file if that file is served with an `Access-Control-Allow-Origin` (CORS) header. Google Sheets does **not** reliably send that header to a third-party site like `codemoreh.github.io`, and the URL it does serve redirects across origins, which browsers block. The Worker is a tiny relay that you control: the browser talks to the Worker, the Worker fetches the Sheet server-to-server (no browser, no CORS on that hop), and hands the CSV back with the right header. This removes the single biggest live-demo risk. It is \~20 lines and runs free.
 
-**Design note (prereg + format).** This system handles the **results** submission only. Preregistration is deliberately kept off it (Route 1 renders the declaration block in the report; Route 2 completes the same block in the browser lab and copies it into notes) so that each participant makes **one** submission, not two. The earlier friction was browser participants having to post twice, and one results-Form keeps that gain. If you would rather make prereg fully digital and timestamped too, see section 9.
+**Design note (prereg + format).** This system handles the **results** submission only. Preregistration is kept off it (in the workspace the declaration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a declaration and a result separately. If you would rather make prereg fully digital and timestamped too, see section 9.
 
 ------------------------------------------------------------------------
 
@@ -50,14 +50,14 @@ Why the Worker exists: a browser will only read a remote file if that file is se
     | `n`            | Short answer | observations                                  |
     | `r`            | Short answer | partial correlation (the one that the chart plots) |
 
-    Short titles look terse, but that is fine: participants never type into the form – `report_result()` pre-fills every box and they just press Send. The only hard requirement is that the question for the partial correlation is titled **`r`**, because the chart reads a column called `r`.
+    Short titles look terse, but participants never type into the form: `report_result()` pre-fills every box and they just press Send. The only hard requirement is that the question for the partial correlation is titled **`r`**, because the chart reads a column called `r`.
 
 ### 2.2 Make it anonymous (no Google login)
 
 In the **Settings** tab of the form:
 
 - **Responses → Collect email addresses → Do not collect.**
-- **Responses → Limit to 1 response → OFF.** ← this is the setting that otherwise forces a Google sign-in. With it off, anyone can submit with no account. (Trade-off: a person could submit twice. Harmless for a workshop.)
+- **Responses → Limit to 1 response → OFF.** ← this is the setting that otherwise forces a Google sign-in. With it off, anyone can submit with no account. (A person could then submit twice, which does no harm in a workshop.)
 
 ### 2.3 Link a responses Sheet and make it readable
 
@@ -150,7 +150,7 @@ wrangler deploy
     .then(r => r.text()).then(console.log)
   ```
 
-  CSV printed and **no CORS error** = the load-bearing piece works.
+  CSV printed and **no CORS error** = the piece that everything else depends on works.
 
   [**ACTUAL: NOT YET TESTED**]{.underline}
 
@@ -158,7 +158,7 @@ wrangler deploy
 
 ## 4. Step 3 – wire the IDs into the repo
 
-Four edits. Two carry a literal `PASTE_…` marker in the code (items 1 and 2). Item 3 (the template repo) has no marker because that file lives in a different repo and is structured differently – replace its "section 4" as shown below. Item 4 is a value in `_variables.yml`.
+There are four edits. Two have a literal `PASTE_…` marker in the code (items 1 and 2). Item 3 (the template repo) has no marker because that file is in a different repo and is structured differently – replace its "section 4" as shown below. Item 4 is a value in `_variables.yml`.
 
 1.  **`results.qmd`** – in the `live-multiverse` cell, set:
 
@@ -175,7 +175,7 @@ Four edits. Two carry a literal `PASTE_…` marker in the code (items 1 and 2). 
                r = "entry.777777")
     ```
 
-3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `report_result()` helper in its `R/spec_tools.R` so Route 1 participants get working links too. (That file is gitignored from this repo; edit it in its own checkout.)
+3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `report_result()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout.)
 
     [**ACTUAL: I CAN'T LOCATE THAT !!!**]{.underline}
 
@@ -199,20 +199,20 @@ git push
 
 `_freeze/` must be committed (CI deploys without R). A full `quarto render` before pushing is safest.
 
-> Note: the `worker_url` is baked into the page at render time, so changing it means a re-render + push. That is fine – you set it once before the workshop.
+> Note: the `worker_url` is baked into the page at render time, so changing it means a re-render + push, which you need to do only once, before the workshop.
 
 ------------------------------------------------------------------------
 
 ## 5. Column-name contract
 
-The chart reads a column literally named **`r`** (case/space-tolerant). The other columns are carried for the record but only `r` positions the dot.
+The chart reads a column literally named **`r`** (case/space-tolerant). The other columns are kept for the record, but only `r` positions the dot.
 
 - Live path: the Worker serves the header row of the Sheet as CSV headers, which come from your Form question titles – so titling the question `r` (step 2.1) is what makes this work.
 - Archive path (section 7): the committed `data/class_results.csv` must also have a column named `r`.
 
 ------------------------------------------------------------------------
 
-## 6. The morning of the delivery – re-test, do not assume {#the-morning-of-16-june-re-test-do-not-assume}
+## 6. Checks on the morning of the delivery {#the-morning-of-16-june-re-test-do-not-assume}
 
 Google has changed its anonymous-form and sharing behaviour before, so verify on the day, not just the night before.
 
@@ -220,7 +220,7 @@ Google has changed its anonymous-form and sharing behaviour before, so verify on
 - [ ] **Sheet got it:** the test row appears in "Form Responses 1".
 - [ ] **Worker serves it:** open the Worker URL → the test row is in the CSV.
 - [ ] **Chart shows it:** open the live Multiverse page, press **Run Code** on the Class-results chart → a test dot appears. Do this in incognito too (CORS can differ by login state).
-- [ ] **Clear test rows** from the Sheet so the room starts clean (delete the test data rows; keep the header row).
+- [ ] **Clear test rows** from the Sheet so the class starts with an empty chart (delete the test data rows; keep the header row).
 - [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklist in `guide.qmd`).
 
 If the morning test fails, you still have two fallbacks (section 8) and the static "The class multiverse" slide in the deck always works.
@@ -231,22 +231,22 @@ If the morning test fails, you still have two fallbacks (section 8) and the stat
 
 1.  Project the live Multiverse page.
 2.  As results arrive, press **Run Code** on the Class-results chart to pull the latest dots. Press it again every minute or so – each press re-fetches (the URL is cache-busted, so you always get the freshest rows).
-3.  Talk to the picture: where did the room land, who flipped the sign, which choice moved the estimate most. The five analysts are the dashed lines; the pre-computed menu is the grey cloud; the orange dots are the room.
+3.  Talk through the chart: where the class landed, who flipped the sign, which choice moved the estimate most. The five analysts are the dashed lines, the pre-computed menu is the grey cloud and the orange dots are the class submissions.
 
-If the live fetch ever stalls in the room, fall back to the static spec curve on the slide "The class multiverse" – it is the same chart minus the live dots.
+If the live fetch ever stalls during the session, fall back to the static spec curve on the slide "The class multiverse" – it is the same chart minus the live dots.
 
 ------------------------------------------------------------------------
 
 ## 8. Fallbacks (if the Worker route misbehaves)
 
 - **Publish-to-web CSV instead of the Worker.** File → Share → Publish to web → the responses sheet → CSV. Point `worker_url` at that `…/pub?output=csv` URL. Simpler (no Worker) but it has a multi-minute publish cache and its cross-origin CORS is less reliable – use only if the Worker is unavailable.
-- **Facilitator local render.** Forget the browser entirely: download the Sheet as CSV to `data/class_results.csv` on your laptop, run `quarto render results.qmd` locally (your laptop has R, so there is no CORS), and project/refresh that. This is bulletproof and is the recommended safety net if conference wifi is hostile.
+- **Facilitator local render.** Forget the browser entirely: download the Sheet as CSV to `data/class_results.csv` on your laptop, run `quarto render results.qmd` locally (your laptop has R, so there is no CORS), and project/refresh that. This is the most reliable option and the recommended fallback if the conference wifi is poor.
 
 ------------------------------------------------------------------------
 
 ## 9. After the session
 
-- [ ] **Archive a permanent snapshot.** The live chart depends on the Sheet and Worker staying up. To preserve the result independently, export the responses Sheet (**File → Download → CSV**), keep the columns including `r`, and save it over `data/class_results.csv` in this repo. Commit and push. The chart automatically reads this snapshot whenever the Worker is unset or unreachable, so the page keeps showing the room's multiverse forever.
+- [ ] **Archive a permanent snapshot.** The live chart depends on the Sheet and Worker staying up. To preserve the result independently, export the responses Sheet (**File → Download → CSV**), keep the columns including `r`, and save it over `data/class_results.csv` in this repo. Commit and push. The chart automatically reads this snapshot whenever the Worker is unset or unreachable, so the page keeps showing the multiverse built by the class indefinitely.
 - [ ] Optionally **set `worker_url <- ""`** in `results.qmd` and re-render, so the page serves the committed snapshot rather than calling a Worker you may later delete.
 - [ ] Optionally **close the Form** (Responses tab → "Accepting responses" off) to stop late submissions.
 - [ ] You can then safely delete the Worker and/or unshare the Sheet; the page runs on the committed snapshot.

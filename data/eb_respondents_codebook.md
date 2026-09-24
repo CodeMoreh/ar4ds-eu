@@ -1,6 +1,6 @@
 # Codebook: `eb_respondents.rds`
 
-**This file is not distributed.** It is derived from sixteen Eurobarometer scientific-use files that GESIS licenses to each user individually, and it is built on your own machine by `prep/01_build_respondents.R` in the workspace from the files you downloaded under your own GESIS account. The [data sources module](../companion/data-sources.html#sec-gesis) walks through the download and the terms of use; the [data management module](../companion/data-management.html) walks through the build. The file lives in `data_private/`, which the workspace never commits. This codebook is published so that the respondent-level outputs on the course site can be read by anyone, whether or not they hold the file.
+**This file is not distributed.** It is derived from sixteen Eurobarometer scientific-use files that GESIS licenses to each user individually, and it is built on your own machine by `prep/01_build_respondents.R` in the workspace from the files you downloaded under your own GESIS account. The [data sources module](../companion/data-sources.html#sec-gesis) explains the download and the terms of use, and the [data management module](../companion/data-management.html) explains the build. The file is stored in `data_private/`, which is excluded from version control in the workspace. This codebook is published so that the respondent-level outputs on the course site can be read by anyone, whether or not they hold the file.
 
 One row per respondent interviewed in one of the twenty-seven member states of the period, in the sixteen waves: 416,698 rows, 31 columns. The GESIS terms of use apply to every row: no redistribution, no publication of individual cases, no processing by AI systems.
 
@@ -33,9 +33,9 @@ The spring 2004 wave predates the accession of the ten new member states, which 
 |---|---|
 | `study` | GESIS study number (`ZA4056` to `ZA5689`) |
 | `eb` | Eurobarometer wave (`61.0` to `79.3`) |
-| `year` | Fieldwork year the course assigns the wave to, 2004–2013; two waves share 2004, 2005, 2008, 2010, 2011 and 2012 |
+| `year` | Fieldwork year to which the course assigns the wave, 2004–2013; two waves share 2004, 2005, 2008, 2010, 2011 and 2012 |
 | `cntry` | ISO 3166 two-letter code of the member state, as in `EUframes_cy.csv` |
-| `w1` | The design weight GESIS supplies with each wave (variable `W1`), which corrects each national sample to its population on sex, age, region and community size; mean about 1 within a country |
+| `w1` | The design weight that GESIS supplies with each wave (variable `W1`), which corrects each national sample to its population on sex, age, region and community size; mean about 1 within a country |
 | `it1` … `it14` | The fourteen items of "What does the European Union mean to you personally?", 1 if mentioned and 0 otherwise: 1 peace · 2 economic prosperity · 3 democracy · 4 social protection · 5 freedom to travel, study and work anywhere in the EU · 6 cultural diversity · 7 stronger say in the world · 8 euro · 9 unemployment · 10 bureaucracy · 11 waste of money · 12 loss of our cultural identity · 13 more crime · 14 not enough control at external frontiers |
 | `oth` | 1 if the respondent gave a spontaneous other answer |
 | `dk` | 1 if the respondent answered "don't know" |
@@ -50,7 +50,7 @@ The spring 2004 wave predates the accession of the ten new member states, which 
 | `urban` | Type of community: `rural`, `small_town`, `large_town` |
 | `rile` | Left–right self-placement, 1 to 10; asked in twelve of the sixteen waves and missing by design in the other four |
 
-The euro item (`it8`) is carried but not scored in any of the course's scales, following the published paper. The framing scales themselves are not in this file: they are built from the items in `prep/02_scales_and_panel.R`, where the scoring rule is a decision rather than a column.
+The euro item (`it8`) is kept in the file but not scored in any of the scales used in the course, following the published paper. The framing scales themselves are not in this file. They are built from the items in `prep/02_scales_and_panel.R`, where the scoring rule is chosen as a step of the analysis.
 
 ## What is derived from it
 
@@ -61,4 +61,4 @@ The euro item (`it8`) is carried but not scored in any of the course's scales, f
 | `teney_panel_weights.csv` | 270 | Design-weighted and count-built cell means, effective sample sizes, no-opinion counts, population denominators |
 | `teney_panel_measurement.csv` | 38,880 | Cell means under every combination of scoring rule, item set, no-opinion rule and cell weighting |
 
-All four are aggregates of at least several hundred respondents per cell and travel under CC BY 4.0.
+All four are aggregates of at least several hundred respondents per cell and are released under CC BY 4.0.

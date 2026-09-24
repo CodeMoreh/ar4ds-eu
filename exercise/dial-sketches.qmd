@@ -12,7 +12,7 @@ bibliography: ../references.bib
 # The per-cell summary of the maximal grid: one row for each estimand cell that
 # the six Level 1 choices define, with the number of measurement and estimation
 # variants fitted inside it and where their claim-aligned partial correlations
-# sit. Written by the article repository's R/17 alongside the shards under
+# sit. Written by R/17 in the article repository alongside the shards under
 # data/grid/, which this page fetches one at a time. This page is the ring
 # version of estimand-dial.qmd: the same main panel, driven by three dials in
 # the sidebar instead of fourteen selects.
@@ -76,7 +76,7 @@ ojs_define(cells_raw = cells)
 ## {.sidebar width="500px"}
 
 <span class="lv lv1">Level 1 – Estimands</span>
-<p class="lv-note">Each ring is one choice that rewrites the estimand statement, and the option under the red index at twelve o'clock is the one chosen. Click any segment and its ring turns to bring it under the index. From the outside in: four rings that name the variables – the outcome twice, which frames and how they are scored – two that say whom the question is about, and the estimator, which says how they are compared.</p>
+<p class="lv-note">Each ring is one choice that rewrites the estimand statement, and the option under the red index at twelve o'clock is the one chosen. Click any segment and its ring turns to bring it under the index. From the outside in, four rings name the variables – the outcome twice, which frames and how they are scored – two say whom the question is about, and the estimator ring says how the country-years are compared.</p>
 
 ```{ojs}
 //| echo: false
@@ -88,10 +88,10 @@ dial1_input = ringDial({
 })
 ```
 
-<p class="dial-legend"><span style="background:#0e3b6a"></span>the variables (frames, scoring, predictor, adjustment) &nbsp;&nbsp; <span style="background:#0f6b6b"></span>whom it is about &nbsp;&nbsp; <span style="background:#8c5a10"></span>how they are compared</p>
+<p class="dial-legend"><span style="background:#0e3b6a"></span>the variables (frames, scoring, predictor, adjustment) &nbsp;&nbsp; <span style="background:#0f6b6b"></span>whom it is about &nbsp;&nbsp; <span style="background:#8c5a10"></span>how the country-years are compared</p>
 
 <span class="lv lv2">Level 2 – Measurement</span>
-<p class="lv-note">The same question, put to the data differently. The statement does not change; the answer may. The outer three rings build the outcome; the inner ring names the published series behind the predictor, and it offers the growth series once the predictor ring is turned to GDP growth.</p>
+<p class="lv-note">These rings keep the question and change how the outcome and the predictor are measured, which can move the answer. In the estimand statement only the green words change. The outer three rings build the outcome, and the inner ring names the published series behind the predictor, offering the growth series once the predictor ring is turned to GDP growth.</p>
 
 ```{ojs}
 //| echo: false
@@ -104,19 +104,19 @@ dial2_input = ringDial({
 ```
 
 <span class="lv lv3">Level 3 – Estimation</span>
-<p class="lv-note">Neither the question nor the measures change; only the fitting does.</p>
+<p class="lv-note">These rings change how the model is fitted and how its standard errors are computed, and leave the question and the measures as they are.</p>
 
 ```{ojs}
 //| echo: false
 dial3_input = ringDial({
   size: 300, ringW: 24, gapIn: 2, gapOut: 8, fontSize: 9.5, nameSize: 7.5,
-  centre: ["Level 3", "the arithmetic"],
+  centre: ["Level 3", "the estimation"],
   value: {pred_form: "raw", family: "gaussian", se: "conventional"},
   rings: rings3
 })
 ```
 
-<p class="lv-note" style="margin-top:0.9rem">The rings open on C6HJR's published Multi100 specification. Nothing is fitted in the browser: every number is read from the pre-computed grid, one small file per question.</p>
+<p class="lv-note" style="margin-top:0.9rem">The page opens with the rings set to C6HJR's published Multi100 specification. Nothing is fitted in the browser: every number is read from the pre-computed grid, one small file per question.</p>
 
 ```{ojs}
 //| echo: false
@@ -324,7 +324,7 @@ async function readCsvGz(url) {
   let text;
   if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
     if (typeof DecompressionStream === "undefined")
-      throw new Error("This browser cannot inflate the results file; a current Chrome, Edge, Firefox or Safari can.");
+      throw new Error("This browser cannot decompress the results file; a current version of Chrome, Edge, Firefox or Safari can.");
     const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
     text = await new Response(stream).text();
   } else {
@@ -342,7 +342,7 @@ shard = cell === undefined
   : (await readCsvGz(`../data/grid/${cellId}.csv.gz`)).filter(d => d.construction === construction && typeof d.r_ca === "number" && Number.isFinite(d.r_ca))
 
 within = ["construction", "noop", "item_set", "cell_weight", "measure", "pred_form", "family", "se"]
-// written as blocks with a return: Quarto's dashboard rewrite drops the
+// written as blocks with a return: the dashboard rewrite in Quarto drops the
 // parentheses of an object-literal cell, which would turn it into a block of
 // bare statements with no value
 current = { return {construction, noop, item_set, cell_weight, measure, pred_form, family, se}; }
@@ -368,9 +368,9 @@ labels = {
   return {
   // the frame set names the frames and the scoring rule says what "more" means
   outcome: Object.fromEntries(Object.entries(frameName).map(([k, nm]) => [k,
-    construction === "count" ? `the number of ${nm} frames people attach to the EU`
+    construction === "count" ? `the number of ${nm} frames that people attach to the EU`
     : construction === "rate" ? `the proportion of the ${numWord[kItems[item_set][k]]} ${nm} frames that people attach to the EU`
-    : `the share of ${nm} frames among the frames people attach to the EU`])),
+    : `the share of ${nm} frames among the frames that people attach to the EU`])),
   predictor: {unemp: "the national unemployment rate", growth: "national GDP growth"},
   units: {
     all:        "the 270 country-years of the 27 member states surveyed between 2004 and 2013",
@@ -383,11 +383,11 @@ labels = {
     fe_twoway:  "each country with itself over time, net of what all countries share in a given year",
     fe_country: "each country with itself over time",
     re:         "a blend of change within countries and differences between them, in proportion to how precisely each is measured",
-    pooled_cl:  "country-years with one another as one pool, so that differences between countries carry the comparison"
+    pooled_cl:  "country-years with one another as one pool, so that differences between countries make up most of the comparison"
   },
   weighting: {
     none:   "each country-year counting once",
-    n_cell: "each country-year counting in proportion to the respondents behind its average",
+    n_cell: "each country-year counting in proportion to the number of respondents behind its average",
     n_eff:  "each country-year counting in proportion to its effective sample size once the design weights are applied",
     pop:    "each country counting in proportion to its adult population, so that the answer describes people rather than country-years"
   },
@@ -398,9 +398,9 @@ labels = {
            mi_amelia: "imputing the answers of respondents who named nothing (Amelia)"},
     item_set: {all: "from all 13 items", un: "from the 12 items other than 'unemployment'"},
     cell_weight: {unweighted: "with cells averaged as interviewed", design: "with design-weighted cells"},
-    measure: {wb_nat: "the World Bank series", es_1574_act: "Eurostat's 15–74 rate as a share of the active population",
-              es_2064_pop: "Eurostat's 20–64 rate as a share of the population", es_2564_lfs: "Eurostat's 25–64 labour-force-survey rate",
-              es_1574_tips: "Eurostat's headline 15–74 table", wb_growth: "the World Bank growth series", es_growth: "Eurostat's growth series"}
+    measure: {wb_nat: "the World Bank series", es_1574_act: "the Eurostat 15–74 rate as a share of the active population",
+              es_2064_pop: "the Eurostat 20–64 rate as a share of the population", es_2564_lfs: "the Eurostat 25–64 labour-force-survey rate",
+              es_1574_tips: "the Eurostat 15–74 table tipsun20", wb_growth: "the World Bank growth series", es_growth: "the Eurostat growth series"}
   }
   };
 }
@@ -412,16 +412,16 @@ fmt = d3.format(".3f")
 problem = cell === undefined
   ? "That pairing is not in the universe: the random-effects estimator is never fitted with regression weights. Set the weight to none or choose another estimator."
   : hit === undefined
-    ? (family === "beta" && construction === "count" ? "A count of items is not a proportion, so it has no beta twin. Choose the per-item rate, which is the count divided by the number of items in the set, or the linear family."
+    ? (family === "beta" && construction === "count" ? "A count of items is not a proportion, so it cannot be modelled with the beta family. Choose the per-item rate, which is the count divided by the number of items in the set, or the linear family."
        : family === "beta" ? "The beta family was pre-computed only with the measurement held fixed: the share or the per-item rate of all 13 items, no-opinion respondents scored zero, cells as interviewed, the World Bank series."
-       : noop.startsWith("mi_") ? "The imputed options were pre-computed only for the unemployment arm, with everything else held fixed: share of all 13 items, cells as interviewed, World Bank series, raw form, linear family."
+       : noop.startsWith("mi_") ? "The imputed options were pre-computed only with unemployment as the predictor and with everything else held fixed: share of all 13 items, cells as interviewed, World Bank series, raw form, linear family."
        : "That combination was not fitted.")
     : null
 placement = hit === undefined ? NaN : d3.mean(questions, d => d.median_rca < hit.r_ca ? 1 : 0)
 verdict = hit === undefined ? null
   : hit.supports_claim && hit.sig ? ["for", "supports the claim, p < .05"]
-  : hit.supports_claim ? ["ns", "claim's direction, not significant"]
-  : ["against", "against the claim's direction"]
+  : hit.supports_claim ? ["ns", "in the direction of the claim, not significant"]
+  : ["against", "against the direction of the claim"]
 statLabel = family === "beta" ? "z" : "t"
 
 // The six Level 1 choices in the order of the rings, with the ring colours.
@@ -459,7 +459,7 @@ html`<p class="estimand">Among <b>${labels.units[sample]}</b>, the association b
   <span class="measured">(measured as ${labels.measured.measure[measure]})</span> and <b>${labels.outcome[outcome]}</b>
   <span class="measured">(built ${labels.measured.item_set[item_set]}, ${labels.measured.noop[noop]}, ${labels.measured.cell_weight[cell_weight]})</span>,
   comparing <b>${labels.comparison[estimator]}</b>${adjustment}, with <b>${labels.weighting[weights]}</b>.</p>
-<p class="small" style="margin-top:0.6rem">Blue is the question. Green is how it is measured: turn a ring of the Level 2 dial and only the green words move. The Level 3 dial changes nothing in the statement.</p>`
+<p class="small" style="margin-top:0.6rem">The words in blue state the question, and the words in green say how its variables are measured. Turn a ring of the Level 2 dial and only the green words change, while the Level 3 dial leaves the statement as it is.</p>`
 ```
 
 ```{ojs}
@@ -474,7 +474,7 @@ problem !== null
   <div><div class="k">p</div><div class="v">${hit.p < 0.001 ? "< 0.001" : fmt(hit.p)}</div></div>
   <div><div class="k">aligned r</div><div class="v">${fmt(hit.r_ca)}</div></div>
 </div>
-<p class="small">Without changing the question, the answer can be moved from <b>${fmt(d3.min(shard, d => d.r_ca))}</b> to <b>${fmt(d3.max(shard, d => d.r_ca))}</b> by the Level 2 and Level 3 choices alone (median ${fmt(d3.median(shard, d => d.r_ca))}; ${Math.round(100 * d3.mean(shard, d => d.sig ? 1 : 0))}% of the ${shard.length} answers significant). Among the ${questions.length.toLocaleString()} questions the menu can ask, ${Math.round(100 * placement)}% have a median answer more claim-supporting than this one.</p>`
+<p class="small">Without changing the question, the answer can be moved from <b>${fmt(d3.min(shard, d => d.r_ca))}</b> to <b>${fmt(d3.max(shard, d => d.r_ca))}</b> by the Level 2 and Level 3 choices alone (median ${fmt(d3.median(shard, d => d.r_ca))}; ${Math.round(100 * d3.mean(shard, d => d.sig ? 1 : 0))}% of the ${shard.length} answers significant). Among the ${questions.length.toLocaleString()} questions that the menu can ask, ${Math.round(100 * placement)}% have a median answer more claim-supporting than the answer from the chosen specification.</p>`
 ```
 
 ### Row {.flow}
@@ -523,7 +523,7 @@ Plot.plot({
 })
 ```
 
-<p class="caption">Each dot is one way of answering the question the Level 1 dial fixes: one combination of the Level 2 and Level 3 options, read from the pre-computed grid. Dark blue dots are significant at the five per cent level, grey ones are not. The orange ring is the chosen specification, and the dashed line is the question's median answer. Hover over a dot for its options. The menu above the chart colours the dots by one Level 2 or Level 3 choice, to show which of its options sit where along the curve.</p>
+<p class="caption">Each dot is one way of answering the question that is fixed by the Level 1 dial: one combination of the Level 2 and Level 3 options, read from the pre-computed grid. Dark blue dots are significant at the five per cent level, grey ones are not. The orange ring is the chosen specification, and the dashed line is the median answer to the question. Hover over a dot for its options. The menu above the chart colours the dots by one Level 2 or Level 3 choice, to show where each of its options falls along the curve.</p>
 
 :::
 
@@ -554,7 +554,7 @@ Plot.plot({
 })
 ```
 
-<p class="caption">One row for every option on every ring of the Level 1 dial, grouped by ring from the outside in. The orange dots are the six options under the index now. Each other dot is what the question's median answer becomes if that one ring is turned to that option and the other five are left as they are, in the ring's colour: blue for the three rings that name the variables, teal for the two that say whom the question is about, bronze for the estimator. The shaded band is where the middle 80% of the current question's own answers lie, across every combination of the Level 2 and Level 3 options. A dot outside the band means that turning that one ring moves the answer further than all the measurement and arithmetic decisions together can. Hover over a dot for that question's range and its share of significant answers.</p>
+<p class="caption">One row for every option on every ring of the Level 1 dial, grouped by ring from the outside in. The orange dots are the six options under the index now. Each other dot is what the median answer to the question becomes if that one ring is turned to that option and the other five are left as they are, drawn in the colour of its ring: blue for the three rings that name the variables, teal for the two that say whom the question is about, bronze for the estimator. The shaded band covers the middle 80% of the answers to the current question, across every combination of the Level 2 and Level 3 options. A dot outside the band means that turning that one ring moves the answer further than all the measurement and estimation decisions together can. Hover over a dot for the range of answers to that question and the share of them that is significant.</p>
 
 :::
 
@@ -567,7 +567,7 @@ Plot.plot({
   width: 1100,
   marginBottom: 40,
   style: {fontSize: "12px"},
-  x: {label: "Median claim-aligned partial r of each question the menu can ask →", domain: [-0.75, 0.45]},
+  x: {label: "Median claim-aligned partial r of each question that the menu can ask →", domain: [-0.75, 0.45]},
   y: {label: "↑ Questions", grid: true},
   marks: [
     Plot.rectY(questions, Plot.binX({y: "count"}, {x: "median_rca", fill: "#b9c9dc", thresholds: 40})),
@@ -578,18 +578,18 @@ Plot.plot({
 })
 ```
 
-<p class="caption">Every question the Level 1 dial can ask, the per-item rate counted with the count it rescales, each summarised by the median of its answers, with the chosen question marked in orange. Below zero supports the claim on every scale, because negative framings are reverse-coded and the sign convention for growth is flipped.</p>
+<p class="caption">Every question that can be set on the Level 1 dial, each summarised by the median of its answers, with the chosen question marked in orange. The per-item rate, which rescales the count, is not counted as a question of its own. Below zero supports the claim on every scale, because negative framings are reverse-coded and the sign convention for growth is flipped.</p>
 
 :::
 
 ::: {.card title="How to read this page"}
 
 <div class="small" style="max-width:75ch">
-<p><b>The three dials</b> hold the fourteen choices, one ring each, and the option under the red index at twelve o'clock is the one chosen; click a segment to turn its ring. <b>The statement</b> is the test the course uses. Turn a ring of the Level 1 dial and the statement changes: a different question is being asked of the data, and two analysts who set it differently were not disagreeing about method. Turn a ring of the Level 2 dial and only the "measured as" words change; turn one of the Level 3 dial and nothing in the statement changes at all. The Level 1 rings come in three groups, from the outside in: the frame set, the scoring rule, the predictor and the adjustment set name the variables; the sample and the weight say whom the question is about; the estimator says how they are compared.</p>
-<p><b>The answers to this question</b> shows all the ways the pre-computed grid answered the question the Level 1 dial fixes – every combination of the Level 2 and Level 3 options – ranked from most to least claim-supporting. Dark blue dots are significant at the five per cent level, grey ones are not, and the orange ring is the chosen specification. Colour the dots by one choice to find out which of its options sit where.</p>
-<p><b>One ring at a time</b> shows what each alternative option on a Level 1 ring would do, holding the other five as they are: each dot is the median answer of that question, the orange dots are the chosen question, and the shaded band behind them is where the middle 80% of the current question's own answers lie. A dot outside the band means that turning that one ring moves the answer further than every Level 2 and Level 3 choice together.</p>
-<p><b>All the questions</b> places the current question among every question the menu can ask, each summarised by its median answer; the per-item rate is counted with the count it rescales.</p>
-<p>The <a href="spec-menu.qmd">specification menu</a> gives, for every choice, how much of the variation in results it carries and how often moving it alone crosses p = .05; the <a href="../companion/weighting.qmd">weighting</a> and <a href="../companion/missingness.qmd">missing-answers</a> pages take two of the Level 2 choices apart.</p>
+<p><b>The three dials</b> hold the fourteen choices, one ring each, and the option under the red index at twelve o'clock is the one chosen. Click a segment to turn its ring. <b>The statement</b> is how the course tests whether two analyses ask the same question. Turn a ring of the Level 1 dial and the statement changes, because a different question is now being asked of the data; two analysts who set it differently were not disagreeing about method. Turn a ring of the Level 2 dial and only the green words change, while turning a ring of the Level 3 dial leaves the statement as it is. The Level 1 rings come in three groups. From the outside in, the frame set, the scoring rule, the predictor and the adjustment set name the variables. The sample and the weight say whom the question is about, and the estimator says how the country-years are compared.</p>
+<p><b>The answers to this question</b> ranks every answer to the question that is fixed by the Level 1 dial, one for each combination of the Level 2 and Level 3 options in the pre-computed grid, from most to least claim-supporting. Dark blue dots are significant at the five per cent level, grey ones are not, and the orange ring is the chosen specification. Colour the dots by one choice to find out where each of its options falls.</p>
+<p><b>One ring at a time</b> shows what each alternative option on a Level 1 ring would do to the answer, holding the other five as they are. Each dot is the median answer to the question that the turn produces, the orange dots mark the chosen question, and the shaded band behind them covers the middle 80% of the answers to the current question. A dot outside the band means that turning that one ring moves the answer further than every Level 2 and Level 3 choice together.</p>
+<p><b>All the questions</b> places the current question among every question that the menu can ask, each summarised by its median answer. The per-item rate, which rescales the count, is not counted as a question of its own.</p>
+<p>The <a href="spec-menu.qmd">specification menu</a> gives, for every choice, the share of the variation in results that is attributed to it and how often changing that choice alone takes a result across p = .05. The <a href="../companion/weighting.qmd">weighting</a> and <a href="../companion/missingness.qmd">missing-answers</a> pages examine two of the Level 2 choices in detail.</p>
 </div>
 
 :::

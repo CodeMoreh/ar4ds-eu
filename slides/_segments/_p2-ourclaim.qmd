@@ -14,7 +14,7 @@
 :::
 
 ::: notes
-Now apply it to our paper – and this one is a chat exercise. Write the statement on the slide with the brackets filled in: your one-sentence estimand for the claim. Type it, hold it, send when I say go. [go; read three or four aloud.] Look at the spread in the chat – some of you wrote about a person's framing, some about a country-year average, some named different years. None of those are wrong; they are different questions, with different confounding stories, and the coefficient means something different in each. That spread, in a room that just watched the same slides, is the red-card diagnosis happening live. Keep your sentence – it goes into your preregistration this afternoon, and this afternoon you will also see what the unit choice did to the five published analysts.
+Now apply it to our paper – and this one is a chat exercise. Write the statement on the slide with the brackets filled in: your one-sentence estimand for the claim. Type it, hold it, send when I say go. [go; read three or four aloud.] Look at the spread in the chat – some of you wrote about a person's framing, some about a country-year average, some named different years. None of those are wrong. They are different questions, with different confounding stories, and the coefficient means something different in each. That spread, in a class that has just watched the same slides, repeats what Auspurg and Brüderl found among the red-card teams. Keep your statement, because it goes into your preregistration this afternoon, and this afternoon you will also see what the choice of unit did to the estimates of the five published analysts.
 :::
 
 ## We cannot identify a causal effect here {.smaller}
@@ -30,7 +30,7 @@ So why spend half an hour on causal graphs?
 :::
 
 ::: {.fragment .small}
-Because the graph does three jobs that survive the loss of identification:
+Because the graph still does three jobs that do not need identification:
 
 - It says **which association** you are after – the total effect, not whatever the software returns
 - It tells you **which variables belong in the model**, and, just as usefully, which do not
@@ -38,7 +38,7 @@ Because the graph does three jobs that survive the loss of identification:
 :::
 
 ::: notes
-Let me be blunt about where we stand. This is an observational panel of twenty-seven countries. Nobody assigned unemployment to anyone. The variables plausibly feed back into each other over time, and the whole decade is shot through with shocks that hit everybody at once. Nothing in that design licenses the sentence "unemployment causes a shift in EU framing". So why are we about to spend half an hour on causal graphs? Because the graph does three jobs that survive perfectly well without identification. It says which association you are actually after – the total effect, say, rather than whatever the software happens to return. It tells you which variables belong in your model, and just as usefully which do not. And it puts your assumptions on paper where a reader can disagree with a specific arrow. The third job is the one that pays: an argument about an arrow is productive in a way that an argument about a coefficient usually is not.
+This is an observational panel of twenty-seven countries. Nobody assigned unemployment to anyone. The variables plausibly feed back into each other over time, and the whole decade is shot through with shocks that hit everybody at once. Nothing in that design licenses the sentence "unemployment causes a shift in EU framing". So why spend half an hour on causal graphs at all? Because the graph does three jobs that do not need identification. It says which association you are actually after – the total effect, say, rather than whatever the software happens to return. It tells you which variables belong in your model, and just as usefully which do not. And it puts your assumptions on paper where a reader can disagree with a specific arrow. An argument about an arrow is productive in a way that an argument about a coefficient usually is not.
 :::
 
 ## Publishing the estimand and the graph {#say-it-in-public-or-it-does-not-count .smaller}
@@ -46,21 +46,21 @@ Let me be blunt about where we stand. This is an observational panel of twenty-s
 ::: {.small}
 The graph and the estimand are only worth anything if they are **written down where someone else can read them**:
 
-- in the paper, not in your head
+- in the paper itself
 - **before** the model runs, not reconstructed afterwards
-- with the **limitations named by you**, not discovered by a reviewer
+- with the **limitations named by you** before a reviewer finds them
 :::
 
 ::: {.fragment .small}
-In Part 4 you write exactly that down – the estimand, the graph-based justification, the one specification, and the rule for what would count as support – and you do it **before** you see a result.
+In Part 4 you write all of that down – the estimand, the graph-based justification, the one specification, and the rule for what would count as support – and you do it **before** you see a result.
 :::
 
 ::: {.fragment .small}
-The technical name for that is preregistration, and what it does is stop the result from choosing the question.
+The technical name for that is preregistration, and it fixes the question before anyone knows the result.
 :::
 
 ::: notes
-And one more step, which is where the day is heading. A graph you drew and did not publish is worth almost nothing. It has to be written down where someone else can read it – in the paper, not in your head. It has to be written before the model runs, not reconstructed afterwards once you know which way the coefficient went, because a graph drawn after the fact will very reliably justify the result you already have. And the limitations have to be named by you, not discovered by a reviewer. That requirement runs through the rest of today. In part four you will write exactly that down: your estimand, your graph-based justification, the one specification you commit to, and your rule for what would count as support – and you will do it before you see a result. The technical name for it is preregistration; part four is where you do it for real.
+And one more step, which is where the day is heading. A graph you drew and did not publish is worth almost nothing. It has to be written down in the paper, where someone else can read it. It has to be written before the model runs, not reconstructed afterwards once you know which way the coefficient went, because a graph drawn after the fact will very reliably justify the result you already have. And you have to name the limitations yourself, before a reviewer finds them. That requirement runs through the rest of today. In part four you will write all of that down: your estimand, your graph-based justification, the one specification you commit to, and your rule for what would count as support – and you will do it before you see a result. The technical name for it is preregistration, and part four is where you do it for real.
 :::
 ## The EU-frames DAG, half built
 
@@ -169,12 +169,12 @@ dagify(
 ::::
 
 ::: notes
-And this is the graph you will finish yourselves. The solid part is what we are committing to: unemployment to framing is the path of interest, and country and year are the two confounder pairs – stable national traits on one side, EU-wide shocks in a given year on the other. Run `adjustmentSets()` on this graph and it answers: country and year. Which is precisely what a two-way fixed-effects model absorbs – the graph and the baseline model are the same claim, written in two languages. The three pale nodes are yours to wire up, and they are genuine decisions. Is GDP growth a time-varying confounder that fixed effects cannot reach – a slump that raises unemployment and sours sentiment in the same year? Is the bailout a mediator, in which case you leave it alone if you want the total effect? Multi100 told us to disregard politicisation – was that defensible? The code beside the picture is the same graph written as R formulas, one arrow to a line, so wiring a node up is uncommenting the line you believe and running it again to see what the adjustment set has become. Whatever you decide here becomes your model in the next task.
+And this is the graph you will finish yourselves. The solid part is what we are committing to: unemployment to framing is the path of interest, and country and year are the two confounder pairs – stable national traits on one side, EU-wide shocks in a given year on the other. Run `adjustmentSets()` on this graph and it returns country and year, which is what a two-way fixed-effects model absorbs. So the graph and the baseline model make the same claim, once as a picture and once as a regression. The three pale nodes are yours to wire up, and they are genuine decisions. Is GDP growth a time-varying confounder that fixed effects cannot reach – a slump that raises unemployment and sours sentiment in the same year? Is the bailout a mediator, in which case you leave it alone if you want the total effect? Multi100 told us to disregard politicisation – was that defensible? The code beside the picture is the same graph written as R formulas, one arrow to a line, so wiring a node up is uncommenting the line you believe and running it again to see what the adjustment set has become. Whatever you decide here becomes your model in the next task.
 :::
 
 
 <!-- DEEP DIVE START: R tutorial (10 slides). Optional depth – press d during
      the talk, or load the deck with ?depth=0, and slides/nav-tools.html lifts
      the whole run out of the DOM. The switch acts on the .deepdive class that
-     every slide in the run carries, so that class is the load-bearing part;
+     every slide in the run has, so that class is the load-bearing part;
      these markers are here for the reader. -->
