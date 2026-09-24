@@ -47,10 +47,10 @@ The first establishes that careful people disagree, and the second explains **wh
 :::
 
 ::: notes
-Before we go further into our own case, I want to put two studies beside it – and one of them you have already met. Silberzahn and colleagues, the red-card study from earlier: twenty-nine teams, one dataset, one question, twenty intervals excluding one and nine not. There are all twenty-nine again, flattened onto a single line so that you can take in their spread at a glance. That is the study that establishes careful people disagree. The second one is new, and the rest of this part depends on it. Auspurg and Brüderl, twenty twenty-one, went back through all twenty-nine of those pipelines and asked something that the original had not thought to ask: what was each team actually trying to measure? So one study shows the disagreement, and the other explains it. Let me take the second one properly.
+Before we go further into our own case, I want to put two studies beside it, and one of them you have already met. [advance] Silberzahn and colleagues, the red-card study from earlier: twenty-nine teams, one dataset, one question, twenty intervals excluding one and nine not. There are all twenty-nine again, flattened onto a single line so that you can take in their spread at a glance. That study establishes that careful people disagree. [advance] The second one is new, and the rest of this part depends on it. Auspurg and Brüderl, twenty twenty-one, went back through all twenty-nine of those pipelines and asked something that the original had not thought to ask: what was each team actually trying to measure? [advance] So one study shows the disagreement, and the other explains it. Let me take the second one properly.
 :::
 
-## They were not answering the same question
+## Four estimands in the red-card study {#they-were-not-answering-the-same-question}
 
 :::: {.none}
 <br>
@@ -61,7 +61,7 @@ descriptive association · discrimination *net of mediators* · variance-maximis
 :::
 
 ::: {.fragment .fadeInUp}
-The dispersion was largely a **question**-multiverse, not an analysis-multiverse.
+The dispersion came largely from a multiverse of **questions**, rather than from a multiverse of analyses.
 :::
 ::::
 
@@ -70,11 +70,11 @@ The dispersion was largely a **question**-multiverse, not an analysis-multiverse
 :::
 
 ::: notes
-And what they found is that the teams were not answering one question. They found four. Some estimated the plain descriptive association. Some went after discrimination proper – the effect net of everything that legitimately explains red cards. Some built models tuned to explain variance. And some were frankly exploring. Of course the answers differed – they were answers to different questions. That reframes the crisis quite a bit, because much of what looks like analytical instability is unstated disagreement about *what is being estimated*.
+Auspurg and Brüderl found that the twenty-nine teams had been answering four different questions. [advance] Some estimated the plain descriptive association. Some went after discrimination proper – the effect net of everything that legitimately explains red cards. Some built models tuned to explain variance, and some were frankly exploring. [advance] With four different questions in play, the answers were bound to differ. That reframes the crisis quite a bit, because much of what looks like analytical instability is unstated disagreement about *what is being estimated*.
 :::
 
 
-## Fix the estimand, and the spread collapses
+## Red-card estimates with and without a fixed estimand {#fix-the-estimand-and-the-spread-collapses}
 
 ```{r}
 #| label: redcard-contrast
@@ -111,7 +111,7 @@ ggplot(contrast, aes(or, grp, colour = grp)) +
 ```
 
 ::: {.small}
-- Fix the question → derive the model space from a DAG → run **all 486** justifiable models → **SD 0.45 → 0.06**
+- Fix the question, derive the model space from a DAG, and run **all 486** justifiable models: the SD falls from **0.45 to 0.06**
 - The 0.45 in the top row comes mostly from **two analyses**, the outliers beside a tight cluster
 :::
 
@@ -120,14 +120,14 @@ ggplot(contrast, aes(or, grp, colour = grp)) +
 :::
 
 ::: notes
-Auspurg and Brüderl then fixed one estimand – discrimination, properly defined – used a causal graph to derive every model specification consistent with it, four hundred and eighty-six of them, and ran the lot. Look what happens to the spread: standard deviation point four five in the crowd, point zero six with the question fixed. The top row there is the twenty-nine published estimates themselves, and only the bottom row is drawn to the reported median and standard deviation, because those four hundred and eighty-six values were never published. What we take from them is the procedure that this course follows: a precise question, assumptions drawn out explicitly, then a whole multiverse rather than one path, then sensitivity analysis. The spread in the top row comes from a tight cluster and two outliers, which is why the standard deviation is about two and a half times what the cluster alone would give you. With the question fixed, even those two disappear. [advance]
+Auspurg and Brüderl then fixed one estimand – discrimination, properly defined – used a causal graph to derive every model specification consistent with it, four hundred and eighty-six of them, and ran the lot. The standard deviation falls from point four five among the twenty-nine teams to point zero six with the question fixed. The top row there is the twenty-nine published estimates themselves, and only the bottom row is drawn to the reported median and standard deviation, because those four hundred and eighty-six values were never published. The spread in the top row comes from a tight cluster and two outliers, which is why its standard deviation is about two and a half times what the cluster alone would give you, and with the question fixed even those two disappear. What we take from the study is the procedure that this course follows: a precise question, assumptions drawn out explicitly, then a whole multiverse rather than one path, then sensitivity analysis. [advance]
 :::
 
 
-## Has credibility been credibly destroyed? {#the-crisis-has-a-crisis-of-its-own .smaller}
+## Under-specified research questions {#the-crisis-has-a-crisis-of-its-own .smaller}
 
 :::: {.none}
-Auspurg and Brüderl's title asks it directly: *has the credibility of the social sciences been credibly destroyed?*
+Auspurg and Brüderl put the question in their title: *has the credibility of the social sciences been credibly destroyed?*
 
 ::: {.fragment .fadeInUp}
 If the twenty-nine teams answered **four different questions**, most of their disagreement is not evidence that analysis is unreliable.
@@ -151,5 +151,5 @@ This reading is more optimistic, and also more demanding, because it places the 
 :::
 
 ::: notes
-Now, this diagnosis has a consequence that goes well beyond the red-card study, and Auspurg and Brüderl put it in their title: has the credibility of the social sciences been credibly destroyed? If the twenty-nine teams were in fact answering four different questions, then most of their disagreement is not evidence that data analysis is unreliable. It is evidence that the question they were handed was under-specified, and that is an ordinary, fixable defect of research design. Read that way, the whole many-analyst literature stops being a verdict on the field and becomes a diagnosis of vague research questions. I find that a considerably more optimistic reading. It is also a more demanding one, because it takes the problem away from statistics, where you could hope a better estimator would save you, and puts it back on whoever writes the question, which today means you.
+Now, this diagnosis has a consequence that goes well beyond the red-card study, and Auspurg and Brüderl put it in their title: has the credibility of the social sciences been credibly destroyed? If the twenty-nine teams were in fact answering four different questions, then most of their disagreement is not evidence that data analysis is unreliable. It is evidence that the question they were handed was under-specified, and that is an ordinary, fixable defect of research design. Read that way, the whole many-analyst literature stops being a verdict on the field and becomes a diagnosis of vague research questions. I find that a considerably more optimistic reading. It is also a more demanding one, because it takes the problem away from statistics, where you could hope a better estimator would save you, and puts it back on whoever writes the question, which in the tasks ahead means you.
 :::

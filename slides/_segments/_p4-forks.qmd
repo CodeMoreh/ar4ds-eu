@@ -1,4 +1,20 @@
-## The outcome fork carries half the variance {#the-outcome-fork-carries-half-of-everything}
+## A bet on the six axes {#place-your-bet}
+
+::: {.big}
+Six axes: outcome · predictor form · estimator · copredictor · sample · weights
+:::
+
+::: {.none}
+**Which axis moves the estimates most across all 840 specifications?**
+
+Type your guess – hold it – send on "go".
+:::
+
+::: notes
+Before I show you the answer, commit to a guess. You have made these choices yourselves in the hands-on, so you have instincts now. Of the six axes of the grid of 840, which one moves the estimates most across the whole grid? Estimator is the popular pick, because fixed versus random effects is the favourite fight in methods seminars. Copredictors is another, since everyone worries about growth. Type your answer, hold it, and send on go. [go; scan the chat.] Interesting spread. Most classes bet on estimator or copredictors. Let's see.
+:::
+
+## Fork importance {#the-outcome-fork-carries-half-of-everything}
 
 ```{r}
 #| label: fork-importance
@@ -39,10 +55,10 @@ Computed over the committed data/spec_grid.csv; imported as data/fork_importance
 :::
 
 ::: notes
-The outcome fork accounts for just under half of all the variation in the grid – forty-nine point seven per cent. And now look at the bottom of the chart. Estimator, predictor form, copredictor and weights are the axes we argue about in seminars, and together they account for under two per cent. The residual block is interactions, combinations that matter beyond any single axis. One caveat: this decomposition is computed on the grid as estimated, before claim-alignment, so most of the outcome share is the polarity split itself – positive framings falling, negative framings rising. That split is real variation in what the specifications estimate. The aligned chart removes it from the display, not from the decomposition. On the claim-aligned scale the ranking reverses. In my extended analysis of the same grid, the estimator then carries about fifty-eight per cent and the outcome about twelve, because once every framing points the same way, the gap between the pooled model and the other three estimators is the largest difference left. The to-weight-or-not debate barely moves the estimate on either scale. Whoever guessed "outcome" in the chat: take the point.
+The outcome fork accounts for just under half of all the variation in the grid – forty-nine point seven per cent. And now look at the bottom of the chart. Estimator, predictor form, copredictor and weights are the axes we argue about in seminars, and together they account for under two per cent. The residual block is interactions, combinations that matter beyond any single axis. One caveat: this decomposition is computed on the grid as estimated, before claim-alignment, so most of the outcome share is the polarity split itself – positive framings falling, negative framings rising. That split is real variation in what the specifications estimate. The aligned chart removes it from the display, not from the decomposition. On the claim-aligned scale the ranking reverses. In my extended analysis of the same grid, the estimator then accounts for about fifty-eight per cent and the outcome about twelve, because once every framing points the same way, the gap between the pooled model and the other three estimators is the largest difference left. The to-weight-or-not debate barely moves the estimate on either scale. Whoever guessed "outcome" in the chat: take the point.
 :::
 
-## The unit of analysis does the work
+## The five analysts in the grid {#the-unit-of-analysis-does-the-work}
 
 ```{r}
 #| label: analyst-placement
@@ -77,10 +93,10 @@ ggplot(an_placed,
 :::
 
 ::: notes
-Now put the five published analysts inside the same grid – for each one, the share of all eight hundred and forty claim-aligned specifications that come out more negative than their value. And look who is at the ends. KEVF1, the most strongly claim-supporting of the five at around the sixteenth percentile, and PRL47, the closest to the null at around the sixty-eighth – those two, at the opposite extremes, are the two analysts who worked at *person level*, on the third of a million respondents, rather than on aggregates. The three aggregate pipelines sit between them; my own constrained baseline falls almost exactly at the median of the grid. What scatters five competent people across half the curve is the unit of analysis and the outcome metric, both decided before any model is fitted, and not Stata against R or the choice of estimator.
+Now put the five published analysts inside the same grid – for each one, the share of all eight hundred and forty claim-aligned specifications that come out more negative than their value. And look who is at the ends. KEVF1, the most strongly claim-supporting of the five at around the sixteenth percentile, and PRL47, the closest to the null at around the sixty-eighth – those two, at the opposite extremes, are the two analysts who worked at *person level*, on the third of a million respondents, rather than on aggregates. The three aggregate pipelines sit between them; my own constrained baseline falls almost exactly at the median of the grid. Five competent people end up scattered across half the curve because of the unit of analysis and the outcome metric, both decided before any model is fitted, rather than because of Stata against R or the choice of estimator.
 :::
 
-## Where the sign flips concentrate {#the-sign-flips-are-patterned-not-random}
+## Sign flips by estimator and sample {#the-sign-flips-are-patterned-not-random}
 
 ```{r}
 #| label: sign-flips
@@ -121,5 +137,5 @@ p_est + p_smp
 :::
 
 ::: notes
-One more way to read the grid: where do the sign flips occur? Take only the cosmopolitan-outcome specifications – the claim predicts a negative coefficient, so a positive estimate is a flip – and cross-tab the flips by axis. They are not scattered randomly. The estimator that absorbs no between-country differences at all – the pooled model with clustered errors – accounts for thirty-three of the forty-one, and the flips are also concentrated in the samples that exclude the bailout countries. In other words, when this claim flips sign, it flips for identifiable, diagnosable reasons: let the between-country comparison into the estimate, or remove the crisis countries, and the association goes. Taken apart like this, a specification curve lets you name the choices that produce the extremes.
+The grid can also be read for where the sign flips occur. Take only the cosmopolitan-outcome specifications – the claim predicts a negative coefficient, so a positive estimate is a flip – and cross-tab the flips by axis. They are not scattered randomly. The estimator that absorbs no between-country differences at all – the pooled model with clustered errors – accounts for thirty-three of the forty-one, and the flips are also concentrated in the samples that exclude the bailout countries. In other words, when this claim flips sign, it flips for identifiable, diagnosable reasons: let the between-country comparison into the estimate, or remove the crisis countries, and the association goes. Taken apart like this, a specification curve lets you name the choices that produce its extremes, and the same grid can place any single result, your own included.
 :::

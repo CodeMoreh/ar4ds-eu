@@ -1,7 +1,7 @@
-## Six ways to say 'EU framing' {.smaller .deepdive run="methods"}
+## The six framing scales {#six-ways-to-say-eu-framing .smaller .deepdive run="methods"}
 
 ::: {.skiplink}
-[12 optional slides · skip to Hands-on 4 →](#hands-on-4-work-the-menu)
+[Methods tutorial · 12 slides · skip to Hands-on 4 →](#hands-on-4-work-the-menu)
 :::
 
 ::: {.small}
@@ -16,14 +16,14 @@
 :::
 
 ::: {.fragment .small}
-The claim says "decrease positive dimensions" – `mpos` is the more literal reading, `mcosmo` is what was instructed. Across all six scales, the outcome carries roughly **half** the variance in the grid as estimated, most of it because positive and negative framings take opposite signs. The `mpos`-against-`mcosmo` disagreement on its own carries **0.15%**.
+The claim says "decrease positive dimensions" – `mpos` is the more literal reading, `mcosmo` is what was instructed. Across all six scales, the choice of outcome accounts for roughly **half** the variance in the grid as estimated, most of it because positive and negative framings take opposite signs. The disagreement between `mpos` and `mcosmo` accounts on its own for **0.15%**.
 :::
 
 ::: notes
-Start with the outcome. On the grid as estimated it carries about half the variance, more than all the other choices put together, though most of that half comes from positive and negative framings pointing in opposite directions. Once the framings are claim-aligned, the estimator carries more. One survey question – what does the EU mean to you personally – with thirteen response options, which the paper sorts into four scales. Cosmopolitan: peace, democracy, free movement, diversity, a stronger voice in the world. Utilitarian: prosperity and social protection. Communitarian: unemployment, loss of identity, crime, border control. Libertarian: bureaucracy and waste of money. And then two composites, all the positive items and all the negative ones. Notice the third column, because it trips people up: for the negative framings the claim predicts a positive coefficient, not a negative one. And notice the fragment. The words of the claim itself are "decrease positive dimensions", which points at the composite rather than at cosmopolitan alone. On its own, that disagreement carries less than one per cent of the variance in the grid.
+We start with the outcome. One survey question – what does the EU mean to you personally – offers thirteen response options, which the paper sorts into four scales. Cosmopolitan: peace, democracy, free movement, diversity, a stronger voice in the world. Utilitarian: prosperity and social protection. Communitarian: unemployment, loss of identity, crime, border control. Libertarian: bureaucracy and waste of money. And then two composites, all the positive items and all the negative ones. The third column trips people up, because for the negative framings the claim predicts a positive coefficient. [advance] The words of the claim itself are "decrease positive dimensions", which points at the composite rather than at cosmopolitan alone, yet on its own that disagreement accounts for less than one per cent of the variance in the grid. The choice among all six scales accounts for about half of it as estimated, more than all the other choices put together, and most of that half comes from positive and negative framings pointing in opposite directions. Once the framings are claim-aligned, the estimator accounts for more than the outcome does.
 :::
 
-## Building a scale: mean, sum or share? {.smaller .deepdive run="methods"}
+## Building a scale – mean, sum or share {#building-a-scale-mean-sum-or-share .smaller .deepdive run="methods"}
 
 ::: {.small}
 Five binary items per respondent. Three defensible summaries:
@@ -42,10 +42,10 @@ Among the five Multi100 analysts, one used a **mean**, one a **sum**, one a **sh
 :::
 
 ::: notes
-And how do you turn five binary items into one number? Three summaries, all defensible. The mean of the five, which gives you a proportion between nought and one and lets every item count equally – that is what our panel uses. The sum, which is a count from nought to five: the same information on a different scale, so the coefficient will be five times bigger and mean the same thing. Or a share of all the respondent's mentions, which is the interesting one, because it is relative to how many boxes that person ticked overall. Somebody who ticked eight options contributes differently from somebody who ticked two. The mean and the sum do not work that way. And look at the fragment: among the five of us, one used a mean, one a sum, one a share, one three separate shares. All defensible, and not one of them the same quantity as the others.
+How do you turn five binary items into one number? There are three summaries, all defensible. The mean of the five, which gives you a proportion between nought and one and lets every item count equally. The sum, which is a count from nought to five: the same information on a different scale, so the coefficient will be five times bigger and mean the same thing. Or a share of all the respondent's mentions, which is what our panel uses, and the interesting one, because it is relative to how many boxes that person ticked overall. Somebody who ticked eight options contributes differently from somebody who ticked two. The mean and the sum do not work that way. And look at the fragment: among the five of us, one used a mean, one a sum, one a share, one three separate shares. All defensible, and not one of them the same quantity as the others.
 :::
 
-## Claim alignment, and why the class needs it {#claim-alignment-and-why-the-room-needs-it .smaller .deepdive run="methods"}
+## Claim alignment {#claim-alignment-and-why-the-room-needs-it .smaller .deepdive run="methods"}
 
 ```{.r code-line-numbers="|1|3"}
 d$mcomm_ca <- 1 - d$mcomm      # reverse-code a negative framing
@@ -66,7 +66,7 @@ It is still an analytic decision, so it is set by an explicit `claim_align` swit
 :::
 
 ::: notes
-Now the convention that makes the class chart work. If your outcome is one of the negative framings, you reverse-code it before fitting: one minus the scale. What that does is flip the sign of the coefficient, the t and the partial r, and leave everything else where it was – the magnitude, the standard error, the absolute t, the p-value. And it holds exactly for the beta family too, because the logit of one minus mu is just minus the logit of mu. So nothing about your evidence changes, only the direction in which it is reported. But – and this is why we do it explicitly – it is still a real analytic decision, and a reader deserves to see it. That is why it is set by a visible claim-align switch in your preregistration block, where anyone reading the block will find it.
+Claim alignment was one of the ground rules for the menu, and it is what makes the class chart readable. If your outcome is one of the negative framings, you reverse-code it before fitting, as one minus the scale. What that does is flip the sign of the coefficient, the t and the partial r, and leave everything else where it was – the magnitude, the standard error, the absolute t, the p-value. And it holds exactly for the beta family too, because the logit of one minus mu is just minus the logit of mu. So nothing about your evidence changes, only the direction in which it is reported. But – and this is why we do it explicitly – it is still a real analytic decision, and a reader deserves to see it. That is why it is set by a visible claim-align switch in your preregistration block, where anyone reading the block will find it.
 :::
 
 ## A bounded scale in a linear model {.smaller .deepdive run="methods"}
@@ -87,15 +87,15 @@ The choice of distribution matters in principle, and on this claim it changes th
 :::
 
 ::: notes
-Here is a proper methodological question. Our outcome is a proportion – it lies strictly between nought and one, and its variance is necessarily smallest near the two ends, because a mean near zero cannot vary much. A linear model assumes neither of those things. So you have a choice. Gaussian treats it as if it were unbounded: simple, familiar, and in principle capable of predicting a framing score of one point two. Or beta regression with a logit link, which is built for bounded outcomes of this kind and reports a z instead of a t. Now the result. On this claim the two agree: the beta version of our baseline gives a logit coefficient of minus point zero one four, z of minus four point zero eight, partial r of minus point two six, against minus point two four from the gaussian fit. So the direction is the same, it is still significant, and it is marginally stronger. The distributional choice matters in principle, and here it changes very little.
+Next, the outcome family. Our outcome is a proportion – it lies strictly between nought and one, and its variance is necessarily smallest near the two ends, because a mean near zero cannot vary much. A linear model assumes neither of those things. So you have a choice. Gaussian treats it as if it were unbounded: simple, familiar, and in principle capable of predicting a framing score of one point two. Or beta regression with a logit link, which is built for bounded outcomes of this kind and reports a z instead of a t. Now the result. On this claim the two agree: the beta version of our baseline gives a logit coefficient of minus point zero one four, z of minus four point zero eight, partial r of minus point two six, against minus point two four from the gaussian fit. So the direction is the same, it is still significant, and it is marginally stronger. The distributional choice matters in principle, and here it changes very little.
 :::
 
-## Which variable carries the claim? {.smaller .deepdive run="methods"}
+## The predictor – unemployment or GDP growth {#which-variable-carries-the-claim .smaller .deepdive run="methods"}
 
 ::: {.small}
 The abstract says "poor economic performances". That names at least two things:
 
-- **Unemployment rate** – what Task 2 instructed. Higher is worse
+- **Unemployment rate** – what Task 2 of Multi100 instructed. Higher is worse
 - **GDP growth** – what four of the five analysts used in their free phase, two of them beside unemployment. Higher is *better*, so the claim predicts a **positive** coefficient on positive framings
 :::
 
@@ -108,10 +108,10 @@ Across all the growth specifications in the grid, **70.5%** point in the directi
 :::
 
 ::: notes
-Which variable is the claim actually about? The abstract says "poor economic performances", and that phrase names at least two different things. The unemployment rate, which is what task two instructed and where higher means worse. Or GDP growth, which is what four of the five of us reached for when we were free to choose, and where higher means better – so the claim predicts a positive coefficient on the positive framings, not a negative one. Refit my own free-phase model on this panel, the positive framings on growth and unemployment with two-way fixed effects, and the growth coefficient comes out at plus point zero zero one seven with a t of one point six: right direction, not significant. And across all the growth specifications in the grid, seventy per cent in the direction predicted by the claim but only forty-seven per cent significant. That is direction without significance, which is a materially different kind of support from what the unemployment specifications offer, and a reader deserves to be told which one they are getting.
+Which variable is the claim actually about? The abstract says "poor economic performances", and that phrase names at least two different things. One is the unemployment rate, which is what Multi100 instructed in its second task and where higher means worse. The other is GDP growth, which is what four of the five of us reached for when we were free to choose, and where higher means better – so the claim predicts a positive coefficient on the positive framings, not a negative one. Refit my own free-phase model on this panel, the positive framings on growth and unemployment with two-way fixed effects, and the growth coefficient comes out at plus point zero zero one seven with a t of one point six: right direction, not significant. And across all the growth specifications in the grid, seventy per cent in the direction predicted by the claim but only forty-seven per cent significant. That is direction without significance, which is a materially different kind of support from what the unemployment specifications offer, and a reader deserves to be told which one they are getting.
 :::
 
-## Predictor form, and a warning {.smaller .deepdive run="methods"}
+## Predictor form {#predictor-form-and-a-warning .smaller .deepdive run="methods"}
 
 ::: {.small}
 - **Raw** `unemp` – a one-point rise in the rate
@@ -157,7 +157,7 @@ Of the 41 cosmopolitan specifications with the wrong sign, opposite to the one t
 Four estimators, and the thing to hold on to is that they do not answer the same question. Pooled with clustered standard errors compares countries with each other and with themselves at once, and assumes there is nothing systematically different about countries that you have not measured – which for twenty-seven European states is a strong assumption. Country fixed effects compare each country only with itself over time, which means every stable national difference drops out. Two-way fixed effects do the same and additionally soak up anything that hit all of Europe in a given year. Random effects blend the two comparisons, weighting by precision, and assume the country effects are uncorrelated with your predictor. Now the fragment: pooled asks whether high-unemployment countries frame the EU differently, and fixed effects ask whether a country frames it differently when its own rate rises. And in the grid, thirty-three of the forty-one wrong-sign specifications are pooled.
 :::
 
-## What fixed effects actually buy you {.smaller .deepdive run="methods"}
+## What fixed effects adjust for {#what-fixed-effects-actually-buy-you .smaller .deepdive run="methods"}
 
 :::: {.columns}
 ::: {.column width="52%"}
@@ -180,14 +180,14 @@ Four estimators, and the thing to hold on to is that they do not answer the same
 ::::
 
 ::: {.fragment .small}
-This is the same statement as the DAG from Task 2. `adjustmentSets()` on its solid part, before any of the pale nodes is wired in, returns country and year, which are what two-way fixed effects absorb, so **the graph and the baseline model make the same claim.**
+This is the same statement as the DAG from Hands-on 2. `adjustmentSets()` on its solid part, before any of the pale nodes is wired in, returns country and year, which are what two-way fixed effects absorb, so **the graph and the baseline model make the same claim.**
 :::
 
 ::: notes
-Worth being precise about what fixed effects buy, because they are often treated as a general-purpose cure. They absorb anything stable about a country across the decade – institutions, history, size, whatever the country already thought about the EU in 2004. And they absorb anything common to a year across all countries: the crisis itself, a treaty, a Europe-wide media cycle. What they do not touch is anything that varies within a country over time, which is where the interesting confounders are – a national bailout programme, a change of government, a domestic scandal. They do nothing about reverse causation, where today's framing moves tomorrow's unemployment. And nothing about measurement error or selection. Then the fragment: run adjustmentSets on the solid part of the graph from Task 2, before you wired in any of the pale nodes, and it returns country and year. The graph and the baseline model are making the same claim.
+Fixed effects are often treated as a general remedy for confounding, so it is worth being precise about what they adjust for. They absorb anything stable about a country across the decade – institutions, history, size, whatever the country already thought about the EU in 2004. And they absorb anything common to a year across all countries: the crisis itself, a treaty, a Europe-wide media cycle. What they do not touch is anything that varies within a country over time, which is where the interesting confounders are – a national bailout programme, a change of government, a domestic scandal. They do nothing about reverse causation, where today's framing moves tomorrow's unemployment. And nothing about measurement error or selection. Then the fragment: run adjustmentSets on the solid part of the graph from Hands-on 2, before you wired in any of the pale nodes, and it returns country and year. The graph and the baseline model are making the same claim.
 :::
 
-## Copredictor: control, or second exposure? {.smaller .deepdive run="methods"}
+## The copredictor {#copredictor-control-or-second-exposure .smaller .deepdive run="methods"}
 
 ::: {.small}
 Put GDP growth in beside unemployment and you have made a choice you should be able to name:
@@ -202,10 +202,10 @@ The line of code is the same in all three cases, but each reading of it targets 
 :::
 
 ::: notes
-The copredictor axis looks like the most innocuous choice on the menu, and it is the one that most often goes wrong. If you put GDP growth into the model beside unemployment, you have made a choice, and you should be able to say which one. You might mean it as a confounder: a slump raises unemployment and sours sentiment in the same year, so adjusting for growth closes a back-door path that your fixed effects cannot reach, because it varies within country over time. Or you might mean it as a rival exposure – growth is another measure of the same poor economic performance, and you are now asking which of the two the claim is really about. Or, if unemployment works partly through growth, growth is a mediator and adjusting for it removes part of the very effect you set out to measure. It is the same line of code with three different estimands. And do not forget the Table 2 fallacy: the growth coefficient in that model is not automatically the causal effect of growth.
+The copredictor axis looks like the most innocuous choice on the menu, and it is easy to get wrong. If you put GDP growth into the model beside unemployment, you have made a choice, and you should be able to say which one. You might mean it as a confounder: a slump raises unemployment and sours sentiment in the same year, so adjusting for growth closes a back-door path that your fixed effects cannot reach, because it varies within country over time. Or you might mean it as a rival exposure – growth is another measure of the same poor economic performance, and you are now asking which of the two the claim is really about. Or, if unemployment works partly through growth, growth is a mediator and adjusting for it removes part of the very effect you set out to measure. It is the same line of code with three different estimands. And do not forget the Table 2 fallacy: the growth coefficient in that model is not automatically the causal effect of growth.
 :::
 
-## Sample: which countries, which years {.smaller .deepdive run="methods"}
+## Sample restrictions {#sample-which-countries-which-years .smaller .deepdive run="methods"}
 
 ::: {.small}
 - **All** – 2004–2013, 27 countries, 270 cells
@@ -223,10 +223,10 @@ An exclusion is a claim about **who the finding is meant to be about**, and so i
 :::
 
 ::: notes
-Sample. All years is the baseline. Splitting into 2004 to 2008 and 2009 to 2013 halves your data and asks a real question: is this a crisis phenomenon or a standing relationship? Then two exclusions. Drop the countries while an EU or IMF programme was running. Or drop Greece and Spain, whose unemployment trajectories are so extreme they could plausibly drive the whole thing on their own. Those last two are the interesting ones, because if an association depends on a handful of extreme cases, taking them out should worry you – and here it matters: twenty-four of the forty-one wrong-sign specifications sit in bailout-excluding samples. Take the crisis countries out and the association goes. An exclusion is a claim about who your finding is meant to be about, which makes it a question about the estimand.
+Sample. All years is the baseline. Splitting into 2004 to 2008 and 2009 to 2013 halves your data and asks a real question: is this a crisis phenomenon or a standing relationship? Then two exclusions. Drop the countries while an EU or IMF programme was running. Or drop Greece and Spain, whose unemployment trajectories are so extreme they could plausibly drive the whole thing on their own. Those last two are the interesting ones, because they test whether the association depends on a handful of extreme cases, which would be a reason for concern. On this claim there is some cause for it: twenty-four of the forty-one wrong-sign specifications sit in samples that leave out the bailout countries. An exclusion is also a claim about who your finding is meant to be about, which makes it a question about the estimand.
 :::
 
-## Weights: whose country-year counts more? {.smaller .deepdive run="methods"}
+## Weights {#weights-whose-country-year-counts-more .smaller .deepdive run="methods"}
 
 ::: {.small}
 Each cell is a mean of very different numbers of respondents. Weighting by `n_cy` makes a cell built from 2,000 people count for more than one built from 500.
@@ -236,7 +236,7 @@ Each cell is a mean of very different numbers of respondents. Weighting by `n_cy
 :::
 
 ::: {.fragment .small}
-That changes the estimand, which is why the day's convention is to declare it.
+That changes the estimand, which is why the course convention is to declare it.
 :::
 
 ::: {.fragment .small}
@@ -244,7 +244,7 @@ Practical note: random effects are never fitted with weights in the grid – the
 :::
 
 ::: notes
-Weights. Each cell in the panel is a mean over a very different number of respondents, so weighting by that count says a country-year built from two thousand people should count for more than one built from five hundred. And that sounds like a purely technical refinement, but it is not. Unweighted, every country-year is one observation and you are studying countries – Malta counts as much as Germany. Weighted, cells count in proportion to the people behind them, and you have moved a long way towards studying people. That is a change of estimand, which is why the day's convention is that you declare it instead of leaving it as an argument to the fitting function. One practical note: random effects are never fitted with weights in our grid, because the combination is not well defined for this design, so those rows simply do not exist.
+Weights. Each cell in the panel is a mean over a very different number of respondents, so weighting by that count says a country-year built from two thousand people should count for more than one built from five hundred. That sounds like a purely technical refinement, but it changes what you are studying. Unweighted, every country-year is one observation and you are studying countries – Malta counts as much as Germany. Weighted, cells count in proportion to the people behind them, and you have moved a long way towards studying people. That is a change of estimand, which is why the convention in this course is that you declare it instead of leaving it as an argument to the fitting function. One practical note: random effects are never fitted with weights in our grid, because the combination is not well defined for this design, so those rows simply do not exist.
 :::
 
 ## Making the axes comparable {.smaller .deepdive run="methods"}
@@ -270,7 +270,7 @@ Silberzahn's teams faced the same problem: four of the twenty-nine reported a co
 :::
 
 ::: notes
-Last one, and it is what makes the afternoon possible. A coefficient from a beta model on a share and a coefficient from a weighted pooled model on a sum are simply not on the same scale – you cannot put them on one axis and read anything off it. The answer from Multi100, and ours, is to take the test statistic and its degrees of freedom, convert to a partial correlation, and then apply claim alignment so the sign means the same thing everywhere. A partial r is the association between predictor and outcome net of everything else in the model, on a fixed scale from minus one to plus one. Report underscore result does that conversion for you. And there is a cost: standardising makes numbers comparable, not equivalent. It cannot rescue two analyses that are estimating different quantities. All it can do is put them next to each other, which is the problem we discussed in Part 2.
+Last, the conversion that puts every result on the class chart. A coefficient from a beta model on a share and one from a weighted pooled model on a sum are not on the same scale, so an axis that holds both tells you nothing. Multi100, and this course after it, take the test statistic and its degrees of freedom, convert them to a partial correlation, and then apply claim alignment so that the sign means the same thing everywhere. A partial r is the association between predictor and outcome net of everything else in the model, on a fixed scale from minus one to plus one, and report underscore result does the conversion for you. Comparable is not the same as equivalent, though. Two analyses that estimate different quantities remain different once they sit side by side, which is the estimand problem from the red-card study again. Silberzahn and colleagues faced the same difficulty when four of their twenty-nine teams reported something other than an odds ratio. They converted everything to one scale and reported the median, which gives one number where a curve gives the whole distribution.
 :::
 
 <!-- DEEP DIVE END -->

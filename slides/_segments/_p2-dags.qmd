@@ -1,4 +1,4 @@
-## DAG crash course: three roles {.smaller}
+## Confounders, mediators and colliders {#dag-crash-course-three-roles .smaller}
 
 ```{r}
 #| label: mini-dags
@@ -63,10 +63,10 @@ X = predictor, Y = outcome. **Green** = the causal effect you want; **coloured**
 :::
 
 ::: notes
-These three small graphs cover all the graph theory you need today. In every panel the green arrow is the same thing, the effect of X on Y that you are actually after. What changes is the coloured structure around it. A confounder is a common cause of your predictor and your outcome – that red fork is a back-door path, and if you leave it open you are biased, so you adjust to close it. A mediator lies on the causal path between them. The amber path is real and part of the total effect, so if the total effect is what you want you do not adjust for it, or you remove part of the very thing you are measuring. And a collider is caused by both sides – those edges are harmless until you condition on the collider, which opens a spurious path that was not there before. So the rulebook is short: adjust confounders, leave mediators alone for total effects, and never condition on a collider. The next four slides add a little depth to those three rules before you use them.
+The causal graph is the second of those three steps, and these three small graphs cover all the graph theory that the tasks need. In every panel the green arrow is the same thing, the effect of X on Y that you are actually after. What changes is the coloured structure around it. A confounder is a common cause of your predictor and your outcome – that red fork is a back-door path, and if you leave it open you are biased, so you adjust to close it. A mediator lies on the causal path between them. The amber path is real and part of the total effect, so if the total effect is what you want you do not adjust for it, or you remove part of the very thing you are measuring. And a collider is caused by both sides – those edges are harmless until you condition on the collider, which opens a spurious path that was not there before. So the rulebook is short: adjust confounders, leave mediators alone for total effects, and never condition on a collider. The next four slides add a little depth to those three rules before you use them.
 :::
 
-## One number, many stories {.smaller}
+## Causal stories behind a correlation {#one-number-many-stories .smaller}
 
 :::: {.columns}
 ::: {.column width="54%"}
@@ -119,7 +119,7 @@ The data look identical in all four. Only an assumption about *how the data aros
 :::
 
 ::: notes
-Here is a strong correlation – r of about nought point six. Before you reach for a model, consider that this single number is consistent with at least four different stories. Maybe X really does cause Y, and the slope is the effect. Maybe a common cause is inflating it. Maybe we are quietly looking at a selected sample, and the association is an artefact of who got in. Maybe Y causes X, or it is simply chance. Nothing in the data can decide between these, because the scatter looks identical in every case. Only a claim about how the data were generated can do that. A DAG is where you write that claim down, and that is why we draw one before we fit anything.
+The scatter here has a strong correlation, an r of about nought point six. Before you reach for a model, consider that this single number is consistent with at least four different stories. Maybe X really does cause Y, and the slope is the effect. Maybe a common cause is inflating it. Maybe we are quietly looking at a selected sample, and the association is an artefact of who got in. Maybe Y causes X, or it is simply chance. Nothing in the data can decide between these, because the scatter looks identical in every case. Only a claim about how the data were generated can do that. A DAG is where you write that claim down, and that is why we draw one before we fit anything.
 :::
 
 ## Reading a DAG: open and closed paths {.smaller}
@@ -299,5 +299,5 @@ patchwork::wrap_plots(p_sel, p_clp, nrow = 1)
 :::
 
 ::: notes
-Two last ways a relationship can be spurious, and both of them apply to our case. The first is selection, or collider bias. If you condition on – or merely sample on – something that both your variables cause, you manufacture a correlation out of nothing. A lot of the early COVID risk-factor findings were of this kind, drawn from people who had been tested, which is a selected group. The second is reverse causation and feedback. Our data are a panel, and in a panel today's outcome can feed tomorrow's predictor. Two-way fixed effects – which is the model we are about to draw – soak up stable differences between countries and shocks common to a year. They do not, on their own, fix a time-varying confounder or a feedback loop. Keep that in mind when we build the graph for our own paper.
+Two last ways a relationship can be spurious, and both of them apply to our case. The first is selection, or collider bias. If you condition on – or merely sample on – something that both your variables cause, you manufacture a correlation out of nothing. A lot of the early COVID risk-factor findings were of this kind, drawn from people who had been tested, which is a selected group. The second is reverse causation and feedback. Our data are a panel, and in a panel today's outcome can feed tomorrow's predictor. Two-way fixed effects, the baseline design for our own claim, soak up stable differences between countries and shocks common to a year. They do not, on their own, fix a time-varying confounder or a feedback loop. Keep that in mind when we build the graph for our own paper.
 :::

@@ -12,10 +12,10 @@ repeatability_matrix()
 :::
 
 ::: notes
-Here is the whole framework on one slide, and if you take a single thing home today, make it this grid. The question stays the same throughout, and what varies is the data and the analysis. Same data and the same analysis is reproducibility: if I rerun your recipe, do I get your number? Same data but a different, justifiable analysis is robustness, which asks whether your finding survives my defensible choices. New data for the same question is replicability. The fourth cell, new data and new analysis, is really generalisation, and we set it aside today. Sit with this for a moment, because everything that follows this morning refers back to it.
+Here is that vocabulary as a single grid, and if you take one thing home, make it this. The question stays the same throughout, and what varies is the data and the analysis. Same data and the same analysis is reproducibility: if I rerun your recipe, do I get your number? Same data but a different, justifiable analysis is robustness, which asks whether your finding survives my defensible choices. New data for the same question is replicability. The fourth cell, new data and new analysis, is really generalisation, and we leave it aside. Sit with the grid for a moment, because everything that follows refers back to it.
 :::
 
-## Credibility is not truth
+## Repeatability and credibility {#credibility-is-not-truth}
 
 ::: {.scaled style="--fs: 0.9; --lh: 1.15"}
 "**Repeatability** is used when referring to reproducibility, robustness, and replicability as a constellation of concepts intended to assess whether answers to scientific questions are unchanged when different steps of the research process are repeated."
@@ -30,10 +30,10 @@ Here is the whole framework on one slide, and if you take a single thing home to
 :::
 
 ::: notes
-The glossary is worth reading slowly, because it separates two things we routinely run together. Repeatability is the umbrella: reproducibility, robustness and replicability as a family, all asking whether the answer survives repeating some step of the process. Credibility and trustworthiness are about how much confidence a finding deserves – and note the sentence in the middle. Because scientific claims are tentative, credibility is not the same as truth. A credible finding can be wrong. What credibility is built from is the list at the bottom: declared interests, validated methods, precise evidence, and claims calibrated to the uncertainty behind them. That last one is the one we will keep coming back to.
+The glossary on this slide is worth reading slowly, because it separates two things we routinely run together. Repeatability is the umbrella: reproducibility, robustness and replicability as a family, all asking whether the answer survives repeating some step of the process. Credibility and trustworthiness are about how much confidence a finding deserves – and note the sentence in the middle. Because scientific claims are tentative, credibility is not the same as truth. A credible finding can be wrong. What credibility is built from is the list at the bottom: declared interests, validated methods, precise evidence, and claims calibrated to the uncertainty behind them. That last one is the one we will keep coming back to.
 :::
 
-## Quick check: credibility in the wild {.questionslide transition="fade-in none-out"}
+## Quick check – the matrix in peer review {#quick-check-credibility-in-the-wild .questionslide transition="fade-in none-out"}
 
 ::: {.none}
 You submit your paper and replication package. It goes out to reviewers.
@@ -43,7 +43,11 @@ You submit your paper and replication package. It goes out to reviewers.
 - 'Reviewer 3' takes a special interest because he's just working on a similar paper on data they published recently. Do your results [replicate]{.fragment .bounceIn} when your methods are applied to that state-of-the-art dataset?
 :::
 
-## Quick check: credibility in the wild {.questionslide transition="none-in fade-out"}
+::: notes
+Here is the matrix at work on one paper. You submit a paper with its replication package, and three reviewers each check something different. For each one, call out or type in the chat which cell of the matrix that reviewer is in, before the answer appears. Reviewer 1 reruns your own script on your own data. [pause] [advance] Reproduction. Reviewer 2 fits your data with a different function. [pause] [advance] Robustness. Reviewer 3 applies your methods to a dataset that somebody else published. [pause] [advance] Replication.
+:::
+
+## Quick check – the matrix in peer review {#quick-check-credibility-in-the-wild-1 .questionslide transition="none-in fade-out"}
 
 ::: {.none}
 You submit your paper and replication package. It goes out to reviewers.
@@ -51,6 +55,10 @@ You submit your paper and replication package. It goes out to reviewers.
 'Reviewer 2' just doesn't want to let go...
 
 - He tried a few alternative analyses of your data, including a fancy new regression method that he just released as an R package. His method gives results that are generally aligned to yours, but for the method to work, it would require a larger dataset; would your results really [generalise]{.fragment .bounceIn} to this new dataset published by 'Reviewer 3' that he just read about, if applying his new fancy method to it?
+:::
+
+::: notes
+Reviewer 2 has not finished. His new method agrees with your results, but it needs more data than you had, so he wants to run it on the dataset that Reviewer 3 published. Which cell is that? [pause] [advance] New data and a new analysis at once put him in the fourth cell, generalisation. Each of these checks asks a different question of the same paper, and passing one of them does not settle the others.
 :::
 
 ## Open research: the practices {.smaller}
@@ -71,5 +79,5 @@ Each one removes a specific obstacle, and none of them guards against every prob
 :::
 
 ::: notes
-So what does open research actually propose? A list of practices, each of which removes a specific, identifiable obstacle. Open data means someone else can re-analyse your evidence rather than taking your word for it. Open code means they can rerun your exact analysis. Open materials means they can run the study again in a new sample. Open access means they can read the thing at all, which sounds trivial until you try to get a paper from outside a wealthy university. Preregistration produces a dated record of the plan before the results exist. And registered reports go further: the plan is peer-reviewed and the publication decision is made before anyone sees a result, which removes the incentive to find something. Each removes one obstacle, and none of them guards against every problem, so let us not get too enthusiastic yet.
+Each of those reviewers needed something from you before they could start – your code, your data, your materials. Open research is a list of practices that supply those things and more, each of which removes a specific, identifiable obstacle. Open data means someone else can re-analyse your evidence rather than taking your word for it. Open code means they can rerun your exact analysis. Open materials means they can run the study again in a new sample. Open access means they can read the thing at all, which sounds trivial until you try to get a paper from outside a wealthy university. Preregistration produces a dated record of the plan before the results exist. And registered reports go further: the plan is peer-reviewed and the publication decision is made before anyone sees a result, which removes the incentive to find something. Each removes one obstacle, and none of them guards against every problem. Whether published findings hold up when somebody does check them has now been measured on a large scale.
 :::

@@ -1,7 +1,7 @@
 ## R, in one slide {.smaller .deepdive run="r"}
 
 ::: {.skiplink}
-[10 optional slides · skip to Hands-on 2 →](#hands-on-2-meet-the-panel-draw-the-graph)
+[R tutorial · 10 slides · skip to Hands-on 2 →](#hands-on-2-meet-the-panel-draw-the-graph)
 :::
 
 ```{.r code-line-numbers="|1|3|5|7"}
@@ -15,7 +15,7 @@ euframes |> nrow()               # |> the pipe: send the left into the right
 ```
 
 ::: {.small}
-Four things and you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
+With four pieces of syntax you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
 :::
 
 ::: notes
@@ -42,7 +42,7 @@ What comes back is a **data frame**: a rectangle, one row per observation, one c
 Getting data in. The library line makes the functions in a package available for this session – and note that it does not install anything; installing is a separate thing you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on euframes is our panel. Typing the name on its own prints it. What you get back is a data frame, which is the central object in R: a rectangle with one row per observation, one column per variable, and each column holding a single type. Nearly every function you will meet takes a data frame and hands you a data frame back, which is why the pipe works so well – the output of one step is the right shape to be the input of the next.
 :::
 
-## Look before you model {.smaller .deepdive run="r"}
+## Inspecting the data {#look-before-you-model .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|2|3|5-6"}
 glimpse(euframes)      # every column, its type, the first few values
@@ -58,10 +58,10 @@ Every serious error I have made in twenty years of this was visible in the data 
 :::
 
 ::: notes
-Look before you model. Glimpse shows every column with its type and first few values. nrow counts the rows. Summary on a single column gives the minimum, the quartiles, the mean and the maximum. And count, piped, tells you how many rows there are per country – which for a balanced panel should be the same number every time. Now, the fragment. Every serious error I have made in twenty years of doing this was visible in the data before it ever reached a model: a year that appeared twice, a missing value coded as minus nine and quietly averaged in, a scale running one to ten when I had assumed nought to one. Ten minutes of looking pays back more than any other ten minutes in the workflow, and it is the part that people skip because it does not feel like analysis.
+With the panel loaded, the next step is to look at it before any model touches it. Glimpse shows every column with its type and first few values. nrow counts the rows. Summary on a single column gives the minimum, the quartiles, the mean and the maximum. And count, piped, tells you how many rows there are per country – which for a balanced panel should be the same number every time. Then the fragment. Every serious error I have made in twenty years of doing this was visible in the data before it ever reached a model: a year that appeared twice, a missing value coded as minus nine and quietly averaged in, a scale running one to ten when I had assumed nought to one. Ten minutes of looking pays back more than any other ten minutes in the workflow, and it is the part that people skip because it does not feel like analysis.
 :::
 
-## Five verbs do most of the work {.smaller .deepdive run="r"}
+## Working with rows and columns {#five-verbs-do-most-of-the-work .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|2|3|4|5"}
 euframes |>
@@ -80,10 +80,10 @@ The sixth verb is `summarise()`, usually with `group_by()`: collapse many rows i
 :::
 
 ::: notes
-Five verbs get you a very long way, and they all work the same way: first argument a data frame, result a data frame. Filter keeps rows. Select keeps columns. Mutate makes a new column. Arrange sorts. And the pipe strings them together so you read the whole thing downwards as a sentence: take the panel, then keep 2008 onwards, then keep these four columns, then add a centred unemployment column, then sort by unemployment with the highest first. The sixth verb, on the fragment, is summarise, usually paired with group-by: collapse many rows into one row per group. I mention it because it is the operation that produced the panel you will be working on – three hundred and ninety thousand respondents collapsed into two hundred and seventy country-year means.
+Five verbs get you a very long way, and they all share one pattern: first argument a data frame, result a data frame. Filter keeps rows. Select keeps columns. Mutate makes a new column. Arrange sorts. And the pipe strings them together so you read the whole thing downwards as a sentence: take the panel, then keep 2008 onwards, then keep these four columns, then add a centred unemployment column, then sort by unemployment with the highest first. The sixth verb, on the fragment, is summarise, usually paired with group-by: collapse many rows into one row per group. I mention it because it is the operation that produced the panel you will be working on – three hundred and ninety thousand respondents collapsed into two hundred and seventy country-year means.
 :::
 
-## A model is a formula plus data {.smaller .deepdive run="r"}
+## Model formulas {#a-model-is-a-formula-plus-data .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|3|5"}
 mcosmo ~ unemp                    # "mcosmo explained by unemp"
@@ -102,10 +102,10 @@ Almost every modelling function in R takes this same shape: `something(formula, 
 :::
 
 ::: notes
-Now models. The tilde is the heart of it: outcome on the left, predictors on the right, and you add more predictors with a plus. The thing that surprises people coming from other software is that the formula is an object in its own right – you can store it in a variable, print it, pass it around – and it is not tied to the function that will eventually use it. Then lm fits a linear model given that formula and a data frame, the arrow names the result, and summary prints the coefficient table. The genuinely useful pattern is on the fragment: almost every modelling function in R has this same shape, something bracket formula comma data. Learn it once and lm, glm, lmer for multilevel models, feols for fixed effects and betareg for bounded outcomes all become variations on one thing you already know.
+A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, and you add more predictors with a plus. The thing that surprises people coming from other software is that the formula is an object in its own right – you can store it in a variable, print it, pass it around – and it is not tied to the function that will eventually use it. Then lm fits a linear model given that formula and a data frame, the arrow names the result, and summary prints the coefficient table. The genuinely useful pattern is on the fragment: almost every modelling function in R has this same shape, something bracket formula comma data. Learn it once and lm, glm, lmer for multilevel models, feols for fixed effects and betareg for bounded outcomes all become variations on one thing you already know.
 :::
 
-## Fixed effects, the fast way {.smaller .deepdive run="r"}
+## Fixed effects with fixest {#fixed-effects-the-fast-way .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|3|3"}
 library(fixest)
@@ -120,11 +120,11 @@ The equivalent with dummies would be `mcosmo ~ unemp_c + factor(cntry) + factor(
 :::
 
 ::: {.fragment .small}
-This is the model you reproduce in Part 3. **`t = −3.804`.**
+This is the model that you reproduce in Hands-on 3, where it gives **`t = −3.804`**.
 :::
 
 ::: notes
-This one you will type yourself in a couple of hours, so it is worth a slow look. Feols comes from the fixest package and fits linear models with fixed effects very fast. The bar is the key piece of syntax: everything to the left of it is the regression, everything to the right is absorbed as fixed effects. Country gives every country its own intercept, so we are comparing each country with itself over time rather than comparing countries with each other. Year gives every year its own intercept, so anything that hit all of Europe in a given year is soaked up. You could write the same model with dummy variables – the estimate would be identical – but you would get thirty-six extra rows of output that nobody wants to read. And this same line is the model you reproduce in part three, where it gives a t of minus three point eight zero four.
+This is the line that you will run yourself when you reproduce the recorded result, so it is worth a slow look. Feols comes from the fixest package and fits linear models with fixed effects very fast. The bar is the key piece of syntax: everything to the left of it is the regression, everything to the right is absorbed as fixed effects. Country gives every country its own intercept, so we are comparing each country with itself over time rather than comparing countries with each other. Year gives every year its own intercept, so anything that hit all of Europe in a given year is soaked up. You could write the same model with dummy variables – the estimate would be identical – but you would get thirty-six extra rows of output that nobody wants to read. And in the third hands-on this same line gives a t of minus three point eight zero four.
 :::
 
 ## Reading what comes back {.smaller .deepdive run="r"}
@@ -143,14 +143,14 @@ broom::tidy(m1)
 :::
 
 ::: {.fragment .small}
-`broom::tidy()` returns the table as a **data frame**, so you can filter it, join it, plot it. That is how 840 model fits become one chart this afternoon.
+`broom::tidy()` returns the table as a **data frame**, so you can filter it, join it, plot it. That is how 840 model fits become one chart when we reach the multiverse.
 :::
 
 ::: notes
-And what comes back. The tidy function from broom turns the model into a small table. The estimate says a one-point rise in the unemployment rate goes with a fall of about three thousandths on a nought-to-one framing scale – small, but the scale is small too, which is why we will standardise later. The standard error says how much that estimate would move across repeated samples. The statistic is the t: the estimate divided by its standard error, which you can read as how many standard errors the estimate is from zero. And the p-value says how often you would get a t that large if the true value were zero. Now the fragment. Tidy hands the table back as a data frame. That means you can filter it, join it, stack hundreds of them and plot the lot – and that is how eight hundred and forty model fits become one chart this afternoon.
+And what comes back. The tidy function from broom turns the model into a small table. The estimate says a one-point rise in the unemployment rate goes with a fall of about three thousandths on a nought-to-one framing scale – small, but the scale is small too, which is why we will standardise later. The standard error says how much that estimate would move across repeated samples. The statistic is the t: the estimate divided by its standard error, which you can read as how many standard errors the estimate is from zero. And the p-value says how often you would get a t that large if the true value were zero. Now the fragment. Tidy hands the table back as a data frame. That means you can filter it, join it, stack hundreds of them and plot the lot – and that is how eight hundred and forty model fits become one chart when we reach the multiverse.
 :::
 
-## One line of ggplot {.smaller .deepdive run="r"}
+## Plotting with ggplot2 {#one-line-of-ggplot .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|2|3|4"}
 ggplot(euframes, aes(x = year, y = mcosmo)) +   # data, and what maps to what
@@ -168,10 +168,10 @@ Three parts, always: the **data**, the **mapping** (`aes`) from variables to vis
 :::
 
 ::: notes
-Plotting, briefly, because you will use it in the next task. Ggplot always has three parts. The data. The mapping – that is what aes does – saying which variable becomes which visual property, here year on the horizontal and cosmopolitan framing on the vertical. And then one or more geoms that actually draw something, stacked with plus signs: lines, then points on top. The one worth stealing today is on the fragment: facet-wrap repeats the entire plot once per group, so that single line gives you twenty-seven small country panels side by side. That is the plot you will make in the next task, and I want you to actually look at it rather than skip past it, because you can see with your eyes which countries move sharply around 2009 – and that is the variation that the fixed-effects model is using.
+Plotting, briefly, because you will use it in the next task. Ggplot always has three parts. The data. The mapping – that is what aes does – saying which variable becomes which visual property, here year on the horizontal and cosmopolitan framing on the vertical. And then one or more geoms that actually draw something, stacked with plus signs: lines, then points on top. The one worth stealing is on the fragment: facet-wrap repeats the entire plot once per group, so that single line gives you twenty-seven small country panels side by side. That is the plot you will make in the next task, and I want you to actually look at it rather than skip past it, because you can see with your eyes which countries move sharply around 2009 – and that is the variation that the fixed-effects model is using.
 :::
 
-## A causal graph is a set of formulas {.smaller .deepdive run="r"}
+## Causal graphs in R {#a-causal-graph-is-a-set-of-formulas .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1-4|2|3|6|7"}
 dag <- dagify(
@@ -193,10 +193,10 @@ Each line is **one arrow, read outcome-first**, following the same convention as
 :::
 
 ::: notes
-And the last piece, which is the one you use in this next task. A causal graph in R is just a set of formulas, and they follow the same convention you already learned for models: outcome on the left, cause on the right. So the first line says unemployment points at framing. The second says country and year both point at framing. The third says they also both point at unemployment – which makes them common causes, which makes them confounders. Then you declare which node is the exposure and which is the outcome. The lovely part is on the fragment. Because each arrow is its own line, you can put a hash in front of one and the code still runs, so wiring your beliefs into the graph is literally a matter of commenting lines in and out. And adjustmentSets reads the finished graph and tells you which variables you must control for. Change an arrow, rerun it, watch the answer change.
+The last piece of R is the one you use in the next task. A causal graph in R is a set of formulas, and they follow the same convention you already learned for models: outcome on the left, cause on the right. So the first line says unemployment points at framing. The second says country and year both point at framing. The third says they also both point at unemployment – which makes them common causes, which makes them confounders. Then you declare which node is the exposure and which is the outcome. The lovely part is that each arrow is its own line, so you can put a hash in front of one and the code still runs, and wiring your beliefs into the graph is literally a matter of commenting lines in and out. [advance] And adjustmentSets reads the finished graph and tells you which variables you must control for. Those are the variables that close every back-door path, a term that the causal-graph slides explain. Change an arrow, rerun it, watch the answer change.
 :::
 
-## When it breaks {.smaller .deepdive run="r"}
+## Common error messages {#when-it-breaks .smaller .deepdive run="r"}
 
 ::: {.small}
 | What you see | What it usually means |
@@ -212,7 +212,7 @@ Read the error. R error messages are terse but almost always literally true, and
 :::
 
 ::: notes
-Four errors, which between them will be about ninety per cent of what you hit today. "Could not find function" means the package is not loaded – add the library line above it. "Object euframes not found" means you ran a chunk before the one that creates the object, so go back up and run them in order, and this is the notebook trap, where cells run out of order. "Object unemp underscore c not found" means you skipped the mutate line that makes the column. And if the console is showing you a plus sign and nothing is happening, R thinks you have not finished the command – there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. The general advice is on the fragment, and it is the habit I would most like you to keep: read the error. R error messages are terse and unfriendly, but they are almost always literally true, and most of them give you the exact name of the thing that R could not find.
+These four errors will be about ninety per cent of what you hit in the tasks. "Could not find function" means the package is not loaded – add the library line above it. "Object euframes not found" means you ran a chunk before the one that creates the object, so go back up and run them in order, and this is the notebook trap, where cells run out of order. "Object unemp underscore c not found" means you skipped the mutate line that makes the column. And if the console is showing you a plus sign and nothing is happening, R thinks you have not finished the command – there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. The general advice is on the fragment, and it is the habit I would most like you to keep: read the error. R error messages are terse and unfriendly, but they are almost always literally true, and most of them give you the exact name of the thing that R could not find.
 :::
 
 <!-- DEEP DIVE END -->

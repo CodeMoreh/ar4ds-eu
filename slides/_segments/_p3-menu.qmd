@@ -22,10 +22,10 @@ Two of these axes already varied in the red-card study, where the 29 teams split
 :::
 
 ::: notes
-Here is the menu, and everything left in the day runs off it. Fourteen axes, eight of them on this slide, and every option on it is a choice that a competent analyst could defend in print. Which framing scale is your outcome. Whether you model a bounded nought-to-one scale with a linear model or with something built for proportions. Whether you measure economic performance by unemployment or by GDP growth. Whether you take the rate raw or logged. Whether the other macro measure goes in beside it. Which of four ways you handle the fact that observations are grouped in countries and in years. Which countries and which years you keep. And whether you weight each cell, and if so by how many people were interviewed in it, by its effective sample size or by the adult population that it stands for. The menu page has copy-paste code for every one of these, so nobody is writing R from a blank line.
+Here is the menu, and everything that follows is built on it. Fourteen axes, eight of them on this slide, and every option on it is a choice that a competent analyst could defend in print. Which framing scale is your outcome. Whether you model a bounded nought-to-one scale with a linear model or with something built for proportions. Whether you measure economic performance by unemployment or by GDP growth. Whether you take the rate raw or logged. Whether the other macro measure goes in beside it. Which of four ways you handle the fact that observations are grouped in countries and in years. Which countries and which years you keep. And whether you weight each cell, and if so by how many people were interviewed in it, by its effective sample size or by the adult population that it stands for. The menu page has copy-paste code for every one of these, so nobody is writing R from a blank line. [advance] Two of these axes are not new to you. In the red-card study the twenty-nine teams already split four ways on the response distribution, which is our outcome family, and four ways on how to handle observations that are not independent, which is our estimator.
 :::
 
-## What Task 2 left open {.smaller}
+## What Task 2 of Multi100 left open {#what-task-2-left-open .smaller}
 
 ::: {.small}
 The three instructions fixed the **outcome dimension**, the **predictor** and the **contextual controls**. Everything else stayed open – including one thing that few people think of as a choice:
@@ -44,15 +44,15 @@ Their five answers all obeyed the three instructions and still ran from *r* = �
 :::
 
 ::: notes
-So what did those three instructions actually pin down? The outcome dimension, the predictor, and the contextual controls. Everything else stayed open – including one thing that almost nobody thinks of as a methodological choice at all, which is the unit of analysis. Two of the five of us fitted models on individual respondents, hundreds of thousands of them. Three worked on aggregates. Task two never said which, and the wording did not imply one either way. And the consequence is on the next fragment: five answers, all obeying all three instructions, still running from minus point zero zero six to minus point four five. The freedom that remained after the constraints was more than enough to produce the whole spread. Hold that thought all afternoon, because it generalises: the choices that move an estimate most are usually the ones made before a model is fitted at all.
+So what did those three instructions actually pin down? The outcome dimension, the predictor, and the contextual controls. Everything else stayed open – including one thing that almost nobody thinks of as a methodological choice at all, which is the unit of analysis. Two of the five of us fitted models on individual respondents, hundreds of thousands of them. Three worked on aggregates. Task two never said which, and the wording did not imply one either way. And the consequence is on the next fragment: five answers, all obeying all three instructions, still running from minus point zero zero six to minus point four five. The freedom that remained after the constraints was more than enough to produce the whole spread. Hold on to that, because it generalises: the choices that move an estimate most are usually the ones made before a model is fitted at all.
 :::
 
-## One deviation, and a reason for it {.smaller}
+## Ground rules for the menu {#one-deviation-and-a-reason-for-it .smaller}
 
 ::: {.small}
-For the rest of today the rule is: **change one axis, hold the other thirteen at baseline.**
+In Hands-on 4 the rule is: **change one axis, hold the other thirteen at baseline.**
 
-Baseline = the specification you just reproduced: `mcosmo` · gaussian · unemployment · raw · no copredictor · two-way FE · all years · unweighted · share of mentions · standard measurement settings · conventional SEs.
+Baseline = the specification you reproduced in Hands-on 3: `mcosmo` · gaussian · unemployment · raw · no copredictor · two-way FE · all years · unweighted · share of mentions · standard measurement settings · conventional SEs.
 :::
 
 ::: {.fragment .small}
@@ -64,8 +64,8 @@ And one convention binds everyone: **claim-alignment**. The negative framings ar
 :::
 
 ::: notes
-Two ground rules before you touch the menu. First, one deviation: change one axis and hold the other thirteen at the baseline, which is the specification you have just reproduced – cosmopolitan outcome, gaussian, unemployment raw, no copredictor, two-way fixed effects, all years, unweighted, the answers scored as shares, the standard measurement settings and conventional standard errors. That sounds restrictive, but it is what makes the class chart readable. Every dot on the chart will differ from one common baseline in exactly one declared way, so when a dot sits somewhere surprising we can say what put it there. Second, a convention that binds everybody: claim-alignment. If your outcome is one of the negative framings, it gets reverse-coded – one minus the scale – so that supporting the claim reads as a negative sign for every outcome that anyone picks. Without that, half the class would be above zero by construction and the chart would look like noise.
+Two ground rules before you touch the menu. First, one deviation: in Hands-on 4 you change one axis and hold the other thirteen at the baseline, which is the specification you reproduced in the third hands-on – cosmopolitan outcome, gaussian, unemployment raw, no copredictor, two-way fixed effects, all years, unweighted, the answers scored as shares, the standard measurement settings and conventional standard errors. That sounds restrictive, but it is what makes the class chart readable. Every exploratory dot on the chart will differ from one common baseline in exactly one declared way, so when a dot sits somewhere surprising we can say what put it there. Second, a convention that binds everybody: claim-alignment. If your outcome is one of the negative framings, it gets reverse-coded – one minus the scale – so that supporting the claim reads as a negative sign for every outcome that anyone picks. Without that, half the class would be above zero by construction and the chart would look like noise.
 :::
 
 <!-- DEEP DIVE START: methodological tutorial (12 slides). Optional depth, on
-     the .deepdive class – see the note at the R tutorial in Part 2. -->
+     the .deepdive class – see the note at the end of _p2-ourclaim.qmd, where the R tutorial run starts. -->

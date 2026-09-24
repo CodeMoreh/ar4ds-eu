@@ -12,13 +12,13 @@ A curve is a **map of the menu you wrote**, and it cannot show whether that menu
 :::
 
 ::: notes
-Before we go on, four things that this picture does not contain, because a chart as tidy as this one makes it easy to think it is complete. First, the specifications nobody ran: person-level models, a different scale construction, a lagged predictor. The curve contains nothing from outside the menu, and it looks just as complete either way, which is what makes this easy to miss. Second, the dependence: all eight hundred and forty of these use the same two hundred and seventy country-years, so they share their noise, and the width of that cloud cannot be read as eight hundred and forty independent results. Third, estimand drift: some of these answer subtly different questions, and putting them on one axis does not make them commensurable. And fourth, everything upstream of the panel – how the scales were coded, which waves were pooled – is fixed for everyone in this class. A curve is a map of the menu you wrote, and it cannot show whether the menu was right.
+Four things are missing from the specification curve, and a chart as tidy as ours makes it easy to think it is complete. First, the specifications nobody ran: person-level models, a different scale construction, a lagged predictor. The curve contains nothing from outside the menu, and it looks just as complete either way, which is what makes this easy to miss. Second, the dependence: all eight hundred and forty of these use the same two hundred and seventy country-years, so they share their noise, and the width of that cloud cannot be read as eight hundred and forty independent results. Third, estimand drift: some of these answer subtly different questions, and putting them on one axis does not make them commensurable. And fourth, everything upstream of the panel – how the scales were coded, which waves were pooled – is fixed for everyone in this class. A curve is a map of the menu you wrote, and it cannot show whether the menu was right.
 :::
 
-## Two jobs, one curve
+## Description and inference {#two-jobs-one-curve}
 
 ::: {.none}
-**Description** – map how the estimate moves across every defensible choice. *(What we have been doing all day.)*
+**Description** – map how the estimate moves across every defensible choice. *(What our curve does.)*
 
 ::: {.fragment}
 **Inference** – ask whether the curve *as a whole* is surprising if there were no effect at all. *(A different, harder job.)*
@@ -34,10 +34,10 @@ The two are detachable, and most published curves stop at description.
 :::
 
 ::: notes
-A curve like ours does two different jobs. The first is description, showing how the estimate moves as the choices move. That is what we built, and it is useful on its own. The second is inference: asking whether the curve, taken as a whole, is more extreme than you would expect if there were no effect at all. Those are different questions with different machinery, and they detach cleanly – Multi100 did the description without the inference, and so, so far, have we. The next three slides are about what the second job takes.
+A curve like ours does two different jobs. The first is description, showing how the estimate moves as the choices move. That is what we built, and it is useful on its own. The second is inference: asking whether the curve, taken as a whole, is more extreme than you would expect if there were no effect at all. Those are different questions with different machinery, and they detach cleanly – Multi100 did the description without the inference, and so far we have done the same. The next three slides are about what the second job takes.
 :::
 
-## 840 estimates are not 840 tests
+## Dependence among the 840 estimates {#estimates-are-not-840-tests}
 
 :::: {.none}
 ::: {.fragment .fadeInUp}
@@ -73,7 +73,7 @@ The design is worked through in your inference reading; permutation inference af
 The claim says that a country's unemployment moves its EU framing over time. To build the null, take each country and shuffle its unemployment series in time – together with growth, so the macro side stays internally coherent – while leaving the framing data untouched. In a shuffled world the alignment between unemployment and framing is broken by construction: whatever curve you get is what pure chance produces on these data with these 840 specifications. Do that five hundred times, refit the entire grid each time, and you have five hundred null curves to compare ours with. If our curve falls in the far tail of those null curves, the curve as a whole is evidence. If it falls comfortably among them, the description stands but the inference does not.
 :::
 
-## How to read a curve-level test {.smaller}
+## Reading a curve-level test {#how-to-read-a-curve-level-test .smaller}
 
 ::: {.small}
 - With B = 500, the smallest reportable p is **2/(B+1) ≈ 0.004**, a floor set by the number of draws, not a zero
@@ -86,7 +86,7 @@ The claim says that a country's unemployment moves its EU framing over time. To 
 :::
 
 ::: notes
-Two literacy points and then you argue. First: with five hundred draws, the smallest p-value the test can report is two over five hundred and one – about point zero zero four. That is a floor set by the number of draws, not a zero, and more draws lower it at a real cost in computing time. Second: near the point-oh-five boundary the Monte-Carlo error is around plus or minus point zero one, so a permutation p of point zero four and one of point zero six count as the same finding. The badge says that this test is designed and has not been run, so you are reading a plan today, which is the preregistration point again. Now the discussion beat. The constrained universe – cosmopolitan outcome only, 140 specifications – is 70.7 per cent negative, 57.1 per cent negative and significant. Two minutes: is that strong evidence? Against what null? Type your answer. [harvest: the sharp ones will say – we don't know until we know what chance produces on these dependent data; that is the point.]
+Two literacy points and then you argue. First: with five hundred draws, the smallest p-value the test can report is two over five hundred and one – about point zero zero four. That is a floor set by the number of draws, not a zero, and more draws lower it at a real cost in computing time. Second: near the point-oh-five boundary the Monte-Carlo error is around plus or minus point zero one, so a permutation p of point zero four and one of point zero six count as the same finding. The badge says that this test is designed and has not been run, so what you are reading today is a plan whose result nobody yet knows, which is the position that a preregistration puts you in. Now the discussion beat. The constrained universe – cosmopolitan outcome only, 140 specifications – is 70.7 per cent negative, 57.1 per cent negative and significant. Two minutes: is that strong evidence? Against what null? Type your answer. [harvest: the sharp ones will say – we don't know until we know what chance produces on these dependent data; that is the point.]
 :::
 
 ## What stands without the test
@@ -106,5 +106,5 @@ Careful reporting says which of the two layers a claim belongs to.
 ::::
 
 ::: notes
-A good deal of today needs no permutation at all. That the outcome fork accounts for half the variance – description, stands. That the two person-level analysts bracket the range – stands. That the sign flips concentrate in the pooled estimator and the non-bailout samples – stands. Your preregistered dot, the whole structure of the curve – all of it stands. The single sentence that has to wait is "this curve as a whole is unlikely if there is no effect". Keeping those two layers apart in your own writing – saying which one your claim belongs to – is what inference literacy means in practice, and it puts you ahead of most published specification curves.
+Most of what the grid has shown needs no permutation at all. That the outcome fork accounts for half the variance – description, stands. That the two person-level analysts bracket the range – stands. That the sign flips concentrate in the pooled estimator and the non-bailout samples – stands. Your own dot and the whole structure of the curve stand as well. The single sentence that has to wait is "this curve as a whole is unlikely if there is no effect". Keeping those two layers apart in your own writing – saying which one your claim belongs to – is what inference literacy means in practice, and it puts you ahead of most published specification curves.
 :::
