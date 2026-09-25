@@ -315,12 +315,13 @@ my_experiments <- function() {
   invisible(show)
 }
 
-submit_exploration <- function() {
+submit_exploration <- function(nickname = NULL) {
   if (is.null(.tried$last))
     stop("Nothing to submit – call try_spec() first, ending with the specification you want on the chart.",
          call. = FALSE)
   .submit(.tried$last$ch, .tried$last$hit, "explore",
-          "Your exploratory submission (claim-aligned, the last specification you tried):")
+          "Your exploratory submission (claim-aligned, the last specification you tried):",
+          nickname)
 }
 
 # --- Task 5: the declared helpers ------------------------------------------
@@ -397,13 +398,69 @@ run_spec <- function(spec) {
   invisible(hit)
 }
 
-# One submission, used by both phases. The phase is prefixed to the free-text
-# spec label, and all fourteen decisions are written into that label; the form,
-# its fields and the collection pipeline are frozen infrastructure.
-.submit <- function(ch, hit, phase, lead) {
+# Both submissions of a participant carry one short tag inside the spec label,
+# "explore: [amber-otter-42] …", so that the participant can find their own
+# circles on the class chart. The tag rides in the free-text label because the
+# form and its fields are frozen infrastructure. The same functions sit in
+# R/spec_tools.R of the workspace, which keeps the tag in a file; here it lasts
+# for the browser session, and a nickname passed to either submission function
+# sets it or brings it back after a reload.
+.tag_words <- list(
+  adj  = c("amber", "azure", "bright", "calm", "coral", "crisp", "dusky", "early",
+           "fair", "gentle", "golden", "hazel", "ivory", "jade", "keen", "lively",
+           "lunar", "misty", "noble", "olive", "pale", "quiet", "rapid", "rosy",
+           "russet", "silver", "snowy", "solar", "sunny", "swift", "velvet", "vivid"),
+  noun = c("otter", "heron", "lynx", "badger", "finch", "hare", "ibex", "kestrel",
+           "lark", "marten", "newt", "owl", "puffin", "quail", "raven", "seal",
+           "stoat", "tern", "vole", "wren", "bison", "crane", "dove", "egret",
+           "fox", "gecko", "koala", "lemur", "moose", "panda", "robin", "swan")
+)
+.tag_env <- new.env(parent = emptyenv())
+.tag_env$tag <- NULL
+
+# A fresh tag, drawn without touching the random-number stream of the session.
+.new_tag <- function() {
+  had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had_seed) old_seed <- get(".Random.seed", envir = globalenv())
+  on.exit(if (had_seed) assign(".Random.seed", old_seed, envir = globalenv())
+          else rm(".Random.seed", envir = globalenv()))
+  set.seed(as.integer((as.numeric(Sys.time()) * 1000) %% 1e9) + Sys.getpid() %% 1e5)
+  paste(sample(.tag_words$adj, 1), sample(.tag_words$noun, 1), sample(10:99, 1), sep = "-")
+}
+
+# A nickname reduced to lower-case ASCII letters, digits and single hyphens,
+# at most 24 characters – the only form that the class chart parses.
+.clean_tag <- function(x) {
+  # iconv on Windows turns these into "?": the Romanian comma-below letters and the eszett
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x)[1])))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  x <- gsub("-+$", "", substr(x, 1, 24))
+  if (is.na(x) || !nzchar(x))
+    stop("A nickname needs at least one letter or digit, for example nickname = \"blue-heron\".",
+         call. = FALSE)
+  x
+}
+
+# The tag of this session: the nickname if one is given, otherwise the tag
+# already drawn, otherwise a fresh one. Returns the tag and the one it replaced.
+.class_tag <- function(nickname = NULL) {
+  stored <- .tag_env$tag
+  tag <- if (!is.null(nickname)) .clean_tag(nickname) else if (!is.null(stored)) stored else .new_tag()
+  .tag_env$tag <- tag
+  list(tag = tag, replaced = if (!is.null(stored) && !identical(tag, stored)) stored)
+}
+
+# One submission, used by both phases. The phase and the tag are prefixed to
+# the free-text spec label, and all fourteen decisions are written into that
+# label; the form, its fields and the collection pipeline are frozen
+# infrastructure.
+.submit <- function(ch, hit, phase, lead, nickname = NULL) {
   fl <- .flip(ch)
   b <- fl * hit$estimate; tv <- fl * hit$statistic; r <- hit$r_ca
-  spec_label <- paste0(phase, ": ", .spec_line(ch))
+  tg <- .class_tag(nickname)
+  spec_label <- paste0(phase, ": [", tg$tag, "] ", .spec_line(ch))
 
   FORM_ID <- "1FAIpQLSezoAEOnZUfP4pkfN28_XtEBwSyc2RLsXB-h8RPSegF7_t76A"
   field <- c(spec = "entry.832496914", b = "entry.1656311800", se = "entry.1337458262",
@@ -428,15 +485,22 @@ run_spec <- function(spec) {
   if (requireNamespace("htmltools", quietly = TRUE))
     print(htmltools::tags$p(htmltools::tags$a(href = url, target = "_blank",
                                               "Open the pre-filled form in a new tab")))
-  invisible(list(spec = spec_label, b = b, se = hit$std_error, statistic = tv,
+  cat(sprintf("\nYour circles on the class chart carry the tag %s%s.\n", tg$tag,
+              if (!is.null(tg$replaced)) sprintf(" (it replaces %s)", tg$replaced) else ""))
+  cat("Type it into the my_tag line of the live cell on the Multiverse page to\n")
+  cat("highlight them. Both of your submissions share it while this page stays\n")
+  cat(sprintf("open; after a reload, bring it back with nickname = \"%s\". To choose\n", tg$tag))
+  cat("your own, pass a nickname rather than your name, because the chart is public.\n")
+  invisible(list(spec = spec_label, tag = tg$tag, b = b, se = hit$std_error, statistic = tv,
                  df = hit$df, n = hit$n, r = r, url = url))
 }
 
-report_result <- function() {
+report_result <- function(nickname = NULL) {
   ch  <- .check_choices()
   hit <- .lookup(ch)
   .submit(ch, hit, "declared",
-          "Your declared submission (claim-aligned, straight from your preregistration):")
+          "Your declared submission (claim-aligned, straight from your preregistration):",
+          nickname)
 }
 ```
 
@@ -984,7 +1048,7 @@ Everything you try is logged. Print the log to see the small multiverse that you
 my_experiments()
 ```
 
-When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result:
+When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own circles on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
 
 ```{webr}
 #| autorun: false
@@ -1082,7 +1146,7 @@ run_spec(my_model)
 
 The output gives the coefficient, its claim-aligned partial *r* and your placement. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero supports the claim. The placement is the share of the grid of 840 specifications that supports the claim more strongly than your choice does. The five Multi100 analysts are placed between about the 16th percentile (the most strongly claim-supporting) and about the 68th (near the null).
 
-Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared**.
+Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
 
 ```{webr}
 #| autorun: false

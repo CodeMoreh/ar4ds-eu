@@ -36,14 +36,14 @@ You submit twice, and the two are different in kind. The browser lab and the wor
 
 1. **`try_spec(...)`** – one argument per axis, every one defaulting to the baseline you reproduced. `try_spec(estimator = "pooled_cl")` changes one thing and leaves the rest alone.
 2. **`my_experiments()`** – prints everything you have tried so far, side by side, with only the axes that varied.
-3. **`submit_exploration()`** – sends the most recent try to the chart, labelled as exploration. Open the printed link and press **Send**.
+3. **`submit_exploration()`** – sends the most recent try to the chart, labelled as exploration. Open the printed link and press **Send**. It also prints your tag, such as `amber-otter-42`, which marks your circles on the class chart; `submit_exploration(nickname = "...")` sets your own instead.
 
 **Task 5 – the declared dot (filled circle).** Here you preregister one specification before you run it.
 
 4. **Preregister.** Make one choice on every axis in the preregistration cell (`claim_align <- TRUE` is already set for you), then run `prereg()`. The completed cell is your preregistration. In the workspace, render the report before step 5, as set out under [Rendering the report](#rendering-your-report-route-1); on the browser lab page, copy the whole cell into your notes.
 5. **`build_model(...)`** – write your specification as a formula. It accepts only code that matches your preregistration and tells you what is off when it does not.
 6. **`run_spec(my_model)`** – computes your specification and shows the coefficient, its claim-aligned partial *r* (below zero supports the claim), and, on the browser lab page, your placement against the grid of 840 specifications.
-7. **`report_result()`** – no arguments. It builds your submission from the preregistration and prints a clickable, pre-filled form link; open it and press **Send**.
+7. **`report_result()`** – no arguments needed. It builds your submission from the preregistration and prints a clickable, pre-filled form link; open it and press **Send**. It reuses your tag from Task 4. In the browser lab, if you have reloaded the page since then, pass the tag back with `report_result(nickname = "your-tag")`.
 
 If any of that stalls, work down the list below.
 
