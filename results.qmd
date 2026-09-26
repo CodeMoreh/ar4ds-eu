@@ -1,6 +1,6 @@
 ---
-title: "The Multiverse"
-subtitle: "The specification curve, the five analysts and the room's results"
+title: "Enter the *multiverse*"
+subtitle: "A visual overview of 2,520 justifiable data processing and statistical analysis pipelines"
 engine: knitr
 format:
   live-html:
@@ -48,23 +48,9 @@ girafe_opts <- list(
 )
 ```
 
-This page shows the specification curve for the course exercise. Every justifiable analysis of one claim sits on one chart. The chart is **claim-aligned**: the claim predicts opposite signs for the positive framings (`mcosmo`, `mutil`, `mpos`) and the negative framings (`mcomm`, `mlib`, `mneg`), so the negative framings are reverse-coded (1 − y) before plotting. That is the same convention that is recorded in your preregistration (`claim_align`), applied here automatically, and it puts every result on one readable scale. **A specification below zero supports the claim, whichever outcome it uses.**
+The specification curve below contains results from 2,520 justifiable analyses of our dataset to test the central claim that "*poor economic performances … decrease positive dimensions of EU framing*" (Teney 2016, p. 619).
 
-The main chart renders at build time and is interactive. Hover over any point to read the full recipe behind it. The chart at the foot of the page is live: it fetches the room's submissions in your browser and redraws when you press *Run Code*. Before the session, or when the data files are absent, the page renders with placeholder messages.
-
-The logic of the visualisation follows the specification-curve idea (Simonsohn, Simmons and Nelson): one point per justifiable analysis, ordered by size. Because the menu mixes outcome scales and predictor forms, raw coefficients are not comparable across specifications. The chart therefore plots the **partial correlation** (r = t/sqrt(t^2 + df)), the same metric that Multi100 used to compare analysts, on the claim-aligned scale. The horizontal line at zero is the boundary between support for the claim and evidence against it, and your own submission will land on one side of it.
-
----
-
-## The claim-aligned specification curve {#the-claim-aligned-multiverse}
-
-The chart holds the **2,520** specifications of the canonical universe: every combination of the menu's Level 1 and Level 3 choices at the canonical measurement settings (the share of all thirteen items, respondents who mentioned no frame scored zero, cells as interviewed, the World Bank series). The far larger grid behind the fourteen-axis menu, which varies the measurement as well, is drawn one question at a time on the [Estimand dial](exercise/estimand-dial.qmd). The canonical 840 are the `gaussian` family, drawn in blue as open triangles with unemployment as the predictor. The beta-family twin of each one is in green, and the two halves together make the family universe of 1,680. The remaining 840 carry the **growth predictor** – GDP growth as the claim carrier, alone or beside unemployment, in both families – and are drawn as open squares. Colour therefore carries the outcome family and the marker carries the claim-carrying predictor. Faded points are not significant at 5%.
-
-Both the outcome family and the choice of predictor are course additions beyond the Multi100 menu, which fixed unemployment as the predictor. Task 1 of Multi100 shows three of the five analysts freely choosing GDP measures before that instruction existed. Each family curve is ranked within itself, and the claim-alignment convention extends once more: the claim-expected sign for growth is positive on the positive framings, so growth-predictor results are sign-flipped on top of the outcome recoding and below zero still means support for the claim, whichever variable and whichever framing a specification uses.
-
-The five Multi100 analysts sit on the gaussian curve styled as what they ran – blue unemployment triangles, slightly enlarged – each found by its name tag. C6HJR's gold tag marks the constrained baseline you reproduce in Task 3. The original author (OA) joins them under a red tag, their own published coefficient converted to the common axis exactly as the analysts' results were. Every mark answers on hover, and hovering a name tag or its marker highlights the pair while the rest of the chart dims.
-
-That OA's own published coefficient lands beside PRL47's near-zero triangle rather than out among the strong results is the degrees-of-freedom lesson of the [statistical methods module](companion/stats-methods.qmd#sec-onescale) in one picture: a person-level t of −4.03 with no recorded residual df is read against its 335,566 respondents, and almost nothing survives the conversion.
+The *negative* framings (`mcomm`, `mlib`, `mneg`) are reverse-coded (1 − y) before plotting, to align the direction of their meaning to those of the *positive* framings (`mcosmo`, `mutil`, `mpos`). This is the same convention expected in the preregistration exercise (`claim_align`). Because equally justifiable analyses can rely on different outcome scales and predictor forms, raw coefficients are not comparable across specifications. The chart therefore plots *partial correlations* $r$ (calculated as $r=t/\sqrt{t^2+df}$) to make the results comparable. Thus, a negative partial $r$ value supports the claim, while a positive one goes against it. The horizontal line at zero is the boundary between support for the claim and evidence against it.
 
 ```{r}
 #| label: spec-curve-family
@@ -111,7 +97,7 @@ if (file.exists(grid_file)) {
   )
 
   # the five analysts and OA's own published coefficient, placed on the gaussian
-  # (canonical) curve at the rank where each partial r falls – C6HJR's value IS
+  # curve of 840 at the rank where each partial r falls – C6HJR's value IS
   # the constrained baseline, so no separate baseline marker is drawn. Each
   # mark carries a small name-tag label sharing its data_id: hovering either
   # highlights the pair (opts_hover_inv dims the rest) and shows the same
@@ -315,7 +301,7 @@ if (file.exists(family_file)) {
   cat(sprintf(
     paste0(
       "On the claim-aligned scale every supportive specification sits below zero: ",
-      "**%.1f%%** of the family universe of %s (**%.1f%%** of the canonical gaussian half, ",
+      "**%.1f%%** of the family universe of %s (**%.1f%%** of the gaussian half, ",
       "**%.1f%%** of the beta half), with **%.1f%%** significant at the 5%% level overall. ",
       "The two family curves all but coincide, and in the cosmopolitan universe ",
       "(outcome `mcosmo`) the wrong-sign pattern is identical in each family. The same ",
@@ -349,15 +335,19 @@ if (file.exists(family_file)) {
 }
 ```
 
----
+## Interpreting the curve {#the-specification-curve}
 
-## The room's results {#class-results}
+Each point is one specification. The points are ranked by their claim-aligned partial *r*, so the curve runs from the strongest support for the claim on the left to the strongest evidence against it on the right. The 2,520 specifications are a subset of the [specification menu](exercise/spec-menu.qmd), all fitted at its standard measurement settings; the [estimand choices page](exercise/estimand-dial.qmd) draws the full menu one question at a time.
 
-This chart is **live**, and it uses the same visual conventions as the chart above. The canonical universe of 2,520 pre-computed specifications forms the muted backdrop: the gaussian curve in grey, its beta twin in green-grey, triangles carrying unemployment and squares GDP growth, each family ranked within itself. The analysts and OA sit on the gaussian curve as name-tagged triangles, and the room's own submissions overlay them as black circles, numbered in arrival order and placed where the claim-aligned partial *r* of each result falls on the curve.
+Blue points use the linear (`gaussian`) model and green points its beta-regression twin. Triangles have unemployment as the predictor and squares GDP growth, whose results are sign-flipped as well, so that a point below zero supports the claim whatever its predictor. The blue triangles are the 840 specifications of the Multi100 menu, and the beta twins and the growth predictor are course additions to it. Each family is ranked separately, and faded points are not significant at 5%. Name tags mark the five Multi100 analysts, with C6HJR's gold tag on the baseline that you reproduce in Task 3, and a red tag marks the published coefficient of the original author (OA). Hover over any mark for its details.
 
-The room submits twice, and the two waves are drawn differently. An **open** circle is an *explored* specification – tried while working through the menu, chosen after its result was visible. A **filled** circle is a *declared* one, written down before it ran. Hover any circle for the specification behind it. Press **Run Code** to pull the latest submissions.
+Section 9 of [Getting started with R](companion/intro-r.qmd#sec-speccurve) builds a curve like this one from the data. [Section 6 of the multiverse module](companion/multiverse.qmd#sec-reading) explains why the share of points below zero describes this set of analyses and is not the probability that the claim is true, and the [inference reading](exercise/reading-inference.qmd) sets out what a test on the whole curve can add.
 
-The R engine downloads into your browser the first time (10–30 seconds); the button changes from a spinner to *Run Code* when it is ready.
+## Class results {#class-results}
+
+The live class chart below is where your own submitted results are shown on the specification curve. If you have submitted your results via the form, pressing *Run Code* below will run the `refresh_multiverse()` function that updates the plot with the latest recorded submission data. 
+
+Submissions from the class are displayed as black circles, numbered in order of arrival. An **open** circle shows an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result. A **filled** circle shows a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two circles share it. Hovering over a circle shows its tag and the specification behind it. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your circles in orange, joined in the order in which you submitted them.
 
 ```{webr}
 #| label: live-multiverse-setup
@@ -387,7 +377,7 @@ spec$r <- spec$r * ifelse(spec$positive_outcome, 1, -1) *
 # beta curves draw as two overlaid backdrops rather than one merged sequence
 spec <- spec[order(spec$family, spec$r), ]
 spec$rank <- ave(spec$r, spec$family, FUN = seq_along)
-# analysts, OA and class submissions place on the gaussian (canonical) curve
+# analysts, OA and class submissions place on the gaussian curve of 840
 gauss_r <- sort(spec$r[spec$family == "gaussian"])
 sg <- spec[spec$family == "gaussian", ]
 sb <- spec[spec$family == "beta", ]
@@ -439,7 +429,21 @@ read_clean <- function(path) {
   d[!is.na(d$r), , drop = FALSE]
 }
 
-refresh_multiverse <- function() {
+# my_tag is the tag that submit_exploration() and report_result() print. It is
+# reduced exactly as .clean_tag() in the submission helpers reduces a nickname
+# (transliterated to ASCII, lower case, single hyphens, at most 24 characters),
+# so that a nickname typed as the participant first wrote it still matches.
+clean_my_tag <- function(x) {
+  if (length(x) == 0 || is.na(x[1])) return("")
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x[1]))))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  gsub("-+$", "", substr(x, 1, 24))
+}
+
+refresh_multiverse <- function(my_tag = "") {
+  my_tag <- clean_my_tag(my_tag)
   cls <- NULL
   if (nzchar(worker_url)) {
     cls <- tryCatch({
@@ -500,18 +504,22 @@ refresh_multiverse <- function() {
   if (!is.null(cls) && nrow(cls) > 0) {
     cls$rank <- findInterval(cls$r, gauss_r)
     cls$n_lab <- paste0("#", seq_len(nrow(cls)))
-    # The room submits twice: an exploratory result while working the menu, and
-    # a declared one after preregistering. A prefix in the free-text spec field
-    # says which is which, so neither the form nor the sheet carries a phase
-    # column of its own.
-    # Rows with no prefix are pre-2026-07-31 submissions, all of them declared.
-    cls$phase <- if ("spec" %in% names(cls)) {
-      ifelse(grepl("^explore:", cls$spec), "explored", "declared")
-    } else "declared"
-    cls$spec_txt <- if ("spec" %in% names(cls))
-      sub("^(explore|declared): ", "", cls$spec) else ""
+    # The class submits twice: an exploratory result while working the menu, and
+    # a declared one after preregistering. The free-text spec field carries the
+    # phase and the tag of the participant, "explore: [amber-otter-42] …", so
+    # neither the form nor the sheet needs a column of its own for either.
+    # Rows without a tag predate 2026-09-24, and rows without a phase predate
+    # 2026-07-31 and were all declared; both still parse.
+    spec_raw <- if ("spec" %in% names(cls)) as.character(cls$spec) else rep("", nrow(cls))
+    spec_raw[is.na(spec_raw)] <- ""
+    cls$phase <- ifelse(grepl("^explore:", spec_raw), "explored", "declared")
+    rest <- sub("^(explore|declared): ", "", spec_raw)
+    cls$tag <- ifelse(grepl("^\\[[a-z0-9-]+\\] ", rest),
+                      sub("^\\[([a-z0-9-]+)\\] .*$", "\\1", rest), NA_character_)
+    cls$spec_txt <- sub("^\\[[a-z0-9-]+\\] ", "", rest)
     cls$tip <- paste0(
       "<b>submission ", cls$n_lab, " (", cls$phase, ")</b>",
+      ifelse(is.na(cls$tag), "", paste0("<br/>tag: ", cls$tag)),
       "<br/><b>claim-aligned r = ", sprintf("%.3f", cls$r), "</b>",
       if (all(c("t", "df") %in% names(cls)))
         ifelse(is.na(cls$t) | is.na(cls$df), "",
@@ -520,9 +528,28 @@ refresh_multiverse <- function() {
              paste0("<br/>", cls$spec_txt))
     )
     # Open circle for a specification that was explored, filled for one that
-    # was declared before its result was seen. The distinction is the whole
-    # point of the two-wave design, so it has to be visible without a hover.
+    # was preregistered before it was run. The distinction is the whole point
+    # of the two-wave design, so it has to be visible without a hover.
     cls$shape <- ifelse(cls$phase == "declared", 19, 1)
+    # The circles of the participant whose tag is typed into the live cell,
+    # as larger orange circles joined in the order of submission. They are
+    # drawn first, so that the black circles on top keep their hover boxes.
+    mine <- nzchar(my_tag) & !is.na(cls$tag) & cls$tag == my_tag
+    sub_txt <- paste(nrow(cls), "class result(s) so far")
+    if (any(mine)) {
+      # a joining line needs two circles; one alone would print a ggplot notice
+      if (sum(mine) > 1)
+        p <- p + geom_path(data = cls[mine, , drop = FALSE], aes(x = rank, y = r),
+                           colour = orange, linewidth = 0.7, inherit.aes = FALSE)
+      p <- p +
+        geom_point(data = cls[mine, , drop = FALSE], aes(x = rank, y = r),
+                   shape = cls$shape[mine], size = 4.6, colour = orange,
+                   stroke = 1.6, inherit.aes = FALSE)
+      sub_txt <- paste0(sub_txt, " · tag ", my_tag, ": ",
+                        paste(cls$n_lab[mine], collapse = ", "))
+    } else if (nzchar(my_tag)) {
+      sub_txt <- paste0(sub_txt, " · no circle carries the tag ", my_tag, " yet")
+    }
     if (have_ggiraph) {
       p <- p + geom_point_interactive(
         data = cls, aes(x = rank, y = r, tooltip = tip, data_id = n_lab),
@@ -542,7 +569,7 @@ refresh_multiverse <- function() {
       geom_text(data = cls, aes(x = rank, y = r, label = n_lab),
                 colour = "black", size = 2.6, vjust = cls$vj,
                 inherit.aes = FALSE) +
-      labs(subtitle = paste(nrow(cls), "class result(s) so far"))
+      labs(subtitle = sub_txt)
     # a dot far above the band is almost certainly an un-recoded negative
     # framing: stretch the axis so it stays visible for the debrief
     ylim_hi <- max(ylim_hi, max(cls$r, na.rm = TRUE) + 0.06)
@@ -573,11 +600,14 @@ refresh_multiverse <- function() {
 #| fig-width: 9
 #| fig-height: 5
 #| caption: "Press Run Code to refresh – pull the latest class results"
-refresh_multiverse()
+my_tag <- ""   # your tag, e.g. "amber-otter-42", highlights your own circles
+refresh_multiverse(my_tag)
 ```
 
+```{=html}
 <!-- ::: {.callout-note collapse="true"}
 ## How this works (facilitator)
 
 Submissions go to a Google Form, land in a linked Google Sheet, and are served as CSV with permissive CORS headers by a small Cloudflare Worker. The `{webr}` cell above fetches that CSV in the browser.
 ::: -->
+```
