@@ -42,10 +42,9 @@
 #               No microdata: every input is either the public panel or a
 #               committed aggregate, so this script runs for anyone.
 # Writes:       data/EUframes_person_full.csv       ($SIM_OUT overrides)
-#               A second twin alongside the older EUframes_person_sim.csv,
-#               which the existing simulation module still reads. This one
-#               carries the full published variable set and is the file the
-#               individual-level analysis works from.
+#               The simulated twin carries the full published variable set
+#               and is the file that the simulation module and the
+#               individual-level analysis work from.
 #               the file named by $SIM_SWEEP, when that is set
 # Author:       Chris Moreh
 # Last updated: 2026-07-30
