@@ -11,6 +11,7 @@ project:
     - "*.qmd"
     - "data/*.md"
     - "tracks/**/*.qmd"
+    - "case/*.qmd"
     - "exercise/*.qmd"
     - "companion/*.qmd"
     - "slides/*.qmd"
@@ -30,6 +31,16 @@ website:
   repo-url: "https://github.com/CodeMoreh/applied-replication"
   repo-actions: [issue]
   favicon: assets/logo.png
+  # Shown at the top of every page while the materials are being revised;
+  # delete the block once they are stable. Not dismissable, so that it
+  # appears on every page a visitor opens. It does not reach the reveal.js
+  # decks, which have no site navigation.
+  announcement:
+    icon: exclamation-triangle
+    dismissable: false
+    type: warning
+    position: above-navbar
+    content: "**Under active development.** These course materials are being revised and may change at any time, so please do not rely on them as they currently stand."
 
   navbar:
     logo: assets/logo.png
@@ -60,6 +71,9 @@ website:
             text: "Semester"
           - href: tracks/self-study/index.qmd
             text: "Self-study"
+      # The presentation of the case that every track starts from
+      - href: case/index.qmd
+        text: "Case study"
       - text: Exercise
         menu:
           - href: exercise/index.qmd
