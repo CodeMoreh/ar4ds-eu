@@ -36,12 +36,12 @@ This page presents the case on which the whole course is built, and it is the pl
 
 The paper starts from a distinction between the affective component of attitudes towards the EU, such as a sense of belonging to Europe, and their cognitive component, the meanings that citizens attach to the EU, which in the view of OA had "received much less attention so far" [@Teney2016DoesEUEconomic, p. 620]. Its stated aim is to investigate "the effect of the current economic crisis, the resulting EU financial stability support program, and the politicization of the EU on subjective Europeanization", and so to "assess the dynamics of EU attitudes among citizens from the 27 EU member states between 2004 and 2013" (p. 620). OA calls these meanings 'EU framing' and distinguishes four dimensions of it, which cross the valence of a meaning, positive or negative, with its content, materialist or not.
 
-|          | Materialist | Non-materialist |
-|:---------|:------------|:----------------|
+|   | Materialist | Non-materialist |
+|:-----------------|:-----------------------|:-----------------------------|
 | Positive | **Utilitarian**: "the EU framed in material advantages such as economic prosperity and social protection" | **Cosmopolitan**: "the EU framed as a cosmopolitan legal order that includes terms such as peace, democracy and cultural diversity" |
 | Negative | **Libertarian**: "the EU considered as a bureaucratic waste of money" | **Communitarian**: "the EU perceived as a threat to the own constitutive community" |
 
-: The four dimensions of EU framing, in the words of the paper (p. 620). {#tbl-dimensions}
+: The four dimensions of EU framing, in the words of the paper (p. 620).
 
 The theoretical sections of the paper derive five hypotheses, two of them in two parts, which read as follows.
 
@@ -67,14 +67,14 @@ Two features of the survey limit what can be done with it. GESIS supplies a post
 
 The outcome is built from one question with several possible answers. In the spring 2004 questionnaire it reads "What does the European Union mean to you personally?", and the interviewer shows a card, reads out the list, records every item that the respondent picks and rotates the order of the list between interviews (variable report for ZA4056, p. 68). Each item is stored as a separate variable, coded 0 for not mentioned and 1 for mentioned. The list holds fourteen substantive meanings, from 'Peace' and 'Economic prosperity' to 'More crime' and 'Not enough control at external frontiers', besides a spontaneous 'Other' and 'Don't know'. OA set the 'Euro' aside, because it "shows only low associations with the 13 other items" and "does not have the same meaning among citizens within and outside the Eurozone" [@Teney2016DoesEUEconomic, p. 631, note 1], and assigned the remaining thirteen to the four dimensions on the evidence of an earlier exploratory analysis and of a confirmatory factor analysis of the pooled data (p. 623).
 
-| Dimension     | Items, with the share of respondents who mentioned each |
-|:--------------|:---------------------------------------------------------|
-| Cosmopolitan  | Peace (28.54%), Democracy (21.86%), Freedom to travel, study and work anywhere in the EU (50.99%), Cultural diversity (22.12%), Stronger say in the world (23.14%) |
-| Utilitarian   | Economic prosperity (18.66%), Social protection (11.93%) |
+| Dimension | Items, with the share of respondents who mentioned each |
+|:----------------|:------------------------------------------------------|
+| Cosmopolitan | Peace (28.54%), Democracy (21.86%), Freedom to travel, study and work anywhere in the EU (50.99%), Cultural diversity (22.12%), Stronger say in the world (23.14%) |
+| Utilitarian | Economic prosperity (18.66%), Social protection (11.93%) |
 | Communitarian | Loss of our cultural identity (12.06%), More crime (17.50%), Not enough control at external borders (16.61%), Unemployment (16.64%) |
-| Libertarian   | Bureaucracy (21.51%), Waste of money (21.64%) |
+| Libertarian | Bureaucracy (21.51%), Waste of money (21.64%) |
 
-: The thirteen items and the four dimensions, with the pooled shares given in the paper (p. 623). {#tbl-items}
+: The thirteen items and the four dimensions, with the pooled shares given in the paper (p. 623).
 
 The way in which each dimension becomes a score matters for everything that follows. In the words of the paper, "the scale is composed of the sum of the mentioned items belonging to the specific framing dimension, divided by the total number of items mentioned by the respondent", so that the four scales "measure the relative frequency with which the respondent associates each frame to the EU" (p. 623). A respondent who mentions 'Peace', 'Freedom to travel, study and work anywhere in the EU' and 'Bureaucracy' therefore scores 2/3 on the cosmopolitan scale, 1/3 on the libertarian scale and 0 on the other two, and the four scores of anyone who mentions at least one item sum to 1. Each score is a share of what the respondent said rather than a count of meanings, so a respondent who adds a negative meaning lowers every positive score without withdrawing any positive item. Pooled over all respondents, the means are 0.534 for the cosmopolitan scale, 0.105 for the utilitarian, 0.208 for the communitarian and 0.153 for the libertarian (Table 1, p. 625), and the [measurement module](../companion/measurement.qmd) examines how well the thirteen items support the four dimensions.
 
@@ -89,8 +89,8 @@ OA supplied to SCORE, on request, the two Stata do-files that built and analysed
 ::: {.callout-note collapse="true"}
 ## The sixteen waves
 
-| Wave    | GESIS study and version | Fieldwork, from the GESIS title      | Respondents in the EU-27 |
-|:--------|:------------------------|:-------------------------------------|-------------------------:|
+| Wave | GESIS study and version | Fieldwork, from the GESIS title | Respondents in the EU-27 |
+|:---------------|:---------------|:------------------------|----------------:|
 | EB 61.0 | ZA4056, 1.0.1 | February–March 2004 | 16,216 |
 | EB 62.0 | ZA4229, 1.1.0 | October–November 2004 | 26,807 |
 | EB 63.4 | ZA4411, 1.1.0 | May–June 2005 | 26,823 |
@@ -137,7 +137,7 @@ Reading the paper beside the two do-files turns up a handful of discrepancies, e
 
 OA fitted a multilevel linear model "to take the structure of this repeated cross-sectional sampling design into account: citizens (Level 1; N: 390,373) are sampled within 16 EB waves (Level 2) that repeatedly took place within the 27 EU countries (Level 3)" [@Teney2016DoesEUEconomic, p. 623]. In the code, the second level is the country-wave, the cell that holds all respondents interviewed in one country in one wave, so that respondents sit in country-waves and country-waves in countries, with random intercepts for both. The economic indicators "vary over time and across countries and are, therefore, included as fixed effects at Level 2" (p. 625), where 'fixed effects' carries its multilevel meaning, coefficients that take the same value in every country rather than varying at random between them, and not the econometric meaning of a separate intercept for each country that several of the reanalyses use. Model 1 of Table 3 contains sex, age, education in three bands, occupation in eight groups, type of community, GDP growth, unemployment, and the interactions of each economic indicator with education. The line of the do-file that fits it for the cosmopolitan scale is the following.
 
-```
+```         
 mixed cos female mage i.edu3 b4.ses b3.urban  mgrowth munemp  c.mgrowth##edu3 c.munemp##edu3|| cty:   || eb_ctr:  if eb!=203 & eb!=303 &eb!=906 , covariance(unstructured)
 ```
 
@@ -151,13 +151,13 @@ SCORE, short for Systematizing Confidence in Open Research and Evidence, was a p
 
 This paper went through all three. A push-button reproduction, run with the code of OA, failed before it produced a number, because "the authors used file names that did not correspond with the names of the files available for download. Additionally 16 datasets are listed on the website as being used but the code references 18 files", as the report of the attempt puts it. A second reproduction, from the source data, was recorded as 'not reproduced'. The robustness study was Multi100, whose five reanalyses are the subject of section 3. A replication on fourteen Standard Eurobarometer waves fielded between 2013 and 2019 found a positive coefficient for unemployment, opposite in sign to the claim, which a revision of the report in October 2026 left positive but no longer significant, and SCORE judged the replication not successful in both versions. All of these materials are public on the Open Science Framework (OSF), and @fig-osf shows how they are organised there.
 
-::: {.column-page}
+::: column-page
 ![The SCORE dossier on the paper, as it is organised on the OSF. Each panel holds the OSF nodes of one kind of study, and in the full-size diagram every node links to its OSF page.](../assets/diagrams/score-teney-osf.svg){#fig-osf fig-alt="Diagram of the SCORE dossier on the OSF in four panels: the original materials, the two reproductions, the five Multi100 reanalyses with the fork kept by analyst C6HJR, and the replication on later waves with its preregistration and both reports."}
 :::
 
 The diagram can be [opened at full size](../assets/diagrams/score-teney-osf.svg), where its links work. The [repositories module](../companion/repositories.qmd#sec-trail) uses the same tree to show how such a record is kept and what it lets a reader establish without writing to anyone.
 
-### 2.2 How Multi100 worked {#sec-multi100}
+### 2.2 How the *Multi100* robustness analysis worked {#sec-multi100}
 
 Multi100 took 100 claims from papers in the SCORE sample and gave each to several independent analysts, 457 people in all, who completed 504 reanalyses [@AczelEtAl2026InvestigatingAnalyticalRobustness, p. 136]. Each claim had been extracted from the abstract of its paper in an earlier phase of SCORE as a 'single trace', one claim that "ideally corresponded to one statistically significant inferential test result" (preregistration of Multi100, [osf.io/4ev9t](https://osf.io/4ev9t), p. 5). The lead team of Multi100 then checked that each extraction was understandable, contained only one claim, indicated the direction of the effect and corresponded to a test reported in the paper, replacing any wording that it judged ambiguous or rhetorical with an ellipsis (p. 5). The claim taken from this paper reached the analysts as "... poor economic performances ... decrease positive dimensions of EU framing. (p. 619.)", a trimmed version of the sentence of the abstract quoted in section 1.1. The analysts received the full paper with the claim but no research question, since the preregistration had decided that "we will not give them specific research questions" (p. 5). No dataset came with this paper, because the Eurobarometer files may not be passed on, so every analyst rebuilt the data from the GESIS archive.
 
@@ -167,13 +167,13 @@ The instructions for Task 2 were meant to make each result comparable with one r
 
 ### 2.3 The Task 2 instruction {#sec-instruction}
 
-The instruction is quoted here as the analysts received it, from the Task 2 report filed by analyst C6HJR.
+The instruction is quoted here as the analysts received it.
 
 > **Claim:**
 >
 > **".. poor economic performances ... decrease positive dimensions of EU framing"** (p. 619)
 >
-> The original paper's results that refer to Task 2 were shown in their 'Model 1 – Cosmopolitan' column in Table 3, 'Unempl. rate' independent variable: estimate = -0.00340; t statistic = -4.03; P < 0.001
+> The original paper's results that refer to Task 2 were shown in their 'Model 1 – Cosmopolitan' column in Table 3, 'Unempl. rate' independent variable: estimate = -0.00340; t statistic = -4.03; P \< 0.001
 >
 > **Task 2:**
 >
@@ -182,22 +182,22 @@ The instruction is quoted here as the analysts received it, from the Task 2 repo
 > - use the **positive non-materialist form of EU framing** in your analysis.
 > - use the **unemployment rate** as the measure for poor economic performance in your analysis.
 
-The Multi100 data keep only the last three of these bullets, the ones that are specific to this claim, worded as sentences beginning "You should", without the general request for a single result or the pointer to Table 3. Read literally, the second bullet removes the variables of Model 2 and leaves the rest of Model 1, with its individual controls, GDP growth and the interactions with education, to the judgement of the analyst. Four of the five analysts nevertheless fitted unemployment as the only predictor, as section 3 shows, so in practice the instruction narrowed the analyses further than its words required.
+Read literally, the second bullet removes the variables of Model 2 and leaves the rest of Model 1, with its individual controls, GDP growth and the interactions with education, to the judgement of the analyst. Four of the five analysts nevertheless fitted unemployment as the only predictor, so in practice the instruction narrowed the analyses further than its literal interpretation required.
 
 ## 3. The five reanalysts {#sec-reanalysts}
 
-The five analysts are known by the identifiers that Multi100 gave them. Three described their discipline as sociology and two as psychology, three worked in R and two in Stata, and they submitted between May 2022 and July 2023, spending between 7 and 60 hours on the two tasks. All five concluded in Task 1 that the data showed evidence for the claim. @tbl-overview summarises what each did in Task 2, and the sections that follow take the five in the order in which they submitted, quoting the reports that they filed with Multi100, which are public in the Multi100 data.
+The five analysts were assigned identifier codes by Multi100, and in this workshop we will keep referring to them using these identifiers. Three described their discipline as sociology and two as psychology; three worked in R and two in Stata. All five concluded in Task 1 that the data showed evidence for the claim. @tbl-overview summarises what each did in Task 2, and the sections that follow take the five in the order in which they submitted, quoting the reports that they filed with Multi100, which are public in the Multi100 data.
 
-::: {.column-body-outset}
+::: column-body-outset
 | Analyst | Data in Task 2 | Outcome | Unemployment series | Model | Recorded result |
-|:--------|:---------------|:--------|:--------------------|:------|:----------------|
+|:-----------|:-----------|:-----------|:------------|:-----------|:-----------|
 | KQXUE | 270 country-years | share of mentions | Eurostat, as a share of the population aged 20–64 | an intercept for each country | t = −7.17, 242 df |
 | C6HJR | 270 country-years | share of mentions | World Bank | an intercept for each country and each year | t = −3.80, 233 df |
 | KEVF1 | 209,826 respondents | count of the five items | Eurostat `tipsun20` | random intercepts for years within countries | t = −5.90, 135.6 df |
 | PRL47 | 394,575 respondents | share of mentions, without the respondents who mentioned nothing | Eurostat, quarterly, ages 25–64 | three levels, random slopes, individual and national controls | z = −3.59 |
 | 018OL | 420 country-wave cells | mean of the five items, logged | Eurostat, ages 15–74 | random intercepts for country, year and wave | t = −1.21, 396.9 df |
 
-: The five reanalyses in Task 2, with the result as Multi100 recorded it. {#tbl-overview}
+: The five reanalyses in Task 2, with the result as Multi100 recorded it.
 :::
 
 ### 3.1 KQXUE {#sec-kqxue}
@@ -210,7 +210,7 @@ C6HJR, the facilitator of this course, submitted in November 2022, after rebuild
 
 ### 3.3 KEVF1 {#sec-kevf1}
 
-KEVF1, a professor of psychology with twenty years of experience in data analysis, worked in R and kept the respondents as the unit of analysis. In Task 1 the analyst summed the seven positive items and the six negative ones into two scores and regressed each on GDP growth in mixed models in which "data was nested within country and year", concluding that "A decline in GDP growth decreases the positive attitude towards the European Union and increases the negative attitude towards the European Union". For Task 2 the outcome was the sum of the five cosmopolitan items, a count from 0 to 5, and the predictor an unemployment series from Eurostat, with a consequence that the report states openly: "Note that unemployment rate was not available for the UK, and only from 2009 for the remaining countries. That left 209,826 observations." The model has random intercepts for countries and for years within countries, and the report gives its result as "beta = -.0295, t(135.606) = -5.899, p < .001". The degrees of freedom come from the Satterthwaite approximation, which the lmerTest package computes as an estimate of how much independent information a mixed model holds about each coefficient, and because unemployment takes one value per country-year, the approximation counts cells rather than respondents. The form recorded the statistic as +5.899, and Multi100 changed the sign to agree with the text.
+KEVF1, a professor of psychology with twenty years of experience in data analysis, worked in R and kept the respondents as the unit of analysis. In Task 1 the analyst summed the seven positive items and the six negative ones into two scores and regressed each on GDP growth in mixed models in which "data was nested within country and year", concluding that "A decline in GDP growth decreases the positive attitude towards the European Union and increases the negative attitude towards the European Union". For Task 2 the outcome was the sum of the five cosmopolitan items, a count from 0 to 5, and the predictor an unemployment series from Eurostat, with a consequence that the report states openly: "Note that unemployment rate was not available for the UK, and only from 2009 for the remaining countries. That left 209,826 observations." The model has random intercepts for countries and for years within countries, and the report gives its result as "beta = -.0295, t(135.606) = -5.899, p \< .001". The degrees of freedom come from the Satterthwaite approximation, which the lmerTest package computes as an estimate of how much independent information a mixed model holds about each coefficient, and because unemployment takes one value per country-year, the approximation counts cells rather than respondents. The form recorded the statistic as +5.899, and Multi100 changed the sign to agree with the text.
 
 ### 3.4 PRL47 {#sec-prl47}
 
@@ -218,7 +218,7 @@ PRL47, a postdoctoral researcher in sociology, spent 60 hours on the two tasks, 
 
 ### 3.5 018OL {#sec-018ol}
 
-018OL, a postdoctoral researcher in psychology who analyses data daily, wrote both tasks as R Markdown documents. In Task 1 the outcome was the proportion of the seven positive items that a respondent mentioned, computed "by summing the positive dimensions checked and dividing them by the number of possible positive dimensions", averaged by year, country and wave, and the predictor was GDP per capita. A mixed model with "the random intercepts of year, country and eurobarometer wave" gave "estimate = 0.32 [CI 0.10 - 0.54], p = 0.005". In Task 2 the outcome became the mean of the five cosmopolitan items, the predictor the annual unemployment rate of people aged 15 to 74 from Eurostat, and the data 420 cells of one country in one wave, whose means were log-transformed before the same kind of model was fitted. The result was t = −1.206 on 396.9 degrees of freedom (p = 0.228), and the analyst concluded that "Economic performance as measured in unemployment rate did not predict positive non-materialist form of EU framing", while ticking, for a negative estimate, the box for a result "Opposite as claimed by the original study".
+018OL, a postdoctoral researcher in psychology who analyses data daily, wrote both tasks as R Markdown documents. In Task 1 the outcome was the proportion of the seven positive items that a respondent mentioned, computed "by summing the positive dimensions checked and dividing them by the number of possible positive dimensions", averaged by year, country and wave, and the predictor was GDP per capita. A mixed model with "the random intercepts of year, country and eurobarometer wave" gave "estimate = 0.32 \[CI 0.10 - 0.54\], p = 0.005". In Task 2 the outcome became the mean of the five cosmopolitan items, the predictor the annual unemployment rate of people aged 15 to 74 from Eurostat, and the data 420 cells of one country in one wave, whose means were log-transformed before the same kind of model was fitted. The result was t = −1.206 on 396.9 degrees of freedom (p = 0.228), and the analyst concluded that "Economic performance as measured in unemployment rate did not predict positive non-materialist form of EU framing", while ticking, for a negative estimate, the box for a result "Opposite as claimed by the original study".
 
 ### 3.6 Assessment {#sec-assessment}
 
@@ -262,17 +262,17 @@ The estimate and the partial correlation stay where they were under every rule, 
 
 **018OL** wrote a literate pipeline with cached intermediate data and found the items by their labels, which survives the renumbering of variables between waves, and the random intercepts for country, year and wave arguably describe the structure of the data more fully than most of the other designs. The outcome, however, is a mean of five items rather than a share, and it was log-transformed. The 420 country-wave cells share 270 annual unemployment rates, so cells of the same country-year carry the same value of the predictor, and the 396.9 degrees of freedom most probably overstate the number of independent comparisons. Without an intercept for each country, stable national differences enter the slope to the extent that the random intercepts do not absorb them. The box ticked for the direction of the result marked a negative estimate as opposite to the claim, and Multi100 carried that into the effect size, as section 4 shows. The facilitator's re-implementation does not recover the result (t = −1.60 against −1.21), most probably because it selects the items by their position where the analyst matched their labels.
 
-### 3.7 Duplicated waves {#sec-slips}
+### 3.7 Reanalyst coding errors {#sec-slips}
 
-Two of the five pipelines read the wrong set of waves. In the build that C6HJR submitted, the preparation script read the file of EB 70.1 (ZA4819) twice, correctly for 2008 and again for 2009 in place of EB 72.4 (ZA4994), which it never read, so that the 2009 cells held respondents of 2008 under a new label. The submitted result was t = −3.853, the corrected one t = −3.804, the two builds differ only in 2009, and the conclusion is the same. The analyst, who is the facilitator of this course, found the error and annotated the script with the comment `# APRIL 2025 - Mistake in dataset here; the dataset associated with "eb724" should be "ZA4994_v3-0-0.dta"`. The fork that the analyst maintains on the OSF ([osf.io/6zqct](https://osf.io/6zqct/)) holds both versions, while the archival record kept by Multi100 ([osf.io/8rtwe](https://osf.io/8rtwe/)) holds only the uncorrected folder, and the value recorded by Multi100 reflects the corrected build, although the cleaning sheet of the project keeps the reported −3.853 beside it without a note.
+Two of the five pipelines read the wrong set of waves. In the build that C6HJR submitted, the preparation script read the file of EB 70.1 (ZA4819) twice, correctly for 2008 and again for 2009 in place of EB 72.4 (ZA4994), which it never read, so that the 2009 cells held respondents of 2008 under a new label. The submitted result was t = −3.853, the corrected one t = −3.804, the two builds differ only in 2009, and the conclusion is the same. The analyst found the error and annotated the script with the comment `# APRIL 2025 - Mistake in dataset here; the dataset associated with "eb724" should be "ZA4994_v3-0-0.dta"`. The fork that the analyst maintains on the OSF ([osf.io/6zqct](https://osf.io/6zqct/)) holds both versions, while the archival record kept by Multi100 ([osf.io/8rtwe](https://osf.io/8rtwe/)) holds only the uncorrected folder. The value recorded by Multi100 for their analyses, however, reflects the corrected build.
 
-KQXUE appended the file of EB 62.0, the wave of autumn 2004, twice, in the code of both tasks (lines 441 and 442 of `task2.do`), so that the autumn wave counts double in the 2004 means of the fifteen older member states, while for the states that EB 61.0 did not sample, the duplicated wave is the only one of the year and their means are unchanged. How much this moves the estimate has not been computed. The slip was never corrected: the code and the reports in the OSF component of the analyst ([osf.io/vycgd](https://osf.io/vycgd/)) carry the upload date of 25 May 2022 and have not changed since, as a check through the OSF API confirmed on 25 October 2026.
+KQXUE appended the file of EB 62.0, the wave of autumn 2004, twice, in the code of both tasks (lines 441 and 442 of `task2.do`), so that the autumn wave counts double in the 2004 means of the fifteen older member states, while for the states that EB 61.0 did not sample, the duplicated wave is the only one of the year and their means are unchanged. The analysis would need to be refitted using the corrected data to assess how much the coding error moves the estimate.
 
 That two of five pipelines in one case carry a slip of this kind says more about how easily such errors arise than about the care of either analyst. Neither leaves a trace in a table of results, while both appear at once in the inputs, where a list of the files read shows the repeated file name and a count of respondents by wave and year shows the duplicate. In the C6HJR build, 2009 holds 26,618 respondents, exactly as many as the EB 70.1 wave of autumn 2008, because that file was read a second time under the label of 2009, where a correct build holds the 26,731 respondents of EB 72.4. Three checks written into a pipeline catch both errors: an assertion that no input file is read twice, an assertion of one wave per fieldwork period with the expected number of respondents, and a cell-by-cell comparison of two builds that reports every cell that differs.
 
-An AI coding agent can now act as a second reader of the code before a result is submitted. Asked to compare a preparation script with the paper, it can list the files read against the waves that the paper names, flag repeated reads and waves appended twice, and check how country codes are merged or dropped and how missing codes are treated, and both slips above are of the kind that such a reading finds from the code alone, without opening any data. The terms of use of GESIS limit this use, since they state that "The use of AI systems for processing the database provided to the user by GESIS is prohibited", as the [data sources module](../companion/data-sources.qmd#sec-gesis) explains, so the agent should read code and aggregate outputs and never respondent rows. It also checks only what it is asked to check, which is why the assertions above belong in the pipeline, where they keep working after the session with the agent has ended.
+An AI coding agent can now act as a second reader of the code before a result is submitted. Asked to compare a preparation script with the paper, it can list the files read against the waves that the paper names, flag repeated reads and waves appended twice, and check how country codes are merged or dropped and how missing codes are treated, and both slips above are of the kind that such a reading finds from the code alone, without opening any data. Restrictions on making raw data available to commercial AI agents set by data providers, however, may limit the kind of assistance AI agents can provide. The terms of use set by GESIS, for example, state that "The use of AI systems for processing the database provided to the user by GESIS is prohibited" (see the [data sources module](../companion/data-sources.qmd#sec-gesis) for details), so the agent should read code and aggregate outputs and never the raw data. Other training, such the [AI for Survey Researchers – A three-workshop series (online)](https://www.ncrm.ac.uk/training/show.php?article=14967) course provided by the National Centre for Research Methods, provides the skills needed to use AI tools for research work efficiently and ethically.
 
-## 4. Back to Multi100 {#sec-back}
+## 4. Cross-analyst comparisons {#sec-back}
 
 ### 4.1 From test statistics to effect sizes {#sec-conversion}
 
@@ -344,9 +344,9 @@ The case suggests what to look for in any converted effect size, in the article 
 
 ### 4.6 Recomputing the correlations {#sec-task}
 
-The conversion takes one line of R. Download [`analysts5.csv`](../data/analysts5.csv), which holds the five recorded rows, into the `data` folder of your workspace, and run the following in your IDE.
+The conversion takes one line of R code. Download [`analysts5.csv`](../data/analysts5.csv), which holds the five recorded rows, into the `data` folder of your workspace, and run the following in your IDE.
 
-```r
+``` r
 analysts <- readr::read_csv("data/analysts5.csv")
 analysts |> dplyr::mutate(r_233 = statistic / sqrt(statistic^2 + 233))
 ```
