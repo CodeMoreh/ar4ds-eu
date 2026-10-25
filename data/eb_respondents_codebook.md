@@ -35,7 +35,7 @@ The spring 2004 wave predates the accession of the ten new member states, which 
 | `eb` | Eurobarometer wave (`61.0` to `79.3`) |
 | `year` | Fieldwork year to which the course assigns the wave, 2004–2013; two waves share 2004, 2005, 2008, 2010, 2011 and 2012 |
 | `cntry` | ISO 3166 two-letter code of the member state, as in `EUframes_cy.csv` |
-| `w1` | The design weight that GESIS supplies with each wave (variable `W1`), which corrects each national sample to its population on sex, age, region and community size; mean about 1 within a country |
+| `w1` | The post-stratification weight that GESIS supplies with each wave (variable `W1`), which adjusts each national sample to its population on sex, age, region and size of locality; GESIS supplies no design weight for unequal probabilities of selection. Mean about 1 within a country |
 | `it1` … `it14` | The fourteen items of "What does the European Union mean to you personally?", 1 if mentioned and 0 otherwise: 1 peace · 2 economic prosperity · 3 democracy · 4 social protection · 5 freedom to travel, study and work anywhere in the EU · 6 cultural diversity · 7 stronger say in the world · 8 euro · 9 unemployment · 10 bureaucracy · 11 waste of money · 12 loss of our cultural identity · 13 more crime · 14 not enough control at external frontiers |
 | `oth` | 1 if the respondent gave a spontaneous other answer |
 | `dk` | 1 if the respondent answered "don't know" |
