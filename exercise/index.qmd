@@ -3,7 +3,7 @@ title: "Exercise Overview"
 subtitle: "Analyst no. 6"
 ---
 
-This page sets out the whole exercise. Your work happens in the workspace you downloaded and opened in your IDE; the [Browser lab](browser-lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation, and as a fallback. Come back here whenever you want the overview again.
+This page sets out the whole exercise. The [case study](../case/index.qmd) presents the original study, the Multi100 project and the five reanalyses in full, and it is the place to start if you have not read it. Your work happens in the workspace you downloaded and opened in your IDE; the [Browser lab](browser-lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation, and as a fallback. Come back here whenever you want the overview again.
 
 ---
 
@@ -29,9 +29,9 @@ Each of those steps was a decision that someone other than you made, and each on
 
 ## The five Multi100 analysts {#the-five-published-analysts}
 
-Before you begin, here is what the five Multi100 analysts found when they reanalysed the same claim:
+Before you begin, here is what the five Multi100 analysts found when they reanalysed the same claim, as Multi100 recorded it:
 
-| Analyst | Tool | Statistic | N | Partial r |
+| Analyst | Tool | Statistic | N | Partial r, recorded |
 |---|---|---|---|---|
 | 018OL | R | t = −1.21 | 420 | −0.060 |
 | **C6HJR** | **R** | **t = −3.80** | **270** | **−0.242** |
@@ -39,7 +39,7 @@ Before you begin, here is what the five Multi100 analysts found when they reanal
 | KQXUE | Stata | t = −7.17 | 270 | −0.419 |
 | PRL47 | Stata | z = −3.59 | 394,575 | −0.006 |
 
-All five reported a negative effect (same direction as the original). The partial r ranges from −0.006 to −0.452, a factor of nearly 80, so five competent analysts working on one claim arrived at widely different estimates. The multiverse debrief in Part 4 explains most of that gap.
+All five reported a negative effect, in the direction of the original. The recorded partial correlations range from −0.006 to −0.452, a factor of nearly 80, but most of that spread comes from the conversion of each test statistic into a correlation rather than from the analyses themselves. PRL47 and C6HJR report almost the same statistic, yet the z of PRL47 was converted on the number of respondents, which pulls any correlation towards zero. Section 4 of the [case study](../case/index.qmd#sec-recorded) shows how the conversion works, and the [Multiverse page](../results.qmd#reference-marks) places each result on the degrees of freedom of its own inference.
 
 ---
 
@@ -69,9 +69,9 @@ Third, complete the **causal graph**. Take the `#` off the arrows you are willin
 
 **Task 3 – Reproduce the recorded result (~22 minutes).** Fit the constrained two-way fixed-effects model – `mcosmo ~ unemp_c`, with country and year fixed effects – and confirm you get **t = −3.804** (df = 233, N = 270). This is the reproduction step, and reaching −3.804, the value recorded for analyst C6HJR in the Multi100 dataset, shows that the same data and the same code give the same number. *Workspace:* run the model in your working script. *Browser lab:* fill the gaps in the exercise cell; there are two hints and a full solution, and using them is not cheating.
 
-Your reproduction is one check among several, and the paper did less well on the others. It was put through all three Rs in the SCORE dossier ([osf.io/h7432](https://osf.io/h7432/)): the push-button reproduction failed, the source-data reproduction was recorded as "not reproduced", and a preregistered replication on fresh data (N = 352,114) flipped sign, with b = +0.002 and p = .046.
+Your reproduction is one check among several. The paper was also put through attempts at reproduction and replication in the SCORE programme, which section 2 of the [case study](../case/index.qmd#sec-repetition) describes.
 
-**Task 4 – Work the menu (~20 minutes).** This task is **exploratory**. Try several specifications from the [specification menu](spec-menu.qmd), see what each one does, and get a feel for which choices move the estimate and which barely touch it. `try_spec()` takes one argument per axis and every argument defaults to the baseline that you just reproduced, so changing one thing means changing one argument. `my_experiments()` prints everything you have tried, side by side – the small multiverse you have just built. Then pick the one you would defend if you had to, and `submit_exploration()` puts it on the live [Multiverse](../results.qmd) chart as an **exploratory** result, drawn as an open circle.
+**Task 4 – Work the menu (~20 minutes).** This task is **exploratory**. Try several specifications from the [specification menu](spec-menu.qmd), see what each one does, and get a feel for which choices move the estimate and which barely touch it. `try_spec()` takes one argument per decision and every argument defaults to the specification that you just reproduced, so changing one thing means changing one argument. An option that is not on the curve, such as pooled OLS (`estimator = "pooled_cl"`), stops with the reason that it left the curve and the page of the course that teaches it. `my_experiments()` prints everything you have tried, side by side – the small multiverse you have just built. Then pick the one you would defend if you had to, and `submit_exploration()` puts it on the live [Multiverse](../results.qmd) chart as an **exploratory** result, drawn as an open circle.
 
 Nothing in this task is preregistered. You are allowed to look, change your mind and try again, and the chart labels the result as exploratory for that reason.
 
@@ -79,9 +79,9 @@ Nothing in this task is preregistered. You are allowed to look, change your mind
 
 ### Part 4 – Multiverse and preregistration
 
-Part 4 opens with a reading of the class results: the class chart laid over the full 840-specification curve and the five published analysts, which analytical choice moves estimates most, where the sign flips come from, and **your own percentile** – the share of the 840 specifications more negative than the estimate you submitted. It then turns to what a curve can and cannot establish, and to the argument that once a question is fully specified there is only one correct analysis. The [reading on the specification curve](reading-inference.qmd) is the companion for this part.
+Part 4 opens with a reading of the class results: the class chart laid over the curve of 864 specifications, which decisions move the result most, where the five reanalyses and the original study sit on the main chart, and **your own placement**, the share of the 864 specifications that lie further in the direction of the claim than the estimate you submitted. It then turns to what a curve can and cannot establish, and to the argument that once a question is fully specified there is only one correct analysis. The [reading on the specification curve](reading-inference.qmd) is the companion for this part.
 
-**Task 5 – Declare one specification, run it, report it (~20 minutes).** Pick ONE analysis from the menu, one choice on each of the fourteen axes, and complete the preregistration block **before you run that specification**. It is a shortened but real preregistration template: what you are testing, what you already know about the data, your one specification, why those controls (grounded in your Task 2 graph), and the rule you will judge the result by. `claim_align <- TRUE` is the convention for the day and is applied for you. Negative framings are reverse-coded and the claim-expected sign of GDP growth is flipped, so 'supports the claim' reads as a negative sign for everyone.
+**Task 5 – Declare one specification, run it, report it (~20 minutes).** Pick ONE specification from the curve, one option for each of the fourteen decisions on the menu, and complete the preregistration block **before you run that specification**. It is a shortened but real preregistration template: what you are testing, what you already know about the data, your one specification, why those controls (grounded in your Task 2 graph), and the rule you will judge the result by. `claim_align <- TRUE` is the convention for the day and is applied for you. The claim expects framing to rise with growth, so the sign of a growth slope is flipped, and 'supports the claim' then reads as a negative sign for every specification.
 
 Render the report once that block is complete, so that the rendered report, which carries the date on which it was rendered, holds your preregistration before you run the specification that it declares. On the browser lab page, copy the block into your notes instead. Then translate the declaration into model syntax yourself – `build_model()` accepts only code that matches what you declared – run it, and `report_result()` prints a one-click, pre-filled form link. Your submission appears on the chart as a **declared** result, drawn as a filled circle beside the open exploratory ones.
 
@@ -93,7 +93,7 @@ Task 4 and Task 5 run identical code. What separates them is that an exploratory
 
 Your result is valid for the multiverse chart if it:
 
-- reports the coefficient on the predictor that measures economic performance (unemployment or GDP growth, or its transformation) from a model on `EUframes_cy.csv`,
+- is one of the 864 specifications on the curve, so that it reports the coefficient on the predictor that measures economic performance (unemployment or GDP growth, in one of its published series and forms) from a model of the country-year panel,
 - is submitted to the class-results form via the `report_result()` link (so that it appears on the live [Multiverse](../results.qmd) chart), and
 - has a written justification for the choice you made (2 sentences is enough).
 
@@ -104,8 +104,8 @@ The whole exercise depends on the justification. Auspurg & Brüderl (2021) argue
 ## Links
 
 - [Browser lab](browser-lab.qmd) – the whole exercise and its data in a browser tab, for demonstrations and for trying it without an installation.
-- [Specification menu](spec-menu.qmd) – the fourteen axes you choose one option from, grouped into the three levels of decision they belong to, with a worked example.
-- [Estimand choices](estimand-dial.qmd) – set the seven Level 1 choices, read the question that they define, and watch how far the answer moves when only its measurement changes.
+- [Specification menu](spec-menu.qmd) – the fourteen decisions from which you choose one option each, grouped into the three levels to which they belong, with the options that the curve keeps, the reasons for the ones that it does not, and a worked example.
+- [Decision map](estimand-dial.qmd) – every decision of an analysis of the claim, in the order in which an analyst meets it, with each option on and off the curve; selecting an option rewrites the estimand statement and shows what the option does to the results.
 - [Reading a specification curve](reading-inference.qmd) – the companion reading for Part 4: what a large set of results can and cannot establish.
 - [Cheatsheet](cheatsheet.qmd) – the one-page card to keep open on the day, with the session links and what to do if something stalls.
 

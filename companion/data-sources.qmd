@@ -3,6 +3,50 @@ title: "Social science data sources"
 subtitle: "Foundation to intermediate – where the data come from, and how the data behind this course were obtained"
 ---
 
+```{r}
+#| label: setup
+#| include: false
+# Figures for section 3.3, read from the series file and from the comparison of
+# every option of the full menu with its twins on the curve of the claim.
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(readr)
+})
+series <- read_csv("../data/macro/predictor_measures.csv", show_col_types = FALSE) |>
+  filter(between(year, 2004, 2013), !is.na(value))
+curve <- read_csv("../data/spec_curve.csv", show_col_types = FALSE)
+forks <- read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  filter(curve == "positive")
+devs <- read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
+  filter(curve == "positive", axis == "measure")
+
+pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
+num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x)
+below_sig <- \(d) 100 * mean(d$supports & d$sig)
+dv <- \(op, col) devs[[col]][devs$option == op]
+cover <- \(m, col) series |> filter(measure == m) |> summarise(cells = n(), countries = n_distinct(cntry)) |> pull(col)
+
+# the four full-coverage unemployment series, with the means of each country and
+# of each year removed (sequential demeaning is exact on a balanced panel)
+full <- c("wb_nat", "es_1574_act", "es_2064_pop", "es_2564_lfs")
+within_cor <- series |>
+  filter(measure %in% full) |>
+  mutate(value = value - mean(value), .by = c(measure, cntry)) |>
+  mutate(value = value - mean(value), .by = c(measure, year)) |>
+  pivot_wider(id_cols = c(cntry, year), names_from = measure, values_from = value) |>
+  select(all_of(full)) |>
+  cor()
+cor_range <- range(within_cor[upper.tri(within_cor)])
+names_cy <- read_csv("../data/EUframes_cy.csv", show_col_types = FALSE) |> distinct(cntry, country)
+tips_pre <- series |>
+  filter(measure == "es_1574_tips", year < 2009) |>
+  distinct(cntry) |>
+  left_join(names_cy, by = "cntry") |>
+  pull(country) |>
+  sort()
+```
+
 This module of the [companion curriculum](index.qmd) is about where the data that social scientists analyse are held, and how a researcher gets hold of them. It has two halves. The first is a map: the survey programmes, archives, statistical offices and international organisations that hold most of the quantitative data used in sociology, political science and demography, with a focus on Europe and the United Kingdom, and with the access rule for each, because the access rule decides whether you can start on Monday or in ten weeks. The second half follows the sources behind this course, the Eurobarometer microdata at GESIS, the macro indicators at the World Bank and the country-year panel on the Open Science Framework, with every step from registration to a file on your disk. The [R module](intro-r.qmd#sec-fetching) has the companion subsection on the R packages that fetch from these sources directly, and the [repositories module](repositories.qmd) covers the other side of the exchange, where a finished piece of work is deposited so that others can find it.
 
 Two things are outside the scope of this page. Qualitative data archives are not discussed, although the UK Data Service, which appears in the tables below, and the Qualitative Data Repository both hold qualitative collections. And nothing here replaces the terms of use of a particular dataset, which change, and which you read before you download.
@@ -186,11 +230,19 @@ macro <- WDI(
 )
 ```
 
-Level 2 of the specification menu offers other published series for the same quantity, and the axis exists because the series are not identical. They include the national estimate, the ILO modelled estimate that the Bank also publishes (`SL.UEM.TOTL.ZS`), and the unemployment series produced by Eurostat, which comes from the EU Labour Force Survey and is fetched from the Eurostat database through its API. The measure module of the course shows how little the choice moves the results and how much the differences in coverage between the series do.
+The Bank publishes other estimates of the same quantity, among them the ILO modelled estimate (`SL.UEM.TOTL.ZS`), and Eurostat publishes its own series, built from the EU Labour Force Survey and fetched from the Eurostat database. Section 3.3 sets out the series that the course uses besides the two above, and why two of them are not on the curve of the claim.
 
 The third macro variable, `bailout`, is not downloaded at all. It is coded from the record of EU and IMF financial assistance programmes, country by country and year by year, and the codebook lists the programmes and years used. Many contextual variables enter a panel in this way, through a documented rule applied by hand, with the source of each fact stated.
 
-### 3.3 The panel itself, on the Open Science Framework {#sec-osf}
+### 3.3 The published series {#sec-series}
+
+The specification menu offers more than one published series for each of the two economic measures, and the decision sits at Level 2, among the decisions about measurement, because the series measure one construct, the national unemployment rate or the growth of output, in slightly different ways. For unemployment there are five: the national estimate of the World Bank above (`wb_nat`), which is the series of the course panel and of the reanalyst C6HJR, and four series cut from the Eurostat tables that the other reanalysts merged. Those are the rate in the labour force aged 15–74 from the table `une_rt_a_h` (`es_1574_act`, the series of 018OL), the unemployed as a share of the whole population aged 20–64 from the same table (`es_2064_pop`, KQXUE), the rate in the labour force aged 25–64 from the Labour Force Survey table `lfsa_urgan` (`es_2564_lfs`, PRL47), and the rate in the labour force aged 15–74 from the short table `tipsun20` (`es_1574_tips`, KEVF1). For growth there are two, the World Bank series and the national accounts of Eurostat in the table `nama_10_gdp` (`es_growth`). All seven are held for the 270 country-years in `data/macro/predictor_measures.csv`, so that the workspace can merge them without a connection, and the Eurostat tables are kept in the source repository as they were retrieved.
+
+The four unemployment series that cover all 270 country-years differ in age band and denominator, and the population-based series of KQXUE is a different quantity from a labour-force rate, but within countries they move together. Once the mean of each country and of each year is removed, they correlate with one another at between `r num(cor_range[1])` and `r num(cor_range[2])`, so all four stay on the curve, where the choice among them carries `r pp(forks$share[forks$axis == "measure"])` of the variance of the claim-aligned partial correlations.
+
+The other two series left the curve, because choosing either of them changes who is in the analysis as well as how the economy is measured. The table `tipsun20` has rows for `r cover("es_1574_tips", "cells")` of the 270 country-years, in `r cover("es_1574_tips", "countries")` countries, with none for the United Kingdom and, before 2009, rows for only `r paste(tips_pre, collapse = " and ")`. Choosing it therefore halves the panel and moves the question towards the crisis years: swapped into the `r dv("es_1574_tips", "n_pairs")` unemployment specifications of the curve, it leaves `r pp(dv("es_1574_tips", "below_zero_sig"))` of them below zero with bootstrap p < 0.05, against `r pp(below_sig(filter(curve, predictor == "unemp")))` of the unemployment specifications on the curve itself, and it changes the class of `r pp(dv("es_1574_tips", "class_changes"))` of the pairs. It is a decision about the sample presented as one about the measure, which is why the [decision map](../exercise/estimand-dial.qmd) rewrites the population in the estimand statement when the series is chosen. The Eurostat growth series has no row for the United Kingdom, `r cover("es_growth", "cells")` country-years in `r cover("es_growth", "countries")` countries, which costs one country for the same reason, although within the countries that it covers it moves with the World Bank series and leaves the class of every one of its `r dv("es_growth", "n_pairs")` pairs unchanged. Coverage of this kind is worth checking before any series is merged, since a merge that silently drops rows changes the population of the question without changing a line of the model.
+
+### 3.4 The panel itself, on the Open Science Framework {#sec-osf}
 
 The finished panel is deposited on the Open Science Framework in the analyst's fork of the Multi100 record, node [`osf.io/6zqct`](https://osf.io/6zqct/), where `EUframes_cy.csv` is in the main folder next to the submitted materials. The workspace script `R/get_data.R` fetches it with the `osfr` package, which uses the OSF API and needs no login for a public node:
 

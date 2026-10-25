@@ -25,6 +25,14 @@ options(width = 88, pillar.sigfig = 4)
 
 euframes <- read_csv("../data/EUframes_cy.csv", show_col_types = FALSE)
 
+# the adjustment decision on the curve of the claim, for section 6
+curve <- read_csv("../data/spec_curve.csv", show_col_types = FALSE)
+forks <- read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  filter(curve == "positive")
+pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
+below_sig <- \(d) 100 * mean(d$supports & d$sig)
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
+
 # Nodes are drawn as rounded boxes rather than circles: a circle wide enough to
 # hold "unemployment" without clipping would swamp a four-node graph.
 node_box <- function() {
@@ -220,7 +228,7 @@ The adjustment set comes from `adjustmentSets()`, which returns the variables th
 adjustmentSets(case)
 ```
 
-The set contains country and year. The answer is not surprising, but it is the right-hand side of a regression that has been derived from stated substantive beliefs about the case. Adjusting for country and year means letting each country have its own level and each year its own level, which is what a two-way fixed-effects model does, so the graph and the baseline specification of the course make the same claim in two notations.
+The set contains country and year. The answer is not surprising, but it is the right-hand side of a regression that has been derived from stated substantive beliefs about the case. Adjusting for country and year means letting each country have its own level and each year its own level, which is what a two-way fixed-effects model does, so the graph and the reproduced specification of the course make the same claim in two notations.
 
 The claim can be checked by fitting the model that the graph prescribes beside the three nearby models that it does not.
 
@@ -243,7 +251,7 @@ list(
   mutate(across(where(is.numeric), \(x) signif(x, 4)))
 ```
 
-Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and has no warrant for. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Part 3 of the workshop day and the value recorded for analyst C6HJR in the Multi100 project.
+Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Part 3 of the workshop day and the value recorded for analyst C6HJR in the Multi100 project.
 
 Of the four models, one is correct because it adjusts for the set that the graph requires, and one of the other three points the opposite way. Nothing in the data picks out the correct one. The choice comes from the graph, and so from five arrows that were drawn before any model was fitted.
 
@@ -251,9 +259,9 @@ The name `adjustmentSets()` is plural because the function returns *minimally su
 
 ## 6. The limits of fixed effects {#sec-growth}
 
-Country and year fixed effects are frequently described as though they adjust for everything, and the graph shows why they do not. A country fixed effect absorbs whatever is constant within a country across the whole period, and a year fixed effect absorbs whatever is common to all countries in a given year. A variable that moves *within* a country *over* time is untouched by both, and if that variable causes unemployment and framing alike, it is a back door that the baseline model does not close. This is the substance of the methodological warnings about reading fixed-effects coefficients as causal quantities [@KeeleEtAl2020CausalInterpretationEstimated; @BellJones2015ExplainingFixedEffects].
+Country and year fixed effects are frequently described as though they adjust for everything, and the graph shows why they do not. A country fixed effect absorbs whatever is constant within a country across the whole period, and a year fixed effect absorbs whatever is common to all countries in a given year. A variable that moves *within* a country *over* time is untouched by both, and if that variable causes unemployment and framing alike, it is a back door that the reproduced specification does not close. This is the substance of the methodological warnings about reading fixed-effects coefficients as causal quantities [@KeeleEtAl2020CausalInterpretationEstimated; @BellJones2015ExplainingFixedEffects].
 
-GDP growth is such a variable, and it is one of the axes of the [specification menu](../exercise/spec-menu.qmd), where it appears as an optional copredictor. Switch on the two arrows commented out in section 4 and run `adjustmentSets()` again.
+GDP growth is such a variable, and on the [specification menu](../exercise/spec-menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 4 and run `adjustmentSets()` again.
 
 ```{r}
 #| label: growth-confounder
@@ -333,6 +341,12 @@ list(total = "total", direct = "direct") |>
 
 Depending on which of the two defensible beliefs about growth you hold, and which quantity you want, the graphs give three different formulas. The menu axis that offers growth as a copredictor is therefore a choice between two claims about what the unemployment coefficient means, and running the model both ways as a robustness check does not make that choice. Nor will a coefficient on growth that looks 'supported by the data' settle it, because the two graphs make identical predictions about the data.
 
+### The adjustment on the curve {#sec-adjustment}
+
+The curve of the claim keeps both options of the adjustment decision, the slope with the other economic measure left out and the slope with it held fixed, and the reasoning is the one that the two graphs above set out. Unemployment and growth are two expressions of the same downturn rather than a cause and its confounder, so leaving growth out and holding it fixed give two estimands rather than a right and a wrong set of controls. The unadjusted slope is the association of framing with unemployment whatever happened to output, which is what the reproduced specification estimates, and the adjusted slope is the association at a given rate of growth, which is what the model of the original study estimates, since it carries both measures. The roles swap when growth is the predictor and unemployment is held fixed, and growth then has less to work with, because 59% of its variation within countries is common to all of them in the same year, above all the recession of 2009, which the year effects remove. On the curve the adjustment carries `r pp(fk("copredictor"))` of the variance of the claim-aligned partial correlations, and moving it alone changes the class of `r pp(fk("copredictor", "crossing_rate"))` of the pairs of specifications that differ in nothing else; `r pp(below_sig(filter(curve, copredictor == "none")))` of the unadjusted specifications and `r pp(below_sig(filter(curve, copredictor == "other")))` of the adjusted ones lie below zero with bootstrap p < 0.05.
+
+The year effects of the graph are a decision on the curve as well, made with the estimator. The two-way design, which adjusts for country and year as the graph of section 4 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly. Without year effects the comparison within each country keeps the changes that every member state went through in the same year, which on this panel make up 29% of the variation in unemployment within countries, so that the slope describes all change within a country, the shared recession included, and is open to confounding by any shift in framing across Europe that coincided with the crisis. An analyst who draws the year arrows of section 4 wants the two-way slope, while one who counts the shared recession as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../exercise/estimand-dial.qmd) shows both decisions, with every option and what each does to the curve.
+
 ::: {.callout-tip}
 ## Try it
 
@@ -358,7 +372,7 @@ parameters::model_parameters(
 
 The unemployment coefficient falls by nearly half, from −0.00347 to −0.00195, and its *t* drops below conventional significance. The bailout term is itself sizeable and clearly estimated. If the bailout is a mediator, the fall should not be read as a weakening of the effect of unemployment. The adjustment has taken the part of the effect that passes through the bailout out of the total and assigned it to the bailout term.
 
-The second analyst takes a different route to what looks like the same caution. Bailout country-years are unusual, so drop them and see whether the result survives. That option is on the [specification menu](../exercise/spec-menu.qmd) as a sample restriction, and it is the kind of check that reviewers ask for by reflex.
+The second analyst takes a different route to what looks like the same caution. Bailout country-years are unusual, so drop them and see whether the result survives. That option is on the full [specification menu](../exercise/spec-menu.qmd) as a sample restriction, though not on the curve of the claim, because it asks whether the association holds where the crisis was mild, and it is the kind of check that reviewers ask for by reflex. [Section 8 of the multiverse module](multiverse.qmd#sec-heterogeneity) sets the two groups of countries side by side.
 
 ```{r}
 #| label: bailout-dropped
