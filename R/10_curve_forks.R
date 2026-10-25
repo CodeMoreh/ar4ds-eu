@@ -4,9 +4,8 @@
 #               curves. Two measures per axis that varies.
 #               The share of the variance of the claim-aligned partial
 #               correlation that the main effect of the axis carries:
-#               non-partial eta-squared from a sequential main-effects fit, as
-#               in 06_fork_importance.R, with the remainder reported as the
-#               interactions between axes. The series and the form of the
+#               non-partial eta-squared from a sequential main-effects fit,
+#               with the remainder reported as the interactions between axes. The series and the form of the
 #               predictor exist only for unemployment, so the predictor enters
 #               first and the series and the form after it; every other axis
 #               is crossed with every other in a balanced design, so their

@@ -8,10 +8,6 @@ The scripts in this folder build the specification grids, the curve of the claim
 |:--|:--|:--|
 | `01_person_file.R` | the sixteen GESIS Eurobarometer files in `_planning_data/raw/`, `data/EUframes_cy.csv` | `_planning_data/person_level.rds` (respondent level, never committed) |
 | `02_macro_series.R` | `data-raw/eurostat/*.tsv.gz`, `data/EUframes_cy.csv` | `data/macro/analyst_unemployment.csv`, `data/macro/predictor_measures.csv` |
-| `03_spec_grid.R` | `data/EUframes_cy.csv` | `data/spec_grid.csv` (the Multi100 grid of 840) |
-| `04_family_grid.R` | `data/EUframes_cy.csv`, `data/spec_grid.csv` | `data/spec_grid_family.csv` (the family universe of 1,680) |
-| `05_full_grid.R` | `data/EUframes_cy.csv`, `data/spec_grid_family.csv` | `data/spec_grid_full.csv` (the universe of 2,520) |
-| `06_fork_importance.R` | the three grids above, `data/analysts5.csv` | `data/fork_importance.csv` and five sibling decompositions |
 | `07_measurement_panels.R` | `_planning_data/person_level.rds`, `data/macro/population.csv`, `data/EUframes_cy.csv` | `data/teney_panel_weights.csv`, `data/teney_panel_measurement.csv` |
 | `08_mi_tier.R` | `_planning_data/person_level.rds`, `data/EUframes_cy.csv`, `data/teney_panel_weights.csv` | `data/spec_grid_mi.csv`, `data/mi_diagnostics.csv` |
 | `09_spec_curve.R` | `data/teney_panel_measurement.csv`, `data/teney_panel_weights.csv`, `data/macro/predictor_measures.csv`, `data/EUframes_cy.csv` | `data/spec_curve.csv`, `data/spec_curve_negative.csv` (864 rows each) |
@@ -21,7 +17,7 @@ The scripts in this folder build the specification grids, the curve of the claim
 | `13_reference_marks.R` | `_template/data_private/eb_respondents.rds` through `companion/_model-outputs/_load_respondents.R`, `data/analysts5.csv`, `data/spec_curve.csv`, the inputs of `09` | `companion/_model-outputs/reference_refits.csv`, `data/reference_marks.csv` |
 | `check_parity.R` | the committed files and a rebuild of them in another folder | nothing; prints the comparison |
 
-The three nested grids of `03` to `05` form a chain: `04` imports the 840 rows of `03` unchanged and adds their beta twins, and `05` imports the 1,680 rows of `04` unchanged and adds the growth predictor. They are the menu before the audit of October 2026 and stay until the pages that read them have been rewritten. The curve of `09` is the menu that the audit keeps, and `10` to `12` are built on it. Three stages read licensed microdata: `01` builds the respondent file, `07` and `08` aggregate it, and `13` refits two respondent-level designs on the respondent file that the workspace builds. Everything else runs from committed aggregates.
+The stages are numbered from 07 after the macro series because the numbers 03 to 06 belonged to the stages that built the grids of the menu before the audit of October 2026, which the curve of `09` and the comparisons of `11` supersede; they remain in the history of the repository. The curve of `09` is the menu that the audit keeps, and `10` to `13` are built on it. Three stages read licensed microdata: `01` builds the respondent file, `07` and `08` aggregate it, and `13` refits two respondent-level designs on the respondent file that the workspace builds. Everything else runs from committed aggregates.
 
 The significance rule of the curve is the restricted wild cluster bootstrap by country in `_wild_bootstrap.R`. Its sign matrix is drawn once from a fixed seed and keyed by country code, so that a copy of the file reproduces any stored p-value exactly from the same cells; `09` checks it against fwildclusterboot at the reference cell.
 
@@ -41,7 +37,3 @@ The significance rule of the curve is the restricted wild cluster bootstrap by c
 ## Packages
 
 dplyr, tidyr, purrr, readr, datawizard, haven, fixest, plm, betareg, glmmTMB, sandwich, lmtest, clubSandwich, lme4, lmerTest, mice, Amelia and effectsize; fwildclusterboot and dqrng for the check of the bootstrap in `09`.
-
-## Not ported
-
-The measure grid (`data/spec_grid_measure.csv`), the weighting grid (`data/spec_grid_weights.csv`), the maximal tier and its beta tier, the decision-level summaries (`data/decision_levels_maximal.csv`, `data/decision_classes_maximal.csv`, `data/axis_level_summary_maximal.csv`) and the per-cell files under `data/grid/` belong to the menu before the audit, and the curve of `09` with the comparisons of `11` supersedes them. They are not rebuilt here; their committed copies stay until the pages and helpers that read them have been rewritten.

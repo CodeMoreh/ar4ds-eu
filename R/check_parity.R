@@ -30,14 +30,9 @@ source("R/_paths.R")
 stopifnot("COURSE_OUT_DIR points at data/: set it to the rebuild folder" =
             normalizePath(out_dir, mustWork = FALSE) != normalizePath("data", mustWork = FALSE))
 
-axes_core  <- c("outcome", "pred_form", "copredictor", "estimator", "sample", "weights")
 axes_curve <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
                 "construction", "noop", "item_set", "cell_weight", "measure", "pred_form", "family")
 checks <- list(
-  list(file = "spec_grid.csv",        keys = axes_core),
-  list(file = "spec_grid_family.csv", keys = c(axes_core, "family")),
-  list(file = "spec_grid_full.csv",   keys = c(axes_core, "family", "predictor")),
-  list(file = "fork_importance.csv",  keys = "term"),
   list(file = file.path("macro", "analyst_unemployment.csv"),
        keys = c("analyst_id", "series", "cntry", "year")),
   list(file = file.path("macro", "predictor_measures.csv"),
@@ -66,10 +61,7 @@ checks <- list(
 flag_names <- c("sig", "supports_claim", "supports", "baseline", "is_reference", "positive_outcome")
 
 compare_one <- function(file, keys) {
-  # the committed fork-importance file predates the schema of the grid and
-  # names two of its axes by their earlier labels
-  committed <- datawizard::data_read(file.path("data", file), verbose = FALSE) |>
-    mutate(across(any_of("term"), \(x) recode(x, exposure = "pred_form", control = "copredictor")))
+  committed <- datawizard::data_read(file.path("data", file), verbose = FALSE)
   rebuilt   <- datawizard::data_read(out_path(file), verbose = FALSE)
   joined <- inner_join(committed, rebuilt, by = keys, suffix = c("_c", "_r"),
                        relationship = "one-to-one")
@@ -112,21 +104,6 @@ diffs |>
             in_column = column[which.max(max_abs_diff)], .by = file) |>
   as.data.frame() |>
   print(row.names = FALSE)
-
-# where the largest differences of the full universe sit: the five rows whose
-# statistic moves most between the two builds
-if (file.exists(out_path("spec_grid_full.csv"))) {
-  full_c <- datawizard::data_read("data/spec_grid_full.csv", verbose = FALSE)
-  full_r <- datawizard::data_read(out_path("spec_grid_full.csv"), verbose = FALSE)
-  full_c |>
-    inner_join(full_r, by = c(axes_core, "family", "predictor"), suffix = c("_c", "_r")) |>
-    mutate(d_estimate = abs(estimate_c - estimate_r), d_statistic = abs(statistic_c - statistic_r),
-           d_r = abs(r_c - r_r)) |>
-    slice_max(d_statistic, n = 5) |>
-    select(all_of(c(axes_core, "family", "predictor")), d_estimate, d_statistic, d_r) |>
-    as.data.frame() |>
-    print(row.names = FALSE)
-}
 
 stopifnot("a file gained or lost rows" =
             all(rows$committed == rows$rebuilt & rows$rebuilt == rows$matched),
