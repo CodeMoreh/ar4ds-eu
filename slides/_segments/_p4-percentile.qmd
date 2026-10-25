@@ -1,9 +1,9 @@
 ## Your own percentile {#find-your-own-percentile .smaller}
 
 ::: {.small}
-- In the browser lab, rerun `try_spec()` with the choices you submitted in Task 4: its output includes your **placement**. Everyone uses the lab for this step, because the workspace does not print it
-- The placement is the share of the 840 specifications more negative than yours, on the claim-aligned scale
-- The same statistic that placed the five analysts, computed for **you**
+- Rerun `try_spec()` with the choices that you submitted in Task 4, in the workspace or in the browser lab: its output includes your **placement**
+- The placement is the share of the `r fmt_n(nrow(spec_curve))` specifications on the curve with a more negative claim-aligned *r* than yours. For the reproduced specification it is `r sprintf("%.0f%%", 100 * mean(spec_curve$r_ca < curve_ref$r_ca))`
+- The same statistic that places the reference results, computed for **you**
 :::
 
 ::: {.fragment}
@@ -11,5 +11,5 @@ Paste your percentile in chat – hold – send on "go".
 :::
 
 ::: notes
-Your turn to be placed. Open the browser lab – everyone, because the workspace does not print this and the lab runs in any browser tab – and rerun try underscore spec with the choices you submitted. The placement line in its output is the same statistic that I computed for the five analysts: the share of the grid of 840 that is more negative than your value. Two or three minutes. Then paste your percentile in chat, hold it, send on go. [go] Look at the range in the chat – the class spans a good stretch of the curve, and every one of you can now say where you stand relative to eight hundred and forty defensible alternatives. That sentence – "my estimate sits at the Nth percentile of the specification space" – is a publishable way to report a robustness check, and you have just done it.
+Your turn to be placed. Rerun try underscore spec with the choices that you submitted, in your workspace or in the browser lab, whichever you have open. The placement line in its output is the same statistic that places the reference results: the share of the eight hundred and sixty-four specifications on the curve that are more negative than yours. For the specification that we all reproduced it is sixty-seven per cent, so if you did not submit, that is your number. Two or three minutes. Then paste your percentile in chat, hold it, send on go. [go] Look at the range in the chat – the class spans a good stretch of the curve, and every one of you can now say where you stand relative to eight hundred and sixty-four justifiable alternatives. That sentence – "my estimate sits at the Nth percentile of the specification curve" – is a publishable way to report a robustness check, as long as you say how the curve was built.
 :::

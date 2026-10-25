@@ -139,15 +139,15 @@ broom::tidy(m1)
 - **estimate** – a one-point rise in unemployment goes with a fall of 0.00347 on a 0–1 framing scale
 - **std.error** – how much that estimate would wobble across repeated samples
 - **statistic** – the *t*: the estimate divided by its standard error. Roughly, how many standard errors from zero
-- **p.value** – how often you would get a *t* this large if the true value were zero
+- **p.value** – how often you would get a *t* this large if the true value were zero, with errors that treat the 270 country-years as independent; Part 3 comes back to that assumption
 :::
 
 ::: {.fragment .small}
-`broom::tidy()` returns the table as a **data frame**, so you can filter it, join it, plot it. That is how 840 model fits become one chart when we reach the multiverse.
+`broom::tidy()` returns the table as a **data frame**, so you can filter it, join it, plot it. That is how the 864 specifications of the curve become one chart when we reach the multiverse.
 :::
 
 ::: notes
-And what comes back. The tidy function from broom turns the model into a small table. The estimate says a one-point rise in the unemployment rate goes with a fall of about three thousandths on a nought-to-one framing scale – small, but the scale is small too, which is why we will standardise later. The standard error says how much that estimate would move across repeated samples. The statistic is the t: the estimate divided by its standard error, which you can read as how many standard errors the estimate is from zero. And the p-value says how often you would get a t that large if the true value were zero. Now the fragment. Tidy hands the table back as a data frame. That means you can filter it, join it, stack hundreds of them and plot the lot – and that is how eight hundred and forty model fits become one chart when we reach the multiverse.
+And what comes back. The tidy function from broom turns the model into a small table. The estimate says a one-point rise in the unemployment rate goes with a fall of about three thousandths on a nought-to-one framing scale – small, but the scale is small too, which is why we will standardise later. The standard error says how much that estimate would move across repeated samples. The statistic is the t: the estimate divided by its standard error, which you can read as how many standard errors the estimate is from zero. And the p-value says how often you would get a t that large if the true value were zero. These are conventional errors, which treat every country-year as an independent observation, and in Part 3 we see what changes when the years of one country are allowed to resemble each other. Now the fragment. Tidy hands the table back as a data frame. That means you can filter it, join it, stack hundreds of them and plot the lot – and that is how eight hundred and sixty-four specifications become one chart when we reach the multiverse.
 :::
 
 ## Plotting with ggplot2 {#one-line-of-ggplot .smaller .deepdive run="r"}

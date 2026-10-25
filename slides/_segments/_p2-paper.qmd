@@ -137,26 +137,27 @@ SCORE, the large research programme that Multi100 was part of, made two attempts
 ## Replication on new data {#replication-the-coefficient-flips-sign}
 
 ::: {.small}
+- Fourteen later Standard Eurobarometer waves, fielded after 2013, and the model of the original study
 - Analysis One – the focal test on which SCORE evaluates the claim
 
-  - 352,114 person-year observations in the analytic sample
-  - b = 0.002, p = 0.046, se = 0.0008, t = 2.004
+  - 331,668 respondents in the analytic sample
+  - b = 0.001, se = 0.0007, t = 1.428, p = 0.153
 
-- Analysis Two – the 'still studying' and 'no full-time education' categories in the variable 'age when finished full-time education' were **not** converted to missing values
+- Analysis Two – the 'still studying' and 'no full-time education' categories of 'age when finished full-time education' kept rather than set to missing
 
-  - 379,396 person-year observations in the analytic sample
-  - b = 0.002, p = 0.017, se = 0.0007, t = 2.394
+  - 357,310 respondents in the analytic sample
+  - b = 0.001, se = 0.0007, t = 1.894, p = 0.058
 
-- Both give a **positive coefficient** for unemployment on cosmopolitan framing, **significant** at p-values of 0.05 or less, after controlling for selected predictors and for wave and country-level effects
-- By the criteria used by SCORE, Analysis Two did not replicate the claim
+- Both coefficients for unemployment are **positive** and neither is significant at 5%, so neither meets the criterion of SCORE (a negative coefficient with p of 0.05 or less): the replication was **not successful**
+- Figures of the revised report of October 2026, which corrected two coding errors of the first report
 :::
 
 ::: {.src}
-[osf.io/zt5y2/files/7efsw](https://osf.io/zt5y2/files/7efsw)
+[osf.io/zt5y2](https://osf.io/zt5y2/)
 :::
 
 ::: notes
-The third R is replication, which takes the same question to new Eurobarometer data. Analysis One is the focal test on which SCORE evaluates the claim: three hundred and fifty-two thousand observations, and a coefficient for unemployment on cosmopolitan framing of plus point zero zero two, with a p-value of point zero four six. Analysis Two changes one coding decision. Respondents who were still studying, or who had no full-time education, stay in the sample instead of being set to missing, which takes it to three hundred and seventy-nine thousand, and the coefficient is again plus point zero zero two, now with a p-value of point zero one seven. Both estimates are positive and significant, so both point the opposite way from the claim on the card. And by the criteria used by SCORE, as the last line says, Analysis Two did not replicate the claim.
+The third R is replication, which takes the same question to new data: fourteen Standard Eurobarometer waves fielded after the period of the paper, with the model of the original study. Analysis One is the focal test on which SCORE evaluates the claim. On about three hundred and thirty thousand respondents, the coefficient for unemployment on cosmopolitan framing is plus point zero zero one, with a p-value of point one five. Analysis Two changes one coding decision, keeping respondents who were still studying or had no full-time education, and the coefficient is again plus point zero zero one, with a p-value just above point zero five. [pause] So both estimates point the opposite way from the claim on the card, and neither is significant. By the criterion of SCORE, a negative coefficient significant at five per cent, the replication did not succeed. These are the figures of the revised report, posted in October 2026 after two coding errors in the first one were corrected; the verdict did not change.
 :::
 
 ## The three Rs on this paper {#one-paper-all-three-rs}
@@ -172,7 +173,7 @@ sb <- tibble::tribble(
   ~ord, ~R,              ~verdict,         ~detail,                                              ~fill,
   3,    "Reproducible?", "FAILED ×2", "push-button + source-data",  d_red,
   2,    "Robust?",       "MIXED",          "5 analysts, \nnegative effect in line with original, \nvaried strength + significance ", orange,
-  1,    "Replicable?",   "FAILED",   "new Eurobarometer data, \nsign flipped/opposing results", d_red
+  1,    "Replicable?",   "FAILED",   "new Eurobarometer data, \npositive, not significant", d_red
 )
 
 ggplot(sb, aes(x = 1, y = ord)) +
@@ -204,7 +205,7 @@ ggplot(sb, aes(x = 1, y = ord)) +
 :::
 
 ::: notes
-Put the whole dossier together – every artefact here is public, and the link is on the slide. Reproduction failed twice, in two different ways. Robustness is mixed: five analysts, one sign, and sizes spanning two orders of magnitude. And replication, a preregistered study that took the same question to new Eurobarometer data with three hundred and fifty-two thousand observations, flipped the sign of the coefficient, which came out positive, just significant, and the wrong way round. So the one paper has received three different verdicts, one for each R. Across the whole SCORE programme the three verdicts barely predict one another, and this paper shows that pattern in a single case. The question worth asking of it is therefore in which sense it is reliable, since a plain yes or no does not fit. Of the three, the middle one is where five careful people disagreed with each other, and it is the only one that we can work on in the tasks. The rest of this part is about what they were disagreeing over.
+Put the whole dossier together – every artefact here is public, and the link is on the slide. Reproduction failed twice, in two different ways. Robustness is mixed: five analysts, one sign, and sizes that differ more than sevenfold once each is converted on the degrees of freedom of its own inference. And replication, a preregistered study that took the same question to new Eurobarometer data with about three hundred and thirty thousand respondents, found a positive coefficient, the wrong way round, though not a significant one. So the one paper has received three different verdicts, one for each R. Across the whole SCORE programme the three verdicts barely predict one another, and this paper shows that pattern in a single case. The question worth asking of it is therefore in which sense it is reliable, since a plain yes or no does not fit. Of the three, the middle one is where five careful people disagreed with each other, and it is the only one that we can work on in the tasks. The rest of this part is about what they were disagreeing over.
 :::
 
 ## The five free-phase analyses {#same-verdict-five-different-questions .smaller}
@@ -221,7 +222,7 @@ Put the whole dossier together – every artefact here is public, and the link i
 
 ::: {.fragment .small}
 - Five free analyses, **five different questions** – three of us never touched unemployment at all – and **one shared recorded verdict**: 'evidence for the claim'
-- The constrained phase then *manufactured* a common question; its five comparable answers span **−0.006 to −0.45**
+- The constrained phase then *manufactured* a common question, and its five answers still span **`r fmt_num(max(five_r), 2)` to `r fmt_num(min(five_r), 2)`** on the degrees of freedom of each inference
 - Conclusions can agree while estimates cannot even be compared – the two robustness questions that Multi100 was built to separate [@AczelEtAl2026InvestigatingAnalyticalRobustness]
 :::
 
@@ -230,5 +231,5 @@ Free-phase records: the public Multi100 dataset (osf.io/q5h2c), which contains o
 :::
 
 ::: notes
-This table goes back to what the same five analysts did before they produced the estimates in the forest plot from earlier. Multi100 ran in two phases, and the table records the first one, months before the constrained task, when each analyst had complete freedom. GDP per capita for one analyst, GDP growth for another, a whole battery of GDP measures at three levels for a third – and three of the five of us never touched the unemployment rate at all. The outcomes differ too: a mean, a sum, a share, three separate shares. These are five different questions, in other words, and every one of us recorded the same verdict, evidence for the claim. [advance] Then the constrained task arrived and manufactured one common question, and the five comparable answers ran from minus point zero zero six to minus point four five. Conclusions agreed in words while the numbers disagreed by two orders of magnitude. That is five people working on one paper, and earlier you met twenty-nine teams working on one dataset.
+This table goes back to what the same five analysts did before they produced the estimates in the forest plot from earlier. Multi100 ran in two phases, and the table records the first one, months before the constrained task, when each analyst had complete freedom. GDP per capita for one analyst, GDP growth for another, a whole battery of GDP measures at three levels for a third – and three of the five of us never touched the unemployment rate at all. The outcomes differ too: a mean, a sum, a share, three separate shares. These are five different questions, in other words, and every one of us recorded the same verdict, evidence for the claim. [advance] Then the constrained task arrived and manufactured one common question, and the five answers still ran from minus point zero six to minus point four five, once each is converted on the degrees of freedom of its own inference. Conclusions agreed in words while the numbers differed more than sevenfold. That is five people working on one paper, and earlier you met twenty-nine teams working on one dataset.
 :::

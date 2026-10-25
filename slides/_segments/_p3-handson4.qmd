@@ -1,11 +1,11 @@
 ## Hands-on 4 – Exploring the menu {#hands-on-4-work-the-menu .smaller}
 
 ::: {.small}
-**Task 4 is exploratory.** Try several specifications, look at what each one does, and get a feel for which axes move the estimate.
+**Task 4 is exploratory.** Try several specifications, look at what each one does, and get a feel for which decisions move the estimate.
 
-1. Start from the baseline you reproduced
-2. Change **one axis** in `try_spec()` and read what happens to *b*, *t* and the partial *r*; `my_experiments()` lists every try
-3. Do it again with a different axis. Three or four is plenty
+1. Start from the specification you reproduced
+2. Change **one decision** in `try_spec()` and read what happens to *b*, the partial *r*, the bootstrap p and the placement; `my_experiments()` lists every try
+3. Do it again with a different decision. Three or four is plenty, and one option that is off the curve, to read why it is refused
 4. Then rerun the one you can argue for best with `try_spec()`, so that it is your last try, and **submit it** with `submit_exploration()`
 :::
 
@@ -18,7 +18,7 @@ This is **not** your preregistered analysis. You are allowed to look, change you
 :::
 
 ::: notes
-Right. This is where you get your hands properly dirty, and I want to be explicit about what kind of activity it is, because it differs from the preregistered analysis that comes later. Task four is exploration. Start from the baseline you reproduced. Change one axis with try underscore spec, and look at what happens to the coefficient, the t and the partial r. Every try is logged, and my underscore experiments lists them for you. Then do it again with a different axis – three or four goes is plenty. Then rerun whichever one you can argue for best with try underscore spec, so that it is your last try, and submit it with submit underscore exploration, which sends whatever you tried last. Your dot appears on the live multiverse page within seconds. Once everyone has submitted, we read what the class built. The second fragment matters: this is not your preregistered analysis. Here you are allowed to look, change your mind and try again. Most published work never says that such a phase took place, which is why this one has a name of its own.
+Right. This is where you get your hands properly dirty, and I want to be explicit about what kind of activity it is, because it differs from the preregistered analysis that comes later. Task four is exploration. Start from the specification you reproduced. Change one decision with try underscore spec, and look at what happens to the coefficient, the partial r, the bootstrap p-value and the placement among the eight hundred and sixty-four. Every try is logged, and my underscore experiments lists them for you. Then do it again with a different decision – three or four goes is plenty. Ask for one option that is off the curve as well, such as pooled OLS or a weight by population, and read the reason that comes back with the refusal. Then rerun whichever one you can argue for best with try underscore spec, so that it is your last try, and submit it with submit underscore exploration, which sends whatever you tried last. Your dot appears on the live multiverse page within seconds. Once everyone has submitted, we read what the class built. The second fragment matters: this is not your preregistered analysis. Here you are allowed to look, change your mind and try again. Most published work never says that such a phase took place, which is why this one has a name of its own.
 :::
 
 ## Fitting and download times {#how-long-will-anything-take .smaller visibility="hidden"}
@@ -28,10 +28,9 @@ Measured on the 270-row panel, on an ordinary laptop:
 
 | What | Time |
 |---|---|
-| `feols` two-way FE · pooled OLS with clustered SE | under 0.01 s |
-| `plm` within / random effects | ~0.02 s |
-| `betareg` with country and year dummies | ~0.05 s |
-| `glmmTMB` beta random effects | ~0.3 s |
+| `feols`, two-way or country fixed effects | under 0.01 s |
+| `try_spec()` in the workspace, with the 9,999-draw bootstrap | under 1 s for the first call, about 0.06 s after it |
+| `try_spec()` in the browser lab | instant: it reads the curve that ships with the page |
 :::
 
 ::: {.small}
@@ -42,5 +41,5 @@ Measured on the 270-row panel, on an ordinary laptop:
 :::
 
 ::: notes
-[Facilitator slide, hidden in the deck – for answering "how long should this take?" without guessing.] Every fit on this panel is effectively instantaneous, including the beta models. Nobody is waiting for a model. What people do wait for is a package download: ggdag in the browser lab is about twenty-three megabytes, which is one slow moment on a bad connection. The browser lab reads every menu result from the pre-computed grid, so no choice on the menu triggers a package download there. The first run in the workspace installs the whole set once. So if someone reports that it is stuck, ask what it is stuck on before assuming the model is the problem.
+[Facilitator slide, hidden in the deck – for answering "how long should this take?" without guessing.] Every fit on this panel is effectively instantaneous, and so is the bootstrap that tests it: the workspace fits each specification live and runs its nine thousand nine hundred and ninety-nine draws in well under a second, the first call being the slowest because it draws the sign matrix. Nobody is waiting for a model. What people do wait for is a package download: ggdag in the browser lab is about twenty-three megabytes, which is one slow moment on a bad connection. The browser lab reads every result from the curve that ships with the page, so no choice on the menu triggers a package download there. The first run in the workspace installs the whole set once. So if someone reports that it is stuck, ask what it is stuck on before assuming the model is the problem.
 :::

@@ -231,7 +231,7 @@ If the morning test fails, you still have two fallbacks (section 8) and the stat
 
 1.  Project the live Multiverse page.
 2.  As results arrive, press **Run Code** on the Class-results chart to pull the latest dots. Press it again every minute or so – each press re-fetches (the URL is cache-busted, so you always get the freshest rows).
-3.  Talk through the chart: where the class landed, who flipped the sign, which choice moved the estimate most. The five analysts and the published coefficient of the original author (OA) are the labelled blue triangles, the 2,520 pre-computed specifications are the two muted curves (grey for the gaussian family, green-grey for the beta family), and the class submissions are the numbered black circles – open for an exploratory result from Task 4, filled for a declared one from Task 5.
+3.  Talk through the chart: where the class landed, who flipped the sign, which choice moved the estimate most. The faint marks are the 864 specifications of the curve of the claim, and the class submissions are drawn over them: each placed by the partial correlation computed from its submitted t and df, and classed by looking its specification up on the curve, a circle for bootstrap p < 0.05 and a cross otherwise; green for an explored result from Task 4, black for a declared one from Task 5, and a diamond for a label that matches no specification of the curve. The reference results (the five analysts and the original author, OA) are not on the class chart; they are on the chart of the claim at the top of the page.
 
 If the live fetch ever stalls during the session, fall back to the static spec curve on the slide "The class multiverse" – it is the same chart minus the live dots.
 

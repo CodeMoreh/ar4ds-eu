@@ -1,141 +1,181 @@
-## A bet on the six axes {#place-your-bet}
-
-::: {.big}
-Six axes: outcome · predictor form · estimator · copredictor · sample · weights
-:::
+## A bet on the decisions {#place-your-bet}
 
 ::: {.none}
-**Which axis moves the estimates most across all 840 specifications?**
+Nine decisions vary on the curve: outcome · predictor · series · predictor form · adjustment · estimator · no-opinion rule · item set · cell weighting
+
+**Which decision moves the estimates most across the `r fmt_n(nrow(spec_curve))` specifications?**
 
 Type your guess – hold it – send on "go".
 :::
 
 ::: notes
-Before I show you the answer, commit to a guess. You have made these choices yourselves in the hands-on, so you have instincts now. Of the six axes of the grid of 840, which one moves the estimates most across the whole grid? Estimator is the popular pick, because fixed versus random effects is the favourite fight in methods seminars. Copredictors is another, since everyone worries about growth. Type your answer, hold it, and send on go. [go; scan the chat.] Interesting spread. Most classes bet on estimator or copredictors. Let's see.
+Before I show you the answer, commit to a guess. You have made these choices yourselves in the hands-on, so you have instincts now. Nine decisions vary on the curve, from the outcome scale and the predictor to the way in which respondents who mention nothing are scored. Which one moves the estimates most across all eight hundred and sixty-four? The outcome is a popular pick, because what 'EU framing' means sounds like the deepest choice. The measurement decisions are another, since everyone has a story about missing answers or about which unemployment series to trust. Type your answer, hold it, and send on go. [go; scan the chat.] Interesting spread. Let's see.
 :::
 
 ## Fork importance {#the-outcome-fork-carries-half-of-everything}
 
 ```{r}
 #| label: fork-importance
-#| fig-width: 9
+#| fig-width: 10
 #| fig-height: 4
-# Share of specification variance in partial r per menu axis, from the
-# facilitator's extended decomposition (data/fork_importance.csv, main-effects
-# eta-squared). Bars ordered by share; the outcome fork in orange.
-fi <- fork_imp |>
-  dplyr::mutate(axis = dplyr::recode(term,
-    outcome   = "outcome",
-    Residuals = "residual / interactions",
-    sample    = "sample",
-    estimator = "estimator",
-    exposure  = "predictor form",
-    control   = "copredictor",
-    weights   = "weights")) |>
-  dplyr::arrange(share) |>
-  dplyr::mutate(axis = factor(axis, levels = axis))
-ggplot(fi, aes(share, axis, fill = axis == "outcome")) +
+# Two readings of each decision on the curve (data/spec_curve_forks.csv): the
+# share of the variance of the claim-aligned partial r that its main effect
+# carries, and the share of pairs, differing only in that decision, whose two
+# members fall in different classes under the bootstrap. Ordered by the share
+# of the variance; the estimator in orange, the interactions in grey.
+fk <- curve_forks |>
+  dplyr::mutate(
+    name     = axis_names[axis],
+    share    = share / 100,
+    crossing = crossing_rate / 100,
+    fill     = dplyr::case_when(axis == "estimator" ~ "lead",
+                                axis == "interactions" ~ "rest",
+                                .default = "axis")
+  ) |>
+  dplyr::arrange(dplyr::if_else(axis == "interactions", -Inf, share)) |>
+  dplyr::mutate(name = factor(name, levels = name))
+fk_fill <- scale_fill_manual(values = c(lead = orange, axis = ncl_blue, rest = grey_mid),
+                             guide = "none")
+p_share <- ggplot(fk, aes(share, name, fill = fill)) +
   geom_col(width = 0.7) +
-  geom_text(aes(label = sprintf("%.1f%%", share)),
-            hjust = -0.15, colour = ncl_blue, fontface = "bold", size = 5) +
-  scale_fill_manual(values = c(`TRUE` = orange, `FALSE` = ncl_blue),
-                    guide = "none") +
-  scale_x_continuous(limits = c(0, 60)) +
-  labs(x = "share of variance in partial r (%)", y = NULL) +
-  theme_slide(16)
+  geom_text(aes(label = fmt_pct(share)), hjust = -0.15, colour = ncl_blue,
+            fontface = "bold", size = 4.4) +
+  fk_fill +
+  scale_x_continuous(limits = c(0, 0.55), labels = NULL) +
+  labs(x = "share of the variance", y = NULL) +
+  theme_slide(15)
+p_cross <- ggplot(dplyr::filter(fk, axis != "interactions"), aes(crossing, name, fill = fill)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = fmt_pct(crossing)), hjust = -0.15, colour = ncl_blue,
+            fontface = "bold", size = 4.4) +
+  fk_fill +
+  scale_y_discrete(drop = FALSE) +
+  scale_x_continuous(limits = c(0, 0.72), labels = NULL) +
+  labs(x = "pairs that change class when it moves alone", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_blank())
+p_share + p_cross
 ```
 
 ::: {.small}
-- **Outcome operationalisation: 49.7%** of specification variance · estimator + predictor form + copredictor + weights together: **under 2%**
-- Computed on the grid **as estimated** – most of the outcome share *is* the polarity split between positive and negative framings, the split that the claim-aligned chart removes from display
+- The **estimator** carries **`r fmt_pct(fork_of("estimator"))`** of the variance, the predictor `r fmt_pct(fork_of("predictor"))` and the outcome `r fmt_pct(fork_of("outcome"))`; the no-opinion rule, the series, the form and the cell weighting together carry `r fmt_pct(sum(purrr::map_dbl(c("noop", "measure", "pred_form", "cell_weight"), fork_of)))`
+- The no-opinion rule carries almost none of the variance and still changes the class of `r fmt_pct(fork_of("noop", "crossing_rate"))` of its pairs
 :::
 
 ::: {.src}
-Computed over the committed data/spec_grid.csv; imported as data/fork_importance.csv.
+data/spec_curve_forks.csv: main-effect shares of the variance over the curve, and class changes under the wild cluster bootstrap. The [decision map]({{< var site-url >}}exercise/estimand-dial.html) shows where each decision is made.
 :::
 
 ::: notes
-The outcome fork accounts for just under half of all the variation in the grid – forty-nine point seven per cent. And now look at the bottom of the chart. Estimator, predictor form, copredictor and weights are the axes we argue about in seminars, and together they account for under two per cent. The residual block is interactions, combinations that matter beyond any single axis. One caveat: this decomposition is computed on the grid as estimated, before claim-alignment, so most of the outcome share is the polarity split itself – positive framings falling, negative framings rising. That split is real variation in what the specifications estimate. The aligned chart removes it from the display, not from the decomposition. On the claim-aligned scale the ranking reverses. In my extended analysis of the same grid, the estimator then accounts for about fifty-eight per cent and the outcome about twelve, because once every framing points the same way, the gap between the pooled model and the other three estimators is the largest difference left. The to-weight-or-not debate barely moves the estimate on either scale. Whoever guessed "outcome" in the chat: take the point.
+The estimator accounts for the largest share of the variation on the curve, about forty-one per cent, and the predictor comes next at seventeen. The outcome scale, which many people bet on, carries nine. The estimator here is the choice between two estimands, with or without the year effects that remove what all member states went through together, which is why it does so much. The decisions about measurement that occupy so much of the methods literature – how to treat respondents who mention nothing, which published series, whether cells are weighted – carry about one per cent between them, and the interactions, combinations of decisions that matter beyond any single one, about a quarter. Now the right-hand panel, which asks a different question: how often does moving one decision, with everything else held, change whether a specification clears the bootstrap? The estimator and the predictor still lead. But the no-opinion rule, with almost no share of the variance, changes the class of about one pair in twelve. A decision can matter little across the curve and still decide whether your own result is significant. Whoever guessed the estimator in the chat: take the point.
 :::
 
-## The five analysts in the grid {#the-unit-of-analysis-does-the-work}
+## The reference results in the curve {#the-unit-of-analysis-does-the-work}
 
 ```{r}
 #| label: analyst-placement
-#| fig-width: 9
-#| fig-height: 4
-# Each analyst's recorded partial r located in the 840-spec grid as the
-# share of the grid MORE NEGATIVE than their value on the claim-aligned scale
-# (computed in the setup chunk). Person-level analysts in orange, aggregated
-# in navy.
-ggplot(an_placed,
-       aes(pct_more_negative,
-           factor(analyst_id, levels = analyst_id),
-           colour = level)) +
-  geom_segment(aes(x = 0, xend = pct_more_negative,
-                   yend = factor(analyst_id, levels = analyst_id)),
-               linewidth = 1.2) +
-  geom_point(size = 7) +
-  geom_text(aes(label = sprintf("%.1f%%", pct_more_negative)),
-            hjust = -0.35, colour = ncl_blue, fontface = "bold", size = 5) +
-  scale_colour_manual(values = c(`person-level` = orange,
-                                 `aggregated` = ncl_blue),
-                      name = NULL) +
-  scale_x_continuous(limits = c(0, 80)) +
-  labs(x = "share of the 840 specifications more negative, claim-aligned (%)",
-       y = NULL) +
+#| fig-width: 10
+#| fig-height: 4.2
+# The six reference results (data/reference_marks.csv) under three
+# conversions of the same statistic: on the degrees of freedom of its own
+# inference, where the mark is placed; on the 233 df of the two-way design,
+# the common denominator of the conversion lesson; and as Multi100 recorded
+# it, drawn only where it differs from the placement, which is PRL47 alone (OA
+# has no recorded value). The bands behind are the curve: its full range, its
+# middle half and its median (dashed).
+conv <- ref_marks |>
+  dplyr::select(tag, placed = r_placement, on_233 = r_233, recorded = r_recorded) |>
+  tidyr::pivot_longer(c(on_233, recorded), names_to = "kind", values_to = "r") |>
+  dplyr::filter(!is.na(r), kind != "recorded" | abs(r - placed) > 0.001) |>
+  dplyr::bind_rows(dplyr::distinct(ref_marks, tag, r = r_placement) |>
+                     dplyr::mutate(kind = "placed")) |>
+  dplyr::mutate(kind = factor(kind, levels = c("placed", "on_233", "recorded"),
+                              labels = c("own df (placed)", "233 df", "as recorded by Multi100, where it differs")))
+row_levels <- rev(ref_marks$tag)
+curve_q <- stats::quantile(spec_curve$r_ca, c(0.25, 0.5, 0.75))
+ggplot(conv, aes(r, factor(tag, levels = row_levels))) +
+  annotate("rect", xmin = min(spec_curve$r_ca), xmax = max(spec_curve$r_ca),
+           ymin = -Inf, ymax = Inf, fill = plain, alpha = 0.06) +
+  annotate("rect", xmin = curve_q[[1]], xmax = curve_q[[3]],
+           ymin = -Inf, ymax = Inf, fill = plain, alpha = 0.10) +
+  geom_vline(xintercept = curve_q[[2]], colour = plain, linetype = "dashed", linewidth = 0.5) +
+  geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
+  geom_point(aes(shape = kind, colour = kind), size = 4.2, stroke = 1.1) +
+  geom_text(data = ref_marks, aes(x = 0.14, y = tag,
+                                  label = sprintf("%d of %d further below zero", rank, nrow(spec_curve))),
+            hjust = 0, size = 4, colour = grey_mid, inherit.aes = FALSE) +
+  scale_shape_manual(values = c(16, 1, 4), name = NULL) +
+  scale_colour_manual(values = c(ink, ink, d_red), name = NULL) +
+  scale_x_continuous(limits = c(-0.62, 0.52), breaks = seq(-0.6, 0, by = 0.2),
+                     labels = \(x) fmt_num(x, 1)) +
+  labs(x = "partial correlation r", y = NULL) +
   theme_slide(15) +
-  theme(legend.position = "top")
+  theme(legend.position = "top", legend.justification = "left")
 ```
 
 ::: {.small}
-- The two **person-level** analysts are at the two extremes of the recorded range, so the unit of analysis and the metric matter more than the software or the estimator
+- On its own df PRL47 sits beside the original study; Multi100 recorded it at `r fmt_num(mark_of("PRL47", "r_recorded"))`, converted on `r fmt_n(analysts5$n[analysts5$analyst_id == "PRL47"])` respondents
+- On 233 df every result moves, and KEVF1 changes places with KQXUE: the common denominator is a teaching device, worked through in the [conversion lesson]({{< var site-url >}}case/index.html#sec-recorded) of the case study
+:::
+
+::: {.src}
+data/reference_marks.csv; each statistic converted as $r = t/\sqrt{t^2 + df}$. The bands are the curve: its range, its middle half and its median.
 :::
 
 ::: notes
-Now put the five published analysts inside the same grid – for each one, the share of all eight hundred and forty claim-aligned specifications that come out more negative than their value. And look who is at the ends. KEVF1, the most strongly claim-supporting of the five at around the sixteenth percentile, and PRL47, the closest to the null at around the sixty-eighth – those two, at the opposite extremes, are the two analysts who worked at *person level*, on the third of a million respondents, rather than on aggregates. The three aggregate pipelines sit between them; my own constrained baseline falls almost exactly at the median of the grid. Five competent people end up scattered across half the curve because of the unit of analysis and the outcome metric, both decided before any model is fitted, rather than because of Stata against R or the choice of estimator.
+Here are the six reference results again, now with the three numbers that each of them could be given. The filled dot is where each sits on the degrees of freedom of its own inference, which is the placement on the previous chart. The open circle converts the same statistic on two hundred and thirty-three degrees of freedom, the residual degrees of freedom of my own two-way design, which is the common denominator that the conversion lesson uses. The red cross marks the value that Multi100 recorded where it differs from the placement, which happens only for PRL47, whose z was converted on the number of respondents. The bands behind the dots show the curve: its full range, its middle half and its median. Two things to take away. The choice of degrees of freedom moves a result by as much as the largest decisions on the menu do, and the right choice is the one that counts the units that carry the evidence. And once that is done, the five analysts are spread across most of the curve rather than across two orders of magnitude.
 :::
 
-## Sign flips by estimator and sample {#the-sign-flips-are-patterned-not-random}
+## Sign changes by option {#the-sign-flips-are-patterned-not-random}
 
 ```{r}
 #| label: sign-flips
 #| fig-width: 10
-#| fig-height: 3.8
-# Wrong-sign (positive) estimates in the cosmopolitan-only universe,
-# cross-tabbed by estimator and by sample; computed in-chunk from the
-# committed spec_grid.csv (flips_mcosmo in the setup chunk).
-f_est <- flips_mcosmo |>
-  dplyr::count(estimator, wrong_sign) |>
-  dplyr::filter(wrong_sign) |>
-  dplyr::arrange(n) |>
-  dplyr::mutate(estimator = factor(estimator, levels = estimator))
-f_smp <- flips_mcosmo |>
-  dplyr::count(sample, wrong_sign) |>
-  dplyr::filter(wrong_sign) |>
-  dplyr::arrange(n) |>
-  dplyr::mutate(sample = factor(sample, levels = sample))
-p_est <- ggplot(f_est, aes(n, estimator)) +
-  geom_col(fill = d_red, width = 0.65) +
-  geom_text(aes(label = n), hjust = -0.3, colour = ncl_blue,
-            fontface = "bold", size = 5) +
-  scale_x_continuous(expand = ggplot2::expansion(mult = c(0, 0.2))) +
-  labs(x = "wrong-sign specs", y = NULL, title = "by estimator") +
-  theme_slide(14)
-p_smp <- ggplot(f_smp, aes(n, sample)) +
-  geom_col(fill = d_red, width = 0.65) +
-  geom_text(aes(label = n), hjust = -0.3, colour = ncl_blue,
-            fontface = "bold", size = 5) +
-  scale_x_continuous(expand = ggplot2::expansion(mult = c(0, 0.2))) +
-  labs(x = "wrong-sign specs", y = NULL, title = "by sample") +
-  theme_slide(14)
-p_est + p_smp
+#| fig-height: 3.9
+# The share of pairs whose two members lie on different sides of zero: for the
+# decisions on the curve, pairs that differ only in that decision
+# (data/spec_curve_forks.csv); for the options off the curve, each curve
+# specification against its twin with the option swapped in
+# (data/menu_deviations.csv; the rate repeats the count and is left out).
+# Only decisions and options that change at least one sign are drawn.
+opt_labels <- menu_opts |> dplyr::select(axis, option, label)
+flips <- dplyr::bind_rows(
+  curve_forks |>
+    dplyr::filter(axis != "interactions") |>
+    dplyr::transmute(label = axis_names[axis], sign_changes = sign_changes / 100,
+                     where = "decisions on the curve"),
+  deviations |>
+    dplyr::filter(!on_curve, axis != "se", n_pairs > 0, rule != "identical_to_count") |>
+    dplyr::distinct(axis, option, .keep_all = TRUE) |>
+    dplyr::left_join(opt_labels, by = c("axis", "option")) |>
+    dplyr::transmute(label, sign_changes = sign_changes / 100,
+                     where = "options off the curve")
+) |>
+  dplyr::filter(sign_changes > 0) |>
+  dplyr::arrange(sign_changes) |>
+  dplyr::mutate(label = factor(label, levels = unique(label)))
+ggplot(flips, aes(sign_changes, label, fill = where)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = fmt_pct(sign_changes)), hjust = -0.15, colour = ncl_blue,
+            fontface = "bold", size = 4.2) +
+  facet_grid(where ~ ., scales = "free_y", space = "free_y") +
+  scale_fill_manual(values = c(`decisions on the curve` = ncl_blue,
+                               `options off the curve` = d_red), guide = "none") +
+  scale_x_continuous(limits = c(0, 0.6), labels = NULL) +
+  labs(x = "pairs whose two members lie on different sides of zero", y = NULL) +
+  theme_slide(14) +
+  theme(strip.text.y = element_text(angle = 0, hjust = 0, colour = ncl_blue, face = "bold"))
 ```
 
 ::: {.small}
-- In the cosmopolitan-only universe, the wrong-sign estimates concentrate in the **pooled cluster-robust estimator** and the **bailout-excluding samples**
+- On the curve, `r sum(spec_curve$r_ca > 0)` of the `r fmt_n(nrow(spec_curve))` specifications lie above zero, all of them GDP growth on the cosmopolitan scale, and `r if (any(spec_curve$r_ca > 0 & spec_curve$sig)) "some" else "none"` with bootstrap p < 0.05
+- Off the curve the sign changes come from options that change the question: **pooled OLS** brings in the comparison between countries, and the samples **without the bailout countries** or **before the crisis** remove the cases that the claim is about
+:::
+
+::: {.src}
+data/spec_curve_forks.csv and data/menu_deviations.csv. The [decision map]({{< var site-url >}}exercise/estimand-dial.html) gives the reason for each option, on the curve or off it.
 :::
 
 ::: notes
-The grid can also be read for where the sign flips occur. Take only the cosmopolitan-outcome specifications – the claim predicts a negative coefficient, so a positive estimate is a flip – and cross-tab the flips by axis. They are not scattered randomly. The estimator that absorbs no between-country differences at all – the pooled model with clustered errors – accounts for thirty-three of the forty-one, and the flips are also concentrated in the samples that exclude the bailout countries. In other words, when this claim flips sign, it flips for identifiable, diagnosable reasons: let the between-country comparison into the estimate, or remove the crisis countries, and the association goes. Taken apart like this, a specification curve lets you name the choices that produce its extremes, and the same grid can place any single result, your own included.
+The curve can also be read for where the signs change. On the curve itself there is little to read: sixteen of the eight hundred and sixty-four specifications lie above zero, all of them growth on the cosmopolitan scale, and none of them clears the bootstrap. The estimator, which moves the estimates most, changes no signs at all. The sign changes come from options that the audit moved off the curve, and they are patterned. Swap pooled OLS into every specification and half of them change sign, because pooled OLS lets in the comparison between countries, where the association runs the other way. Leave out the bailout countries, or keep only the years before the crisis, and about a quarter change sign, because those samples remove the cases that the claim is most about. So when this claim flips, it flips for reasons that can be named, and each of those options answers another question, which is why it is taught beside the curve rather than on it.
 :::

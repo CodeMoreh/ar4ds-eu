@@ -1,8 +1,8 @@
 ## What the curve leaves out {.smaller}
 
 ::: {.small}
-- **The specifications nobody ran.** Person-level models, a different scale construction, a lagged predictor. The curve contains nothing from outside the menu, and looks just as complete either way
-- **The dependence.** All 840 use the same 270 country-years, so they share their noise, and the width of the cloud cannot be read as 840 independent results
+- **The options left off, and the specifications that nobody ran.** The audit moved pooled OLS, random effects, the restricted samples and the weights off the curve, and nobody ran person-level models or a lagged predictor. The curve looks just as complete either way
+- **The dependence.** All `r fmt_n(nrow(spec_curve))` use the same 270 country-years, so they share their noise, and the width of the cloud cannot be read as `r fmt_n(nrow(spec_curve))` independent results
 - **Estimand drift.** Some of these specifications answer subtly different questions. The chart puts them on one axis; that does not make them commensurable
 - **The data-building choices.** Everything upstream of the panel – how the scales were coded, which waves were pooled – is fixed for everyone here
 :::
@@ -12,7 +12,7 @@ A curve is a **map of the menu you wrote**, and it cannot show whether that menu
 :::
 
 ::: notes
-Four things are missing from the specification curve, and a chart as tidy as ours makes it easy to think it is complete. First, the specifications nobody ran: person-level models, a different scale construction, a lagged predictor. The curve contains nothing from outside the menu, and it looks just as complete either way, which is what makes this easy to miss. Second, the dependence: all eight hundred and forty of these use the same two hundred and seventy country-years, so they share their noise, and the width of that cloud cannot be read as eight hundred and forty independent results. Third, estimand drift: some of these answer subtly different questions, and putting them on one axis does not make them commensurable. And fourth, everything upstream of the panel – how the scales were coded, which waves were pooled – is fixed for everyone in this class. A curve is a map of the menu you wrote, and it cannot show whether the menu was right.
+Four things are missing from the specification curve, and a chart as tidy as ours makes it easy to think it is complete. First, what is not on it. Some options were left off on purpose, because the audit judged that they answer another question or answer this one less well, and the decision map gives the reason for each. Others were never run by anyone: person-level models, a lagged predictor. The curve looks just as complete either way, which is what makes this easy to miss. Second, the dependence: all eight hundred and sixty-four of these use the same two hundred and seventy country-years, so they share their noise, and the width of that cloud cannot be read as eight hundred and sixty-four independent results. Third, estimand drift: some of these answer subtly different questions, and putting them on one axis does not make them commensurable. And fourth, everything upstream of the panel – how the scales were coded, which waves were pooled – is fixed for everyone in this class. A curve is a map of the menu you wrote, and it cannot show whether the menu was right.
 :::
 
 ## Description and inference {#two-jobs-one-curve}
@@ -37,7 +37,7 @@ The two are detachable, and most published curves stop at description.
 A curve like ours does two different jobs. The first is description, showing how the estimate moves as the choices move. That is what we built, and it is useful on its own. The second is inference: asking whether the curve, taken as a whole, is more extreme than you would expect if there were no effect at all. Those are different questions with different machinery, and they detach cleanly – Multi100 did the description without the inference, and so far we have done the same. The next three slides are about what the second job takes.
 :::
 
-## Dependence among the 840 estimates {#estimates-are-not-840-tests}
+## Dependence among the estimates {#estimates-are-not-840-tests}
 
 :::: {.none}
 ::: {.fragment .fadeInUp}
@@ -45,7 +45,7 @@ Every specification re-uses the **same 270 country-years**. The estimates are de
 :::
 
 ::: {.fragment .fadeInUp}
-'63.9% significant' **describes** the curve. It is not a p-value for the claim.
+'`r fmt_pct(share_sig(spec_curve))` below zero with bootstrap p < 0.05' **describes** the curve. It is not a p-value for the claim. The bootstrap allows for the years of one country resembling each other within each fit; it does not make the fits independent of one another.
 :::
 
 ::: {.fragment .fadeInUp}
@@ -54,14 +54,14 @@ Vote-counting across dependent specifications has no null distribution, so a tal
 ::::
 
 ::: notes
-Sixty-three point nine per cent of our specifications are significant, and it is very tempting to read that as evidence strength: "most tests pass, so the claim holds". But all eight hundred and forty specifications use the same two hundred and seventy country-years. They share the data, so they share the noise: if sampling luck pushed a handful of country-years in the direction of the claim, it pushed hundreds of specifications the same way at once. The percentage significant is a description of the curve, not a test of the claim. To test the claim at curve level you need to know what the whole curve would look like if there were nothing to find, and that null has to be constructed.
+Seventy-one per cent of our specifications lie below zero with a bootstrap p under point zero five, and it is very tempting to read that as evidence strength: "most tests pass, so the claim holds". The bootstrap already allows for the years of one country resembling each other inside each fit. But all eight hundred and sixty-four specifications use the same two hundred and seventy country-years. They share the data, so they share the noise: if sampling luck pushed a handful of country-years in the direction of the claim, it pushed hundreds of specifications the same way at once. The percentage significant is a description of the curve, not a test of the claim. To test the claim at curve level you need to know what the whole curve would look like if there were nothing to find, and that null has to be constructed.
 :::
 
 ## The permutation design {#building-the-nothing-the-permutation-design}
 
 ::: {.small}
 - Break the one link that the claim needs: **shuffle each country's unemployment series in time** (jointly with growth), keeping everything else intact
-- Refit **all 840 specifications** on each shuffled dataset · repeat **B = 500** times
+- Refit **every specification on the curve** on each shuffled dataset · repeat **B = 500** times
 - Compare the observed curve to the 500 null curves: is ours more extreme than chance produces?
 :::
 
@@ -70,7 +70,7 @@ The design is worked through in your inference reading; permutation inference af
 :::
 
 ::: notes
-The claim says that a country's unemployment moves its EU framing over time. To build the null, take each country and shuffle its unemployment series in time – together with growth, so the macro side stays internally coherent – while leaving the framing data untouched. In a shuffled world the alignment between unemployment and framing is broken by construction: whatever curve you get is what pure chance produces on these data with these 840 specifications. Do that five hundred times, refit the entire grid each time, and you have five hundred null curves to compare ours with. If our curve falls in the far tail of those null curves, the curve as a whole is evidence. If it falls comfortably among them, the description stands but the inference does not.
+The claim says that a country's unemployment moves its EU framing over time. To build the null, take each country and shuffle its unemployment series in time – together with growth, so the macro side stays internally coherent – while leaving the framing data untouched. In a shuffled world the alignment between unemployment and framing is broken by construction: whatever curve you get is what pure chance produces on these data with these specifications. Do that five hundred times, refit the entire curve each time, and you have five hundred null curves to compare ours with. If our curve falls in the far tail of those null curves, the curve as a whole is evidence. If it falls comfortably among them, the description stands but the inference does not.
 :::
 
 ## Reading a curve-level test {#how-to-read-a-curve-level-test .smaller}
@@ -82,18 +82,18 @@ The claim says that a country's unemployment moves its EU framing over time. To 
 :::
 
 ::: {.fragment}
-**Discussion (2 minutes, then chat):** the constrained cosmopolitan-only universe has 140 specs: **70.7% negative, 57.1% negative *and* significant.** Strong evidence? *Against what null?*
+**Discussion (2 minutes, then chat):** the cosmopolitan scale on the curve has `r nrow(dplyr::filter(spec_curve, outcome == "mcosmo"))` specifications: **`r fmt_pct(share_below(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero, `r fmt_pct(share_sig(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero with bootstrap p < 0.05.** Strong evidence? *Against what null?*
 :::
 
 ::: notes
-Two literacy points and then you argue. First: with five hundred draws, the smallest p-value the test can report is two over five hundred and one – about point zero zero four. That is a floor set by the number of draws, not a zero, and more draws lower it at a real cost in computing time. Second: near the point-oh-five boundary the Monte-Carlo error is around plus or minus point zero one, so a permutation p of point zero four and one of point zero six count as the same finding. The badge says that this test is designed and has not been run, so what you are reading today is a plan whose result nobody yet knows, which is the position that a preregistration puts you in. Now the discussion beat. The constrained universe – cosmopolitan outcome only, 140 specifications – is 70.7 per cent negative, 57.1 per cent negative and significant. Two minutes: is that strong evidence? Against what null? Type your answer. [harvest: the sharp ones will say – we don't know until we know what chance produces on these dependent data; that is the point.]
+Two literacy points and then you argue. First: with five hundred draws, the smallest p-value that the test can report is two over five hundred and one – about point zero zero four. That is a floor set by the number of draws, not a zero, and more draws lower it at a real cost in computing time. Second: near the point-oh-five boundary the Monte-Carlo error is around plus or minus point zero one, so a permutation p of point zero four and one of point zero six count as the same finding. The badge says that this test is designed and has not been run, so what you are reading today is a plan whose result nobody yet knows, which is the position that a preregistration puts you in. Now the discussion beat. Take the cosmopolitan scale alone, the outcome that Multi100 instructed: two hundred and eighty-eight specifications on the curve, ninety-four per cent below zero, fifty-six per cent below zero with a bootstrap p under point zero five. Two minutes: is that strong evidence? Against what null? Type your answer. [harvest: the sharp ones will say – we don't know until we know what chance produces on these dependent data; that is the point.]
 :::
 
 ## What stands without the test
 
 :::: {.none}
 ::: {.fragment .fadeInUp}
-Everything descriptive survives: the **49.7%** outcome fork, the analysts' placement, the sign-flip pattern, **your dot**.
+Everything descriptive survives: the share that the **estimator** carries, the placement of the reference results, where the sign changes come from, **your dot**.
 :::
 
 ::: {.fragment .fadeInUp}
@@ -106,5 +106,5 @@ Careful reporting says which of the two layers a claim belongs to.
 ::::
 
 ::: notes
-Most of what the grid has shown needs no permutation at all. That the outcome fork accounts for half the variance – description, stands. That the two person-level analysts bracket the range – stands. That the sign flips concentrate in the pooled estimator and the non-bailout samples – stands. Your own dot and the whole structure of the curve stand as well. The single sentence that has to wait is "this curve as a whole is unlikely if there is no effect". Keeping those two layers apart in your own writing – saying which one your claim belongs to – is what inference literacy means in practice, and it puts you ahead of most published specification curves.
+Most of what the curve has shown needs no permutation at all. That the estimator accounts for the largest share of the variance – description, stands. Where the six reference results sit once each is converted on its own degrees of freedom – stands. That the sign changes come from pooled OLS and from the samples without the bailout countries – stands. Your own dot and the whole structure of the curve stand as well. The single sentence that has to wait is "this curve as a whole is unlikely if there is no effect". Keeping those two layers apart in your own writing – saying which one your claim belongs to – is what inference literacy means in practice, and it puts you ahead of most published specification curves.
 :::

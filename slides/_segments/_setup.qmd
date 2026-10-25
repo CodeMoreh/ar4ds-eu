@@ -82,15 +82,94 @@ repeatability_matrix <- function(highlight = NULL) {
           plot.margin = ggplot2::margin(2, 8, 2, 2))
 }
 
-# Read the two data files that the multiverse slides depend on. Relative paths
-# resolve from slides/ at render time (verified with quarto render).
-# r_ca is the claim-aligned partial r – the day's convention: negative framings
-# (mcomm, mlib, mneg) reverse-coded, so 'supports the claim' = negative sign
-# for every outcome. All Part 4 curve/placement slides work on this scale;
-# the class chart and the placement line that try_spec() and run_spec() print in the browser lab use the same one.
-spec_grid <- readr::read_csv("../data/spec_grid.csv", show_col_types = FALSE) |>
-  dplyr::mutate(r_ca = ifelse(positive_outcome, r, -r))
+# The curve of the claim and the files around it, read once. Relative paths
+# resolve from slides/ at render time. Codebooks: data/spec_curve_codebook.md,
+# data/reference_marks_codebook.md, data/displays_codebook.md and
+# data/menu_options_codebook.md. r_ca is the claim-aligned partial r of the
+# conventional fit, with growth already sign-flipped, so that below zero is the
+# direction of the claim for every specification; the class of a point is
+# p_wcr < 0.05, the wild cluster bootstrap by country, never the conventional p.
+# The class chart and the placement line that try_spec() prints use the same
+# scale and the same rule.
+spec_curve <- readr::read_csv("../data/spec_curve.csv", show_col_types = FALSE) |>
+  dplyr::arrange(r_ca) |>
+  dplyr::mutate(rank = dplyr::row_number(), sig = p_wcr < 0.05)
+curve_ref <- dplyr::filter(spec_curve, is_reference)
+curve_forks <- readr::read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  dplyr::filter(curve == "positive")
+deviations <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
+  dplyr::filter(curve == "positive")
+menu_opts <- readr::read_csv("../data/menu_options.csv", show_col_types = FALSE)
+disp_inference <- readr::read_csv("../data/display_inference.csv", show_col_types = FALSE)
+disp_periods <- readr::read_csv("../data/display_periods.csv", show_col_types = FALSE)
+disp_loo <- readr::read_csv("../data/display_loo.csv", show_col_types = FALSE)
+disp_bailout <- readr::read_csv("../data/display_bailout.csv", show_col_types = FALSE)
+disp_bw <- readr::read_csv("../data/display_between_within.csv", show_col_types = FALSE)
 analysts5 <- readr::read_csv("../data/analysts5.csv", show_col_types = FALSE)
+
+# Numbers in the slide text: a true minus sign and fixed decimals, shares in
+# per cent, and the two shares that describe a set of curve rows.
+fmt_num <- \(x, d = 3) sub("^-", "−", formatC(x, format = "f", digits = d))
+fmt_pct <- \(x, d = 1) paste0(formatC(100 * x, format = "f", digits = d), "%")
+fmt_n <- \(x) format(x, big.mark = ",")
+share_below <- \(d) mean(d$r_ca < 0)
+share_sig <- \(d, p = d$p_wcr) mean(d$r_ca < 0 & p < 0.05)
+
+# One value of the fork table, of the option table, or of a display file at
+# the reproduced specification (the cosmopolitan scale on raw unemployment).
+fork_of <- \(axis_code, col = "share") curve_forks[[col]][curve_forks$axis == axis_code] / 100
+dev_of <- \(option_code, col = "below_zero_sig") deviations[[col]][deviations$option == option_code][1] / 100
+ref_display <- \(d) dplyr::filter(d, outcome == "mcosmo", predictor == "unemp")
+period_of <- \(sample_code, col) {
+  ref_display(disp_periods) |>
+    dplyr::filter(estimator == "fe_twoway", pred_form == "raw", copredictor == "none",
+                  sample == sample_code) |>
+    dplyr::pull(dplyr::all_of(col))
+}
+bailout_of <- \(group_code, col) {
+  ref_display(disp_bailout) |>
+    dplyr::filter(estimator == "fe_twoway", group == group_code) |>
+    dplyr::pull(dplyr::all_of(col))
+}
+bw_cosmo <- dplyr::filter(disp_bw, outcome == "mcosmo", predictor == "unemp")
+loo_twoway <- dplyr::filter(disp_loo, estimator == "fe_twoway", left_out != "none")
+loo_country <- dplyr::filter(disp_loo, estimator == "fe_country", left_out != "none")
+inference_of <- \(rule, col = "p") {
+  disp_inference |>
+    dplyr::filter(estimator == "fe_twoway", inference == rule) |>
+    dplyr::pull(dplyr::all_of(col))
+}
+
+# The six reference results, each placed on the degrees of freedom of its own
+# inference (r_placement); r_233 converts every statistic on the 233 df of the
+# two-way design, the teaching device of the conversion lesson, and r_recorded
+# is the value in the Multi100 record. The shape follows the bootstrap check
+# where the design fits on the country-year cells and the p-value as reported
+# where it does not, as on the results page; rank counts the specifications of
+# the curve that lie further below zero.
+ref_marks <- readr::read_csv("../data/reference_marks.csv", show_col_types = FALSE) |>
+  dplyr::mutate(
+    tag   = dplyr::if_else(id == "OA", "OA 2016", id),
+    p_num = suppressWarnings(as.numeric(sub("^<\\s*", "", p_recorded))),
+    sig   = dplyr::coalesce(p_cluster_check, p_num) < 0.05,
+    rank  = purrr::map_int(r_placement, \(x) sum(spec_curve$r_ca < x))
+  ) |>
+  dplyr::arrange(rank)
+mark_of <- \(mark_id, col) ref_marks[[col]][ref_marks$id == mark_id]
+five_r <- ref_marks |> dplyr::filter(id != "OA") |> dplyr::pull(r_placement)
+
+# The beta twin of the reproduced specification, tested by its clustered t on
+# G - 1 = 26 df, and the free-phase model of C6HJR (the positive composite on
+# growth, adjusted for unemployment, two-way fixed effects), a point of the curve.
+curve_axes <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
+                "construction", "noop", "item_set", "cell_weight", "measure", "pred_form")
+beta_ref <- readr::read_csv("../data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
+  dplyr::filter(curve == "positive", axis == "family", option == "beta") |>
+  dplyr::semi_join(curve_ref, by = curve_axes)
+growth_c6hjr <- spec_curve |>
+  dplyr::filter(outcome == "mpos", predictor == "growth", copredictor == "other",
+                estimator == "fe_twoway", noop == "zero", item_set == "all",
+                cell_weight == "unweighted")
 
 # The 29 teams of Silberzahn et al. (2018), published values, read here because
 # two slides in different parts draw them: the full forest in Part 1 and the
@@ -106,94 +185,71 @@ tidy_approach <- function(x) {
                            "\\b(And|A|For|With|Using|The|Of)\\b", tolower)
 }
 
-# Shared multiverse base layer, mirroring the build-time chart on the
-# Multiverse page (results.qmd) so the class sees one visual grammar in the
-# deck and on the page that collects the class submissions: the full universe of 2,520
-# specifications (data/spec_grid_full.csv), each family ranked within itself;
-# colour marks the outcome family, the marker the predictor that the claim is about,
-# faded points miss 5% significance, and the shaded band above zero runs
-# against the claim. Claim alignment matches the page too: negative framings
-# reverse-coded, growth predictors sign-flipped on top (their claim-expected
-# sign is positive). Built ONCE so the two consecutive multiverse slides
-# ("The class multiverse" and "The published results on the curve") are the SAME chart
-# with an overlay, not two charts: identical dims, axes, theme and legend
-# slots, so the reveal animates the analyst tags appearing on one unchanging
-# panel. coord_cartesian() pins the y-range so the overlay cannot rescale
-# the axis between slides.
-spec_full <- readr::read_csv("../data/spec_grid_full.csv", show_col_types = FALSE) |>
-  dplyr::mutate(r_ca = r * ifelse(positive_outcome, 1, -1) *
-                  ifelse(predictor == "growth", -1, 1)) |>
-  dplyr::arrange(family, r_ca) |>
-  dplyr::mutate(rank = dplyr::row_number(), .by = family)
-sc_baseline <- dplyr::filter(spec_full, baseline, family == "gaussian")
-
+# The curve as the results page draws it, so that the class meets one visual
+# grammar in the deck and on the Multiverse page: one mark per specification,
+# ranked by r_ca, an open circle for bootstrap p < 0.05 and a cross for
+# p >= 0.05 at the same footprint, plain blue at outline opacities 0.25 and
+# 0.12, and the reference results in ink at full strength; the shaded band
+# above zero runs against the claim. Built once, so that the two consecutive
+# curve slides are the same panel with an overlay; coord_cartesian() pins the
+# y-range so that the overlay cannot rescale the axis between slides.
+plain <- "#1f5fa8"
+ink   <- "#1d2733"
 spec_base <- function() {
-  ggplot(spec_full, aes(rank, r_ca)) +
+  ggplot(spec_curve, aes(rank, r_ca)) +
     annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf,
              fill = d_red, alpha = 0.045) +
     geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
-    geom_point(aes(colour = family, shape = predictor, alpha = sig),
-               size = 1.2, stroke = 0.4) +
-    geom_point(data = sc_baseline, shape = 2, size = 3.2, stroke = 1.1,
-               colour = orange) +
-    annotate("text", x = sc_baseline$rank, y = sc_baseline$r_ca - 0.14,
-             label = "constrained baseline\nt = −3.804",
-             colour = orange, fontface = "bold", size = 4, hjust = 0) +
-    scale_colour_manual(values = c(gaussian = ncl_blue, beta = green),
-                        breaks = c("gaussian", "beta"),
-                        labels = c("gaussian family", "beta family"),
-                        name = NULL,
-                        guide = guide_legend(order = 1, override.aes = list(
-                          shape = 16, size = 2.6, alpha = 1))) +
-    scale_shape_manual(values = c(unemp = 2, growth = 0),
-                       breaks = c("unemp", "growth"),
-                       labels = c("unemployment", "GDP growth"),
-                       name = NULL,
-                       guide = guide_legend(order = 2, override.aes = list(
-                         colour = "grey30", size = 2.6, stroke = 0.8,
-                         alpha = 1))) +
-    scale_alpha_manual(values = c(`TRUE` = 0.9, `FALSE` = 0.25),
-                       breaks = c(TRUE, FALSE),
-                       labels = c("p < .05", "n.s."),
-                       name = NULL,
-                       guide = guide_legend(order = 3, override.aes = list(
-                         shape = 16, size = 2.6, colour = grey_mid))) +
-    labs(x = "specification (ranked by claim-aligned partial r within family)",
+    geom_point(aes(shape = sig, alpha = sig), colour = plain, size = 2.2, stroke = 0.6) +
+    scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
+                       labels = c("p < 0.05", "p ≥ 0.05"), name = NULL) +
+    scale_alpha_manual(values = c(`TRUE` = 0.25, `FALSE` = 0.12), guide = "none") +
+    guides(shape = guide_legend(override.aes = list(alpha = 1, colour = "#4f5b67",
+                                                    size = 2.8, stroke = 0.8))) +
+    labs(x = sprintf("specification, ranked by claim-aligned partial r (%s)", fmt_n(nrow(spec_curve))),
          y = "claim-aligned partial r") +
-    coord_cartesian(ylim = c(-0.75, 0.45)) +
+    coord_cartesian(ylim = c(-0.65, 0.32)) +
     theme_slide(15) +
-    theme(legend.position = "right", legend.title = element_blank())
+    theme(legend.position = "top", legend.justification = "right",
+          legend.margin = ggplot2::margin(0, 0, -6, 0))
 }
 
-# Fork-importance decomposition over the committed grid
-# (data/fork_importance.csv: share of specification variance in partial r per
-# menu axis, main-effects eta-squared). Read once; the Part 4 slide charts it.
-fork_imp <- readr::read_csv("../data/fork_importance.csv", show_col_types = FALSE)
+# Reference results as ink marks at the end of a thin line to a tag; marks
+# needs rank, r, sig and label. Tags alternate two heights from left to right,
+# so that neighbours on the curve do not crowd one another.
+mark_layer <- function(marks) {
+  m <- marks |>
+    dplyr::arrange(rank) |>
+    dplyr::mutate(lab_y = r + rep(c(0.13, 0.25), length.out = dplyr::n()))
+  list(
+    geom_segment(data = m, aes(x = rank, xend = rank, y = r, yend = lab_y),
+                 colour = "#9aa3ab", linewidth = 0.35, inherit.aes = FALSE),
+    geom_point(data = m, aes(x = rank, y = r, shape = sig), colour = ink,
+               size = 3, stroke = 1, inherit.aes = FALSE),
+    geom_label(data = m, aes(x = rank, y = lab_y, label = label), colour = ink,
+               fill = "#FFFFFFE6", size = 3.7, linewidth = 0.2, inherit.aes = FALSE)
+  )
+}
 
-# Analyst placement inside the 840-spec grid: the share of the grid more
-# negative than each analyst's recorded partial r, on the claim-aligned scale
-# (the analysts' own values are cosmopolitan-outcome results, so alignment
-# leaves them untouched). The person/aggregate split is the published
-# classification of the five Multi100 pipelines (KEVF1 and PRL47 fitted
-# person-level models; the other three worked on aggregates).
-an_level <- tibble::tribble(
-  ~analyst_id, ~level,
-  "KEVF1", "person-level",
-  "PRL47", "person-level",
-  "KQXUE", "aggregated",
-  "018OL", "aggregated",
-  "C6HJR", "aggregated"
-)
-an_placed <- analysts5 |>
-  dplyr::left_join(an_level, by = "analyst_id") |>
-  dplyr::mutate(pct_more_negative = purrr::map_dbl(r, \(x) mean(spec_grid$r_ca < x)) * 100) |>
-  dplyr::arrange(pct_more_negative)
+# The decisions that vary on the curve, named as on the results page.
+axis_names <- c(outcome = "Outcome", predictor = "Predictor", copredictor = "Adjustment",
+                estimator = "Estimator", noop = "No-opinion rule", item_set = "Item set",
+                cell_weight = "Cell weighting", measure = "Series", pred_form = "Predictor form",
+                interactions = "Interactions")
 
-# Wrong-sign specifications in the cosmopolitan-only universe: the claim
-# predicts a negative unemployment coefficient on mcosmo, so a positive
-# estimate is a sign flip. Cross-tabbed by estimator and sample on the
-# Part 4 patterned-flips slide.
-flips_mcosmo <- spec_grid |>
-  dplyr::filter(outcome == "mcosmo") |>
-  dplyr::mutate(wrong_sign = estimate > 0)
+# The arithmetic of the menu. The curve crosses the options that it keeps; the
+# full menu multiplies every option of every decision except the inference,
+# with the series and the form counted within each predictor, before the
+# admissibility rules remove the combinations that do not exist.
+opts_n <- menu_opts |> dplyr::count(axis)
+opts_of <- \(axis_code) opts_n$n[opts_n$axis == axis_code]
+series_forms <- menu_opts |>
+  dplyr::filter(axis == "measure") |>
+  dplyr::mutate(forms = dplyr::if_else(grepl("growth", option), 1L, opts_of("pred_form"))) |>
+  dplyr::pull(forms) |>
+  sum()
+n_full_menu <- c("outcome", "construction", "copredictor", "sample", "weights",
+                 "estimator", "noop", "item_set", "cell_weight", "family") |>
+  purrr::map_int(opts_of) |>
+  prod() * series_forms
 ```
