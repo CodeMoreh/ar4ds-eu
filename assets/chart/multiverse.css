@@ -1,0 +1,39 @@
+/* Styles of the interactive specification curve (assets/chart/multiverse.js),
+   scoped to .mv so that the page theme leaves the chart alone and the chart
+   leaves the page alone. */
+.mv { --ink: #1d2733; --ink2: #4f5b67; --muted: #6b7682; --surface: #ffffff; --accent: #1f5fa8;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink); background: var(--surface); font-size: 14px; line-height: 1.45;
+  max-width: 1000px; margin: 1rem auto 1.25rem; padding: 12px 6px 10px; box-sizing: border-box; color-scheme: light; text-align: left; }
+.mv *, .mv *::before, .mv *::after { box-sizing: border-box; }
+.mv .mv-title { font-size: 17px; font-weight: 650; line-height: 1.3; margin: 0 0 3px; }
+.mv .mv-sub { font-size: 13.5px; color: var(--ink2); margin: 0 0 10px; }
+.mv .mv-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 0 0 8px; }
+.mv .mv-controls label { font-size: 13px; color: var(--ink2); display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0; }
+.mv select, .mv button { font: inherit; font-size: 13px; color: var(--ink); background: #ffffff; border: 1px solid #c5cbd2; border-radius: 6px; padding: 4px 8px; margin: 0; cursor: pointer; line-height: 1.3;
+  text-transform: none; letter-spacing: normal; font-weight: 400; box-shadow: none; width: auto; height: auto; max-width: 100%; }
+.mv button:hover, .mv select:hover { border-color: #8e98a3; }
+.mv select:focus-visible, .mv button:focus-visible, .mv svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mv .mv-status { font-size: 12.5px; color: var(--ink); margin: -2px 0 6px; }
+.mv .mv-status:empty { display: none; }
+.mv .mv-legend { display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: 12.5px; color: var(--ink2); margin: 0 0 2px; }
+.mv .mv-key { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.mv .mv-key svg { display: inline-block; width: 15px; height: 15px; flex: none; }
+.mv .mv-plot { position: relative; }
+.mv .mv-plot > svg { display: block; width: 100%; touch-action: manipulation; overflow: visible; }
+.mv .mv-tag { cursor: pointer; }
+.mv .mv-tag:focus { outline: none; }
+.mv .mv-tag:hover rect, .mv .mv-tag:focus-visible rect, .mv .mv-tag.on rect { stroke: #1d2733; stroke-width: 1.3; fill-opacity: 1; }
+.mv .mv-tip { position: absolute; left: 0; top: 0; pointer-events: none; background: #ffffff; border: 1px solid #cdd3d9; border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(20, 30, 40, 0.14); padding: 7px 9px; font-size: 12.5px; line-height: 1.4; width: max-content; max-width: min(340px, 92%);
+  visibility: hidden; z-index: 2; }
+.mv .mv-tip.on { visibility: visible; }
+.mv .mv-tip .v { font-size: 14px; font-weight: 650; }
+.mv .mv-tip .s { color: var(--ink2); margin-bottom: 3px; }
+.mv .mv-tip .t { font-weight: 600; margin-bottom: 2px; }
+.mv .mv-tip .k { color: var(--muted); }
+.mv .mv-tip .n { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.mv .mv-tip .h { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.mv .mv-notes { font-size: 12.5px; color: var(--ink2); margin: 6px 0 0; }
+.mv .mv-src { font-size: 11.5px; color: var(--muted); margin: 5px 0 0; }
+.mv a { color: var(--accent); }

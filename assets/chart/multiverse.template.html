@@ -1,0 +1,25 @@
+<!--
+  One interactive specification curve. R/_chart_multiverse.R fills the
+  placeholders (__MV_ID__, __MV_TITLE__, __MV_SUB__, __MV_NOTES__, __MV_SRC__,
+  __MV_DATA__) and writes the result into the page as raw HTML; the drawing and
+  the interaction are in assets/chart/multiverse.js, the styles in
+  assets/chart/multiverse.css. Text placeholders arrive HTML-escaped, except
+  __MV_NOTES__ and __MV_SRC__, which may carry links.
+-->
+<div id="__MV_ID__" class="mv" lang="en">
+<div class="mv-title">__MV_TITLE__</div>
+<div class="mv-sub">__MV_SUB__</div>
+<div class="mv-controls">
+  <label>Colour by <select class="mv-sel" aria-label="Colour the specifications by one decision"></select></label>
+  <label>Show only <select class="mv-fax" aria-label="Show only the specifications that use one option of a decision"></select> <select class="mv-flv" aria-label="The option to show"></select></label>
+  <button type="button" class="mv-dl">Download the data (CSV)</button>
+</div>
+<div class="mv-status" role="status" aria-live="polite"></div>
+<div class="mv-legend"></div>
+<div class="mv-plot">
+  <div class="mv-tip" role="status" aria-live="polite"></div>
+</div>
+<div class="mv-notes">__MV_NOTES__</div>
+<div class="mv-src">__MV_SRC__</div>
+<script>mvChart("__MV_ID__", __MV_DATA__);</script>
+</div>
