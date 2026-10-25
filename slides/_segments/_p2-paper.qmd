@@ -110,7 +110,7 @@ The aggregate panel addresses the **contextual** question directly: does a count
 :::
 
 ::: notes
-The data OA used are Eurobarometer microdata under a GESIS licence, which I am not permitted to redistribute, and on the next slide you will see how that constraint shaped the first attempt to reproduce this paper. What you work with instead is an aggregate that I built from those files and am allowed to share: two hundred and seventy country-years, one row each, with the framing scales averaged within each cell. It ships with the workspace and the browser lab, and a model on it fits in milliseconds. [advance] The aggregate answers the contextual question directly – does a country's framing move when its unemployment moves? What it cannot answer is the compositional one, whether the same people are framing differently or the mix of people has changed. If that interests you, there is a companion module on the site that takes it up on simulated individual data.
+The data that OA used are Eurobarometer microdata under a GESIS licence, which I am not permitted to redistribute, and on the next slide you will see how that constraint shaped the first attempt to reproduce this paper. What you work with instead is an aggregate that I built from those files and am allowed to share: two hundred and seventy country-years, one row each, with the framing scales averaged within each cell. It ships with the workspace and the browser lab, and a model on it fits in milliseconds. [advance] The aggregate answers the contextual question directly – does a country's framing move when its unemployment moves? What it cannot answer is the compositional one, whether the same people are framing differently or the mix of people has changed. If that interests you, there is a companion module on the site that takes it up on simulated individual data.
 :::
 ## Attempts to reproduce the paper {#reproducibility-two-attempts-two-failures}
 
@@ -137,19 +137,9 @@ SCORE, the large research programme that Multi100 was part of, made two attempts
 ## Replication on new data {#replication-the-coefficient-flips-sign}
 
 ::: {.small}
-- Fourteen later Standard Eurobarometer waves, fielded after 2013, and the model of the original study
-- Analysis One – the focal test on which SCORE evaluates the claim
-
-  - 331,668 respondents in the analytic sample
-  - b = 0.001, se = 0.0007, t = 1.428, p = 0.153
-
-- Analysis Two – the 'still studying' and 'no full-time education' categories of 'age when finished full-time education' kept rather than set to missing
-
-  - 357,310 respondents in the analytic sample
-  - b = 0.001, se = 0.0007, t = 1.894, p = 0.058
-
-- Both coefficients for unemployment are **positive** and neither is significant at 5%, so neither meets the criterion of SCORE (a negative coefficient with p of 0.05 or less): the replication was **not successful**
-- Figures of the revised report of October 2026, which corrected two coding errors of the first report
+- Fourteen later Standard Eurobarometer waves, fielded from late 2013 to 2019, and a model close to that of the original study
+- The focal test on which SCORE evaluates the claim: 331,668 respondents, b = 0.001, p = 0.153
+- The coefficient for unemployment is **positive** and not significant at 5%, so it does not meet the criterion of SCORE (a negative coefficient with p of 0.05 or less): the replication was **not successful**
 :::
 
 ::: {.src}
@@ -157,7 +147,7 @@ SCORE, the large research programme that Multi100 was part of, made two attempts
 :::
 
 ::: notes
-The third R is replication, which takes the same question to new data: fourteen Standard Eurobarometer waves fielded after the period of the paper, with the model of the original study. Analysis One is the focal test on which SCORE evaluates the claim. On about three hundred and thirty thousand respondents, the coefficient for unemployment on cosmopolitan framing is plus point zero zero one, with a p-value of point one five. Analysis Two changes one coding decision, keeping respondents who were still studying or had no full-time education, and the coefficient is again plus point zero zero one, with a p-value just above point zero five. [pause] So both estimates point the opposite way from the claim on the card, and neither is significant. By the criterion of SCORE, a negative coefficient significant at five per cent, the replication did not succeed. These are the figures of the revised report, posted in October 2026 after two coding errors in the first one were corrected; the verdict did not change.
+The third R is replication, which takes the same question to new data: fourteen Standard Eurobarometer waves fielded after the period of the paper, with a model close to that of the original study. On about three hundred and thirty thousand respondents, the coefficient for unemployment on cosmopolitan framing is plus point zero zero one, with a p-value of point one five. [pause] So the estimate points the opposite way from the claim on the card, and it is not significant. By the criterion of SCORE, a negative coefficient significant at five per cent, the replication did not succeed. That is all we need from it today: the dossier on the OSF holds the report, if you want the detail.
 :::
 
 ## The three Rs on this paper {#one-paper-all-three-rs}

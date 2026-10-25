@@ -139,7 +139,7 @@ if (nrow(.curve) != 864 ||
   q <- paste0("\"", x, "\"")
   if (length(q) == 1) q else paste(paste(q[-length(q)], collapse = ", "), "or", q[length(q)])
 }
-# the earlier menu spelled two options differently; their reasons still apply
+# two older option codes that labels and calls may still use, mapped to the rows that hold their reasons
 .legacy <- c("se:clustered" = "cr1", "weights:n_cy" = "n_cell")
 
 .on_menu <- function(k, v) is.character(v) && length(v) == 1 && !is.na(v) && v %in% .menu[[k]]
@@ -502,7 +502,7 @@ run_spec <- function(spec) {
                                               "Open the pre-filled form in a new tab")))
   writeLines(c(
     "",
-    sprintf("Your circles on the class chart carry the tag %s%s.", tg$tag,
+    sprintf("Your marks on the class chart carry the tag %s%s.", tg$tag,
             if (!is.null(tg$replaced)) sprintf(" (it replaces %s)", tg$replaced) else ""),
     "Type it into the my_tag line of the live cell on the Multiverse page to",
     "highlight them. Both of your submissions share it while this page stays",
@@ -520,7 +520,7 @@ report_result <- function(nickname = NULL) {
 }
 ```
 
-Five analysts reanalysed a claim from the EU-frames case [@Teney2016DoesEUEconomic] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. Read the full task description, the claim, and the five-analyst table of findings on the [Exercise overview](index.qmd) page (the broader context of the project is set out in the [course slides](../slides/index.qmd)).
+Five analysts reanalysed a claim from the EU-frames case [@Teney2016DoesEUEconomic] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. Read the full task description, the claim, and the five-analyst table of findings on the [Exercise overview](index.qmd) page; the [case study](../case/index.qmd) sets out the original study, Multi100 and the five reanalyses in full.
 
 The five tasks take you from a setup check to two dots on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it.
 
@@ -545,9 +545,9 @@ You should see **270 rows**, **27 countries** and **10 years**, and `TRUE` on th
 
 
 
-## Warm-up – the three R's {#task-1-concepts-warm-up-while-the-engine-loads}
+## Warm-up – the three Rs {#task-1-concepts-warm-up-while-the-engine-loads}
 
-The warm-up settles the vocabulary before you touch any data. Three of the four scenarios below describe one of our three R's – reproducibility, robustness, replicability – and the fourth describes something else. Read all four, then label each one in the code cell.
+The warm-up settles the vocabulary before you touch any data. Three of the four scenarios below describe one of our three Rs – reproducibility, robustness, replicability – and the fourth describes something else. Read all four, then label each one in the code cell.
 
 ***Scenario 1:*** A reviewer reruns the authors' Stata .do file on the authors' data and gets a *different* coefficient from the one printed in the paper. This is an example of \_\_\_\_\_\_ even though what they *tried* to do failed.
 
@@ -630,7 +630,7 @@ In most countries the framing changes little over the decade, while in a few it 
 
 Before fitting anything, say what you are trying to estimate, in words. A template you can adapt:
 
-> The **unit-specific quantity** is the change in mean cosmopolitan EU framing within a country-year associated with a one-point change in that country's unemployment rate. The **target population** is EU member states over 2004–2013. The **aggregation** is the average of those unit-specific effects, holding fixed each country's time-invariant traits and each year's EU-wide shocks.
+> The **unit-specific quantity** is the change in mean cosmopolitan EU framing within a country from one year to another associated with a one-point change in that country's unemployment rate. The **target population** is EU member states over 2004–2013. The **aggregation** is a weighted average of those unit-specific effects, in which the country-years whose unemployment departs most from their country and year means count most, holding fixed each country's time-invariant traits and each year's EU-wide shocks.
 
 That last clause is a causal claim, and a directed acyclic graph makes it checkable. A DAG is a diagram of what causes what: variables are nodes, arrows run from cause to effect, and the rules for reading the graph then identify which variables have to be adjusted for if the arrow you care about is to be read cleanly. The graph below draws the five arrows that this exercise takes as given, which the rest of this page calls the committed arrows. Further down you decide which of the arguable arrows to add to them.
 
@@ -928,7 +928,7 @@ Write two sentences for your own notes. What do two-way fixed effects adjust for
 
 ## Task 3 – Reproduce the recorded result
 
-This is the **reproducibility** check. Fit the two-way fixed-effects model that follows from the constraints set by Multi100 for its second task:
+This is the **reproducibility** check. Fit the two-way fixed-effects model that analyst C6HJR chose under the constraints that Multi100 set for its second task:
 
 ```
 mcosmo ~ unemp_c   with fixed effects for country and year
@@ -951,7 +951,7 @@ euframes$unemp_c <- euframes$unemp - ______
 
 # 2. fit two-way fixed effects with fixest::feols
 #    the part after the | adds the fixed effects
-m1 <- feols(mcosmo ~ unemp_c | ______, data = euframes)
+m1 <- feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
 
 broom::tidy(m1)
 ```
@@ -966,7 +966,7 @@ To centre a variable on its grand mean, subtract the mean of the whole column:
 euframes$unemp_c <- euframes$unemp - mean(euframes$unemp)
 ```
 
-With fixed effects present this does not change the t-statistic, but the constrained specification includes it, so do it explicitly.
+With fixed effects present this does not change the t-statistic, but the specification recorded for C6HJR includes it, so do it explicitly.
 :::
 ::::
 
@@ -977,7 +977,7 @@ With fixed effects present this does not change the t-statistic, but the constra
 In `fixest::feols`, the bar `|` separates the regression from the fixed effects. To add country and year fixed effects, list them after the bar separated by `+`:
 
 ``` r
-feols(mcosmo ~ unemp_c | cntry + year, data = euframes)
+feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 ```
 :::
 ::::
@@ -988,20 +988,20 @@ feols(mcosmo ~ unemp_c | cntry + year, data = euframes)
 
 ``` r
 euframes$unemp_c <- euframes$unemp - mean(euframes$unemp)
-m1 <- feols(mcosmo ~ unemp_c | cntry + year, data = euframes)
+m1 <- feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 broom::tidy(m1)
 ```
 
-You should get `estimate ≈ −0.00347`, `std.error ≈ 0.00091`, `statistic ≈ −3.80` – the recorded value reproduces from the published data and the published model. `feols` reports conventional (IID) standard errors by default when two fixed-effect dimensions are present, which is why it matches the `plm` value to three decimals.
+You should get `estimate ≈ −0.00347`, `std.error ≈ 0.00091`, `statistic ≈ −3.80` – the recorded value reproduces from the published data and the published model. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals. Conventional errors treat the 270 country-years as independent; the case study and Part 4 show what changes when they do not.
 :::
 ::::
 
 ::: {.callout-note collapse="true"}
 ## Reproduction and the five analysts
 
-You reproduced the recorded value, and so did everyone else in the class, because everyone ran the same code on the same file. This is why reproducibility is the cheapest of the three R's to establish.
+You reproduced the recorded value, and so did everyone else in the class, because everyone ran the same code on the same file. This is why reproducibility is the cheapest of the three Rs to establish.
 
-The five Multi100 analysts each wrote their own code for the same claim, and came back with five different answers, one of them not significant. Their pipelines are competent, well-organised work, so the spread is not a quality problem. It arises because a claim stated in words leaves several defensible quantities open, and different analysts estimate different ones without noticing that they have made a choice.
+The five Multi100 analysts each wrote their own code for the same claim, and came back with five different numbers, one of them not significant under the analyst's own test. Part of the spread comes from the questions that each analyst chose to answer, part from errors that only a reading of the code shows, and most of the spread in the recorded correlations from the conversion that put them on one scale, as the [case study](../case/index.qmd) sets out.
 
 In Task 2 you named the quantity you are after and drew the graph from which your adjustment set follows. In Task 4 you find out how far the answer moves when the other choices change.
 :::
@@ -1073,7 +1073,7 @@ Everything you try is logged. Print the log to see the small multiverse that you
 my_experiments()
 ```
 
-When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same bootstrap test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own circles on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
+When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same bootstrap test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
 
 ```{webr}
 #| autorun: false

@@ -6,7 +6,7 @@ The multiverse chart of the course marks six results that come from outside the 
 
 A test statistic becomes a partial correlation through r = t / sqrt(t^2 + df). The conversion is sound when the degrees of freedom count the units that carry the evidence under the error structure that produced the t, so each result is placed on the degrees of freedom of its own inference. Where the software of an analyst counted those units, the value that Multi100 recorded stands: KQXUE and C6HJR, whose residual df count country-years, and KEVF1 and 018OL, whose Satterthwaite df count cells rather than respondents. OA and PRL47 reported no degrees of freedom (the paper prints a t, and Stata printed a z for PRL47), and Multi100 converted the PRL47 statistic on the respondent count, which compresses any statistic towards zero. Those two are converted on the Satterthwaite degrees of freedom of a refit of their own design on the rebuilt respondents.
 
-`r_233` converts every statistic on 233 df, the residual degrees of freedom of the two-way design on the 270 country-years. It is a teaching device for the lesson on conversion, which shows how much of the spread between the six results the choice of df makes; it is not where the marks are drawn.
+`r_233` converts every statistic on 233 df, the residual degrees of freedom of the two-way design on the 270 country-years. It is a teaching device for the lesson on conversion, which shows how much of the spread between the six results comes from the choice of df; it is not where the marks are drawn.
 
 ## Columns of `reference_marks.csv`
 

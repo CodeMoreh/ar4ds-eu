@@ -32,15 +32,15 @@ format:
 
 You submit twice, and the two are different in kind. The browser lab and the workspace use the same function names.
 
-**Task 4 – the exploratory dot (open circle).** Nothing in this task is preregistered.
+**Task 4 – the exploratory dot (green).** Nothing in this task is preregistered.
 
 1. **`try_spec(...)`** – one argument per decision, every one defaulting to the specification you reproduced. `try_spec(estimator = "fe_country")` changes one thing and leaves the rest alone. An option that left the curve, such as `estimator = "pooled_cl"`, stops with the reason and the page that teaches it.
 2. **`my_experiments()`** – prints everything you have tried so far, side by side, with only the decisions that varied.
-3. **`submit_exploration()`** – sends the most recent try to the chart, labelled as exploration. Open the printed link and press **Send**. It also prints your tag, such as `amber-otter-42`, which marks your circles on the class chart; `submit_exploration(nickname = "...")` sets your own instead.
+3. **`submit_exploration()`** – sends the most recent try to the chart, labelled as exploration. Open the printed link and press **Send**. It also prints your tag, such as `amber-otter-42`, which marks your submissions on the class chart; `submit_exploration(nickname = "...")` sets your own instead.
 
-**Task 5 – the declared dot (filled circle).** Here you preregister one specification before you run it.
+**Task 5 – the declared dot (black).** Here you preregister one specification before you run it.
 
-4. **Preregister.** Make one choice for every decision in the preregistration cell (`claim_align <- TRUE` is already set for you), then run `prereg()`. The completed cell is your preregistration. In the workspace, render the report before step 5, as set out under [Rendering the report](#rendering-your-report-route-1); on the browser lab page, copy the whole cell into your notes.
+4. **Preregister.** Make one choice for every decision in the preregistration cell (`claim_align <- TRUE` is already set for you), then run `prereg()`. The completed cell is your preregistration. In the workspace, run the cell before you write the model code of step 5, and keep it in the report as set out under [Rendering the report](#rendering-your-report-route-1); on the browser lab page, copy the whole cell into your notes.
 5. **`build_model(...)`** – write your specification as a formula. It accepts only code that matches your preregistration and tells you what is off when it does not.
 6. **`run_spec(my_model)`** – computes your specification and shows the coefficient, its claim-aligned partial *r* (below zero supports the claim), its p-values under CR2 and the wild cluster bootstrap, its class, and its placement among the 864 specifications on the curve.
 7. **`report_result()`** – no arguments needed. It builds your submission from the preregistration and prints a clickable, pre-filled form link; open it and press **Send**. It reuses your tag from Task 4. In the browser lab, if you have reloaded the page since then, pass the tag back with `report_result(nickname = "your-tag")`.
@@ -69,8 +69,8 @@ Last resort, facilitator-side, if a participant's cells will not run at all: eve
 
 | If ... | Then ... |
 |---|---|
-| A package will not load, or `feols` / `plm` is "not found" | Run the checker again – `source("R/check_setup.R")` – and run the install line that it prints; or install by hand, e.g. `install.packages("fixest")`. |
-| The `renv` / `pak` restore stalls or half-finishes | Restart R (Session menu), then run the restore again; a second pass usually completes what the first left. |
+| A package will not load, or `feols` is "not found" | Run the checker again – `source("R/check_setup.R")` – and run the install line that it prints; or install by hand, e.g. `install.packages("fixest")`. |
+| The `pak` install that `R/check_setup.R` prints stalls or half-finishes | Restart R (Session menu), then run the install again; a second pass usually completes what the first left. |
 | "Permission denied" while installing a package | Let R use a personal library it can write to – accept the offer from R to create a personal library, then reinstall. |
 | A data file is "not found" | Check you opened the unzipped **folder** in your IDE (File → Open Folder in Positron and VS Code; the `.Rproj` file in RStudio), not a single file – the paths in the code are relative to that folder. |
 | Something not listed here | The [setup help page](../help.qmd) has the longer table, with links to the discussions where each problem was solved, and prompts to give an AI assistant. |
@@ -80,4 +80,4 @@ Last resort, facilitator-side, if a participant's cells will not run at all: eve
 
 ## Rendering the report {#rendering-your-report-route-1}
 
-Render your report once your preregistration block is complete and before you run your specification, so that the block is fixed in a rendered copy of the report, which carries the date on which it was rendered. In Positron and in RStudio, press the **Render** button at the top of the open report. In VS Code, run the Render command of the Quarto extension. In any of the three you can also run `quarto render index.qmd` in a terminal. On the browser lab page the same block is a cell on the page, and it updates in the tab when you run it.
+Render your report once your preregistration block is complete. The rendered copy carries the date on which it was rendered and keeps the declaration above the cells that fit the specification. In Positron and in RStudio, press the **Render** button at the top of the open report. In VS Code, run the Render command of the Quarto extension. In any of the three you can also run `quarto render index.qmd` in a terminal. On the browser lab page the same block is a cell on the page, and it updates in the tab when you run it.

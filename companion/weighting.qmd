@@ -1,6 +1,6 @@
 ---
 title: "Weights"
-subtitle: "Design weights, precision weights and population weights"
+subtitle: "Survey weights, precision weights and population weights"
 bibliography: [../references.bib, ../references-new.bib]
 ---
 
@@ -52,7 +52,7 @@ This module takes the three questions apart, using the course panel throughout. 
 
 | | Level | The argument for it | Does it change the estimand? |
 |:--|:--|:--|:--|
-| **Design weighting** | inside a country-year cell | The achieved sample is not a miniature of the country, so weight the respondents before averaging them | No. It makes the cell mean a better estimate of the same quantity |
+| **Survey weighting** | inside a country-year cell | The achieved sample is not a miniature of the country, so weight the respondents before averaging them | No. It makes the cell mean a better estimate of the same quantity |
 | **Precision weighting** | across cells | A cell mean built on more interviews is measured more precisely, so let it count for more | No. It is an efficiency argument about estimating the same slope |
 | **Population weighting** | across cells | The claim is about Europeans, not about countries, so a country should count in proportion to how many people live in it | **Yes.** The slope now describes a different average |
 
@@ -60,9 +60,9 @@ This module takes the three questions apart, using the course panel throughout. 
 
 The first is a *measurement* decision, because it changes how well the number in the cell estimates the thing it names. The second is an *estimation* decision, which changes the efficiency of the fit and leaves the target alone. The third is an *estimand* decision: it changes whose average the coefficient describes, and two analysts who resolve it differently are answering different questions.
 
-## Design weights within the cell
+## Survey weights within the cell
 
-Every Eurobarometer wave is released with design weights, because the people who complete an interview never quite match the population. Some groups are easier to reach than others, some refuse more often, and the achieved sample tilts accordingly. The **W1 national weight** reverses that tilt so that the weighted sample matches the known distribution of the national population by sex, age, region and size of locality.
+Every Eurobarometer wave is released with survey weights, because the people who complete an interview never quite match the population. Some groups are easier to reach than others, some refuse more often, and the achieved sample tilts accordingly. The **W1 national weight** reverses that tilt so that the weighted sample matches the known distribution of the national population by sex, age, region and size of locality.
 
 Applying it changes the country-year means by a small but not negligible amount. Across the `r nrow(pw)` cells, the largest change to the cosmopolitan scale is `r sig(max(abs(pw$w_mcosmo - cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))])))` on a 0–1 scale whose mean is about 0.51, and the weighted and unweighted cell means correlate at `r round(cor(pw$w_mcosmo, cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))]), 4)`. Because the two versions move together, the choice almost never changes a result. On the curve of the claim the cell weighting carries `r pc_small(fk("cell_weight"))` of the variance of the claim-aligned partial correlation, and moving it alone changes whether a specification lies below zero with bootstrap p < 0.05 in `r pc(fk("cell_weight", "crossing_rate"))` of the pairs. Both options stay on the curve, the design-weighted mean as the better estimator of a national quantity in principle, and the mean of the respondents as interviewed because it is the one that the original study and the course panel use.
 
@@ -143,7 +143,7 @@ tinytable::tt(
 
 Every row lies below zero, so no weighting choice reverses the direction of the association, but its strength and the verdict on it change. The partial correlation runs from `r num(max(c6hjr$r), 3)` to `r num(min(c6hjr$r), 3)` across eight versions of a specification that any methods section would describe in the same sentence, and the two kinds of weight pull in **opposite directions**. Precision weighting by the respondent count weakens the result, from t = `r num(cw("unweighted", "none", "t"), 2)` to t = `r num(cw("unweighted", "n_cell", "t"), 2)` in the conventional fit and from a bootstrap p of `r num(cw("unweighted", "none", "p"))` to `r num(cw("unweighted", "n_cell", "p"))`. Population weighting strengthens it, to t = `r num(cw("unweighted", "pop", "t"), 2)` and p = `r num(cw("unweighted", "pop", "p"))`. An analyst who reasons "I should weight, because weighting is more careful" without saying which argument they are making could end up with either.
 
-Kish's correction changes almost nothing. With cells as interviewed, `n_eff` and `n_cell` are the same weight, because a cell mean that uses no design weights has an effective sample size equal to its number of respondents, and with design-weighted cells they give t = `r num(cw("design", "n_eff", "t"), 2)` and `r num(cw("design", "n_cell", "t"), 2)`. $n_\text{eff}$ is the correct precision weight, but the design effects in this panel are small enough that choosing it over `n_cell` does not change the conclusion.
+Kish's correction changes almost nothing. With cells as interviewed, `n_eff` and `n_cell` are the same weight, because a cell mean that uses no survey weights has an effective sample size equal to its number of respondents, and with design-weighted cells they give t = `r num(cw("design", "n_eff", "t"), 2)` and `r num(cw("design", "n_cell", "t"), 2)`. $n_\text{eff}$ is the correct precision weight, but the design effects in this panel are small enough that choosing it over `n_cell` does not change the conclusion.
 
 The same holds across the curve. Swapped into every one of its `r nrow(curve)` specifications, the respondent weight leaves `r pc(dv("n_cell", "below_zero_sig"))` of them below zero with bootstrap p < 0.05 and the effective sample size `r pc(dv("n_eff", "below_zero_sig"))`, against `r pc(below_sig(curve))` on the curve itself, and each changes the class of `r pc(dv("n_cell", "class_changes"))` of the pairs. The curve keeps only the unweighted fit, because the precision weights rest on an argument that the error structure of these data does not support, and the population weight, which the next section takes up, answers another question.
 
@@ -252,19 +252,19 @@ show_fit("wemix_2lvl.txt")
 
 Compare this with the unweighted two-level fit of [section 6 of the statistics module](stats-methods.qmd#sec-multilevel), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule from section 3 of the statistics module applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
 
-The weighting decisions of the course are simpler than any of this. The specification menu offers three regression weights – the number of respondents behind each country-year average (`n_cell`), the effective sample size that remains once the design weights have been applied to those respondents (`n_eff`), and the adult population of the country (`pop`) – and, separately, a choice of whether the cell means themselves are built with or without the Eurobarometer design weights (`cell_weight`). The first two regression weights are precision arguments about aggregated cells: a mean built from 3,000 people is measured more precisely than one built from 300. The population weight is a different kind of object, because it changes whose average the estimate describes. The design weights belong to the respondent-level data, and the cell weighting applies them there, when the cell means are built, producing a second version of the panel. The earlier sections of this page discuss each of these in turn. The second Stata analyst in this case, KQXUE, works with the aggregated cells, and in their code two lines settle the whole weighting question by default:
+The weighting decisions of the course are simpler than any of this. The specification menu offers three regression weights – the number of respondents behind each country-year average (`n_cell`), the effective sample size that remains once the survey weights have been applied to those respondents (`n_eff`), and the adult population of the country (`pop`) – and, separately, a choice of whether the cell means themselves are built with or without the post-stratification weights of the Eurobarometer (`cell_weight`). The first two regression weights are precision arguments about aggregated cells: a mean built from 3,000 people is measured more precisely than one built from 300. The population weight is a different kind of object, because it changes whose average the estimate describes. The survey weights belong to the respondent-level data, and the cell weighting applies them there, when the cell means are built, producing a second version of the panel. The earlier sections of this page discuss each of these in turn. The second Stata analyst in this case, KQXUE, works with the aggregated cells, and in their code two lines settle the whole weighting question by default:
 
 ```stata
 collapse cosmo util, by(cntry year)    // unweighted country-year means
 xtreg cosmo unemployment, fe           // = the within estimator of section 4 of the statistics module
 ```
 
-The `collapse` command averages every respondent equally, so the design weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option on the menu switches on and off. (The Stata–R correspondence continues here too: `xtreg, fe` after `xtset cntry_num year` is the within estimator in `plm`.) On the curve of the claim, where every cell counts once, the only weighting decision that varies is the cell weighting, and it carries `r pc_small(fk("cell_weight"))` of the variance.
+The `collapse` command averages every respondent equally, so the survey weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option on the menu switches on and off. (The Stata–R correspondence continues here too: `xtreg, fe` after `xtset cntry_num year` is the within estimator in `plm`.) On the curve of the claim, where every cell counts once, the only weighting decision that varies is the cell weighting, and it carries `r pc_small(fk("cell_weight"))` of the variance.
 
 ## What to take away
 
 - Say which of the three decisions you are making, and give the argument that goes with it. The word 'weighted' on its own does not specify a model.
-- Design weighting and precision weighting leave the estimand alone. Population weighting changes it, and a paper that switches to population weights in a robustness section has changed its question without saying so.
+- Survey weighting and precision weighting leave the estimand alone. Population weighting changes it, and a paper that switches to population weights in a robustness section has changed its question without saying so.
 - A precision weight is worth its cost only when sampling error is a large part of what the model leaves unexplained. In this panel it is about 7%.
 - When a survey provides several weights, the choice among them usually encodes the country-versus-person decision. Read the codebook first.
 - Look at what your weight variable actually varies over before trusting it as a proxy for anything. Here the respondent count spans a factor of `r round(max(pw$n_cy) / min(pw$n_cy), 1)` and the population it is standing in for spans a factor of `r round(max(pw$pop_15plus) / min(pw$pop_15plus))`.
@@ -272,5 +272,5 @@ The `collapse` command averages every respondent equally, so the design weights 
 ## Exercise
 
 1. Pick any specification from the curve (`data/spec_curve.csv`) and look up its twins under the three regression weights in `data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
-2. Two of those four sentences describe the same quantity. Which two, and why?
+2. Three of those four sentences describe the same quantity, and two of them give the same number. Which, and why?
 3. The `no_bailout` sample and the `pop` weight both change the population that the claim is about, and neither stands on the curve of the claim. One of them is conventionally reported as a robustness check and the other as a modelling choice. Should either be?
