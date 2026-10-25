@@ -7,11 +7,16 @@
 #               018OL). The two results reported without df are converted on
 #               the Satterthwaite df of a refit of their own design on the
 #               rebuilt respondents (maximum likelihood, as Stata's mixed):
-#               the original study (Table 3, model 1: the cosmopolitan share
-#               of respondents who mention an item, in country-waves in
-#               countries, with sex, age, education, occupation, community
-#               type, growth, unemployment and the interactions of the two
-#               with education), and PRL47 (model B8: the same share, the wave
+#               the original study and PRL47. The original study is placed by
+#               the refit of its design without the education interactions of
+#               Table 3, model 1 (the cosmopolitan share of respondents who
+#               mention an item, in country-waves in countries, with sex, age,
+#               education, occupation, community type, growth and
+#               unemployment), so that its slope is the average over the
+#               education bands, as in the other five results; the published
+#               coefficient belongs to the low-education band of the model with
+#               the interactions, which the individual-level module teaches.
+#               PRL47 is placed on its own statistic (model B8: the same share, the wave
 #               standing in for the quarter, unemployment of the 25-64
 #               population, the individual controls of the analyst, growth and
 #               a crisis indicator from 2009). The notes list what the files
@@ -124,7 +129,8 @@ kevf1_fit <- fit_linear(kevf1_row, inputs, signs, d = kevf1_cells)
 
 ## ---- the six marks ----------------------------------------------------------------------
 
-oa  <- refit_res |> filter(refit_id == "OA_published")
+oa  <- refit_res |> filter(refit_id == "OA_no_interactions")
+oa_int <- refit_res |> filter(refit_id == "OA_published")
 prl <- refit_res |> filter(refit_id == "PRL47_B8_fixed_slopes")
 rec <- \(id, col) an[[col]][an$analyst_id == id]
 p_reported <- c(KQXUE = "0.000", C6HJR = "0.00015", KEVF1 = ".0000000277", PRL47 = "0.000",
@@ -132,7 +138,7 @@ p_reported <- c(KQXUE = "0.000", C6HJR = "0.00015", KEVF1 = ".0000000277", PRL47
 
 marks <- tribble(
   ~id,     ~label,                                   ~unit,                                             ~design,
-  "OA",    "Original study (Table 3, model 1)",      "respondents (N = 335,566 in Table 3)",            "respondents within country-waves within countries, individual controls, GDP growth, education interactions",
+  "OA",    "Original study design, without its education interactions (course refit)", "respondents (refit)", "respondents within country-waves within countries, individual controls, GDP growth; the education interactions of Table 3, model 1 left out",
   "KQXUE", "KQXUE",                                  "country-year cells (270)",                        "country fixed effects, cosmopolitan share, Eurostat unemployment of the 20-64 population",
   "C6HJR", "C6HJR",                                  "country-year cells (270)",                        "country and year fixed effects, cosmopolitan share, World Bank unemployment",
   "KEVF1", "KEVF1",                                  "respondents",                                     "random intercepts for years within countries, count of the five cosmopolitan items, Eurostat tipsun20",
@@ -143,6 +149,7 @@ marks <- tribble(
     unit = case_when(
       id == "KEVF1" ~ sprintf("respondents (%s)", format(rec("KEVF1", "n"), big.mark = ",")),
       id == "PRL47" ~ sprintf("respondents (%s)", format(rec("PRL47", "n"), big.mark = ",")),
+      id == "OA"    ~ sprintf("respondents (%s, course refit)", format(oa$respondents, big.mark = ",")),
       .default = unit),
     statistic_type = c("t", rec("KQXUE", "statistic_type"), rec("C6HJR", "statistic_type"),
                        rec("KEVF1", "statistic_type"), rec("PRL47", "statistic_type"),
@@ -154,23 +161,27 @@ marks <- tribble(
                     rec("PRL47", "df1"), rec("018OL", "df1")),
     r_recorded = c(NA, rec("KQXUE", "r"), rec("C6HJR", "r"), rec("KEVF1", "r"), rec("PRL47", "r"),
                    rec("018OL", "r")),
+    # the statistic that is placed: the record, except for the original study,
+    # whose mark is the refit of its design without the interactions
+    statistic_placement = c(oa$t, statistic_recorded[2:6]),
     df_placement = c(oa$df_satterthwaite, df_recorded[2:4], prl$df_satterthwaite, df_recorded[6]),
-    df_basis = c("Satterthwaite df of the course refit of the design",
+    df_basis = c("Satterthwaite df of the course refit of the design without its interactions",
                  "residual df as recorded", "residual df as recorded",
                  "Satterthwaite df as recorded", "Satterthwaite df of the course refit of the design",
                  "Satterthwaite df as recorded"),
-    r_placement = r_of(statistic_recorded, df_placement),
-    r_233 = r_of(statistic_recorded, 233),
-    b_natural = c(-0.00340, NA, curve$b[curve$is_reference], -0.0295, NA, NA),
-    se_natural = c(0.00340 / 4.03, NA, curve$se[curve$is_reference], 0.0295 / 5.899, NA, NA),
-    b_unit = c("cosmopolitan share (0-1) per point of unemployment, low-education band",
+    r_placement = r_of(statistic_placement, df_placement),
+    r_233 = r_of(statistic_placement, 233),
+    b_natural = c(oa$b, NA, curve$b[curve$is_reference], -0.0295, NA, NA),
+    se_natural = c(oa$se, NA, curve$se[curve$is_reference], 0.0295 / 5.899, NA, NA),
+    b_unit = c("cosmopolitan share (0-1) per point of unemployment, averaged over the education bands",
                NA, "cosmopolitan share (0-1) per point of unemployment",
                "count of five items (0-5) per point of unemployment", NA, NA),
     p_recorded = c("< 0.001", p_reported[c("KQXUE", "C6HJR", "KEVF1", "PRL47", "018OL")]),
     p_cluster_check = c(NA, p_kqxue, p_c6hjr, kevf1_fit$p_wcr, NA, NA),
     note = c(
-      sprintf("The paper prints b = -0.00340 and t = -4.03 with no df; Multi100 recorded no effect size for the original study. Placed on the %.1f Satterthwaite df of the course refit (b = %.5f, t = %.2f on %s respondents); on the respondent count the same t would give r = %.4f. se_natural is b / t.",
-              oa$df_satterthwaite, oa$b, oa$t, format(oa$respondents, big.mark = ","), r_of(-4.03, 335566)),
+      sprintf("The paper prints b = -0.00340 and t = -4.03, with no df, for the low-education band of a model with education interactions (Table 3, model 1); Multi100 recorded no effect size for the original study. The mark is the course refit of the design without the interactions, whose slope is the average over the education bands: b = %.5f, t = %.2f on %.1f Satterthwaite df and %s respondents. The refit with the interactions gives b = %.5f, t = %.2f on %.1f df; that model is taught in the individual-level module. On the respondent count the published t would give r = %.4f.",
+              oa$b, oa$t, oa$df_satterthwaite, format(oa$respondents, big.mark = ","),
+              oa_int$b, oa_int$t, oa_int$df_satterthwaite, r_of(-4.03, 335566)),
       sprintf("Recorded t uses conventional errors. The course refit on the curve (own series es_2064_pop, drop rule, country fixed effects) has p_wcr = %.4f; at the standard measurement settings p_wcr = %.4f. No slope is in the Multi100 record.",
               p_kqxue, p_kqxue_panel),
       "Recorded t = -3.804 is the corrected build; the form reported -3.853. b and se are those of the reproduced specification, whose bootstrap p is p_cluster_check.",
@@ -182,7 +193,7 @@ marks <- tribble(
     )
   ) |>
   select(id, label, unit, design, statistic_type, statistic_recorded, df_recorded, r_recorded,
-         df_placement, df_basis, r_placement, r_233, b_natural, se_natural, b_unit, p_recorded,
+         statistic_placement, df_placement, df_basis, r_placement, r_233, b_natural, se_natural, b_unit, p_recorded,
          p_cluster_check, note)
 
 datawizard::data_write(marks, out_path("reference_marks.csv"), verbose = FALSE)

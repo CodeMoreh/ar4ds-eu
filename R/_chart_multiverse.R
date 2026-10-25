@@ -85,18 +85,24 @@ mv_marks <- function(marks, curve_r) {
       rank      = findInterval(.data$r_placement, sort(curve_r)),
       p_num     = suppressWarnings(as.numeric(sub("^<\\s*", "", .data$p_recorded))),
       sg        = as.integer(coalesce(.data$p_cluster_check, .data$p_num) < 0.05),
-      tag       = if_else(.data$id == "OA", "OA 2016", .data$id),
+      tag       = if_else(.data$id == "OA", "OA design", .data$id),
       title     = case_when(
-        .data$id == "OA"    ~ "The original author's published coefficient (2016) – Table 3, model 1",
+        .data$id == "OA"    ~ "The design of the original study (2016), refitted by the course without its education interactions",
         .data$id == "C6HJR" ~ "Multi100 reanalyst C6HJR, the specification that you reproduce in Task 3",
         .data$id == "PRL47" ~ "Multi100 reanalyst PRL47, model B8",
         .default            = paste("Multi100 reanalyst", .data$id)
       ),
-      stat      = sprintf("%s = %s %s, %s", .data$statistic_type,
-                          sub("^-", "−", as.character(.data$statistic_recorded)),
-                          if_else(.data$id == "OA", "as printed in the paper", "as recorded by Multi100"),
-                          if_else(startsWith(.data$p_recorded, "<"), paste("p", .data$p_recorded),
-                                  mv_p_label(.data$p_num))),
+      stat      = paste0(
+        sprintf("%s = %s %s, %s", .data$statistic_type,
+                sub("^-", "−", as.character(.data$statistic_recorded)),
+                if_else(.data$id == "OA", "as printed in the paper, for the low-education band of the model with education interactions",
+                        "as recorded by Multi100"),
+                if_else(startsWith(.data$p_recorded, "<"), paste("p", .data$p_recorded),
+                        mv_p_label(.data$p_num))),
+        # the mark of OA is the refit without the interactions, so its statistic is shown too
+        if_else(.data$id == "OA",
+                sprintf("; placed by the refit without the interactions, t = %s",
+                        sub("^-", "−", sprintf("%.2f", .data$statistic_placement))), "")),
       shape     = if_else(.data$sg == 1L, "Circle", "Cross"),
       shape_why = if_else(
         is.na(.data$p_cluster_check),

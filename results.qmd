@@ -5,6 +5,7 @@ engine: knitr
 format:
   live-html:
     toc: true
+    include-after-body: _includes/track-choice.html
     webr:
       packages:
         - ggplot2
@@ -58,7 +59,7 @@ The specification curve below holds `r format(n_curve, big.mark = ",")` justifia
 #| output: asis
 notes_claim <- paste(
   "Each mark is one specification: a circle for p &lt; 0.05 and a cross for p &ge; 0.05 under the wild cluster bootstrap by country.",
-  "The tags mark the five Multi100 reanalysts and the published coefficient of the original author (OA 2016), each placed on the degrees of freedom of its own inference.",
+  "The tags mark the five Multi100 reanalysts and the design of the original study refitted without its education interactions (OA design), each placed on the degrees of freedom of its own inference.",
   "Click or tap a tag to hold its details open, and click again to release it.",
   "<i>Colour by</i> colours the marks by one decision and adds rows under the curve that show where the specifications using each option fall in the ranking;",
   "<i>Show only</i> keeps the specifications that use one option and fades the rest.",
@@ -92,19 +93,21 @@ Section 9 of [Getting started with R](companion/intro-r.qmd#sec-speccurve) build
 
 ## Reference marks {#reference-marks}
 
-Six tagged marks come from outside the curve: the five reanalyses of this claim that Multi100 recorded, and the published coefficient of the original author (OA), tagged OA 2016. Each is drawn as an ordinary mark in ink, at the end of a thin line to a tag that holds its pop-up open when clicked, so that its neighbours on the curve stay visible. A test statistic becomes a partial correlation through the same formula, which is sound when the degrees of freedom count the units that carry the evidence under the error structure that produced the t. Each result is therefore placed on the degrees of freedom of its own inference. Where the software of an analyst counted those units, the recorded value stands: the residual degrees of freedom of KQXUE and C6HJR count country-years, and the Satterthwaite degrees of freedom of KEVF1 and 018OL count cells rather than respondents. OA and PRL47 reported no degrees of freedom, and the rule of Multi100 converted the statistic of PRL47 on the respondent count, which compresses any statistic towards zero. Those two results are placed on the Satterthwaite degrees of freedom of a refit of their own design on the rebuilt respondent file, `r mv_df(mark("OA", "df_placement"))` for OA and `r mv_df(mark("PRL47", "df_placement"))` for PRL47.
+Six tagged marks come from outside the curve: the five reanalyses of this claim that Multi100 recorded, and the design of the original author (OA), tagged OA design. Each is drawn as an ordinary mark in ink, at the end of a thin line to a tag that holds its pop-up open when clicked, so that its neighbours on the curve stay visible. A test statistic becomes a partial correlation through the same formula, which is sound when the degrees of freedom count the units that carry the evidence under the error structure that produced the t. Each result is therefore placed on the degrees of freedom of its own inference. Where the software of an analyst counted those units, the recorded value stands: the residual degrees of freedom of KQXUE and C6HJR count country-years, and the Satterthwaite degrees of freedom of KEVF1 and 018OL count cells rather than respondents. PRL47 reported no degrees of freedom, and the rule of Multi100 converted its statistic on the respondent count, which compresses any statistic towards zero; it is placed on the Satterthwaite degrees of freedom of a refit of its design on the rebuilt respondent file, `r mv_df(mark("PRL47", "df_placement"))`. The published coefficient of OA belongs to a model with interactions between education and the economic measures, so it is the slope of unemployment for the low-education band alone. The mark of OA is therefore a refit of the same design without the interactions, whose slope is the average over the education bands as in the five reanalyses, placed on its own `r mv_df(mark("OA", "df_placement"))` Satterthwaite degrees of freedom; the model with the interactions is taken up in the [individual-level module](companion/individual-level.qmd#sec-claim2).
 
 The shape of a reference mark follows the rule of the curve wherever the file gives a bootstrap check of the design on the country-year cells. That is the case for C6HJR, whose specification is the reproduced one, for KQXUE, whose design is on the menu, and for KEVF1, through the analogue of its design with country fixed effects. The designs of OA, PRL47 and 018OL cannot be fitted on those cells, because their units are respondents or country-waves, so their shapes follow the p-value as reported, which rests on the errors of each model itself. Four of the six results come from outside the menu of the curve, with other units, another construct or a narrower sample, and their pop-ups say which. Each pop-up also gives, as a teaching aside, the value of the result on the `r ref$df` degrees of freedom of the two-way design on the `r curve$n_cells[1]` country-years. The [conversion lesson](case/index.qmd#sec-recorded) uses that common denominator to show how much of the spread between the six results comes from the choice of degrees of freedom; the marks are not drawn there.
 
 ```{r}
 #| label: tbl-marks
-#| tbl-cap: !expr 'sprintf("The six reference marks: the statistic as reported, the degrees of freedom on which each is placed and their source, the placed partial correlation, the number of specifications on the curve that lie further below zero, the value on %d degrees of freedom, and the shape of the mark. Source: `data/reference_marks.csv`.", ref$df)'
+#| tbl-cap: !expr 'sprintf("The six reference marks: the statistic as reported, the statistic that is placed (for OA, the refit of its design without the education interactions), the degrees of freedom on which each is placed and their source, the placed partial correlation, the number of specifications on the curve that lie further below zero, the value on %d degrees of freedom, and the shape of the mark. Source: `data/reference_marks.csv`.", ref$df)'
 an |>
   dplyr::arrange(.data$rank) |>
   dplyr::transmute(
     Mark = sub(" ", "\u00a0", .data$tag),
     `As reported` = sprintf("%s\u00a0=\u00a0%s", .data$statistic_type,
                             sub("^-", "−", as.character(.data$statistic_recorded))),
+    `Placed statistic` = sprintf("%s = %s", .data$statistic_type,
+                                 sub("^-", "−", sprintf("%.2f", .data$statistic_placement))),
     `Placed on (df)` = mv_df(.data$df_placement),
     Source = .data$df_basis,
     `Placed r` = mv_minus(.data$r_placement),
@@ -114,8 +117,8 @@ an |>
   ) |>
   dplyr::rename_with(\(x) sprintf("r on %d df", ref$df), "r_233") |>
   tt() |>
-  style_tt(j = c(1, 2, 4, 8), align = "l") |>
-  style_tt(j = c(3, 5, 6, 7), align = "r")
+  style_tt(j = c(1, 2, 5, 9), align = "l") |>
+  style_tt(j = c(3, 4, 6, 7, 8), align = "r")
 ```
 
 ## The negative scales {#negative-scales}

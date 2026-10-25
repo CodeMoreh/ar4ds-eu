@@ -149,7 +149,7 @@ inference_of <- \(rule, col = "p") {
 # the curve that lie further below zero.
 ref_marks <- readr::read_csv("../data/reference_marks.csv", show_col_types = FALSE) |>
   dplyr::mutate(
-    tag   = dplyr::if_else(id == "OA", "OA 2016", id),
+    tag   = dplyr::if_else(id == "OA", "OA design", id),
     p_num = suppressWarnings(as.numeric(sub("^<\\s*", "", p_recorded))),
     sig   = dplyr::coalesce(p_cluster_check, p_num) < 0.05,
     rank  = purrr::map_int(r_placement, \(x) sum(spec_curve$r_ca < x))

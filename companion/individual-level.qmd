@@ -103,6 +103,16 @@ Among the macro terms, a one-point rise in a country's unemployment rate goes wi
 
 The term `sesunemployed` is the respondent's own employment status. Being unemployed rather than a manual worker moves the score by `r sprintf("%.3f", fixef(m_cosmo)[["sesunemployed"]])` – roughly `r round(abs(fixef(m_cosmo)[["sesunemployed"]] / fixef(m_cosmo)[["munemp"]]))` times as much per unit. Individual circumstance matters far more to an individual than the national rate does.
 
+```{r}
+#| label: published-refits
+#| include: false
+# refits of the published design on the rebuilt respondents (R/13_reference_marks.R)
+refits <- readr::read_csv("_model-outputs/reference_refits.csv", show_col_types = FALSE)
+rf <- \(id, col) refits[[col]][refits$refit_id == id]
+```
+
+The model of the paper differs from this one in a respect that matters for the coefficient it prints. Its Model 1 also carries interactions of unemployment and of growth with education, so its unemployment coefficient, −0.00340, is the slope for the low-education band, the reference category, rather than an average over the bands. The model above leaves the interactions out, because the twin does not carry them (section 7), and its slope is the average over the education bands. On the rebuilt respondents the version with the interactions gives a slope of `r sprintf("%.5f", rf("OA_published", "b"))` for the low-education band (t = `r sprintf("%.2f", rf("OA_published", "t"))` on `r sprintf("%.1f", rf("OA_published", "df_satterthwaite"))` Satterthwaite degrees of freedom), and the version without them a slope of `r sprintf("%.5f", rf("OA_no_interactions", "b"))` (t = `r sprintf("%.2f", rf("OA_no_interactions", "t"))` on `r sprintf("%.1f", rf("OA_no_interactions", "df_satterthwaite"))`). The multiverse chart places the original study by the second, so that its mark answers the same question as the five reanalyses. What the interactions themselves show, the education gap of the second hypothesis, is the subject of [section 8](#sec-claim2).
+
 The comparison is easy to misread, and the next section works through the arithmetic.
 
 ## 4. Individual effects and aggregate associations {#sec-composition}

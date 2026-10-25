@@ -1,0 +1,33 @@
+<!-- The track that a visitor chose on the opening page, shown as a navbar item
+     on every page of the site. The choice lives in this browser only
+     (localStorage key "ar-track"); with no choice, or with storage blocked,
+     nothing is shown. Links use the quarto:offset meta tag, so they work from
+     pages at any depth. Inline rather than a separate file for that reason. -->
+<script>
+(function () {
+  var TRACKS = {
+    "one-day-replication": "One day – open science and replication",
+    "one-day-tools": "One day – social data science tools",
+    "one-day-methods": "One day – the statistical methods",
+    "three-days": "Three days",
+    "semester": "Semester",
+    "self-study": "Self-study"
+  };
+  var slug = null;
+  try { slug = window.localStorage.getItem("ar-track"); } catch (e) { return; }
+  if (!slug || !TRACKS[slug]) return;
+  var meta = document.querySelector('meta[name="quarto:offset"]');
+  var base = meta ? meta.getAttribute("content") : "./";
+  var nav = document.querySelector("#navbarCollapse .navbar-nav.ms-auto, #navbarCollapse .navbar-nav");
+  if (!nav) return;
+  var li = document.createElement("li");
+  li.className = "nav-item";
+  var a = document.createElement("a");
+  a.className = "nav-link";
+  a.href = base + "tracks/" + slug + "/index.html";
+  a.title = "The track you chose on the opening page";
+  a.innerHTML = '<i class="bi bi-signpost-split" aria-hidden="true"></i> <span class="menu-text">Your track: ' + TRACKS[slug] + "</span>";
+  li.appendChild(a);
+  nav.appendChild(li);
+})();
+</script>
