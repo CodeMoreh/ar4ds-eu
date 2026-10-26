@@ -128,22 +128,22 @@ With a 0/1 outcome and a 0/1 predictor, the coefficient of `lm()` **is** the dif
 A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, more predictors added with a plus. Then lm fits a linear model, and glm with the binomial family fits a logistic regression, a logit. Almost every modelling function in R has this same shape, a formula and then data, so once you know it, lm, glm and everything after them become variations on one pattern. [advance] And one fact that makes this case easy to learn on: when the outcome is zero or one and the predictor is zero or one, the coefficient of the linear model is exactly the difference between the two shares. A greeting rate of forty-one per cent against sixty-one gives a coefficient of minus point two. We come back to both models in Part 3.
 :::
 
-## Plotting with ggplot2 {#one-line-of-ggplot .smaller .deepdive run="tools"}
+## Plotting with tinyplot {#one-line-of-ggplot .smaller .deepdive run="tools"}
 
 ```{.r code-line-numbers="|1-3|4|5"}
-audit |>
+greeted <- audit |>
   datawizard::data_filter(reply == 1 & !is.na(named)) |>
-  datawizard::data_summary(greeted = mean(named), by = c("name", "group")) |>
-  ggplot2::ggplot(ggplot2::aes(x = greeted, y = name, colour = group)) +   # data, and what maps to what
-  ggplot2::geom_point(size = 3)                                            # draw points
+  datawizard::data_summary(greeted = mean(named), by = c("name", "group"))
+tinyplot::tinyplot(greeted ~ name | group, data = greeted,   # what goes where, coloured by group
+                   type = "p", flip = TRUE)                  # draw points, names on the side
 ```
 
 ::: {.small}
-Three parts, always: the **data**, the **mapping** (`aes`) from variables to what you see, and one or more **geoms** that draw something. Layers stack with `+`.
+Two parts: a **formula**, `y ~ x | group`, with the **data**, which says what goes on which axis and what sets the colour, and a **type** that says what to draw.
 :::
 
 ::: notes
-Plotting, briefly. A ggplot always has three parts. The data, here the share of coded replies that greeted the sender by name, for each of the six names. The mapping, which is what aes does: it says which variable becomes which visual property, here the share on the horizontal axis, the name on the vertical one, and the group as the colour. And one or more geoms that actually draw something, stacked with plus signs. This one draws points. Notice that the pipe carries the summarised data straight into ggplot, so the whole thing reads as one sentence from the raw emails to the picture. The plot it makes is a rough version of the right-hand panel from earlier.
+Plotting, briefly, with tinyplot, the package that draws every figure of your workspace and of the browser lab. First the data: the share of coded replies that greeted the sender by name, for each of the six names, kept in a small table called greeted. Then a tinyplot has two parts. A formula with the data, the same tilde as in a model, which says what goes on which axis, and the vertical bar adds a third variable that sets the colour, here the group that the name was meant to indicate. And a type, which says what to draw: points. Flip turns the chart on its side, so the names can be read. The plot it makes is a rough version of the right-hand panel from earlier.
 :::
 
 ## Causal graphs in R {#a-causal-graph-is-a-set-of-arrows .smaller .deepdive run="tools"}
