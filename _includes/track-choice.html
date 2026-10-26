@@ -6,9 +6,10 @@
 <script>
 (function () {
   // Slugs carry the case, as the folders under tracks/ do: <slug>-<format>.
-  // The cross-case semester track will be "semester" (tracks/semester/); add
-  // it here, in _includes/home-script.html and in _includes/next-delivery.qmd
-  // when its folder exists. Until then a stored "semester" shows nothing.
+  // The one exception is "semester", the track that takes the four cases in
+  // turn (tracks/semester/). The same slugs are known to the cards of the
+  // opening page (_includes/home-script.html reads them from data-slug) and to
+  // _includes/next-delivery.qmd.
   var TRACKS = {
     "housing-short": "Short session – housing audit",
     "housing-one-day": "One day – housing audit",
@@ -19,12 +20,13 @@
     "eu-frames-one-day-methods": "One day – the statistical methods – EU frames",
     "eu-frames-three-days": "Three days – EU frames",
     "eu-frames-semester": "Semester – EU frames",
-    "eu-frames-self-study": "Self-study – EU frames"
+    "eu-frames-self-study": "Self-study – EU frames",
+    "semester": "Semester – four cases"
   };
   // A choice stored under one of the slugs that the EU-frames tracks had
   // before they carried the case is read as the slug that replaced it, and
-  // written back once. "semester" is not among them: it names the coming
-  // cross-case track, not the semester track of the EU-frames case.
+  // written back once. "semester" is not among them: it names the semester
+  // track across the four cases, not the semester track of the EU-frames case.
   var FORMER = {
     "one-day-replication": "eu-frames-one-day-replication",
     "one-day-tools": "eu-frames-one-day-tools",

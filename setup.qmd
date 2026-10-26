@@ -96,11 +96,27 @@ The zip unzips into a folder called `replication-lab-housing-main`. In RStudio, 
 
 ### Immigration and trust
 
-The workspace of the immigration-and-trust case is in preparation. Its address will be [{{< var cases.trust.template-repo >}}]({{< var cases.trust.template-repo >}}).
+[Download the workspace of the immigration-and-trust case (zip)]({{< var cases.trust.workspace-zip >}})
+
+The zip unzips into a folder called `replication-lab-trust-main`. In RStudio, open the file `replication-lab-trust.Rproj` inside it. The folder holds four things that you will use:
+
+- `index.qmd` – the report, with Tasks 1 to 5 and the preregistration block, which renders from the first preview;
+- `working_script.R` – the same steps as a plain script, for working in the console;
+- `R/` – the check script, the starter file for the causal graph of Task 2 and the helpers of Tasks 3 to 5;
+- `data/` – the extract of the European Social Survey (about 10 MB), the country variables of the paper, the curve of the 192 specifications and their codebooks.
+
+Task 3 needs one more file, the file that Multi100 gave the analysts, which the workspace downloads from the OSF (about 29 MB) into the folder `data_private/` the first time the task runs. While you are online before the course, run `source("R/spec_tools.R"); fetch_multi100()` once in the console of your IDE, so that the file is in place on the day.
 
 ### Cohabitation
 
-The workspace of the cohabitation case is in preparation. Its address will be [{{< var cases.cohabitation.template-repo >}}]({{< var cases.cohabitation.template-repo >}}).
+[Download the workspace of the cohabitation case (zip)]({{< var cases.cohabitation.workspace-zip >}})
+
+The zip unzips into a folder called `replication-lab-cohabitation-main`. In RStudio, open the file `replication-lab-cohabitation.Rproj` inside it. The folder holds four things that you will use:
+
+- `index.qmd` – the report, with Tasks 1 to 5 and the preregistration block, which renders from the first preview;
+- `working_script.R` – the same steps as a plain script, for working in the console;
+- `R/` – the check script, the starter file for the causal graph of Task 2 and the helpers of Tasks 4 and 5;
+- `data/` – the unions rebuilt from the National Survey of Family Growth, the person-month file that Multi100 gave the analysts, the curve of the 144 specifications and their codebooks.
 
 ### EU frames
 
@@ -138,7 +154,7 @@ The original authors (OAs) of the study published their data and code on the Har
 
 ### Immigration and trust
 
-The case will use rounds 1 to 4 of the European Social Survey, which ESS ERIC releases under CC BY-NC-SA 4.0. That licence allows a derived file to be shared for non-commercial use with attribution, so the workspace will ship an extract built from the four rounds, and no download will be needed.
+The case uses rounds 1 to 4 of the European Social Survey, which ESS ERIC releases under CC BY-NC-SA 4.0. That licence allows a derived file to be shared for non-commercial use with attribution under the same licence, so the workspace ships an extract of the four rounds, `data/trust_ess.csv`, whose codebook names the editions from which it is adapted. The one file to download is the file that Multi100 gave the analysts, which Task 3 fetches from the OSF; it holds person-level survey data under no stated licence, so it stays in `data_private/` and out of any repository that you make of your work.
 
 ### Cohabitation
 

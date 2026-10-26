@@ -1,10 +1,13 @@
 -- case-label.lua – the line "Case: <label>" at the top of every page of a case,
--- and "Case: ..." or "Cases: ..." at the top of the companion modules.
+-- and "Case: ..." or "Cases: ..." at the top of the companion modules and of
+-- any other page that names its case.
 --
 -- A page belongs to a case when its source sits under cases/<slug>/: the case
 -- pages and the codebooks in cases/<slug>/data/. A companion module names the
 -- cases that it works on in companion-cases in _variables.yml, by the name of
--- its file. The label of each case is cases.<slug>.label there, so that the
+-- its file. Any other page, such as a week of the semester track that works on
+-- one case, names it in its front matter as `case: <slug>` (or a list of
+-- slugs). The label of each case is cases.<slug>.label there, so that the
 -- names of the cases are written in one place; a slug without a label gets no
 -- line. Each label links to the case study of its case, except on the case
 -- study itself. A one-line script moves the line into the title block, above
@@ -74,6 +77,14 @@ function Pandoc(doc)
       table.insert(slugs, pandoc.utils.stringify(s))
     end
     prefix = "../"
+  elseif doc.meta.case then
+    local named = doc.meta.case
+    if pandoc.utils.type(named) == "List" then
+      for _, s in ipairs(named) do table.insert(slugs, pandoc.utils.stringify(s)) end
+    else
+      slugs = { pandoc.utils.stringify(named) }
+    end
+    prefix = string.rep("../", select(2, rel:gsub("/", "")))
   else
     return nil
   end

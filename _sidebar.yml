@@ -2,8 +2,9 @@
 # lists only the pages of its own track, so the shared teaching pages – the
 # case pages, the companion modules, the multiverse pages – keep the plain
 # navbar when a track links to them. The folder of each track carries the
-# slug of its case (tracks/<slug>-<format>/). The pages under tracks/ and this
-# file are edited by hand.
+# slug of its case (tracks/<slug>-<format>/), apart from the semester track
+# across the four cases, which is tracks/semester/. The pages under tracks/
+# and this file are edited by hand.
 website:
   sidebar:
     - title: "Short session – the housing-audit case"
@@ -214,3 +215,49 @@ website:
           href: tracks/eu-frames-self-study/slides.qmd
         - text: "Working alone"
           href: tracks/eu-frames-self-study/after.qmd
+
+    # The weeks of the cross-case track are grouped under the case on which
+    # each works, so that the order of the ladder shows in the sidebar;
+    # collapse-level 2 keeps every group open.
+    - title: "Semester – four cases"
+      style: docked
+      collapse-level: 2
+      contents:
+        - text: "Overview"
+          href: tracks/semester/index.qmd
+        - text: "Week 1 – Credibility and the three Rs"
+          href: tracks/semester/week-1.qmd
+        - text: "Week 2 – R and Quarto"
+          href: tracks/semester/week-2.qmd
+        - section: "The housing-audit case"
+          contents:
+            - text: "Week 3 – The claim and its reproduction"
+              href: tracks/semester/week-3.qmd
+            - text: "Week 4 – The menu and the declaration"
+              href: tracks/semester/week-4.qmd
+        - section: "The immigration-and-trust case"
+          contents:
+            - text: "Week 5 – Survey data and scales"
+              href: tracks/semester/week-5.qmd
+            - text: "Week 6 – Regression on respondents"
+              href: tracks/semester/week-6.qmd
+            - text: "Week 7 – The menu and the public record"
+              href: tracks/semester/week-7.qmd
+        - section: "The cohabitation case"
+          contents:
+            - text: "Week 8 – Unions as person-months"
+              href: tracks/semester/week-8.qmd
+            - text: "Week 9 – The reproduction and competing risks"
+              href: tracks/semester/week-9.qmd
+        - section: "The EU-frames case"
+          contents:
+            - text: "Week 10 – From respondents to a panel"
+              href: tracks/semester/week-10.qmd
+            - text: "Week 11 – Few clusters and the multiverse"
+              href: tracks/semester/week-11.qmd
+        - text: "Week 12 – The final project"
+          href: tracks/semester/week-12.qmd
+        - text: "Slides"
+          href: tracks/semester/slides.qmd
+        - text: "After the term"
+          href: tracks/semester/after.qmd

@@ -62,8 +62,7 @@ website:
             text: "Setup help"
       # The cases in the order of the ladder, each a header followed by its
       # pages. An entry with text and no href is drawn as a header of the menu,
-      # and "---" as a divider. The trust and cohabitation cases are headers
-      # without links until their pages exist.
+      # and "---" as a divider.
       - text: Cases
         menu:
           - text: "The housing-audit case"
@@ -129,11 +128,11 @@ website:
             text: "Multiverse"
           - href: cases/eu-frames/cheatsheet.qmd
             text: "Cheatsheet"
-      # The delivery tracks, grouped by case. Each is a folder of
-      # participant-facing pages with a docked sidebar (_sidebar.yml) and a
-      # slides page embedding the deck that it runs on; the decks themselves
-      # are not in the navbar. The cross-case semester track (tracks/semester/)
-      # joins the end of the menu when it exists.
+      # The delivery tracks, grouped by case, then the semester track that
+      # takes the four cases in turn (tracks/semester/) under a header of its
+      # own. Each is a folder of participant-facing pages with a docked
+      # sidebar (_sidebar.yml) and a slides page embedding the deck or decks
+      # that it runs on; the decks themselves are not in the navbar.
       - text: Tracks
         menu:
           - text: "The housing-audit case"
@@ -164,7 +163,9 @@ website:
           - href: tracks/eu-frames-self-study/index.qmd
             text: "Self-study"
           - text: "---"
-          - text: "Semester across the four cases – in preparation"
+          - text: "Across the cases"
+          - href: tracks/semester/index.qmd
+            text: "Semester"
       # Grouped by the three strands of the curriculum – computational tools,
       # data management and sharing, statistical methods – with the
       # "---" entries drawing the dividers between them.
@@ -233,7 +234,8 @@ website:
 filters:
   - highlight-text
   - more-fragments
-  # The line "Case: ..." at the top of every page under cases/<slug>/
+  # The line "Case: ..." at the top of every page under cases/<slug>/, of the
+  # companion modules, and of any page that names its case in its front matter
   - style/case-label.lua
 
 format:

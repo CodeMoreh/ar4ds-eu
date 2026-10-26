@@ -46,10 +46,10 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     }
 
     # The tracks, keyed by the slug that names the folder of each under
-    # tracks/ (<slug>-<format>). A slug that the EU-frames tracks had before
-    # they carried the case is read as the slug that replaced it, except
-    # "semester", which names the cross-case semester track and is listed only
-    # once tracks/semester/ exists. Anything else in delivery.track – a typo,
+    # tracks/ (<slug>-<format>, and semester for the track across the four
+    # cases). A slug that the EU-frames tracks had before they carried the case
+    # is read as the slug that replaced it, except "semester", which names the
+    # cross-case track. Anything else in delivery.track – a typo,
     # a retired name, an empty string – matches nothing here, so no line is
     # printed and no link is written to a page that does not exist. The link
     # is relative to the including page, and index.qmd at the site root is the
@@ -65,11 +65,9 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
       "eu-frames-one-day-methods"     = "one-day course on the EU-frames case, the statistical methods",
       "eu-frames-three-days"          = "three-day format of the EU-frames case",
       "eu-frames-semester"            = "semester format of the EU-frames case",
-      "eu-frames-self-study"          = "self-study track of the EU-frames case"
+      "eu-frames-self-study"          = "self-study track of the EU-frames case",
+      "semester"                      = "semester track across the four cases"
     )
-    if (dir.exists("tracks/semester")) {
-      track_labels <- c(track_labels, "semester" = "semester track across the four cases")
-    }
     former_slugs <- c("one-day-replication", "one-day-tools", "one-day-methods",
                       "three-days", "self-study")
 

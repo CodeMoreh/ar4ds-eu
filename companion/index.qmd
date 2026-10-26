@@ -3,15 +3,15 @@ title: "Companion curriculum"
 subtitle: "The teaching modules of the course"
 ---
 
-The course is built around one exercise, taught on several cases: you reproduce a recorded result, vary the analysis behind it, declare one analysis before you run it, and read your result against those of the class. A short session or a single day has room for that exercise and little else, so the skills around it are taught in these seventeen modules, which run from a first line of R to a reanalysis that you can archive and version. Each module stands on its own, so you can take the one you need and leave the rest.
+The course is built around one exercise, taught on several cases: you reproduce a recorded result, vary the analysis behind it, declare one analysis before you run it, and read your result against those of the class. A short session or a single day has room for that exercise and little else, so the skills around it are taught in these eighteen modules, which run from a first line of R to a reanalysis that you can archive and version. Each module stands on its own, so you can take the one you need and leave the rest.
 
-The modules share the cases between them. Each method is taught on the case that carries it best: the experiment of the housing-audit case for proportions, binary outcomes and conditioning on a consequence of the treatment, the survey respondents of the immigration-and-trust case for attitude scales, their reliability and survey weights in a regression on respondents, and the country-year panel of the EU-frames case for survey measurement, weights, panel models and a multiverse of hundreds of specifications. Where a module uses more than one case, it says at the top which sections work on which. The cohabitation case (event-history analysis) is in preparation, with a module of its own to come.
+The modules share the cases between them. Each method is taught on the case that carries it best: the experiment of the housing-audit case for proportions, binary outcomes and conditioning on a consequence of the treatment, the survey respondents of the immigration-and-trust case for attitude scales, their reliability and survey weights in a regression on respondents, the cohabiting unions of the cohabitation case for censoring, the life table and discrete-time models of two competing ways out of a union, and the country-year panel of the EU-frames case for survey measurement, weights, panel models and a multiverse of hundreds of specifications. Where a module uses more than one case, it says at the top which sections work on which.
 
-Nothing here is required for a one-day track or a short session, which run in full without any module and with no account to create. Each track points at some modules as optional preparation, at others as the slower companion of a task, and at the rest as reading for afterwards; the [last table](#sec-tracks) sets out which tracks use which modules. The longer tracks of the EU-frames case, over three days, a semester or self-study, are built out of the modules.
+Nothing here is required for a one-day track or a short session, which run in full without any module and with no account to create. Each track points at some modules as optional preparation, at others as the slower companion of a task, and at the rest as reading for afterwards; the [last table](#sec-tracks) sets out which tracks use which modules. The longer tracks of the EU-frames case, over three days, a semester or self-study, are built out of the modules, and so is the semester track that takes the four cases in turn.
 
 ## Three strands {#sec-strands}
 
-The seventeen modules group into three strands: the computational tools with which an analysis is written, the data management and sharing that let it be built and let others find it and run it again, and the statistical methods with which the cases are analysed. The strands are only a way of reading the curriculum, and you can read across them in whatever order suits you.
+The eighteen modules group into three strands: the computational tools with which an analysis is written, the data management and sharing that let it be built and let others find it and run it again, and the statistical methods with which the cases are analysed. The strands are only a way of reading the curriculum, and you can read across them in whatever order suits you.
 
 ## Strand I – Computational tools {#sec-tools}
 
@@ -36,7 +36,7 @@ Where data come from, how a downloaded survey file becomes the file on which a m
 
 ## Strand III – Statistical methods {#sec-methods}
 
-Ten modules on the statistical side of the cases, roughly in the order of the ladder of difficulty: the design of an experiment and the models for a yes-or-no outcome; the causal graph that decides what to compare or hold constant; the survey items, weights and missing answers behind a scale; the panel models of the EU-frames case and its claim at the level of respondents; simulation as a check of a method; and the multiverse that every class builds. Each computes its numbers from the files of the course when the page is built, so a module can be read as a worked analysis as well as an explanation. The participant reading of the EU-frames case, [reading a specification curve](../cases/eu-frames/reading-inference.qmd), belongs with this strand without being a module of its own.
+Eleven modules on the statistical side of the cases, roughly in the order of the ladder of difficulty: the design of an experiment and the models for a yes-or-no outcome; the causal graph that decides what to compare or hold constant; the survey items, weights and missing answers behind a scale; the event-history models of the cohabitation case; the panel models of the EU-frames case and its claim at the level of respondents; simulation as a check of a method; and the multiverse that every class builds. Each computes its numbers from the files of the course when the page is built, so a module can be read as a worked analysis as well as an explanation. The participant reading of the EU-frames case, [reading a specification curve](../cases/eu-frames/reading-inference.qmd), belongs with this strand without being a module of its own.
 
 | Module | Level | What it covers | Cases |
 |---|---|---|---|
@@ -46,6 +46,7 @@ Ten modules on the statistical side of the cases, roughly in the order of the la
 | [The items behind the scales](measurement.qmd) | Intermediate | The instrument behind every outcome of the EU-frames menu: how the four framing scales and the two composites are built from thirteen items; how often each item is named and how the items hang together; exploratory and confirmatory factor structures; what a two-item scale can and cannot support. Then the scales of the immigration-and-trust case: the three items of concern about immigration and their index; Cronbach's alpha of each scale, and why a single item weakens the coefficient; the two rules for unanswered items; the three trust items, why the paper keeps them apart, and what the choice among them, or their mean, does on the curve. | EU frames (sections 1–9), immigration and trust (section 10) |
 | [Weights](weighting.qmd) | Intermediate | Survey weights inside a country-year cell, precision weights across cells and population weights across countries; why only the third changes the estimand; the reproduced coefficient under every combination of the weighting choices. Then the design, post-stratification and population weights of the European Social Survey in a regression on respondents: what each makes the estimate describe, the coefficient as an average of one slope per country, and why three of the five uses of the weights stay on the curve of the immigration-and-trust case. | EU frames, immigration and trust (last section) |
 | [Missing answers](missingness.qmd) | Intermediate | What a respondent who mentions no frame at all does to a share built from mentions; the rules that the menu offers and what each assumes; multiple imputation with mice and Amelia, pooled by Rubin's rules, against the fiat rules; a sensitivity band. | EU frames |
+| [Event-history analysis](event-history.qmd) | Intermediate | Time to an event and censoring, and why the share married by the interview mixes the event with the time that each union was observed; the life table, the hazard, and marriage and separation as competing events; person-period data; the discrete-time logit and its baseline of time since the start; the complementary log-log model, the proportional hazards model for time measured in whole months; competing risks with a multinomial logit; period against cohort. | Cohabitation |
 | [The statistical methods behind the course](stats-methods.qmd) | Foundation to advanced | Every model fitted on the panel, output by output: why the analysis sits at the country-year level; a first linear model; clustered standard errors and the wild cluster bootstrap; the two fixed-effects designs; within and between, with random effects and the within–between model; person-level multilevel models; survey weights; Bayesian estimation; bounded outcomes; effect sizes on one scale. | EU frames |
 | [The individual level](individual-level.qmd) | Advanced | The claim fitted where its author fitted it, on a simulated person-level dataset validated against the real respondents: individual circumstance against national context, what the levels of a multilevel model do to its degrees of freedom, and the second claim of the paper under three designs. | EU frames |
 | [Simulation as a method](simulation.qmd) | Intermediate | Data with a known recipe: parameter recovery, composition against context, weights that matter, the degrees-of-freedom argument run live, a null multiverse, a lineup, and design precision by simulation. | EU frames |
@@ -57,29 +58,30 @@ The table gives, for each module, the tracks whose pages point to it, as prepara
 
 ::: {.column-page-inset-right}
 
-| Module | Housing: short | Housing: one day | EU frames: one day, replication | EU frames: one day, tools | EU frames: one day, methods | EU frames: three days | EU frames: semester | EU frames: self-study |
-|---|---|---|---|---|---|---|---|---|
-| [Getting started with R](intro-r.qmd) | yes | yes | yes | yes | yes | yes | yes | yes |
-| [Positron, RStudio and VS Code](ide.qmd) | yes | yes | yes | yes | – | yes | yes | yes |
-| [Quarto and reproducible documents](quarto.qmd) | – | yes | – | yes | – | yes | yes | yes |
-| [Social science data sources](data-sources.qmd) | – | – | yes | yes | yes | yes | yes | yes |
-| [Building the analysis file](data-management.qmd) | – | – | – | yes | – | yes | yes | yes |
-| [Reproducibility repositories](repositories.qmd) | yes | yes | yes | yes | yes | yes | yes | yes |
-| [Git and GitHub](git-github.qmd) | yes | yes | yes | yes | yes | yes | yes | yes |
-| [Audit experiments](experiments.qmd) | yes | yes | – | – | – | – | – | – |
-| [Binary outcomes](binary-outcomes.qmd) | yes | yes | – | – | – | yes | yes | yes |
-| [Causal graphs & adjustment sets](dags.qmd) | yes | yes | yes | – | yes | yes | yes | yes |
-| [The items behind the scales](measurement.qmd) | – | – | yes | – | yes | yes | yes | yes |
-| [Weights](weighting.qmd) | – | – | yes | – | yes | yes | yes | yes |
-| [Missing answers](missingness.qmd) | – | – | yes | – | yes | yes | yes | yes |
-| [The statistical methods behind the course](stats-methods.qmd) | – | – | yes | yes | yes | yes | yes | yes |
-| [The individual level](individual-level.qmd) | – | – | yes | – | yes | yes | yes | yes |
-| [Simulation as a method](simulation.qmd) | – | – | yes | – | yes | yes | yes | yes |
-| [The multiverse and its critics](multiverse.qmd) | yes | yes | yes | yes | yes | yes | yes | yes |
+| Module | Housing: short | Housing: one day | Trust: one day | Cohabitation: one day | EU frames: one day, replication | EU frames: one day, tools | EU frames: one day, methods | EU frames: three days | EU frames: semester | EU frames: self-study | Semester: four cases |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| [Getting started with R](intro-r.qmd) | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| [Positron, RStudio and VS Code](ide.qmd) | yes | yes | yes | yes | yes | yes | – | yes | yes | yes | yes |
+| [Quarto and reproducible documents](quarto.qmd) | – | yes | yes | yes | – | yes | – | yes | yes | yes | yes |
+| [Social science data sources](data-sources.qmd) | – | – | – | – | yes | yes | yes | yes | yes | yes | yes |
+| [Building the analysis file](data-management.qmd) | – | – | – | – | – | yes | – | yes | yes | yes | yes |
+| [Reproducibility repositories](repositories.qmd) | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| [Git and GitHub](git-github.qmd) | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| [Audit experiments](experiments.qmd) | yes | yes | – | – | – | – | – | – | – | – | yes |
+| [Binary outcomes](binary-outcomes.qmd) | yes | yes | – | yes | – | – | – | yes | yes | yes | yes |
+| [Causal graphs & adjustment sets](dags.qmd) | yes | yes | yes | yes | yes | – | yes | yes | yes | yes | yes |
+| [The items behind the scales](measurement.qmd) | – | – | yes | – | yes | – | yes | yes | yes | yes | yes |
+| [Weights](weighting.qmd) | – | – | yes | yes | yes | – | yes | yes | yes | yes | yes |
+| [Missing answers](missingness.qmd) | – | – | yes | – | yes | – | yes | yes | yes | yes | yes |
+| [Event-history analysis](event-history.qmd) | – | – | – | yes | – | – | – | – | – | – | yes |
+| [The statistical methods behind the course](stats-methods.qmd) | – | – | yes | – | yes | yes | yes | yes | yes | yes | yes |
+| [The individual level](individual-level.qmd) | – | – | – | – | yes | – | yes | yes | yes | yes | yes |
+| [Simulation as a method](simulation.qmd) | – | – | – | – | yes | – | yes | yes | yes | yes | yes |
+| [The multiverse and its critics](multiverse.qmd) | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
 
 :::
 
-A short session and a one-day track have room for the exercise and a few slides of background, so they use the modules mainly for preparation and for afterwards; the one-day track of the housing-audit case points at the causal-graphs and multiverse modules during the day itself, in Parts 2 and 4. The longer tracks of the EU-frames case are built out of the modules, and the [three-day](../tracks/eu-frames-three-days/index.qmd), [semester](../tracks/eu-frames-semester/index.qmd) and [self-study](../tracks/eu-frames-self-study/index.qmd) tracks give each module its place in a sequence.
+A short session and a one-day track have room for the exercise and a few slides of background, so they use the modules mainly for preparation and for afterwards. During the day itself, the one-day tracks of the housing-audit, immigration-and-trust and cohabitation cases point at the causal-graphs module in Part 2 and at the multiverse and repositories modules in Part 4, and the day of the cohabitation case at the event-history module in Part 3 as well. The longer tracks are built out of the modules. The [three-day](../tracks/eu-frames-three-days/index.qmd), [semester](../tracks/eu-frames-semester/index.qmd) and [self-study](../tracks/eu-frames-self-study/index.qmd) tracks of the EU-frames case give each module its place in a sequence on that case, and the [semester track across the four cases](../tracks/semester/index.qmd) uses every module, each in the weeks of the case that carries it.
 
 ## A first route through {#sec-route}
 
@@ -89,8 +91,10 @@ If you are new to all of this and want a route through, take the modules in this
 2. **Before or after the course: [Quarto and reproducible documents](quarto.qmd).** The report that you fill in is a Quarto document, and this module explains every option that it uses.
 3. **Either side of the course: [Audit experiments](experiments.qmd), then [Binary outcomes](binary-outcomes.qmd).** The design that makes a comparison of randomised groups an estimate of an effect, and the models for a yes-or-no outcome.
 4. **Either side of the course: [Causal graphs & adjustment sets](dags.qmd).** The graph of Task 2 at a slower pace, in an experiment and in a panel.
-5. **For the EU-frames case: [Social science data sources](data-sources.qmd) and [Building the analysis file](data-management.qmd), then [The items behind the scales](measurement.qmd), [Weights](weighting.qmd), [Missing answers](missingness.qmd) and [The statistical methods behind the course](stats-methods.qmd).** Where the data come from, the decisions made at the boundary between respondents and cells, and the panel estimators output by output.
-6. **After the course: [The multiverse and its critics](multiverse.qmd), and for the EU-frames case [The individual level](individual-level.qmd) and [Simulation as a method](simulation.qmd).** The ideas behind the curve that the class builds and the arguments against them, then the claim at the level of respondents and data with a known recipe.
-7. **After the course: [Reproducibility repositories](repositories.qmd), then [Git and GitHub](git-github.qmd).** The public records of the cases read as models, and the two modules that turn a report of your own into something archived, versioned and shared.
+5. **For the immigration-and-trust case: [The items behind the scales](measurement.qmd#sec-trust), section 10, [Weights](weighting.qmd#sec-trust), the section on the case, and sections 3 to 6 of [The statistical methods behind the course](stats-methods.qmd#sec-pooled).** An attitude scale and its reliability, the weights of a cross-national survey in a regression on respondents, and fixed effects, random intercepts and errors clustered by country, which that module teaches on the EU-frames panel.
+6. **For the cohabitation case: [Event-history analysis](event-history.qmd).** Censoring, the life table, person-period data and the discrete-time models of two competing events. Read sections 1 and 2 before Task 3 of the case and the rest after it, because Task 3 asks you to find out for yourself something that section 3 mentions.
+7. **For the EU-frames case: [Social science data sources](data-sources.qmd) and [Building the analysis file](data-management.qmd), then [The items behind the scales](measurement.qmd), [Weights](weighting.qmd), [Missing answers](missingness.qmd) and [The statistical methods behind the course](stats-methods.qmd).** Where the data come from, the decisions made at the boundary between respondents and cells, and the panel estimators output by output.
+8. **After the course: [The multiverse and its critics](multiverse.qmd), and for the EU-frames case [The individual level](individual-level.qmd) and [Simulation as a method](simulation.qmd).** The ideas behind the curve that the class builds and the arguments against them, then the claim at the level of respondents and data with a known recipe.
+9. **After the course: [Reproducibility repositories](repositories.qmd), then [Git and GitHub](git-github.qmd).** The public records of the cases read as models, and the two modules that turn a report of your own into something archived, versioned and shared.
 
-Read as much or as little as suits you. On a short session or a one-day track the course stands on its own, and the curriculum is there for when you want more, while on the longer tracks the modules make up most of the course.
+Read as much or as little as suits you. On a short session or a one-day track the course stands on its own, and the curriculum is there for when you want more, while on the longer tracks the modules make up most of the course. The [semester track across the four cases](../tracks/semester/index.qmd) follows roughly this route, one case at a time.
