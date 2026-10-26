@@ -44,9 +44,11 @@ c6hjr <- bind_rows(
 cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]
 ```
 
-The specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this module gives the reasons.
+This module of the [companion curriculum](index.qmd) works on two cases. The sections from "The three decisions" to the exercise use the EU-frames case, and the [last section](#sec-trust) the immigration-and-trust case.
 
-This module takes the three questions apart, using the course panel throughout. It is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
+In the EU-frames case, the specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this module gives the reasons.
+
+The sections on the EU-frames case take the three questions apart on the course panel. It is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
 
 ## The three decisions
 
@@ -274,3 +276,188 @@ The `collapse` command averages every respondent equally, so the survey weights 
 1. Pick any specification from the curve (`cases/eu-frames/data/spec_curve.csv`) and look up its twins under the three regression weights in `cases/eu-frames/data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
 2. Three of those four sentences describe the same quantity, and two of them give the same number. Which, and why?
 3. The `no_bailout` sample and the `pop` weight both change the population that the claim is about, and neither stands on the curve of the claim. One of them is conventionally reported as a robustness check and the other as a modelling choice. Should either be?
+
+## The immigration-and-trust case {#sec-trust}
+
+```{r}
+#| label: setup-trust
+#| include: false
+# the section on the immigration-and-trust case, computed when the page is built
+# from the extract of the European Social Survey that the course ships and from
+# the files of its curve; the objects of the section carry the prefix tr_
+source("../R/trust/_tools.R")
+tr_read <- \(f) readr::read_csv(file.path("../cases/trust/data", f), show_col_types = FALSE)
+tr_ess <- tr_read("trust_ess.csv")
+tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+tr_opts <- tr_read("display_options.csv") |> filter(axis == "weights")
+tr_devs <- tr_read("menu_deviations.csv") |> filter(axis == "weights")
+tr_menu <- tr_read("menu_options.csv") |> filter(axis == "weights")
+tr_marks <- tr_read("reference_marks.csv")
+tr_country <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Germany",
+                DK = "Denmark", ES = "Spain", FI = "Finland", FR = "France",
+                GB = "the United Kingdom", GR = "Greece", IE = "Ireland", IT = "Italy",
+                NL = "the Netherlands", NO = "Norway", PT = "Portugal", SE = "Sweden")
+tr_country_short <- sub("^the ", "", tr_country)
+tr_names <- \(codes) {
+  n <- unname(tr_country[codes])
+  if (length(n) == 1) n else paste(paste(n[-length(n)], collapse = ", "), "and", n[length(n)])
+}
+tr_sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), num(x, d))
+tr_dv <- \(option, col) tr_devs[[col]][tr_devs$option == option]
+
+# the respondents of the paper: citizens who do not belong to an ethnic minority
+tr_paper <- tr_ess |> filter(citizen %in% 1, minority %in% 0)
+
+# the weights by country: Kish design effects among the respondents of the
+# paper, and the adult population that the population weight stands for,
+# pweight x the respondents of the country-round in the data file x 10,000
+tr_kish <- \(w) length(w) * sum(w^2) / sum(w)^2
+tr_deff <- tr_paper |>
+  summarise(design = tr_kish(dweight), post = tr_kish(pspwght), .by = cntry)
+tr_flat <- tr_deff |> filter(round(design, 2) == 1) |> arrange(cntry) |> pull(cntry)
+tr_dw_mean <- tr_ess |> summarise(m = mean(dweight), .by = c(cntry, essround)) |> pull(m)
+stopifnot(all(abs(tr_dw_mean - 1) < 5e-4))
+tr_adults <- tr_ess |>
+  summarise(adults = first(pweight) * n() * 1e4, .by = c(cntry, essround)) |>
+  summarise(adults = mean(adults), rounds = n(), .by = cntry)
+ad <- \(c) tr_adults$adults[tr_adults$cntry == c] / 1e6
+tr_big5 <- tr_adults |> slice_max(adults, n = 5) |> pull(cntry)
+
+# the reference specification under the five ways of using the weights
+tr_five <- tr_curve |>
+  filter(outcome == "parliament", controls == "paper", items == "complete", fe == "country_round") |>
+  select(option = weights, b, se, stat) |>
+  bind_rows(tr_opts |> select(option, b, se, stat)) |>
+  left_join(tr_menu |> select(option, label, on_curve), by = "option")
+tw <- \(o, col) tr_five[[col]][tr_five$option == o]
+
+# The fixed-effects coefficient as a weighted average of one slope per country.
+# With concern and distrust taken net of the country-round intercepts and of the
+# controls, a country adds sum(w * x^2) to the denominator of the coefficient
+# and sum(w * x * y) to its numerator, so its share is the first sum over the
+# total and its slope the ratio of its two sums.
+tr_decompose <- \(weights) {
+  frame <- spec_frame(tr_ess, weights = weights)
+  terms <- CONTROL_TERMS$paper
+  m <- demean(as.matrix(frame[, c("y", "x", terms)]), frame$cr, frame$w)
+  z <- m[, terms]
+  x <- m[, "x"] - drop(z %*% solve(crossprod(z, frame$w * z), crossprod(z, frame$w * m[, "x"])))
+  tibble::tibble(cntry = frame$cntry, w = frame$w, x = x, y = m[, "y"]) |>
+    summarise(sxx = sum(w * x^2), sxy = sum(w * x * y), .by = cntry) |>
+    mutate(share = sxx / sum(sxx), slope = sxy / sxx, weights = weights)
+}
+tr_shares <- purrr::map(c("none", "design", "population"), tr_decompose) |> bind_rows()
+tr_sums <- tr_shares |> summarise(b = sum(share * slope), .by = weights)
+stopifnot(all(abs(tr_sums$b - purrr::map_dbl(tr_sums$weights, tw, col = "b")) < 1e-10))
+sh <- \(c, w, col = "share") tr_shares[[col]][tr_shares$cntry == c & tr_shares$weights == w]
+tr_group <- \(codes, w) sum(tr_shares$share[tr_shares$cntry %in% codes & tr_shares$weights == w])
+tr_moved <- tr_shares |>
+  filter(weights != "population") |>
+  select(cntry, weights, share) |>
+  tidyr::pivot_wider(names_from = weights, values_from = share) |>
+  summarise(m = max(abs(design - none))) |>
+  pull(m)
+tr_slopes <- tr_shares |> filter(weights == "none") |> arrange(slope)
+# the prose names the steepest and two of the three flattest slopes, and the
+# countries with fewer than four rounds
+stopifnot(tr_slopes$cntry[nrow(tr_slopes)] == "GB", all(c("IT", "ES") %in% tr_slopes$cntry[1:3]),
+          setequal(tr_adults$cntry[tr_adults$rounds < 4], c("AT", "GR", "IT")),
+          tr_adults$rounds[tr_adults$cntry == "IT"] == 2)
+
+# the share of the variance of the curve that each decision carries, from the
+# sums of squares of a main-effects model, as on the Multiverse page of the case
+tr_var <- anova(lm(b ~ outcome + controls + weights + items + fe, data = tr_curve))
+tr_share <- setNames(tr_var$`Sum Sq` / sum(tr_var$`Sum Sq`), trimws(rownames(tr_var)))
+```
+
+The immigration-and-trust case puts the same questions to respondents rather than to cells. Its claim comes from a study by the original author (OA) of that case, which relates concern about immigration to distrust of national politics among about 110,000 respondents of the first four rounds of the European Social Survey (ESS) in 16 Western European countries [@McLaren2012CulturalDivideEurope], and the paper says nothing about weights. Because there is no step of aggregation, a weight enters the regression directly. Each respondent counts in proportion to their weight in a weighted least-squares fit, and the fit compares respondents only with others from their own country and round. Every number in this section is computed when the page is built from the extract that the course ships, `cases/trust/data/trust_ess.csv`, and from the files of the curve of the case, among the `r format(nrow(tr_paper), big.mark = ",")` respondents whom the paper analyses: the citizens of the 16 countries who do not belong to an ethnic minority. The [specification menu](../cases/trust/menu.qmd#weights) of the case sets out the weighting decision in brief.
+
+### The three weights of the ESS {#sec-trust-ess-weights}
+
+Every file of the ESS carries three weights, and the extract keeps all three. The **design weight** (`dweight`) corrects for sample designs that do not give every adult of a country the same chance of being selected, which leaves some kinds of people, such as those in larger households, under-represented in the unweighted sample. It is the inverse of the probability of selection, scaled so that it averages 1 in every country-round (to three decimals in the extract), and it makes each national sample stand for the adult population of its country. Where every adult had the same chance, the design weight is the same for everyone, and its design effect, the loss of precision that the section on [effective sample size](#effective-sample-size) defines, is 1.00 to two decimals in `r tr_names(tr_flat)`, and elsewhere it runs up to `r num(max(tr_deff$design), 2)` in `r tr_names(tr_deff$cntry[which.max(tr_deff$design)])`.
+
+The **post-stratification weight** (`pspwght`) starts from the design weight and adjusts it further, so that the weighted sample of each country-round matches the population on age, sex, education and region. It also corrects part of what the design weight cannot reach, the imbalance that remains when some kinds of selected people take part less often than others. It describes the same national adult populations as the design weight, at a higher cost in precision, with design effects from `r num(min(tr_deff$post), 2)` to `r num(max(tr_deff$post), 2)`.
+
+The **population size weight** (`pweight`) is constant within each country-round. The ESS defines it as the population aged 15 and over divided by the number of respondents in the data file times 10,000, so multiplying it back gives the adult population that a country-round stands for: about `r num(ad("DE"), 1)` million in Germany and `r num(ad("IE"), 1)` million in Ireland, on average over their rounds. On its own it changes nothing within a country-round. Multiplied by the design weight or by the post-stratification weight, it makes each country-round count in proportion to its adult population rather than its number of interviews.
+
+### Weights and estimands {#sec-trust-describe}
+
+@tbl-trust-five fits the reference specification of the curve (distrust of parliament, the controls of the paper, every item answered and an intercept for every country-round) under the five ways of using the weights that the menu offers.
+
+```{r}
+#| label: tbl-trust-five
+#| echo: false
+#| tbl-cap: "The reference specification of the immigration-and-trust case under each use of the weights, with errors clustered by country (t on 15 df). The shift is the change from the fit without weights. Sources: `cases/trust/data/spec_curve.csv` for the three options on the curve and `cases/trust/data/display_options.csv` for the two off it."
+tr_five |>
+  mutate(option = factor(option, c("none", "design", "population", "post", "post_population"))) |>
+  arrange(option) |>
+  transmute(
+    Weights = label,
+    Variable = c(none = "–", design = "dweight", population = "dweight × pweight",
+                 post = "pspwght", post_population = "pspwght × pweight")[as.character(option)],
+    `Population described` = c(
+      none = "the respondents as interviewed",
+      design = "the adult population of each country",
+      population = "the adults of the 16 countries as one population",
+      post = "the adult population of each country, matched to its population margins",
+      post_population = "the adults of the 16 countries as one population, matched to population margins"
+    )[as.character(option)],
+    `On the curve` = if_else(on_curve, "yes", "no, a check"),
+    Coefficient = num(b),
+    Shift = if_else(option == "none", "–", tr_sgn(b - tw("none", "b"))),
+    `Clustered SE` = num(se, 4),
+    t = num(stat, 1)
+  ) |>
+  as.data.frame() |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 5:8, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+The coefficient moves by little, from `r num(min(tr_five$b))` to `r num(max(tr_five$b))`, and the reason why it moves at all shows what each weight does. With an intercept for every country-round, the coefficient compares respondents only within their own country and round, and it can be written exactly as a weighted average of 16 slopes, one for each country. The slope of a country is the association between concern and distrust among its respondents once the controls are held constant. Its weight is the share of the variation in concern, net of the controls and of the intercepts, that the respondents of the country contribute, so a country counts for more when it has more respondents and when they differ more in their concern. @tbl-trust-shares gives the shares and the slopes without weights and with design and population weights, and in each column the shares multiplied by the slopes add up to the coefficient of @tbl-trust-five.
+
+```{r}
+#| label: tbl-trust-shares
+#| echo: false
+#| tbl-cap: "The reference specification as a weighted average of one slope per country: the share of each country in the estimate and the slope among its respondents, without weights and with design and population weights, beside the adult population that the population weight assigns to the country (the mean over its rounds). Within each pair of columns, the sum of share × slope is the coefficient. Source: `cases/trust/data/trust_ess.csv`."
+tr_shares |>
+  filter(weights != "design") |>
+  select(cntry, weights, share, slope) |>
+  tidyr::pivot_wider(names_from = weights, values_from = c(share, slope)) |>
+  left_join(tr_adults, by = "cntry") |>
+  arrange(desc(share_population)) |>
+  transmute(
+    Country = unname(tr_country_short[cntry]),
+    Rounds = as.character(rounds),
+    `Adults (millions)` = num(adults / 1e6, 1),
+    `Share, no weights` = pct(share_none),
+    `Slope, no weights` = num(slope_none),
+    `Share, design and population` = pct(share_population),
+    `Slope, design and population` = num(slope_population)
+  ) |>
+  as.data.frame() |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:7, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+Without weights every respondent counts once, so the shares follow the numbers of respondents and the spread of their concern. `r tr_names(tr_shares$cntry[tr_shares$weights == "none"][which.max(tr_shares$share[tr_shares$weights == "none"])])` carries the largest share, `r pct(max(tr_shares$share[tr_shares$weights == "none"]))`, and Italy, which took part in only two rounds, the smallest, `r pct(sh("IT", "none"))`. The coefficient then describes the respondents as they were interviewed, the people whom the survey happened to reach in each country.
+
+The design weight averages 1 in every country-round, so it rearranges respondents within each country and leaves the countries almost where they were: no share moves by more than `r num(100 * tr_moved, 1)` percentage points, and the coefficient goes from `r num(tw("none", "b"))` to `r num(tw("design", "b"))`. Each slope now describes the adult population of its country rather than its sample, and the coefficient averages the national populations with weights that still follow the sizes of the samples.
+
+Multiplied by the population weight, the design weight hands `r pct(tr_group(tr_big5, "population"))` of the estimate to the five largest countries, `r tr_names(tr_big5)`, which hold `r pct(tr_group(tr_big5, "none"))` of it without weights. The slopes of those five differ widely. The United Kingdom has the steepest slope of all 16, `r num(sh("GB", "none", "slope"))`, while Italy and Spain have two of the three flattest, `r num(sh("IT", "none", "slope"))` and `r num(sh("ES", "none", "slope"))`, so the balance of the estimate shifts towards countries in which concern and distrust go together less, and the coefficient falls to `r num(tw("population", "b"))`. It now describes the adults of the 16 countries taken together as one population, Western Europeans rather than Western European countries or their samples. That population is pooled over the rounds of the survey, so a country counts once for every round in which it took part, and Italy, with two rounds, and Austria and Greece, with three, count for less than their populations alone would give them. The precision falls as well. With errors clustered by country the standard error rises from `r num(tw("none", "se"), 4)` to `r num(tw("population", "se"), 4)`, because most of the evidence now comes from five of the 16 clusters.
+
+### The weights on the curve {#sec-trust-curve}
+
+The curve keeps three of the five options: no weights, design weights, and design weights multiplied by the population weight. Swapped into the `r tr_dv("design", "n_pairs")` pairs of twin specifications, which agree on every other decision, design weights move the estimate by `r tr_sgn(tr_dv("design", "shift_mean"))` on average (from `r tr_sgn(tr_dv("design", "shift_min"))` to `r tr_sgn(tr_dv("design", "shift_max"))`) and population weights by `r tr_sgn(tr_dv("population", "shift_mean"))` (from `r tr_sgn(tr_dv("population", "shift_min"))` to `r tr_sgn(tr_dv("population", "shift_max"))`). No pair changes the verdict at the 5% level, and the weights carry `r pct(tr_share[["weights"]])` of the variance of the `r nrow(tr_curve)` estimates.
+
+All three stay on the curve because the claim does not say which average it means. In the EU-frames case the population weight answers another question, as the section on [the average European](#the-average-european) explains, because that claim concerns national economies and its unit is the member state. The claim of this case is about individuals, as the first proposition of the paper puts it: "individuals expressing most concern about the impact of immigration on the national community will be most distrusting of politicians and political institutions" [@McLaren2012CulturalDivideEurope, p. 205]. Whether the average is to be taken over the respondents, over each national population or over Western Europeans as one population is left open, so each weight answers a defensible reading of the claim, and the curve holds them as three estimands rather than as three estimates of one.
+
+The two post-stratification options stay off the curve as checks. The post-stratification weight describes the same national populations as the design weight, with a further correction for who took part, so it checks an answer that the curve already holds: at the reference settings it gives `r num(tw("post", "b"), 4)` against `r num(tw("design", "b"), 4)`, and with the population weight `r num(tw("post_population", "b"), 4)` against `r num(tw("population", "b"), 4)`. The SCORE replication of the claim on round 5 of the ESS weighted its respondents in this way and found `r num(tr_marks$b[tr_marks$id == "SCORE_1634"])`, against 0.190 without the weights, a difference of the same order as those of @tbl-trust-five.
+
+### Exercise {#sec-trust-exercise}
+
+1. In @tbl-trust-shares, multiply each share by the slope beside it and add the products for each pair of columns. Which three countries contribute most to the fall from `r num(tw("none", "b"))` to `r num(tw("population", "b"))`, and is it their slopes or their shares that changed?
+2. In the workspace of the case, `try_spec(weights = "post")` is refused with a reason. Write the estimand statement of the reference specification with design weights and with post-stratification weights. Do the two statements differ, and if they do not, what makes one of them a check on the other?
+3. Write one sentence for each of the three weights on the curve, stating whose association the coefficient averages, and compare them with the sentences of the first exercise for the EU-frames case.

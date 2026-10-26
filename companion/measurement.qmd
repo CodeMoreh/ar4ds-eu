@@ -1,6 +1,6 @@
 ---
 title: "The items behind the scales"
-subtitle: "The Eurobarometer question, the four published scales and the two composites, item by item"
+subtitle: "Survey items, scales and reliability in the EU-frames and immigration-and-trust cases"
 bibliography: ../references.bib
 ---
 
@@ -68,9 +68,11 @@ cell_wide <- datawizard::data_read("../cases/eu-frames/data/teney_panel_measurem
 cap_efa4 <- sprintf("The four-factor exploratory solution (minimum residual, oblimin rotation), accounting for %.1f%% of the variance in the items. Loadings under 0.30 are blank. Communality is the share of the variance of an item that the four factors reproduce together. Factor correlations: 1 with 4, %.2f; 2 with 3, %.2f; every positive factor with every negative one between %s and %s.", 100 * mean(l4$communality), phi4$F4[phi4$factor == "F1"], phi4$F3[phi4$factor == "F2"], num(min(phi4$F2[phi4$factor == "F1"], phi4$F3[phi4$factor == "F1"], phi4$F2[phi4$factor == "F4"], phi4$F3[phi4$factor == "F4"])), num(max(phi4$F2[phi4$factor == "F1"], phi4$F3[phi4$factor == "F1"], phi4$F2[phi4$factor == "F4"], phi4$F3[phi4$factor == "F4"])))
 ```
 
-Every outcome on the [specification menu](../cases/eu-frames/menu.qmd) is built from one survey question, and the six scales that the full menu offers as its frame set are six ways of adding up the answers to it, of which the curve of the claim keeps the three positive ones. The menu treats the choice among them as a decision about what the claim is about, and the choice of scoring rule, a share of a respondent's own mentions or a count of the items in the set, as a second decision of the same kind. It does not, however, show the instrument itself. This module takes the thirteen answer options apart: how often each is named, how the answers to them hang together, how many dimensions they hold, whether those dimensions are the four that the original author (OA) built and the course inherits, and how far a scale of two items can be trusted as a measure. The subject is measurement rather than modelling. Nothing here changes which scales the course uses, for reasons that are given in section 8, but the page should leave you knowing more about the numbers before you choose one. Section 9 then takes up the three decisions about the outcome that the curve of the claim settles differently from the full menu: the negative scales, the count and the rate, and the item set.
+This module of the [companion curriculum](index.qmd) works on two cases. Sections 1 to 9 use the EU-frames case, and section 10 the immigration-and-trust case.
 
-The tables on this page are read from files that were written before the page was built. The respondent-level records are GESIS-licensed and are not distributed with the course, so the analyses were run once, on the facilitator's machine, by `companion/_model-outputs/fit_measurement.R`, and only aggregate tables were committed: item prevalences, a correlation matrix, eigenvalues, loadings and fit indices. The correlation matrix is enough to repeat every exploratory step below without the microdata, and the [Try it](#try-it) section at the end does so.
+In the EU-frames case, every outcome on the [specification menu](../cases/eu-frames/menu.qmd) is built from one survey question, and the six scales that the full menu offers as its frame set are six ways of adding up the answers to it, of which the curve of the claim keeps the three positive ones. The menu treats the choice among them as a decision about what the claim is about, and the choice of scoring rule, a share of a respondent's own mentions or a count of the items in the set, as a second decision of the same kind. It does not, however, show the instrument itself. This module takes the thirteen answer options apart: how often each is named, how the answers to them hang together, how many dimensions they hold, whether those dimensions are the four that the original author (OA) built and the course inherits, and how far a scale of two items can be trusted as a measure. The subject is measurement rather than modelling. Nothing here changes which scales the course uses, for reasons that are given in section 8, but the page should leave you knowing more about the numbers before you choose one. Section 9 then takes up the three decisions about the outcome that the curve of the claim settles differently from the full menu: the negative scales, the count and the rate, and the item set.
+
+The tables of sections 1 to 9 are read from files that were written before the page was built. The respondent-level records are GESIS-licensed and are not distributed with the course, so the analyses were run once, on the facilitator's machine, by `companion/_model-outputs/fit_measurement.R`, and only aggregate tables were committed: item prevalences, a correlation matrix, eigenvalues, loadings and fit indices. The correlation matrix is enough to repeat every exploratory step below without the microdata, and the [Try it](#try-it) section at the end does so.
 
 ## 1. The instrument {#sec-instrument}
 
@@ -247,6 +249,249 @@ fa(R, nfactors = 3, n.obs = n, fm = "minres", rotate = "oblimin")   # the open q
 
 A second exercise stays closer to the menu. Fit the four-factor solution with a varimax rotation instead, which forces the factors to be uncorrelated, and compare the loadings of the two negative factors with the oblique ones above. The difference reflects the correlation of `r num(phi4$F3[phi4$factor == "F2"])` between them.
 
+## 10. The immigration-and-trust case {#sec-trust}
+
+```{r}
+#| label: setup-trust
+#| include: false
+# section 10: the immigration-and-trust case, computed when the page is built
+# from the extract of the European Social Survey that the course ships and from
+# the files of its curve; the objects of the section carry the prefix tr_
+source("../R/trust/_tools.R")
+tr_read <- \(f) readr::read_csv(file.path("../cases/trust/data", f), show_col_types = FALSE)
+tr_ess <- tr_read("trust_ess.csv")
+tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+tr_rel <- tr_read("display_reliability.csv")
+tr_opts <- tr_read("display_options.csv")
+tr_devs <- tr_read("menu_deviations.csv")
+tr_country <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Germany",
+                DK = "Denmark", ES = "Spain", FI = "Finland", FR = "France",
+                GB = "the United Kingdom", GR = "Greece", IE = "Ireland", IT = "Italy",
+                NL = "the Netherlands", NO = "Norway", PT = "Portugal", SE = "Sweden")
+tr_sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), num(x, d))
+tr_dv <- \(axis, option, col) tr_devs[[col]][tr_devs$axis == axis & tr_devs$option == option]
+
+# the respondents of the paper: citizens who do not belong to an ethnic minority
+tr_paper <- tr_ess |> filter(citizen %in% 1, minority %in% 0)
+tr_concern <- CONCERN_ITEMS$index
+tr_trust <- OUTCOME_ITEMS$index
+tr_social <- c("distrust_people", "unfair_people", "unhelpful_people")
+tr_cors <- \(items) {
+  r <- cor(tr_paper[items], use = "complete.obs")
+  r[upper.tri(r)]
+}
+tr_r <- \(a, b) cor(tr_paper[[a]], tr_paper[[b]], use = "complete.obs")
+tr_mean_item <- \(v, f) f(tr_paper[[v]], na.rm = TRUE)
+tr_missing <- purrr::map_dbl(purrr::set_names(c(tr_concern, tr_trust)), \(v) mean(is.na(tr_paper[[v]])))
+
+# Cronbach's alpha of the three scales by country and pooled: concern and trust
+# from the display file, interpersonal distrust computed here by the same rule
+# (the respondents of the paper who answered all three items)
+tr_social_rows <- tr_paper |> select(cntry, all_of(tr_social)) |> tidyr::drop_na()
+tr_alpha <- bind_rows(
+  tr_rel |> select(scale, cntry, alpha),
+  tr_social_rows |>
+    summarise(alpha = performance::cronbachs_alpha(pick(all_of(tr_social))), .by = cntry) |>
+    mutate(scale = "social"),
+  tibble::tibble(scale = "social", cntry = "all",
+                 alpha = performance::cronbachs_alpha(tr_social_rows[tr_social]))
+)
+stopifnot(abs(performance::cronbachs_alpha(tidyr::drop_na(tr_paper[tr_concern])) -
+                tr_rel$alpha[tr_rel$scale == "concern" & tr_rel$cntry == "all"]) < 1e-8)
+tr_alpha_sum <- tr_alpha |>
+  filter(cntry != "all") |>
+  summarise(mean_c = mean(alpha), lo = min(alpha), lo_c = cntry[which.min(alpha)],
+            hi = max(alpha), hi_c = cntry[which.max(alpha)], .by = scale) |>
+  left_join(tr_alpha |> filter(cntry == "all") |> select(scale, pooled = alpha), by = "scale") |>
+  mutate(mean_r = purrr::map_dbl(scale, \(s) mean(tr_cors(
+    list(concern = tr_concern, trust = tr_trust, social = tr_social)[[s]]))))
+tr_a <- \(s, col) tr_alpha_sum[[col]][tr_alpha_sum$scale == s]
+# alpha of k items that correlate at r on average, for standardised items
+tr_sb <- \(k, r) k * r / (1 + (k - 1) * r)
+
+# a single item of concern against the index: attenuation by reliability
+tr_ref <- tr_curve |> filter(is_reference)
+tr_rbar <- tr_a("concern", "mean_r")
+tr_ratio <- tr_rbar / tr_a("concern", "pooled")
+tr_single <- \(o) tr_opts$b[tr_opts$axis == "concern" & tr_opts$option == o]
+
+# the respondents of the paper by the number of items of concern answered
+tr_answered <- tr_paper |>
+  mutate(answered = rowSums(!is.na(pick(all_of(tr_concern)))),
+         concern = scale_mean(pick(everything()), tr_concern, "available")) |>
+  summarise(n = n(), concern = mean(concern, na.rm = TRUE),
+            distrust = mean(distrust_parl, na.rm = TRUE), .by = answered) |>
+  arrange(desc(answered))
+tr_skipped <- tr_paper |>
+  filter(rowSums(is.na(pick(all_of(tr_concern)))) %in% 1:2) |>
+  summarise(across(all_of(tr_concern), \(v) mean(is.na(v))))
+tr_av <- tr_curve |>
+  filter(outcome == "parliament", controls == "paper", weights == "none",
+         items == "available", fe == "country_round")
+
+# the four outcomes at the reference settings, and the three items and their
+# mean fitted on one sample, the respondents who answered every item
+tr_out_ref <- tr_curve |>
+  filter(controls == "paper", weights == "none", items == "complete", fe == "country_round")
+tr_o <- \(o, col) tr_out_ref[[col]][tr_out_ref$outcome == o]
+tr_common <- tr_paper |>
+  mutate(x = scale_mean(pick(everything()), tr_concern, "complete"),
+         soc_distrust = scale_mean(pick(everything()), tr_social, "complete"),
+         index = scale_mean(pick(everything()), tr_trust, "complete"),
+         cr = paste0(cntry, essround)) |>
+  select(cr, all_of(tr_trust), index, x, all_of(CONTROL_TERMS$paper)) |>
+  tidyr::drop_na()
+tr_common_b <- c(tr_trust, "index") |>
+  purrr::set_names() |>
+  purrr::map_dbl(\(v) {
+    fit <- lm(reformulate(c("x", CONTROL_TERMS$paper, "factor(cr)"), v), data = tr_common)
+    unname(coef(fit)["x"])
+  })
+stopifnot(nrow(tr_common) == tr_o("index", "n"),
+          abs(tr_common_b[["index"]] - tr_o("index", "b")) < 1e-8,
+          abs(mean(tr_common_b[tr_trust]) - tr_common_b[["index"]]) < 1e-10)
+
+# the share of the variance of the curve that each decision carries, from the
+# sums of squares of a main-effects model, as on the Multiverse page of the case
+tr_var <- anova(lm(b ~ outcome + controls + weights + items + fe, data = tr_curve))
+tr_share <- setNames(tr_var$`Sum Sq` / sum(tr_var$`Sum Sq`), trimws(rownames(tr_var)))
+```
+
+The immigration-and-trust case takes a claim from a study by the original author (OA) of that case: that citizens of Western European countries who are more concerned about the effect of immigration on the national community trust their national politics less [@McLaren2012CulturalDivideEurope]. In this section OA refers to that author. Both sides of the claim are scales, built from questions of the European Social Survey (ESS) that are answered on a scale from 0 to 10. Since these are not yes-or-no answers, the ordinary correlations between the items and the ordinary Cronbach's alpha do the work that the tetrachoric correlations and the ordinal alpha did in [section 3](#sec-correlations) and [section 7](#sec-reliability). The course ships the respondent-level extract of this case, `cases/trust/data/trust_ess.csv`, under the licence of the ESS, so every number below is computed from it when the page is built, among the `r big(nrow(tr_paper))` respondents whom the paper analyses: the citizens of the 16 countries who do not belong to an ethnic minority. The [case study](../cases/trust/index.qmd) describes the study and the data, and the [specification menu](../cases/trust/menu.qmd) sets out the decisions to which this section returns.
+
+### 10.1 The items and the index {#sec-trust-items}
+
+The ESS asked the respondents of its first four rounds three questions about immigration, each answered on a card from 0 to 10, which ask whether it is generally bad or good for the economy of the country that people come to live there from other countries, whether the cultural life of the country is undermined or enriched by them, and whether they make the country a worse or a better place to live. OA turns each answer round, so that 10 stands for the most concern, and builds the measure in one step: "The coding of all three of these items was reversed and the items were combined into a single index, with values ranging from 0 to 10, which was the average score given by each respondent for all three items" [@McLaren2012CulturalDivideEurope, p. 231]. Distrust comes from a battery that asks how far the respondent trusts each of a list of institutions, from 0 (no trust at all) to 10 (complete trust). The paper takes three of them, the national parliament, politicians and the legal system, again turned round so that 10 means no trust. @tbl-trust-items sets the six items side by side.
+
+```{r}
+#| label: tbl-trust-items
+#| tbl-cap: !expr 'sprintf("The three items of concern about immigration and the three items of distrust, each turned round so that 10 stands for the most concern or the least trust, among the %s respondents of the paper. Missing is the share of them without an answer. Source: `cases/trust/data/trust_ess.csv`.", big(nrow(tr_paper)))'
+tibble::tribble(
+  ~item,            ~Item,                                               ~ESS,
+  "imm_econ",       "Immigration is bad for the economy",                "imbgeco",
+  "imm_culture",    "Immigrants undermine cultural life",                "imueclt",
+  "imm_place",      "Immigrants make the country a worse place to live", "imwbcnt",
+  "distrust_parl",  "Distrust of the national parliament",               "trstprl",
+  "distrust_pol",   "Distrust of politicians",                           "trstplt",
+  "distrust_legal", "Distrust of the legal system",                      "trstlgl"
+) |>
+  transmute(Item, `ESS variable` = ESS,
+            Mean = num(purrr::map_dbl(item, tr_mean_item, f = mean)),
+            SD = num(purrr::map_dbl(item, tr_mean_item, f = sd)),
+            Missing = pct(tr_missing[item])) |>
+  tt() |>
+  style_tt(j = 3:5, align = "r")
+```
+
+The three items of concern correlate with one another at between `r num(min(tr_cors(tr_concern)))` and `r num(max(tr_cors(tr_concern)))`, against the 0.58 to 0.65 that the paper reports, so they share much of what they measure without being copies of one another. The item on cultural life has the lowest mean, which means that respondents worry less, on average, about what immigration does to cultural life than about what it does to the economy or to the country as a place to live. Between `r pct(min(tr_missing))` and `r pct(max(tr_missing))` of the respondents left each of the six items unanswered, and section 10.3 takes up what that does to a scale.
+
+### 10.2 Reliability {#sec-trust-reliability}
+
+Cronbach's alpha compares the variance of a sum of items with the variances of the items taken one at a time. When the items vary together, their sum varies more than the items alone would make it vary, and alpha approaches one; when they are unrelated, it falls towards zero. It grows with the average correlation between the items and with their number. Three items that correlate at `r num(tr_rbar)`, the average for the items of concern, give an alpha of about `r num(tr_sb(3, tr_rbar))`, and six items correlating at the same level would give `r num(tr_sb(6, tr_rbar))`. Read as a reliability, alpha estimates the share of the variance of a scale that comes from what its items have in common rather than from the noise of each answer, on the assumption that every item measures the same disposition equally well. @tbl-trust-alpha gives it for the three scales of the case. Besides the index of concern and the mean of the three trust items, these include interpersonal distrust, the mean of three items on whether most people can be trusted, would be fair and try to be helpful, which the paper holds constant as a control.
+
+```{r}
+#| label: tbl-trust-alpha
+#| tbl-cap: "Cronbach's alpha of the three scales of the case, among the respondents of the paper who answered all three items of a scale: pooled over the 16 countries, the mean of the 16 country values, and the countries where it is lowest and highest. The mean correlation is the average correlation between two items of the scale. The last column gives the values reported in the paper, pp. 231–233. Sources: `cases/trust/data/display_reliability.csv` and, for interpersonal distrust, `cases/trust/data/trust_ess.csv`."
+tr_alpha_sum |>
+  mutate(scale = factor(scale, c("concern", "trust", "social"))) |>
+  arrange(scale) |>
+  transmute(
+    Scale = c(concern = "Concern about immigration", trust = "Distrust of the three institutions",
+              social = "Interpersonal distrust")[as.character(scale)],
+    `Mean correlation` = num(mean_r),
+    `Alpha, pooled` = num(pooled),
+    `Alpha, mean of countries` = num(mean_c),
+    Lowest = paste0(lo_c, " ", num(lo)),
+    Highest = paste0(hi_c, " ", num(hi)),
+    `In the paper` = c(concern = "0.83 on average; lowest 0.75 (NL)", trust = "not reported",
+                       social = "0.76")[as.character(scale)]
+  ) |>
+  tt() |>
+  style_tt(j = 2:4, align = "r")
+```
+
+For the index of concern the extract agrees with the paper. Its alpha is `r num(tr_a("concern", "pooled"))` among all the respondents of the paper, the mean of the 16 country values is `r num(tr_a("concern", "mean_c"))`, which is the average that the paper reports, and the lowest value is in `r tr_country[[tr_a("concern", "lo_c")]]` (`r num(tr_a("concern", "lo"))`), where the paper also places its minimum of 0.75. The paper adds that the three items "load onto a single factor in every country" [@McLaren2012CulturalDivideEurope, p. 232]. Interpersonal distrust is the least reliable of the three scales, at `r num(tr_a("social", "pooled"))` against the 0.76 that the paper reports, and as low as `r num(tr_a("social", "lo"))` in `r tr_country[[tr_a("social", "lo_c")]]`. Because it is a control, its reliability bears on how much of what it stands for the analysis actually holds constant. A confounder that is measured with error is held constant only in part, and the part that is left over stays in the coefficient of concern.
+
+The same arithmetic explains why a single item of concern answers the claim less well than the index. If the three items measure the disposition equally well, the reliability of any one of them is about the correlation between two of them, `r num(tr_rbar)`, against `r num(tr_a("concern", "pooled"))` for the index. Random error in a predictor pulls its coefficient towards zero in proportion to the reliability of the predictor, a bias known as attenuation or regression dilution. A single item should therefore give about `r num(tr_ratio)` of the coefficient of the index, or about `r num(tr_ref$b * tr_ratio, 3)` points of distrust per point of concern at the reference settings of the curve, where the index gives `r num(tr_ref$b, 3)`. The three items give `r num(tr_single("economy"), 3)` (economy), `r num(tr_single("culture"), 3)` (cultural life) and `r num(tr_single("place"), 3)` (place to live), a little less than the prediction. The controls of the paper take away part of the true differences in concern between respondents and none of the error, so the reliability that matters once the controls are held constant is lower than that of the items on their own. The single items stay off the curve as weaker answers, and LT39B, the Multi100 analyst who measured concern with the item on the country as a place to live, has the smallest coefficient of the five reanalyses.
+
+### 10.3 Unanswered items {#sec-trust-unanswered}
+
+A respondent who answers two of the three items of a scale leaves the analyst with a choice, and the menu offers two rules for it. Both apply to every scale of the analysis: the index of concern, the mean of the trust items and interpersonal distrust. Under `complete`, a scale counts only for respondents who answered every item, which is the rule of the main analysis of the SCORE reproduction osf.io/jp7tr. Under `available`, it is the mean of the items that a respondent answered, which is the rule of the additional analysis of that reproduction and the rule by which the file that Multi100 gave the analysts was built. The paper does not say which rule it used. @tbl-trust-answered counts the respondents of the paper by the number of items of concern that they answered.
+
+```{r}
+#| label: tbl-trust-answered
+#| tbl-cap: "The respondents of the paper by the number of the three items of concern that they answered, with their mean concern over the items answered and their mean distrust of parliament. Source: `cases/trust/data/trust_ess.csv`."
+tr_answered |>
+  transmute(
+    `Items answered` = as.character(answered),
+    Respondents = big(n),
+    Share = pct(n / sum(n)),
+    `Mean concern` = if_else(is.nan(concern), "–", num(concern)),
+    `Mean distrust of parliament` = num(distrust)
+  ) |>
+  tt() |>
+  style_tt(j = 2:5, align = "r")
+```
+
+The respondents with a partial answer are few, `r pct(sum(tr_answered$n[tr_answered$answered %in% 1:2]) / nrow(tr_paper))` of the respondents of the paper, and they are not a random slice of them. Over the items that they did answer, they are more concerned about immigration than those who answered all three, and they distrust parliament more. The item that they skip most often is the one on the economy, which `r pct(tr_skipped$imm_econ)` of them left unanswered, against `r pct(tr_skipped$imm_culture)` for cultural life and `r pct(tr_skipped$imm_place)` for the country as a place to live.
+
+The respondents who answered none of the three have no score under either rule, and each rule makes a different assumption about those who answered some of them. The complete rule leaves them out, which does no harm only if they resemble the respondents who answered everything, and @tbl-trust-answered suggests that they do not. The available rule keeps them, on the assumption that a skipped item would have been answered like the items that were answered, and it gives them a scale built from fewer items, which carries more error. Neither assumption can be checked against answers that were never given, so both rules stay on the curve. Swapped into twin specifications, which agree on every other decision, the available rule keeps `r big(round(tr_dv("items", "available", "n_shift_mean")))` more respondents on average and moves the estimate by `r tr_sgn(tr_dv("items", "available", "shift_mean"), 4)` on average, from `r tr_sgn(tr_dv("items", "available", "shift_min"), 4)` to `r tr_sgn(tr_dv("items", "available", "shift_max"), 4)`. At the reference settings it gives `r num(tr_av$b, 3)` on `r big(tr_av$n)` respondents, against `r num(tr_ref$b, 3)` on `r big(tr_ref$n)`.
+
+### 10.4 The three trust items {#sec-trust-outcome}
+
+The three items of distrust hang together about as well as the items of concern. Parliament and politicians correlate at `r num(tr_r("distrust_parl", "distrust_pol"))`, parliament and the legal system at `r num(tr_r("distrust_parl", "distrust_legal"))`, and politicians and the legal system at `r num(tr_r("distrust_pol", "distrust_legal"))`. The mean of the three has an alpha of `r num(tr_a("trust", "pooled"))`, from `r num(tr_a("trust", "lo"))` in `r tr_country[[tr_a("trust", "lo_c")]]` to `r num(tr_a("trust", "hi"))` in `r tr_country[[tr_a("trust", "hi_c")]]`, so by the standard of the index of concern the three would make a reliable scale, and the menu offers their mean as an outcome. The paper nevertheless analyses them one at a time, for a reason that concerns the question rather than the measure: "if a relationship is found between concern about immigration and political distrust across these multiple indicators of the latter, this will be taken as a potential indication that the effects are unlikely to be limited to specific support for the particular set of incumbents in power at the time of the survey (and this is precisely why the three indicators have not been combined into a single index here)" [@McLaren2012CulturalDivideEurope, p. 212].
+
+The distinction behind that sentence, which the paper takes from Easton, is between specific support for the people in office and diffuse support for the political system. If concern goes with distrust of an unelected legal system as well as with distrust of politicians, the association is less likely to be a verdict on the government of the day, and a mean of the three would hide the comparison on which that argument rests. The legal system is the item that correlates least with the other two, which is what the argument needs it to be, since it is the target that stands furthest from the government. The trust items therefore show the limit of reliability as a guide, the point that [section 8](#sec-menu) made about the framing scales. Alpha says how well a set of items measures what they have in common, and it cannot say whether the claim is about what they have in common.
+
+The ESS asks about other institutions as well, and two of them bear on the claim. Trust in political parties joined the list after the first round, so the paper leaves it out because it "was not included in round 1" [@McLaren2012CulturalDivideEurope, p. 212, note 42], and an analysis of it would answer the claim for three of the four rounds. Trust in the European Parliament serves the paper as a contrast: across countries, distrust of it correlates with concern about immigration at only 0.20, against 0.51 to 0.70 for the national institutions [@McLaren2012CulturalDivideEurope, pp. 213–214], and it concerns an institution beyond the national community of which the claim speaks. The extract holds neither item, and the menu treats both as other questions.
+
+### 10.5 The outcome on the curve {#sec-trust-curve}
+
+All four outcomes stay on the curve of the claim. Parliament is the outcome of the reference specification, because SCORE tested the claim on the parliament column of Table 3 of the paper and the Multi100 instruction told the analysts to "focus on trust in parliament". Politicians and the legal system answer the claim as the paper states it, about national politicians and political institutions, and the mean of the three answers it as a claim about trust in politics as one attitude, which is how two of the five Multi100 analysts, N8P2J and LT39B, combined the items in their first task. @tbl-trust-outcomes gives the four at the reference settings of the curve: the controls of the paper, no weights, every item answered and an intercept for every country-round.
+
+```{r}
+#| label: tbl-trust-outcomes
+#| tbl-cap: "The four outcomes on the curve at the reference settings, in points of distrust (0–10) per point of concern (0–10), with errors clustered by country (t on 15 df) and the partial correlation by the rule of Multi100. Each specification has its own analysed respondents. Source: `cases/trust/data/spec_curve.csv`."
+tr_out_ref |>
+  mutate(outcome = factor(outcome, SPEC_AXES$outcome)) |>
+  arrange(outcome) |>
+  transmute(
+    Outcome = c(parliament = "Parliament", politicians = "Politicians", legal = "Legal system",
+                index = "Mean of the three")[as.character(outcome)],
+    Coefficient = num(b, 3),
+    `Clustered SE` = num(se, 4),
+    t = num(stat, 1),
+    `Partial r` = num(r, 3),
+    Respondents = big(n)
+  ) |>
+  tt() |>
+  style_tt(j = 2:6, align = "r")
+```
+
+Across the curve, set against parliament on twin specifications, distrust of politicians lies `r num(abs(tr_dv("outcome", "politicians", "shift_mean")), 3)` points lower on average (from `r tr_sgn(tr_dv("outcome", "politicians", "shift_min"))` to `r tr_sgn(tr_dv("outcome", "politicians", "shift_max"))`), the legal system `r num(abs(tr_dv("outcome", "legal", "shift_mean")), 3)` and the mean of the three `r num(abs(tr_dv("outcome", "index", "shift_mean")), 3)`, and no pair changes the verdict at the 5% level. The outcome carries `r pct(tr_share[["outcome"]])` of the variance of the `r nrow(tr_curve)` estimates, against `r pct(tr_share[["controls"]])` for the adjustment, so the choice of institution moves the size of the result far less than the choice of what to hold constant.
+
+The mean of the three shows what random error in an outcome does and does not do. On the `r big(nrow(tr_common))` respondents who answered every item, the sample on which the mean is analysed, the three institutions give `r num(tr_common_b[["distrust_parl"]], 3)` for parliament, `r num(tr_common_b[["distrust_pol"]], 3)` for politicians and `r num(tr_common_b[["distrust_legal"]], 3)` for the legal system. Their average, `r num(mean(tr_common_b[tr_trust]), 3)`, is exactly the coefficient of the mean, because the regression of an average of outcomes on the same predictors is the average of their regressions. Averaging the items therefore places the coefficient among those of its items and does not raise it. Error in an outcome adds noise around the regression line without pulling the coefficient towards zero, unlike error in a predictor. What averaging changes is the precision: the mean has the smallest clustered standard error of the four and the largest partial correlation, `r num(tr_o("index", "r"), 3)` against `r num(tr_o("parliament", "r"), 3)` for parliament, because part of the noise of each item cancels out in the average. That is the case for the mean as a measure. The argument of the paper for the separate items concerns the question, and the curve keeps both.
+
+## Try it {#sec-trust-try}
+
+In the workspace of the case the extract is `data/trust_ess.csv`. The code below computes the alpha of the index of concern in each country. Find the country where it is lowest, and work out which of the three items, left out, would lower it most there. Then compute the alpha of the three trust items, and of parliament and politicians alone, and decide whether the legal system adds to the reliability of the mean, and whether that matters for the argument of the paper in section 10.4.
+
+```r
+library(dplyr); library(purrr); library(performance)
+ess <- readr::read_csv("data/trust_ess.csv", show_col_types = FALSE)
+concern <- c("imm_econ", "imm_culture", "imm_place")
+
+ess |>
+  filter(citizen == 1, minority == 0) |>
+  select(cntry, all_of(concern)) |>
+  tidyr::drop_na() |>
+  split(~cntry) |>
+  map_dbl(\(d) cronbachs_alpha(select(d, -cntry)))
+```
+
 ## Sources and provenance {#sec-sources}
 
-The question wording, the assignment of items to the four scales and the share rule are taken from the original paper [@Teney2016DoesEUEconomic, pp. 623 and 625], and its removal of the unemployment item as a robustness check from its fifth footnote. Every number on this page was computed by `companion/_model-outputs/fit_measurement.R` on the respondent-level rebuild of the sixteen GESIS waves that the [statistical methods module](stats-methods.qmd#sec-sources) describes, with the tetrachoric correlations and the exploratory solutions from the psych package and the confirmatory models from lavaan, and only the aggregate tables it writes are committed: the prevalences, the tetrachoric matrix, the eigenvalues with their parallel-analysis benchmark, the loadings and factor correlations of the two exploratory solutions, the fit indices and standardised loadings of the three confirmatory models, and the reliability table. The respondent-level file is never distributed with the course, and the [data sources module](data-sources.qmd#sec-gesis) explains the registration route to the raw data.
+The question wording, the assignment of items to the four scales and the share rule are taken from the original paper [@Teney2016DoesEUEconomic, pp. 623 and 625], and its removal of the unemployment item as a robustness check from its fifth footnote. Every number in sections 1 to 8 was computed by `companion/_model-outputs/fit_measurement.R` on the respondent-level rebuild of the sixteen GESIS waves that the [statistical methods module](stats-methods.qmd#sec-sources) describes, with the tetrachoric correlations and the exploratory solutions from the psych package and the confirmatory models from lavaan, and only the aggregate tables it writes are committed: the prevalences, the tetrachoric matrix, the eigenvalues with their parallel-analysis benchmark, the loadings and factor correlations of the two exploratory solutions, the fit indices and standardised loadings of the three confirmatory models, and the reliability table. The respondent-level file is never distributed with the course, and the [data sources module](data-sources.qmd#sec-gesis) explains the registration route to the raw data.
+
+Section 10 rests on a file that the course does distribute. The extract `cases/trust/data/trust_ess.csv` is adapted from rounds 1–4 of the European Social Survey and shipped under the licence of the survey, CC BY-NC-SA 4.0, and its [codebook](../cases/trust/data/trust_ess_codebook.md) gives the editions, their DOIs and the construction of every column. The reliabilities of the index of concern and of the trust items come from `cases/trust/data/display_reliability.csv`, the single items of concern from `display_options.csv`, the comparisons of options on twin specifications from `menu_deviations.csv` and the outcomes from `spec_curve.csv`, all written by the pipeline of the case in `R/trust/`, and everything else in the section is computed from the extract when the page is built. The wording of the index, the reliabilities that the paper reports and its reason for keeping the trust items apart are quoted from the paper [@McLaren2012CulturalDivideEurope, pp. 212–214 and 231–233].
