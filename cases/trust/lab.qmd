@@ -1,0 +1,1381 @@
+---
+title: "Browser lab"
+engine: knitr
+format:
+  live-html:
+    toc: true
+    include-after-body: ../../_includes/track-choice.html
+    webr:
+      packages:
+        - dplyr
+        - purrr
+        - ggplot2
+        - htmltools
+resources:
+  - data/trust_ess.csv
+  - data/spec_curve.csv
+  - data/menu_options.csv
+live:
+  show-hints: true
+  show-solutions: true
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+{{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. The facilitator drives it on the shared screen, and it is the fallback for a machine that will not cooperate on the day. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page, and nothing done here is wasted, since both fit the same models to the same data and give the same numbers. The one exception is the reproduction of Task 3, which needs a file that a browser page cannot fetch; the task says why, and what the page does instead.
+
+::: {.callout-important icon="false"}
+## While the R engine loads
+
+The R engine and the ESS extract (about 10 MB) download into your browser the first time you open this page, which can take up to a minute on a slow connection. Read Task 1 while they load. You will know that the page is ready when the first code cell switches from a loading spinner to a "Run Code" button.
+
+Keep this tab open. Your work stays in this page until you refresh it – there is nothing to install, nothing to save to disk, and no account needed.
+:::
+
+```{webr}
+#| edit: false
+#| autorun: true
+#| output: false
+# Shared setup – this runs automatically once the engine is ready. It loads
+# the ESS extract into your browser session as `ess`, one row per respondent,
+# the object from which the cells below work. The file arrives at data/... in
+# the browser through the `resources:` list at the top of this page.
+ess <- read.csv("data/trust_ess.csv", na.strings = c("", "NA"))  # r-style: keep – readr is not loaded on this page
+```
+
+```{webr}
+#| include: false
+#| autorun: true
+# Lab machinery: the estimator of the course, the specification menu, its
+# validation, and the helpers of Tasks 4 and 5 – try_spec(), my_experiments(),
+# submit_exploration(), prereg(), run_spec() and report_result(). The same
+# code as R/spec_tools.R of the downloadable workspace, apart from the tag of
+# the class chart, which lasts for the browser session here, and the download
+# of Task 3, which a browser cannot make. Every specification is fitted live
+# (about a second in the browser); data/spec_curve.csv places it among the
+# 192, and data/menu_options.csv gives the reason for every option that is
+# not on the curve. Both arrive with the page through its `resources:` list.
+
+# ============================================================================
+# CONFIGURATION – the class chart and the course site
+# ============================================================================
+# The results Form that submit_exploration() and report_result() pre-fill: its
+# ID and the entry codes of its seven fields. They belong to the Form that the
+# cases of the course share, set up for the EU-frames case; a Form of its own
+# replaces them here and nowhere else. The word in .case_word follows the tag
+# in every label, so that the chart of this case reads only its own rows.
+.form_id <- "1FAIpQLSezoAEOnZUfP4pkfN28_XtEBwSyc2RLsXB-h8RPSegF7_t76A"
+.form_entry <- c(spec = "entry.832496914", b = "entry.1656311800", se = "entry.1337458262",
+                 t = "entry.1940779437", df = "entry.1682711955", n = "entry.1586392724",
+                 r = "entry.1660273001")
+.case_word <- "trust"
+.course_url <- "https://codemoreh.github.io/applied-replication"
+# ============================================================================
+
+
+# ---- The estimator -------------------------------------------------------------
+# A verbatim copy of R/trust/_tools.R in the course repository, everything
+# below its banner, which builds the curve; the downloadable workspace carries
+# the same copy in R/spec_tools.R.
+
+# The fits use base R, dplyr and purrr only, on purpose: the same code runs in the
+# downloadable workspace and in webR on the browser lab. Fixed effects are
+# absorbed by subtracting group means, so a fit on 110,000 respondents needs no
+# dummy matrix. R/trust/check_parity.R checks the results against fixest and
+# sandwich.
+
+# The menu of the curve, in menu order: every combination is one specification
+# (4 x 4 x 3 x 2 x 2 = 192). Anything else is refused by check_spec() unless it
+# is one of the off-curve options listed in OFF_CURVE.
+SPEC_AXES <- list(
+  outcome  = c("parliament", "politicians", "legal", "index"),
+  controls = c("none", "demog", "outlook", "paper"),
+  weights  = c("none", "design", "population"),
+  items    = c("complete", "available"),
+  fe       = c("country_round", "country_and_round")
+)
+
+# Settings that the curve holds fixed, with the alternatives that fit_spec()
+# can also fit for the displays beside the curve. Where a list starts with the
+# setting of the curve, that first option is it; `controls`, `weights` and `fe`
+# list only the alternatives to the options of the curve.
+OFF_CURVE <- list(
+  controls = c("paper_no_unhappy"),
+  weights = c("post", "post_population"),
+  sample  = c("paper", "all_respondents"),
+  concern = c("index", "economy", "culture", "place"),
+  extra   = c("none", "gov_dissat"),
+  cluster = c("country", "country_round"),
+  fe      = c("pooled")
+)
+
+# Outcomes: distrust (0-10, the trust items reversed) in each institution, or
+# the mean of the three.
+OUTCOME_ITEMS <- list(
+  parliament  = "distrust_parl",
+  politicians = "distrust_pol",
+  legal       = "distrust_legal",
+  index       = c("distrust_parl", "distrust_pol", "distrust_legal")
+)
+
+CONCERN_ITEMS <- list(
+  index   = c("imm_econ", "imm_culture", "imm_place"),
+  economy = "imm_econ",
+  culture = "imm_culture",
+  place   = "imm_place"
+)
+
+# Adjustment sets, each nested in the next, and the set of the paper without
+# unhappiness, which the Multi100 instruction of Task 2 required. `soc_distrust`
+# is the mean of the three items of interpersonal distrust, built by the same
+# rule as the scales.
+CONTROL_TERMS <- list(
+  none    = character(0),
+  demog   = c("age", "female", "education", "hh_income_z"),
+  outlook = c("age", "female", "education", "hh_income_z",
+              "unhappy", "life_dissat", "meet_rarely", "soc_distrust", "left_right"),
+  paper   = c("age", "female", "education", "hh_income_z",
+              "unhappy", "life_dissat", "meet_rarely", "soc_distrust", "left_right",
+              "econ_dissat", "income_difficulty", "health_dissat", "educ_dissat",
+              "winner", "far_right_vote"),
+  paper_no_unhappy = c("age", "female", "education", "hh_income_z",
+                       "life_dissat", "meet_rarely", "soc_distrust", "left_right",
+                       "econ_dissat", "income_difficulty", "health_dissat", "educ_dissat",
+                       "winner", "far_right_vote")
+)
+
+# The specification closest to the model of the paper (Table 3, parliament)
+REFERENCE <- list(outcome = "parliament", controls = "paper", weights = "none",
+                  items = "complete", fe = "country_round")
+
+check_spec <- function(outcome, controls, weights, items, fe,
+                       sample = "paper", concern = "index", extra = "none", cluster = "country") {
+  chosen <- list(outcome = outcome, controls = controls, weights = weights, items = items, fe = fe,
+                 sample = sample, concern = concern, extra = extra, cluster = cluster)
+  widened <- intersect(names(SPEC_AXES), names(OFF_CURVE))
+  allowed <- c(purrr::imap(SPEC_AXES, \(options, axis) c(options, OFF_CURVE[[axis]])),
+               OFF_CURVE[setdiff(names(OFF_CURVE), widened)])
+  bad <- names(chosen)[!purrr::map2_lgl(chosen, allowed[names(chosen)], \(v, ok) length(v) == 1 && v %in% ok)]
+  if (length(bad) > 0) {
+    stop("Not on the menu: ", paste0(bad, " = '", unlist(chosen[bad]), "'", collapse = ", "),
+         ". The options are listed in menu_options.csv.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# The mean of a set of 0-10 items. "complete" needs every item answered (the
+# focal rule of the SCORE reproduction); "available" averages whatever items
+# were answered (its additional analysis, and the Multi100 file).
+scale_mean <- function(data, items, rule) {
+  m <- as.matrix(data[, items, drop = FALSE])
+  if (rule == "complete") return(rowMeans(m))
+  out <- rowMeans(m, na.rm = TRUE)
+  out[is.nan(out)] <- NA
+  out
+}
+
+# The analysed rows of one specification: the sample, the outcome, the measure
+# of concern, the controls and the weight, without the rows that miss any of them.
+spec_frame <- function(ess, outcome = "parliament", controls = "paper", weights = "none",
+                       items = "complete", sample = "paper", concern = "index", extra = "none") {
+  terms <- c(CONTROL_TERMS[[controls]], if (extra != "none") extra)
+  ess |>
+    dplyr::filter(.env$sample == "all_respondents" | (citizen %in% 1 & minority %in% 0)) |>
+    dplyr::mutate(
+      y = scale_mean(dplyr::pick(dplyr::everything()), OUTCOME_ITEMS[[outcome]], items),
+      x = scale_mean(dplyr::pick(dplyr::everything()), CONCERN_ITEMS[[concern]], items),
+      soc_distrust = scale_mean(dplyr::pick(dplyr::everything()),
+                                c("distrust_people", "unfair_people", "unhelpful_people"), items),
+      w = switch(.env$weights, none = 1, design = dweight, population = dweight * pweight,
+                 post = pspwght, post_population = pspwght * pweight),
+      cr = paste0(cntry, essround)
+    ) |>
+    dplyr::select(cntry, essround, cr, y, x, w, dplyr::all_of(terms)) |>
+    dplyr::filter(dplyr::if_all(dplyr::everything(), \(v) !is.na(v)))
+}
+
+# Weighted group means subtracted from every column of a matrix
+demean <- function(m, g, w) {
+  means <- rowsum(w * m, g, reorder = FALSE) / as.vector(rowsum(w, g, reorder = FALSE))
+  m - means[match(g, rownames(means)), , drop = FALSE]
+}
+
+# One specification: the coefficient of concern about immigration (points of
+# distrust on the 0-10 scale per point of concern; positive = more concern goes
+# with more distrust, the direction of the claim), its errors clustered by
+# country (CR1, t on G - 1 df, the rule of the curve), the conventional test,
+# and the partial correlation by the Multi100 rule.
+fit_spec <- function(ess, outcome = "parliament", controls = "paper", weights = "none",
+                     items = "complete", fe = "country_round", sample = "paper",
+                     concern = "index", extra = "none", cluster = "country") {
+  check_spec(outcome, controls, weights, items, fe, sample, concern, extra, cluster)
+  frame <- spec_frame(ess, outcome, controls, weights, items, sample, concern, extra)
+  terms <- c("x", CONTROL_TERMS[[controls]], if (extra != "none") extra)
+  x <- as.matrix(frame[, terms])
+  w <- frame$w
+
+  # Round dummies for every round present but the first, so that a subset of
+  # rounds still fits
+  if (fe == "country_and_round") {
+    shifts <- sort(unique(frame$essround))[-1]
+    rounds <- outer(frame$essround, shifts, `==`) * 1
+    colnames(rounds) <- paste0("round", shifts)
+    x <- cbind(x, rounds)
+  }
+  absorbed <- switch(fe, country_round = frame$cr, country_and_round = frame$cntry,
+                     pooled = rep("all", nrow(frame)))
+  m <- demean(cbind(y = frame$y, x), absorbed, w)
+  yt <- m[, 1]
+  xt <- m[, -1, drop = FALSE]
+
+  bread <- solve(crossprod(xt, w * xt))
+  beta <- drop(bread %*% crossprod(xt, w * yt))
+  e <- yt - drop(xt %*% beta)
+  n <- nrow(xt)
+  k <- ncol(xt)
+  n_fe <- length(unique(absorbed))
+
+  # Conventional (model-based) errors, with the absorbed groups in the df
+  df_conv <- n - k - n_fe
+  se_conv <- sqrt(sum(w * e^2) / df_conv * bread[1, 1])
+
+  # Cluster-robust CR1 errors. Groups absorbed inside the clusters do not count
+  # in K, apart from one that stands for the intercept (the default of fixest).
+  groups <- if (cluster == "country") frame$cntry else frame$cr
+  n_cl <- length(unique(groups))
+  scores <- rowsum(xt * (w * e), groups)
+  k_ssc <- k + 1
+  adj <- n_cl / (n_cl - 1) * (n - 1) / (n - k_ssc)
+  se <- sqrt(adj * (bread %*% crossprod(scores) %*% bread)[1, 1])
+
+  b <- beta[[1]]
+  t_cl <- b / se
+  t_conv <- b / se_conv
+  data.frame(
+    outcome = outcome, controls = controls, weights = weights, items = items, fe = fe,
+    sample = sample, concern = concern, extra = extra, cluster = cluster,
+    b = b, se = se, stat_type = "t", stat = t_cl, df = n_cl - 1,
+    p = 2 * stats::pt(-abs(t_cl), n_cl - 1),
+    se_conv = se_conv, t_conv = t_conv, df_conv = df_conv,
+    p_conv = 2 * stats::pt(-abs(t_conv), df_conv),
+    r = r_multi100(t_conv, "t", df_conv, n),
+    b_std = b * stats::sd(frame$x) / stats::sd(frame$y),
+    n = n, n_clusters = n_cl, n_country_rounds = length(unique(frame$cr))
+  )
+}
+
+# The conversion rules of Multi100 (standard_correlation_coefficient.R): t with
+# its df; z with the sample size standing in for the missing df; F with one
+# numerator df read as the square of a t.
+r_multi100 <- function(stat, stat_type, df, n) {
+  stat_type <- rep_len(stat_type, length(stat))
+  dplyr::case_when(
+    stat_type == "t" ~ stat / sqrt(stat^2 + df),
+    stat_type == "z" ~ tanh(abs(stat) * sqrt(1 / (n - 3))) * sign(stat),
+    stat_type == "F" ~ sqrt(stat / (stat + df))
+  )
+}
+
+# The free-text label that carries a specification to the class chart.
+spec_line <- function(outcome, controls, weights, items, fe) {
+  sprintf("outcome=%s controls=%s weights=%s items=%s fe=%s", outcome, controls, weights, items, fe)
+}
+
+
+# ---- The menu --------------------------------------------------------------------
+# The twelve decisions in the order of the menu, each with the options that
+# the curve keeps. The five decisions of SPEC_AXES keep two or more options,
+# which multiply to the 192 specifications; on the other seven the curve keeps
+# one. Every other option is a row of data/menu_options.csv, whose reason the
+# helpers print when it is asked for.
+.menu <- list(
+  # Level 1 – Estimands
+  outcome   = SPEC_AXES$outcome,
+  controls  = SPEC_AXES$controls,
+  weights   = SPEC_AXES$weights,
+  sample    = "paper",
+  # Level 2 – Measurement
+  concern   = "index",
+  items     = SPEC_AXES$items,
+  education = "five",
+  votes     = "cabinet",
+  missing   = "listwise",
+  # Level 3 – Estimation
+  fe        = SPEC_AXES$fe,
+  errors    = "country",
+  scale     = "points"
+)
+.level_titles <- c(estimand    = "Level 1 – Estimands",
+                   measurement = "Level 2 – Measurement",
+                   estimation  = "Level 3 – Estimation")
+
+
+# ---- The shipped files -----------------------------------------------------------
+# Each file is read once and cached, apart from the copy of the data that the
+# page loads as `ess`, so that edits made to that copy in a task never reach
+# the helpers. The base reader keeps this code identical, line for line, with
+# the copy in R/spec_tools.R of the workspace; it reads the empty cells of the
+# extract as NA, as readr does.
+.cache <- new.env(parent = emptyenv())
+.read_once <- function(name, path) {
+  if (is.null(.cache[[name]])) {
+    if (!file.exists(path))
+      stop(sprintf("%s is missing – the page loads it through its resources list. Reload the page.",
+                   path), call. = FALSE)
+    assign(name, utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8", # r-style: keep – the same reader as the workspace
+                                 na.strings = c("", "NA")),
+           envir = .cache)
+  }
+  .cache[[name]]
+}
+.ess     <- function() .read_once("ess", "data/trust_ess.csv")
+.curve   <- function() .read_once("curve", "data/spec_curve.csv")
+.options <- function() .read_once("options", "data/menu_options.csv")
+
+# The extract that the setup cell has just read goes into the cache as it is,
+# so that the helpers never read the 10 MB file a second time. An edit to
+# `ess` in a task makes a new copy and leaves the cached one untouched.
+if (exists("ess")) assign("ess", ess, envir = .cache)
+
+
+# ---- Pages of the course site ----------------------------------------------------
+.pages <- c(
+  "cases/trust/index.qmd"       = "Case study",
+  "cases/trust/menu.qmd"        = "Specification menu",
+  "cases/trust/map.qmd"         = "Decision map",
+  "cases/trust/multiverse.qmd"  = "Multiverse",
+  "companion/dags.qmd"          = "Causal graphs and adjustment sets",
+  "companion/measurement.qmd"   = "The items behind the scales",
+  "companion/weighting.qmd"     = "Weights",
+  "companion/missingness.qmd"   = "Missing answers",
+  "companion/stats-methods.qmd" = "The statistical methods behind the course",
+  "companion/multiverse.qmd"    = "The multiverse and its critics")
+.page_ref <- function(path) {
+  title <- if (path %in% names(.pages)) .pages[[path]] else path
+  sprintf("%s, %s/%s", title, .course_url, sub("\\.qmd$", ".html", path))
+}
+.or_list <- function(x) {
+  q <- paste0("\"", x, "\"")
+  if (length(q) == 1) q else paste(paste(q[-length(q)], collapse = ", "), "or", q[length(q)])
+}
+
+
+# ---- Validation ------------------------------------------------------------------
+# Two entry points into the same rules. .validate() takes a named list, which
+# is how try_spec() supplies its arguments; .check_choices() reads the twelve
+# my_* choices of the preregistration cell. An option that is not on the
+# curve stops with the reason from menu_options.csv, the page of the course
+# site that teaches it, and the options that stay on the curve.
+.on_menu <- function(axis, v) is.character(v) && length(v) == 1 && !is.na(v) && v %in% .menu[[axis]]
+
+.refuse <- function(axis, v, as_args) {
+  shown <- if (as_args) axis else paste0("my_", axis)
+  keep  <- .menu[[axis]]
+  map   <- paste0("  Every decision and its options: ", .page_ref("cases/trust/map.qmd"))
+  if (!is.character(v) || length(v) != 1 || is.na(v))
+    stop(sprintf("%s needs one option in quotes, for example %s = \"%s\".", shown, shown, keep[1]),
+         call. = FALSE)
+  opts <- .options()
+  row  <- dplyr::filter(opts, .data$axis == .env$axis, .data$option == .env$v)
+  off  <- dplyr::filter(opts, .data$axis == .env$axis, !.data$on_curve)$option
+  msg <- if (nrow(row) == 1) c(
+    sprintf("%s = \"%s\" (%s) is not on the curve of %d specifications, so it has no result here.",
+            shown, v, row$label, nrow(.curve())),
+    paste0("  Why: ", row$reason),
+    paste0("  Where it is taught: ", .page_ref(row$taught_on)),
+    map,
+    sprintf("  To stay on the curve, choose %s = %s.", shown, .or_list(keep))
+  ) else c(
+    sprintf("%s = \"%s\" is not an option on the menu.", shown, v),
+    sprintf("  On the curve: %s.", paste(keep, collapse = " | ")),
+    if (length(off) > 0)
+      sprintf("  Off the curve, refused with the reason why: %s.", paste(off, collapse = " | ")),
+    map
+  )
+  stop(paste(msg, collapse = "\n"), call. = FALSE)
+}
+
+.validate <- function(ch, as_args = FALSE) {
+  bad <- purrr::discard(names(.menu), \(a) .on_menu(a, ch[[a]]))
+  if (length(bad) > 0) .refuse(bad[1], ch[[bad[1]]], as_args)
+  ch[names(.menu)]
+}
+
+# The choices are looked up from the frame of this function outwards, which
+# reaches the session in which the preregistration cell was run.
+.check_choices <- function() {
+  need <- paste0("my_", names(.menu))
+  ch <- mget(need, envir = environment(), inherits = TRUE, ifnotfound = list(NULL))
+  missing <- need[purrr::map_lgl(ch, is.null)]
+  if (length(missing) > 0)
+    stop("Not declared yet: ", paste(missing, collapse = ", "),
+         ". Fill in every choice in the preregistration cell and run it first.", call. = FALSE)
+  .validate(stats::setNames(ch, names(.menu)))
+}
+
+
+# ---- The live fit ----------------------------------------------------------------
+# fit_spec() on the five decisions that vary on the curve, with the 95%
+# interval of the estimate (t on 15 df, from the errors clustered by country)
+# and the place of the result among the 192. The fit is checked against its
+# row of data/spec_curve.csv; a difference means that the page loaded an
+# incomplete file.
+.result <- function(ch) {
+  fit <- fit_spec(.ess(), ch$outcome, ch$controls, ch$weights, ch$items, ch$fe) |>
+    as.list()
+  crit <- stats::qt(0.975, fit$df)
+  curve <- .curve()
+  stored <- dplyr::filter(curve, .data$outcome == ch$outcome, .data$controls == ch$controls,
+                          .data$weights == ch$weights, .data$items == ch$items,
+                          .data$fe == ch$fe)
+  if (nrow(stored) != 1) {
+    warning("This specification has no row in data/spec_curve.csv; reload the page.",
+            call. = FALSE)
+  } else if (abs(fit$b - stored$b) > 1e-6 || abs(fit$stat - stored$stat) > 1e-6) {
+    warning(sprintf("The live fit (b = %.5f, t = %.3f) differs from the curve that this page loaded (b = %.5f, t = %.3f). Reload the page.",
+                    fit$b, fit$stat, stored$b, stored$stat),
+            call. = FALSE)
+  }
+  c(fit, list(ci_low = fit$b - crit * fit$se, ci_high = fit$b + crit * fit$se,
+              larger = sum(curve$b > fit$b + 1e-9), n_curve = nrow(curve)))
+}
+
+
+# ---- The printout ----------------------------------------------------------------
+.fmt_p <- function(p) if (p < 1e-4) "< 0.0001" else sprintf("= %s", format(signif(p, 2), scientific = FALSE))
+.fmt_n <- function(n) format(round(n), big.mark = ",", scientific = FALSE, trim = TRUE)
+
+.class_line <- function(res) {
+  above <- res$b > 0
+  sig   <- res$p < 0.05
+  if (above && sig) "above zero and significant at 5%, in the direction of the claim"
+  else if (above) "above zero, but not significant at 5%"
+  else if (sig) "below zero and significant at 5%, against the direction of the claim"
+  else "below zero and not significant at 5%"
+}
+
+.print_result <- function(ch, res, lead = NULL) {
+  writeLines(c(
+    lead,
+    paste0("  ", spec_line(ch$outcome, ch$controls, ch$weights, ch$items, ch$fe)),
+    sprintf("  Estimate: %.4f points of distrust per point of concern, 95%% interval %.3f to %.3f",
+            res$b, res$ci_low, res$ci_high),
+    sprintf("  Test: t = %.2f on %d df, p %s (errors clustered by country, %d countries)",
+            res$stat, round(res$df), .fmt_p(res$p), res$n_clusters),
+    sprintf("        conventional errors, which treat respondents as independent: t = %.2f on %s df",
+            res$t_conv, .fmt_n(res$df_conv)),
+    sprintf("  n = %s respondents in %d country-rounds, partial r = %.3f (the conversion rule of Multi100)",
+            .fmt_n(res$n), res$n_country_rounds, res$r),
+    paste0("  Verdict: ", .class_line(res)),
+    sprintf("  On the curve: %d of the %d specifications have a larger estimate",
+            res$larger, res$n_curve)))
+  invisible(res)
+}
+
+
+# ---- Task 4: the exploratory helpers -----------------------------------------------
+.tried <- new.env(parent = emptyenv())
+assign("log", NULL, envir = .tried)
+assign("last", NULL, envir = .tried)
+
+# The first five arguments are the decisions on which the curve keeps more
+# than one option; the other seven are fixed on the curve, and asking for any
+# other option of theirs prints the reason why it is not on the curve.
+try_spec <- function(outcome = "parliament", controls = "paper", weights = "none",
+                     items = "complete", fe = "country_round", sample = "paper",
+                     concern = "index", education = "five", votes = "cabinet",
+                     missing = "listwise", errors = "country", scale = "points") {
+  ch <- .validate(list(outcome = outcome, controls = controls, weights = weights,
+                       sample = sample, concern = concern, items = items,
+                       education = education, votes = votes, missing = missing,
+                       fe = fe, errors = errors, scale = scale), as_args = TRUE)
+  res <- .result(ch)
+  .print_result(ch, res, lead = "")
+  row <- data.frame(ch, b = res$b, ci_low = res$ci_low, ci_high = res$ci_high,
+                    t = res$stat, p = res$p, n = res$n, stringsAsFactors = FALSE)
+  assign("log", dplyr::bind_rows(.tried$log, row), envir = .tried)
+  assign("last", list(ch = ch, res = res), envir = .tried)
+  invisible(row)
+}
+
+# The running log of everything try_spec() has fitted. Only the decisions that
+# varied are shown; the others are those of the reference specification.
+my_experiments <- function() {
+  d <- .tried$log
+  if (is.null(d)) {
+    writeLines("Nothing tried yet – call try_spec() at least once.")
+    return(invisible(NULL))
+  }
+  varied <- purrr::keep(names(.menu), \(a) dplyr::n_distinct(d[[a]]) > 1)
+  show <- d |>
+    dplyr::transmute(dplyr::across(dplyr::all_of(varied)),
+                     estimate = round(.data$b, 4),
+                     interval = sprintf("%.3f to %.3f", .data$ci_low, .data$ci_high),
+                     t = round(.data$t, 2),
+                     n = .data$n)
+  writeLines(sprintf("Specifications you have tried (%d), estimates in points of distrust per point of concern:\n",
+                     nrow(d)))
+  # wide enough for all five varied decisions on one line
+  old_width <- options(width = max(getOption("width"), 120))
+  on.exit(options(old_width))
+  print(show, row.names = FALSE)
+  writeLines(sprintf("\nEstimates from %.4f to %.4f  |  above zero and significant at 5%%: %d of %d",
+                     min(d$b), max(d$b), sum(d$b > 0 & d$p < 0.05), nrow(d)))
+  invisible(show)
+}
+
+submit_exploration <- function(nickname = NULL) {
+  if (is.null(.tried$last))
+    stop("Nothing to submit – call try_spec() first, ending with the specification you want on the chart.",
+         call. = FALSE)
+  .submit(.tried$last$ch, .tried$last$res, "explore",
+          "Your exploratory submission (the last specification you tried):", nickname)
+}
+
+
+# ---- Task 5: the declared helpers --------------------------------------------------
+# prereg() prints the cell and returns it, so that run_spec() can check that
+# the cell has not changed since. The estimand statement is assembled from
+# the phrase column of menu_options.csv, in the order that its codebook sets.
+prereg <- function() {
+  ch <- .check_choices()
+  rows <- .options() |>
+    dplyr::filter(paste(.data$axis, .data$option) %in% paste(names(ch), unlist(ch))) |>
+    dplyr::arrange(match(.data$axis, names(.menu))) |>
+    dplyr::mutate(line = sprintf("    %-20s : %-17s (%s)", .data$decision, .data$option, .data$label))
+  block <- purrr::imap(.level_titles, \(title, lv) c(paste0("  ", title), rows$line[rows$level == lv])) |>
+    unlist(use.names = FALSE)
+  ph <- stats::setNames(rows$phrase, rows$axis)
+  statement <- c(
+    sprintf("%s%s, %s, the change in %s that goes with one more point of %s (%s), %s (%s, %s, %s).",
+            toupper(substr(ph[["sample"]], 1, 1)), substring(ph[["sample"]], 2), ph[["weights"]],
+            ph[["outcome"]], ph[["concern"]], ph[["items"]], ph[["controls"]],
+            ph[["education"]], ph[["votes"]], ph[["missing"]]),
+    sprintf("Estimated by %s, tested %s and reported %s.", ph[["fe"]], ph[["errors"]], ph[["scale"]]))
+  writeLines(c(
+    "DECLARED – your preregistered specification, fixed before it is fitted:",
+    "",
+    block,
+    "",
+    "  The estimand statement",
+    strwrap(statement, width = 78, indent = 4, exdent = 4),
+    "",
+    "run_spec() and report_result() read these choices from here. Copied into",
+    "your notes, this cell is your preregistration."))
+  invisible(structure(list(choices = ch), class = "trust_prereg"))
+}
+
+run_spec <- function(spec) {
+  if (missing(spec) || !inherits(spec, "trust_prereg"))
+    stop("Pass the object that prereg() returned: my_spec <- prereg(), then run_spec(my_spec).",
+         call. = FALSE)
+  if (!identical(spec$choices, .check_choices()))
+    stop("The preregistration cell has changed since prereg() returned this object. Run the whole cell again, then run_spec(my_spec).",
+         call. = FALSE)
+  .print_result(spec$choices, .result(spec$choices), "Your preregistered specification, fitted live:")
+}
+
+report_result <- function(nickname = NULL) {
+  ch <- .check_choices()
+  .submit(ch, .result(ch), "declared",
+          "Your declared submission (straight from your preregistration):", nickname)
+}
+
+
+# ---- Submission tags ---------------------------------------------------------------
+# Both submissions of a participant carry one short tag inside the spec label,
+# "explore: [amber-otter-42] trust …", so that the participant can find their
+# own marks on the class chart. The same functions sit in R/spec_tools.R of
+# the workspace, which keeps the tag in a file; here it lasts for the browser
+# session, and a nickname passed to either submission function sets it or
+# brings it back after a reload.
+.tag_words <- list(
+  adj  = c("amber", "azure", "bright", "calm", "coral", "crisp", "dusky", "early",
+           "fair", "gentle", "golden", "hazel", "ivory", "jade", "keen", "lively",
+           "lunar", "misty", "noble", "olive", "pale", "quiet", "rapid", "rosy",
+           "russet", "silver", "snowy", "solar", "sunny", "swift", "velvet", "vivid"),
+  noun = c("otter", "heron", "lynx", "badger", "finch", "hare", "ibex", "kestrel",
+           "lark", "marten", "newt", "owl", "puffin", "quail", "raven", "seal",
+           "stoat", "tern", "vole", "wren", "bison", "crane", "dove", "egret",
+           "fox", "gecko", "koala", "lemur", "moose", "panda", "robin", "swan")
+)
+.tag_env <- new.env(parent = emptyenv())
+assign("tag", NULL, envir = .tag_env)
+
+# A fresh tag, drawn without touching the random-number stream of the session.
+.new_tag <- function() {
+  had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had_seed) old_seed <- get(".Random.seed", envir = globalenv())
+  on.exit(if (had_seed) assign(".Random.seed", old_seed, envir = globalenv())
+          else rm(".Random.seed", envir = globalenv()))
+  set.seed(as.integer((as.numeric(Sys.time()) * 1000) %% 1e9) + Sys.getpid() %% 1e5)
+  paste(sample(.tag_words$adj, 1), sample(.tag_words$noun, 1), sample(10:99, 1), sep = "-")
+}
+
+# A nickname reduced to lower-case ASCII letters, digits and single hyphens,
+# at most 24 characters – the only form that the class chart parses.
+.clean_tag <- function(x) {
+  # iconv on Windows turns these into "?": the Romanian comma-below letters and the eszett
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x)[1])))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  x <- gsub("-+$", "", substr(x, 1, 24))
+  if (is.na(x) || !nzchar(x))
+    stop("A nickname needs at least one letter or digit, for example nickname = \"blue-heron\".",
+         call. = FALSE)
+  x
+}
+
+# The tag of this session: the nickname if one is given, otherwise the tag
+# already drawn, otherwise a fresh one. Returns the tag and the one it replaced.
+.class_tag <- function(nickname = NULL) {
+  stored <- .tag_env$tag
+  tag <- if (!is.null(nickname)) .clean_tag(nickname) else if (!is.null(stored)) stored else .new_tag()
+  assign("tag", tag, envir = .tag_env)
+  list(tag = tag, replaced = if (!is.null(stored) && !identical(tag, stored)) stored)
+}
+
+# One submission, used by both phases. The phase, the tag and the word of the
+# case are prefixed to the free-text spec label, which carries the five
+# decisions that vary on the curve. The estimate and its standard error are
+# sent in points of distrust per point of concern, the t of the errors
+# clustered by country with its 15 df, and r by the rule of Multi100 from the
+# conventional t, as the r column of spec_curve.csv holds it.
+.submit <- function(ch, res, phase, lead, nickname = NULL) {
+  tg <- .class_tag(nickname)
+  spec_label <- paste0(phase, ": [", tg$tag, "] ", .case_word, " ",
+                       spec_line(ch$outcome, ch$controls, ch$weights, ch$items, ch$fe))
+  value <- c(spec = spec_label, b = sprintf("%.5f", res$b), se = sprintf("%.5f", res$se),
+             t = sprintf("%.3f", res$stat), df = as.character(round(res$df)),
+             n = as.character(res$n), r = sprintf("%.3f", res$r))
+  query <- purrr::imap_chr(.form_entry, \(entry, k)
+    paste0(entry, "=", utils::URLencode(value[[k]], reserved = TRUE))) |>
+    paste(collapse = "&")
+  url <- sprintf("https://docs.google.com/forms/d/e/%s/viewform?usp=pp_url&%s", .form_id, query)
+
+  writeLines(c(
+    lead,
+    "",
+    paste("  spec:", spec_label),
+    sprintf("  b = %s | se = %s | t = %s | df = %s | n = %d | r = %s",
+            value[["b"]], value[["se"]], value[["t"]], value[["df"]], res$n, value[["r"]]),
+    "  (b and se in points of distrust per point of concern; t with errors clustered by country)",
+    paste0("  Verdict: ", .class_line(res)),
+    "",
+    "Open the link below (or copy the URL) – the form opens with every field",
+    "pre-filled; just press Send.",
+    "",
+    url))
+  if (requireNamespace("htmltools", quietly = TRUE))
+    print(htmltools::tags$p(htmltools::tags$a(href = url, target = "_blank",
+                                              "Open the pre-filled form in a new tab")))
+  writeLines(c(
+    "",
+    sprintf("Your marks on the class chart carry the tag %s%s.", tg$tag,
+            if (!is.null(tg$replaced)) sprintf(" (it replaces %s)", tg$replaced) else ""),
+    sprintf("Look for it on the Multiverse page, %s/cases/trust/multiverse.html.", .course_url),
+    "Both of your submissions share it while this page stays open; after a reload,",
+    sprintf("bring it back with nickname = \"%s\". To choose your own, pass a", tg$tag),
+    "nickname rather than your name, because the chart is public."))
+  invisible(list(spec = spec_label, tag = tg$tag, b = res$b, se = res$se, statistic = res$stat,
+                 df = res$df, n = res$n, r = res$r, url = url))
+}
+```
+
+Five analysts reanalysed a claim of the immigration-and-trust case [@McLaren2012CulturalDivideEurope] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. The claim is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics", in the words of the original author (OA) as the SCORE programme selected them. The [exercise overview](exercise.qmd) sets out the five tasks, and the [case study](index.qmd) the original study, Multi100 and the five reanalyses.
+
+The five tasks take you from a setup check to two marks on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it. Every fit of the menu on this page is live: the estimator of the course runs in your browser, on the same file and with the same code as in the workspace, and each fit takes about a second.
+
+## Task 1 – The setup check {#task-1-setup}
+
+The aim of this task is only to reach the point where a line of R runs and the data are in front of you. Press **Run Code** on the cell below. If it prints the three lines that it should, you are set up and everything else on this page will work.
+
+```{webr}
+#| autorun: false
+# The setup check. It uses only what the page preloads, so if this runs, the
+# rest of the lab runs.
+writeLines(c(
+  paste("R is running in your browser:", R.version.string),
+  sprintf("The ESS extract is loaded: %s respondents", format(nrow(ess), big.mark = ",")),
+  sprintf("The estimator reproduces the reference specification: %.4f points of distrust per point of concern",
+          fit_spec(ess)$b)))
+```
+
+You should see **120,080 respondents** and **0.1753 points of distrust per point of concern** on the last line. If any of that is missing, reload the page and wait for the engine to finish downloading before pressing Run Code again. If it still fails, say **STUCK** in the chat.
+
+## Warm-up – the three Rs {#warm-up}
+
+The warm-up settles the vocabulary before you touch any data. Three of the four scenarios below describe one of our three Rs – reproducibility, robustness, replicability – and the fourth describes something else. Read all four, then label each one in the code cell.
+
+***Scenario 1:*** A team rebuilds the variables of the paper from the ESS files, fits its three-level model, and gets 0.178 points of distrust per point of concern against the published 0.17. It analyses 69,522 respondents rather than the 110,732 of the paper, because it leaves out everyone with a missing answer on any variable of the model. This is an example of \_\_\_\_\_\_, even though the sample does not match.
+
+***Scenario 2:*** An analyst takes the file that the team built, fits the model in Stata instead of R, and measures concern with the single item on whether immigrants make the country a worse or a better place to live. Is this a case of \_\_\_\_\_\_ or \_\_\_\_\_\_?
+
+***Scenario 3:*** A preregistered team fits the model to the next round of the ESS, fielded in 2010 in 13 of the 16 countries, and finds 0.183. Their conclusion is that the original finding has \_\_\_\_\_\_.
+
+***Scenario 4:*** Another researcher asks whether concern about refugees goes with distrust of politics among citizens of Central and Eastern Europe, using another survey ten years later, and finds the same pattern. The researcher concludes that the original finding \_\_\_\_\_\_ to other societies and another measure.
+
+Fill in the gaps in the code cell below and run it to print your answers back.
+
+```{webr}
+#| exercise: vocab
+#| code-overflow: wrap
+writeLines(c(
+  "Scenario 1: This is an example of ______.",
+  "Scenario 2: Is this a case of ______ or ______?",
+  "Scenario 3: The original finding has ______.",
+  "Scenario 4: The original finding ______ to other societies and another measure."
+))
+```
+
+:::: {.solution exercise="vocab"}
+::: {.callout-tip collapse="false"}
+## Answers
+
+1.  **reproducibility** – a reproduction from the source data, which SCORE scored as reproducing the coefficient approximately but not the sample.
+2.  a grey area. Rerunning an analysis of the same file in different software is still **reproducibility**, but the single item in place of the index of three is an analytic choice, which makes it a test of **robustness**.
+3.  **replicated** (replicability) – the same question asked of independent new data.
+4.  **generalises** (generalisability) – the odd one out, with new societies, new data and a new measure at once.
+:::
+::::
+
+## Task 2 – The data {#task-2-data}
+
+The **ESS extract** (`trust_ess.csv`) is already loaded for you as `ess`, one row per respondent: every respondent of the 16 countries in rounds 1–4 of the European Social Survey (ESS). It is adapted from the ESS files of those rounds and shared under their licence, CC BY-NC-SA 4.0, and the downloadable workspace contains the same file. Each trust item is turned round, so that every distrust column runs from 0 (complete trust) to 10 (no trust at all), and each immigration item too, so that 10 is the answer most concerned about immigration. Run the cell below to count the respondents. Edit it freely – this is your environment.
+
+```{webr}
+#| autorun: false
+# How many respondents, countries and country-rounds, and how many in the
+# sample of the paper: citizens who do not belong to an ethnic minority?
+ess |>
+  summarise(respondents    = n(),
+            countries      = n_distinct(cntry),
+            country_rounds = n_distinct(paste(cntry, essround)),
+            paper_sample   = sum(citizen %in% 1 & minority %in% 0))
+```
+
+You should find **120,080 respondents** in **16 countries** and **60 country-rounds**, and **110,732** in the sample of the paper, the count that it reports in every table. The paper leaves out non-citizens and members of ethnic minorities, because its argument concerns members of the national community who believe that community to be under threat. The [codebook](data/trust_ess_codebook.md) describes every column.
+
+The concern of the claim is measured by three items. A scale built from several items measures an attitude with less error than any single item, provided that the items move together. Cronbach's alpha says how far they do: it runs from 0 (the items are unrelated) to 1 (they move in lockstep), and values above about 0.7 are usually taken as good enough for a scale.
+
+```{webr}
+#| autorun: false
+# The sample of the paper, with concern as the mean of the three items. A
+# respondent who skipped any item has no score (NA).
+paper <- ess |>
+  filter(citizen == 1, minority == 0) |>
+  mutate(concern = (imm_econ + imm_culture + imm_place) / 3)
+
+# Cronbach's alpha of the three items, on the respondents who answered all three
+items <- paper |>
+  select(imm_econ, imm_culture, imm_place) |>
+  na.omit()
+k <- ncol(items)
+k / (k - 1) * (1 - sum(purrr::map_dbl(items, var)) / var(rowSums(items)))
+
+# The mean distrust of the three institutions, and the mean concern
+paper |>
+  summarise(across(c(distrust_parl, distrust_pol, distrust_legal, concern),
+                   \(v) round(mean(v, na.rm = TRUE), 2)))
+```
+
+Alpha comes out at **0.84**, close to the average of 0.83 that the paper reports. The mean distrust is **5.08** for parliament, **6.06** for politicians and **4.45** for the legal system, within 0.01 of the means that the paper prints in its Table 1. Now the countries:
+
+```{webr}
+#| autorun: false
+#| fig-width: 8
+#| fig-height: 5
+by_country <- paper |>
+  summarise(r_within      = cor(concern, distrust_parl, use = "complete.obs"),
+            concern       = mean(concern, na.rm = TRUE),
+            distrust_parl = mean(distrust_parl, na.rm = TRUE),
+            .by = cntry)
+
+# The correlation across countries, and its range within them
+cor(by_country$concern, by_country$distrust_parl)
+range(by_country$r_within)
+
+ggplot(by_country, aes(x = concern, y = distrust_parl)) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "grey70", linewidth = 0.6) +
+  geom_text(aes(label = cntry), fontface = "bold", colour = "#0e3b6a") +
+  labs(x = "Mean concern about immigration (0–10)", y = "Mean distrust of parliament (0–10)") +
+  theme_minimal(base_size = 11)
+```
+
+Across the 16 countries, the correlation of mean concern with mean distrust of parliament is **0.68**: where citizens worry more about immigration, they distrust their parliament more. Greece is the most concerned country, and Portugal distrusts its parliament most. Within each country the correlation is much weaker, from about **0.17** in Southern Europe to **0.38** in Norway. The claim is about respondents, not countries, and countries differ in their history of immigration, their politics and the performance of their governments, any of which can move both averages at once. So every specification of the curve compares respondents of the same country, surveyed in the same round.
+
+## Task 2, continued – The estimand and the graph {#task-2-estimand-and-graph}
+
+Before fitting anything, say what you are trying to estimate, in words. A template that you can adapt [@LundbergEtAl2021WhatYourEstimand]:
+
+> The **unit-specific quantity** is, for each respondent, the difference between the distrust of parliament that they would report if they were one point more concerned about immigration and the distrust that they report now. The **target population** is the citizens of the 16 Western European countries in 2002–2009 who do not belong to an ethnic minority.
+
+There is a catch in that sentence. Nobody observes the same respondent at two levels of concern: the ESS interviewed different people in each round, so the data can only compare respondents who differ in concern. Whether that comparison answers the question depends on what else differs between them.
+
+A causal graph sets this out. A graph of this kind is a diagram of what causes what: variables are nodes, arrows run from cause to effect, and the rules for reading the graph say which paths between concern and distrust are open, given what the comparison holds constant. The graph below is written in ordinary R, one arrow per string, each written the way it is drawn: `"pessimism -> concern"` is the arrow from a pessimistic outlook to concern about immigration. Background characteristics (age, sex, education, income), a general pessimism and ideology can each shape both concern and distrust, which makes them possible confounders. A vote for a far-right party and the verdict on public services and the economy may follow from concern, from distrust, or from both. One arrow is switched off with a `#`: the arrow from concern to distrust, which is the effect that the claim is about.
+
+```{webr}
+#| include: false
+#| autorun: true
+# Graph machinery for Task 2. dagitty runs its graph algorithms in a
+# JavaScript engine that a browser grants only to a page served with
+# cross-origin isolation headers (COOP and COEP); without them the call fails
+# with a JavaScript error that tryCatch() cannot catch. The functions below
+# answer the questions of Task 2 in R instead: make_dag() builds the graph,
+# adjustmentSets() returns the minimal adjustment sets for the total effect,
+# isAdjustmentSet() checks one set, paths() lists the paths between two nodes
+# and whether each is open given a conditioning set Z, and plot_dag() draws
+# the graph with ggplot2. They agree with dagitty on every graph of this
+# task, and plot_dag() also draws a graph that dagitty built.
+
+# Where each node sits in the figure, with y counted upwards: concern on the
+# left, distrust on the right, the possible common causes above the line
+# between them and the possible consequences below it. A node without a
+# position here is drawn on a row below the graph.
+.dag_xy <- list(concern = c(0, 0), distrust = c(4, 0), background = c(2, 2.4),
+                pessimism = c(0.7, 1.5), ideology = c(3.3, 1.5),
+                far_right = c(2, -1.1), services = c(2, -2.1))
+dag_engine <- "built-in"
+
+.make_dag_builtin <- function(..., exposure, outcome, latent) {
+  arrows <- c(...)
+  edges <- purrr::map(arrows, \(a) {
+    ends <- trimws(strsplit(a, "->", fixed = TRUE)[[1]])
+    if (length(ends) < 2 || !all(nzchar(ends)) || grepl("<-", a, fixed = TRUE))
+      stop(sprintf("Write each arrow as \"cause -> effect\", for example \"pessimism -> concern\"; \"%s\" is not one.",
+                   a), call. = FALSE)
+    data.frame(from = ends[-length(ends)], to = ends[-1])
+  }) |>
+    dplyr::bind_rows() |>
+    dplyr::distinct()
+  structure(list(edges = edges, nodes = unique(c(exposure, outcome, edges$from, edges$to)),
+                 exposure = exposure, outcome = outcome, latent = latent),
+            class = "simple_dag")
+}
+
+# The same graph as a dagitty object, as R/dag_starter.R of the workspace
+# builds it; dagitty counts y downwards, so the heights change sign.
+.make_dag_dagitty <- function(..., exposure, outcome, latent) {
+  arrows <- c(...)
+  nodes <- unique(c(exposure, outcome, trimws(unlist(strsplit(arrows, "->|<-")))))
+  declare <- purrr::map_chr(nodes, \(v) {
+    tags <- c(if (v %in% exposure) "exposure",
+              if (v %in% outcome) "outcome",
+              if (v %in% latent) "latent",
+              if (v %in% names(.dag_xy))
+                sprintf("pos=\"%s,%s\"", .dag_xy[[v]][1], -.dag_xy[[v]][2]))
+    if (length(tags) == 0) v else sprintf("%s [%s]", v, paste(tags, collapse = ","))
+  })
+  dagitty::dagitty(paste0("dag {\n", paste(c(declare, arrows), collapse = "\n"), "\n}"))
+}
+
+# A graph from arrows written "cause -> effect", one per string. The named
+# arguments come last, so that switching off the last arrow with a # never
+# leaves a comma dangling.
+make_dag <- function(..., exposure = "concern", outcome = "distrust", latent = character(0)) {
+  build <- if (identical(dag_engine, "dagitty")) .make_dag_dagitty else .make_dag_builtin
+  build(..., exposure = exposure, outcome = outcome, latent = latent)
+}
+
+.dag_has_edge <- function(dag, a, b) any(dag$edges$from == a & dag$edges$to == b)
+
+# A node counts as one of its own descendants, which is what the collider rule
+# below needs.
+.dag_descendants <- function(dag, v) {
+  kids <- setdiff(dag$edges$to[dag$edges$from %in% v], v)
+  if (length(kids) == 0) v else .dag_descendants(dag, union(v, kids))
+}
+
+# Every simple path between two nodes, ignoring the direction of the arrows.
+# The recursion is safe only because a teaching graph is tiny.
+.dag_paths <- function(dag, from, to) {
+  neighbours <- \(v) unique(c(dag$edges$to[dag$edges$from == v], dag$edges$from[dag$edges$to == v]))
+  extend <- function(path) {
+    v <- path[length(path)]
+    if (v == to) return(list(path))
+    purrr::list_flatten(purrr::map(setdiff(neighbours(v), path), \(w) extend(c(path, w))))
+  }
+  extend(from)
+}
+
+# A path is blocked by the set z if any node along it is either a non-collider
+# inside z, or a collider with no descendant in z.
+.dag_path_blocked <- function(dag, path, z) {
+  if (length(path) < 3L) return(FALSE)
+  purrr::some(seq(2L, length(path) - 1L), \(i) {
+    node <- path[i]
+    collider <- .dag_has_edge(dag, path[i - 1L], node) && .dag_has_edge(dag, path[i + 1L], node)
+    if (collider) !any(.dag_descendants(dag, node) %in% z) else node %in% z
+  })
+}
+
+# The backdoor criterion: a set qualifies if it holds no descendant of the
+# exposure and blocks every path that starts with an arrow into the exposure.
+.closes_backdoors <- function(x, z, exposure = x$exposure, outcome = x$outcome) {
+  backdoor <- purrr::keep(.dag_paths(x, exposure, outcome), \(p) .dag_has_edge(x, p[2L], exposure))
+  !any(z %in% .dag_descendants(x, exposure)) &&
+    purrr::every(backdoor, \(p) .dag_path_blocked(x, p, z))
+}
+
+# Brute-forced over subsets of the observed variables that are not
+# descendants of the exposure: smallest sets first, and a set is skipped once
+# it contains a set already found, which leaves the minimal ones.
+.adjustment_sets_builtin <- function(x, exposure = x$exposure, outcome = x$outcome,
+                                     effect = "total", ...) {
+  if (!identical(effect, "total"))
+    stop("The graph code built into this page answers the total effect only; paths() shows what a conditioning set opens and closes.",
+         call. = FALSE)
+  candidates <- setdiff(x$nodes, c(outcome, x$latent, .dag_descendants(x, exposure)))
+  subsets <- c(list(character(0)),
+               purrr::list_flatten(purrr::map(seq_along(candidates),
+                                              \(k) utils::combn(candidates, k, simplify = FALSE))))
+  closing <- purrr::keep(subsets, \(z) .closes_backdoors(x, z, exposure, outcome))
+  minimal <- purrr::reduce(closing, \(found, z)
+    if (purrr::some(found, \(f) all(f %in% z))) found else c(found, list(sort(z))), .init = list())
+  structure(minimal, class = "simple_dag_sets")
+}
+
+print.simple_dag_sets <- function(x, ...) {
+  shown <- if (length(x) == 0) "(no set of observed variables closes every backdoor path)" else
+    purrr::map_chr(x, \(z) if (length(z) > 0) paste0("{ ", paste(z, collapse = ", "), " }") else "{}")
+  writeLines(shown)
+  invisible(x)
+}
+
+# Registered rather than left in the session: these cells do not evaluate in
+# the global environment, so plain S3 dispatch would not find the method.
+registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
+
+.is_adjustment_set_builtin <- function(x, Z, exposure = x$exposure, outcome = x$outcome, ...) {
+  .closes_backdoors(x, Z, exposure, outcome)
+}
+
+# The paths between two nodes, each with its arrows, and whether it is open
+# given the conditioning set Z; sorted as dagitty sorts them.
+.paths_builtin <- function(x, from = x$exposure, to = x$outcome, Z = character(0), ...) {
+  found <- .dag_paths(x, from, to)
+  label <- purrr::map_chr(found, \(p) {
+    steps <- purrr::map_chr(seq_len(length(p) - 1L),
+                            \(i) if (.dag_has_edge(x, p[i], p[i + 1L])) " -> " else " <- ")
+    paste0(p[1], paste0(steps, p[-1], collapse = ""))
+  })
+  open <- purrr::map_lgl(found, \(p) !.dag_path_blocked(x, p, Z))
+  ord <- order(label, method = "radix")
+  list(paths = label[ord], open = open[ord])
+}
+
+adjustmentSets <- .adjustment_sets_builtin
+isAdjustmentSet <- .is_adjustment_set_builtin
+paths <- .paths_builtin
+
+# The figure, for a graph from either engine. Colour marks the exposure and
+# the outcome. Each arrow stops at the edge of the box of its target.
+.dag_parts <- function(d) {
+  if (inherits(d, "dagitty")) {
+    xy <- dagitty::coordinates(d)
+    list(nodes = data.frame(name = names(xy$x), x = unname(xy$x), y = -unname(xy$y)),
+         edges = dplyr::transmute(dagitty::edges(d), from = as.character(.data$v),
+                                  to = as.character(.data$w)),
+         exposure = dagitty::exposures(d), outcome = dagitty::outcomes(d),
+         latent = dagitty::latents(d))
+  } else {
+    at <- \(v, k) if (v %in% names(.dag_xy)) .dag_xy[[v]][k] else NA_real_
+    list(nodes = data.frame(name = d$nodes, x = purrr::map_dbl(d$nodes, \(v) at(v, 1)),
+                            y = purrr::map_dbl(d$nodes, \(v) at(v, 2))),
+         edges = d$edges, exposure = d$exposure, outcome = d$outcome, latent = d$latent)
+  }
+}
+
+plot_dag <- function(d) {
+  parts <- .dag_parts(d)
+  nodes <- parts$nodes |>
+    dplyr::mutate(
+      unplaced = is.na(.data$x),
+      x = dplyr::if_else(.data$unplaced, 1.2 * (cumsum(.data$unplaced) - 1), .data$x),
+      y = dplyr::if_else(.data$unplaced, -3, .data$y),
+      half_w = 0.06 + 0.032 * nchar(.data$name),
+      role = dplyr::case_when(.data$name %in% parts$exposure ~ "exposure",
+                              .data$name %in% parts$outcome ~ "outcome",
+                              .data$name %in% parts$latent ~ "unobserved",
+                              .default = "observed"))
+  # how far along a unit vector (ux, uy) the edge of a box of half-width w lies
+  to_edge <- \(ux, uy, w) pmin(w / pmax(abs(ux), 1e-9), 0.15 / pmax(abs(uy), 1e-9))
+  tails <- dplyr::select(nodes, from = "name", x0 = "x", y0 = "y", w0 = "half_w")
+  heads <- dplyr::select(nodes, to = "name", x1 = "x", y1 = "y", w1 = "half_w")
+  arrows <- parts$edges |>
+    dplyr::inner_join(tails, by = "from") |>
+    dplyr::inner_join(heads, by = "to") |>
+    dplyr::mutate(len = sqrt((.data$x1 - .data$x0)^2 + (.data$y1 - .data$y0)^2),
+                  ux = (.data$x1 - .data$x0) / .data$len,
+                  uy = (.data$y1 - .data$y0) / .data$len,
+                  s0 = to_edge(.data$ux, .data$uy, .data$w0),
+                  s1 = to_edge(.data$ux, .data$uy, .data$w1) + 0.04,
+                  x = .data$x0 + .data$s0 * .data$ux, y = .data$y0 + .data$s0 * .data$uy,
+                  xend = .data$x1 - .data$s1 * .data$ux, yend = .data$y1 - .data$s1 * .data$uy)
+
+  ggplot2::ggplot() +
+    ggplot2::geom_segment(data = arrows, ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
+                          colour = "grey40", linewidth = 0.6,
+                          arrow = grid::arrow(length = grid::unit(7, "pt"), type = "closed")) +
+    ggplot2::geom_label(data = nodes, ggplot2::aes(x = x, y = y, label = name, fill = role, colour = role),
+                        fontface = "bold", size = 3.6, linewidth = 0,
+                        label.r = grid::unit(4, "pt"), label.padding = grid::unit(5, "pt")) +
+    ggplot2::scale_fill_manual(values = c(exposure = "#1b6ca8", outcome = "#d1495b",
+                                          observed = "grey45", unobserved = "grey88"),
+                               breaks = c("exposure", "outcome", "observed", "unobserved"),
+                               name = NULL) +
+    ggplot2::scale_colour_manual(values = c(exposure = "white", outcome = "white",
+                                            observed = "white", unobserved = "grey25"),
+                                 guide = "none") +
+    # Without the override, the legend keys show the letter "a" that geom_label draws.
+    ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(label = ""))) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(add = 0.5)) +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(add = 0.3)) +
+    ggplot2::theme_void() +
+    ggplot2::theme(legend.position = "bottom")
+}
+
+# Whether dagitty could work here at all. Its JavaScript engine needs
+# SharedArrayBuffer, which a browser grants only to a cross-origin-isolated
+# page, and the failure is a JavaScript error that tryCatch() cannot catch, so
+# the question has to be asked before anything calls dagitty.
+.dagitty_possible <- function() {
+  isTRUE(tryCatch(
+    as.numeric(webr::eval_js("typeof SharedArrayBuffer === 'undefined' ? 0 : 1")) == 1,
+    error = \(e) FALSE))
+}
+```
+
+`make_dag()`, `adjustmentSets()`, `isAdjustmentSet()`, `paths()` and `plot_dag()` are already available on this page, so you can go straight to the graph. The optional cell below loads `dagitty`, the R package that the downloadable workspace uses for the same questions; where the browser cannot run it, the page keeps its own graph code, which gives the same answers.
+
+```{webr}
+#| autorun: false
+# Optional: load dagitty. The check comes first, because dagitty runs its
+# graph algorithms in a JavaScript engine that this browser may not offer.
+if (!.dagitty_possible()) {
+  writeLines(c("This page is not served with the headers that the dagitty engine needs.",
+               "Everything in Task 2 still works: make_dag(), adjustmentSets(), isAdjustmentSet(),",
+               "paths() and plot_dag() use the graph code built into this page."))
+} else {
+  have_dagitty <- tryCatch({
+    webr::install("dagitty", quiet = TRUE)
+    suppressPackageStartupMessages(library(dagitty))
+    TRUE
+  }, error = \(e) FALSE)
+  if (have_dagitty) {
+    dag_engine <- "dagitty"
+    adjustmentSets <- dagitty::adjustmentSets
+    isAdjustmentSet <- dagitty::isAdjustmentSet
+    paths <- dagitty::paths
+    writeLines("dagitty is loaded: rerun the graph cell below, and every question goes to dagitty.")
+  } else {
+    writeLines("dagitty did not install. The graph code built into this page answers every question of Task 2.")
+  }
+}
+```
+
+Now build the graph and put three questions to it. What has to be held constant to estimate the effect of concern on distrust? Which paths between the two are open before anything is held constant? And which are open once the controls of the paper are held constant, the background, pessimism and ideology together with the far-right vote and the verdict on services?
+
+```{webr}
+#| autorun: false
+#| fig-width: 8
+#| fig-height: 5
+my_dag <- make_dag(
+  # Background, pessimism and ideology can each shape both attitudes.
+  "background -> concern",
+  "background -> distrust",
+  "pessimism -> concern",
+  "pessimism -> distrust",
+  "ideology -> concern",
+  "ideology -> distrust",
+  # A far-right vote can follow from concern and from distrust; if you think
+  # instead that the vote deepens distrust, swap the second line for the third.
+  "concern -> far_right",
+  "distrust -> far_right",
+  # "far_right -> distrust",
+  # So can the verdict on public services; if you think instead that poor
+  # services feed distrust, swap the second line for the third.
+  "concern -> services",
+  "distrust -> services",
+  # "services -> distrust",
+
+  # The effect that the claim is about: take the # off if you believe it.
+  # "concern -> distrust",
+
+  exposure = "concern", outcome = "distrust"
+)
+
+paper_set <- c("background", "pessimism", "ideology", "far_right", "services")
+adjustmentSets(my_dag)
+paths(my_dag, Z = paper_set)
+isAdjustmentSet(my_dag, paper_set)
+plot_dag(my_dag)
+```
+
+`adjustmentSets()` returns `{ background, ideology, pessimism }`. Three paths connect concern and distrust through their common causes, and holding those three constant closes them. The two paths through the far-right vote and the verdict on services are closed already, because each runs into a common effect of concern and distrust (a collider). Holding the controls of the paper constant closes the first three paths but opens these two, and `isAdjustmentSet()` answers `FALSE`: comparing respondents who voted alike and judge the services alike makes concern and distrust go together even in this graph, in which concern has no effect on distrust at all.
+
+Now take the `#` off the arrow `"concern -> distrust"` and run the cell again. Then try the two swaps that the cell offers, one at a time, and finally replace the arrow of the claim with `"distrust -> concern"`. Answer three questions for your own notes: whether the adjustment set changes once the arrow of the claim is on; what the far-right vote and the verdict on services become after the swaps, and what holding them constant then estimates; and whether any set of controls can separate the two directions of the arrow.
+
+::: {.callout-note collapse="true"}
+## Answers
+
+1.  The set stays `{ background, ideology, pessimism }`. The arrow of the claim is the effect itself, not a path to be blocked, and the controls of the paper still open the two collider paths.
+2.  After the swaps they are mediators: part of the effect of concern runs through them. Holding them constant removes that part and leaves what the graph calls the direct effect, so the controls of the paper then answer a narrower question than the claim.
+3.  No. With `"distrust -> concern"`, the path `concern <- distrust` stays open whatever is held constant, and `adjustmentSets()` finds no set, so a comparison of respondents at one point in time cannot tell the two directions apart. One Multi100 analyst raised this reverse direction, and the paper says that an analysis with instrumental variables confirmed its own direction, but does not report it.
+
+The four adjustment sets of the menu follow the graph: no controls (`"none"`), the background (`"demog"`), the background with pessimism and ideology (`"outlook"`), and those with the verdicts on the economy and public services and the two vote controls, the set of the paper (`"paper"`). The adjustment set is the second argument of `try_spec()` in Task 4, and whatever you conclude here belongs in field 4 of your preregistration in Task 5.
+:::
+
+## Task 3 – The reproduction {#task-3-reproduction}
+
+This is the **reproducibility** check. All five Multi100 analysts worked from one file, which a SCORE reproduction had built from the ESS files of rounds 1–4 with the variables of the paper already coded (osf.io/e48gd). Analyst 6U3LL fitted the model of Table 3 of the paper to it, without the unemployment rate of each country: a three-level model with random intercepts for countries and for country-rounds, fitted in R with the lmerTest package, which builds on lme4. Multi100 recorded **t = 46.625**, with a coefficient of 0.191 on 72,733 respondents.
+
+The downloadable workspace reproduces that value exactly: it downloads the file from the OSF and fits the model with lme4. This page cannot. The OSF serves the file through a redirect that does not give a page on another website permission to read it, a rule that every browser enforces (cross-origin resource sharing), and the course cannot host a copy of its own, because the file holds person-level survey data. lme4 itself runs in the browser, so the file is the only obstacle. What the page can do is fit the specification of the course that comes closest to the model of 6U3LL, on the course data: distrust of parliament, the controls of the paper, and an intercept for every country-round (fixed effects) in place of the random intercepts. The country-level variables of the paper are constant within a country-round, so the fixed effects absorb them, unemployment included.
+
+The cell below is an exercise. The file of the analysts builds each scale from the items that a respondent answered, which is one of the two options of the decision `items`. Replace the blank (`______`) with that option, then press "Run Code". If you get stuck, open the hint below; the solution has the full code.
+
+```{webr}
+#| exercise: analogue
+# The specification of the course closest to the model of 6U3LL, fitted to the
+# course data: the reference specification with the rule of the file of the
+# analysts for unanswered items.
+analogue <- fit_spec(ess, items = "______")
+analogue[, c("b", "t_conv", "n", "n_country_rounds")]
+```
+
+:::: {.hint exercise="analogue"}
+::: {.callout-note collapse="false"}
+## Hint – the rule for unanswered items
+
+The two options of `items` are `"complete"` (a scale counts only for respondents who answered every item) and `"available"` (it averages the items that were answered).
+:::
+::::
+
+:::: {.solution exercise="analogue"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+analogue <- fit_spec(ess, items = "available")
+analogue[, c("b", "t_conv", "n", "n_country_rounds")]
+```
+
+You should get a coefficient of **0.174** on **72,620 respondents** in 57 country-rounds, with a conventional *t* of 41.7, against 0.191 and 46.625 on the file of the analysts.
+:::
+::::
+
+The gap of 0.017 does not come from the model. In the workspace, the same fixed-effects model fitted to the file of the analysts gives almost exactly the coefficient of their random intercepts, so the gap lies in the two files. They code several variables differently, among them the vote for a party in government (the file of the analysts counts only voters for the party that won the last election) and the far-right vote.
+
+*Optional extension.* The SCORE reproduction osf.io/jp7tr rebuilt the data of the paper from the ESS files and published a coefficient of 0.1780 on 69,522 respondents. It read the integrated files of the four rounds, which lack the Italian round 2. Leave that country-round out of the course data and fit the reference specification:
+
+```{webr}
+#| autorun: false
+without_it2 <- filter(ess, !(cntry == "IT" & essround == 2))
+fit_spec(without_it2)[, c("b", "se", "t_conv", "n", "n_country_rounds")]
+```
+
+The fit keeps exactly the 69,522 respondents of that reproduction and gives 0.1772, within 0.001 of its published 0.1780, without any multilevel model. The [case study](index.qmd) traces the small gap that remains to the coding of the vote controls.
+
+::: {.callout-note collapse="true"}
+## Reproduction and the five analysts
+
+In the workspace, everyone reproduces the recorded value exactly, because everyone runs the same code on the same file. This is why reproducibility is the cheapest of the three Rs to establish.
+
+The five Multi100 analysts each wrote their own code for this claim, and all five concluded that their results were evidence for it, in the direction that the paper reports. Their coefficients still differ by a factor of two, from 0.115 to 0.235 points of distrust per point of concern: one analyst measured concern with a single item, another held constant a much shorter list of controls. One of them also doubted the direction of the effect: "one could argue for an at least partially reverse direction of the effect, given that there is ample evidence that trust in authorities impacts on attitudinal variables". The [case study](index.qmd) sets out what each analyst chose.
+:::
+
+## Task 4 – The menu {#task-4-menu}
+
+This task is **exploratory**. You try several specifications, look at what each one does, and get a feel for which choices move the estimate and which barely touch it. Nothing in this task is preregistered; the preregistration comes in Task 5.
+
+`try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and every argument defaults to the reference specification, the one closest to the model of the paper: distrust of parliament, the controls of the paper, no weights, every item of a scale answered, an intercept for every country-round. So changing one thing means changing one argument, and everything you do not name stays as it was. Every call is a live fit in your browser and takes about a second.
+
+```{webr}
+#| autorun: false
+# Nothing changed – the reference specification.
+try_spec()
+```
+
+The printout gives the estimate in points of distrust per point of concern with its 95% interval, the *t* test with errors clustered by country (the rule that classes every point of the curve, on 15 degrees of freedom for 16 countries), the *t* of conventional errors for comparison, the number of respondents and country-rounds analysed, the partial *r* by the conversion rule of Multi100, the class of the result, and its place among the 192 specifications on the curve of the claim.
+
+Each of the five calls below changes a single decision. The first three change the question that is being asked of the data, the fourth changes how the scales are measured, and the last changes only how the same question is estimated. Run them and compare the results.
+
+```{webr}
+#| autorun: false
+try_spec(outcome  = "politicians")        # distrust of politicians instead of parliament
+try_spec(controls = "none")               # no controls: the claim as SCORE selected it
+try_spec(weights  = "population")         # each country counted by its adult population
+try_spec(items    = "available")          # scales averaged over the answered items
+try_spec(fe       = "country_and_round")  # country intercepts and a shift for each round
+```
+
+The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. Every other option is still an argument of `try_spec()`, so trying one is part of the exercise. The helper refuses it, gives the reason why it is not on the curve and names the page of the course that teaches it, and the [decision map](map.qmd) sets out every decision and its options on one page. Run the cell, then edit it to try others, such as `controls = "paper_gov"`, `sample = "all_respondents"`, `fe = "random_intercepts"`, `errors = "conventional"` or `weights = "post"`.
+
+```{webr}
+#| autorun: false
+# An option that is not on the curve: the helper refuses it and says why.
+try_spec(concern = "culture")
+```
+
+Then try your own combinations. The full set of arguments, each with the reference specification as its default and the options of the menu in the comment beside it:
+
+```{webr}
+#| autorun: false
+try_spec(
+  # the five decisions on which the curve keeps more than one option
+  outcome   = "parliament",     # parliament | politicians | legal | index
+                                #     off the curve: parties | european_parliament
+  controls  = "paper",          # none | demog | outlook | paper
+                                #     off the curve: paper_no_unhappy | paper_gov | paper_macro
+  weights   = "none",           # none | design | population
+                                #     off the curve: post | post_population
+  items     = "complete",       # complete | available
+  fe        = "country_round",  # country_round | country_and_round
+                                #     off the curve: random_intercepts | pooled
+  # the seven decisions that are fixed on the curve
+  sample    = "paper",          # paper      off the curve: all_respondents | all_countries
+  concern   = "index",          # index      off the curve: economy | culture | place
+  education = "five",           # five       off the curve: seven
+  votes     = "cabinet",        # cabinet    off the curve: nonvoters_missing | largest_party
+  missing   = "listwise",       # listwise   off the curve: imputation | as_published
+  errors    = "country",        # country    off the curve: country_round | conventional | wild_bootstrap
+  scale     = "points"          # points     off the curve: maximum_effect | standardised | r
+)
+```
+
+Everything you try is logged. Print the log to view the small multiverse that you have just built. It shows only the decisions that you varied, so the differences are easy to read:
+
+```{webr}
+#| autorun: false
+my_experiments()
+```
+
+When you have tried three or four, decide which one you would defend if you had to, run it once more so that it is the most recent, and submit it. It appears on the live [Multiverse]({{< var cases.trust.live-results-url >}}) chart as an open circle, labelled **exploratory**, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
+
+```{webr}
+#| autorun: false
+submit_exploration()
+```
+
+::: {.callout-note collapse="true"}
+## Exploratory and declared
+
+Because you chose this specification after finding out what several specifications do, it lacks the guarantee that comes with a choice declared in a preregistration before its result is known: no one can rule out that it was chosen *because* of its result. This is something that we almost never know about published papers, unless their analysis was preregistered and every departure from the preregistration documented. In this course exploration is a natural step, and you also practise preregistering the analysis that you choose, so you submit twice, once here and once in Task 5.
+:::
+
+## Task 5 – The preregistration {#task-5-preregistration}
+
+Preregistration means setting out your choice in a plan **before** you know what it does, which stops you from quietly picking the specification that happens to give the answer you wanted. On this page the plan is the preregistration cell below, and it binds mechanically as well: the session remembers the choices that you declare in that cell, and `run_spec()` and `report_result()` read them from there.
+
+::: {.callout-important icon="false"}
+## A shortened preregistration
+
+*Each numbered comment maps to a question in the OSF "Preregistration Template from AsPredicted.org" (the eight-question short form). Because you are reanalysing data that already exist, field 2 also stands in for the prior-knowledge section of the secondary-data template (van den Akker et al. 2021) – the part that AsPredicted leaves out.*
+:::
+
+Make one choice on each decision of the [specification menu](menu.qmd), complete the dotted lines, then run the cell. The four decisions at Level 1 fix the question that you are asking, the five at Level 2 fix how it is measured, and the three at Level 3 fix how it is estimated. The curve of 192 specifications keeps two or more options on five of these decisions and a single option on the other seven. An option that is not on the curve stops `prereg()` with the reason why, as it stops `try_spec()`.
+
+```{webr}
+#| autorun: false
+# ============================================================================
+# MY PREREGISTRATION – one specification, declared before seeing its result
+# ============================================================================
+# 1. The claim I am testing: .................................................
+# 2. The data + what I already know: trust_ess.csv (120,080 respondents of
+#    ESS rounds 1-4, CC BY-NC-SA 4.0); I know that the reference specification
+#    gives 0.175, and what my exploration in Task 4 showed.
+# 3. My one specification – one choice on each decision. An option that is
+#    not on the curve of 192 stops prereg() with the reason why.
+
+# Level 1 – Estimands (each of these changes what is being estimated)
+my_outcome   <- "parliament"     # parliament | politicians | legal | index
+my_controls  <- "paper"          # none | demog | outlook | paper
+my_weights   <- "none"           # none | design | population
+my_sample    <- "paper"          # paper   (citizens who do not belong to an ethnic minority)
+
+# Level 2 – Measurement (the same question, put to the data differently)
+my_concern   <- "index"          # index   (the mean of the three immigration items)
+my_items     <- "complete"       # complete | available   (every item answered, or the answered ones)
+my_education <- "five"           # five    (the five ISCED levels of the ESS)
+my_votes     <- "cabinet"        # cabinet (votes for a party in government and for a far-right party)
+my_missing   <- "listwise"       # listwise (respondents with a missing answer left out)
+
+# Level 3 – Estimation (the same question and measures, another fit)
+my_fe        <- "country_round"  # country_round | country_and_round
+my_errors    <- "country"        # country (clustered by country, t on 15 df)
+my_scale     <- "points"         # points  (points of distrust per point of concern)
+
+# 4. Why this specification answers the claim, in one sentence grounded in
+#    the causal graph of Task 2: .............................................
+# 5. Supported if the estimate is above zero with p < .05 under errors
+#    clustered by country; undermined if it is not significant or below
+#    zero. I will report what I get.
+
+my_spec <- prereg()   # checks every choice, prints your preregistration and keeps it
+```
+
+The cell above, copied into your notes, is your preregistration record.
+
+## Task 5, continued – Fit, report and place {#task-5-fit-report}
+
+This is the **robustness** check, and it is the part that your classmates cannot copy from you: together the class samples the multiverse of defensible analyses. `run_spec()` fits your declared specification and prints the same lines as `try_spec()`. It refuses to run if the preregistration cell has changed since `prereg()` read it.
+
+```{webr}
+#| autorun: false
+run_spec(my_spec)
+```
+
+The estimate is in points of distrust per point of concern, and a value above zero means that respondents who are more concerned about immigration distrust the institution more, the direction of the claim. Whether it is significant is decided by the test with errors clustered by country, and the line headed `Verdict:` says which of the four cases your result falls in.
+
+Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your mark joins the live [Multiverse]({{< var cases.trust.live-results-url >}}) chart within seconds, this time as a filled circle labelled **declared**, carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
+
+```{webr}
+#| autorun: false
+report_result()
+```
+
+If the form will not open on your machine, read the printed numbers to the facilitator, who adds your mark to the chart.
+
+Finally, place your result on the curve of the claim: the 192 specifications that the menu keeps, ranked from the smallest estimate, coloured by the adjustment set, with yours ringed.
+
+```{webr}
+#| autorun: false
+#| fig-width: 8
+#| fig-height: 4.5
+spec_curve <- read.csv("data/spec_curve.csv") |>  # r-style: keep – readr is not loaded on this page
+  arrange(b) |>
+  mutate(rank = row_number(),
+         controls = factor(controls, levels = c("none", "demog", "outlook", "paper")),
+         mine = outcome == my_outcome & controls == my_controls & weights == my_weights &
+           items == my_items & fe == my_fe)
+
+ggplot(spec_curve, aes(x = rank, y = b)) +
+  geom_hline(yintercept = 0, colour = "grey60") +
+  geom_point(aes(colour = controls), size = 1.8) +
+  geom_point(data = filter(spec_curve, mine), shape = 21, size = 5, stroke = 1.2,
+             colour = "#8b1538") +
+  scale_colour_manual(values = c(none = "#b3cde3", demog = "#6497c8",
+                                 outlook = "#2166ac", paper = "#08306b"),
+                      labels = c(none = "none", demog = "demographics",
+                                 outlook = "outlook and ideology", paper = "controls of the paper"),
+                      name = "Controls") +
+  labs(x = "The 192 specifications, from the smallest estimate",
+       y = "Points of distrust per point of concern") +
+  theme_minimal(base_size = 11)
+```
+
+All 192 estimates lie above zero, from 0.117 to 0.326 points of distrust per point of concern, and every one of them is significant at 5% with errors clustered by country (*t* from 11.3 to 21.6 on 15 df). The four bands are the four adjustment sets. The mean estimate is 0.290 without controls, 0.286 with the demographic controls, 0.214 with outlook and ideology, and 0.151 with the controls of the paper. The outcome moves the estimate by up to 0.055, and the weights, the rule for unanswered items and the intercepts each by less than 0.02. Within these data the claim holds under every choice on the menu; how large the association is depends above all on what is held constant, which is the question that the graph of Task 2 answers. The [Multiverse]({{< var cases.trust.live-results-url >}}) page sets the class submissions beside this curve.
+
+If you want a second declared specification, edit the preregistration cell, rerun it, then rerun `run_spec(my_spec)`. The chart will still label it declared, so be clear with yourself about what the second one is. Your first declaration was made without knowing its result. Anything after it was not, which puts it back in the same category as Task 4, and you should say so wherever you write about the result.
+
+## Taking it home
+
+This page keeps nothing once you refresh it, so work you want to keep belongs in the downloadable workspace. Putting that work under version control and publishing the rendered report is the natural next step. The [Git and GitHub module](../../companion/git-github.qmd) of the companion curriculum explains it click by click.
+
+::: {.callout-tip icon="false"}
+## The downloadable workspace
+
+The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE (Positron, RStudio, VS Code, etc.), edit and render offline, and in which everyone taking the course works. The same folder holds the reproduction of Task 3 as a script, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab-trust`]({{< var cases.trust.template-repo >}}) repository, and it is yours to reuse.
+:::
