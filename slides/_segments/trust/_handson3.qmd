@@ -7,7 +7,7 @@
 ```{.r}
 source("R/spec_tools.R")
 have_srd <- fetch_multi100()                 # downloaded once from the OSF and checked
-srd <- read.csv(.multi100$path)
+srd <- read.csv(.multi100$path)              # the reader of the script of the analyst
 
 m_6u3ll <- lme4::lmer(
   trstprl_r ~ im_conc + happy_r + stflife_r + sclmeet_r + distrust + stfeco_r + hincfel +
@@ -15,7 +15,7 @@ m_6u3ll <- lme4::lmer(
     far_right_share + spr_estat + factor(round) + long_im_his + wgi + GDP +
     (1 | country_round) + (1 | cntry),
   data = srd)
-coef(summary(m_6u3ll))["im_conc", ]
+parameters::model_parameters(m_6u3ll, effects = "fixed", keep = "^im_conc$")
 ```
 
 ::: {.fragment .small}

@@ -14,20 +14,15 @@ resources:
 # the curve of the claim, every option of the curve against its twins, and the
 # displays that hold the options off the curve at the reference settings. All
 # of it is aggregate, and the twins are paired in the browser from the curve.
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(readr)
-  library(purrr)
-})
-
-menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character())) |>
-  arrange(desc(b), spec_id) |>
-  mutate(rank = row_number())
-deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
-displays <- read_csv("data/display_options.csv", show_col_types = FALSE)
-inference <- read_csv("data/display_inference.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA.
+menu <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character())) |>
+  datawizard::data_arrange(c("-b", "spec_id")) |>
+  datawizard::data_modify(rank = 1:n())
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+displays <- readr::read_csv("data/display_options.csv", show_col_types = FALSE)
+inference <- readr::read_csv("data/display_inference.csv", show_col_types = FALSE)
 stopifnot(nrow(curve) == 192, sum(curve$is_reference) == 1)
 
 fallback_titles <- c(
@@ -46,17 +41,18 @@ page_title <- \(f) {
 
 # taught_on is a path from the project root, and the page links up two levels
 menu_js <- menu |>
-  mutate(page = taught_on) |>
-  select(axis, level, option, label, on_curve, page, reason, decision, stage, judgement,
-         phrase, estimates, explanation)
+  datawizard::data_modify(page = taught_on) |>
+  datawizard::data_select(c("axis", "level", "option", "label", "on_curve", "page", "reason", "decision",
+                            "stage", "judgement", "phrase", "estimates", "explanation"))
 pages <- unique(menu_js$page) |>
-  set_names() |>
-  map(page_title)
+  purrr::set_names() |>
+  purrr::map(page_title)
 
 curve_js <- curve |>
-  transmute(
+  dplyr::transmute(
     spec_id, outcome, controls, weights, items, fe,
     b = round(b, 5), se = round(se, 5), stat = round(stat, 3), df, p = signif(p, 3),
+    ci_low = round(ci_low, 5), ci_high = round(ci_high, 5),
     t_conv = round(t_conv, 2), df_conv, t_cr = round(t_cr, 2), df_cr, p_cr = signif(p_cr, 3),
     r = round(r, 4), b_std = round(b_std, 4), n, n_cr = n_country_rounds,
     rank, ref = is_reference
@@ -65,12 +61,15 @@ curve_js <- curve |>
 # the options off the curve that a display beside the curve holds, each fitted
 # alone at the reference settings; the random intercepts carry a model-based test
 display <- displays |>
-  transmute(axis, option, b = round(b, 4), p = signif(p, 3), n,
-            test = if_else(option == "random_intercepts", "model-based", "clustered"))
-p_boot <- inference$p[startsWith(inference$rule, "wild")]
+  dplyr::transmute(axis, option, b = round(b, 4), p = signif(p, 3), n,
+                   test = dplyr::if_else(option == "random_intercepts", "model-based", "clustered"))
+# the reference specification under the CR2 rule with Satterthwaite df
+cr2 <- inference |>
+  datawizard::data_filter(startsWith(rule, "CR2")) |>
+  datawizard::data_select(c("stat", "df", "p"))
 
 ojs_define(menu_raw = menu_js, curve_raw = curve_js, dev_raw = deviations,
-           display_raw = display, pages_raw = pages, p_boot = p_boot)
+           display_raw = display, pages_raw = pages, cr2_raw = cr2)
 ```
 
 <style>
@@ -250,9 +249,9 @@ decisionMap = {
   const statText = d => `t = ${fmtStat(d.stat)} on ${d.df} df`;
   function checkText(a, code, d) {
     if (a === "errors" && code === "country_round") return `Clustered by country-round, the same estimate has t = ${fmtStat(d.t_cr)} on ${d.df_cr} df, ${pEq(d.p_cr)}.`;
-    if (a === "errors" && code === "wild_bootstrap") return d.ref
-      ? `The wild cluster bootstrap by country, computed for this specification, gives ${pBoot === 0 ? "p below 1/10,000: none of its 9,999 draws reaches the t of the data" : pEq(pBoot)}.`
-      : "The wild cluster bootstrap was computed for the reference specification only, where it agrees with the clustered test.";
+    if (a === "errors" && code === "cr2") return d.ref
+      ? `With CR2 errors clustered by country, computed for this specification, the same estimate has t = ${fmtStat(cr2.stat)} on ${cr2.df.toFixed(1)} Satterthwaite degrees of freedom, ${pEq(cr2.p)}.`
+      : "The CR2 errors with Satterthwaite degrees of freedom were computed for the reference specification only, where they agree with the clustered test.";
     if (a === "scale" && code === "maximum_effect") return `Across the whole scale of concern, ten times the coefficient: ${(10 * d.b).toFixed(2)} points of distrust.`;
     if (a === "scale" && code === "standardised") return `As a standardised coefficient, ${d.b_std.toFixed(3)} standard deviations of distrust per standard deviation of concern.`;
     if (a === "scale" && code === "r") return `By the Multi100 rule, the conventional test converts to a partial correlation of ${fmtR(d.r)}.`;
@@ -379,9 +378,8 @@ decisionMap = {
   }
 
   // ---- charts
-  const T15 = 2.131;
-  // a scalar from ojs_define() can arrive as a one-element array
-  const pBoot = Array.isArray(p_boot) ? p_boot[0] : p_boot;
+  // the one row of the CR2 rule, from a data frame passed by ojs_define()
+  const cr2 = transpose(cr2_raw)[0];
   function curveChart(width) {
     const onVary = VARY.filter(a => isOn(sel, a));
     const match = curve.filter(d => onVary.every(a => d[a] === sel[a]));
@@ -392,7 +390,7 @@ decisionMap = {
     const base = curve.filter(d => !matchSet.has(d.spec_id) && !latestSet.has(d.spec_id));
     const tip = d => `${recipe(d)}\n${fmtB(d.b)} points, ${statText(d)}, ${pEq(d.p)}`;
     const dots = (data, stroke, op, r, sw) => [
-      Plot.ruleX(data, {x: "rank", y1: d => d.b - T15 * d.se, y2: d => d.b + T15 * d.se, stroke, strokeOpacity: op * 0.35, strokeWidth: sw}),
+      Plot.ruleX(data, {x: "rank", y1: "ci_low", y2: "ci_high", stroke, strokeOpacity: op * 0.35, strokeWidth: sw}),
       Plot.dot(data.filter(d => d.p < 0.05), {x: "rank", y: "b", r, symbol: "circle", fill: "none", stroke, strokeOpacity: op, strokeWidth: sw, title: tip}),
       Plot.dot(data.filter(d => d.p >= 0.05), {x: "rank", y: "b", r, symbol: "times", fill: "none", stroke, strokeOpacity: op, strokeWidth: sw, title: tip})
     ];

@@ -16,8 +16,6 @@
 # Sourced by:   cases/trust/multiverse.qmd
 ################################################################################
 
-library(dplyr)
-
 # The decisions that vary on the curve, in the order of the "Colour by" and
 # "Show only" menus. The keys are the short names that the payload and
 # assets/chart/multiverse.js use.
@@ -64,12 +62,12 @@ mv_menu_relation <- tibble::tribble(
 # that the data files write with hyphens.
 mv_minus <- \(x, d = 1) sub("^-", "−", formatC(x, format = "f", digits = d))
 mv_big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
-mv_p_label <- \(p) if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
+mv_p_label <- \(p) dplyr::if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
 mv_clean <- \(x) x |>
   stringr::str_replace_all("(?<=\\d)-(?=\\d)", "–") |>
   stringr::str_replace_all("(?<![\\w.])-(?=[0-9.])", "−")
 mv_upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
-mv_placement <- \(rank, n) case_when(
+mv_placement <- \(rank, n) dplyr::case_when(
   rank == 0 ~ sprintf("None of the %d specifications has a larger coefficient", n),
   rank == 1 ~ sprintf("1 of the %d specifications has a larger coefficient", n),
   .default = sprintf("%d of the %d specifications have a larger coefficient", rank, n)
@@ -80,8 +78,8 @@ mv_placement <- \(rank, n) case_when(
 # menu_options.csv, with their labels.
 mv_levels <- function(curve, options, axis_code) {
   lev <- options |>
-    filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
-    select("option", "label")
+    dplyr::filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
+    dplyr::select("option", "label")
   stopifnot(all(curve[[axis_code]] %in% lev$option))
   lev
 }
@@ -92,27 +90,27 @@ mv_levels <- function(curve, options, axis_code) {
 # from the statistic as published or recorded, which treats respondents as
 # independent or fits random intercepts; the paper prints p = 0.000.
 mv_marks <- function(marks, analysts, curve) {
-  # not n: a lambda built inside mutate() would find the column n of the marks first
+  # not n: a lambda built inside dplyr::mutate() would find the column n of the marks first
   n_spec <- nrow(curve)
   out <- marks |>
-    filter(.data$on_chart) |>
-    left_join(mv_menu_relation, by = "id") |>
-    left_join(analysts |> select("id", "outcome_txt" = "outcome", "concern_txt" = "concern",
+    dplyr::filter(.data$on_chart) |>
+    dplyr::left_join(mv_menu_relation, by = "id") |>
+    dplyr::left_join(analysts |> dplyr::select("id", "outcome_txt" = "outcome", "concern_txt" = "concern",
                                  "method", "task1", "df_f" = "df2_recorded"),
               by = "id") |>
-    mutate(
+    dplyr::mutate(
       rank = purrr::map_int(.data$b, \(x) sum(curve$b > x + 1e-9)),
-      p_num = case_when(
+      p_num = dplyr::case_when(
         is.na(.data$statistic) ~ 0,
         .data$statistic_type == "F" ~ pf(.data$statistic, 1, .data$df_f, lower.tail = FALSE),
         .default = 2 * pnorm(-abs(.data$statistic))
       ),
       sg = as.integer(.data$p_num < 0.05),
-      source = case_when(
+      source = dplyr::case_when(
         startsWith(.data$id, "SCORE") ~ "as published by SCORE",
         .default = "as recorded by Multi100"
       ),
-      stat = case_when(
+      stat = dplyr::case_when(
         .data$id == "OA" ~ "b = 0.17 with a standard error printed as 0.00 and p = 0.000, as published; no test statistic can be recovered",
         .data$statistic_type == "F" ~ sprintf("F = %s on 1 and %s df, %s; %s",
                                               formatC(.data$statistic, format = "f", digits = 2),
@@ -122,17 +120,17 @@ mv_marks <- function(marks, analysts, curve) {
                            formatC(.data$statistic, format = "f", digits = 3), .data$source,
                            mv_p_label(.data$p_num))
       ),
-      outcome_txt = case_when(
+      outcome_txt = dplyr::case_when(
         is.na(.data$outcome_txt) ~ "distrust in parliament",
         .data$outcome_txt == "trust in parliament" ~ "trust in parliament, turned round to distrust for the chart",
         .default = .data$outcome_txt
       ),
-      concern_txt = case_when(
+      concern_txt = dplyr::case_when(
         is.na(.data$concern_txt) ~ "index of the three items",
         .data$concern_txt == "index (any item)" ~ "index of the three items, over the items answered",
         .default = .data$concern_txt
       ),
-      method = case_when(
+      method = dplyr::case_when(
         !is.na(.data$method) ~ .data$method,
         .data$id == "OA" ~ "three-level model of Table 3, HLM",
         .data$id == "SCORE_1634" ~ "two-level model with post-stratification weights, 13 of the 16 countries",
@@ -169,7 +167,7 @@ mv_payload <- function(curve, options, marks, analysts, file = "spec-curve-trust
                        size = c(4, 5), sw = "0.9",
                        op = list(sig = "0.45", ns = "0.3", ghostSig = "0.1", ghostNs = "0.05"),
                        y = list(min = -0.05, max = 0.45, step = 0.05)) {
-  curve <- curve |> arrange(desc(.data$b), .data$spec_id)
+  curve <- curve |> dplyr::arrange(dplyr::desc(.data$b), .data$spec_id)
   levels <- purrr::map(mv_axes$axis, \(a) mv_levels(curve, options, a)) |>
     rlang::set_names(mv_axes$key)
   code <- purrr::map2(mv_axes$axis, levels, \(a, lev) match(curve[[a]], lev$option) - 1L) |>

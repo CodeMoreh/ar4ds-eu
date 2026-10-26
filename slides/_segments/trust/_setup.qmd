@@ -8,9 +8,8 @@
 # hand); every number on the slides is computed from them or taken from
 # _planning/trust/trust-facts.md. Estimates are in points of distrust (0–10)
 # per point of concern about immigration (0–10), and an estimate above zero is
-# the direction of the claim.
-td <- \(f) file.path("../cases/trust/data", f)
-rd <- \(f) read_csv(td(f), show_col_types = FALSE)
+# the direction of the claim. The files are read with readr rather than
+# datawizard::data_read(), which reads empty cells as "" rather than NA.
 
 # The addresses of the case, which the shared segments print. The record of
 # Multi100 lists a source-data reproduction for this paper, so it is not one
@@ -22,11 +21,11 @@ case_vars <- yaml::read_yaml("../_variables.yml")$cases$trust |>
 # The extract, and the respondents of the paper: citizens who do not belong to
 # an ethnic minority. Concern is the mean of the three items, for respondents
 # who answered all three, as in Task 2 of the workspace.
-ess <- rd("trust_ess.csv")
+ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
 paper_rows <- ess |>
-  filter(citizen %in% 1, minority %in% 0) |>
-  mutate(concern = (imm_econ + imm_culture + imm_place) / 3)
-n_country_rounds <- n_distinct(paste(ess$cntry, ess$essround))
+  datawizard::data_filter(citizen %in% 1, minority %in% 0) |>
+  dplyr::mutate(concern = datawizard::row_means(dplyr::pick(imm_econ, imm_culture, imm_place), min_valid = 3))
+n_country_rounds <- dplyr::n_distinct(paste(ess$cntry, ess$essround))
 miss_income <- mean(is.na(paper_rows$hh_income_z))
 
 country_names <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Germany",
@@ -37,55 +36,58 @@ country_names <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Ger
 # The association of concern with distrust of parliament within each country,
 # and across the 16 country means (unweighted)
 r_within <- paper_rows |>
-  summarise(r = cor(concern, distrust_parl, use = "complete.obs"), .by = cntry) |>
-  mutate(country = country_names[cntry]) |>
-  arrange(r)
-r_between <- paper_rows |>
-  summarise(across(c(concern, distrust_parl), \(v) mean(v, na.rm = TRUE)), .by = cntry) |>
-  summarise(r = cor(concern, distrust_parl)) |>
-  pull(r)
+  datawizard::data_summary(r = stats::cor(concern, distrust_parl, use = "complete.obs"), by = "cntry") |>
+  dplyr::mutate(country = country_names[cntry]) |>
+  datawizard::data_arrange("r")
+country_means <- paper_rows |>
+  datawizard::data_summary(concern = mean(concern, na.rm = TRUE),
+                           distrust_parl = mean(distrust_parl, na.rm = TRUE), by = "cntry")
+r_between <- stats::cor(country_means$concern, country_means$distrust_parl)
 
 # The curve of 192, ranked from the largest estimate (rank 1) to the smallest,
 # as the Multiverse page draws it
-curve <- read_csv(td("spec_curve.csv"), show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character())) |>
-  arrange(desc(b)) |>
-  mutate(rank = row_number())
-curve_ref <- filter(curve, is_reference)
+curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character())) |>
+  datawizard::data_arrange("-b") |>
+  datawizard::data_modify(rank = 1:n())
+curve_ref <- datawizard::data_filter(curve, is_reference)
 # The specification of the course closest to the model of 6U3LL: scales over
 # the answered items, as in the file of the analysts
-curve_analogue <- filter(curve, outcome == "parliament", controls == "paper", weights == "none",
-                         items == "available", fe == "country_round")
+curve_analogue <- datawizard::data_filter(curve, outcome == "parliament", controls == "paper",
+                                          weights == "none", items == "available", fe == "country_round")
 # Placement as try_spec() prints it: the specifications with a larger estimate
 placement_ref <- sum(curve$b > curve_ref$b + 1e-9)
 by_set <- curve |>
-  summarise(lo = min(b), hi = max(b), mean = mean(b), n_lo = min(n), n_hi = max(n), .by = controls)
+  datawizard::data_summary(lo = min(b), hi = max(b), mean = mean(b), n_lo = min(n), n_hi = max(n),
+                           by = "controls")
 bs <- \(set, col) by_set[[col]][by_set$controls == set]
 
-# Share of the variance of the 192 estimates carried by each decision, from the
-# sums of squares of a main-effects model; the residual holds the interactions
-var_ss <- anova(lm(b ~ outcome + controls + weights + items + fe, data = curve))
-var_share <- setNames(var_ss$`Sum Sq` / sum(var_ss$`Sum Sq`), rownames(var_ss))
+# Share of the variance of the 192 estimates carried by each decision: the eta
+# squared of each decision in a main-effects model (effectsize), the sum of
+# squares of the decision over the total; the residual holds the interactions
+variance <- stats::lm(b ~ outcome + controls + weights + items + fe, data = curve) |>
+  effectsize::eta_squared(partial = FALSE, ci = NULL)
+var_share <- c(stats::setNames(variance$Eta2, variance$Parameter), Residuals = 1 - sum(variance$Eta2))
 
-analysts <- rd("analysts5.csv")
-repro <- rd("display_reproduction.csv")
-inference <- rd("display_inference.csv")
-loo <- rd("display_loo.csv")
-means <- rd("display_country_means.csv")
-reliab <- rd("display_reliability.csv")
-options_d <- rd("display_options.csv")
-deviations <- rd("menu_deviations.csv")
-menu_opts <- rd("menu_options.csv")
+analysts <- readr::read_csv("../cases/trust/data/analysts5.csv", show_col_types = FALSE)
+repro <- readr::read_csv("../cases/trust/data/display_reproduction.csv", show_col_types = FALSE)
+inference <- readr::read_csv("../cases/trust/data/display_inference.csv", show_col_types = FALSE)
+loo <- readr::read_csv("../cases/trust/data/display_loo.csv", show_col_types = FALSE)
+means <- readr::read_csv("../cases/trust/data/display_country_means.csv", show_col_types = FALSE)
+reliab <- readr::read_csv("../cases/trust/data/display_reliability.csv", show_col_types = FALSE)
+options_d <- readr::read_csv("../cases/trust/data/display_options.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("../cases/trust/data/menu_deviations.csv", show_col_types = FALSE)
+menu_opts <- readr::read_csv("../cases/trust/data/menu_options.csv", show_col_types = FALSE)
 
 # The published result, the reproductions, the five reanalyses and the
 # replications, each placed by its coefficient; rank is the count of
 # specifications with a larger estimate, as for a class result
 mark_tags <- c(OA = "OA 2012", SCORE_jp7tr = "SCORE jp7tr", SCORE_65wm6 = "SCORE e48gd",
                SCORE_1634 = "SCORE 2010", SCORE_65wm6_DAR = "SCORE 2010–18")
-marks_all <- rd("reference_marks.csv") |>
-  mutate(tag = coalesce(unname(mark_tags[id]), id),
-         rank = map_dbl(b, \(x) sum(curve$b > x + 1e-9)) + 0.5,
-         new_data = data == "new")
+marks_all <- readr::read_csv("../cases/trust/data/reference_marks.csv", show_col_types = FALSE) |>
+  dplyr::mutate(tag = dplyr::coalesce(unname(mark_tags[id]), id),
+                rank = purrr::map_dbl(b, \(x) sum(curve$b > x + 1e-9)) + 0.5,
+                new_data = data == "new")
 
 # One value of a record or display file, for inline use
 an <- \(id_code, col) analysts[[col]][analysts$id == id_code]
@@ -114,24 +116,25 @@ set_labels <- c(none = "no controls", demog = "demographics", outlook = "outlook
 # coord_cartesian() fixes the range, so that an overlay never rescales the
 # axis between consecutive slides.
 curve_base <- function(colour_by = NULL) {
-  p <- ggplot(curve, aes(rank, b)) +
-    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4)
+  p <- ggplot2::ggplot(curve, ggplot2::aes(rank, b)) +
+    ggplot2::geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4)
   p <- if (is.null(colour_by)) {
-    p + geom_point(aes(shape = sig), colour = plain, alpha = 0.45, size = 2.4, stroke = 0.8)
+    p + ggplot2::geom_point(ggplot2::aes(shape = sig), colour = plain, alpha = 0.45, size = 2.4, stroke = 0.8)
   } else {
-    p + geom_point(aes(shape = sig, colour = .data[[colour_by]]), alpha = 0.85, size = 2.4, stroke = 0.9) +
-      scale_colour_manual(values = set_cols, labels = set_labels, breaks = names(set_cols), name = NULL)
+    p + ggplot2::geom_point(ggplot2::aes(shape = sig, colour = .data[[colour_by]]), alpha = 0.85, size = 2.4,
+                            stroke = 0.9) +
+      ggplot2::scale_colour_manual(values = set_cols, labels = set_labels, breaks = names(set_cols), name = NULL)
   }
   p +
-    scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
-                       labels = c("p < 0.05", "p ≥ 0.05"), name = NULL, drop = FALSE) +
-    scale_y_continuous(breaks = seq(0, 0.35, 0.05), labels = \(x) fmt_num(x, 2)) +
-    labs(x = sprintf("specification, ranked by the estimate (%d)", nrow(curve)),
-         y = "points of distrust\nper point of concern") +
-    coord_cartesian(ylim = c(0, 0.35), xlim = c(0, nrow(curve) + 1)) +
+    ggplot2::scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
+                                labels = c("p < 0.05", "p ≥ 0.05"), name = NULL, drop = FALSE) +
+    ggplot2::scale_y_continuous(breaks = seq(0, 0.35, 0.05), labels = \(x) fmt_num(x, 2)) +
+    ggplot2::labs(x = sprintf("specification, ranked by the estimate (%d)", nrow(curve)),
+                  y = "points of distrust\nper point of concern") +
+    ggplot2::coord_cartesian(ylim = c(0, 0.35), xlim = c(0, nrow(curve) + 1)) +
     theme_slide(15) +
-    theme(legend.position = "top", legend.justification = "right",
-          legend.margin = margin(0, 0, -6, 0))
+    ggplot2::theme(legend.position = "top", legend.justification = "right",
+                   legend.margin = ggplot2::margin(0, 0, -6, 0))
 }
 
 # Reference results as ink marks on the curve, each joined by a thin line to a
@@ -139,26 +142,26 @@ curve_base <- function(colour_by = NULL) {
 # with the same estimate to three decimals share a tag (the SCORE reproduction
 # e48gd and N8P2J fitted the same model to the same file). The tags are stacked
 # in the order of the marks, largest estimate on top, so that no two lines
-# cross.
+# cross. dplyr inside the function, because datawizard cannot see its arguments.
 mark_layer <- function(m, label_x = 92, top = 0.228, gap = 0.024) {
   tags <- m |>
-    mutate(spot = round(b, 3),
-           label = if_else(new_data, paste0(tag, " (new data)"), tag)) |>
-    summarise(rank = mean(rank), b = mean(b), label = paste(label, collapse = " · "),
-              .by = c(spot, new_data)) |>
-    arrange(desc(b)) |>
-    mutate(lab_y = top - gap * (row_number() - 1))
+    dplyr::mutate(spot = round(b, 3),
+                  label = dplyr::if_else(new_data, paste0(tag, " (new data)"), tag)) |>
+    dplyr::summarise(rank = mean(rank), b = mean(b), label = paste(label, collapse = " · "),
+                     .by = c(spot, new_data)) |>
+    dplyr::arrange(dplyr::desc(b)) |>
+    dplyr::mutate(lab_y = top - gap * (dplyr::row_number() - 1))
   list(
-    geom_segment(data = tags, aes(x = label_x + 1, xend = rank, y = lab_y, yend = b),
-                 colour = "#9aa3ab", linewidth = 0.35, inherit.aes = FALSE),
+    ggplot2::geom_segment(data = tags, ggplot2::aes(x = label_x + 1, xend = rank, y = lab_y, yend = b),
+                          colour = "#9aa3ab", linewidth = 0.35, inherit.aes = FALSE),
     # a circle for the original data, a triangle for the replications
-    geom_point(data = filter(tags, !new_data), aes(x = rank, y = b), shape = 1, colour = ink,
-               size = 3.4, stroke = 1.1, inherit.aes = FALSE),
-    geom_point(data = filter(tags, new_data), aes(x = rank, y = b), shape = 2, colour = ink,
-               size = 3.2, stroke = 1.1, inherit.aes = FALSE),
-    geom_label(data = tags, aes(x = label_x, y = lab_y, label = label), colour = ink,
-               fill = "#FFFFFFE6", size = 3.5, linewidth = 0.2, hjust = 1,
-               label.padding = grid::unit(2.5, "pt"), inherit.aes = FALSE)
+    ggplot2::geom_point(data = dplyr::filter(tags, !new_data), ggplot2::aes(x = rank, y = b), shape = 1,
+                        colour = ink, size = 3.4, stroke = 1.1, inherit.aes = FALSE),
+    ggplot2::geom_point(data = dplyr::filter(tags, new_data), ggplot2::aes(x = rank, y = b), shape = 2,
+                        colour = ink, size = 3.2, stroke = 1.1, inherit.aes = FALSE),
+    ggplot2::geom_label(data = tags, ggplot2::aes(x = label_x, y = lab_y, label = label), colour = ink,
+                        fill = "#FFFFFFE6", size = 3.5, linewidth = 0.2, hjust = 1,
+                        label.padding = grid::unit(2.5, "pt"), inherit.aes = FALSE)
   )
 }
 
@@ -170,7 +173,7 @@ mark_layer <- function(m, label_x = 92, top = 0.228, gap = 0.024) {
 # arrows out of the three common causes, whose paths the boxes close, turn
 # pale, and the arrows into the two common effects, whose paths the boxes
 # open, turn red.
-dag_nodes <- tribble(
+dag_nodes <- tibble::tribble(
   ~name,        ~x,   ~y,
   "concern",    0,    0,
   "distrust",   4,    0,
@@ -180,71 +183,72 @@ dag_nodes <- tribble(
   "far_right",  2,   -1.1,
   "services",   2,   -2.1
 ) |>
-  mutate(half_w = 0.12 + 0.05 * nchar(name), half_h = 0.2,
-         role = case_when(name == "concern" ~ "exposure", name == "distrust" ~ "outcome",
-                          .default = "other"))
+  dplyr::mutate(half_w = 0.12 + 0.05 * nchar(name), half_h = 0.2,
+                role = dplyr::case_when(name == "concern" ~ "exposure", name == "distrust" ~ "outcome",
+                                        .default = "other"))
 
 # how far along a unit vector (ux, uy) the edge of a box lies
 to_edge <- \(ux, uy, w, h) pmin(w / pmax(abs(ux), 1e-9), h / pmax(abs(uy), 1e-9))
 
 # Arrows between the boxes of the nodes, each stopped at the edge of both boxes
 dag_segments <- function(edges, nodes) {
-  tails <- select(nodes, from = name, x0 = x, y0 = y, w0 = half_w, h0 = half_h)
-  heads <- select(nodes, to = name, x1 = x, y1 = y, w1 = half_w, h1 = half_h)
+  tails <- dplyr::select(nodes, from = name, x0 = x, y0 = y, w0 = half_w, h0 = half_h)
+  heads <- dplyr::select(nodes, to = name, x1 = x, y1 = y, w1 = half_w, h1 = half_h)
   edges |>
-    left_join(tails, by = "from") |>
-    left_join(heads, by = "to") |>
-    mutate(len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
-           ux = (x1 - x0) / len, uy = (y1 - y0) / len,
-           s0 = to_edge(ux, uy, w0, h0) + 0.03,
-           s1 = to_edge(ux, uy, w1, h1) + 0.07,
-           x = x0 + s0 * ux, y = y0 + s0 * uy,
-           xend = x1 - s1 * ux, yend = y1 - s1 * uy)
+    dplyr::left_join(tails, by = "from") |>
+    dplyr::left_join(heads, by = "to") |>
+    dplyr::mutate(len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
+                  ux = (x1 - x0) / len, uy = (y1 - y0) / len,
+                  s0 = to_edge(ux, uy, w0, h0) + 0.03,
+                  s1 = to_edge(ux, uy, w1, h1) + 0.07,
+                  x = x0 + s0 * ux, y = y0 + s0 * uy,
+                  xend = x1 - s1 * ux, yend = y1 - s1 * uy)
 }
 
 trust_dag <- function(view = c("all", "paper")) {
   view <- match.arg(view)
   confounders <- c("background", "pessimism", "ideology")
   colliders <- c("far_right", "services")
-  edges <- tibble(from = c(rep(confounders, each = 2), "concern", "distrust", "concern", "distrust"),
-                  to = c(rep(c("concern", "distrust"), 3), "far_right", "far_right", "services", "services")) |>
-    mutate(state = case_when(view == "all" ~ "plain",
-                             from %in% confounders ~ "closed",
-                             .default = "opened"))
+  edges <- tibble::tibble(from = c(rep(confounders, each = 2), "concern", "distrust", "concern", "distrust"),
+                          to = c(rep(c("concern", "distrust"), 3), "far_right", "far_right", "services",
+                                 "services")) |>
+    dplyr::mutate(state = dplyr::case_when(view == "all" ~ "plain",
+                                           from %in% confounders ~ "closed",
+                                           .default = "opened"))
   segs <- dag_segments(edges, dag_nodes)
-  boxes <- filter(dag_nodes, name %in% c(confounders, colliders)) |>
-    mutate(kind = if_else(name %in% confounders, "closed", "opened"))
+  boxes <- dplyr::filter(dag_nodes, name %in% c(confounders, colliders)) |>
+    dplyr::mutate(kind = dplyr::if_else(name %in% confounders, "closed", "opened"))
   edge_cols <- c(plain = "grey40", closed = "grey82", opened = d_red)
   node_fill <- c(exposure = ncl_blue, outcome = burgundy, other = "grey45")
-  p <- ggplot() +
-    annotate("segment", x = 0.62, xend = 3.3, y = 0, yend = 0, colour = green, linewidth = 1.1,
-             linetype = "22", arrow = grid::arrow(length = grid::unit(9, "pt"), type = "closed")) +
-    annotate("text", x = 2, y = 0.24, label = "the claim", colour = green, fontface = "bold",
-             size = 4.8) +
-    geom_segment(data = segs, aes(x = x, y = y, xend = xend, yend = yend, colour = state),
-                 linewidth = 0.9, arrow = grid::arrow(length = grid::unit(8, "pt"), type = "closed")) +
-    scale_colour_manual(values = edge_cols, guide = "none")
+  p <- ggplot2::ggplot() +
+    ggplot2::annotate("segment", x = 0.62, xend = 3.3, y = 0, yend = 0, colour = green, linewidth = 1.1,
+                      linetype = "22", arrow = grid::arrow(length = grid::unit(9, "pt"), type = "closed")) +
+    ggplot2::annotate("text", x = 2, y = 0.24, label = "the claim", colour = green, fontface = "bold",
+                      size = 4.8) +
+    ggplot2::geom_segment(data = segs, ggplot2::aes(x = x, y = y, xend = xend, yend = yend, colour = state),
+                          linewidth = 0.9, arrow = grid::arrow(length = grid::unit(8, "pt"), type = "closed")) +
+    ggplot2::scale_colour_manual(values = edge_cols, guide = "none")
   if (view == "paper") {
-    p <- p + geom_rect(data = boxes,
-                       aes(xmin = x - half_w - 0.08, xmax = x + half_w + 0.08,
-                           ymin = y - half_h - 0.1, ymax = y + half_h + 0.1),
-                       fill = NA, colour = if_else(boxes$kind == "closed", ncl_blue, d_red),
-                       linewidth = 1.2)
+    p <- p + ggplot2::geom_rect(data = boxes,
+                                ggplot2::aes(xmin = x - half_w - 0.08, xmax = x + half_w + 0.08,
+                                             ymin = y - half_h - 0.1, ymax = y + half_h + 0.1),
+                                fill = NA, colour = dplyr::if_else(boxes$kind == "closed", ncl_blue, d_red),
+                                linewidth = 1.2)
   }
   p +
-    geom_label(data = dag_nodes, aes(x = x, y = y, label = name, fill = role), colour = "white",
-               fontface = "bold", size = 5.6, linewidth = 0,
-               label.r = grid::unit(5, "pt"), label.padding = grid::unit(6, "pt")) +
-    scale_fill_manual(values = node_fill, guide = "none") +
-    coord_fixed(xlim = c(-0.7, 4.7), ylim = c(-2.5, 2.9)) +
-    theme_void()
+    ggplot2::geom_label(data = dag_nodes, ggplot2::aes(x = x, y = y, label = name, fill = role),
+                        colour = "white", fontface = "bold", size = 5.6, linewidth = 0,
+                        label.r = grid::unit(5, "pt"), label.padding = grid::unit(6, "pt")) +
+    ggplot2::scale_fill_manual(values = node_fill, guide = "none") +
+    ggplot2::coord_fixed(xlim = c(-0.7, 4.7), ylim = c(-2.5, 2.9)) +
+    ggplot2::theme_void()
 }
 
 # The three readings of the controls of the paper, as the specification menu
 # draws them: the common causes above, the far-right vote and the verdict on
 # services below, as common causes (left), steps on the path from concern to
 # distrust (centre), or consequences of both attitudes (right)
-readings_nodes <- tribble(
+readings_nodes <- tibble::tribble(
   ~name,        ~x,   ~y,
   "concern",    0,    0,
   "distrust",   4,    0,
@@ -254,10 +258,10 @@ readings_nodes <- tribble(
   "services",   1.2, -1.45,
   "far_right",  2.8, -1.45
 ) |>
-  mutate(half_w = 0.1 + 0.055 * nchar(name), half_h = 0.24,
-         role = case_when(name %in% c("concern", "distrust") ~ "attitude",
-                          name %in% c("services", "far_right") ~ "disputed",
-                          .default = "common"))
+  dplyr::mutate(half_w = 0.1 + 0.055 * nchar(name), half_h = 0.24,
+                role = dplyr::case_when(name %in% c("concern", "distrust") ~ "attitude",
+                                        name %in% c("services", "far_right") ~ "disputed",
+                                        .default = "common"))
 readings_disputed <- list(
   "Common causes" = c("services>concern", "services>distrust", "far_right>concern", "far_right>distrust"),
   "Steps on the path" = c("concern>services", "services>distrust", "concern>far_right", "far_right>distrust"),
@@ -265,30 +269,32 @@ readings_disputed <- list(
 )
 
 dag_readings <- function() {
-  shared_edges <- tibble(from = rep(c("pessimism", "background", "ideology"), each = 2),
-                         to = rep(c("concern", "distrust"), 3), kind = "shared") |>
-    bind_rows(tibble(from = "concern", to = "distrust", kind = "claim"))
+  shared_edges <- tibble::tibble(from = rep(c("pessimism", "background", "ideology"), each = 2),
+                                 to = rep(c("concern", "distrust"), 3), kind = "shared") |>
+    dplyr::bind_rows(tibble::tibble(from = "concern", to = "distrust", kind = "claim"))
   panel_levels <- names(readings_disputed)
-  edges <- imap(readings_disputed, \(e, panel) {
-    bind_rows(shared_edges,
-              tibble(from = sub(">.*$", "", e), to = sub("^.*>", "", e), kind = "disputed")) |>
-      mutate(panel = panel)
+  edges <- purrr::imap(readings_disputed, \(e, panel) {
+    dplyr::bind_rows(shared_edges,
+                     tibble::tibble(from = sub(">.*$", "", e), to = sub("^.*>", "", e), kind = "disputed")) |>
+      dplyr::mutate(panel = panel)
   }) |>
-    bind_rows() |>
+    dplyr::bind_rows() |>
     dag_segments(readings_nodes) |>
-    mutate(panel = factor(panel, levels = panel_levels))
+    dplyr::mutate(panel = factor(panel, levels = panel_levels))
   labels <- tidyr::crossing(readings_nodes, panel = factor(panel_levels, levels = panel_levels))
-  ggplot() +
-    geom_segment(data = edges, aes(x = x, y = y, xend = xend, yend = yend, colour = kind),
-                 linewidth = 0.7, arrow = grid::arrow(length = grid::unit(6, "pt"), type = "closed")) +
-    geom_label(data = labels, aes(x = x, y = y, label = name, fill = role), colour = "white",
-               fontface = "bold", size = 3.7, linewidth = 0, label.padding = grid::unit(3.5, "pt")) +
-    facet_wrap(~panel, nrow = 1) +
-    scale_colour_manual(values = c(claim = green, shared = "grey60", disputed = bronze), guide = "none") +
-    scale_fill_manual(values = c(attitude = ncl_blue, common = "grey45", disputed = bronze), guide = "none") +
-    coord_cartesian(xlim = c(-0.7, 4.7), ylim = c(-1.85, 2)) +
-    theme_void(base_size = 15) +
-    theme(strip.text = element_text(face = "bold", colour = ncl_blue, size = 15, margin = margin(b = 6)),
-          panel.spacing.x = unit(1.5, "lines"))
+  ggplot2::ggplot() +
+    ggplot2::geom_segment(data = edges, ggplot2::aes(x = x, y = y, xend = xend, yend = yend, colour = kind),
+                          linewidth = 0.7, arrow = grid::arrow(length = grid::unit(6, "pt"), type = "closed")) +
+    ggplot2::geom_label(data = labels, ggplot2::aes(x = x, y = y, label = name, fill = role), colour = "white",
+                        fontface = "bold", size = 3.7, linewidth = 0, label.padding = grid::unit(3.5, "pt")) +
+    ggplot2::facet_wrap(~panel, nrow = 1) +
+    ggplot2::scale_colour_manual(values = c(claim = green, shared = "grey60", disputed = bronze), guide = "none") +
+    ggplot2::scale_fill_manual(values = c(attitude = ncl_blue, common = "grey45", disputed = bronze),
+                               guide = "none") +
+    ggplot2::coord_cartesian(xlim = c(-0.7, 4.7), ylim = c(-1.85, 2)) +
+    ggplot2::theme_void(base_size = 15) +
+    ggplot2::theme(strip.text = ggplot2::element_text(face = "bold", colour = ncl_blue, size = 15,
+                                                      margin = ggplot2::margin(b = 6)),
+                   panel.spacing.x = grid::unit(1.5, "lines"))
 }
 ```

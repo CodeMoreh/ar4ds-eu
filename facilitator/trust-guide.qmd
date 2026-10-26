@@ -14,58 +14,59 @@ execute:
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-
 # Every number of the expected-numbers section is read from the committed data
-# files of the case, so that the guide and the pages cannot drift apart.
-case_data <- \(file) read_csv(file.path("../cases/trust/data", file), show_col_types = FALSE)
+# files of the case, so that the guide and the pages cannot drift apart. readr
+# rather than datawizard::data_read(), which reads empty cells as "" rather than NA.
 fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
-sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), fmt(x, d))
 
-ess <- case_data("trust_ess.csv")
-curve <- read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character()))
-analysts <- case_data("analysts5.csv")
-marks <- case_data("reference_marks.csv")
-deviations <- case_data("menu_deviations.csv")
-inference <- case_data("display_inference.csv")
-loo <- case_data("display_loo.csv")
-reliab <- case_data("display_reliability.csv")
-options_d <- case_data("display_options.csv")
+ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
+curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character()))
+analysts <- readr::read_csv("../cases/trust/data/analysts5.csv", show_col_types = FALSE)
+marks <- readr::read_csv("../cases/trust/data/reference_marks.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("../cases/trust/data/menu_deviations.csv", show_col_types = FALSE)
+inference <- readr::read_csv("../cases/trust/data/display_inference.csv", show_col_types = FALSE)
+loo <- readr::read_csv("../cases/trust/data/display_loo.csv", show_col_types = FALSE)
+reliab <- readr::read_csv("../cases/trust/data/display_reliability.csv", show_col_types = FALSE)
+options_d <- readr::read_csv("../cases/trust/data/display_options.csv", show_col_types = FALSE)
 
-ref <- filter(curve, is_reference)
-analogue <- filter(curve, outcome == "parliament", controls == "paper", weights == "none",
-                   items == "available", fe == "country_round")
+ref <- datawizard::data_filter(curve, is_reference)
+analogue <- datawizard::data_filter(curve, outcome == "parliament", controls == "paper", weights == "none",
+                                    items == "available", fe == "country_round")
 an <- \(id, col) analysts[[col]][analysts$id == id]
 mark <- \(id, col = "b") marks[[col]][marks$id == id]
 shift <- \(axis, option, col = "shift_mean") deviations[[col]][deviations$axis == axis & deviations$option == option]
 inf <- \(start, col) inference[[col]][startsWith(inference$rule, start)]
 opt <- \(option, col = "b") options_d[[col]][options_d$option == option]
-by_set <- curve |> summarise(lo = min(b), hi = max(b), mean = mean(b), .by = controls)
+by_set <- curve |> datawizard::data_summary(lo = min(b), hi = max(b), mean = mean(b), by = "controls")
 bs <- \(set, col) by_set[[col]][by_set$controls == set]
 
 # The respondents of the paper, with concern over every item answered, as in
 # Task 2 of the workspace
 paper <- ess |>
-  filter(citizen %in% 1, minority %in% 0) |>
-  mutate(concern = (imm_econ + imm_culture + imm_place) / 3)
+  datawizard::data_filter(citizen %in% 1, minority %in% 0) |>
+  dplyr::mutate(concern = datawizard::row_means(dplyr::pick(imm_econ, imm_culture, imm_place), min_valid = 3))
 within <- paper |>
-  summarise(r = cor(concern, distrust_parl, use = "complete.obs"), .by = cntry)
-between <- paper |>
-  summarise(across(c(concern, distrust_parl), \(v) mean(v, na.rm = TRUE)), .by = cntry) |>
-  summarise(r = cor(concern, distrust_parl)) |>
-  pull(r)
+  datawizard::data_summary(r = stats::cor(concern, distrust_parl, use = "complete.obs"), by = "cntry")
+country_means <- paper |>
+  datawizard::data_summary(concern = mean(concern, na.rm = TRUE),
+                           distrust_parl = mean(distrust_parl, na.rm = TRUE), by = "cntry")
+between <- stats::cor(country_means$concern, country_means$distrust_parl)
 
 # Placement as try_spec() prints it: the specifications with a larger estimate
 placement <- \(b) sum(curve$b > b + 1e-9)
 other_max <- deviations |>
-  filter(axis != "controls") |>
-  summarise(m = max(abs(c(shift_min, shift_max)))) |>
-  pull(m)
-var_ss <- anova(lm(b ~ outcome + controls + weights + items + fe, data = curve))
-var_controls <- var_ss["controls", "Sum Sq"] / sum(var_ss$`Sum Sq`)
+  datawizard::data_filter(axis != "controls") |>
+  datawizard::data_summary(m = max(abs(c(shift_min, shift_max)))) |>
+  datawizard::data_extract("m")
+# the share of the variance of the estimates that the adjustment set carries:
+# its eta squared in a main-effects model (effectsize)
+var_controls <- stats::lm(b ~ outcome + controls + weights + items + fe, data = curve) |>
+  effectsize::eta_squared(partial = FALSE, ci = NULL) |>
+  datawizard::data_filter(Parameter == "controls") |>
+  datawizard::data_extract("Eta2")
 ```
 
 ::: {.callout-note}
@@ -200,7 +201,7 @@ The readout at the top right names the part and the position, and its badge show
 | 0:00 | Your own small multiverse and the curve (10′) | Name what Task 4 was; optionally the origins and the garden of forking paths; then the curve of the claim and the ten reference results placed on it. | Watch. | – |
 | 0:10 | The class multiverse and the placement (10′) | Refresh the class chart; the question bank (below). Then the third held answer: "rerun your submitted specification, read your placement, hold it, go". | Find their mark; read and send their placement. | Participants without a submission use the reference specification, whose placement is `r placement(ref$b)`. |
 | 0:20 | What moved the estimate (6′) | The shifts by option, then the curve coloured by the adjustment set. | Connect the blocks to their own choice and to their graph. | – |
-| 0:26 | Inference with 16 countries (12′) | Four rules of inference at the reference specification; why respondents of one country are not independent; few clusters and the wild cluster bootstrap; leaving out one country; what the curve leaves out. | Listen; ask. | The point is the size of the uncertainty that the 0.00 hid, not a change of verdict: on this claim no rule changes any verdict, and the EU-frames case is the one where it does. |
+| 0:26 | Inference with 16 countries (12′) | Five rules of inference at the reference specification; why respondents of one country are not independent; few clusters and the CR2 correction; leaving out one country; what the curve leaves out. | Listen; ask. | The point is the size of the uncertainty that the 0.00 hid, not a change of verdict: on this claim no rule changes any verdict, and the EU-frames case is the one where it does. |
 | 0:38 | The replications and the causal reading (8′) | The two SCORE replications, the three Rs on this paper, repetition and the causal reading. | Listen; argue. | The last slide is the lesson of the day; never compress it. |
 | 0:46 | Critics and preregistration (8′) | The critics; one correct analysis and how to identify it; what preregistration settles; exploration against declaration. | Listen; ask. | If the clock is tight, the identification slide goes to one sentence. |
 | 0:54 | Archiving and the public record (6′) | Archiving and registering; the Multi100 preregistration; the two templates; the records slide with the three-minute search of the Multi100 component; the eight AsPredicted questions. | Search the component; paste one decision in chat. | If time is short, show the search on the shared screen. |
@@ -273,13 +274,13 @@ Each row names the first move, not the only one, and every ladder ends at a poin
 ## Expected numbers {#expected-numbers}
 
 - **Task 1.** The last check of `R/check_setup.R`: the reference specification reproduces at `r fmt(ref$b, 4)` points of distrust per point of concern; the lab prints the same, with `r big(nrow(ess))` respondents.
-- **Task 2.** `r big(nrow(ess))` respondents in `r n_distinct(ess$cntry)` countries and `r n_distinct(paste(ess$cntry, ess$essround))` country-rounds; `r big(nrow(paper))` in the sample of the paper. Cronbach's alpha of the three immigration items `r fmt(reliab$alpha[reliab$scale == "concern" & reliab$cntry == "all"], 2)`. Mean distrust among the respondents of the paper: parliament `r fmt(mean(paper$distrust_parl, na.rm = TRUE), 2)`, politicians `r fmt(mean(paper$distrust_pol, na.rm = TRUE), 2)`, legal system `r fmt(mean(paper$distrust_legal, na.rm = TRUE), 2)`. The correlation of mean concern with mean distrust of parliament across the 16 countries is `r fmt(between, 2)`; within the countries it runs from `r fmt(min(within$r), 2)` to `r fmt(max(within$r), 2)`. The graph: `adjustmentSets(dag)` returns `{ background, ideology, pessimism }`, and `isAdjustmentSet(dag, paper_set)` returns `FALSE`, because the far-right vote and the verdict on services are colliders in the starter graph. With the swaps, they become mediators, and in the workspace `adjustmentSets(dag, effect = "direct")` adds them; the graph code of the browser lab gives only the set for the total effect. With the arrow turned round, no set separates the two directions.
+- **Task 2.** `r big(nrow(ess))` respondents in `r dplyr::n_distinct(ess$cntry)` countries and `r dplyr::n_distinct(paste(ess$cntry, ess$essround))` country-rounds; `r big(nrow(paper))` in the sample of the paper. Cronbach's alpha of the three immigration items `r fmt(reliab$alpha[reliab$scale == "concern" & reliab$cntry == "all"], 2)`. Mean distrust among the respondents of the paper: parliament `r fmt(mean(paper$distrust_parl, na.rm = TRUE), 2)`, politicians `r fmt(mean(paper$distrust_pol, na.rm = TRUE), 2)`, legal system `r fmt(mean(paper$distrust_legal, na.rm = TRUE), 2)`. The correlation of mean concern with mean distrust of parliament across the 16 countries is `r fmt(between, 2)`; within the countries it runs from `r fmt(min(within$r), 2)` to `r fmt(max(within$r), 2)`. The graph: `adjustmentSets(dag)` returns `{ background, ideology, pessimism }`, and `isAdjustmentSet(dag, paper_set)` returns `FALSE`, because the far-right vote and the verdict on services are colliders in the starter graph. With the swaps, they become mediators, and in the workspace `adjustmentSets(dag, effect = "direct")` adds them; the graph code of the browser lab gives only the set for the total effect. With the arrow turned round, no set separates the two directions.
 - **Task 3.** 6U3LL: *t* = `r fmt(an("6U3LL", "statistic_recorded"), 3)`, coefficient `r fmt(an("6U3LL", "b_refit"), 3)`, `r big(an("6U3LL", "n_refit"))` respondents in 57 country-rounds of 16 countries. An intercept for every country-round on the same file: 0.191. The analogue on the course extract: `r fmt(analogue$b, 3)` on `r big(analogue$n)` respondents (conventional *t* `r fmt(analogue$t_conv, 1)`). The optional N8P2J: *t* = `r fmt(an("N8P2J", "statistic_refit"), 3)` on `r big(an("N8P2J", "n_refit"))` respondents.
 - **The reference specification** (parliament, the controls of the paper, no weights, every item answered, an intercept for every country-round): `r fmt(ref$b, 4)`, SE `r fmt(ref$se, 4)` clustered by country, *t* = `r fmt(ref$stat, 2)` on `r ref$df` df, conventional *t* = `r fmt(ref$t_conv, 2)`, partial *r* = `r fmt(ref$r, 3)`, `r big(ref$n)` respondents in `r ref$n_country_rounds` country-rounds.
 - **The curve.** `r nrow(curve)` specifications, all above zero and all significant at 5% with errors clustered by country, from `r fmt(min(curve$b))` to `r fmt(max(curve$b))`; the clustered *t* runs from `r fmt(min(curve$stat), 1)` to `r fmt(max(curve$stat), 1)`. Mean by adjustment set: none `r fmt(bs("none", "mean"))`, demographics `r fmt(bs("demog", "mean"))`, outlook and ideology `r fmt(bs("outlook", "mean"))`, the controls of the paper `r fmt(bs("paper", "mean"))`; the set carries `r round(100 * var_controls)`% of the variance of the estimates. Against no controls on twins, the controls of the paper shift the estimate by `r sgn(shift("controls", "paper"))` on average; no option of any other decision moves a specification by more than `r fmt(other_max)`, and no option changes a verdict.
-- **Placement.** The reference specification is placed at `r placement(ref$b)` of `r nrow(curve)` (specifications with a larger estimate); `try_spec(controls = "none")` at `r placement(filter(curve, outcome == "parliament", controls == "none", weights == "none", items == "complete", fe == "country_round")$b)`.
+- **Placement.** The reference specification is placed at `r placement(ref$b)` of `r nrow(curve)` (specifications with a larger estimate); `try_spec(controls = "none")` at `r placement(datawizard::data_filter(curve, outcome == "parliament", controls == "none", weights == "none", items == "complete", fe == "country_round")$b)`.
 - **The reference marks.** OA 2012 `r fmt(mark("OA"), 2)` (placement `r placement(mark("OA"))`); SCORE jp7tr `r fmt(mark("SCORE_jp7tr"))`; SCORE e48gd and N8P2J `r fmt(mark("N8P2J"))`; FQ1G7 `r fmt(mark("FQ1G7"))`; LT39B `r fmt(mark("LT39B"))`; 456AD `r fmt(mark("456AD"))`; 6U3LL `r fmt(mark("6U3LL"))`; the replications `r fmt(mark("SCORE_1634"))` (round 5, `r big(mark("SCORE_1634", "n"))` respondents) and `r fmt(mark("SCORE_65wm6_DAR"))` (rounds 5–9, `r big(mark("SCORE_65wm6_DAR", "n"))`).
-- **Inference at the reference specification.** Conventional *t* = `r fmt(inf("conventional", "stat"), 1)` on `r big(inf("conventional", "df"))` df; clustered by country-round *t* = `r fmt(inf("clustered by country-round", "stat"), 1)` on `r inf("clustered by country-round", "df")` df; clustered by country *t* = `r fmt(inf("clustered by country (", "stat"), 1)` on `r inf("clustered by country (", "df")` df, with an SE `r fmt(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times the conventional one; the wild cluster bootstrap by country gives p below 1/10,000. Leaving out one country moves the estimate between `r fmt(min(loo$b))` and `r fmt(max(loo$b))`.
+- **Inference at the reference specification.** Conventional *t* = `r fmt(inf("conventional", "stat"), 1)` on `r big(inf("conventional", "df"))` df; clustered by country-round *t* = `r fmt(inf("clustered by country-round", "stat"), 1)` on `r inf("clustered by country-round", "df")` df; clustered by country *t* = `r fmt(inf("clustered by country (", "stat"), 1)` on `r inf("clustered by country (", "df")` df, with an SE `r fmt(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times the conventional one; CR2 by country *t* = `r fmt(inf("CR2", "stat"), 1)` on `r fmt(inf("CR2", "df"), 1)` Satterthwaite df, with an SE of `r fmt(inf("CR2", "se"), 5)` against `r fmt(inf("clustered by country (", "se"), 5)`. Leaving out one country moves the estimate between `r fmt(min(loo$b))` and `r fmt(max(loo$b))`.
 - **Options off the curve, at the reference settings.** Single items `r fmt(opt("culture"))` to `r fmt(opt("place"))`; satisfaction with the government added `r fmt(opt("paper_gov"))`; random intercepts `r fmt(opt("random_intercepts"))`; pooled regression `r fmt(opt("pooled"))`.
 - **The five analysts.** All five concluded in Task 1 of Multi100 that their results showed evidence for the claim. Coefficients from `r fmt(min(analysts$b_refit))` (LT39B, one item) to `r fmt(max(analysts$b_refit))` (FQ1G7, a short list of controls).
 

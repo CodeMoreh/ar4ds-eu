@@ -4,37 +4,40 @@
 #| label: inference-chart
 #| fig-width: 10
 #| fig-height: 3.6
-# The reference specification under four rules of inference
-# (data/display_inference.csv): the coefficient with its 95% interval, the
-# t and the df of each rule. The wild cluster bootstrap gives a p-value and no
-# standard error, so it is reported beneath the chart.
+# The reference specification under five rules of inference
+# (data/display_inference.csv): the coefficient with its 95% interval, as the
+# package of each rule computes it, and the t and the df of each rule. dplyr,
+# which sees the labels defined in this chunk.
 rule_labels <- c("conventional (model-based) errors" = "conventional errors",
                  "random intercepts (multilevel model)" = "random intercepts",
                  "clustered by country-round (CR1)" = "clustered by country-round",
-                 "clustered by country (CR1), the curve" = "clustered by country (the curve)")
+                 "clustered by country (CR1), the curve" = "clustered by country (the curve)",
+                 "CR2 by country with Satterthwaite df" = "CR2 by country")
 inf_rows <- inference |>
-  filter(rule %in% names(rule_labels)) |>
-  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
-         lab = factor(rule_labels[rule], levels = rev(rule_labels)),
-         note = paste0("t = ", fmt_num(stat, 1), " on ", format(round(df), big.mark = ",", trim = TRUE), " df"),
-         curve_rule = startsWith(rule, "clustered by country ("))
-ggplot(inf_rows, aes(b, lab, colour = curve_rule)) +
-  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.6) +
-  geom_point(size = 4.2) +
-  geom_text(aes(x = 0.205, label = note), hjust = 0, size = 4.8, colour = "grey30") +
-  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
-  coord_cartesian(xlim = c(0.15, 0.235)) +
-  labs(x = "points of distrust per point of concern, with 95% intervals", y = NULL) +
+  dplyr::filter(rule %in% names(rule_labels)) |>
+  dplyr::mutate(lab = factor(rule_labels[rule], levels = rev(rule_labels)),
+                # the Satterthwaite df of the CR2 rule are not whole numbers
+                df_txt = dplyr::if_else(df < 100 & df != round(df), fmt_num(df, 1),
+                                        format(round(df), big.mark = ",", trim = TRUE)),
+                note = paste0("t = ", fmt_num(stat, 1), " on ", df_txt, " df"),
+                curve_rule = startsWith(rule, "clustered by country ("))
+ggplot2::ggplot(inf_rows, ggplot2::aes(b, lab, colour = curve_rule)) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = ci_low, xmax = ci_high), linewidth = 1.6) +
+  ggplot2::geom_point(size = 4.2) +
+  ggplot2::geom_text(ggplot2::aes(x = 0.205, label = note), hjust = 0, size = 4.8, colour = "grey30") +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  ggplot2::coord_cartesian(xlim = c(0.15, 0.235)) +
+  ggplot2::labs(x = "points of distrust per point of concern, with 95% intervals", y = NULL) +
   theme_slide(15) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20", face = "bold"))
 ```
 
 ::: {.small}
-The paper prints the standard error as 0.00. Clustered by country, it is `r fmt_num(inf("clustered by country (", "se"), 4)`, **`r fmt_num(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times** the conventional `r fmt_num(inf("conventional", "se"), 4)`; across the curve, `r fmt_num(min(curve$se / curve$se_conv), 1)` to `r fmt_num(max(curve$se / curve$se_conv), 1)` times. A wild cluster bootstrap by country gives p below 1/10,000.
+The paper prints the standard error as 0.00. Clustered by country, it is `r fmt_num(inf("clustered by country (", "se"), 4)`, **`r fmt_num(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times** the conventional `r fmt_num(inf("conventional", "se"), 4)`; across the curve, `r fmt_num(min(curve$se / curve$se_conv), 1)` to `r fmt_num(max(curve$se / curve$se_conv), 1)` times. The CR2 correction for few clusters raises it by `r fmt_num(100 * (inf("CR2", "se") / inf("clustered by country (", "se") - 1), 1)`%, with *t* = `r fmt_num(inf("CR2", "stat"), 1)` on `r fmt_num(inf("CR2", "df"), 1)` df.
 :::
 
 ::: notes
-Here is the question that the paper left its readers unable to ask. The coefficient is the same under every rule; what changes is how uncertain we say it is. Conventional errors treat seventy thousand respondents as seventy thousand independent pieces of evidence, and give a t of forty-one. The random-intercept model of the paper gives the same t. Clustering by country-round widens the interval, and clustering by country, the rule of the curve, widens it more than twice over, with a t of eighteen on fifteen degrees of freedom. The standard error printed as nought point nought nought is really nought point nought one once the countries are allowed to differ. And still the interval sits far from zero, and a bootstrap that multiplies the residuals of whole countries by random weights agrees. On this claim no rule of inference changes the verdict, which is itself worth knowing.
+Here is the question that the paper left its readers unable to ask. The coefficient is the same under every rule; what changes is how uncertain we say it is. Conventional errors treat seventy thousand respondents as seventy thousand independent pieces of evidence, and give a t of forty-one. The random-intercept model of the paper gives the same t. Clustering by country-round widens the interval, and clustering by country, the rule of the curve, widens it more than twice over, with a t of eighteen on fifteen degrees of freedom. The standard error printed as nought point nought nought is really nought point nought one once the countries are allowed to differ. And still the interval sits far from zero, and the CR2 correction, which is built for few clusters, gives almost exactly the same interval. On this claim no rule of inference changes the verdict, which is itself worth knowing.
 :::
 
 ## Respondents of one country {#respondents-of-one-country}
@@ -45,14 +48,14 @@ Here is the question that the paper left its readers unable to ask. The coeffici
 #| fig-height: 3.9
 # The correlation of concern with distrust of parliament among the
 # respondents of the paper in each country (data/trust_ess.csv).
-ggplot(r_within, aes(r, factor(country, levels = country))) +
-  geom_segment(aes(x = 0, xend = r, yend = factor(country, levels = country)),
-               colour = "#c7ccd2", linewidth = 0.8) +
-  geom_point(size = 3.6, colour = ncl_blue) +
-  scale_x_continuous(limits = c(0, 0.42)) +
-  labs(x = "correlation of concern with distrust of parliament, within the country", y = NULL) +
+ggplot2::ggplot(r_within, ggplot2::aes(r, factor(country, levels = country))) +
+  ggplot2::geom_segment(ggplot2::aes(x = 0, xend = r, yend = factor(country, levels = country)),
+                        colour = "#c7ccd2", linewidth = 0.8) +
+  ggplot2::geom_point(size = 3.6, colour = ncl_blue) +
+  ggplot2::scale_x_continuous(limits = c(0, 0.42)) +
+  ggplot2::labs(x = "correlation of concern with distrust of parliament, within the country", y = NULL) +
   theme_slide(13) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20"))
 ```
 
 ::: {.small}
@@ -68,7 +71,7 @@ Why should the respondents of one country count for less than independent eviden
 ::: {.small}
 - With errors clustered by country, the evidence on the uncertainty rests on **16 clusters**, and with few clusters even clustered errors can be too small
 - The curve tests every coefficient against a ***t* distribution on 15 degrees of freedom** rather than the normal one
-- A **wild cluster bootstrap** checks the result: it rebuilds the distribution of the clustered *t* under no association, multiplying the residuals of whole countries by random weights 9,999 times. None of the draws reaches the *t* of the data
+- The **CR2 correction** checks the result: it enlarges the residuals of the countries that pull the fit towards themselves, and takes its degrees of freedom from the data, `r fmt_num(inf("CR2", "df"), 1)` here rather than 15. The *t* hardly moves: `r fmt_num(inf("CR2", "stat"), 2)` against `r fmt_num(inf("clustered by country (", "stat"), 2)`
 :::
 
 ::: {.fragment .small}
@@ -76,7 +79,7 @@ Across the curve the clustered *t* runs from `r fmt_num(min(curve$stat), 1)` to 
 :::
 
 ::: notes
-Clustering by country solves one problem and opens another. The evidence about uncertainty now comes from sixteen countries, and with that few clusters, even clustered errors tend to be too small. Two things protect the curve. Every coefficient is tested against a t distribution on fifteen degrees of freedom rather than the normal one. And a wild cluster bootstrap checks the answer: it builds the distribution of the t that we would get with no association at all, by flipping and scaling the residuals of whole countries, nearly ten thousand times. Not one draw comes near the t of the data. [advance] So here, nothing changes. In the EU-frames case on this site, the same correction decides whether the reproduced result is significant, because its predictor varies only between country-years. Here concern varies between respondents of the same country and round, so each of the sixteen clusters carries thousands of comparisons.
+Clustering by country solves one problem and opens another. The evidence about uncertainty now comes from sixteen countries, and with that few clusters, even clustered errors tend to be too small. Two things protect the curve. Every coefficient is tested against a t distribution on fifteen degrees of freedom rather than the normal one. And the CR2 correction checks the answer: it scales up the residuals of the countries that pull the fit towards themselves, and it works out how many countries' worth of information the data really hold, about thirteen here rather than sixteen. The t barely moves, and stays at about eighteen. [advance] So here, nothing changes. In the EU-frames case on this site, the same correction decides whether the reproduced result is significant, because its predictor varies only between country-years. Here concern varies between respondents of the same country and round, so each of the sixteen clusters carries thousands of comparisons.
 :::
 
 ## Leaving out one country {#leaving-out-one-country}
@@ -89,14 +92,13 @@ Clustering by country solves one problem and opens another. The evidence about u
 # 95% intervals from errors clustered by the remaining 15 countries (t on 14
 # df); the dashed line is the estimate on all 16 (data/display_loo.csv).
 loo |>
-  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
-         country = reorder(country_names[left_out], b)) |>
-  ggplot(aes(b, country)) +
-  geom_vline(xintercept = curve_ref$b, linetype = "dashed", colour = burgundy) +
-  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 0.9, colour = ink) +
-  geom_point(size = 3, colour = ink) +
-  coord_cartesian(xlim = c(0.12, 0.23)) +
-  labs(x = "points of distrust per point of concern, without the country", y = "country left out") +
+  dplyr::mutate(country = stats::reorder(country_names[left_out], b)) |>
+  ggplot2::ggplot(ggplot2::aes(b, country)) +
+  ggplot2::geom_vline(xintercept = curve_ref$b, linetype = "dashed", colour = burgundy) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = ci_low, xmax = ci_high), linewidth = 0.9, colour = ink) +
+  ggplot2::geom_point(size = 3, colour = ink) +
+  ggplot2::coord_cartesian(xlim = c(0.12, 0.23)) +
+  ggplot2::labs(x = "points of distrust per point of concern, without the country", y = "country left out") +
   theme_slide(13)
 ```
 

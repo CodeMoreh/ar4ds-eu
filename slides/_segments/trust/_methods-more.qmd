@@ -16,20 +16,20 @@
 # all three (data/display_reliability.csv).
 scale_labels <- c(concern = "concern about immigration", trust = "trust in the three institutions")
 rel <- reliab |>
-  mutate(place = if_else(cntry == "all", "pooled", cntry),
-         scale = scale_labels[scale])
+  dplyr::mutate(place = dplyr::if_else(cntry == "all", "pooled", cntry),
+                scale = scale_labels[scale])
 rel_order <- rel |>
-  filter(scale == scale_labels[["concern"]]) |>
-  arrange(alpha) |>
-  pull(place)
-ggplot(rel, aes(alpha, factor(place, levels = rel_order), colour = scale)) +
-  geom_vline(xintercept = 0.7, colour = grey_mid, linetype = "22") +
-  geom_point(size = 3.4) +
-  scale_colour_manual(values = c(ncl_blue, orange), name = NULL) +
-  scale_x_continuous(limits = c(0.65, 0.95)) +
-  labs(x = "Cronbach's alpha", y = NULL) +
+  dplyr::filter(scale == scale_labels[["concern"]]) |>
+  datawizard::data_arrange("alpha") |>
+  datawizard::data_extract("place")
+ggplot2::ggplot(rel, ggplot2::aes(alpha, factor(place, levels = rel_order), colour = scale)) +
+  ggplot2::geom_vline(xintercept = 0.7, colour = grey_mid, linetype = "22") +
+  ggplot2::geom_point(size = 3.4) +
+  ggplot2::scale_colour_manual(values = c(ncl_blue, orange), name = NULL) +
+  ggplot2::scale_x_continuous(limits = c(0.65, 0.95)) +
+  ggplot2::labs(x = "Cronbach's alpha", y = NULL) +
   theme_slide(13) +
-  theme(legend.position = "top", legend.justification = "left")
+  ggplot2::theme(legend.position = "top", legend.justification = "left")
 ```
 
 ::: {.small}

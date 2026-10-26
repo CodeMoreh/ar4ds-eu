@@ -1,6 +1,6 @@
-rule,b,se,stat,df,p,note
-conventional (model-based) errors,0.17527159164702144,0.004255714039171099,41.18500210158851,70253,0,Assumes independent respondents.
-clustered by country-round (CR1),0.17527159164702144,0.0066221711567312535,26.46739075429404,56,2.4224743479390397e-33,"57 clusters, t on 56 df."
-"clustered by country (CR1), the curve",0.17527159164702144,0.009716880045453909,18.0378465955256,15,1.4008314821237447e-11,"16 clusters, t on 15 df: the rule that classes every specification of the curve."
-wild cluster bootstrap by country,0.17527159164702144,,18.03066173568108,,0,"Webb weights, 9,999 draws, null imposed; the p-value cannot go below about 1/10,000."
-random intercepts (multilevel model),0.17534,0.00425397,41.218,70298,0,lme4 with Satterthwaite df; the random intercepts replace the fixed effects.
+rule,b,se,stat,df,p,ci_low,ci_high,note
+conventional (model-based) errors,0.17527159164702144,0.004255714039171081,41.18500210158868,70253,0,0.16693040169430212,0.18361278159974076,Assumes independent respondents.
+clustered by country-round (CR1),0.17527159164702144,0.006622171156731247,26.467390754294062,56,2.4224743479389368e-33,0.1620057887386775,0.1885373945553654,"57 clusters, t on 56 df."
+"clustered by country (CR1), the curve",0.17527159164702144,0.009716880045453924,18.037846595525572,15,1.4008314821237751e-11,0.15456055208987982,0.19598263120416307,"16 clusters, t on 15 df: the rule that classes every specification of the curve."
+CR2 by country with Satterthwaite df,0.17527159164702144,0.009745287163791085,17.985267001495856,13.27576881249338,1.043796387699045e-10,0.1542625482225365,0.19628063507152937,"16 clusters, errors corrected for the leverage of each country and t on Satterthwaite df, which suit few clusters; from estimatr, which agrees with clubSandwich."
+random intercepts (multilevel model),0.17534,0.00425397,41.218,70298,0,0.167002,0.183678,lme4 with Satterthwaite df; the random intercepts replace the fixed effects.

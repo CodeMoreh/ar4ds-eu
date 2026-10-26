@@ -9,14 +9,18 @@
 # Last updated: 2026-10-26
 # Sourced by:   R/trust/03_spec_curve.R, R/trust/04_reference_marks.R,
 #               R/trust/05_menu_deviations.R, R/trust/06_displays.R,
-#               R/trust/check_parity.R
+#               R/trust/check_parity.R, cases/trust/menu.qmd
 ################################################################################
 
-# The fits use base R, dplyr and purrr only, on purpose: the same code runs in the
-# downloadable workspace and in webR on the browser lab. Fixed effects are
-# absorbed by subtracting group means, so a fit on 110,000 respondents needs no
-# dummy matrix. R/trust/check_parity.R checks the results against fixest and
-# sandwich.
+# The same code runs in the downloadable workspace and in webR on the browser
+# lab, so all three give the same numbers. The statistics come from packages:
+# fixest fits the regression with the fixed effects absorbed and computes the
+# errors clustered by country, parameters reads the coefficient, its error, t,
+# df, p and 95% interval from each fit, datawizard averages the items of a
+# scale, and effectsize converts t to the partial correlation of Multi100.
+# R/trust/check_parity.R checks the fits against estimatr. The rows are chosen
+# with dplyr, because datawizard evaluates its conditions in a fresh
+# environment and so cannot see the arguments of a function.
 
 # The menu of the curve, in menu order: every combination is one specification
 # (4 x 4 x 3 x 2 x 2 = 192). Anything else is refused by check_spec() unless it
@@ -99,13 +103,11 @@ check_spec <- function(outcome, controls, weights, items, fe,
 
 # The mean of a set of 0-10 items. "complete" needs every item answered (the
 # focal rule of the jp7tr reproduction); "available" averages whatever items
-# were answered (its additional analysis, and the Multi100 file).
+# were answered (its additional analysis, and the Multi100 file). A single item
+# is its own scale, since datawizard::row_means() needs two columns or more.
 scale_mean <- function(data, items, rule) {
-  m <- as.matrix(data[, items, drop = FALSE])
-  if (rule == "complete") return(rowMeans(m))
-  out <- rowMeans(m, na.rm = TRUE)
-  out[is.nan(out)] <- NA
-  out
+  if (length(items) == 1) return(data[[items]])
+  datawizard::row_means(data, select = items, min_valid = if (rule == "complete") length(items) else 1)
 }
 
 # The analysed rows of one specification: the sample, the outcome, the measure
@@ -128,83 +130,65 @@ spec_frame <- function(ess, outcome = "parliament", controls = "paper", weights 
     dplyr::filter(dplyr::if_all(dplyr::everything(), \(v) !is.na(v)))
 }
 
-# Weighted group means subtracted from every column of a matrix
-demean <- function(m, g, w) {
-  means <- rowsum(w * m, g, reorder = FALSE) / as.vector(rowsum(w, g, reorder = FALSE))
-  m - means[match(g, rownames(means)), , drop = FALSE]
-}
-
 # One specification: the coefficient of concern about immigration (points of
 # distrust on the 0-10 scale per point of concern; positive = more concern goes
 # with more distrust, the direction of the claim), its errors clustered by
 # country (CR1, t on G - 1 df, the rule of the curve), the conventional test,
-# and the partial correlation by the Multi100 rule.
+# the 95% interval under each, and the partial correlation by the Multi100 rule.
 fit_spec <- function(ess, outcome = "parliament", controls = "paper", weights = "none",
                      items = "complete", fe = "country_round", sample = "paper",
                      concern = "index", extra = "none", cluster = "country") {
   check_spec(outcome, controls, weights, items, fe, sample, concern, extra, cluster)
   frame <- spec_frame(ess, outcome, controls, weights, items, sample, concern, extra)
-  terms <- c("x", CONTROL_TERMS[[controls]], if (extra != "none") extra)
-  x <- as.matrix(frame[, terms])
-  w <- frame$w
 
-  # Round dummies for every round present but the first, so that a subset of
-  # rounds still fits
-  if (fe == "country_and_round") {
-    shifts <- sort(unique(frame$essround))[-1]
-    rounds <- outer(frame$essround, shifts, `==`) * 1
-    colnames(rounds) <- paste0("round", shifts)
-    x <- cbind(x, rounds)
-  }
-  absorbed <- switch(fe, country_round = frame$cr, country_and_round = frame$cntry,
-                     pooled = rep("all", nrow(frame)))
-  m <- demean(cbind(y = frame$y, x), absorbed, w)
-  yt <- m[, 1]
-  xt <- m[, -1, drop = FALSE]
+  # An intercept for every country-round, or for every country with a dummy for
+  # every round but the first, absorbed by fixest (Bergé, Butts and McDermott
+  # 2026, arXiv:2601.21749) rather than estimated
+  rhs <- c("x", CONTROL_TERMS[[controls]], if (extra != "none") extra,
+           if (fe == "country_and_round") "factor(essround)")
+  absorbed <- switch(fe, country_round = "| cr", country_and_round = "| cntry", pooled = "")
+  form <- stats::as.formula(paste("y ~", paste(rhs, collapse = " + "), absorbed))
+  fit <- fixest::feols(form, data = frame, weights = ~w, vcov = "iid")
 
-  bread <- solve(crossprod(xt, w * xt))
-  beta <- drop(bread %*% crossprod(xt, w * yt))
-  e <- yt - drop(xt %*% beta)
-  n <- nrow(xt)
-  k <- ncol(xt)
-  n_fe <- length(unique(absorbed))
+  # Errors clustered by country (or country-round): CR1 with the default
+  # small-sample correction of fixest, G / (G - 1) times (n - 1) / (n - K), where
+  # K leaves out the intercepts nested in the clusters (Cameron and Miller 2015,
+  # Journal of Human Resources), and t on G - 1 df
+  clustered <- summary(fit, cluster = if (cluster == "country") ~cntry else ~cr) |>
+    parameters::model_parameters() |>
+    datawizard::data_filter(Parameter == "x")
+  # Conventional (model-based) errors, with the absorbed intercepts in the df
+  conventional <- parameters::model_parameters(fit) |>
+    datawizard::data_filter(Parameter == "x")
 
-  # Conventional (model-based) errors, with the absorbed groups in the df
-  df_conv <- n - k - n_fe
-  se_conv <- sqrt(sum(w * e^2) / df_conv * bread[1, 1])
-
-  # Cluster-robust CR1 errors. Groups absorbed inside the clusters do not count
-  # in K, apart from one that stands for the intercept (the default of fixest).
-  groups <- if (cluster == "country") frame$cntry else frame$cr
-  n_cl <- length(unique(groups))
-  scores <- rowsum(xt * (w * e), groups)
-  k_ssc <- k + 1
-  adj <- n_cl / (n_cl - 1) * (n - 1) / (n - k_ssc)
-  se <- sqrt(adj * (bread %*% crossprod(scores) %*% bread)[1, 1])
-
-  b <- beta[[1]]
-  t_cl <- b / se
-  t_conv <- b / se_conv
-  data.frame(
+  n <- stats::nobs(fit)
+  data.frame(  # r-style: keep – a data frame prints every digit that the tasks quote
     outcome = outcome, controls = controls, weights = weights, items = items, fe = fe,
     sample = sample, concern = concern, extra = extra, cluster = cluster,
-    b = b, se = se, stat_type = "t", stat = t_cl, df = n_cl - 1,
-    p = 2 * stats::pt(-abs(t_cl), n_cl - 1),
-    se_conv = se_conv, t_conv = t_conv, df_conv = df_conv,
-    p_conv = 2 * stats::pt(-abs(t_conv), df_conv),
-    r = r_multi100(t_conv, "t", df_conv, n),
-    b_std = b * stats::sd(frame$x) / stats::sd(frame$y),
-    n = n, n_clusters = n_cl, n_country_rounds = length(unique(frame$cr))
+    b = clustered$Coefficient, se = clustered$SE, stat_type = "t", stat = clustered$t,
+    df = clustered$df_error, p = clustered$p,
+    se_conv = conventional$SE, t_conv = conventional$t, df_conv = conventional$df_error,
+    p_conv = conventional$p,
+    r = r_multi100(conventional$t, "t", conventional$df_error, n),
+    # the coefficient in standard deviations of the analysed rows, unweighted;
+    # effectsize::standardize_parameters(method = "basic") gives the same for
+    # an unweighted fit but stops at the round dummies of a fixest fit
+    b_std = clustered$Coefficient * stats::sd(frame$x) / stats::sd(frame$y),
+    n = n, n_clusters = dplyr::n_distinct(if (cluster == "country") frame$cntry else frame$cr),
+    n_country_rounds = dplyr::n_distinct(frame$cr),
+    ci_low = clustered$CI_low, ci_high = clustered$CI_high,
+    ci_conv_low = conventional$CI_low, ci_conv_high = conventional$CI_high
   )
 }
 
-# The conversion rules of Multi100 (standard_correlation_coefficient.R): t with
-# its df; z with the sample size standing in for the missing df; F with one
-# numerator df read as the square of a t.
+# The conversion rules of Multi100 (standard_correlation_coefficient.R in
+# github.com/marton-balazs-kovacs/multi100): t with its df, which is the rule of
+# effectsize::t_to_r(); z with the sample size standing in for the missing df;
+# F with one numerator df read as the square of a t.
 r_multi100 <- function(stat, stat_type, df, n) {
   stat_type <- rep_len(stat_type, length(stat))
   dplyr::case_when(
-    stat_type == "t" ~ stat / sqrt(stat^2 + df),
+    stat_type == "t" ~ effectsize::t_to_r(stat, df, ci = NULL)$r,
     stat_type == "z" ~ tanh(abs(stat) * sqrt(1 / (n - 3))) * sign(stat),
     stat_type == "F" ~ sqrt(stat / (stat + df))
   )

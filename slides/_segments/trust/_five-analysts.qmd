@@ -18,25 +18,25 @@ choice_note <- c(
   LT39B = "one item for concern, with satisfaction with the government"
 )
 five <- marks_all |>
-  filter(id %in% names(choice_note)) |>
-  mutate(lab = paste0(tag, "   ", choice_note[id]), oa = id == "OA") |>
-  arrange(desc(b)) |>
-  mutate(lab = factor(lab, levels = rev(lab)))
-paper_set <- filter(curve, controls == "paper")
+  dplyr::filter(id %in% names(choice_note)) |>
+  dplyr::mutate(lab = paste0(tag, "   ", choice_note[id]), oa = id == "OA") |>
+  datawizard::data_arrange("-b") |>
+  dplyr::mutate(lab = factor(lab, levels = rev(lab)))
+paper_set <- datawizard::data_filter(curve, controls == "paper")
 
-ggplot(five, aes(b, lab)) +
-  annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
-           fill = "#d6dde5", alpha = 0.6) +
-  annotate("rect", xmin = min(paper_set$b), xmax = max(paper_set$b), ymin = -Inf, ymax = Inf,
-           fill = "#9fb1c2", alpha = 0.55) +
-  geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
-  geom_point(aes(colour = oa), size = 5.5) +
-  geom_text(aes(label = fmt_num(b, 3)), hjust = -0.5, size = 5, colour = ink) +
-  scale_colour_manual(values = c(`FALSE` = ncl_blue, `TRUE` = burgundy), guide = "none") +
-  scale_x_continuous(limits = c(0, 0.35), labels = \(x) fmt_num(x, 2)) +
-  labs(x = "points of distrust per point of concern", y = NULL) +
+ggplot2::ggplot(five, ggplot2::aes(b, lab)) +
+  ggplot2::annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
+                    fill = "#d6dde5", alpha = 0.6) +
+  ggplot2::annotate("rect", xmin = min(paper_set$b), xmax = max(paper_set$b), ymin = -Inf, ymax = Inf,
+                    fill = "#9fb1c2", alpha = 0.55) +
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
+  ggplot2::geom_point(ggplot2::aes(colour = oa), size = 5.5) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_num(b, 3)), hjust = -0.5, size = 5, colour = ink) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = ncl_blue, `TRUE` = burgundy), guide = "none") +
+  ggplot2::scale_x_continuous(limits = c(0, 0.35), labels = \(x) fmt_num(x, 2)) +
+  ggplot2::labs(x = "points of distrust per point of concern", y = NULL) +
   theme_slide(15) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20"))
 ```
 
 ::: {.small}
@@ -54,11 +54,11 @@ And here are the five, with the published result in burgundy for reference, each
 #| output: asis
 # The five reanalyses as a Markdown table, from data/analysts5.csv.
 rows <- analysts |>
-  arrange(desc(b_refit)) |>
-  mutate(stat = paste0("*", statistic_type, "* = ", formatC(statistic_recorded, format = "fg", digits = 6)),
-         line = paste0("| ", id, " | ", concern, " | ", method, " | ", stat, " | ",
-                       fmt_n(n_recorded), " | ", fmt_num(b_refit, 3), " |")) |>
-  pull(line)
+  datawizard::data_arrange("-b_refit") |>
+  dplyr::mutate(stat = paste0("*", statistic_type, "* = ", formatC(statistic_recorded, format = "fg", digits = 6)),
+                line = paste0("| ", id, " | ", concern, " | ", method, " | ", stat, " | ",
+                              fmt_n(n_recorded), " | ", fmt_num(b_refit, 3), " |")) |>
+  datawizard::data_extract("line")
 cat(c("::: {.fs-55}", # r-style: keep – writes the Markdown of the table
       "| Analyst | Concern | Model | Recorded | Respondents | Coefficient |",
       "|:--|:--|:--|--:|--:|--:|",

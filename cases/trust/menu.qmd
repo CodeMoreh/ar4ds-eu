@@ -7,31 +7,29 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(tinytable)
 source("../../R/trust/_tools.R")
 
-read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
-menu       <- read_data("menu_options.csv")
-deviations <- read_data("menu_deviations.csv")
-options_d  <- read_data("display_options.csv")
-reliab     <- read_data("display_reliability.csv")
-ess        <- read_data("trust_ess.csv")
-curve      <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                       col_types = cols(stat_type = col_character()))
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+menu       <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+options_d  <- readr::read_csv("data/display_options.csv", show_col_types = FALSE)
+reliab     <- readr::read_csv("data/display_reliability.csv", show_col_types = FALSE)
+inference  <- readr::read_csv("data/display_inference.csv", show_col_types = FALSE)
+ess        <- readr::read_csv("data/trust_ess.csv", show_col_types = FALSE)
+curve      <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                              col_types = readr::cols(stat_type = readr::col_character()))
 
 # Fixed decimals and a true minus sign; signed shifts carry a plus sign
 fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
-sgn_n <- \(x) paste0(if_else(x > 0, "+", if_else(x < 0, "−", "")), format(round(abs(x)), big.mark = ",", trim = TRUE))
+sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), fmt(x, d))
+sgn_n <- \(x) paste0(dplyr::if_else(x > 0, "+", dplyr::if_else(x < 0, "−", "")),
+                     format(round(abs(x)), big.mark = ",", trim = TRUE))
 pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
-num_word <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-                   "ten", "eleven", "twelve", "thirteen")[n]
 
-ref <- curve |> filter(is_reference)
+ref <- datawizard::data_filter(curve, is_reference)
+# the reference specification under the CR2 rule with Satterthwaite df
+cr2 <- datawizard::data_filter(inference, startsWith(rule, "CR2"))
 dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
 opt <- \(axis, option, col) options_d[[col]][options_d$axis == axis & options_d$option == option]
 spec <- \(outcome, controls, weights, items, fe) {
@@ -39,10 +37,10 @@ spec <- \(outcome, controls, weights, items, fe) {
           curve$items == items & curve$fe == fe, ]
 }
 by_set <- curve |>
-  summarise(mean = mean(b), lo = min(b), hi = max(b), n = mean(n), cr = min(n_country_rounds),
-            .by = controls)
+  datawizard::data_summary(mean = mean(b), lo = min(b), hi = max(b), n = mean(n), cr = min(n_country_rounds),
+                           by = "controls")
 bs <- \(set, col) by_set[[col]][by_set$controls == set]
-n_dec <- n_distinct(menu$axis)
+n_dec <- dplyr::n_distinct(menu$axis)
 fixed_axes <- setdiff(unique(menu$axis), names(SPEC_AXES))
 
 # The adjustment sets fitted to one common sample, the respondents of the
@@ -69,22 +67,22 @@ step_terms <- list(
   paper = CONTROL_TERMS$paper
 )
 common_fits <- steps |>
-  mutate(b = purrr::map_dbl(step, \(s) {
-    fit <- lm(reformulate(c("x", step_terms[[s]], "factor(cr)"), "y"), data = common)
-    unname(coef(fit)["x"])
+  dplyr::mutate(b = purrr::map_dbl(step, \(s) {
+    fit <- stats::lm(stats::reformulate(c("x", step_terms[[s]], "factor(cr)"), "y"), data = common)
+    unname(stats::coef(fit)["x"])
   }))
 cf <- \(s) common_fits$b[common_fits$step == s]
 stopifnot(abs(cf("paper") - ref$b) < 1e-8)
 cor_y <- \(v) cor(common[[v]], common$y)
 
 # Missing answers among the respondents of the paper
-paper_rows <- ess |> filter(citizen %in% 1, minority %in% 0)
+paper_rows <- datawizard::data_filter(ess, citizen %in% 1, minority %in% 0)
 miss <- \(v) mean(is.na(paper_rows[[v]]))
-country_r <- paper_rows |>
-  mutate(concern = (imm_econ + imm_culture + imm_place) / 3) |>
-  summarise(concern = mean(concern, na.rm = TRUE), distrust = mean(distrust_parl, na.rm = TRUE),
-            .by = cntry) |>
-  with(cor(concern, distrust))
+country_means <- paper_rows |>
+  dplyr::mutate(concern = datawizard::row_means(dplyr::pick(imm_econ, imm_culture, imm_place), min_valid = 3)) |>
+  datawizard::data_summary(concern = mean(concern, na.rm = TRUE), distrust = mean(distrust_parl, na.rm = TRUE),
+                           by = "cntry")
+country_r <- stats::cor(country_means$concern, country_means$distrust)
 se_ratio <- range(curve$se / curve$se_conv)
 example <- spec("index", "outlook", "design", "complete", "country_round")
 example_rank <- sum(curve$b > example$b + 1e-9) + 1
@@ -92,7 +90,7 @@ example_rank <- sum(curve$b > example$b + 1e-9) + 1
 
 This page sets out every decision that an analysis of the claim has to make, the options that each decision offers, and whether each option answers the claim. The claim, in the wording that SCORE took from the paper of the original author (OA) [@McLaren2012CulturalDivideEurope], is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics". The [case study](index.qmd) sets out the study, the five reanalyses and the data. The [decision map](map.qmd) draws the same menu as a path from the data to a verdict, with every option selectable.
 
-`r stringr::str_to_sentence(num_word(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be built from the data, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
+`r stringr::str_to_sentence(xfun::numbers_to_words(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be built from the data, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
 
 ## The estimand statement {#estimand}
 
@@ -106,7 +104,7 @@ Move one decision and reread the statement. If a bold slot changes, you have mad
 
 ## The curve of `r nrow(curve)` {#the-curve}
 
-Five decisions vary on the curve: the outcome (distrust of parliament, of politicians, of the legal system, or the mean of the three), the adjustment (no controls, the demographics, those with outlook and ideology, or all the controls of the paper), the weights (none, design weights, or design and population weights), the rule for unanswered items (every item of a scale answered, or the mean of the answered items) and the comparison within countries (an intercept for every country-round, or one for every country with a shift for every round). That gives `r paste(purrr::map_int(SPEC_AXES, length), collapse = " × ")` = `r nrow(curve)` specifications. The other `r num_word(length(fixed_axes))` decisions take a single option on the curve.
+Five decisions vary on the curve: the outcome (distrust of parliament, of politicians, of the legal system, or the mean of the three), the adjustment (no controls, the demographics, those with outlook and ideology, or all the controls of the paper), the weights (none, design weights, or design and population weights), the rule for unanswered items (every item of a scale answered, or the mean of the answered items) and the comparison within countries (an intercept for every country-round, or one for every country with a shift for every round). That gives `r paste(purrr::map_int(SPEC_AXES, length), collapse = " × ")` = `r nrow(curve)` specifications. The other `r xfun::numbers_to_words(length(fixed_axes))` decisions take a single option on the curve.
 
 Every estimate is the change in distrust (0–10) that goes with one more point of concern (0–10), and a value above zero is in the direction of the claim. All `r nrow(curve)` specifications lie above zero and are significant at the 5% level with errors clustered by country, from `r fmt(min(curve$b))` to `r fmt(max(curve$b))` points, with p never above `r format(signif(max(curve$p), 1), scientific = FALSE)`. The reference specification, the one closest to the model of the paper, takes distrust of parliament, the controls of the paper, no weights, every item answered and an intercept for every country-round: `r fmt(ref$b)` points, t = `r fmt(ref$stat, 2)` on `r ref$df` df, n = `r big(ref$n)`.
 
@@ -119,13 +117,13 @@ Within the curve, what varies is the size of the estimate, and @tbl-shifts shows
 lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
 dec <- \(axis) menu$decision[menu$axis == axis][1]
 deviations |>
-  filter(option != baseline) |>
-  mutate(
+  datawizard::data_filter(option != baseline) |>
+  dplyr::mutate(
     Decision = purrr::map_chr(axis, dec),
     Option = purrr::map2_chr(axis, option, lab),
     Against = purrr::map2_chr(axis, baseline, lab)
   ) |>
-  transmute(
+  dplyr::transmute(
     Decision, Option, Against,
     Pairs = n_pairs,
     `Mean shift` = sgn(shift_mean, 4),
@@ -134,11 +132,11 @@ deviations |>
     `Change in respondents` = sgn_n(n_shift_mean),
     `Still significant` = pct(sig_share, 0)
   ) |>
-  tt() |>
-  style_tt(j = 4:9, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 4:9, align = "r")
 ```
 
-The adjustment set moves the estimate most by far: the full controls of the paper lower it by `r fmt(abs(dv("controls", "paper", "shift_mean")))` points on average against no controls. The outcome moves it by up to `r fmt(abs(dv("outcome", "politicians", "shift_min")))`, and the weights, the rule for unanswered items and the comparison within countries each by less than `r fmt(max(abs(unlist(deviations |> filter(axis %in% c("weights", "items", "fe")) |> select(shift_min, shift_max)))), 2)`. No option moves any specification across the 5% threshold.
+The adjustment set moves the estimate most by far: the full controls of the paper lower it by `r fmt(abs(dv("controls", "paper", "shift_mean")))` points on average against no controls. The outcome moves it by up to `r fmt(abs(dv("outcome", "politicians", "shift_min")))`, and the weights, the rule for unanswered items and the comparison within countries each by less than `r fmt(max(abs(unlist(deviations |> datawizard::data_filter(axis %in% c("weights", "items", "fe")) |> datawizard::data_select(c("shift_min", "shift_max"))))), 2)`. No option moves any specification across the 5% threshold.
 
 ## Level 1 – Estimands {#level-estimand}
 
@@ -151,11 +149,12 @@ Each decision at this level rewrites a bold slot of the statement, so two analys
 judgement_txt <- c(kept = "on the curve", other_question = "another question",
                    weaker_answer = "a weaker answer", check = "a check",
                    unavailable = "not in the data")
+# dplyr inside the function, because datawizard cannot see its argument
 level_table <- \(lv) {
   menu |>
-    filter(level == lv) |>
-    mutate(item = paste0(label, " <code>", option, "</code>")) |>
-    summarise(
+    dplyr::filter(level == lv) |>
+    dplyr::mutate(item = paste0(label, " <code>", option, "</code>")) |>
+    dplyr::summarise(
       on = paste(item[on_curve], collapse = " · "),
       off = if (any(!on_curve)) {
         paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = " · ")
@@ -164,8 +163,8 @@ level_table <- \(lv) {
       },
       .by = c(axis, decision)
     ) |>
-    transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
-    tt()
+    dplyr::transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
+    tinytable::tt()
 }
 level_table("estimand")
 ```
@@ -214,16 +213,16 @@ disputed <- list(
 )
 panel_levels <- names(disputed)
 dag_edges <- purrr::imap(disputed, \(e, panel) {
-  bind_rows(
-    shared |> mutate(kind = if_else(from == "concern" & to == "distrust", "claim", "shared")),
+  dplyr::bind_rows(
+    shared |> dplyr::mutate(kind = dplyr::if_else(from == "concern" & to == "distrust", "claim", "shared")),
     tibble::tibble(from = sub(">.*$", "", e), to = sub("^.*>", "", e), kind = "disputed")
   ) |>
-    mutate(panel = panel)
+    dplyr::mutate(panel = panel)
 }) |>
-  bind_rows() |>
-  left_join(dag_nodes |> rename(from = node, x0 = x, y0 = y), by = "from") |>
-  left_join(dag_nodes |> rename(to = node, x1 = x, y1 = y), by = "to") |>
-  mutate(
+  dplyr::bind_rows() |>
+  dplyr::left_join(dag_nodes |> dplyr::rename(from = node, x0 = x, y0 = y), by = "from") |>
+  dplyr::left_join(dag_nodes |> dplyr::rename(to = node, x1 = x, y1 = y), by = "to") |>
+  dplyr::mutate(
     len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
     # stop each arrow short of the labels at both ends
     trim = pmin(0.45, len / 3),
@@ -232,20 +231,22 @@ dag_edges <- purrr::imap(disputed, \(e, panel) {
     panel = factor(panel, levels = panel_levels)
   )
 dag_labels <- tidyr::crossing(dag_nodes, panel = factor(panel_levels, levels = panel_levels)) |>
-  mutate(role = case_when(node %in% c("concern", "distrust") ~ "attitude",
-                          node %in% c("evaluations", "votes") ~ "disputed",
-                          .default = "common"))
-ggplot() +
-  geom_segment(data = dag_edges, aes(x = xs, y = ys, xend = xe, yend = ye, colour = kind),
-               linewidth = 0.6, arrow = grid::arrow(length = grid::unit(5, "pt"), type = "closed")) +
-  geom_label(data = dag_labels, aes(x = x, y = y, label = node, fill = role), colour = "white",
-             fontface = "bold", size = 3, linewidth = 0, label.padding = grid::unit(3, "pt")) +
-  facet_wrap(~panel, nrow = 1) +
-  scale_colour_manual(values = c(claim = "#8b1538", shared = "grey55", disputed = "#8c5a10"), guide = "none") +
-  scale_fill_manual(values = c(attitude = "#0e3b6a", common = "grey45", disputed = "#8c5a10"), guide = "none") +
-  coord_cartesian(xlim = c(-0.6, 4.6), ylim = c(-1.8, 2)) +
-  theme_void(base_size = 11) +
-  theme(strip.text = element_text(face = "bold", margin = margin(b = 4)))
+  dplyr::mutate(role = dplyr::case_when(node %in% c("concern", "distrust") ~ "attitude",
+                                        node %in% c("evaluations", "votes") ~ "disputed",
+                                        .default = "common"))
+ggplot2::ggplot() +
+  ggplot2::geom_segment(data = dag_edges, ggplot2::aes(x = xs, y = ys, xend = xe, yend = ye, colour = kind),
+                        linewidth = 0.6, arrow = grid::arrow(length = grid::unit(5, "pt"), type = "closed")) +
+  ggplot2::geom_label(data = dag_labels, ggplot2::aes(x = x, y = y, label = node, fill = role), colour = "white",
+                      fontface = "bold", size = 3, linewidth = 0, label.padding = grid::unit(3, "pt")) +
+  ggplot2::facet_wrap(~panel, nrow = 1) +
+  ggplot2::scale_colour_manual(values = c(claim = "#8b1538", shared = "grey55", disputed = "#8c5a10"),
+                               guide = "none") +
+  ggplot2::scale_fill_manual(values = c(attitude = "#0e3b6a", common = "grey45", disputed = "#8c5a10"),
+                             guide = "none") +
+  ggplot2::coord_cartesian(xlim = c(-0.6, 4.6), ylim = c(-1.8, 2)) +
+  ggplot2::theme_void(base_size = 11) +
+  ggplot2::theme(strip.text = ggplot2::element_text(face = "bold", margin = ggplot2::margin(b = 4)))
 ```
 
 The demographics are the least contested confounders, since age, sex, education and income are settled before either attitude forms. Outlook and ideology are the controls with which the paper argues against spuriousness, a general pessimism or an ideology on the right that produces both attitudes; they are confounders in the graph that the paper draws, although ideology and concern about immigration also shape each other, and interpersonal distrust could follow from concern as well as precede it. The evaluations and the votes are where the readings part. The paper holds the evaluations constant as predictors of support for the government of the day, so that what remains speaks to diffuse support for the system, and on that reading they are common causes. But a respondent who believes that immigration strains the economy and the public services may judge both more harshly because of that belief, which makes the evaluations steps on the path; and a respondent who distrusts the government may judge its record more harshly too, which makes them consequences of distrust as well. A vote for a far-right party is plausibly a consequence of concern, and a vote against the parties in government is plausibly a consequence of distrust, which makes both votes colliders in the right panel.
@@ -254,16 +255,16 @@ The demographics are the least contested confounders, since age, sex, education 
 
 ```{r}
 #| label: tbl-common
-#| tbl-cap: !expr 'sprintf("The coefficient of concern under nested sets of controls, fitted to the same %s respondents in %d country-rounds: distrust of parliament, no weights, every item answered, an intercept for every country-round. The fourth and fifth rows add the vote controls and the evaluations of the economy, household income, health services and education separately. Source: `data/trust_ess.csv`.", big(nrow(common)), n_distinct(common$cr))'
+#| tbl-cap: !expr 'sprintf("The coefficient of concern under nested sets of controls, fitted to the same %s respondents in %d country-rounds: distrust of parliament, no weights, every item answered, an intercept for every country-round. The fourth and fifth rows add the vote controls and the evaluations of the economy, household income, health services and education separately. Source: `data/trust_ess.csv`.", big(nrow(common)), dplyr::n_distinct(common$cr))'
 #| echo: false
 common_fits |>
-  transmute(
+  dplyr::transmute(
     `Held constant` = label,
     Coefficient = fmt(b),
-    `Change from no controls` = if_else(step == "none", "–", sgn(b - cf("none")))
+    `Change from no controls` = dplyr::if_else(step == "none", "–", sgn(b - cf("none")))
   ) |>
-  tt() |>
-  style_tt(j = 2:3, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:3, align = "r")
 ```
 
 On a common sample the demographics take `r fmt(cf("none") - cf("demog"))` off the coefficient, and outlook and ideology a further `r fmt(cf("demog") - cf("outlook"))`. Added to those, the two vote controls take only `r fmt(cf("outlook") - cf("outlook_votes"))`, and the evaluations `r fmt(cf("outlook") - cf("outlook_eval"))`. Dissatisfaction with the economy correlates more strongly with distrust of parliament (r = `r fmt(cor_y("econ_dissat"), 2)`) than concern about immigration does (r = `r fmt(cor(common$x, common$y), 2)`), and the evaluations of health and education services about as strongly as concern (r = `r fmt(cor_y("health_dissat"), 2)` and `r fmt(cor_y("educ_dissat"), 2)`), and they are also the variables whose place in the graph is least certain.
@@ -322,7 +323,7 @@ The paper fits random intercepts for countries and country-rounds in a three-lev
 
 ### Standard errors {#errors}
 
-Respondents of the same country share institutions, media and a history, so their answers are not independent pieces of evidence, and conventional standard errors, which assume that they are, understate the uncertainty. The curve clusters the errors by country, which allows any pattern of similarity within a country across its rounds, and tests each coefficient against a t distribution on 15 degrees of freedom, one fewer than the 16 countries. Across the curve the clustered errors are `r fmt(se_ratio[1], 1)` to `r fmt(se_ratio[2], 1)` times the conventional ones, and every specification still clears the 5% threshold by a wide margin. Clustering by country-round, a check stored for every specification, gives smaller errors, because it treats the rounds of one country as independent. A wild cluster bootstrap by country, the usual remedy when clusters are few, rebuilds the distribution of the clustered t by multiplying the residuals of whole countries by random weights, with the null hypothesis imposed. At the reference specification it agrees with the clustered test, since none of its 9,999 draws gives a t as large as that of the data. The [multiverse page](multiverse.qmd#inference) sets the rules side by side.
+Respondents of the same country share institutions, media and a history, so their answers are not independent pieces of evidence, and conventional standard errors, which assume that they are, understate the uncertainty. The curve clusters the errors by country, which allows any pattern of similarity within a country across its rounds, and tests each coefficient against a t distribution on 15 degrees of freedom, one fewer than the 16 countries. Across the curve the clustered errors are `r fmt(se_ratio[1], 1)` to `r fmt(se_ratio[2], 1)` times the conventional ones, and every specification still clears the 5% threshold by a wide margin. Clustering by country-round, a check stored for every specification, gives smaller errors, because it treats the rounds of one country as independent. The CR2 correction with Satterthwaite degrees of freedom, a remedy for few clusters, enlarges the residuals of the countries that pull the fit towards themselves and takes its degrees of freedom from the data rather than from the count of countries. At the reference specification it agrees with the clustered test: t = `r fmt(cr2$stat, 1)` on `r fmt(cr2$df, 1)` degrees of freedom, against `r fmt(ref$stat, 1)` on `r ref$df` under the rule of the curve. The [multiverse page](multiverse.qmd#inference) sets the rules side by side.
 
 ### Effect scale {#scale}
 

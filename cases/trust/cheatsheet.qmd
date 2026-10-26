@@ -68,7 +68,7 @@ Every argument of `try_spec()` is one decision of the menu, and the preregistrat
 | | `votes` | `"cabinet"` | `"nonvoters_missing"`, `"largest_party"` |
 | | `missing` | `"listwise"` | `"imputation"`, `"as_published"` |
 | 3 – Estimation | `fe` | `"country_round"`, `"country_and_round"` | `"random_intercepts"`, `"pooled"` |
-| | `errors` | `"country"` | `"country_round"`, `"conventional"`, `"wild_bootstrap"` |
+| | `errors` | `"country"` | `"country_round"`, `"conventional"`, `"cr2"` |
 | | `scale` | `"points"` | `"maximum_effect"`, `"standardised"`, `"r"` |
 
 The five decisions on which the curve keeps more than one option, and what their options mean:
@@ -116,10 +116,13 @@ If any of that stalls, work down the list under [A stalled browser lab](#a-stall
 
 - `x <- value` stores a value under a name.
 - `source("R/spec_tools.R")` runs a script file; here it loads the helpers.
-- `ess |> filter(citizen == 1)` passes the data on to the next step. Read `|>` as 'and then'.
-- `filter()`, `mutate()` and `summarise(..., .by = cntry)` keep some rows, add a column, and summarise by group.
+- `readr::read_csv()`: the part before `::` names the package that the function comes from.
+- `ess |> datawizard::data_filter(citizen == 1)` passes the data on to the next step. Read `|>` as 'and then'.
+- `datawizard::data_filter()`, `datawizard::data_modify()` and `datawizard::data_summary(..., by = "cntry")` keep some rows, add a column, and summarise by group.
+- `datawizard::row_means(d, select = c("a", "b", "c"), min_valid = 3)` averages items across a row, and gives no score to a respondent with fewer than `min_valid` answers.
 - `mean(x, na.rm = TRUE)` leaves out missing answers; without `na.rm = TRUE`, a single missing value makes the mean missing.
 - `cor(x, y, use = "complete.obs")` is the correlation of two columns, over the rows on which both are answered.
+- `performance::cronbachs_alpha(items)` is Cronbach's alpha of a set of items.
 - `"parliament"`: options are text, so they go in quotes.
 - `# ...`: everything after `#` on a line is a comment, which R ignores. A `#` in front of an arrow of the graph switches it off.
 - `lme4::lmer(y ~ x + (1 | cntry), data = d)` fits a multilevel model with a random intercept for each country; `lm(y ~ x + factor(cntry), data = d)` fits the same comparison with fixed effects.

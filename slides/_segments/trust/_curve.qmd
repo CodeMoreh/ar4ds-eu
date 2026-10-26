@@ -8,8 +8,8 @@
 # draws, with the reference specification tagged in ink. Built on
 # curve_base(), so that the next slide reuses this exact panel.
 curve_base() +
-  mark_layer(transmute(curve_ref, tag = "the reference specification", b, rank = rank,
-                       new_data = FALSE))
+  mark_layer(dplyr::transmute(curve_ref, tag = "the reference specification", b, rank = rank,
+                              new_data = FALSE))
 ```
 
 ::: {.fs-75}
@@ -34,7 +34,7 @@ This is the curve of the claim, the same curve over which the Multiverse page dr
 # five reanalyses and the two SCORE replications (data/reference_marks.csv),
 # each placed by its coefficient; the replications, from new data, are
 # triangles.
-curve_base() + mark_layer(filter(marks_all, on_chart))
+curve_base() + mark_layer(datawizard::data_filter(marks_all, on_chart))
 ```
 
 ::: {.resultline}

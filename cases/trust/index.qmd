@@ -7,19 +7,14 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(tinytable)
-
-read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
-ess      <- read_data("trust_ess.csv")
-analysts <- read_data("analysts5.csv")
-marks    <- read_data("reference_marks.csv")
-repro    <- read_data("display_reproduction.csv")
-reliab   <- read_data("display_reliability.csv")
-curve    <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                     col_types = cols(stat_type = col_character()))
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+ess      <- readr::read_csv("data/trust_ess.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+marks    <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+repro    <- readr::read_csv("data/display_reproduction.csv", show_col_types = FALSE)
+reliab   <- readr::read_csv("data/display_reliability.csv", show_col_types = FALSE)
+curve    <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
 
 # Fixed decimals and a true minus sign, for every number on the page
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
@@ -32,21 +27,21 @@ mark <- \(id, col) marks[[col]][marks$id == id]
 rp <- \(id, col) repro[[col]][repro$id == id]
 alpha <- \(scale, cntry) reliab$alpha[reliab$scale == scale & reliab$cntry == cntry]
 
-paper <- ess |> filter(citizen %in% 1, minority %in% 0)
-cr_count <- n_distinct(paste(ess$cntry, ess$essround))
+paper <- datawizard::data_filter(ess, citizen %in% 1, minority %in% 0)
+cr_count <- dplyr::n_distinct(paste(ess$cntry, ess$essround))
 miss_income <- mean(is.na(paper$hh_income_z))
-concern_alpha <- reliab |> filter(scale == "concern", cntry != "all")
-alpha_lo <- concern_alpha |> slice_min(alpha, n = 1)
-alpha_hi <- concern_alpha |> slice_max(alpha, n = 1)
+concern_alpha <- datawizard::data_filter(reliab, scale == "concern", cntry != "all")
+alpha_lo <- dplyr::slice_min(concern_alpha, alpha, n = 1)
+alpha_hi <- dplyr::slice_max(concern_alpha, alpha, n = 1)
 b_range <- range(analysts$b_refit)
-paper_set <- curve |> filter(controls == "paper")
+paper_set <- datawizard::data_filter(curve, controls == "paper")
 # the specification of the course closest to the model of 6U3LL: scales over
 # the answered items, as in the file of the analysts
 analogue <- curve |>
-  filter(outcome == "parliament", controls == "paper", weights == "none",
-         items == "available", fe == "country_round")
-near_oa <- marks |> filter(id %in% c("SCORE_jp7tr", "SCORE_65wm6", "SCORE_1634", "SCORE_65wm6_DAR",
-                                     "N8P2J", "456AD", "6U3LL"))
+  datawizard::data_filter(outcome == "parliament", controls == "paper", weights == "none",
+                          items == "available", fe == "country_round")
+near_oa <- datawizard::data_filter(marks, id %in% c("SCORE_jp7tr", "SCORE_65wm6", "SCORE_1634",
+                                                   "SCORE_65wm6_DAR", "N8P2J", "456AD", "6U3LL"))
 
 # Table 1 of the paper (p. 214): respondents and mean distrust of parliament
 # by country, as published
@@ -69,10 +64,12 @@ table1 <- tibble::tribble(
   "PT",   "Portugal",       7406,     6.15,
   "SE",   "Sweden",         7249,     4.36
 )
+# dplyr, because datawizard::data_summary() turns every column into text when
+# one summary (the rounds) is text
 by_country <- paper |>
-  summarise(n = n(), rounds = paste(sort(unique(essround)), collapse = ", "),
-            mean_parl = mean(distrust_parl, na.rm = TRUE), .by = cntry) |>
-  right_join(table1, by = "cntry")
+  dplyr::summarise(n = dplyr::n(), rounds = paste(sort(unique(essround)), collapse = ", "),
+                   mean_parl = mean(distrust_parl, na.rm = TRUE), .by = cntry) |>
+  dplyr::right_join(table1, by = "cntry")
 stopifnot(all(by_country$n == by_country$n_paper))
 ```
 
@@ -97,7 +94,7 @@ Distrust is measured by three questions on a scale from 0 (no trust at all) to 1
 #| tbl-cap: "The respondents of the paper by country: the rounds in which each country took part, the number of respondents and the mean distrust of parliament (0–10), in the course extract and in Table 1 of the paper (p. 214). Sources: `data/trust_ess.csv` and the paper."
 #| echo: false
 by_country |>
-  transmute(
+  dplyr::transmute(
     Country = country,
     Rounds = rounds,
     `Respondents, extract` = big(n),
@@ -105,8 +102,8 @@ by_country |>
     `Distrust of parliament, extract` = fmt(mean_parl, 2),
     `Distrust of parliament, Table 1` = fmt(mean_paper, 2)
   ) |>
-  tt() |>
-  style_tt(j = 3:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:6, align = "r")
 ```
 
 The counts agree in every country, and the means agree to within 0.03 points everywhere except in Portugal. The Italian round 2 was fielded in 2006 and is not part of the integrated file of that round, so the course reads it from a separate country file, without which the count for Italy would fall short of Table 1.
@@ -164,11 +161,11 @@ All five analysts worked from one file, `McLaren_SRD_final_data.csv`, which the 
 #| tbl-cap: "The five reanalyses in Task 2, with the statistic as Multi100 recorded it and the coefficient of the course refit, in points of distrust per point of concern. Source: `data/analysts5.csv`."
 #| echo: false
 analysts |>
-  transmute(
+  dplyr::transmute(
     Analyst = id,
     Discipline = tolower(discipline),
     Hours = as.character(hours),
-    Software = if_else(software == "JAMOVI", "jamovi", software),
+    Software = dplyr::if_else(software == "JAMOVI", "jamovi", software),
     Outcome = outcome,
     Concern = concern,
     Model = method,
@@ -176,8 +173,8 @@ analysts |>
     Respondents = big(n_refit),
     Coefficient = fmt(b_refit, 3)
   ) |>
-  tt() |>
-  style_tt(j = c(3, 9, 10), align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = c(3, 9, 10), align = "r")
 ```
 :::
 
@@ -213,18 +210,18 @@ repro_lab <- c(
   course_reference_fe = "Reference specification, all respondents of the extract"
 )
 repro |>
-  mutate(fe = startsWith(id, "course_reference")) |>
-  transmute(
+  datawizard::data_modify(fe = startsWith(id, "course_reference")) |>
+  dplyr::transmute(
     Analysis = repro_lab[id],
     Coefficient = fmt(b, 4),
     SE = fmt(se, 5),
-    t = if_else(fe, paste0(fmt(statistic, 2), " (clustered, ", df, " df)"),
-                paste0(fmt(statistic, 2), " (model-based)")),
+    t = dplyr::if_else(fe, paste0(fmt(statistic, 2), " (clustered, ", df, " df)"),
+                       paste0(fmt(statistic, 2), " (model-based)")),
     Respondents = big(n),
     `Country-rounds` = as.character(country_rounds)
   ) |>
-  tt() |>
-  style_tt(j = 2:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:6, align = "r")
 ```
 
 Two careful rebuilds of the same variables part ways over coding decisions that no published table shows, and the reproduction of a published number from source data tests the description of the data as much as the number. The reference specification of the curve, which the browser lab can fit without a multilevel model, comes within 0.001 of the published reproduction on the same respondents. Its t is less than half as large, because its errors allow the respondents of one country to be alike, a difference that the [multiverse page](multiverse.qmd#inference) explains.
@@ -261,8 +258,8 @@ Multi100 chose to "transform the reported point estimates into a standard effect
 #| tbl-cap: "The five reanalyses: the coefficient of the course refit in points of distrust per point of concern, the statistic as recorded, and the partial correlation computed by Multi100 from the record and by the course from the refit. Source: `data/analysts5.csv`."
 #| echo: false
 analysts |>
-  arrange(b_refit) |>
-  transmute(
+  datawizard::data_arrange("b_refit") |>
+  dplyr::transmute(
     Analyst = id,
     Coefficient = fmt(b_refit, 3),
     `Recorded statistic` = paste(statistic_type, "=", formatC(statistic_recorded, format = "fg", digits = 6)),
@@ -271,8 +268,8 @@ analysts |>
     `r refit` = fmt(r_refit, 3),
     `d recorded` = fmt(d_recorded, 3)
   ) |>
-  tt() |>
-  style_tt(j = c(2, 4:7), align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = c(2, 4:7), align = "r")
 ```
 
 The recorded correlations run from `r fmt(min(analysts$r_recorded), 3)` to `r fmt(max(analysts$r_recorded), 3)`, and on this claim they order the analyses as the coefficients do, because all five fitted linear models of scales from 0 to 10 on samples of similar size. They rest on degrees of freedom of tens of thousands, which treat every respondent as independent, so they say nothing about how far the respondents of one country resemble one another. The course places every result on the scale of the claim, the change in distrust that goes with one more point of concern, which is the scale of the 0.17 of the paper. The "maximum effect" of the paper is the same coefficient multiplied by ten, the difference between the least and the most concerned respondents. @fig-marks places the published result, the reproductions, the five reanalyses and the replications on that scale.
@@ -287,24 +284,24 @@ The recorded correlations run from `r fmt(min(analysts$r_recorded), 3)` to `r fm
 mark_lab <- c(OA = "OA 2012", SCORE_jp7tr = "SCORE jp7tr", SCORE_65wm6 = "SCORE e48gd",
               SCORE_1634 = "SCORE 2010", SCORE_65wm6_DAR = "SCORE 2010–18")
 marks |>
-  mutate(
-    label = coalesce(mark_lab[id], id),
-    label = reorder(label, b),
-    kind = case_when(id == "OA" ~ "published", data == "new" ~ "new data", .default = "original data")
+  dplyr::mutate(
+    label = dplyr::coalesce(mark_lab[id], id),
+    label = stats::reorder(label, b),
+    kind = dplyr::case_when(id == "OA" ~ "published", data == "new" ~ "new data", .default = "original data")
   ) |>
-  ggplot(aes(x = b, y = label, colour = kind, shape = kind)) +
-  annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
-           fill = "#d6dde5", alpha = 0.5) +
-  annotate("rect", xmin = min(paper_set$b), xmax = max(paper_set$b), ymin = -Inf, ymax = Inf,
-           fill = "#9fb1c2", alpha = 0.5) +
-  geom_point(size = 2.6) +
-  scale_colour_manual(values = c(published = "#8b1538", `original data` = "#1d2731", `new data` = "#1f5fa8"),
-                      name = NULL) +
-  scale_shape_manual(values = c(published = 16, `original data` = 16, `new data` = 17), name = NULL) +
-  coord_cartesian(xlim = c(0, 0.35)) +
-  labs(x = "points of distrust per point of concern", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+  ggplot2::ggplot(ggplot2::aes(x = b, y = label, colour = kind, shape = kind)) +
+  ggplot2::annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
+                    fill = "#d6dde5", alpha = 0.5) +
+  ggplot2::annotate("rect", xmin = min(paper_set$b), xmax = max(paper_set$b), ymin = -Inf, ymax = Inf,
+                    fill = "#9fb1c2", alpha = 0.5) +
+  ggplot2::geom_point(size = 2.6) +
+  ggplot2::scale_colour_manual(values = c(published = "#8b1538", `original data` = "#1d2731",
+                                          `new data` = "#1f5fa8"), name = NULL) +
+  ggplot2::scale_shape_manual(values = c(published = 16, `original data` = 16, `new data` = 17), name = NULL) +
+  ggplot2::coord_cartesian(xlim = c(0, 0.35)) +
+  ggplot2::labs(x = "points of distrust per point of concern", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank(), legend.position = "bottom")
 ```
 
 Every result lies above zero and well away from it. The two reproductions, the two replications, N8P2J, 456AD and 6U3LL lie between `r fmt(min(near_oa$b), 3)` and `r fmt(max(near_oa$b), 3)`, close to the published 0.17 and to the upper end of the specifications that hold constant the controls of the paper, which reach `r fmt(max(paper_set$b), 3)`. FQ1G7 sits among the specifications that hold constant the demographics, outlook and ideology without the evaluations and the vote controls, and LT39B, with its single item, at the bottom.

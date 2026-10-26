@@ -28,29 +28,29 @@ Now we leave the original rounds behind. SCORE commissioned two replications tha
 # The SCORE dossier on the immigration-and-trust case as a three-row
 # scoreboard, one row per R; the details come from
 # _planning/trust/trust-facts.md and from the curve and record files.
-sb <- tribble(
+sb <- tibble::tribble(
   ~ord, ~R,              ~verdict,                    ~detail,                                                                                                                                                                                                     ~fill,
   3,    "Reproducible?", "COEFFICIENT YES, SAMPLE NO", sprintf("no data or code from OA; two rebuilds from the ESS\nreproduce the coefficient (%s, %s) but not the sample;\nthe class reproduced 6U3LL exactly", fmt_num(mark_of("SCORE_jp7tr", "b"), 3), fmt_num(mark_of("SCORE_65wm6", "b"), 3)), orange,
   2,    "Robust?",       "THE ANALYSTS AGREE 5–0",     sprintf("%d specifications, all positive and significant,\n%s to %s points; all five analysts found\nevidence for the claim, from %s to %s", nrow(curve), fmt_num(min(curve$b), 3), fmt_num(max(curve$b), 3), fmt_num(min(analysts$b_refit), 3), fmt_num(max(analysts$b_refit), 3)), green,
   1,    "Replicable?",   "REPLICATED TWICE",           sprintf("ESS round 5: %s (t = %s)\nESS rounds 5–9: %s (t = %s)", fmt_num(mark_of("SCORE_1634", "b"), 3), fmt_num(mark_of("SCORE_1634", "statistic"), 1), fmt_num(mark_of("SCORE_65wm6_DAR", "b"), 3), fmt_num(mark_of("SCORE_65wm6_DAR", "statistic"), 1)), green
 )
 
-ggplot(sb, aes(x = 1, y = ord)) +
-  geom_tile(aes(x = 1.2, fill = fill), width = 1.34, height = 0.92, alpha = 0.14) +
-  geom_segment(aes(x = 0.538, xend = 0.538, y = ord - 0.46, yend = ord + 0.46, colour = fill),
-               linewidth = 6) +
-  scale_fill_identity() +
-  scale_colour_identity() +
-  geom_text(aes(label = R), x = 0.60, hjust = 0, vjust = 0.5, fontface = "bold",
-            colour = ncl_blue, size = 8) +
-  geom_text(aes(label = verdict, colour = fill, y = ord - 0.26), x = 0.60, hjust = 0, vjust = 0.5,
-            fontface = "bold", size = 4.6) +
-  geom_text(aes(label = detail), x = 1.1, hjust = 0, vjust = 0.5, colour = "grey35", size = 4.4,
-            lineheight = 0.95) +
-  scale_x_continuous(limits = c(0.5, 1.9)) +
-  scale_y_continuous(limits = c(0.4, 3.6)) +
-  labs(x = NULL, y = NULL) +
-  theme_void()
+ggplot2::ggplot(sb, ggplot2::aes(x = 1, y = ord)) +
+  ggplot2::geom_tile(ggplot2::aes(x = 1.2, fill = fill), width = 1.34, height = 0.92, alpha = 0.14) +
+  ggplot2::geom_segment(ggplot2::aes(x = 0.538, xend = 0.538, y = ord - 0.46, yend = ord + 0.46, colour = fill),
+                        linewidth = 6) +
+  ggplot2::scale_fill_identity() +
+  ggplot2::scale_colour_identity() +
+  ggplot2::geom_text(ggplot2::aes(label = R), x = 0.60, hjust = 0, vjust = 0.5, fontface = "bold",
+                     colour = ncl_blue, size = 8) +
+  ggplot2::geom_text(ggplot2::aes(label = verdict, colour = fill, y = ord - 0.26), x = 0.60, hjust = 0,
+                     vjust = 0.5, fontface = "bold", size = 4.6) +
+  ggplot2::geom_text(ggplot2::aes(label = detail), x = 1.1, hjust = 0, vjust = 0.5, colour = "grey35", size = 4.4,
+                     lineheight = 0.95) +
+  ggplot2::scale_x_continuous(limits = c(0.5, 1.9)) +
+  ggplot2::scale_y_continuous(limits = c(0.4, 3.6)) +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_void()
 ```
 
 ::: {.src}

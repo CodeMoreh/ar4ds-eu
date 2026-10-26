@@ -7,26 +7,23 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(tinytable)
-
-analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character()))
-ess <- read_csv("data/trust_ess.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character()))
+ess <- readr::read_csv("data/trust_ess.csv", show_col_types = FALSE)
 
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
 an <- \(id, col) analysts[[col]][analysts$id == id]
 
-ref <- curve |> filter(is_reference)
+ref <- datawizard::data_filter(curve, is_reference)
 n_paper <- sum(ess$citizen %in% 1 & ess$minority %in% 0)
 # the specification of the course closest to the model of 6U3LL, which the
 # browser lab fits in place of the reproduction
 analogue <- curve |>
-  filter(outcome == "parliament", controls == "paper", weights == "none",
-         items == "available", fe == "country_round")
+  datawizard::data_filter(outcome == "parliament", controls == "paper", weights == "none",
+                          items == "available", fe == "country_round")
 ```
 
 This page sets out the whole exercise of the course on the immigration-and-trust case. The [case study](index.qmd) presents the original study, the SCORE reproductions and replications and the five Multi100 reanalyses, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation and as a fallback, and it gives the same numbers, apart from the reproduction of Task 3, for which it fits the nearest analysis that it can. The page of your track gives the timing of each task.
@@ -50,7 +47,7 @@ Your first job is to reproduce the value that Multi100 recorded for one of the a
 #| tbl-cap: "The five reanalyses, with the statistic that Multi100 recorded and the coefficient of the course refit, in points of distrust per point of concern. Source: `data/analysts5.csv`."
 #| echo: false
 analysts |>
-  transmute(
+  dplyr::transmute(
     Analyst = id,
     Concern = concern,
     Model = method,
@@ -58,8 +55,8 @@ analysts |>
     Respondents = big(n_refit),
     Coefficient = fmt(b_refit, 3)
   ) |>
-  tt() |>
-  style_tt(j = 5:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 5:6, align = "r")
 ```
 
 All five found that respondents who are more concerned about immigration distrust parliament more, all five concluded in Task 1 of Multi100 that the data showed evidence for the claim, and the course refits reproduce four of the recorded statistics exactly. Their coefficients still run from `r fmt(min(analysts$b_refit), 3)` to `r fmt(max(analysts$b_refit), 3)`, a factor of about two, because the analysts held constant different lists of controls and one of them measured concern with a single item. The [case study](index.qmd#sec-reanalysts) sets out what each of them chose.

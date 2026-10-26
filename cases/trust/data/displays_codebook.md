@@ -10,7 +10,7 @@ The course refit without the Italian round 2 analyses exactly the respondents of
 
 ## `display_options.csv`
 
-The options off the curve that a linear model can fit, each changed alone from the reference specification, plus the random-intercept model of the paper without its country-level variables. One row per option: `axis` and `option` (the codes of `menu_options.csv`), `b`, `se` (clustered by country, or the model-based error for `random_intercepts`), `stat`, `df`, `p`, `t_conv` (the conventional t), `r` (the Multi100 partial correlation), `b_std`, `n`, `n_country_rounds`, `b_reference` (0.175) and `shift` (`b` − `b_reference`).
+The options off the curve that a linear model can fit, each changed alone from the reference specification, plus the random-intercept model of the paper without its country-level variables. One row per option: `axis` and `option` (the codes of `menu_options.csv`), `b`, `se` (clustered by country, or the model-based error for `random_intercepts`), `stat`, `df`, `p`, `t_conv` (the conventional t), `r` (the Multi100 partial correlation), `b_std`, `n`, `n_country_rounds`, `ci_low` and `ci_high` (the 95% interval of the test in `stat`), `b_reference` (0.175) and `shift` (`b` − `b_reference`).
 
 | Axis | Option | Coefficient | Shift | Respondents |
 |:--|:--|--:|--:|--:|
@@ -28,11 +28,11 @@ The options off the curve that a linear model can fit, each changed alone from t
 
 ## `display_inference.csv`
 
-The reference specification under five rules of inference: conventional errors (t = 41.2 on 70,253 df), errors clustered by country-round (t = 26.5 on 56 df), errors clustered by country, the rule of the curve (t = 18.0 on 15 df), a wild cluster bootstrap by country (Webb weights, 9,999 draws, null imposed; p below 1/10,000), and the random-intercept model (t = 41.2). The columns are `rule`, `b`, `se`, `stat`, `df`, `p`, `note`. Errors clustered by country are 2.3 times the conventional ones, and the result stays far beyond any threshold under every rule.
+The reference specification under five rules of inference: conventional errors (t = 41.2 on 70,253 df), errors clustered by country-round (t = 26.5 on 56 df), errors clustered by country, the rule of the curve (t = 18.0 on 15 df), errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom (t = 18.0 on 13.3 df), and the random-intercept model (t = 41.2). The columns are `rule`, `b`, `se`, `stat`, `df`, `p`, `ci_low` and `ci_high` (the 95% interval, as the package of each rule computes it), `note`. The first three rules come from fixest, read with parameters, the CR2 rule from estimatr, which gives the same errors and degrees of freedom as clubSandwich (`R/trust/check_parity.R` compares the two on a sample of the respondents), and the random intercepts from lmerTest, read with parameters. Errors clustered by country are 2.3 times the conventional ones, the CR2 correction raises them by less than 1%, and the result stays far beyond any threshold under every rule.
 
 ## `display_loo.csv`
 
-The reference specification with each of the 16 countries left out in turn: `left_out`, `b`, `se`, `stat`, `df` (14), `p`, `n`, `n_country_rounds`, `b_reference`. The coefficient stays between 0.169 (without Norway) and 0.178 (without Portugal).
+The reference specification with each of the 16 countries left out in turn: `left_out`, `b`, `se`, `stat`, `df` (14), `p`, `n`, `n_country_rounds`, `ci_low` and `ci_high` (the 95% interval on 14 df), `b_reference`. The coefficient stays between 0.169 (without Norway) and 0.178 (without Portugal).
 
 ## `display_reliability.csv`
 

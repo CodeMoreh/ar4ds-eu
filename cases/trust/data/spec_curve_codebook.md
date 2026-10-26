@@ -1,6 +1,6 @@
 # Codebook: `spec_curve.csv`
 
-The curve of the claim of the immigration-and-trust case, "... concerns about the effect of immigration on the national community have a(n) [reducing] impact on trust in politics", in the wording that SCORE took from the abstract of the paper of the original author (OA): every specification that the specification menu of the course keeps, 192 rows, fitted once on the course extract `trust_ess.csv` ([codebook](trust_ess_codebook.md)). The file is written by `R/trust/03_spec_curve.R` with the estimator of `R/trust/_tools.R` (`fit_spec()`), which uses base R, dplyr and purrr only, so that the workspace and the browser lab run the identical code, and `R/trust/check_parity.R` checks it against fixest and sandwich on every row.
+The curve of the claim of the immigration-and-trust case, "... concerns about the effect of immigration on the national community have a(n) [reducing] impact on trust in politics", in the wording that SCORE took from the abstract of the paper of the original author (OA): every specification that the specification menu of the course keeps, 192 rows, fitted once on the course extract `trust_ess.csv` ([codebook](trust_ess_codebook.md)). The file is written by `R/trust/03_spec_curve.R` with the estimator of `R/trust/_tools.R` (`fit_spec()`), which fits with fixest and reads the fits with parameters; the workspace and the browser lab run the identical code, and `R/trust/check_parity.R` checks it against estimatr on every row.
 
 ## The specifications
 
@@ -27,18 +27,19 @@ The reference specification (`is_reference`) is `parliament`, `paper`, `none`, `
 | `spec_id` | The row number, 1 to 192, in the order of `expand_grid()` over the five decisions |
 | `outcome`, `controls`, `weights`, `items`, `fe` | The options of the specification, as above. These are the arguments of `fit_spec()` and of `try_spec()` in the exercise |
 | `b` | The coefficient of concern about immigration: the change in distrust (0–10) that goes with one more point of concern (0–10), with the other controls held constant and comparisons made within the groups of `fe`. Positive values mean that more concern goes with more distrust, the direction of the claim |
-| `se` | The standard error of `b`, clustered by country (CR1: the sandwich estimator with the small-sample factor G / (G − 1) × (n − 1) / (n − K), K counting the slopes and one intercept, as fixest does by default) |
+| `se` | The standard error of `b`, clustered by country (CR1: the sandwich estimator with the small-sample factor G / (G − 1) × (n − 1) / (n − K), K counting the slopes and one intercept, since the intercepts of the groups lie within the countries; the default of fixest) |
 | `stat_type` | `t` on every row. readr reads a column that holds only `t` as logical, so give its type when reading the file (`col_types = cols(stat_type = col_character())`) |
 | `stat` | `b` divided by `se` |
 | `df` | The degrees of freedom of the clustered test: the number of countries minus one, 15 |
 | `p` | The two-sided p-value of `stat` on `df`. This is the test that classes every row |
+| `ci_low`, `ci_high` | The 95% interval of `b` under the same test, `b` ± the 97.5th percentile of t on `df` × `se` |
 | `se_conv`, `t_conv`, `df_conv`, `p_conv` | The conventional (model-based) error, its t, its degrees of freedom (respondents minus slopes minus absorbed groups) and its p-value, which treat respondents as independent |
 | `r` | The partial correlation by the rule of Multi100, t / sqrt(t^2 + df), from the conventional t and its degrees of freedom; for a linear model this is the partial correlation of concern and distrust given the controls and the fixed effects (weighted when the specification is weighted) |
 | `b_std` | The coefficient in standard deviations: `b` × SD(concern) / SD(distrust), over the analysed rows, unweighted |
 | `n` | The respondents analysed |
 | `n_clusters` | The countries, 16 on every row |
 | `n_country_rounds` | The country-rounds that the analysed respondents come from |
-| `se_cr`, `t_cr`, `df_cr`, `p_cr` | The same test with errors clustered by country-round (CR1, t on the number of country-rounds minus one), kept as a check |
+| `se_cr`, `t_cr`, `df_cr`, `p_cr` | The same test with errors clustered by country-round (CR1, t on the number of country-rounds minus one), kept as a check. Where the intercepts belong to countries (`country_and_round`), they are not nested in the country-rounds, so K counts them as well |
 | `supports` | `b` > 0 |
 | `sig` | `p` < 0.05 |
 | `is_reference` | TRUE for the reference specification only |

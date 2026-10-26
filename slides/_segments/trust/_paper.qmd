@@ -51,15 +51,15 @@ The data are the first four rounds of the European Social Survey, which intervie
 # design-weighted, data/display_country_means.csv), with the mean of each
 # country over its rounds as a blue point and a bold label.
 country_avg <- means |>
-  summarise(across(c(concern, distrust_parl), mean), .by = cntry)
-ggplot(means, aes(concern, distrust_parl)) +
-  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "grey75", linewidth = 0.7) +
-  geom_point(colour = "grey70", size = 2.2) +
-  geom_point(data = country_avg, colour = ncl_blue, size = 3.2) +
-  ggrepel::geom_text_repel(data = country_avg, aes(label = cntry), fontface = "bold", colour = ncl_blue,
+  datawizard::data_summary(concern = mean(concern), distrust_parl = mean(distrust_parl), by = "cntry")
+ggplot2::ggplot(means, ggplot2::aes(concern, distrust_parl)) +
+  ggplot2::geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "grey75", linewidth = 0.7) +
+  ggplot2::geom_point(colour = "grey70", size = 2.2) +
+  ggplot2::geom_point(data = country_avg, colour = ncl_blue, size = 3.2) +
+  ggrepel::geom_text_repel(data = country_avg, ggplot2::aes(label = cntry), fontface = "bold", colour = ncl_blue,
                            size = 4.6, seed = 1, min.segment.length = 0.4, segment.colour = ncl_blue,
                            box.padding = 0.35, point.padding = 0.2) +
-  labs(x = "mean concern about immigration (0–10)", y = "mean distrust\nof parliament (0–10)") +
+  ggplot2::labs(x = "mean concern about immigration (0–10)", y = "mean distrust\nof parliament (0–10)") +
   theme_slide(15)
 ```
 

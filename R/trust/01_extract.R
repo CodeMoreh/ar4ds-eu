@@ -10,10 +10,8 @@
 #               data-raw/trust/party_codes.csv, data-raw/trust/cabinets.csv
 # Writes:       cases/trust/data/trust_ess.csv
 # Author:       Claude for CM
-# Last updated: 2026-10-25
+# Last updated: 2026-10-26
 ################################################################################
-
-library(tidyverse)
 
 # The one raw seam. ESS_DIR is the ESS folder of the data hub; ESS_FILE and
 # ESS_IT2_FILE override the two files inside it one at a time.
@@ -25,8 +23,8 @@ ESS_IT2_FILE <- Sys.getenv("ESS_IT2_FILE",
 COUNTRIES <- c("AT", "BE", "CH", "DE", "DK", "ES", "FI", "FR", "GB", "GR", "IE", "IT",
                "NL", "NO", "PT", "SE")
 
-party_codes <- read_csv("data-raw/trust/party_codes.csv", show_col_types = FALSE)
-cabinets <- read_csv("data-raw/trust/cabinets.csv", show_col_types = FALSE)
+party_codes <- readr::read_csv("data-raw/trust/party_codes.csv", show_col_types = FALSE)
+cabinets <- readr::read_csv("data-raw/trust/cabinets.csv", show_col_types = FALSE)
 vote_vars <- unique(party_codes$variable)
 
 SURVEY_VARS <- c("cntry", "essround", "idno", "dweight", "pspwght", "pweight", "ctzcntr", "blgetmg",
@@ -41,20 +39,21 @@ SURVEY_VARS <- c("cntry", "essround", "idno", "dweight", "pspwght", "pweight", "
 # as labelled numbers. as_code() reads both as plain numbers.
 as_code <- \(x) if (is.factor(x)) as.numeric(as.character(x)) else as.numeric(haven::zap_labels(x))
 
+# dplyr::any_of() keeps the columns that a file holds; each round has its own vote variables
 cumulative <- readRDS(ESS_FILE) |>
-  filter(essround <= 4, cntry %in% COUNTRIES) |>
-  select(any_of(c(SURVEY_VARS, vote_vars)))
+  datawizard::data_filter(essround <= 4, cntry %in% COUNTRIES) |>
+  dplyr::select(dplyr::any_of(c(SURVEY_VARS, vote_vars)))
 invisible(gc())
 
 # Italy, round 2: fielded in 2006 and released as a country file of its own,
 # outside the cumulative file. It is unpacked to a temporary folder.
 unpacked <- unzip(ESS_IT2_FILE, files = "ESS2IT.dta", exdir = tempfile("ess2it"))
 italy_r2 <- haven::read_dta(unpacked) |>
-  select(any_of(c(SURVEY_VARS, vote_vars)))
+  dplyr::select(dplyr::any_of(c(SURVEY_VARS, vote_vars)))
 
-ess <- bind_rows(
-  mutate(cumulative, across(-c(cntry, essround), as_code)),
-  mutate(italy_r2, across(-c(cntry, essround), as_code), cntry = as.character(cntry))
+ess <- dplyr::bind_rows(
+  dplyr::mutate(cumulative, dplyr::across(-c(cntry, essround), as_code)),
+  dplyr::mutate(italy_r2, dplyr::across(-c(cntry, essround), as_code), cntry = as.character(cntry))
 )
 rm(cumulative, italy_r2)
 invisible(gc())
@@ -64,44 +63,53 @@ invisible(gc())
 # the years in which rounds 1-4 were fielded, takes the median date of its
 # country-round, so that the cabinet in office can still be read.
 ess <- ess |>
-  mutate(date = make_date(coalesce(inwyys, inwyr), coalesce(inwmms, inwmm), coalesce(inwdds, inwdd)),
-         date = if_else(between(date, as.Date("2002-01-01"), as.Date("2010-12-31")), date, NA)) |>
-  mutate(date = coalesce(date, median(date, na.rm = TRUE)), .by = c(cntry, essround))
+  dplyr::mutate(date = lubridate::make_date(dplyr::coalesce(inwyys, inwyr), dplyr::coalesce(inwmms, inwmm),
+                                            dplyr::coalesce(inwdds, inwdd)),
+                date = dplyr::if_else(dplyr::between(date, as.Date("2002-01-01"), as.Date("2010-12-31")),
+                                      date, NA)) |>
+  dplyr::mutate(date = dplyr::coalesce(date, stats::median(date, na.rm = TRUE)), .by = c(cntry, essround))
 
 # Party voted for in the last national election: one variable per country-round
 # (two in Germany, for the constituency and the list vote). A respondent votes
 # far right, or for the cabinet, when either German vote does.
+held_votes <- intersect(vote_vars, names(ess))
 votes <- ess |>
-  select(cntry, essround, idno, date, any_of(vote_vars)) |>
-  pivot_longer(any_of(vote_vars), names_to = "variable", values_to = "code", values_drop_na = TRUE) |>
-  inner_join(party_codes, by = c("cntry", "essround", "variable", "code"))
+  datawizard::data_select(c("cntry", "essround", "idno", "date", held_votes)) |>
+  datawizard::data_to_long(select = held_votes, names_to = "variable", values_to = "code",
+                           values_drop_na = TRUE) |>
+  dplyr::inner_join(party_codes, by = c("cntry", "essround", "variable", "code"))
 
+# dplyr keeps the list column of party keys, which datawizard::data_summary() would flatten
 in_office <- cabinets |>
-  summarise(parlgov_ids = list(parlgov_id), .by = c(cntry, cabinet, start_date)) |>
-  arrange(cntry, start_date)
+  dplyr::summarise(parlgov_ids = list(parlgov_id), .by = c(cntry, cabinet, start_date)) |>
+  datawizard::data_arrange(c("cntry", "start_date"))
 
+# The parties in office on each date: the cabinet whose start date is the last
+# one before it. dplyr, because datawizard cannot see the arguments of a function.
 cabinet_at <- \(country, dates) {
-  office <- filter(in_office, cntry == country)
+  office <- dplyr::filter(in_office, cntry == country)
   office$parlgov_ids[findInterval(as.numeric(dates), as.numeric(office$start_date))]
 }
 
+# dplyr for the grouped steps over 110,000 respondents
 vote_flags <- votes |>
-  mutate(cabinet_ids = cabinet_at(first(cntry), date), .by = cntry) |>
-  mutate(in_cabinet = map2_lgl(parlgov_id, cabinet_ids, \(ids, cab) {
-    !is.na(ids) && any(as.integer(str_split_1(ids, ";")) %in% cab)
+  dplyr::mutate(cabinet_ids = cabinet_at(dplyr::first(cntry), date), .by = cntry) |>
+  dplyr::mutate(in_cabinet = purrr::map2_lgl(parlgov_id, cabinet_ids, \(ids, cab) {
+    !is.na(ids) && any(as.integer(stringr::str_split_1(ids, ";")) %in% cab)
   })) |>
-  summarise(winner = as.integer(any(in_cabinet)), far_right_vote = as.integer(any(far_right == 1)),
-            .by = c(cntry, essround, idno))
+  dplyr::summarise(winner = as.integer(any(in_cabinet)), far_right_vote = as.integer(any(far_right == 1)),
+                   .by = c(cntry, essround, idno))
 
 # Household income: twelve bands in rounds 1-3 and deciles in round 4, so the
 # paper standardises it within each survey (country-round), over every
 # respondent who answered.
+# The standardisation within each country-round comes from datawizard::standardize()
+# (the mean and SD of the answers in that country-round)
 trust_ess <- ess |>
-  left_join(vote_flags, by = c("cntry", "essround", "idno")) |>
-  mutate(hh_income = coalesce(hinctnt, hinctnta)) |>
-  mutate(hh_income_z = (hh_income - mean(hh_income, na.rm = TRUE)) / sd(hh_income, na.rm = TRUE),
-         .by = c(cntry, essround)) |>
-  transmute(
+  dplyr::left_join(vote_flags, by = c("cntry", "essround", "idno")) |>
+  dplyr::mutate(hh_income = dplyr::coalesce(hinctnt, hinctnta)) |>
+  dplyr::mutate(hh_income_z = as.numeric(datawizard::standardize(hh_income)), .by = c(cntry, essround)) |>
+  dplyr::transmute(
     cntry, essround, idno,
     citizen = as.integer(ctzcntr == 1), minority = as.integer(blgetmg == 1),
     dweight = round(dweight, 4), pspwght = round(pspwght, 4), pweight = signif(pweight, 5),
@@ -112,12 +120,12 @@ trust_ess <- ess |>
     econ_dissat = 10 - stfeco, income_difficulty = hincfel,
     health_dissat = 10 - stfhlth, educ_dissat = 10 - stfedu, gov_dissat = 10 - stfgov,
     left_right = lrscale, hh_income_z = round(hh_income_z, 3),
-    voted = case_when(vote == 1 ~ 1L, vote %in% 2:3 ~ 0L),
-    winner = coalesce(winner, 0L), far_right_vote = coalesce(far_right_vote, 0L),
+    voted = dplyr::case_when(vote == 1 ~ 1L, vote %in% 2:3 ~ 0L),
+    winner = dplyr::coalesce(winner, 0L), far_right_vote = dplyr::coalesce(far_right_vote, 0L),
     age = agea, female = as.integer(gndr == 2),
-    education = if_else(edulvla %in% 1:5, edulvla, NA_real_)
+    education = dplyr::if_else(edulvla %in% 1:5, edulvla, NA_real_)
   ) |>
-  arrange(cntry, essround, idno)
+  datawizard::data_arrange(c("cntry", "essround", "idno"))
 
 # The counts of the paper: 120,080 respondents in all (note 40), and 110,732
 # citizens who do not belong to an ethnic minority, by country as in Table 1.
@@ -125,19 +133,20 @@ TABLE1 <- c(AT = 6310, BE = 6648, CH = 6551, DE = 10719, DK = 5843, ES = 7189, F
             FR = 6835, GB = 7905, GR = 6249, IE = 7187, IT = 2698, NL = 7344, NO = 6653,
             PT = 7406, SE = 7249)
 paper_n <- trust_ess |>
-  filter(citizen == 1, minority == 0) |>
-  count(cntry)
+  datawizard::data_filter(citizen == 1, minority == 0) |>
+  datawizard::data_summary(n = n(), by = "cntry")
 stopifnot(nrow(trust_ess) == 120080,
-          !anyDuplicated(select(trust_ess, cntry, essround, idno)),
+          !anyDuplicated(datawizard::data_select(trust_ess, c("cntry", "essround", "idno"))),
           all(paper_n$n == TABLE1[paper_n$cntry]))
 
 # The respondent number is left out of the published file to keep it near 10 MB;
 # rows keep the order of cntry, essround and idno. A copy with idno and the
 # interview date stays in the gitignored cache, for checks against the files of
 # the SCORE reproductions.
-write_csv(select(trust_ess, -idno), "cases/trust/data/trust_ess.csv", na = "")
+# readr writes the bytes of the committed file; datawizard::data_write() does not
+readr::write_csv(datawizard::data_select(trust_ess, exclude = "idno"), "cases/trust/data/trust_ess.csv", na = "")
 dir.create("data-raw/trust/cache", showWarnings = FALSE)
 ess |>
-  distinct(cntry, essround, idno, date) |>
-  right_join(trust_ess, by = c("cntry", "essround", "idno")) |>
+  dplyr::distinct(cntry, essround, idno, date) |>
+  dplyr::right_join(trust_ess, by = c("cntry", "essround", "idno")) |>
   saveRDS("data-raw/trust/cache/trust_ess_ids.rds")
