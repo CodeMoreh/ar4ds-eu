@@ -17,7 +17,7 @@ The session covers four topics. The first is the three Rs – reproducibility, r
 
 Participants install R and an IDE (Positron, RStudio, VS Code, etc.) and download the workspace as a zip from the companion repository [`CodeMoreh/replication-lab`](https://github.com/CodeMoreh/replication-lab), unzip it, and open the folder in their IDE. None of this involves git or an account. The folder holds the working script, the helper functions, the data and a report skeleton containing Tasks 1–5 and the preregistration block. Models are fitted live.
 
-The [browser lab](exercise/browser-lab.qmd) holds the same Tasks 1–5 on webR and quarto-live, with the data pre-loaded and nothing installed, reading its results from the pre-computed curve of the claim. It is the page that the facilitator uses on a shared screen, a place for anyone to try the exercise without an installation, and the fallback when a machine fails. Both submit results through the same one-click links, `submit_exploration()` for the exploratory result of Task 4 and `report_result()` for the preregistered result of Task 5, and each adds a point to the live [Multiverse](results.qmd) chart.
+The [browser lab](cases/eu-frames/lab.qmd) holds the same Tasks 1–5 on webR and quarto-live, with the data pre-loaded and nothing installed, reading its results from the pre-computed curve of the claim. It is the page that the facilitator uses on a shared screen, a place for anyone to try the exercise without an installation, and the fallback when a machine fails. Both submit results through the same one-click links, `submit_exploration()` for the exploratory result of Task 4 and `report_result()` for the preregistered result of Task 5, and each adds a point to the live [Multiverse](cases/eu-frames/multiverse.qmd) chart.
 
 ## Repository layout
 
@@ -25,26 +25,27 @@ The [browser lab](exercise/browser-lab.qmd) holds the same Tasks 1–5 on webR a
 |------------------------|-----------------------------------------------|
 | `index.qmd` | Home: welcome, overview, how the work is done, schedule |
 | `setup.qmd` | Pre-workshop preparation: the installation, the browser lab, what you do not need, optional readings |
-| `tracks/` | Six tracks through the same material, one folder each with a docked sidebar: three one-day formats (open science and replication; social data science tools; the statistical methods), three days, a semester, self-study |
-| `slides/` | The reveal.js decks: `index.qmd` is the full deck, the variants (`one-day-*.qmd`, `three-days.qmd`) include the same segment files under `_segments/` in their own order; the slides page of each track embeds the deck that the track uses |
-| `case/index.qmd` | Case study: the original study and its data, SCORE and Multi100, the five reanalyses with an assessment of their choices, and how Multi100 standardised their results; every track starts here |
-| `exercise/index.qmd` | Full task description: the claim, the five analysts, Tasks 1–5 |
-| `exercise/browser-lab.qmd` | Tasks 1–5 running in the browser (webR / quarto-live), for demonstration and practice |
-| `exercise/spec-menu.qmd` | Specification menu: the fourteen decisions, grouped into estimand, measurement and estimation decisions, the curve of 864 specifications that the menu keeps, and the reasoning for every option on and off the curve |
-| `exercise/estimand-dial.qmd` | Decision map (OJS): every decision of an analysis of the claim in the order in which an analyst meets it, with every option on and off the curve, the estimand statement that it writes and what it does to the results |
-| `exercise/reading-inference.qmd` | The reading for Part 4: why the specifications of the curve are not independent tests, and what a test of the whole curve could add |
-| `exercise/cheatsheet.qmd` | Wallet card: URLs, the steps of the two submissions to the chart, fallbacks |
+| `tracks/` | The tracks, one folder each with a docked sidebar, named by the case and the format: the six tracks of the EU-frames case (`eu-frames-*`) are three one-day formats (open science and replication; social data science tools; the statistical methods), three days, a semester, self-study |
+| `slides/` | The reveal.js decks, named by the case and the format: `eu-frames-full.qmd` is the full deck of the EU-frames case, and the variants (`eu-frames-one-day-*.qmd`, `eu-frames-three-days.qmd`) include the same segment files under `_segments/eu-frames/` in their own order; the slides page of each track embeds the deck that the track uses |
+| `cases/eu-frames/index.qmd` | Case study: the original study and its data, SCORE and Multi100, the five reanalyses with an assessment of their choices, and how Multi100 standardised their results; every track starts here |
+| `cases/eu-frames/exercise.qmd` | Full task description: the claim, the five analysts, Tasks 1–5 |
+| `cases/eu-frames/lab.qmd` | Tasks 1–5 running in the browser (webR / quarto-live), for demonstration and practice |
+| `cases/eu-frames/menu.qmd` | Specification menu: the fourteen decisions, grouped into estimand, measurement and estimation decisions, the curve of 864 specifications that the menu keeps, and the reasoning for every option on and off the curve |
+| `cases/eu-frames/map.qmd` | Decision map (OJS): every decision of an analysis of the claim in the order in which an analyst meets it, with every option on and off the curve, the estimand statement that it writes and what it does to the results |
+| `cases/eu-frames/reading-inference.qmd` | The reading for Part 4: why the specifications of the curve are not independent tests, and what a test of the whole curve could add |
+| `cases/eu-frames/cheatsheet.qmd` | Wallet card: URLs, the steps of the two submissions to the chart, fallbacks |
 | `companion/` | Sixteen self-study modules in three strands, which hold most of the teaching in the course |
-| `results.qmd` | Multiverse: the curve of the claim with the six reference marks, the curve of the negative scales, and the live class chart |
+| `cases/eu-frames/multiverse.qmd` | Multiverse: the curve of the claim with the six reference marks, the curve of the negative scales, and the live class chart |
 | `resources.qmd` | Readings, estimand theory, case-study references, tool docs |
-| `data/` | Committed course datasets and codebooks (see below) |
-| `R/` | The pipeline that builds the curve and the tables around it from the course panel and the aggregate measurement panels; its README gives the order of the scripts and what each one reads and writes |
-| `data-raw/eurostat/` | The Eurostat tables from which the alternative unemployment and growth series are cut, as retrieved, with their provenance |
+| `cases/eu-frames/data/` | The committed datasets of the EU-frames case and their codebooks (see below) |
+| `data/` | Data that more than one case uses: the published estimates of the 29 teams of Silberzahn et al. (2018), with their codebook |
+| `R/eu-frames/` | The pipeline that builds the curve and the tables around it from the course panel and the aggregate measurement panels; its README gives the order of the scripts and what each one reads and writes |
+| `data-raw/eu-frames/eurostat/` | The Eurostat tables from which the alternative unemployment and growth series are cut, as retrieved, with their provenance |
 | `.github/workflows/publish.yml` | CI: render and deploy to GitHub Pages |
 
 ## The data
 
-The `data/` directory holds the committed course datasets and their codebooks, served verbatim so the browser lab can fetch them.
+The `cases/eu-frames/data/` directory holds the committed datasets of the case and their codebooks, served verbatim so that the browser lab can fetch them. The file of the Silberzahn teams, which more than one case uses, is in the shared `data/` directory.
 
 | File | What it is |
 |------------------------|-----------------------------------------------|
@@ -65,7 +66,7 @@ The `data/` directory holds the committed course datasets and their codebooks, s
 | `macro/predictor_measures.csv` | The seven published unemployment and growth series among which the series decision chooses, for the 270 country-years |
 | `macro/population.csv`, `macro/analyst_unemployment.csv` | Adult population by country-year, and the unemployment series as each reanalyst merged it |
 | `analysts5.csv` | The five Multi100 analysts' results for the constrained claim, as Multi100 recorded them |
-| `silberzahn29.csv` | The published estimates of the 29 teams in the red-card study of Silberzahn et al. (2018), with its own codebook |
+| `silberzahn29.csv` | The published estimates of the 29 teams in the red-card study of Silberzahn et al. (2018), with its own codebook; it is in the shared `data/` directory |
 | `class_results.csv` | Committed fallback for the live class chart when the results feed is unreachable |
 | `EUframes_person_full.csv` | Simulated person-level twin of the panel (41,660 rows), with its own codebook alongside |
 | `eb_respondents_codebook.md` | Codebook of the respondent file that the workspace builds from the participant's own GESIS downloads; the file itself is never committed |

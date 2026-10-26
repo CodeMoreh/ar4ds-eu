@@ -27,7 +27,7 @@ suppressPackageStartupMessages({
   library(fixest); library(marginaleffects); library(glmmTMB)
 })
 
-raw <- Sys.getenv("EB_RESPONDENTS", unset = "_template/data_private/eb_respondents.rds")
+raw <- Sys.getenv("EB_RESPONDENTS", unset = "_workspaces/eu-frames/data_private/eb_respondents.rds")
 d <- readRDS(raw) |>
   mutate(cy    = paste(cntry, year, sep = "_"),
          edu3  = factor(edu3, levels = c("low", "mid", "high")),
@@ -38,7 +38,7 @@ d <- readRDS(raw) |>
   filter(!is.na(edu3), !is.na(female), !is.na(age))
 
 # The macro series join by country-year from the committed panel.
-panel <- read_csv("data/EUframes_cy.csv", show_col_types = FALSE) |>
+panel <- read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE) |>
   select(cntry, year, unemp, growth)
 d <- d |>
   left_join(panel, by = c("cntry", "year")) |>

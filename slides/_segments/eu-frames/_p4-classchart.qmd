@@ -1,0 +1,56 @@
+## The class multiverse
+
+```{r}
+#| label: spec-curve
+#| fig-width: 9.5
+#| fig-height: 4.3
+# The curve of the claim, the chart that the Multiverse page draws, minus the
+# hover: the specifications ranked by the claim-aligned partial r and classed
+# by the wild cluster bootstrap by country, with the reproduced specification
+# of Task 3 tagged in ink. Built on spec_base() (setup chunk), so that the
+# next slide reuses this exact panel.
+spec_base() +
+  mark_layer(dplyr::transmute(curve_ref, rank, r = r_ca, sig,
+                              label = paste0("reproduced in Task 3\nbootstrap p = ", fmt_num(p_wcr))))
+```
+
+::: {.small}
+- The curve of the claim: **`r fmt_n(nrow(spec_curve))`** specifications of the three positive scales – unemployment or GDP growth, two fixed-effects designs, and the measurement options that the audit keeps
+- **`r fmt_pct(share_below(spec_curve))`** below zero · **`r fmt_pct(share_sig(spec_curve))`** below zero with bootstrap p < 0.05 · claim-aligned partial r from **`r fmt_num(min(spec_curve$r_ca))` to +`r fmt_num(max(spec_curve$r_ca))`**
+:::
+
+::: {.src}
+cases/eu-frames/data/spec_curve.csv: the height of a mark is the partial r of the conventional fit, its shape the class under a wild cluster bootstrap by country with 9,999 draws.
+:::
+
+::: notes
+This is the curve of the claim, the same curve over which the Multiverse page has been drawing your dots. Eight hundred and sixty-four specifications, each one a mark, ranked from the strongest support for the claim on the left to the weakest on the right. Every one is a justifiable answer to the claim: three positive scales, unemployment or growth, with or without the other measure, two kinds of fixed effects, and the measurement options that the audit kept. Below zero is the direction of the claim, and almost everything is below zero, so direction is not where the disagreement lies. The shape is the test: a circle where the wild cluster bootstrap by country gives a p under point zero five, a cross where it does not, and about seven in ten are circles. The specification that we all reproduced is a cross, with a bootstrap p of point one one. Where did the class results fall? Did anyone end up above the line? Which choice moved your estimate most?
+:::
+
+## The published results on the curve {#where-your-result-lands}
+
+```{r}
+#| label: spec-overlay
+#| fig-width: 9.5
+#| fig-height: 4.3
+# The same panel as the previous slide, with the six reference results
+# (cases/eu-frames/data/reference_marks.csv) placed as the chart at the top of the Multiverse
+# page places them: each on the degrees of freedom of its own inference, in
+# ink, its shape from the bootstrap check where the design can be refitted on
+# the country-year cells and from the p-value as reported where it cannot.
+# The C6HJR mark is the reproduced specification itself.
+spec_base() +
+  mark_layer(dplyr::transmute(ref_marks, rank, r = r_placement, sig, label = tag))
+```
+
+::: {.resultline}
+Your own dots are on the class chart of the [Multiverse]({{< var live-results-url >}}) page, drawn over this same curve
+:::
+
+::: {.src}
+cases/eu-frames/data/reference_marks.csv: each result on the degrees of freedom of its own inference, OA and PRL47 on the Satterthwaite df of a course refit of each design.
+:::
+
+::: notes
+Same chart – nothing moved – with the six reference results dropped onto the curve: the five Multi100 analysts and the design of the original author, tagged OA design. Each is placed on the degrees of freedom of its own inference, the rule that the conversion lesson on the case-study page works through. The published coefficient of the original study belongs to the low-education band of a model with education interactions, so its mark is a refit of the same design without them, which gives the average over the education bands, as the other five do. KEVF1, KQXUE and the original study sit to the left, with between a sixth and a third of the curve further below zero. My own result is the reproduced specification. PRL47 sits further right, once its z is converted on the degrees of freedom of a refit of its design rather than on the number of respondents, and 018OL is out near the right-hand end. The shapes follow the bootstrap wherever a design can be refitted on the country-year cells, which makes KEVF1 a cross as well as my own result. Four of the six come from outside the menu, so they are draws from a wider space than this curve. Nobody was wrong; each of us made a different set of defensible choices. Your own dots are on the Multiverse page, over the same curve, so keep it open next to this one and find yourself.
+:::

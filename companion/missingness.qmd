@@ -8,15 +8,15 @@ bibliography: [../references.bib, ../references-missing.bib]
 #| label: setup
 #| include: false
 suppressPackageStartupMessages({ library(dplyr); library(ggplot2); library(fixest) })
-cy  <- datawizard::data_read("../data/EUframes_cy.csv", verbose = FALSE)
-pw  <- datawizard::data_read("../data/teney_panel_weights.csv", verbose = FALSE)
-me  <- datawizard::data_read("../data/teney_panel_measurement.csv", verbose = FALSE)
-mi  <- datawizard::data_read("../data/spec_grid_mi.csv", verbose = FALSE)
-dg  <- datawizard::data_read("../data/mi_diagnostics.csv", verbose = FALSE)
-curve <- readr::read_csv("../data/spec_curve.csv", show_col_types = FALSE)
-devs <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
+cy  <- datawizard::data_read("../cases/eu-frames/data/EUframes_cy.csv", verbose = FALSE)
+pw  <- datawizard::data_read("../cases/eu-frames/data/teney_panel_weights.csv", verbose = FALSE)
+me  <- datawizard::data_read("../cases/eu-frames/data/teney_panel_measurement.csv", verbose = FALSE)
+mi  <- datawizard::data_read("../cases/eu-frames/data/spec_grid_mi.csv", verbose = FALSE)
+dg  <- datawizard::data_read("../cases/eu-frames/data/mi_diagnostics.csv", verbose = FALSE)
+curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
   filter(curve == "positive", axis == "noop")
-dev_rows <- readr::read_csv("../data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
+dev_rows <- readr::read_csv("../cases/eu-frames/data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
   filter(curve == "positive", axis == "noop")
 # percentages round halves up, as the specification menu does; pct() takes a
 # proportion and pc() a value already in per cent
@@ -88,7 +88,7 @@ band <- purrr::map(seq(-0.6, 0.3, by = 0.05), \(d) {
 delta_zero <- -weighted.mean(ans$m_ans, ans$n_noop)
 ```
 
-The [specification menu](../exercise/spec-menu.qmd) has a decision called **respondents who mention nothing** with five options, and this module explains why it is there. Of the `r big(n_all)` respondents in the EU-frames data, `r big(n_noop)` (`r pct(n_noop / n_all)`) answered the question "What does the EU mean to you personally?" by mentioning none of the thirteen things on the list, so that on every framing scale their score is zero divided by zero. The original paper and its five reanalyses resolved that in two different ways, mostly without saying so, and the people concerned are not a random slice of the sample. The curve of the claim keeps both of the two common rules, scoring the silent respondents zero and leaving them out, and this module teaches the other three options beside them.
+The [specification menu](../cases/eu-frames/menu.qmd) has a decision called **respondents who mention nothing** with five options, and this module explains why it is there. Of the `r big(n_all)` respondents in the EU-frames data, `r big(n_noop)` (`r pct(n_noop / n_all)`) answered the question "What does the EU mean to you personally?" by mentioning none of the thirteen things on the list, so that on every framing scale their score is zero divided by zero. The original paper and its five reanalyses resolved that in two different ways, mostly without saying so, and the people concerned are not a random slice of the sample. The curve of the claim keeps both of the two common rules, scoring the silent respondents zero and leaving them out, and this module teaches the other three options beside them.
 
 ## The missing answers
 
@@ -112,14 +112,14 @@ Item non-response on the outcome battery is the case that this module works thro
 
 The menu has three deterministic rules, which code every silent respondent in the same way without fitting a model, and each is a statement about what the silent respondents mean. **Zero** treats them as people with no framing of any kind, which is the convention of the course panel and of the reproduced specification. **Drop** treats them as people who did not answer the question, which is what the code of OA did. **Split** takes the three codes at their word: "don't know" and blank are dropped as non-response, and "other" is kept at zero on the reasoning that an answer off the list is still an answer that contains no cosmopolitan content. The rules change the cell means before any model is fitted, and the average cosmopolitan cell mean is `r num(mean(me$value[me$construction == "share" & me$item_set == "all" & me$noop == "zero" & me$cell_weight == "unweighted" & me$outcome == "mcosmo"]), 3)` under zero and `r num(mean(me$value[me$construction == "share" & me$item_set == "all" & me$noop == "drop" & me$cell_weight == "unweighted" & me$outcome == "mcosmo"]), 3)` under drop.
 
-The rules also change the question. Under zero the estimand is the average framing among everyone interviewed, with silence counted as no framing, and the cell mean then equals the share among those who answered multiplied by the proportion who answered, so that the rate of saying nothing enters every scale. Under drop it is the average framing among people who have a framing at all, which suits the share as a measure, since a respondent with no mentions has no share, at the cost of conditioning on answering. Those are different populations, so by the test that is applied in the [specification menu](../exercise/spec-menu.qmd#what-each-decision-commits-you-to) the no-opinion rule is an estimand decision. It is classed with measurement on the menu because that is where the decision is made in practice, at the moment the outcome column is built, and a participant who meets it there should know that it also changes the estimand. Both rules stay on the curve, zero because the reproduction task rests on it and drop because it matches the construct and the code of the original study. Split stays off it, since its construct is no clearer than that of either rule and its results lie close to theirs.
+The rules also change the question. Under zero the estimand is the average framing among everyone interviewed, with silence counted as no framing, and the cell mean then equals the share among those who answered multiplied by the proportion who answered, so that the rate of saying nothing enters every scale. Under drop it is the average framing among people who have a framing at all, which suits the share as a measure, since a respondent with no mentions has no share, at the cost of conditioning on answering. Those are different populations, so by the test that is applied in the [specification menu](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to) the no-opinion rule is an estimand decision. It is classed with measurement on the menu because that is where the decision is made in practice, at the moment the outcome column is built, and a participant who meets it there should know that it also changes the estimand. Both rules stay on the curve, zero because the reproduction task rests on it and drop because it matches the construct and the code of the original study. Split stays off it, since its construct is no clearer than that of either rule and its results lie close to theirs.
 
 Across the curve, the rule moves the share of specifications that lie below zero with bootstrap p < 0.05 by a few points and the median correlation by a few hundredths:
 
 ```{r}
 #| label: tbl-noop-levels
 #| echo: false
-#| tbl-cap: "The no-opinion rules across the curve of the claim. Zero and drop are the two halves of the curve; split and the two imputations are swapped into the specifications to which they apply, the imputations only at the standard measurement settings. Sources: `data/menu_deviations.csv` and `data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The no-opinion rules across the curve of the claim. Zero and drop are the two halves of the curve; split and the two imputations are swapped into the specifications to which they apply, the imputations only at the standard measurement settings. Sources: `cases/eu-frames/data/menu_deviations.csv` and `cases/eu-frames/data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   noop_lev |>
     mutate(option = factor(option, c("zero", "drop", "split", "mi_mice", "mi_amelia"),
@@ -142,7 +142,7 @@ For the reproduced specification, the coefficient on unemployment for cosmopolit
 ```{r}
 #| label: tbl-noop-spec
 #| echo: false
-#| tbl-cap: "The reproduced C6HJR specification under each treatment of the respondents who mentioned nothing. Zero is the reproduced result; the imputed variants are tested by their clustered t pooled over ten imputations, since the imputation tier holds no bootstrap. Sources: `data/spec_curve.csv` and `data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The reproduced C6HJR specification under each treatment of the respondents who mentioned nothing. Zero is the reproduced result; the imputed variants are tested by their clustered t pooled over ten imputations, since the imputation tier holds no bootstrap. Sources: `cases/eu-frames/data/spec_curve.csv` and `cases/eu-frames/data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   spec |>
     transmute(Rule = c(zero = "zero (Multi100, course panel)", drop = "drop (original paper)",
@@ -165,7 +165,7 @@ Two engines are run on the case, because they come from different traditions and
 ```{r}
 #| label: tbl-mi
 #| echo: false
-#| tbl-cap: "The reproduced specification under multiple imputation, pooled over ten imputations by Rubin's rules, with conventional and with clustered errors. The fraction of missing information is the share of the uncertainty about the coefficient that is due to the silent respondents. Source: `data/spec_grid_mi.csv`."
+#| tbl-cap: "The reproduced specification under multiple imputation, pooled over ten imputations by Rubin's rules, with conventional and with clustered errors. The fraction of missing information is the share of the uncertainty about the coefficient that is due to the silent respondents. Source: `cases/eu-frames/data/spec_grid_mi.csv`."
 tinytable::tt(
   mi_spec |>
     select(engine, se, estimate, statistic, fmi) |>
@@ -198,7 +198,7 @@ Nothing in the observed data can distinguish missing at random from missing not 
 #| echo: false
 #| fig-width: 7
 #| fig-height: 3.8
-#| fig-cap: "The partial correlation of cosmopolitan framing with unemployment, two-way fixed effects, when every silent respondent is assigned the answered mean of their cell plus δ. Zero on the horizontal axis is the drop rule; the dashed line marks the average δ of the zero rule, and the burgundy point the zero rule itself, which applies a different δ to each cell. Sources: `data/teney_panel_measurement.csv`, `data/teney_panel_weights.csv` and `data/spec_curve.csv`."
+#| fig-cap: "The partial correlation of cosmopolitan framing with unemployment, two-way fixed effects, when every silent respondent is assigned the answered mean of their cell plus δ. Zero on the horizontal axis is the drop rule; the dashed line marks the average δ of the zero rule, and the burgundy point the zero rule itself, which applies a different δ to each cell. Sources: `cases/eu-frames/data/teney_panel_measurement.csv`, `cases/eu-frames/data/teney_panel_weights.csv` and `cases/eu-frames/data/spec_curve.csv`."
 minus <- function(x) gsub("-", "−", format(x), fixed = TRUE)
 ggplot(band, aes(delta, r)) +
   geom_vline(xintercept = 0, colour = "#848c94", linewidth = 0.4) +
@@ -230,5 +230,5 @@ The band runs in one direction. The further the silent respondents are assumed t
 ## Exercise
 
 1. From `teney_panel_weights.csv`, plot the no-opinion rate against the unemployment rate across the 270 cells and describe the pattern in one sentence. Which mechanism does it rule out? Then remove the country means from both variables and plot again. What changes, and why does the second plot matter more for the curve of the claim?
-2. Find your preregistered specification in `data/spec_curve.csv` and its twin under the other rule, which differs only in `noop`. Then look up its split twin in `data/menu_deviations_rows.csv.gz` (`axis == "noop"`, `option == "split"`). Which rule is the split rule closest to, and why would you expect that from what it does with the three kinds of silent respondent?
+2. Find your preregistered specification in `cases/eu-frames/data/spec_curve.csv` and its twin under the other rule, which differs only in `noop`. Then look up its split twin in `cases/eu-frames/data/menu_deviations_rows.csv.gz` (`axis == "noop"`, `option == "split"`). Which rule is the split rule closest to, and why would you expect that from what it does with the three kinds of silent respondent?
 3. Rewrite the estimand statement for the zero rule and for the drop rule. Which word changes?

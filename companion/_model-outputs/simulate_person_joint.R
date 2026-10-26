@@ -32,7 +32,7 @@
 #               270 cells the four dimension shifts are found by Newton
 #               iteration against a fixed reference sample.
 #
-# Reads:        data/EUframes_cy.csv
+# Reads:        cases/eu-frames/data/EUframes_cy.csv
 #               companion/_model-outputs/joint_corr.csv
 #               companion/_model-outputs/joint_marginals.csv
 #               companion/_model-outputs/joint_ses_conditional.csv
@@ -41,7 +41,7 @@
 #               companion/_model-outputs/prevalence_gradient.csv
 #               No microdata: every input is either the public panel or a
 #               committed aggregate, so this script runs for anyone.
-# Writes:       data/EUframes_person_full.csv       ($SIM_OUT overrides)
+# Writes:       cases/eu-frames/data/EUframes_person_full.csv ($SIM_OUT overrides)
 #               The simulated twin carries the full published variable set
 #               and is the file that the simulation module and the
 #               individual-level analysis work from.
@@ -76,7 +76,7 @@ SES_LEVELS  <- c("manual", "self_employed", "manager", "white_collar",
                  "house_person", "unemployed", "retired", "student")
 
 # --- inputs -----------------------------------------------------------------
-panel <- read_csv("data/EUframes_cy.csv", show_col_types = FALSE)
+panel <- read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 corr  <- read_csv("companion/_model-outputs/joint_corr.csv", show_col_types = FALSE)
 marg  <- read_csv("companion/_model-outputs/joint_marginals.csv", show_col_types = FALSE)
 sesc  <- read_csv("companion/_model-outputs/joint_ses_conditional.csv", show_col_types = FALSE)
@@ -335,8 +335,8 @@ out <- sim |>
   select(pid, cntry, year, w1, age, female, edu, edu3, ses, unemployed, urban,
          rile, k, cosmo, util, comm, lib, pos, neg, unemp, growth, bailout)
 
-write_csv(out, Sys.getenv("SIM_OUT", "data/EUframes_person_full.csv"))
-cat("written:", Sys.getenv("SIM_OUT", "data/EUframes_person_full.csv"),
+write_csv(out, Sys.getenv("SIM_OUT", "cases/eu-frames/data/EUframes_person_full.csv"))
+cat("written:", Sys.getenv("SIM_OUT", "cases/eu-frames/data/EUframes_person_full.csv"),
     "(", nrow(out), "rows )\n")
 
 # --- what came out ----------------------------------------------------------

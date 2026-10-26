@@ -14,8 +14,24 @@
 <script>
 (function () {
   var KEY = "ar-track";
+  // The slugs that the tracks had before they carried the case, read as the
+  // slugs that replaced them, so that an earlier choice is still recognised.
+  var FORMER = {
+    "one-day-replication": "eu-frames-one-day-replication",
+    "one-day-tools": "eu-frames-one-day-tools",
+    "one-day-methods": "eu-frames-one-day-methods",
+    "three-days": "eu-frames-three-days",
+    "semester": "eu-frames-semester",
+    "self-study": "eu-frames-self-study"
+  };
   var store = {
-    get: function () { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
+    get: function () {
+      try {
+        var v = localStorage.getItem(KEY);
+        if (v && FORMER[v]) { v = FORMER[v]; localStorage.setItem(KEY, v); }
+        return v;
+      } catch (e) { return null; }
+    },
     set: function (v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} }
   };
   var cards = Array.prototype.slice.call(document.querySelectorAll(".home-track"));

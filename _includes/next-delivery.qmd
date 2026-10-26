@@ -11,7 +11,7 @@
 # with the details of the next delivery. When it is "false" – the evergreen default
 # – this chunk emits nothing, so the page reads as an undated, standing
 # workshop. Activation is therefore a one-line edit in _variables.yml and needs
-# no change to any page. A delivery that names one of the six tracks in
+# no change to any page. A delivery that names one of the tracks in
 # delivery.track also gets a line linking the page of that track.
 #
 # Base R only, and no dependency beyond yaml. The page that includes this chunk,
@@ -45,20 +45,24 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
       vals[!is.na(vals)]
     }
 
-    # The six tracks, keyed by the slug that names each one's folder under
-    # tracks/. Anything else in delivery.track – a typo, a retired name, an
-    # empty string – matches nothing here, so no line is printed and no link
-    # is written to a page that does not exist. The link is relative to the
-    # including page, and index.qmd at the site root is the only one; an
-    # include from a subdirectory would need a ../ in front of tracks/.
+    # The tracks, keyed by the slug that names the folder of each under
+    # tracks/. A slug from before the tracks carried the case is read as the
+    # slug that replaced it. Anything else in delivery.track – a typo, a
+    # retired name, an empty string – matches nothing here, so no line is
+    # printed and no link is written to a page that does not exist. The link
+    # is relative to the including page, and index.qmd at the site root is the
+    # only one; an include from a subdirectory would need a ../ in front of
+    # tracks/.
     track_labels <- c(
-      "one-day-replication" = "one-day course, open science and replication",
-      "one-day-tools"       = "one-day course, social data science tools",
-      "one-day-methods"     = "one-day course, the statistical methods",
-      "three-days"          = "three-day format",
-      "semester"            = "semester format",
-      "self-study"          = "self-study track"
+      "eu-frames-one-day-replication" = "one-day course, open science and replication",
+      "eu-frames-one-day-tools"       = "one-day course, social data science tools",
+      "eu-frames-one-day-methods"     = "one-day course, the statistical methods",
+      "eu-frames-three-days"          = "three-day format",
+      "eu-frames-semester"            = "semester format",
+      "eu-frames-self-study"          = "self-study track"
     )
+    former_slugs <- c("one-day-replication", "one-day-tools", "one-day-methods",
+                      "three-days", "semester", "self-study")
 
     date <- field(delivery[["date"]])
     venue <- field(delivery[["venue"]])
@@ -67,6 +71,7 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     reg_url <- field(delivery[["registration_url"]])
     note <- field(delivery[["note"]])
     track <- tolower(trimws(field(delivery[["track"]])))
+    if (track %in% former_slugs) track <- paste0("eu-frames-", track)
 
     out <- c("", '::: {.callout-tip title="Next delivery" appearance="default"}')
 
@@ -86,7 +91,7 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     }
     out <- c(out, "", ":::", "")
 
-    cat(paste(out, collapse = "\n"))
+    cat(paste(out, collapse = "\n"))  # r-style: keep – an asis chunk writes its Markdown through cat()
   }
 }
 ```

@@ -10,7 +10,7 @@ bibliography: [../references.bib, ../references-new.bib]
 # Reads the curve once, so that the figures quoted in section 9 come from the file;
 # none of the code shown on the page runs.
 suppressPackageStartupMessages(library(readr))
-curve <- read_csv("../data/spec_curve.csv", show_col_types = FALSE)
+curve <- read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 ref <- curve[curve$is_reference, ]
 num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
 pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
@@ -18,7 +18,7 @@ pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", di
 
 This is the first module of the [companion curriculum](index.qmd), and it is written for the person who arrives with no R at all: a student, a professional from another field, or anyone curious about how the course analysis is built. It does not assume you have programmed before. By the end you will know what R is, what the editor around it does, how to store and reshape data, how to draw figures from it and read the ones that the course shows you, how the package system of R and its main dialects fit together, and where the course materials pick up from here.
 
-As in the Quarto module, every command below is **shown on the page and left for you to run**. R is a language you learn by typing into it and watching what comes back, so the way to use this page is to try each snippet yourself, either in the zero-install [browser lab](../exercise/browser-lab.qmd) or in your own copy of R. None of the code shown on this page runs when it renders, and the few figures quoted in section 9 are read from the course data when the page is built.
+As in the Quarto module, every command below is **shown on the page and left for you to run**. R is a language you learn by typing into it and watching what comes back, so the way to use this page is to try each snippet yourself, either in the zero-install [browser lab](../cases/eu-frames/lab.qmd) or in your own copy of R. None of the code shown on this page runs when it renders, and the few figures quoted in section 9 are read from the course data when the page is built.
 
 ## 1. R and the IDE {#sec-what}
 
@@ -31,7 +31,7 @@ You do not strictly need an IDE to use R – R has its own bare console – but 
 ::: {.callout-tip}
 ## Try it
 
-You do not have to install anything to begin. Open the [browser lab](../exercise/browser-lab.qmd): a full copy of R starts up inside the tab after a few seconds, with no editor and no install to manage. Most of the sections below can be typed straight into it, which makes it the fastest way to follow along on a first read. The lab holds the panel `data/EUframes_cy.csv` and the curve `data/spec_curve.csv` but not `data/analysts5.csv`, so the snippet in section 5 that reads that file will not run there.
+You do not have to install anything to begin. Open the [browser lab](../cases/eu-frames/lab.qmd): a full copy of R starts up inside the tab after a few seconds, with no editor and no install to manage. Most of the sections below can be typed straight into it, which makes it the fastest way to follow along on a first read. The lab holds the panel `data/EUframes_cy.csv` and the curve `data/spec_curve.csv` but not `data/analysts5.csv`, so the snippet in section 5 that reads that file will not run there.
 :::
 
 ## 2. The console and the script {#sec-surfaces}
@@ -280,7 +280,7 @@ Write a chain on `euframes` that keeps only Greece (`filter(country == "Greece")
 
 ## 8. The grammar of graphics {#sec-ggplot}
 
-Section 7 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart that the course draws from its own data is built with it – the charts on the slides, the live class chart on the results page, the small country panels in the browser lab – so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The exceptions are the main chart of the [Multiverse page](../results.qmd), which a script of the course draws in the browser, the charts of the [decision map](../exercise/estimand-dial.qmd), which Observable Plot draws, and two figures in the [statistics module](stats-methods.qmd): the rotating plane of section 2, drawn with rgl, and the forest plot of section 10, drawn by metafor.
+Section 7 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart that the course draws from its own data is built with it – the charts on the slides, the live class chart on the results page, the small country panels in the browser lab – so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd), which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and two figures in the [statistics module](stats-methods.qmd): the rotating plane of section 2, drawn with rgl, and the forest plot of section 10, drawn by metafor.
 
 The name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts, much as a grammar describes how words combine into sentences. ggplot2 therefore has no separate function for each chart type. It splits a figure into parts that recombine freely: the data, the mapping from columns to visual properties, the geometric shapes drawn, the scales that decide what those shapes look like, the panels that the plot is divided into, and last the labels and the styling. A scatterplot and a bar chart are two fillings of the same slots, and once you know the slots you can read the figures on this site, including kinds you have not met yet.
 
@@ -508,7 +508,7 @@ Every point below the grey line is an analysis in the direction of the claim. Of
 ::: {.callout-tip}
 ## Try it
 
-Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first point layer and delete the fixed `colour = "#0e3b6a"` that follows it, keeping the shapes as they are. The two colours largely separate along the ranking, which is why the estimator is the decision that moves the curve most, and the [Multiverse page](../results.qmd) explains what the two designs compare. Then try `facet_wrap(~ predictor)` on the same figure and ask yourself which of the two pictures you would rather a reviewer saw.
+Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first point layer and delete the fixed `colour = "#0e3b6a"` that follows it, keeping the shapes as they are. The two colours largely separate along the ranking, which is why the estimator is the decision that moves the curve most, and the [Multiverse page](../cases/eu-frames/multiverse.qmd) explains what the two designs compare. Then try `facet_wrap(~ predictor)` on the same figure and ask yourself which of the two pictures you would rather a reviewer saw.
 :::
 
 ## 10. Naming the estimand {#sec-easystats}
@@ -553,7 +553,7 @@ Everything above is preparation for the workspace in which the day's work is don
 
 **The workspace.** You install R and an IDE and download a single zip file, a ready-made project folder holding the data, a set of short `R/` scripts, and a report skeleton called `index.qmd`. That report skeleton is your first real script. It is a Quarto document you open, read, and fill in as the day goes, running its chunks and rendering it to a finished report. The smaller scripts around it do one job each – `R/check_setup.R` confirms your installation works, `R/get_data.R` fetches the data, `R/spec_tools.R` holds the helpers that fit your specifications and submit your results – and reading them is a gentle way to see the vocabulary of this module used in earnest. The [setup page](../setup.qmd) has the download and the step-by-step.
 
-**The browser lab.** The [browser lab](../exercise/browser-lab.qmd) runs the same exercise inside a web tab, with a full copy of R that starts up on its own and the data already in place. It is the place to try most of this page before you have installed anything, the page that the facilitator drives on the shared screen, and the fallback if your installation fails on the day. It gives the same numbers as the workspace.
+**The browser lab.** The [browser lab](../cases/eu-frames/lab.qmd) runs the same exercise inside a web tab, with a full copy of R that starts up on its own and the data already in place. It is the place to try most of this page before you have installed anything, the page that the facilitator drives on the shared screen, and the fallback if your installation fails on the day. It gives the same numbers as the workspace.
 
 In either place, the sequence is the one you have just practised on a small scale: read the data, reshape it with a few verbs, draw it to see what you are dealing with, then fit a model and read what it says. The rest of the course repeats that sequence, with more care taken over each step.
 

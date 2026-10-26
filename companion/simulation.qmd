@@ -15,8 +15,8 @@ library(ggplot2)
 library(lmerTest)
 set.seed(20260731)
 
-sim   <- read_csv("../data/EUframes_person_full.csv", show_col_types = FALSE)
-panel <- read_csv("../data/EUframes_cy.csv", show_col_types = FALSE)
+sim   <- read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
+panel <- read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 sweep <- read_csv("_model-outputs/sim_recovery_joint.csv", show_col_types = FALSE)
 valid <- read_csv("_model-outputs/twin_validation.csv", show_col_types = FALSE)
 marg  <- read_csv("_model-outputs/joint_marginals.csv", show_col_types = FALSE)
@@ -219,7 +219,7 @@ Point `$SIM_OUT` at a scratch directory unless you mean to overwrite the committ
 
 ## 3. The six outcomes {#sec-outcomes}
 
-Which framing scale you treat as 'EU framing' is a decision about the claim itself. The curve of the claim keeps the three positive scales, and the three negative ones, which belong to the other half of the hypothesis, have a curve of their own on the [Multiverse page](../results.qmd#negative-scales). The twin lets you see part of why the two sets cannot be read as independent tests, because the dimensions are shares of one instrument and cannot move independently.
+Which framing scale you treat as 'EU framing' is a decision about the claim itself. The curve of the claim keeps the three positive scales, and the three negative ones, which belong to the other half of the hypothesis, have a curve of their own on the [Multiverse page](../cases/eu-frames/multiverse.qmd#negative-scales). The twin lets you see part of why the two sets cannot be read as independent tests, because the dimensions are shares of one instrument and cannot move independently.
 
 ```{r}
 #| label: outcome-spread
@@ -345,7 +345,7 @@ Two things to expect. The weighted estimate will not land exactly on the planted
 
 ## 8. A null world {#sec-null}
 
-The [inference reading](../exercise/reading-inference.qmd) argues that to test a specification curve you must know what the curve would look like if there were nothing to find, and the test designed there constructs that null distribution by permutation. Simulation offers a more direct route: write the recipe with the effect removed.
+The [inference reading](../cases/eu-frames/reading-inference.qmd) argues that to test a specification curve you must know what the curve would look like if there were nothing to find, and the test designed there constructs that null distribution by permutation. Simulation offers a more direct route: write the recipe with the effect removed.
 
 ```{r}
 #| label: null-world

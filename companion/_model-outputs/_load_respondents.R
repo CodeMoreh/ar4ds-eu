@@ -16,13 +16,13 @@
 # Last updated: 2026-09-09
 # ########################################################################### #
 
-# The file lives outside every repository. The default is the workspace's
-# private folder on the facilitator's machine; a participant running these
+# The file lives outside every repository. The default is the private folder
+# of the workspace on the facilitator's machine; a participant running these
 # scripts sets EB_RESPONDENTS to their own copy. Paths are relative to the
-# course root; a script run from elsewhere sets EB_COURSE_ROOT first.
+# project root; a script run from elsewhere sets EB_COURSE_ROOT first.
 .root <- Sys.getenv("EB_COURSE_ROOT", unset = ".")
 .respondents_path <- Sys.getenv("EB_RESPONDENTS",
-                                unset = file.path(.root, "_template/data_private/eb_respondents.rds"))
+                                unset = file.path(.root, "_workspaces/eu-frames/data_private/eb_respondents.rds"))
 if (!file.exists(.respondents_path))
   stop("respondent file not found at '", .respondents_path,
        "': build it with prep/01_build_respondents.R in the workspace, or set ",
@@ -34,7 +34,7 @@ if (!file.exists(.respondents_path))
                lib   = paste0("it", c(10, 11)))
 .items13 <- unlist(.items, use.names = FALSE)
 
-.panel <- readr::read_csv(file.path(.root, "data/EUframes_cy.csv"), show_col_types = FALSE) |>
+.panel <- readr::read_csv(file.path(.root, "cases/eu-frames/data/EUframes_cy.csv"), show_col_types = FALSE) |>
   dplyr::select(cntry, year, unemp, growth, bailout)
 
 ind <- readRDS(.respondents_path) |>

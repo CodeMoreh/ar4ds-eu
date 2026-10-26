@@ -10,7 +10,8 @@
 # Reads        : the respondent file, through _load_respondents.R
 #                (GESIS-licensed person-level rebuild, 416,698 respondents –
 #                exists only on the facilitator's machine, never in any repo)
-#                data/EUframes_cy.csv (committed country-year aggregates)
+#                cases/eu-frames/data/EUframes_cy.csv (committed country-year
+#                aggregates)
 # Writes       : companion/_model-outputs/*.txt (captured model summaries –
 #                aggregate statistical output only, no microdata)
 #                _planning_data/brms_panel.rds, _planning_data/ordbetareg_sub.rds
@@ -32,14 +33,12 @@ suppressPackageStartupMessages({
 })
 
 options(width = 88)
-outdir <- "D:/ACADEMIC/TEACHING/2026_OR_NCL/companion/_model-outputs"
+outdir <- "companion/_model-outputs"
 
-Sys.setenv(EB_COURSE_ROOT = "D:/ACADEMIC/TEACHING/2026_OR_NCL")
-source("D:/ACADEMIC/TEACHING/2026_OR_NCL/companion/_model-outputs/_load_respondents.R")
+source("companion/_model-outputs/_load_respondents.R")
 person <- ind |>
   as.data.frame()
-euframes <- read_csv("D:/ACADEMIC/TEACHING/2026_OR_NCL/data/EUframes_cy.csv",
-                  show_col_types = FALSE)
+euframes <- read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 
 save_out <- function(lines, file) writeLines(lines, file.path(outdir, file))
 
@@ -98,7 +97,7 @@ m_brm <- brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
              seed = 2026, refresh = 0, silent = 2)
 save_out(capture.output(print(summary(m_brm), digits = 4)), "brms_panel.txt")
 save_out(capture.output(print(prior_summary(m_brm))), "brms_priors.txt")
-saveRDS(m_brm, "D:/ACADEMIC/TEACHING/2026_OR_NCL/_planning_data/brms_panel.rds")
+saveRDS(m_brm, "_planning_data/brms_panel.rds")
 cat("brms   b_unemp =", round(fixef(m_brm)["unemp", "Estimate"], 5), "\n")
 
 # --- 9. Bayesian ordered beta regression (ordbetareg wraps brms) -------------
@@ -112,7 +111,7 @@ m_ord <- ordbetareg(cosmo ~ unemp + (1 | cntry), data = person_sub,
                     chains = 4, cores = 4, iter = 2000, seed = 2026,
                     refresh = 0, silent = 2)
 save_out(capture.output(print(summary(m_ord), digits = 4)), "ordbetareg_sub.txt")
-saveRDS(m_ord, "D:/ACADEMIC/TEACHING/2026_OR_NCL/_planning_data/ordbetareg_sub.rds")
+saveRDS(m_ord, "_planning_data/ordbetareg_sub.rds")
 cat("ordbetareg b_unemp =",
     round(fixef(m_ord)["unemp", "Estimate"], 5), "\n")
 

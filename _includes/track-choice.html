@@ -5,16 +5,33 @@
      pages at any depth. Inline rather than a separate file for that reason. -->
 <script>
 (function () {
+  // Slugs carry the case, as the folders under tracks/ do. A choice stored
+  // under one of the slugs that the tracks had before they carried the case is
+  // read as the slug that replaced it, and written back once.
   var TRACKS = {
-    "one-day-replication": "One day – open science and replication",
-    "one-day-tools": "One day – social data science tools",
-    "one-day-methods": "One day – the statistical methods",
-    "three-days": "Three days",
-    "semester": "Semester",
-    "self-study": "Self-study"
+    "eu-frames-one-day-replication": "One day – open science and replication",
+    "eu-frames-one-day-tools": "One day – social data science tools",
+    "eu-frames-one-day-methods": "One day – the statistical methods",
+    "eu-frames-three-days": "Three days",
+    "eu-frames-semester": "Semester",
+    "eu-frames-self-study": "Self-study"
+  };
+  var FORMER = {
+    "one-day-replication": "eu-frames-one-day-replication",
+    "one-day-tools": "eu-frames-one-day-tools",
+    "one-day-methods": "eu-frames-one-day-methods",
+    "three-days": "eu-frames-three-days",
+    "semester": "eu-frames-semester",
+    "self-study": "eu-frames-self-study"
   };
   var slug = null;
-  try { slug = window.localStorage.getItem("ar-track"); } catch (e) { return; }
+  try {
+    slug = window.localStorage.getItem("ar-track");
+    if (slug && FORMER[slug]) {
+      slug = FORMER[slug];
+      window.localStorage.setItem("ar-track", slug);
+    }
+  } catch (e) { return; }
   if (!slug || !TRACKS[slug]) return;
   var meta = document.querySelector('meta[name="quarto:offset"]');
   var base = meta ? meta.getAttribute("content") : "./";

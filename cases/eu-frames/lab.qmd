@@ -1,0 +1,1197 @@
+---
+title: "Browser lab"
+subtitle: "The exercise and its data, running in a browser tab"
+engine: knitr
+format:
+  live-html:
+    toc: true
+    include-after-body: ../../_includes/track-choice.html
+    webr:
+      packages:
+        - dplyr
+        - ggplot2
+        - broom
+        - fixest
+        - htmltools
+resources:
+  - data/EUframes_cy.csv
+  - data/spec_curve.csv
+  - data/menu_options.csv
+live:
+  show-hints: true
+  show-solutions: true
+bibliography: ../../references.bib
+aliases:
+  - /exercise/browser-lab.html
+---
+
+{{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. It is the page that the facilitator drives on the shared screen, a place to try the analysis and the data before you have installed anything, and the fallback for a machine that will not cooperate on the day. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page. Nothing you do here is wasted, since both give the same numbers.
+
+::: {.callout-important icon="false"}
+## While the R engine loads
+
+The R engine downloads into your browser the first time you open this page (10–30 seconds on a slow connection). Read Task 1 while it loads. You will see the first code cell switch from a loading spinner to a "Run Code" button when it is ready.
+
+Keep this tab open. Your work stays in this page until you refresh – there is nothing to install, nothing to save to disk, and no account needed.
+:::
+
+```{webr}
+#| edit: false
+#| autorun: true
+#| output: false
+# Shared setup – this runs automatically once the engine is ready. It loads
+# the EU-frames dataset into your browser session as `euframes`, the one
+# object that every cell below works from. The file arrives at data/... in
+# the browser via the `resources:` list at the top of this page.
+euframes <- read.csv("data/EUframes_cy.csv")
+```
+
+```{webr}
+#| include: false
+#| autorun: true
+# Lab machinery – the specification menu, its validation, and the helpers of
+# Tasks 4 and 5: try_spec(), my_experiments(), submit_exploration(), prereg(),
+# build_model(), run_spec() and report_result(). Every result is read from the
+# curve of 864 specifications in data/spec_curve.csv, and every option that is
+# not on the curve is refused with the reason recorded in data/menu_options.csv;
+# both files arrive with the page through its `resources:` list. These helpers
+# fit no model in the browser, so the only estimation package on the page is
+# fixest, which Task 3 uses for the reproduction. The workspace fits the same
+# specifications live, bootstrap included, and returns the same numbers.
+.curve   <- utils::read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
+.options <- utils::read.csv("data/menu_options.csv", stringsAsFactors = FALSE,
+                            encoding = "UTF-8")
+.course_url <- "https://codemoreh.github.io/applied-replication"
+
+# The thirteen axis codes that key the curve, in its column order; the
+# inference rule is the fourteenth decision and is the same for every row.
+.axis_codes <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
+                 "construction", "noop", "item_set", "cell_weight", "measure", "pred_form",
+                 "family")
+.neg_framings <- c("mcomm", "mlib", "mneg")
+
+# The options that the curve keeps, grouped as the course groups the menu.
+# Level 1 changes the question, Level 2 the measurement, Level 3 the
+# estimation. Every other option of the menu is listed in menu_options.csv.
+.menu <- list(
+  # Level 1 – Estimands
+  my_outcome      = c("mcosmo", "mutil", "mpos"),
+  my_predictor    = c("unemp", "growth"),
+  my_copredictor  = c("none", "other"),
+  my_estimator    = c("fe_twoway", "fe_country"),
+  my_sample       = "all",
+  my_weights      = "none",
+  my_construction = "share",
+  # Level 2 – Measurement
+  my_noop         = c("zero", "drop"),
+  my_item_set     = c("all", "un"),
+  my_cell_weight  = c("unweighted", "design"),
+  my_measure      = c("wb_nat", "es_1574_act", "es_2064_pop", "es_2564_lfs", "wb_growth"),
+  # Level 3 – Estimation
+  my_pred_form    = c("raw", "log"),
+  my_family       = "gaussian",
+  my_se           = "wcr"
+)
+.measures_for <- list(unemp  = c("wb_nat", "es_1574_act", "es_2064_pop", "es_2564_lfs"),
+                      growth = "wb_growth")
+
+if (nrow(.curve) != 864 ||
+    !all(vapply(.axis_codes, function(a) all(.curve[[a]] %in% .menu[[paste0("my_", a)]]),
+                logical(1))))
+  stop("The curve of 864 specifications did not load as expected. Reload the page.",
+       call. = FALSE)
+.curve_keys <- do.call(paste, c(unname(as.list(.curve[.axis_codes])), sep = "|"))
+
+.est_lab <- function(e) c(
+  fe_twoway  = "two-way fixed effects (country + year)",
+  fe_country = "country fixed effects")[[e]]
+.se_lab <- "wild cluster bootstrap by country"
+
+# The term for the claim-carrying predictor as it appears in a formula:
+# log(unemp) when the log form is chosen, else the bare variable name.
+.main_term <- function(ch) {
+  if (ch$my_predictor == "unemp" && ch$my_pred_form == "log") "log(unemp)"
+  else ch$my_predictor
+}
+.copred_term <- function(ch) if (identical(ch$my_predictor, "unemp")) "growth" else "unemp"
+
+# --- validation ------------------------------------------------------------
+# Two entry points into the same rules. .validate() takes a named list, which
+# is how the exploratory try_spec() supplies its arguments; .check_choices()
+# reads the fourteen my_* choices and claim_align out of the session, which is
+# how the declared flow reads the preregistration cell. An option that is not
+# on the curve stops with the reason from menu_options.csv, the page of the
+# course that teaches it, and the options that stay on the curve.
+.page_titles <- c(
+  "companion/measurement.qmd"      = "The items behind the scales",
+  "companion/stats-methods.qmd"    = "The statistical methods behind the course",
+  "companion/dags.qmd"             = "Causal graphs",
+  "companion/multiverse.qmd"       = "The multiverse and its critics",
+  "companion/weighting.qmd"        = "Weights",
+  "companion/missingness.qmd"      = "Missing answers",
+  "companion/data-sources.qmd"     = "Social science data sources",
+  "cases/eu-frames/multiverse.qmd" = "Multiverse",
+  "cases/eu-frames/map.qmd"        = "Decision map")
+.page_ref <- function(path) {
+  title <- if (path %in% names(.page_titles)) .page_titles[[path]] else path
+  sprintf("%s, %s/%s", title, .course_url, sub("\\.qmd$", ".html", path))
+}
+.or_list <- function(x) {
+  q <- paste0("\"", x, "\"")
+  if (length(q) == 1) q else paste(paste(q[-length(q)], collapse = ", "), "or", q[length(q)])
+}
+# two older option codes that labels and calls may still use, mapped to the rows that hold their reasons
+.legacy <- c("se:clustered" = "cr1", "weights:n_cy" = "n_cell")
+
+.on_menu <- function(k, v) is.character(v) && length(v) == 1 && !is.na(v) && v %in% .menu[[k]]
+
+.refuse <- function(k, v, ch, as_args) {
+  shown <- function(a) if (as_args) a else paste0("my_", a)
+  axis  <- sub("^my_", "", k)
+  keep  <- if (k == "my_measure" && isTRUE(ch$my_predictor %in% names(.measures_for)))
+    .measures_for[[ch$my_predictor]] else .menu[[k]]
+  map   <- paste0("  Every decision and its options: ", .page_ref("cases/eu-frames/map.qmd"))
+  if (!is.character(v) || length(v) != 1 || is.na(v))
+    stop(sprintf("%s needs one option in quotes, for example %s = \"%s\".",
+                 shown(axis), shown(axis), .menu[[k]][1]), call. = FALSE)
+  look <- if (paste0(axis, ":", v) %in% names(.legacy)) .legacy[[paste0(axis, ":", v)]] else v
+  row  <- .options[.options$axis == axis & .options$option == look & !.options$on_curve, ]
+  msg <- if (nrow(row) == 1) c(
+    sprintf("%s = \"%s\" (%s) is not on the curve of 864 specifications, so it has no result here.",
+            shown(axis), v, row$label),
+    paste0("  Why: ", row$reason),
+    if (axis == "se")
+      "  Inference is fixed: every result on the curve is tested by the wild cluster bootstrap by country, and the printout gives the conventional t and the CR2 p beside it.",
+    paste0("  Where it is taught: ", .page_ref(row$taught_on)),
+    map,
+    sprintf("  To stay on the curve, choose %s = %s.", shown(axis), .or_list(keep))
+  ) else c(
+    sprintf("%s = \"%s\" is not an option on the menu.", shown(axis), v),
+    sprintf("  On the curve: %s.", paste(.menu[[k]], collapse = " | ")),
+    if (any(.options$axis == axis & !.options$on_curve))
+      sprintf("  Off the curve, refused with the reason why: %s.",
+              paste(.options$option[.options$axis == axis & !.options$on_curve], collapse = " | ")),
+    map
+  )
+  stop(paste(msg, collapse = "\n"), call. = FALSE)
+}
+
+.validate <- function(ch, as_args = FALSE) {
+  shown <- function(a) if (as_args) a else paste0("my_", a)
+  # the co-predictor may also be named by its variable, growth or unemp
+  if (identical(ch$my_copredictor, .copred_term(ch))) ch$my_copredictor <- "other"
+  bad <- Filter(function(k) !.on_menu(k, ch[[k]]), names(.menu))
+  if (length(bad) > 0) .refuse(bad[1], ch[[bad[1]]], ch, as_args)
+  if (ch$my_predictor == "growth" && ch$my_pred_form == "log")
+    stop(sprintf("GDP growth enters raw only – it takes negative values, so its log is undefined. Use %s = \"raw\".",
+                 shown("pred_form")), call. = FALSE)
+  if (!ch$my_measure %in% .measures_for[[ch$my_predictor]])
+    stop(sprintf("%s = \"%s\" is a series for %s; with %s = \"%s\" choose %s = %s.",
+                 shown("measure"), ch$my_measure, setdiff(names(.measures_for), ch$my_predictor),
+                 shown("predictor"), ch$my_predictor, shown("measure"),
+                 .or_list(.measures_for[[ch$my_predictor]])), call. = FALSE)
+  ch
+}
+
+.check_choices <- function() {
+  need <- names(.menu)
+  missing <- need[!vapply(need, exists, logical(1))]
+  if (length(missing) > 0)
+    stop("Not declared yet: ", paste(missing, collapse = ", "),
+         ". Fill in every choice in the preregistration cell and run it first.",
+         call. = FALSE)
+  if (!exists("claim_align"))
+    stop("Also declare claim_align <- TRUE (the course convention) in the preregistration cell.",
+         call. = FALSE)
+  ch <- lapply(need, function(k) get(k))
+  names(ch) <- need
+  .validate(ch)
+}
+
+# --- the curve -------------------------------------------------------------
+.key_of <- function(ch) paste(unlist(ch[paste0("my_", .axis_codes)]), collapse = "|")
+
+.lookup <- function(ch) {
+  i <- match(.key_of(ch), .curve_keys)
+  if (is.na(i))
+    stop("That specification passed the checks but is not among the 864 on the curve. This should not happen; tell the facilitator which call you ran.",
+         call. = FALSE)
+  .curve[i, ]
+}
+
+# One result in the form that the printout and the submission use: the
+# conventional fit (b, se, t, df, r), the claim-aligned r, the two clustered
+# tests, and the placement among the 864.
+.result <- function(ch) {
+  hit <- .lookup(ch)
+  list(b = hit$b, se = hit$se, t = hit$t, df = hit$df, n = hit$n_cells, r = hit$r,
+       r_ca = hit$r_ca, p_cr2 = hit$p_cr2, p_wcr = hit$p_wcr,
+       placement = mean(.curve$r_ca < hit$r_ca),
+       source = "read from the curve of 864 specifications")
+}
+
+# The claim-alignment factor. The claim expects framing to rise with growth,
+# so a growth slope is reported with its sign flipped; the negative framings,
+# which are not on the curve, were reverse-coded the same way. The r_ca column
+# of the curve is r times this factor.
+.flip <- function(ch)
+  (if (ch$my_outcome %in% .neg_framings) -1 else 1) *
+  (if (ch$my_predictor == "growth") -1 else 1)
+
+# The one-line spec label that the class chart reads: six of the seven Level 1
+# choices, then in brackets the scoring rule and the measurement and estimation
+# choices, the inference rule last.
+.spec_line <- function(ch) {
+  neg <- ch$my_outcome %in% .neg_framings
+  paste0(ch$my_outcome, if (neg) "_ca" else "", " ~ ", ch$my_predictor, "(", ch$my_pred_form, ")",
+         if (ch$my_copredictor == "other") paste0(" + ", .copred_term(ch)) else "",
+         " | ", ch$my_estimator, " | ", ch$my_sample, " | w:", ch$my_weights,
+         " [", ch$my_construction, ", ", ch$my_noop, ", items:", ch$my_item_set, ", cells:",
+         ch$my_cell_weight, ", ", ch$my_measure, " | ", ch$my_family, ", se:", ch$my_se, "]")
+}
+
+.fmt_p <- function(p) if (p < 0.001) "< 0.001" else sprintf("= %.3f", p)
+
+.class_line <- function(res) {
+  below <- res$r_ca < 0
+  sig   <- res$p_wcr < 0.05
+  if (below && sig) "below zero and significant under the bootstrap (p < 0.05), in the direction of the claim"
+  else if (below) "below zero, but not significant under the bootstrap (p >= 0.05)"
+  else if (sig) "above zero and significant under the bootstrap, against the direction of the claim"
+  else "above zero and not significant under the bootstrap"
+}
+
+.print_result <- function(ch, res, lead = NULL, aligned = TRUE) {
+  fl <- if (aligned) .flip(ch) else 1
+  writeLines(c(
+    lead,
+    paste0("  ", .spec_line(ch)),
+    sprintf("  b = %.5f   se = %.5f   t = %.3f on %d df (conventional standard error)",
+            fl * res$b, res$se, fl * res$t, round(res$df)),
+    sprintf("  partial r = %.3f, %s", if (aligned) res$r_ca else res$r,
+            if (aligned) "claim-aligned (below zero is the direction of the claim)"
+            else "on the original scale of the outcome"),
+    sprintf("  p %s with CR2 errors clustered by country   p %s by the wild cluster bootstrap",
+            .fmt_p(res$p_cr2), .fmt_p(res$p_wcr)),
+    paste0(if (aligned) "  Class: " else "  Class, on the claim-aligned scale: ", .class_line(res)),
+    sprintf("  Placement: %.0f%% of the 864 specifications on the curve have a more negative claim-aligned r",
+            100 * res$placement),
+    if (aligned && ch$my_predictor == "growth")
+      "  (growth: b, t and r are shown with their signs flipped, because the claim expects framing to rise with growth)",
+    if (!aligned)
+      "  (claim_align = FALSE: shown on the original scale; the class chart receives the claim-aligned values)",
+    paste0("  (", res$source, ")")))
+  invisible(res)
+}
+
+# --- Task 4: the exploratory helpers ---------------------------------------
+.tried <- new.env(parent = emptyenv())
+.tried$log <- NULL
+.tried$last <- NULL
+
+try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "none",
+                     estimator = "fe_twoway", sample = "all", weights = "none",
+                     construction = "share", noop = "zero", item_set = "all",
+                     cell_weight = "unweighted", measure = NULL,
+                     pred_form = "raw", family = "gaussian", se = "wcr") {
+  if (is.null(measure)) measure <- if (identical(predictor, "growth")) "wb_growth" else "wb_nat"
+  ch <- .validate(list(my_outcome = outcome, my_predictor = predictor, my_copredictor = copredictor,
+                       my_estimator = estimator, my_sample = sample, my_weights = weights,
+                       my_construction = construction, my_noop = noop, my_item_set = item_set,
+                       my_cell_weight = cell_weight, my_measure = measure,
+                       my_pred_form = pred_form, my_family = family, my_se = se), as_args = TRUE)
+  res <- .result(ch)
+  .print_result(ch, res, lead = "")
+  fl  <- .flip(ch)
+  row <- data.frame(stats::setNames(ch, sub("^my_", "", names(ch))),
+                    b = fl * res$b, t = fl * res$t, r_aligned = res$r_ca, p_boot = res$p_wcr,
+                    stringsAsFactors = FALSE)
+  .tried$log  <- dplyr::bind_rows(.tried$log, row)
+  .tried$last <- list(ch = ch, res = res)
+  invisible(row)
+}
+
+# The running log of everything try_spec() has looked up. Only the decisions
+# that varied are shown; the constant ones are those of the reproduced
+# specification or of every call.
+my_experiments <- function() {
+  d <- .tried$log
+  if (is.null(d)) {
+    writeLines("Nothing tried yet – call try_spec() at least once.")
+    return(invisible(NULL))
+  }
+  axes <- sub("^my_", "", names(.menu))
+  varied <- names(Filter(function(x) length(unique(x)) > 1, d[axes]))
+  show <- d[c(varied, "b", "t", "r_aligned", "p_boot")]
+  show$b <- signif(show$b, 3); show$t <- round(show$t, 2)
+  show$r_aligned <- round(show$r_aligned, 3); show$p_boot <- round(show$p_boot, 3)
+  writeLines(sprintf("Specifications you have tried (%d):\n", nrow(d)))
+  print(show, row.names = FALSE)
+  writeLines(sprintf("\nSpread of claim-aligned r: %.3f to %.3f  |  below zero and significant under the bootstrap: %d of %d",
+                     min(d$r_aligned), max(d$r_aligned),
+                     sum(d$r_aligned < 0 & d$p_boot < 0.05), nrow(d)))
+  invisible(show)
+}
+
+submit_exploration <- function(nickname = NULL) {
+  if (is.null(.tried$last))
+    stop("Nothing to submit – call try_spec() first, ending with the specification you want on the chart.",
+         call. = FALSE)
+  .submit(.tried$last$ch, .tried$last$res, "explore",
+          "Your exploratory submission (claim-aligned, the last specification you tried):",
+          nickname)
+}
+
+# --- Task 5: the declared helpers ------------------------------------------
+
+prereg <- function() {
+  ch <- .check_choices()
+  writeLines(c(
+    "DECLARED – your preregistered specification, fixed before you run it:",
+    "",
+    "  The question (Level 1)",
+    paste("    outcome    :", ch$my_outcome),
+    paste0("    predictor  : ", ch$my_predictor,
+           if (ch$my_predictor == "growth") " (claim-expected sign flipped automatically)"),
+    paste("    adjusted   :", if (ch$my_copredictor == "other") .copred_term(ch) else "nothing"),
+    paste("    estimator  :", .est_lab(ch$my_estimator)),
+    paste("    sample     :", ch$my_sample, "   whose average:", ch$my_weights),
+    paste("    scored as  :", ch$my_construction),
+    "  The measurement (Level 2)",
+    paste("    no-opinion rule:", ch$my_noop, "  items:", ch$my_item_set),
+    paste("    cells:", ch$my_cell_weight, "  series:", ch$my_measure),
+    "  The estimation (Level 3)",
+    paste("    form:", ch$my_pred_form, "  family:", ch$my_family, "  inference:", .se_lab),
+    paste("  claim_align:", isTRUE(claim_align)),
+    "",
+    "These choices are now fixed for the rest of the session – the later",
+    "cells read them from here. Copy this cell into your notes: it is your",
+    "preregistration record, made before you see the result."))
+  invisible(ch)
+}
+
+build_model <- function(formula, estimator) {
+  ch <- .check_choices()
+  if (missing(formula) || !inherits(formula, "formula"))
+    stop("The first argument must be a formula: outcome ~ predictor terms, unquoted.",
+         call. = FALSE)
+  lhs <- all.vars(formula[[2]])
+  if (!identical(lhs, ch$my_outcome))
+    stop(sprintf("The outcome in your formula is '%s' but you preregistered '%s'. The preregistration is binding, so change the formula to match it.",
+                 deparse(formula[[2]]), ch$my_outcome), call. = FALSE)
+  want <- c(.main_term(ch), if (ch$my_copredictor == "other") .copred_term(ch))
+  got  <- attr(terms(formula), "term.labels")
+  if (!setequal(got, want))
+    stop(sprintf("Right-hand side mismatch: you wrote { %s } but your preregistration implies { %s }.%s",
+                 paste(got, collapse = ", "), paste(want, collapse = ", "),
+                 if (.main_term(ch) == "log(unemp)" && !"log(unemp)" %in% got)
+                   " You preregistered the log form – write log(unemp) in the formula." else ""),
+         call. = FALSE)
+  if (missing(estimator) || !identical(estimator, ch$my_estimator))
+    stop(sprintf("estimator = \"%s\" does not match your preregistered \"%s\".",
+                 if (missing(estimator)) "" else estimator, ch$my_estimator), call. = FALSE)
+  writeLines(c("Model accepted – it matches your preregistration:",
+               paste0("  ", deparse(formula), ", estimated by ", .est_lab(estimator)),
+               "  Run it with run_spec(my_model)."))
+  structure(list(choices = ch, formula = formula, estimator = estimator), class = "spec_ticket")
+}
+
+run_spec <- function(spec) {
+  if (missing(spec) || !inherits(spec, "spec_ticket"))
+    stop("Pass the object that build_model() returned, e.g. run_spec(my_model).", call. = FALSE)
+  now <- .check_choices()
+  if (!identical(spec$choices, now))
+    stop("The preregistration cell has changed since you built this model – rerun prereg() and build_model() so they agree.",
+         call. = FALSE)
+  ch  <- spec$choices
+  res <- .result(ch)
+  .print_result(ch, res, "Your preregistered specification, read from the curve of 864 specifications:",
+                aligned = isTRUE(claim_align))
+}
+
+# Both submissions of a participant carry one short tag inside the spec label,
+# "explore: [amber-otter-42] …", so that the participant can find their own
+# circles on the class chart. The tag rides in the free-text label because the
+# form and its fields are frozen infrastructure. The same functions sit in
+# R/spec_tools.R of the workspace, which keeps the tag in a file; here it lasts
+# for the browser session, and a nickname passed to either submission function
+# sets it or brings it back after a reload.
+.tag_words <- list(
+  adj  = c("amber", "azure", "bright", "calm", "coral", "crisp", "dusky", "early",
+           "fair", "gentle", "golden", "hazel", "ivory", "jade", "keen", "lively",
+           "lunar", "misty", "noble", "olive", "pale", "quiet", "rapid", "rosy",
+           "russet", "silver", "snowy", "solar", "sunny", "swift", "velvet", "vivid"),
+  noun = c("otter", "heron", "lynx", "badger", "finch", "hare", "ibex", "kestrel",
+           "lark", "marten", "newt", "owl", "puffin", "quail", "raven", "seal",
+           "stoat", "tern", "vole", "wren", "bison", "crane", "dove", "egret",
+           "fox", "gecko", "koala", "lemur", "moose", "panda", "robin", "swan")
+)
+.tag_env <- new.env(parent = emptyenv())
+.tag_env$tag <- NULL
+
+# A fresh tag, drawn without touching the random-number stream of the session.
+.new_tag <- function() {
+  had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had_seed) old_seed <- get(".Random.seed", envir = globalenv())
+  on.exit(if (had_seed) assign(".Random.seed", old_seed, envir = globalenv())
+          else rm(".Random.seed", envir = globalenv()))
+  set.seed(as.integer((as.numeric(Sys.time()) * 1000) %% 1e9) + Sys.getpid() %% 1e5)
+  paste(sample(.tag_words$adj, 1), sample(.tag_words$noun, 1), sample(10:99, 1), sep = "-")
+}
+
+# A nickname reduced to lower-case ASCII letters, digits and single hyphens,
+# at most 24 characters – the only form that the class chart parses.
+.clean_tag <- function(x) {
+  # iconv on Windows turns these into "?": the Romanian comma-below letters and the eszett
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x)[1])))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  x <- gsub("-+$", "", substr(x, 1, 24))
+  if (is.na(x) || !nzchar(x))
+    stop("A nickname needs at least one letter or digit, for example nickname = \"blue-heron\".",
+         call. = FALSE)
+  x
+}
+
+# The tag of this session: the nickname if one is given, otherwise the tag
+# already drawn, otherwise a fresh one. Returns the tag and the one it replaced.
+.class_tag <- function(nickname = NULL) {
+  stored <- .tag_env$tag
+  tag <- if (!is.null(nickname)) .clean_tag(nickname) else if (!is.null(stored)) stored else .new_tag()
+  .tag_env$tag <- tag
+  list(tag = tag, replaced = if (!is.null(stored) && !identical(tag, stored)) stored)
+}
+
+# One submission, used by both phases. The phase and the tag are prefixed to
+# the free-text spec label, and all fourteen decisions are written into that
+# label; the form, its fields and the collection pipeline are frozen
+# infrastructure. The numbers are those of the conventional fit, claim-aligned.
+.submit <- function(ch, res, phase, lead, nickname = NULL) {
+  fl <- .flip(ch)
+  b <- fl * res$b; tv <- fl * res$t; r <- res$r_ca
+  tg <- .class_tag(nickname)
+  spec_label <- paste0(phase, ": [", tg$tag, "] ", .spec_line(ch))
+
+  FORM_ID <- "1FAIpQLSezoAEOnZUfP4pkfN28_XtEBwSyc2RLsXB-h8RPSegF7_t76A"
+  field <- c(spec = "entry.832496914", b = "entry.1656311800", se = "entry.1337458262",
+             t = "entry.1940779437", df = "entry.1682711955", n = "entry.1586392724",
+             r = "entry.1660273001")
+  value <- c(spec = spec_label, b = sprintf("%.5f", b),
+             se = sprintf("%.5f", res$se), t = sprintf("%.3f", tv),
+             df = as.character(round(res$df)), n = as.character(res$n),
+             r = sprintf("%.3f", r))
+  query <- paste(vapply(names(field), function(k)
+    paste0(field[[k]], "=", utils::URLencode(value[[k]], reserved = TRUE)),
+    character(1)), collapse = "&")
+  url <- sprintf("https://docs.google.com/forms/d/e/%s/viewform?usp=pp_url&%s", FORM_ID, query)
+
+  writeLines(c(
+    lead,
+    "",
+    paste("  spec:", spec_label),
+    sprintf("  b = %.5f | se = %.5f | t = %.3f | df = %d | n = %d | r = %.3f",
+            b, res$se, tv, round(res$df), res$n, r),
+    paste0("  Class: ", .class_line(res)),
+    "",
+    "Open the link below (or copy the URL) – the form opens with every field",
+    "pre-filled; just press Send.",
+    "",
+    url))
+  if (requireNamespace("htmltools", quietly = TRUE))
+    print(htmltools::tags$p(htmltools::tags$a(href = url, target = "_blank",
+                                              "Open the pre-filled form in a new tab")))
+  writeLines(c(
+    "",
+    sprintf("Your marks on the class chart carry the tag %s%s.", tg$tag,
+            if (!is.null(tg$replaced)) sprintf(" (it replaces %s)", tg$replaced) else ""),
+    "Type it into the my_tag line of the live cell on the Multiverse page to",
+    "highlight them. Both of your submissions share it while this page stays",
+    sprintf("open; after a reload, bring it back with nickname = \"%s\". To choose", tg$tag),
+    "your own, pass a nickname rather than your name, because the chart is public."))
+  invisible(list(spec = spec_label, tag = tg$tag, b = b, se = res$se, statistic = tv,
+                 df = res$df, n = res$n, r = r, url = url))
+}
+
+report_result <- function(nickname = NULL) {
+  ch <- .check_choices()
+  .submit(ch, .result(ch), "declared",
+          "Your declared submission (claim-aligned, straight from your preregistration):",
+          nickname)
+}
+```
+
+Five analysts reanalysed a claim from the EU-frames case [@Teney2016DoesEUEconomic] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. Read the full task description, the claim, and the five-analyst table of findings on the [Exercise overview](exercise.qmd) page; the [case study](index.qmd) sets out the original study, Multi100 and the five reanalyses in full.
+
+The five tasks take you from a setup check to two dots on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it.
+
+
+
+## Task 1 – Get yourself running {#task-1-setup}
+
+The aim of this task is only to reach the point where a line of R runs and the data are in front of you. Press **Run Code** on the cell below. If it prints the three lines it should, you are set up and everything else on this page will work.
+
+```{webr}
+#| autorun: false
+# The setup check. It uses only what the page preloads, so if this runs, the
+# rest of the lab runs.
+cat("R is running in your browser. R version:", R.version.string, "\n")
+cat("The panel is loaded:", nrow(euframes), "rows,",
+    dplyr::n_distinct(euframes$cntry), "countries,",
+    dplyr::n_distinct(euframes$year), "years\n")
+cat("fixest is available:", requireNamespace("fixest", quietly = TRUE), "\n")
+```
+
+You should see **270 rows**, **27 countries** and **10 years**, and `TRUE` on the last line. If any of that is missing, reload the page and wait for the engine to finish downloading before pressing Run Code again. If it still fails, say **STUCK** in the chat.
+
+
+
+## Warm-up – the three Rs {#task-1-concepts-warm-up-while-the-engine-loads}
+
+The warm-up settles the vocabulary before you touch any data. Three of the four scenarios below describe one of our three Rs – reproducibility, robustness, replicability – and the fourth describes something else. Read all four, then label each one in the code cell.
+
+***Scenario 1:*** A reviewer reruns the authors' Stata .do file on the authors' data and gets a *different* coefficient from the one printed in the paper. This is an example of \_\_\_\_\_\_ even though what they *tried* to do failed.
+
+***Scenario 2:*** The analyst uses the authors' submitted replication dataset, but they re-implement the model in R instead of Stata and centre the predictor. Is this a case of  \_\_\_\_\_\_ or \_\_\_\_\_\_?
+
+***Scenario 3:*** A preregistered team tests the identical hypothesis on a *separate, much larger* dataset chosen to be theoretically equivalent, and gets results that contradict the original. Their conclusion is that the original analysis has failed to \_\_\_\_\_\_.
+
+***Scenario 4:*** Instead of the survey data used by the original authors, another researcher tests the same underlying idea on social-media texts using a machine-learning classifier method that the original never used. To their surprise, the authors' original findings turn out to be \_\_\_\_\_\_, and the researcher concludes that they provide a reliable middle-range theory of the phenomenon they investigate.
+
+Fill in the gaps in the code cell below and run it to print your answers back.
+
+```{webr}
+#| exercise: vocab
+#| code-overflow: wrap
+
+cat("
+Scenario 1: This is an example of ______.
+Scenario 2: Is this a case of ______ or ______?
+Scenario 3: The original analysis has failed to ______.
+Scenario 4: The authors' original findings are ______.
+")
+
+```
+
+:::: {.solution exercise="vocab"}
+::: {.callout-tip collapse="false"}
+## Answers
+
+1.  **reproducibility** – rerunning the same code on the same data. Here it *failed* to match, but the activity is still reproducibility, and 'not reproduced' is the verdict.
+2.  arguably still **reproducibility**, in a grey area – re-implementing on the same data in different software is technically a re-computation – but centring the predictor nudges towards **robustness**. Two packages can also implement the same estimator differently, so make sure you know what the function you call is doing.
+3.  **replicability** – same question, independent new data chosen to be theoretically equivalent.
+4.  **generalisability** – the odd one out, with new data *and* a new method at once. It is the fourth cell of the matrix, outside the three that the exercise tests.
+:::
+::::
+
+
+
+
+## Task 2 – Meet the panel {#task-2-get-the-data-and-look-at-it}
+
+The **EU-frames dataset** (`EUframes_cy.csv`) is already loaded for you as `euframes`. It is the country-year panel behind the whole exercise. The copy that this page loads is byte-identical to the one published in the analyst's fork on OSF (osf.io/6zqct – "Multi100 \| Teney_EurSocioRev_2016 \| Analyst_C6HJR", main folder), and the official Multi100 archival record is at osf.io/8rtwe. The downloadable workspace contains the same file.
+
+Run the cell below to inspect the panel. Edit it freely – this is your environment.
+
+```{webr}
+#| autorun: false
+# How many countries, how many years, how big is the panel?
+dplyr::glimpse(euframes)
+
+cat("\nCountries:", dplyr::n_distinct(euframes$cntry),
+    " Years:", dplyr::n_distinct(euframes$year),
+    " Rows:", nrow(euframes), "\n")
+```
+
+You should see **270 rows**, **27 countries**, **10 years** (2004–2013), and 13 columns. The outcome we care about first is `mcosmo`, the mean 'cosmopolitan' framing of the EU in each country-year, on a 0–1 scale. The predictor is `unemp`, the annual unemployment rate. `growth` is annual GDP growth, and `n_cy` is the number of survey respondents in each country-year. The [codebook](data/EUframes_cy_codebook.md) describes the other framings and every remaining column.
+
+Now look at the outcome over time, one small panel per country:
+
+```{webr}
+#| autorun: false
+#| fig-width: 9
+#| fig-height: 6
+library(ggplot2)
+
+ggplot(euframes, aes(x = year, y = mcosmo)) +
+  geom_line(colour = "grey55") +
+  geom_point(size = 0.7) +
+  facet_wrap(~ cntry, ncol = 6) +
+  scale_x_continuous(breaks = c(2004, 2008, 2013)) +
+  labs(
+    title = "Cosmopolitan EU framing by country, 2004–2013",
+    x = NULL, y = "Mean cosmopolitan framing"
+  ) +
+  theme_minimal(base_size = 9)
+```
+
+In most countries the framing changes little over the decade, while in a few it moves sharply around the 2009 crisis. This variation within a country over time is what the fixed-effects model in Task 3 uses.
+
+## Task 2, continued – the estimand and the graph {#task-4-estimand-and-dag}
+
+Before fitting anything, say what you are trying to estimate, in words. A template you can adapt:
+
+> The **unit-specific quantity** is the change in mean cosmopolitan EU framing within a country from one year to another associated with a one-point change in that country's unemployment rate. The **target population** is EU member states over 2004–2013. The **aggregation** is a weighted average of those unit-specific effects, in which the country-years whose unemployment departs most from their country and year means count most, holding fixed each country's time-invariant traits and each year's EU-wide shocks.
+
+That last clause is a causal claim, and a directed acyclic graph makes it checkable. A DAG is a diagram of what causes what: variables are nodes, arrows run from cause to effect, and the rules for reading the graph then identify which variables have to be adjusted for if the arrow you care about is to be read cleanly. The graph below draws the five arrows that this exercise takes as given, which the rest of this page calls the committed arrows. Further down you decide which of the arguable arrows to add to them.
+
+```{r}
+#| label: dag-reference
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 4.4
+#| fig-align: center
+#| fig-cap: "The committed graph: unemployment to framing, with country and year each a common cause of both. The three pale nodes have no arrows yet."
+library(ggdag)
+library(ggplot2)
+library(dplyr)
+library(tibble)
+
+ncl_blue <- "#0e3b6a"; orange <- "#E69F00"; grey_mid <- "#848c94"
+
+dag_ref <- dagify(
+  framing      ~ unemployment,
+  framing      ~ country,
+  unemployment ~ country,
+  framing      ~ year,
+  unemployment ~ year,
+  exposure = "unemployment",
+  outcome  = "framing",
+  coords = list(
+    x = c(unemployment = 0, framing = 3, country = 1, year = 2),
+    y = c(unemployment = 0, framing = 0, country = 1.4, year = 1.4)))
+
+# dagify() holds edges, so a node with no arrows cannot live in the graph
+# object; the three undecided nodes join at the drawing layer instead.
+floaters <- tribble(
+  ~name,            ~x,   ~y,
+  "growth",         0.9, -1.0,
+  "bailout",        1.5, -1.2,
+  "politicisation", 3.0, -0.95)
+
+roles <- tribble(
+  ~name,            ~role,       ~disp,
+  "unemployment",   "predictor", "unemp.",
+  "framing",        "outcome",   "framing",
+  "country",        "adjusted",  "country",
+  "year",           "adjusted",  "year",
+  "growth",         "candidate", "growth",
+  "bailout",        "candidate", "bailout",
+  "politicisation", "candidate", "politic.")
+
+dag_tidy <- tidy_dagitty(dag_ref)
+update_dag_data(dag_tidy) <- pull_dag_data(dag_tidy) |>
+  bind_rows(floaters) |>
+  left_join(roles, by = "name") |>
+  mutate(role = factor(role, levels = c("predictor", "outcome",
+                                        "adjusted", "candidate")))
+
+ggplot(dag_tidy, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges_arc(curvature = 0.18, edge_colour = grey_mid,
+                     edge_width = 1.1,
+                     arrow = grid::arrow(length = grid::unit(9, "pt"),
+                                         type = "closed")) +
+  geom_dag_point(aes(fill = role), shape = 21, size = 26, stroke = 0,
+                 colour = "white") +
+  geom_dag_text(aes(label = disp, colour = role), size = 3.6,
+                fontface = "bold") +
+  scale_fill_manual(values = c(predictor = orange, outcome = ncl_blue,
+                               adjusted = "#c7ccd2", candidate = "#dde2e7"),
+                    guide = "none") +
+  scale_colour_manual(values = c(predictor = "#FFFFFF", outcome = "#FFFFFF",
+                                 adjusted = ncl_blue, candidate = "#5d666e"),
+                      guide = "none") +
+  theme_dag() +
+  expand_limits(x = c(-0.5, 3.5), y = c(-1.7, 1.9))
+```
+
+Five arrows are drawn. `unemployment -> framing` is the path of interest. Above it, `country` is a common cause of both: stable national traits such as size, EU tenure and labour-market institutions move local unemployment and shape how people frame the EU. `year` does the same job for the EU-wide shocks that hit every country in the same calendar year. The three pale nodes below have no arrows yet, because whether they belong is your decision.
+
+You build the graph yourself in the cells below, in ordinary R. `dagify()` takes one formula per arrow, written the way you write a model, so `framing ~ unemployment` is the arrow that runs *into* `framing`. Read the tilde as 'is caused by' rather than 'is regressed on' and the direction comes out right every time. Because each arrow is its own line of R, an arrow you are unsure about can stay in the cell commented out, and adopting it means deleting a `#`.
+
+`dagify()` and `adjustmentSets()` are already available on this page, so you can go straight to the next cell. The optional cell below adds the *plot*. It installs `ggdag`, which brings `igraph`, `ggraph` and four further dependencies with it – roughly 23 MB of download, and a noticeable pause on a slow connection. Run it if you want the plot. Skip it and everything else in Task 2 still works, because the figure above is the same graph.
+
+```{webr}
+#| include: false
+#| autorun: true
+# Graph machinery for Task 2. The adjustment-set question is answered here in
+# base R rather than by dagitty, because dagitty reaches its graph algorithms
+# through a JavaScript engine that a browser only exposes to a page served with
+# cross-origin isolation headers (COOP and COEP). Without them the call fails
+# with a JavaScript type error rather than an R error, so the browser lab
+# cannot depend on it. These functions agree with `dagitty::adjustmentSets()`
+# on every arrow combination that this task offers and on 378 random test graphs.
+
+.dag_has_edge <- function(dag, a, b) any(dag$edges$from == a & dag$edges$to == b)
+
+# A node counts as one of its own descendants, which is what the collider rule
+# below needs.
+.dag_descendants <- function(dag, v) {
+  seen <- v
+  frontier <- v
+  while (length(frontier)) {
+    kids <- setdiff(dag$edges$to[dag$edges$from %in% frontier], seen)
+    seen <- c(seen, kids)
+    frontier <- kids
+  }
+  seen
+}
+
+# Every simple path between two nodes, ignoring arrow direction. The recursion
+# is safe only because a teaching graph is tiny.
+.dag_paths <- function(dag, from, to) {
+  out <- list()
+  neighbours <- function(v) unique(c(dag$edges$to[dag$edges$from == v],
+                                     dag$edges$from[dag$edges$to == v]))
+  walk <- function(path) {
+    v <- path[length(path)]
+    if (v == to) {
+      out[[length(out) + 1L]] <<- path
+      return(invisible(NULL))
+    }
+    for (w in setdiff(neighbours(v), path)) walk(c(path, w))
+  }
+  walk(from)
+  out
+}
+
+# A path is blocked by the set z if any node along it is either a non-collider
+# inside z, or a collider with no descendant in z.
+.dag_path_blocked <- function(dag, path, z) {
+  if (length(path) < 3L) return(FALSE)
+  for (i in seq(2L, length(path) - 1L)) {
+    node <- path[i]
+    collider <- .dag_has_edge(dag, path[i - 1L], node) &&
+                .dag_has_edge(dag, path[i + 1L], node)
+    if (collider) {
+      if (!any(.dag_descendants(dag, node) %in% z)) return(TRUE)
+    } else if (node %in% z) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
+.dagify_builtin <- function(..., exposure = NULL, outcome = NULL,
+                            coords = NULL) {
+  parts <- lapply(list(...), function(f) {
+    child <- all.vars(f[[2]])
+    parent <- all.vars(f[[3]])
+    data.frame(from = parent, to = rep(child, length(parent)))
+  })
+  e <- do.call(rbind, parts)
+  structure(list(edges = e, exposure = exposure, outcome = outcome,
+                 nodes = unique(c(e$from, e$to))),
+            class = "simple_dag")
+}
+
+# The backdoor criterion, brute-forced over subsets of the eligible variables:
+# smallest sets first, and a set is skipped once it contains a set already
+# found, which leaves only the minimal ones.
+.adjustment_sets_builtin <- function(x, exposure = x$exposure,
+                                     outcome = x$outcome, ...) {
+  backdoor <- Filter(function(p) .dag_has_edge(x, p[2L], exposure),
+                     .dag_paths(x, exposure, outcome))
+  candidates <- setdiff(x$nodes, c(outcome, .dag_descendants(x, exposure)))
+  found <- list()
+  for (k in seq(0L, length(candidates))) {
+    subsets <- if (k == 0L) list(character(0)) else
+      utils::combn(candidates, k, simplify = FALSE)
+    for (z in subsets) {
+      if (any(vapply(found, function(f) all(f %in% z), logical(1)))) next
+      if (all(vapply(backdoor, function(p) .dag_path_blocked(x, p, z),
+                     logical(1)))) {
+        found[[length(found) + 1L]] <- sort(z)
+      }
+    }
+  }
+  structure(found, class = "simple_dag_sets")
+}
+
+print.simple_dag_sets <- function(x, ...) {
+  if (!length(x)) {
+    cat("(no set of these variables closes every backdoor path)\n")
+  } else {
+    for (z in x) {
+      cat(if (length(z)) paste0("{ ", paste(z, collapse = ", "), " }") else "{}",
+          "\n", sep = "")
+    }
+  }
+  invisible(x)
+}
+
+# Registered rather than left in the session: these cells do not evaluate in
+# the global environment, so plain S3 dispatch would not find the method.
+registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
+
+dagify <- .dagify_builtin
+adjustmentSets <- .adjustment_sets_builtin
+dag_engine <- "built-in"
+
+# Whether dagitty could work here at all. Its JavaScript bridge needs
+# SharedArrayBuffer, which a browser grants only to a cross-origin-isolated
+# page, and the failure is a JavaScript error that tryCatch() cannot catch – so
+# the question has to be asked before anything calls dagitty.
+.dagitty_possible <- function() {
+  isTRUE(tryCatch(
+    as.numeric(webr::eval_js(
+      "typeof SharedArrayBuffer === 'undefined' ? 0 : 1")) == 1,
+    error = function(e) FALSE))
+}
+```
+
+```{webr}
+#| autorun: false
+# Optional: install ggdag so the graph can be drawn. The check comes first,
+# because ggdag draws through dagitty and there is no point downloading 23 MB
+# that this browser cannot use.
+if (!.dagitty_possible()) {
+  cat("This page is not served with the headers that the dagitty graph engine needs,\nso there is no plot here – the figure above is the same graph.\nEverything else in Task 2 works: the adjustment set uses graph code built into this page.\n")
+} else {
+  have_ggdag <- tryCatch({
+    webr::install("ggdag", quiet = TRUE)
+    suppressPackageStartupMessages(library(ggdag))
+    TRUE
+  }, error = function(e) FALSE)
+
+  if (have_ggdag) {
+    dagify <- ggdag::dagify
+    adjustmentSets <- dagitty::adjustmentSets
+    dag_engine <- "dagitty"
+    cat("ggdag is loaded: the graph, the adjustment set and the plot all work.\n")
+  } else {
+    cat("ggdag did not install. The adjustment set still works – it uses graph code built into this page.\nUse the figure above for the picture.\n")
+  }
+}
+```
+
+Now specify the graph. The five committed arrows are live; the arguable ones are commented out, one substantive claim per line. Uncomment any you believe, then run the cell.
+
+```{webr}
+#| autorun: false
+my_dag <- dagify(
+  # The path of interest, and the two common causes (country and year)
+  # that two-way fixed effects absorb.
+  framing      ~ unemployment,
+  framing      ~ country,
+  unemployment ~ country,
+  framing      ~ year,
+  unemployment ~ year,
+
+  # GROWTH as a time-varying confounder: a slump raises unemployment and may
+  # sour EU sentiment in the same year.
+  # framing      ~ growth,
+  # unemployment ~ growth,
+
+  # BAILOUT as a mediator: unemployment triggers a financial-assistance
+  # programme, which then shapes framing.
+  # bailout ~ unemployment,
+  # framing ~ bailout,
+
+  # POLITICISATION of the EU by parties and elites as another cause of
+  # framing. Multi100 instructed analysts to disregard it.
+  # framing ~ politicisation,
+
+  exposure = "unemployment",
+  outcome  = "framing",
+  # Coordinates for all seven nodes; the three not currently wired up are
+  # simply ignored, so this block never needs editing.
+  coords = list(
+    x = c(unemployment = 0, framing = 3, country = 1, year = 2,
+          growth = 0.9, bailout = 1.5, politicisation = 3),
+    y = c(unemployment = 0, framing = 0, country = 1.4, year = 1.4,
+          growth = -1.0, bailout = -1.2, politicisation = -0.95)))
+
+adjustmentSets(my_dag)
+```
+
+With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the model that you will fit in Task 3 makes the same identification claim as the graph you have just written.
+
+Now uncomment the growth pair and run the cell again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The Task 3 model does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
+
+```{webr}
+#| autorun: false
+#| fig-width: 8
+#| fig-height: 4
+# Drawing needs both the ggdag install and the dagitty engine itself; where
+# either is missing the figure at the top of this task stands in.
+if (identical(dag_engine, "dagitty")) {
+  print(ggdag::ggdag_classic(my_dag, size = 4) + ggdag::theme_dag())
+} else {
+  cat("No plot here – scroll up to the reference figure, which is this same graph.\n")
+}
+```
+
+Write two sentences for your own notes. What do two-way fixed effects adjust for, and what can they **not** fix? (Hint: anything time-varying within a country that you have not measured.)
+
+
+## Task 3 – Reproduce the recorded result
+
+This is the **reproducibility** check. Fit the two-way fixed-effects model that analyst C6HJR chose under the constraints that Multi100 set for its second task:
+
+```
+mcosmo ~ unemp_c   with fixed effects for country and year
+```
+
+where `unemp_c` is the unemployment rate centred on its grand mean. The target is **t = −3.804** (df = 233, N = 270) – the value on record for analyst C6HJR in the Multi100 dataset.
+
+The cell below is an exercise. Replace the blanks (`______`) with the missing code, then press "Run Code". If you get stuck, open the hints below; the solution has the full code.
+
+```{webr}
+#| setup: true
+#| exercise: reproduce
+euframes <- read.csv("data/EUframes_cy.csv")
+```
+
+```{webr}
+#| exercise: reproduce
+# 1. centre the unemployment rate on its grand mean
+euframes$unemp_c <- euframes$unemp - ______
+
+# 2. fit two-way fixed effects with fixest::feols
+#    the part after the | adds the fixed effects
+m1 <- feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
+
+broom::tidy(m1)
+```
+
+:::: {.hint exercise="reproduce"}
+::: {.callout-note collapse="false"}
+## Hint 1 – centring
+
+To centre a variable on its grand mean, subtract the mean of the whole column:
+
+``` r
+euframes$unemp_c <- euframes$unemp - mean(euframes$unemp)
+```
+
+With fixed effects present this does not change the t-statistic, but the specification recorded for C6HJR includes it, so do it explicitly.
+:::
+::::
+
+:::: {.hint exercise="reproduce"}
+::: {.callout-note collapse="false"}
+## Hint 2 – the fixed-effects syntax
+
+In `fixest::feols`, the bar `|` separates the regression from the fixed effects. To add country and year fixed effects, list them after the bar separated by `+`:
+
+``` r
+feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
+```
+:::
+::::
+
+:::: {.solution exercise="reproduce"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+euframes$unemp_c <- euframes$unemp - mean(euframes$unemp)
+m1 <- feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
+broom::tidy(m1)
+```
+
+You should get `estimate ≈ −0.00347`, `std.error ≈ 0.00091`, `statistic ≈ −3.80` – the recorded value reproduces from the published data and the published model. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals. Conventional errors treat the 270 country-years as independent; the case study and Part 4 show what changes when they do not.
+:::
+::::
+
+::: {.callout-note collapse="true"}
+## Reproduction and the five analysts
+
+You reproduced the recorded value, and so did everyone else in the class, because everyone ran the same code on the same file. This is why reproducibility is the cheapest of the three Rs to establish.
+
+The five Multi100 analysts each wrote their own code for the same claim, and came back with five different numbers, one of them not significant under the analyst's own test. Part of the spread comes from the questions that each analyst chose to answer, part from errors that only a reading of the code shows, and most of the spread in the recorded correlations from the conversion that put them on one scale, as the [case study](index.qmd) sets out.
+
+In Task 2 you named the quantity you are after and drew the graph from which your adjustment set follows. In Task 4 you find out how far the answer moves when the other choices change.
+:::
+
+## Task 4 – Work the menu {#task-4-explore}
+
+This task is **exploratory**. You try several specifications, look at what each one does, and get a feel for which choices move the estimate and which barely touch it. Nothing in this task is preregistered; the preregistration comes in Task 5.
+
+`try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and every argument defaults to the specification that you have just reproduced. So changing one thing means changing one argument, and everything you do not name stays as it was in Task 3. Each result is one of the 864 specifications on the curve of the claim, which the page loaded with the data, so it prints at once.
+
+```{webr}
+#| autorun: false
+# Nothing changed – this is the specification that you reproduced in Task 3.
+try_spec()
+```
+
+The printout gives the slope `b` with its conventional standard error and *t*, the claim-aligned partial *r*, two p-values, the class of the result and its placement among the 864. The two p-values come from tests that allow the years of one country to be correlated with one another, which the conventional *t* does not. The first clusters the standard errors by country, with the CR2 correction that suits a small number of countries. The second is the wild cluster bootstrap by country: it imposes the null of no association, flips the signs of the residuals country by country 9,999 times, and counts how often a *t* at least as large as the observed one arises. The bootstrap is the test that classes every point on the curve. The reproduced specification lies below zero, but with a bootstrap p of 0.110 it is not significant, and 67% of the 864 specifications lie further in the direction of the claim.
+
+Each of the six calls below changes a single decision. The first four change the question that is being asked of the data; the last two keep the question and change only how it is measured. Run them and compare the results.
+
+```{webr}
+#| autorun: false
+try_spec(outcome     = "mpos")         # the composite of both positive framings
+try_spec(estimator   = "fe_country")   # country effects only: changes common to all of Europe stay in
+try_spec(predictor   = "growth")       # GDP growth instead of unemployment, in the World Bank series
+try_spec(copredictor = "other")        # adjusted for the other economic measure, here GDP growth
+try_spec(noop        = "drop")         # leave out the respondents who mentioned no frame
+try_spec(measure     = "es_2064_pop")  # a Eurostat unemployment series instead of the World Bank one
+```
+
+The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. Every other option is still an argument of `try_spec()`, so trying one is part of the exercise. The helper refuses it, gives the reason why it is not on the curve and names the page of the course that teaches it, and the [decision map](map.qmd) sets out every decision and its options on one page. Run the cell, then edit it to try others, such as `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`.
+
+```{webr}
+#| autorun: false
+# An option that is not on the curve: the helper refuses it and says why.
+try_spec(estimator = "pooled_cl")
+```
+
+Then try your own combinations. The full set of arguments, each with the reproduced specification as its default and the options of the menu in the comment beside it:
+
+```{webr}
+#| autorun: false
+try_spec(
+  # Level 1 – Estimands
+  outcome      = "mcosmo",       # mcosmo | mutil | mpos          off the curve: mcomm | mlib | mneg
+  predictor    = "unemp",        # unemp | growth
+  copredictor  = "none",         # none | other   (the other economic measure, adjusted for)
+  estimator    = "fe_twoway",    # fe_twoway | fe_country         off the curve: re | pooled_cl
+  sample       = "all",          # all       off the curve: y2004_2008 | y2009_2013 | no_bailout | no_GR_ES
+  weights      = "none",         # none      off the curve: n_cell | n_eff | pop
+  construction = "share",        # share     off the curve: count | rate
+  # Level 2 – Measurement
+  noop         = "zero",         # zero | drop                    off the curve: split | mi_mice | mi_amelia
+  item_set     = "all",          # all | un   (with or without the "unemployment" item)
+  cell_weight  = "unweighted",   # unweighted | design
+  measure      = "wb_nat",       # unemp:  wb_nat | es_1574_act | es_2064_pop | es_2564_lfs   off: es_1574_tips
+                                 # growth: wb_growth                                          off: es_growth
+  # Level 3 – Estimation
+  pred_form    = "raw",          # raw | log   (growth: raw only)
+  family       = "gaussian",     # gaussian  off the curve: beta
+  se           = "wcr"           # wcr, fixed: the wild cluster bootstrap by country tests every result
+)
+```
+
+Everything you try is logged. Print the log to see the small multiverse that you have just built. It shows only the decisions that you varied, so the differences are easy to read:
+
+```{webr}
+#| autorun: false
+my_experiments()
+```
+
+When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same bootstrap test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
+
+```{webr}
+#| autorun: false
+submit_exploration()
+```
+
+::: {.callout-note collapse="true"}
+## Why 'exploratory'?
+
+Because you chose this specification after seeing what several specifications do, it lacks the guarantee that comes with a choice declared in a preregistration before its result is known – no one can rule out that it might have been chosen *because* of its result. This is something we almost never know in the case of published papers, unless their analysis has been preregistered and departures from the preregistration documented. In this course exploration is a natural step, and you also practise preregistering the analysis that you choose, so you submit twice, once here and once in Task 5.
+:::
+
+## Task 5 – Preregistration {#task-5-my-preregistration}
+
+Preregistration means setting out your choice in a plan **before** you see what it does, which stops you from quietly picking the specification that happens to give the answer you wanted. On this page the plan is the preregistration cell below, and it binds mechanically as well: the session remembers the choices that you declare in that cell, and every later cell reads them from there. The model builder refuses code that departs from them.
+
+::: {.callout-important icon="false"}
+## A shortened preregistration
+
+*Each numbered comment maps to a question in the OSF "Preregistration Template from AsPredicted.org" (the eight-question short form). Because you are reanalysing data that already exist, field 2 also stands in for the prior-knowledge section of the secondary-data template (van den Akker et al. 2021) – the part that AsPredicted leaves out.*
+:::
+
+Make one choice on each decision of the [specification menu](menu.qmd), complete the dotted lines, then run the cell. The menu has fourteen decisions. The seven at Level 1 fix the question you are asking, the four at Level 2 fix how that question is measured, and the three at Level 3 fix how it is estimated. The curve of 864 specifications keeps two or more options on nine of these decisions and a single option on the other five, which are the sample, the weighting, the scoring rule, the model family and the inference. An option that is not on the curve stops `prereg()` with the reason why, as it stops `try_spec()`. `claim_align <- TRUE` is the course convention, applied automatically: the claim expects framing to rise with GDP growth, so the sign of a growth slope is flipped, and 'supports the claim' reads as a negative sign for everyone.
+
+```{webr}
+#| autorun: false
+# ============================================================================
+# MY PREREGISTRATION – one specification, declared before seeing its result
+# ============================================================================
+# 1. The claim I am testing: .................................................
+# 2. The data + what I already know: EUframes_cy.csv (270 country-years,
+#    public); I know that the reproduced specification gives t = -3.804,
+#    and what my exploration in Task 4 showed.
+# 3. My one specification – one choice on each decision. An option that is
+#    not on the curve of 864 stops prereg() with the reason why.
+
+# Level 1 – Estimands (each of these changes what is being estimated)
+my_outcome      <- "mcosmo"       # mcosmo | mutil | mpos   (the positive framings)
+my_predictor    <- "unemp"        # unemp | growth    (the measure whose coefficient tests the claim)
+my_copredictor  <- "none"         # none | other      (the other economic measure, adjusted for)
+my_estimator    <- "fe_twoway"    # fe_twoway | fe_country
+my_sample       <- "all"          # all    (the 27 member states, 2004–2013)
+my_weights      <- "none"         # none   (every country-year counts once)
+my_construction <- "share"        # share  (the share of a respondent's own mentions)
+
+# Level 2 – Measurement (the same question, put to the data differently)
+my_noop         <- "zero"         # zero | drop   (respondents who mentioned no frame at all)
+my_item_set     <- "all"          # all | un   (with or without the "unemployment" item)
+my_cell_weight  <- "unweighted"   # unweighted | design   (cells as interviewed, or weighted)
+my_measure      <- "wb_nat"       # unemp:  wb_nat | es_1574_act | es_2064_pop | es_2564_lfs
+                                  # growth: wb_growth
+
+# Level 3 – Estimation (the same question and measures, another fit)
+my_pred_form    <- "raw"          # raw | log   (growth: raw only; centring or z-scaling
+                                  #              would leave t, r and p unchanged)
+my_family       <- "gaussian"     # gaussian   (a linear model of the cell means)
+my_se           <- "wcr"          # wcr   (fixed: the wild cluster bootstrap by country)
+
+claim_align     <- TRUE           # the course convention, applied automatically
+
+# 4. Why these controls, in one DAG-grounded sentence: .......................
+# 5. Supported if the claim-aligned coefficient is negative with bootstrap
+#    p < .05; undermined if it is not significant or positive. I will
+#    report what I get.
+
+prereg()   # checks every choice against the menu and prints your preregistration
+```
+
+An optional mirror form collects preregistrations from the class, and its link is shared in the session. It is not required. The cell above, copied into your notes, is your preregistration record.
+
+
+
+## Task 5, continued – build, run and report {#task-5-build-run-report}
+
+This is the **robustness** check, and it is the part that your classmates cannot copy from you: together the class samples the multiverse of defensible analyses. You have declared your specification. Now translate it into model syntax yourself, filling the three gaps – the outcome, the right-hand side, and the estimator code – as you preregistered them. `build_model()` reads your declaration and accepts nothing else, and its error messages tell you what is off. Write the log form as `log(unemp)`, and add any co-predictor with `+`.
+
+```{webr}
+#| autorun: false
+my_model <- build_model(______ ~ ______, estimator = "______")
+```
+
+::: {.callout-note collapse="true"}
+## Hint – from menu speak to model syntax
+
+The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and Task 3 showed what it expands to. Apart from the log form, the Level 2 and Level 3 choices never appear in the formula. They select which version of the panel the result was computed on.
+:::
+
+When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration. These are the numbers that the downloadable workspace gives when it fits the model and runs the bootstrap on your own machine, and here you get them without downloading the estimation packages into your browser:
+
+```{webr}
+#| autorun: false
+run_spec(my_model)
+```
+
+The output has the same lines as in Task 4. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero is in the direction of the claim. Whether it is significant is decided by the bootstrap p, and the class line says which of the four cases your result falls in. The placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, 67% for the specification that you reproduced in Task 3.
+
+Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
+
+```{webr}
+#| autorun: false
+report_result()
+```
+
+If the form will not open on your machine, read the printed numbers to the facilitator, who adds your dot to the chart.
+
+If you want a second declared specification, edit the preregistration cell, rerun `prereg()`, rebuild and rerun. The chart will still label it declared, so be clear with yourself about what the second one is. Your first declaration was made without knowing its result. Anything after it was not, which puts it back in the same category as Task 4, and you should say so wherever you write about the result.
+
+
+
+## Taking it home
+
+This page keeps nothing once you refresh it, so work you want to keep belongs in the downloadable workspace. Putting that work under version control and publishing the rendered report is the natural next step. The [Git and GitHub self-study](../../companion/git-github.qmd) module explains it click by click.
+
+::: {.callout-tip icon="false"}
+## The downloadable workspace
+
+The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE, edit and render offline, and in which everyone taking the course works. The same folder holds `R/get_data.R`, an optional script that fetches the panel from the OSF with `osfr`, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab`](https://github.com/CodeMoreh/replication-lab) repository, and it is yours to reuse.
+:::

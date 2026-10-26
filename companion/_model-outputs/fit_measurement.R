@@ -33,7 +33,6 @@ suppressPackageStartupMessages({
   library(dplyr); library(purrr); library(tidyr); library(psych); library(lavaan)
 })
 t0 <- Sys.time()
-setwd("d:/ACADEMIC/TEACHING/2026_OR_NCL")
 out <- "companion/_model-outputs"
 
 source("companion/_model-outputs/_load_respondents.R")

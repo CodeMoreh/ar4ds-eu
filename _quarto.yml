@@ -3,23 +3,24 @@ project:
   output-dir: _site
   # Anchored to the project root: an unanchored pattern such as `data/` matches
   # every folder of that name at any depth, including the licensed microdata
-  # under _planning/.
+  # under _planning/ and the workspaces.
   resources:
+    - /cases/*/data/
     - /data/
     - /assets/
   render:
     - "*.qmd"
     - "data/*.md"
+    - "cases/**/*.qmd"
+    - "cases/*/data/*.md"
     - "tracks/**/*.qmd"
-    - "case/*.qmd"
-    - "exercise/*.qmd"
     - "companion/*.qmd"
     - "slides/*.qmd"
     - "!_planning/**"
     - "!_planning_data/**"
-    - "!_template/**"
-    - "facilitator/guide.qmd"   # rendered but not linked in the navbar
-    - "facilitator/tracks.qmd"  # likewise: notes on the six formats and their decks
+    - "!_workspaces/**"
+    - "facilitator/eu-frames-guide.qmd"   # rendered but not linked in the navbar
+    - "facilitator/tracks.qmd"            # likewise: notes on the formats and their decks
 
 # The docked sidebars of the six delivery tracks live in their own file.
 metadata-files:
@@ -59,34 +60,34 @@ website:
       # deck that format runs on; the decks themselves are not in the navbar.
       - text: Tracks
         menu:
-          - href: tracks/one-day-replication/index.qmd
+          - href: tracks/eu-frames-one-day-replication/index.qmd
             text: "One day – open science and replication"
-          - href: tracks/one-day-tools/index.qmd
+          - href: tracks/eu-frames-one-day-tools/index.qmd
             text: "One day – social data science tools"
-          - href: tracks/one-day-methods/index.qmd
+          - href: tracks/eu-frames-one-day-methods/index.qmd
             text: "One day – the statistical methods"
-          - href: tracks/three-days/index.qmd
+          - href: tracks/eu-frames-three-days/index.qmd
             text: "Three days"
-          - href: tracks/semester/index.qmd
+          - href: tracks/eu-frames-semester/index.qmd
             text: "Semester"
-          - href: tracks/self-study/index.qmd
+          - href: tracks/eu-frames-self-study/index.qmd
             text: "Self-study"
       # The presentation of the case that every track starts from
-      - href: case/index.qmd
+      - href: cases/eu-frames/index.qmd
         text: "Case study"
       - text: Exercise
         menu:
-          - href: exercise/index.qmd
+          - href: cases/eu-frames/exercise.qmd
             text: Overview
-          - href: exercise/browser-lab.qmd
+          - href: cases/eu-frames/lab.qmd
             text: "Browser lab"
-          - href: exercise/spec-menu.qmd
+          - href: cases/eu-frames/menu.qmd
             text: Specification menu
-          - href: exercise/estimand-dial.qmd
+          - href: cases/eu-frames/map.qmd
             text: Decision map
-          - href: exercise/cheatsheet.qmd
+          - href: cases/eu-frames/cheatsheet.qmd
             text: Cheatsheet
-      - href: results.qmd
+      - href: cases/eu-frames/multiverse.qmd
         text: Multiverse
       # Grouped by the three strands of the curriculum – computational tools,
       # data management and sharing, statistical methods – with the

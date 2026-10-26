@@ -21,7 +21,7 @@
 #               rather than buried.
 #
 # Reads:        the respondent file, through _load_respondents.R (licensed, local only)
-#               data/EUframes_person_full.csv          ($TWIN_FILE overrides)
+#               cases/eu-frames/data/EUframes_person_full.csv ($TWIN_FILE overrides)
 # Writes:       companion/_model-outputs/twin_validation.csv
 #               A coefficient comparison: aggregate, and committed.
 # Author:       Chris Moreh
@@ -62,7 +62,7 @@ fit_anchor <- function(d, y, cluster = "cy") {
 
 source("companion/_model-outputs/_load_respondents.R")
 real <- prep(ind)
-TWIN_DEFAULT <- "data/EUframes_person_full.csv"
+TWIN_DEFAULT <- "cases/eu-frames/data/EUframes_person_full.csv"
 twin_file <- Sys.getenv("TWIN_FILE", TWIN_DEFAULT)
 twin <- prep(read_csv(twin_file, show_col_types = FALSE))
 

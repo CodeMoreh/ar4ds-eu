@@ -8,14 +8,14 @@ bibliography: [../references.bib, ../references-new.bib]
 #| label: setup
 #| include: false
 suppressPackageStartupMessages(library(dplyr))
-pw <- datawizard::data_read("../data/teney_panel_weights.csv", verbose = FALSE)
-cy <- datawizard::data_read("../data/EUframes_cy.csv", verbose = FALSE)
-curve <- readr::read_csv("../data/spec_curve.csv", show_col_types = FALSE)
-forks <- readr::read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE) |>
+pw <- datawizard::data_read("../cases/eu-frames/data/teney_panel_weights.csv", verbose = FALSE)
+cy <- datawizard::data_read("../cases/eu-frames/data/EUframes_cy.csv", verbose = FALSE)
+curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
   filter(curve == "positive")
-devs <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
+devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
   filter(curve == "positive", axis == "weights")
-dev_rows <- readr::read_csv("../data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
+dev_rows <- readr::read_csv("../cases/eu-frames/data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
   filter(curve == "positive", axis == "weights")
 # percentages round halves up, as the specification menu does; pct() takes a
 # proportion and pc() a value already in per cent
@@ -46,7 +46,7 @@ cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weigh
 
 The specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this module gives the reasons.
 
-This module takes the three questions apart, using the course panel throughout. It is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../exercise/spec-menu.qmd#what-each-decision-commits-you-to).
+This module takes the three questions apart, using the course panel throughout. It is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
 
 ## The three decisions
 
@@ -128,7 +128,7 @@ The table below shows the reproduced specification (cosmopolitan framing on raw 
 ```{r}
 #| label: tbl-c6hjr
 #| echo: false
-#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is that of the conventional fit and p is the bootstrap p-value that classes the curve. Sources: `data/spec_curve.csv` and `data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is that of the conventional fit and p is the bootstrap p-value that classes the curve. Sources: `cases/eu-frames/data/spec_curve.csv` and `cases/eu-frames/data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   c6hjr |>
     arrange(factor(reg_weight, c("none", "n_cell", "n_eff", "pop")),
@@ -172,7 +172,7 @@ tinytable::tt(
   tinytable::style_tt(fontsize = 0.8)
 ```
 
-An eight-fold difference in the rate of a response that is coded as a substantive zero is a measurement problem that no weight will fix, because the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the no-opinion respondents should be dropped rather than scored zero is an argument about what the outcome variable *is*, and it belongs with the measurement decisions at Level 2 of the [specification menu](../exercise/spec-menu.qmd). The curve keeps both rules, and the missing answers module sets out what each of them assumes.
+An eight-fold difference in the rate of a response that is coded as a substantive zero is a measurement problem that no weight will fix, because the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the no-opinion respondents should be dropped rather than scored zero is an argument about what the outcome variable *is*, and it belongs with the measurement decisions at Level 2 of the [specification menu](../cases/eu-frames/menu.qmd). The curve keeps both rules, and the missing answers module sets out what each of them assumes.
 
 ## Weights in estimation {#sec-estimation}
 
@@ -271,6 +271,6 @@ The `collapse` command averages every respondent equally, so the survey weights 
 
 ## Exercise
 
-1. Pick any specification from the curve (`data/spec_curve.csv`) and look up its twins under the three regression weights in `data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
+1. Pick any specification from the curve (`cases/eu-frames/data/spec_curve.csv`) and look up its twins under the three regression weights in `cases/eu-frames/data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
 2. Three of those four sentences describe the same quantity, and two of them give the same number. Which, and why?
 3. The `no_bailout` sample and the `pop` weight both change the population that the claim is about, and neither stands on the curve of the claim. One of them is conventionally reported as a robustness check and the other as a modelling choice. Should either be?

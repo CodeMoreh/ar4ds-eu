@@ -18,7 +18,7 @@
 #               aggregate summary; no respondent record leaves this script.
 # Reads:        the respondent file, through _load_respondents.R (licensed,
 #               local only)
-#               data/EUframes_cy_edu.csv
+#               cases/eu-frames/data/EUframes_cy_edu.csv
 # Writes:       companion/_model-outputs/claim2_fits.csv
 # Author:       Chris Moreh
 # Last updated: 2026-09-09
@@ -98,7 +98,7 @@ fe_resp <- bind_rows(
 )
 
 # --- 3. the aggregate route on the education-band panel --------------------------
-edu <- read_csv("data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
+edu <- read_csv("cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
   mutate(edu3 = factor(edu3, levels = c("low", "mid", "high")),
          munemp  = unemp - mean(unemp),
          mgrowth = growth - mean(growth))

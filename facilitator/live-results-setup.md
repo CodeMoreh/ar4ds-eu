@@ -1,6 +1,6 @@
 # Live class-results system – setup and run guide
 
-This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page (`results.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
+This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page (`cases/eu-frames/multiverse.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
 
 You do all of this; participants do nothing except open the pre-filled link that each of their two submissions prints, and press Send.
 
@@ -17,7 +17,7 @@ You do all of this; participants do nothing except open the pre-filled link that
         ▼
  Google Form  ─────────────────────────────────►  responses Google Sheet
                                                           │
- browser (webR on results.qmd)                            │ server-side fetch
+ browser (webR, multiverse page)                          │ server-side fetch
         │  fetch(worker_url)                               ▼
         └──────────────►  Cloudflare Worker  ──────►  Sheet as CSV (gviz)
                           adds CORS header
@@ -28,7 +28,7 @@ You do all of this; participants do nothing except open the pre-filled link that
 
 Why the Worker exists: a browser will only read a remote file if that file is served with an `Access-Control-Allow-Origin` (CORS) header. Google Sheets does **not** reliably send that header to a third-party site like `codemoreh.github.io`, and the URL it does serve redirects across origins, which browsers block. The Worker is a tiny relay that you control: the browser talks to the Worker, the Worker fetches the Sheet server-to-server (no browser, no CORS on that hop), and hands the CSV back with the right header. This removes the single biggest live-demo risk. It is \~20 lines and runs free.
 
-**Design note (prereg + format).** This system handles the **results** submissions only. The `spec` field carries the phase and a participant tag in front of the specification, `explore: [amber-otter-42] …` or `declared: [amber-otter-42] …`, and `results.qmd` parses both, so the Form and the Sheet need no column for either. The tag is drawn by the submission helpers (or set with their `nickname` argument), is shared by both submissions of a participant, and lets participants highlight their own circles through the `my_tag` line of the live cell; rows without a tag or without a phase, from earlier deliveries, still parse. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `results.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the workspace the preregistration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a preregistration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
+**Design note (prereg + format).** This system handles the **results** submissions only. The `spec` field carries the phase and a participant tag in front of the specification, `explore: [amber-otter-42] …` or `declared: [amber-otter-42] …`, and `cases/eu-frames/multiverse.qmd` parses both, so the Form and the Sheet need no column for either. The tag is drawn by the submission helpers (or set with their `nickname` argument), is shared by both submissions of a participant, and lets participants highlight their own circles through the `my_tag` line of the live cell; rows without a tag or without a phase, from earlier deliveries, still parse. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `cases/eu-frames/multiverse.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the workspace the preregistration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a preregistration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
 
 ------------------------------------------------------------------------
 
@@ -143,7 +143,7 @@ wrangler deploy
 
   [**ACTUAL: IT DOES DOWNLOAD A CSV FILE WITH THE EXPECTED HEADERS, BUT IT DOES NOT OPEN IT IN THE BROWSER ON MY MACHINE**]{.underline}
 
-- Test it as the page will, **from the deploy origin**. Open <https://codemoreh.github.io/applied-replication/results.html>, open the browser DevTools console (F12), and run:
+- Test it as the page will, **from the deploy origin**. Open <https://codemoreh.github.io/applied-replication/cases/eu-frames/multiverse.html>, open the browser DevTools console (F12), and run:
 
   ``` js
   fetch("https://class-results.YOUR-SUBDOMAIN.workers.dev")
@@ -158,15 +158,15 @@ wrangler deploy
 
 ## 4. Step 3 – wire the IDs into the repo
 
-There are four edits. All four places already hold the live values – the Worker URL in `results.qmd`, the Form ID and entry codes in the `.submit()` helper of the browser lab and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
+There are four edits. All four places already hold the live values – the Worker URL in `cases/eu-frames/multiverse.qmd`, the Form ID and entry codes in the `.submit()` helper of the browser lab and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
 
-1.  **`results.qmd`** – in the `live-multiverse-setup` cell, set:
+1.  **`cases/eu-frames/multiverse.qmd`** – in the `live-multiverse-setup` cell, set:
 
     ``` r
     worker_url <- "https://class-results.YOUR-SUBDOMAIN.workers.dev"
     ```
 
-2.  **`exercise/browser-lab.qmd`** – in the `.submit()` helper, which `submit_exploration()` and `report_result()` both call, set the Form ID and the seven entry codes:
+2.  **`cases/eu-frames/lab.qmd`** – in the `.submit()` helper, which `submit_exploration()` and `report_result()` both call, set the Form ID and the seven entry codes:
 
     ``` r
     FORM_ID <- "1FAIpQLSxxxxxxxx"
@@ -188,9 +188,9 @@ There are four edits. All four places already hold the live values – the Worke
 Then **render and push**:
 
 ``` bash
-quarto render results.qmd
-quarto render exercise/browser-lab.qmd
-quarto render exercise/spec-menu.qmd exercise/index.qmd exercise/cheatsheet.qmd
+quarto render cases/eu-frames/multiverse.qmd
+quarto render cases/eu-frames/lab.qmd
+quarto render cases/eu-frames/menu.qmd cases/eu-frames/exercise.qmd cases/eu-frames/cheatsheet.qmd
 # (or just `quarto render` for the whole site)
 git add -A
 git commit -m "Wire live class-results Form + Worker"
@@ -208,7 +208,7 @@ git push
 The chart reads a column literally named **`r`** (case/space-tolerant). The other columns are kept for the record, but only `r` positions the dot.
 
 - Live path: the Worker serves the header row of the Sheet as CSV headers, which come from your Form question titles – so titling the question `r` (step 2.1) is what makes this work.
-- Archive path (section 9): the committed `data/class_results.csv` must also have a column named `r`.
+- Archive path (section 9): the committed `cases/eu-frames/data/class_results.csv` must also have a column named `r`.
 
 ------------------------------------------------------------------------
 
@@ -240,14 +240,14 @@ If the live fetch ever stalls during the session, fall back to the static spec c
 ## 8. Fallbacks (if the Worker route misbehaves)
 
 - **Publish-to-web CSV instead of the Worker.** File → Share → Publish to web → the responses sheet → CSV. Point `worker_url` at that `…/pub?output=csv` URL. Simpler (no Worker) but it has a multi-minute publish cache and its cross-origin CORS is less reliable – use only if the Worker is unavailable.
-- **Facilitator local render.** Forget the browser entirely: download the Sheet as CSV to `data/class_results.csv` on your laptop, run `quarto render results.qmd` locally (your laptop has R, so there is no CORS), and project/refresh that. This is the most reliable option and the recommended fallback if the conference wifi is poor.
+- **Facilitator local render.** Forget the browser entirely: download the Sheet as CSV to `cases/eu-frames/data/class_results.csv` on your laptop, run `quarto render cases/eu-frames/multiverse.qmd` locally (your laptop has R, so there is no CORS), and project/refresh that. This is the most reliable option and the recommended fallback if the conference wifi is poor.
 
 ------------------------------------------------------------------------
 
 ## 9. After the session
 
-- [ ] **Archive a permanent snapshot.** The live chart depends on the Sheet and Worker staying up. To preserve the result independently, export the responses Sheet (**File → Download → CSV**), keep the columns including `r`, and save it over `data/class_results.csv` in this repo. Commit and push. The chart automatically reads this snapshot whenever the Worker is unset or unreachable, so the page keeps showing the multiverse built by the class indefinitely.
-- [ ] Optionally **set `worker_url <- ""`** in `results.qmd` and re-render, so the page serves the committed snapshot rather than calling a Worker you may later delete.
+- [ ] **Archive a permanent snapshot.** The live chart depends on the Sheet and Worker staying up. To preserve the result independently, export the responses Sheet (**File → Download → CSV**), keep the columns including `r`, and save it over `cases/eu-frames/data/class_results.csv` in this repo. Commit and push. The chart automatically reads this snapshot whenever the Worker is unset or unreachable, so the page keeps showing the multiverse built by the class indefinitely.
+- [ ] Optionally **set `worker_url <- ""`** in `cases/eu-frames/multiverse.qmd` and re-render, so the page serves the committed snapshot rather than calling a Worker you may later delete.
 - [ ] Optionally **close the Form** (Responses tab → "Accepting responses" off) to stop late submissions.
 - [ ] You can then safely delete the Worker and/or unshare the Sheet; the page runs on the committed snapshot.
 

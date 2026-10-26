@@ -1,0 +1,406 @@
+---
+title: "Enter the *multiverse*"
+subtitle: "A visual overview of justifiable data processing and statistical analysis pipelines"
+engine: knitr
+format:
+  live-html:
+    toc: true
+    include-after-body: ../../_includes/track-choice.html
+    webr:
+      packages:
+        - ggplot2
+        - ggiraph
+resources:
+  - data/spec_curve.csv
+  - data/class_results.csv
+execute:
+  echo: false
+  warning: false
+  message: false
+aliases:
+  - /results.html
+---
+
+{{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{r}
+#| label: setup
+#| include: false
+# The build-time charts are drawn by assets/chart/multiverse.js from payloads
+# built in R/eu-frames/_chart_multiverse.R; the live class chart further down
+# runs in the browser through webR. Every number in the prose is read from the
+# data files of the case here.
+source("../../R/eu-frames/_chart_multiverse.R")
+library(tinytable)
+
+menu      <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve     <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+curve_neg <- readr::read_csv("data/spec_curve_negative.csv", show_col_types = FALSE)
+marks     <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+
+words <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")[n]
+below <- \(d) mean(d$r_ca < 0)
+below_sig <- \(d, p = d$p_wcr) mean(d$r_ca < 0 & p < 0.05)
+n_curve <- nrow(curve)
+n_of <- \(axis_code, d = curve) dplyr::n_distinct(d[[axis_code]])
+unemp <- curve |> dplyr::filter(.data$predictor == "unemp")
+ref <- curve |> dplyr::filter(.data$is_reference)
+ref_rank <- sum(curve$r_ca < ref$r_ca)
+by_est <- curve |>
+  dplyr::group_by(.data$estimator) |>
+  dplyr::summarise(below_sig = below_sig(dplyr::pick(dplyr::everything())))
+est_share <- \(e) mv_pct(by_est$below_sig[by_est$estimator == e])
+an <- mv_marks(marks, curve$r_ca)
+mark <- \(id, col) an[[col]][an$id == id]
+```
+
+The specification curve below holds `r format(n_curve, big.mark = ",")` justifiable analyses of the claim that "*poor economic performances … decrease positive dimensions of EU framing*" (Teney 2016, p. 619), read as a claim about change within countries, namely that the citizens of a member state frame the EU less in positive terms than before when its economy deteriorates. Each analysis is a specification, one complete set of answers to the decisions that an analyst has to take, fitted on the `r curve$n_cells[1]` country-years of the EU-frames panel. The curve crosses the options that the [specification menu](menu.qmd) keeps for this claim. They are `r words(n_of("outcome"))` positive scales; unemployment in `r words(n_of("measure", unemp))` published series and `r words(n_of("pred_form", unemp))` forms, or GDP growth; the other economic measure left out or held fixed; country and year fixed effects or country fixed effects alone; `r words(n_of("noop"))` rules for respondents who mention nothing; `r words(n_of("item_set"))` item sets; and cells as interviewed or weighted. Every specification uses all `r curve$n_countries[1]` member states, counts each country-year once, scores a scale as the share of mentions and fits a linear model. The [decision map](map.qmd) sets out every decision of the menu, including the options that are not on the curve, with the reason for each.
+
+```{r}
+#| label: chart-claim
+#| output: asis
+notes_claim <- paste(
+  "Each mark is one specification: a circle for p &lt; 0.05 and a cross for p &ge; 0.05 under the wild cluster bootstrap by country.",
+  "The tags mark the five Multi100 reanalysts and the design of the original study refitted without its education interactions (OA design), each placed on the degrees of freedom of its own inference.",
+  "Click or tap a tag to hold its details open, and click again to release it.",
+  "<i>Colour by</i> colours the marks by one decision and adds rows under the curve that show where the specifications using each option fall in the ranking;",
+  "<i>Show only</i> keeps the specifications that use one option and fades the rest.",
+  "Hover over or tap a mark for its details, or focus the chart and use the arrow keys."
+)
+src_claim <- paste(
+  'Data: <a href="data/spec_curve_codebook.html">data/spec_curve.csv</a> and',
+  '<a href="data/reference_marks_codebook.html">data/reference_marks.csv</a>, with their codebooks.'
+)
+cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+  id = "mv-claim",
+  payload = mv_payload(curve, menu, marks, file = "spec-curve-claim.csv"),
+  title = "Specification curve of the claim",
+  sub = sprintf("%s specifications of the %s positive scales, with %s reference results",
+                format(n_curve, big.mark = ","), words(n_of("outcome")), words(nrow(marks))),
+  notes = notes_claim, src = src_claim
+))
+```
+
+Of the `r format(n_curve, big.mark = ",")` specifications, `r mv_pct(below(curve))` lie below zero, in the direction of the claim, and `r mv_pct(below_sig(curve))` lie below zero with p < 0.05; `r if (any(curve$r_ca > 0 & curve$p_wcr < 0.05)) "some" else "none"` lie above zero with p < 0.05. The estimator divides the result. Below zero with p < 0.05 are `r est_share("fe_country")` of the specifications with country fixed effects alone and `r est_share("fe_twoway")` of those with country and year fixed effects, which compare each country with itself after the change that all member states shared in a year has been removed. The reproduced specification of Task 3, the design of reanalyst C6HJR, has r = `r mv_minus(ref$r_ca)`, with `r ref_rank` of the `r format(n_curve, big.mark = ",")` specifications further below zero, and its bootstrap p of `r sprintf("%.3f", ref$p_wcr)` makes it a cross.
+
+## Reading the curve {#the-specification-curve}
+
+Each mark is one specification, and the marks are ranked by their claim-aligned partial correlation, from the strongest support for the claim on the left to the weakest on the right. The partial correlation is the correlation of the outcome and the predictor once the fixed effects and any adjustment have been removed from both, which puts specifications with different scales and predictors on one footing. It is computed as $r = t/\sqrt{t^2 + df}$ from the conventional t and the residual degrees of freedom of each fit, which run from `r min(curve$df)` to `r max(curve$df)` on this curve. The claim expects positive framing to fall as unemployment rises and to rise with growth, so the sign of every growth result is reversed. A value below zero is then in the direction of the claim whatever the predictor, and the shaded band above zero holds the results that run against it.
+
+The shape of a mark gives its significance class at the 5% level, an open circle for p < 0.05 and a cross for p ≥ 0.05. The p-value comes from a wild cluster bootstrap by country. Under the null of no association, the signs of the residuals of each country are flipped together 9,999 times, and the clustered t of the data is set against the clustered t of each replicate. A conventional test would treat the `r curve$n_cells[1]` country-years as independent, but the residuals of a country correlate from one year to the next, and a few countries carry most of the variation in unemployment, so that the conventional test overstates the evidence: under it, `r mv_pct(below_sig(curve, curve$p_conv))` of the specifications would lie below zero with p < 0.05, against `r mv_pct(below_sig(curve))` under the bootstrap. The test changes only the class of a mark and never its height. Converting a clustered t on the `r curve$n_countries[1] - 1` degrees of freedom left by the `r curve$n_countries[1]` countries would inflate every correlation without any change in the estimate, which is one of the pitfalls that the [conversion lesson](index.qmd#sec-task) takes apart. Because the evidence on the slope rests on 270 country-years in 27 countries, the 5% threshold means what it usually does, unlike in a model of respondents that treats hundreds of thousands of rows as independent, although they share a predictor that takes only 270 values, and so makes almost any coefficient significant.
+
+Choosing a decision under *Colour by* colours the marks by the option that each specification uses and adds a row for each option under the curve, with a tick at the rank of every specification that uses it, so that an option which pushes results towards one end of the curve shows as a bunched row. *Show only* keeps the specifications that use one option, fades the rest, and reports how many are shown, the share below zero and the share below zero with p < 0.05. Hovering over or tapping a mark, or focusing the chart and pressing the arrow keys, opens a pop-up with the full recipe of the specification, including a plain description of what its estimator compares. The button above the chart downloads the data behind it, with the option codes that `try_spec()` takes as arguments.
+
+Section 9 of [Getting started with R](../../companion/intro-r.qmd#sec-speccurve) builds a curve of this kind from the data. [Section 6 of the multiverse module](../../companion/multiverse.qmd#sec-reading) explains why the share of points below zero describes this set of analyses and is not the probability that the claim is true, and the [inference reading](reading-inference.qmd) sets out what a test on the whole curve can add.
+
+## Reference marks {#reference-marks}
+
+Six tagged marks come from outside the curve: the five reanalyses of this claim that Multi100 recorded, and the design of the original author (OA), tagged OA design. Each is drawn as an ordinary mark in ink, at the end of a thin line to a tag that holds its pop-up open when clicked, so that its neighbours on the curve stay visible. A test statistic becomes a partial correlation through the same formula, which is sound when the degrees of freedom count the units that carry the evidence under the error structure that produced the t. Each result is therefore placed on the degrees of freedom of its own inference. Where the software of an analyst counted those units, the recorded value stands: the residual degrees of freedom of KQXUE and C6HJR count country-years, and the Satterthwaite degrees of freedom of KEVF1 and 018OL count cells rather than respondents. PRL47 reported no degrees of freedom, and the rule of Multi100 converted its statistic on the respondent count, which compresses any statistic towards zero; it is placed on the Satterthwaite degrees of freedom of a refit of its design on the rebuilt respondent file, `r mv_df(mark("PRL47", "df_placement"))`. The published coefficient of OA belongs to a model with interactions between education and the economic measures, so it is the slope of unemployment for the low-education band alone. The mark of OA is therefore a refit of the same design without the interactions, whose slope is the average over the education bands as in the five reanalyses, placed on its own `r mv_df(mark("OA", "df_placement"))` Satterthwaite degrees of freedom; the model with the interactions is taken up in the [individual-level module](../../companion/individual-level.qmd#sec-claim2).
+
+The shape of a reference mark follows the rule of the curve wherever the file gives a bootstrap check of the design on the country-year cells. That is the case for C6HJR, whose specification is the reproduced one, for KQXUE, whose design is on the menu, and for KEVF1, through the analogue of its design with country fixed effects. The designs of OA, PRL47 and 018OL cannot be fitted on those cells, because their units are respondents or country-waves, so their shapes follow the p-value as reported, which rests on the errors of each model itself. Four of the six results come from outside the menu of the curve, with other units, another construct or a narrower sample, and their pop-ups say which. Each pop-up also gives, as a teaching aside, the value of the result on the `r ref$df` degrees of freedom of the two-way design on the `r curve$n_cells[1]` country-years. The [conversion lesson](index.qmd#sec-recorded) uses that common denominator to show how much of the spread between the six results comes from the choice of degrees of freedom; the marks are not drawn there.
+
+```{r}
+#| label: tbl-marks
+#| tbl-cap: !expr 'sprintf("The six reference marks: the statistic as reported, the statistic that is placed (for OA, the refit of its design without the education interactions), the degrees of freedom on which each is placed and their source, the placed partial correlation, the number of specifications on the curve that lie further below zero, the value on %d degrees of freedom, and the shape of the mark. Source: `data/reference_marks.csv`.", ref$df)'
+an |>
+  dplyr::arrange(.data$rank) |>
+  dplyr::transmute(
+    Mark = sub(" ", "\u00a0", .data$tag),
+    `As reported` = sprintf("%s\u00a0=\u00a0%s", .data$statistic_type,
+                            sub("^-", "−", as.character(.data$statistic_recorded))),
+    `Placed statistic` = sprintf("%s = %s", .data$statistic_type,
+                                 sub("^-", "−", sprintf("%.2f", .data$statistic_placement))),
+    `Placed on (df)` = mv_df(.data$df_placement),
+    Source = .data$df_basis,
+    `Placed r` = mv_minus(.data$r_placement),
+    `Further below zero` = .data$rank,
+    r_233 = mv_minus(.data$r_233),
+    Shape = .data$shape
+  ) |>
+  dplyr::rename_with(\(x) sprintf("r on %d df", ref$df), "r_233") |>
+  tt() |>
+  style_tt(j = c(1, 2, 5, 9), align = "l") |>
+  style_tt(j = c(3, 4, 6, 7, 8), align = "r")
+```
+
+## The negative scales {#negative-scales}
+
+The first hypothesis of the original study also expects negative framing of the EU to increase as the national economy deteriorates. The chart below tests that half of the hypothesis on the `r words(n_of("outcome", curve_neg))` negative scales, the communitarian and libertarian shares and their composite, crossed with the same options as the curve of the claim. The negative scales are reverse-coded, so that a value below zero is again in the direction of the hypothesis. This chart is not part of the curve of the claim, which concerns the positive dimensions only, and its results are not independent of that curve. The shares of a respondent sum to one, and the communitarian scale contains the item 'unemployment', which ties the outcome to the predictor by its content.
+
+```{r}
+#| label: chart-negative
+#| output: asis
+notes_neg <- paste(
+  "Each mark is one specification of a negative scale, reverse-coded: a circle for p &lt; 0.05 and a cross for p &ge; 0.05 under the wild cluster bootstrap by country.",
+  "<i>Colour by</i>, <i>Show only</i>, the pop-ups and the arrow keys work as on the chart of the claim."
+)
+src_neg <- 'Data: <a href="data/spec_curve_codebook.html">data/spec_curve_negative.csv</a>, with its codebook.'
+cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+  id = "mv-negative",
+  payload = mv_payload(curve_neg, menu, reversed = TRUE, file = "spec-curve-negative.csv",
+                       target = "hypothesis"),
+  title = "Specification curve of the negative scales",
+  sub = sprintf("%s specifications of the %s negative scales, reverse-coded",
+                format(nrow(curve_neg), big.mark = ","), words(n_of("outcome", curve_neg))),
+  notes = notes_neg, src = src_neg, assets = FALSE
+))
+```
+
+Of these `r format(nrow(curve_neg), big.mark = ",")` specifications, `r mv_pct(below(curve_neg))` lie below zero and `r mv_pct(below_sig(curve_neg))` lie below zero with p < 0.05. The [codebook of the two curves](data/spec_curve_codebook.md) explains why the negative composite repeats much of the positive result when respondents who mention nothing are scored zero.
+
+## Class results {#class-results}
+
+The live chart below shows the results that the class submits, over the curve of `r format(n_curve, big.mark = ",")` specifications. Pressing *Run Code* runs the `refresh_multiverse()` function, which downloads the latest submissions and draws them over the curve. The marks of the curve stay faint, so that the class results lead, and the reference marks are left to the chart at the top of the page.
+
+Each submission is placed by the partial correlation that it carries, computed from its submitted t and degrees of freedom, and classed by looking its specification up on the curve: a circle if the matching specification has bootstrap p < 0.05, and a cross if it has not. The colour gives the phase. A green mark is an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result, and a black mark is a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. A diamond marks a submission whose specification is not among the `r format(n_curve, big.mark = ",")`, which happens with labels from earlier deliveries of the course, whose menu held other options; such a submission has no class, and a line under the chart counts them. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two submissions share it. Hovering over a mark shows its tag, its class and the specification behind it. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your marks in orange, joined in the order in which you submitted them.
+
+```{webr}
+#| label: live-multiverse-setup
+#| include: false
+#| autorun: true
+# Class submissions are served as CSV by a Cloudflare Worker in front of the
+# Google Sheet; when the Worker is unreachable the chart falls back to the
+# committed data/class_results.csv, or to the backdrop alone. Base R
+# throughout, apart from ggplot2 and ggiraph, so that participants download
+# nothing else.
+worker_url <- "https://class-results.chris-moreh.workers.dev/"
+
+library(ggplot2)
+# ggiraph gives the submissions their hover boxes; when its wasm download is
+# unavailable the chart falls back to a static ggplot automatically
+have_ggiraph <- tryCatch({ library(ggiraph); TRUE }, error = function(e) FALSE)
+plain <- "#1f5fa8"; ink <- "#1d2733"; green <- "#009E73"; orange <- "#E69F00"
+grey_mid <- "#8a929a"; hilite <- "#8b1538"
+tooltip_css <- "background-color:#ffffff;color:#1d2733;border:1px solid #cdd3d9;padding:7px 9px;border-radius:6px;font-size:12px;line-height:1.45;box-shadow:0 2px 10px rgba(20,30,40,0.14);"
+
+# The backdrop is the curve of 864, ranked by the claim-aligned partial
+# correlation and classed by the wild cluster bootstrap, as on the chart at
+# the top of the page.
+curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
+curve <- curve[order(curve$r_ca), ]   # r-style: keep – base R in webR, dplyr would be a download
+curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p_wcr < 0.05)
+axis_codes <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
+                "construction", "noop", "item_set", "cell_weight", "measure", "pred_form", "family")
+curve_key <- do.call(paste, c(unname(as.list(curve[axis_codes])), sep = "|"))
+
+# The spec label, in the field order of the submission helpers:
+#   outcome[_ca] ~ predictor(form) [+ copred] | estimator | sample | w:weights
+#     [construction, noop, items:item_set, cells:cell_weight, measure | family, se:rule]
+# Labels of July 2026 end in " | family" with no bracket, and anything older
+# ends after the weights; both carry the standard measurement settings of
+# their time. The inference rule is not part of the lookup, because every
+# point of the curve is classed by the bootstrap whatever rule a label names.
+# A label that cannot be read returns NA on every axis, and so matches nothing.
+label_pattern <- paste0("^([a-z]+)(_ca)? ~ ([a-z]+)\\(([a-z]+)\\)( \\+ [a-z]+)? \\| ([a-z_]+) \\| ",
+                        "([A-Za-z0-9_]+) \\| w:([a-z_]+)(.*)$")
+bracket_pattern <- paste0("^\\[([a-z]+), ([a-z_]+), items:([a-z]+), cells:([a-z]+), ([a-z0-9_]+) ",
+                          "\\| ([a-z]+), se:([a-z0-9_]+)\\]$")
+parse_one_label <- function(x) {
+  none <- setNames(rep(NA_character_, length(axis_codes)), axis_codes)
+  m <- regmatches(x, regexec(label_pattern, x))[[1]]
+  if (length(m) == 0) return(none)
+  rest <- trimws(m[10])
+  standard <- c(construction = "share", noop = "zero", item_set = "all", cell_weight = "unweighted",
+                measure = if (m[4] == "growth") "wb_growth" else "wb_nat")
+  tail <- if (!nzchar(rest)) {
+    c(standard, family = "gaussian")
+  } else if (grepl("^\\| [a-z]+$", rest)) {
+    c(standard, family = sub("^\\| ", "", rest))
+  } else {
+    b <- regmatches(rest, regexec(bracket_pattern, rest))[[1]]
+    if (length(b) == 0) return(none)
+    c(construction = b[2], noop = b[3], item_set = b[4], cell_weight = b[5], measure = b[6],
+      family = b[7])
+  }
+  c(outcome = m[2], predictor = m[4], copredictor = if (nzchar(m[6])) "other" else "none",
+    estimator = m[7], sample = m[8], weights = m[9], pred_form = m[5], tail)[axis_codes]
+}
+parse_labels <- function(spec_txt) {
+  parsed <- vapply(spec_txt, parse_one_label, character(length(axis_codes)), USE.NAMES = FALSE)   # r-style: keep – base R in webR
+  setNames(as.data.frame(t(parsed), stringsAsFactors = FALSE), axis_codes)
+}
+
+read_clean <- function(path) {
+  d <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  names(d) <- tolower(trimws(names(d)))   # tolerate "R", " r ", etc.
+  d$r <- suppressWarnings(as.numeric(d$r))   # r-style: keep – frozen reader of the class CSV
+  d[!is.na(d$r), , drop = FALSE]
+}
+
+# my_tag is the tag that submit_exploration() and report_result() print. It is
+# reduced exactly as .clean_tag() in the submission helpers reduces a nickname
+# (transliterated to ASCII, lower case, single hyphens, at most 24 characters),
+# so that a nickname typed as the participant first wrote it still matches.
+clean_my_tag <- function(x) {
+  if (length(x) == 0 || is.na(x[1])) return("")
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x[1]))))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  gsub("-+$", "", substr(x, 1, 24))
+}
+
+html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
+fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.3f", p))
+
+# The class submits twice: an exploratory result while working the menu, and
+# a declared one after preregistering. The free-text spec field carries the
+# phase and the tag of the participant, "explore: [amber-otter-42] …", so
+# neither the form nor the sheet needs a column of its own for either. Rows
+# without a tag predate 2026-09-24, and rows without a phase predate
+# 2026-07-31 and were all declared; both still parse.
+prepare_class <- function(cls, my_tag = "") {
+  n <- nrow(cls)
+  spec_raw <- if ("spec" %in% names(cls)) as.character(cls$spec) else rep("", n)
+  spec_raw[is.na(spec_raw)] <- ""
+  ph <- ifelse(grepl("^explore:", spec_raw), "explored", "declared")
+  rest <- sub("^(explore|declared): ", "", spec_raw)
+  tg <- ifelse(grepl("^\\[[a-z0-9-]+\\] ", rest), sub("^\\[([a-z0-9-]+)\\] .*$", "\\1", rest),
+               NA_character_)
+  spec_txt <- sub("^\\[[a-z0-9-]+\\] ", "", rest)
+  axes <- parse_labels(spec_txt)
+  hit <- match(do.call(paste, c(unname(as.list(axes)), sep = "|")), curve_key)
+  p_hit <- curve$p_wcr[hit]
+  klass <- ifelse(is.na(hit), "off", ifelse(p_hit < 0.05, "sig", "ns"))
+  has_t <- all(c("t", "df") %in% names(cls))
+  t_txt <- if (has_t) ifelse(is.na(cls$t) | is.na(cls$df), "",
+                             paste0("<br/>t = ", cls$t, " on ", cls$df, " df")) else ""
+  tip <- paste0(
+    "<b>submission #", seq_len(n), " (", ph, ")</b>",
+    ifelse(is.na(tg), "", paste0("<br/>tag: ", tg)),
+    "<br/><b>claim-aligned r = ", sprintf("%.3f", cls$r), "</b>", t_txt,
+    ifelse(is.na(hit), "<br/>not on the curve of 864: no significance class",
+           paste0("<br/>on the curve: bootstrap ", fmt_p(p_hit),
+                  ifelse(klass == "sig", " (circle)", " (cross)"))),
+    ifelse(nzchar(spec_txt), paste0("<br/>", html_text(spec_txt)), "")
+  )
+  # built apart from cls and bound to it, so that a column of the class CSV
+  # (it has one called n) can never stand in for a local value
+  extra <- data.frame(n_lab = paste0("#", seq_len(n)), phase = ph, tag = tg, spec_txt = spec_txt,
+                      rank = findInterval(cls$r, curve$r_ca), on_curve = !is.na(hit), p_wcr = p_hit,
+                      klass = factor(klass, levels = c("sig", "ns", "off")),
+                      mine = nzchar(my_tag) & !is.na(tg) & tg == my_tag, tip = tip)
+  cbind(cls[setdiff(names(cls), names(extra))], extra)
+}
+
+shape_of <- c(sig = 1, ns = 4, off = 5)
+draw_class_chart <- function(cls, my_tag = "") {
+  ylim_lo <- -0.65; ylim_hi <- 0.25
+  p <- ggplot() +
+    annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf, fill = "#a10000", alpha = 0.045) +
+    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
+    geom_point(data = curve, aes(x = rank, y = r_ca), colour = plain,
+               shape = ifelse(curve$sig, 1, 4), alpha = ifelse(curve$sig, 0.25, 0.12),
+               size = 1.7, stroke = 0.35) +
+    labs(x = "Specifications of the curve, ranked by claim-aligned partial correlation",
+         y = "Partial correlation, claim-aligned", title = "Class submissions") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(face = "bold", colour = ink),
+          axis.title = element_text(colour = "#4f5b67"),
+          plot.caption = element_text(hjust = 0, size = 9, colour = "#4f5b67"),
+          legend.position = "bottom", panel.grid.minor = element_blank())
+  if (is.null(cls) || nrow(cls) == 0) {
+    p <- p + labs(subtitle = "No submissions yet – press Run Code to refresh",
+                  caption = "The curve: circles for p < 0.05 and crosses for p ≥ 0.05 under the wild cluster bootstrap by country.")
+  } else {
+    mine <- cls$mine
+    sub_txt <- paste(nrow(cls), "class result(s) so far")
+    # The marks of the participant whose tag is typed into the live cell, as
+    # larger orange marks joined in the order of submission. They are drawn
+    # first, so that the marks on top keep their hover boxes.
+    if (any(mine)) {
+      # a joining line needs two marks; one alone would print a ggplot notice
+      if (sum(mine) > 1)
+        p <- p + geom_path(data = cls[mine, , drop = FALSE], aes(x = rank, y = r),
+                           colour = orange, linewidth = 0.7, inherit.aes = FALSE)
+      p <- p + geom_point(data = cls[mine, , drop = FALSE], aes(x = rank, y = r),
+                          shape = shape_of[as.character(cls$klass[mine])], size = 4.6,
+                          colour = orange, stroke = 1.6, inherit.aes = FALSE)
+      sub_txt <- paste0(sub_txt, " · tag ", my_tag, ": ", paste(cls$n_lab[mine], collapse = ", "))
+    } else if (nzchar(my_tag)) {
+      sub_txt <- paste0(sub_txt, " · no mark carries the tag ", my_tag, " yet")
+    }
+    point_aes <- if (have_ggiraph) {
+      aes(x = rank, y = r, colour = phase, shape = klass, tooltip = tip, data_id = n_lab)
+    } else {
+      aes(x = rank, y = r, colour = phase, shape = klass)
+    }
+    point_layer <- if (have_ggiraph) geom_point_interactive else geom_point
+    n_off <- sum(cls$klass == "off")
+    # submissions landing on the same specification stack their number tags
+    # vertically instead of overprinting
+    vj <- -1.1 - 1.15 * (ave(seq_len(nrow(cls)), cls$rank, FUN = seq_along) - 1)
+    p <- p +
+      point_layer(data = cls, mapping = point_aes, size = 3, stroke = 1.1, show.legend = TRUE,
+                  inherit.aes = FALSE) +
+      geom_text(data = cls, aes(x = rank, y = r, label = n_lab), colour = ink, size = 2.6,
+                vjust = vj, inherit.aes = FALSE) +
+      scale_colour_manual(values = c(explored = green, declared = ink),
+                          limits = c("explored", "declared"),
+                          labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
+                          drop = FALSE,
+                          guide = guide_legend(override.aes = list(shape = 15, size = 4))) +
+      scale_shape_manual(values = shape_of, limits = names(shape_of),
+                         labels = c("p < 0.05", "p ≥ 0.05", "not on the curve"), name = NULL,
+                         drop = FALSE, guide = guide_legend(override.aes = list(colour = ink))) +
+      labs(subtitle = sub_txt,
+           caption = paste0(
+             "Circles and crosses: the class of the matching specification on the curve under the wild ",
+             "cluster bootstrap (p < 0.05 or p ≥ 0.05).\n", n_off, " of ", nrow(cls),
+             " submission(s) name a specification that is not on the curve of 864 and are drawn as ",
+             "diamonds, without a class."))
+    # a mark far above the band is almost certainly an un-recoded negative
+    # framing: stretch the axis so it stays visible for the debrief
+    ylim_hi <- max(ylim_hi, max(cls$r, na.rm = TRUE) + 0.06)
+    ylim_lo <- min(ylim_lo, min(cls$r, na.rm = TRUE) - 0.05)
+  }
+  p <- p + coord_cartesian(ylim = c(ylim_lo, ylim_hi))
+  if (have_ggiraph) {
+    girafe(ggobj = p, width_svg = 9, height_svg = 5.6,
+           options = list(
+             opts_tooltip(css = tooltip_css, opacity = 1),
+             opts_hover(css = girafe_css(css = paste0("stroke:", hilite, ";stroke-width:2px;"))),
+             opts_hover_inv(css = "opacity:0.35;"),
+             opts_sizing(rescale = TRUE, width = 1),
+             opts_toolbar(saveaspng = FALSE)
+           ))
+  } else {
+    p
+  }
+}
+
+refresh_multiverse <- function(my_tag = "") {
+  my_tag <- clean_my_tag(my_tag)
+  cls <- NULL
+  if (nzchar(worker_url)) {
+    cls <- tryCatch({
+      download.file(paste0(worker_url, "?_=", as.numeric(Sys.time())),
+                    "class.csv", quiet = TRUE)
+      read_clean("class.csv")
+    }, error = function(e) NULL)
+  }
+  if (is.null(cls) && file.exists("data/class_results.csv")) {
+    cls <- tryCatch(read_clean("data/class_results.csv"), error = function(e) NULL)
+  }
+  if (!is.null(cls) && nrow(cls) > 0) cls <- prepare_class(cls, my_tag)
+  draw_class_chart(cls, my_tag)
+}
+```
+
+```{webr}
+#| label: live-multiverse
+#| autorun: true
+#| fig-width: 9
+#| fig-height: 5.6
+#| caption: "Press Run Code to refresh – pull the latest class results"
+my_tag <- ""   # your tag, e.g. "amber-otter-42", highlights your own marks
+refresh_multiverse(my_tag)
+```
+
+```{=html}
+<!-- ::: {.callout-note collapse="true"}
+## How this works (facilitator)
+
+Submissions go to a Google Form, land in a linked Google Sheet and are served as CSV, with permissive CORS headers, by a small Cloudflare Worker. The `{webr}` cell above fetches that CSV in the browser and falls back to the committed `data/class_results.csv` when the Worker cannot be reached. The free-text spec field of the form carries the phase (`explore:` or `declared:`), the tag of the participant in square brackets and the label of the specification; a row without a phase is read as declared. Each submission is placed by the partial correlation that it carries and classed by parsing its label into the thirteen axis codes of `data/spec_curve.csv` and taking `p_wcr` from the matching row. The lookup ignores the inference rule that a label names (`se:wcr` now, `se:conventional` or `se:clustered` before), because every point of the curve is classed by the bootstrap. A label in the format of July 2026, which ends in the model family and names no measurement settings, is read at the standard measurement settings of that time. A label that names an option no longer on the curve, such as pooled or random effects, a restricted sample, a regression weight, the beta family or a negative scale, matches no row: the submission is drawn as a diamond and counted under the chart.
+::: -->
+```

@@ -3,7 +3,7 @@
 
   mvChart(id, D) draws one curve into the element with that id, which carries
   the markup of assets/chart/multiverse.template.html. D is the payload built
-  by mv_payload() in R/_chart_multiverse.R: one entry per specification,
+  by mv_payload() in R/eu-frames/_chart_multiverse.R: one entry per specification,
   sorted by the claim-aligned partial correlation, with the option of every
   decision coded as an index into its list of labels, and the reference marks
   with the lines of their pop-ups. Several charts can share a page; each keeps

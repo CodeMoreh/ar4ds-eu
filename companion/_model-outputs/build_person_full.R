@@ -4,7 +4,7 @@
 # Purpose:      Kept as the record of the build that the course's private
 #               file came from. The respondent file every script in this
 #               folder now reads is the one participants build with
-#               _template/prep/01_build_respondents.R, loaded through
+#               _workspaces/eu-frames/prep/01_build_respondents.R, loaded through
 #               _load_respondents.R; that script carries the same wave
 #               inventory, the same label-resolved covariates and the same
 #               education coding as this one, plus the item columns and
@@ -26,7 +26,7 @@
 #               positional guess would silently read the wrong column.
 #
 # Reads:        _planning_data/raw/*.dta   (GESIS licensed, local only)
-#               data/EUframes_cy.csv
+#               cases/eu-frames/data/EUframes_cy.csv
 # Writes:       _planning_data/person_level_full.rds
 #               NEITHER is committed. The raw files are licensed and the
 #               extract is derived microdata; only aggregate summaries and
@@ -205,7 +205,7 @@ ind <- ind |>
 # than being modelled as if they were free-standing outcomes.
 keep_items <- paste0("it", c(1:7, 9:14))
 
-panel <- read_csv("data/EUframes_cy.csv", show_col_types = FALSE)
+panel <- read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 ind <- ind |>
   select(cntry, year, eb, w1, all_of(keep_items),
          age, female, edu, edu3, ses, unemployed, urban, rile,

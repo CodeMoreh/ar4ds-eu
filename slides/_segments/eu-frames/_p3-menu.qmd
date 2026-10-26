@@ -1,0 +1,69 @@
+## The specification menu {.smaller}
+
+::: {.small}
+| Level 1 decision | On the curve | Taught off the curve |
+|:------|:--------------|:--------------------|
+| **Frame set** | cosmopolitan · utilitarian · positive composite | the negative scales, on a curve of their own |
+| **Scoring rule** | share of mentions | count · count per item |
+| **Predictor, adjustment** | unemployment or growth, with or without the other | – |
+| **Sample** | all 27 states, 2004–2013 | two periods · no bailout countries · no Greece and Spain |
+| **Whose average** | each country-year once | by respondents · effective sample size · adult population |
+| **Estimator** | two-way FE · country FE | random effects · pooled OLS · within–between |
+:::
+
+::: {.small}
+Seven more decisions at Levels 2 and 3 make **fourteen**; their justifiable options cross into the **`r fmt_n(nrow(spec_curve))`** specifications of the curve. The [decision map]({{< var site-url >}}cases/eu-frames/map.html) gives the reason for every option.
+:::
+
+::: {.fragment .small}
+Two of these decisions already varied in the red-card study, where the 29 teams split across **four response distributions** (our outcome family) and **four ways of handling non-independence** (our estimator).
+:::
+
+::: notes
+Here is the menu, and everything that follows is built on it. It is the full list of decisions that anyone analysing this claim has to take, fourteen of them, and the slide shows the seven at Level 1, the ones that decide which question is being asked. Which framing scale is your outcome, and whether a person counts as a share of their own mentions or as a count. Unemployment or GDP growth, with or without the other measure beside it. Which countries and years, and whether each country-year counts once or in proportion to its people. And which comparison the estimator makes. Every option in the right-hand column is one that the course teaches, and every option was audited with a single question: is this a justifiable way to answer this claim? The middle column is what survived, and crossed with the measurement options it gives the eight hundred and sixty-four specifications of the curve. The decision map on the site sets out the reason for each option. [advance] Two of these decisions are not new to you. In the red-card study the twenty-nine teams already split four ways on the response distribution, our outcome family, and four ways on how to handle observations that are not independent, our estimator.
+:::
+
+## What Task 2 of Multi100 left open {#what-task-2-left-open .smaller}
+
+::: {.small}
+The instructions fixed the **outcome dimension**, the **predictor** and the **contextual variables of Model 2**. Everything else stayed open – including one thing that few people think of as a choice:
+:::
+
+::: {.fragment .small}
+**The unit of analysis.** Two of the five fitted models on **individual respondents**; three worked on **aggregates**. Task 2 never said which, and the wording did not imply one.
+:::
+
+::: {.fragment .small}
+Their five answers all obeyed the instructions and still ran from *r* = `r fmt_num(max(five_r), 2)` to *r* = `r fmt_num(min(five_r), 2)`, each on the degrees of freedom of its own inference, so the freedom that remained was enough to produce the whole spread.
+:::
+
+::: {.fragment .small}
+**The choices that move an estimate most are usually made before any model is fitted.**
+:::
+
+::: notes
+So what did the instructions actually pin down? The outcome dimension, the predictor, and the contextual variables of the second model. Everything else stayed open – including one thing that almost nobody thinks of as a methodological choice at all, which is the unit of analysis. Two of the five of us fitted models on individual respondents, hundreds of thousands of them. Three worked on aggregates. Task two never said which, and the wording did not imply one either way. And the consequence is on the next fragment: five answers, all obeying the instructions, still running from minus point zero six to minus point four five once each is placed on the degrees of freedom of its own inference. The freedom that remained after the constraints was more than enough to produce the whole spread. Hold on to that, because it generalises: the choices that move an estimate most are usually the ones made before a model is fitted at all.
+:::
+
+## Ground rules for the menu {#one-deviation-and-a-reason-for-it .smaller}
+
+::: {.small}
+In Hands-on 4 the rule is: **change one decision at a time, and hold the others at the reproduced specification.**
+
+The reproduced specification of Hands-on 3: `mcosmo` · share of mentions · World Bank unemployment, raw · no adjustment · two-way FE · all 270 country-years · every country-year once · no mention scored zero · all 13 items · cells as interviewed · linear · wild cluster bootstrap by country.
+:::
+
+::: {.fragment .small}
+Changing one decision at a time keeps the class chart **readable**: when a dot moves, you can say what moved it. An option that is off the curve is refused by `try_spec()`, with the reason and the page that teaches it.
+:::
+
+::: {.fragment .small}
+And one convention binds everyone: **claim-alignment**. Every scale on the curve is a positive framing, so below zero is the direction of the claim for unemployment; for GDP growth the sign is reversed, because the claim expects framing to rise with growth. The helpers apply it for you.
+:::
+
+::: notes
+Two ground rules before you touch the menu. First, change one decision at a time and hold the others where they were in the specification you reproduced in the third hands-on: the cosmopolitan share on World Bank unemployment, raw, with no adjustment, two-way fixed effects, all two hundred and seventy country-years counted once each, respondents who mention nothing scored zero, all thirteen items, cells as interviewed, a linear model, and the wild cluster bootstrap by country as the test. That sounds restrictive, but it is what makes the class chart readable, because when a dot sits somewhere surprising we can say what put it there. If you ask for an option that the audit moved off the curve, try underscore spec refuses it and tells you why and where it is taught, and trying one is part of the exercise. Second, a convention that binds everybody: claim-alignment. Every scale on the curve is a positive framing, so a negative sign supports the claim for unemployment, and for growth the helpers reverse the sign, because the claim expects framing to rise with growth.
+:::
+
+<!-- DEEP DIVE START: methodological tutorial (12 slides). Optional depth, on
+     the .deepdive class – see the note at the end of _p2-ourclaim.qmd, where the R tutorial run starts. -->

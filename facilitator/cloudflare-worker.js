@@ -3,7 +3,8 @@
 // =============================================================================
 //
 // WHAT IT DOES
-//   The live "Class results" chart on results.qmd runs in the browser (webR).
+//   The live "Class results" chart on cases/eu-frames/multiverse.qmd runs in
+//   the browser (webR).
 //   A browser can only fetch a remote file if that file is served with the right
 //   CORS header (Access-Control-Allow-Origin). Google Sheets does NOT reliably
 //   send that header to a third-party site like codemoreh.github.io, so reading
@@ -26,7 +27,7 @@
 //      and paste it into SHEET_ID below.
 //   3. Deploy this file as a Worker (dashboard or `wrangler deploy`), then put
 //      the Worker's URL (e.g. https://class-results.you.workers.dev) into:
-//        - results.qmd          -> the `worker_url` line in the live cell
+//        - cases/eu-frames/multiverse.qmd -> the `worker_url` line in the live cell
 //        - facilitator/live-results-setup.md notes (for your own record)
 //
 // TEST
