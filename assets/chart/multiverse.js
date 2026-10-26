@@ -27,6 +27,12 @@
     sw        stroke width of a mark ("0.7")
     op        outline opacities {sig, ns, ghostSig, ghostNs} (OP below)
     csvHead   the first six column names of the downloaded CSV
+    up        true when values above zero lie in the direction of the claim
+              (a coefficient that the claim expects to be positive): the
+              shaded band then lies below zero, and the notes on the chart and
+              the status line under "Show only" count from above zero. The
+              payload sorts the specifications from the largest value down,
+              so that the strongest support still sits on the left (false)
 
   Conventions set by the author of the course: one ranking for all
   specifications; two significance classes at the 5% level (an open circle for
@@ -87,8 +93,11 @@
     root.setAttribute("data-mv-ready", "1");
 
     var N = D.r.length;
-    // what a value below zero supports: the claim, or the hypothesis on the negative scales
+    // what a value on the supporting side of zero supports: the claim, or the
+    // hypothesis on the negative scales; below zero unless the payload sets up
     var target = D.target || "claim";
+    var up = D.up === true;
+    function supports(v) { return up ? v > 0 : v < 0; }
     var op = D.op || OP;
     var size = D.size || [4.0, 5.0];
     var yDec = D.yDec == null ? 1 : D.yDec;
@@ -152,8 +161,10 @@
       svg.setAttribute("viewBox", "0 0 " + W + " " + H);
       svg.setAttribute("height", String(H));
 
-      // the band above zero: specifications that run against the claim
-      el("rect", { x: m.l, y: ys(Y_MAX), width: W - m.l - m.r, height: ys(0) - ys(Y_MAX), fill: "#a10000", "fill-opacity": "0.045" }, svg);
+      // the band of the specifications that run against the claim: above
+      // zero, or below it when the payload sets up
+      var bandTop = up ? ys(0) : ys(Y_MAX), bandBottom = up ? ys(Y_MIN) : ys(0);
+      el("rect", { x: m.l, y: bandTop, width: W - m.l - m.r, height: Math.max(0, bandBottom - bandTop), fill: "#a10000", "fill-opacity": "0.045" }, svg);
       var g = el("g", { "font-size": "11", fill: "#6b7682" }, svg);
       D.y.ticks.forEach(function (v) {
         var zero = Math.abs(v) < 1e-9;
@@ -176,9 +187,11 @@
 
       var ann = el("g", { "font-size": "11.5", fill: "#4f5b67" }, svg);
       var a1 = el("text", { x: m.l + 8, y: ys(Y_MAX) + 14 }, ann);
-      a1.textContent = narrow ? "above zero: against the " + target : "above zero: runs against the " + target;
+      a1.textContent = up
+        ? "above zero: in the direction of the " + target
+        : (narrow ? "above zero: against the " + target : "above zero: runs against the " + target);
       var a2 = el("text", { x: W - m.r - 8, y: ys(Y_MIN) - 6, "text-anchor": "end" }, ann);
-      a2.textContent = "below zero: in the direction of the " + target;
+      a2.textContent = up ? "below zero: runs against the " + target : "below zero: in the direction of the " + target;
 
       var pts = el("g", { "stroke-width": D.sw || "0.7" }, svg);
       var s = narrow ? size[0] : size[1];
@@ -267,7 +280,7 @@
         if (shown(i)) {
           paint(state.marks[i], colourOf(i), D.sg[i] ? op.sig : op.ns);
           nShown++;
-          if (D.r[i] < 0) { below++; if (D.sg[i]) belowSig++; }
+          if (supports(D.r[i])) { below++; if (D.sg[i]) belowSig++; }
         } else {
           // faint enough that the hidden specifications only trace the curve
           paint(state.marks[i], GHOST, D.sg[i] ? op.ghostSig : op.ghostNs);
@@ -276,7 +289,7 @@
       var f = D.axes[state.faxis];
       status.textContent = f.key
         ? num(nShown) + " of " + num(N) + " specifications shown (" + f.name.toLowerCase() + ": " + f.levels[state.flevel] + "): " +
-          pct(below / nShown) + " fall below zero, in the direction of the " + target + ", and " + pct(belowSig / nShown) + " do so with p < 0.05."
+          pct(below / nShown) + (up ? " lie above zero" : " fall below zero") + ", in the direction of the " + target + ", and " + pct(belowSig / nShown) + " do so with p < 0.05."
         : "";
       var a = axisOf();
       while (legend.firstChild) legend.removeChild(legend.firstChild);

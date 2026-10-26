@@ -55,6 +55,17 @@ h_for <- sum(h_analysts$task1 == "evidence for the claim")
 chi_8ptrz <- h_analysts$statistic_recorded[h_analysts$id == "8PTRZ"]
 chi_plain <- unname(chisq.test(tab_8ptrz, correct = FALSE)$statistic)
 
+# The immigration-and-trust case
+tr_curve <- case_data("trust", "spec_curve.csv")
+tr_analysts <- case_data("trust", "analysts5.csv")
+tr_marks <- case_data("trust", "reference_marks.csv")
+tr_mark <- \(id, col = "b") tr_marks[[col]][tr_marks$id == id]
+tr_spec <- nrow(tr_curve)
+tr_sig <- sum(tr_curve$b > 0 & tr_curve$p < 0.05)
+tr_sig_txt <- if (tr_sig == tr_spec) "every one of them" else paste(tr_sig, "of them")
+tr_for <- sum(tr_analysts$task1 == "evidence for the claim")
+tr_for_txt <- if (tr_for == 5) "All five" else paste(tools::toTitleCase(in_words(tr_for)), "of the five")
+
 # The EU-frames case
 e_curve <- case_data("eu-frames", "spec_curve.csv")
 e_analysts <- case_data("eu-frames", "analysts5.csv")
@@ -120,24 +131,26 @@ A field experiment published in 2017 sent the same short email to about a thousa
 [Read the case study](cases/housing/index.qmd){.home-go}
 :::
 
-::: {.home-casecard .home-soon .home-reveal}
-[2]{.home-rung} [In preparation]{.home-badge}
+::: {.home-casecard .home-reveal}
+[2]{.home-rung}
 
-### The immigration-and-trust case {.unnumbered .unlisted}
+### [The immigration-and-trust case](cases/trust/index.qmd) {.unnumbered .unlisted}
 
 [A cross-national survey · one day]{.home-meta}
 
-A paper of 2012 in *World Politics* argued, from the European Social Survey, that concern about what immigration does to the national community lowers trust in politics.
+A paper of 2012 in *World Politics* asked, from the European Social Survey, whether citizens of Western European countries who see immigration as a threat to the national community trust their national politics less. The claim is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics".
 
-**What it teaches.** Attitude scales and their reliability, regression with controls, survey weights, country fixed effects set against random intercepts, and the question of reverse causation.
+**What it teaches.** Attitude scales and their reliability, regression with controls and what a causal graph says about them, survey weights, country fixed effects set against random intercepts, inference with 16 countries, and the question of reverse causation.
 
-**The data.** Rounds 1 to 4 of the European Social Survey, as a derived extract that the workspace will ship under CC BY-NC-SA 4.0.
+**The data.** Rounds 1 to 4 of the European Social Survey in 16 countries, `r big(tr_mark("OA", "n"))` respondents in the sample of the paper, as a derived extract that the workspace ships under CC BY-NC-SA 4.0.
 
 ::: {.home-3r}
-- **Reproduction.** The reproduction by SCORE agreed with the paper in direction and significance, although not to the decimal.
-- **Robustness.** All five Multi100 analysts found evidence for the claim.
-- **Replication.** Two replications on later rounds of the survey both met the criterion of SCORE.
+- **Reproduction.** The paper came without data or code. Two SCORE reproductions rebuilt the data from the survey files and found `r fmt(tr_mark("SCORE_jp7tr"), 3)` and `r fmt(tr_mark("SCORE_65wm6"), 3)` against the published 0.17, on about 69,000 respondents rather than `r big(tr_mark("OA", "n"))`.
+- **Robustness.** `r tr_for_txt` Multi100 analysts found evidence for the claim, with coefficients from `r fmt(min(tr_analysts$b_refit), 3)` to `r fmt(max(tr_analysts$b_refit), 3)`. The `r tr_spec` specifications of the curve of the claim run from `r fmt(min(tr_curve$b), 3)` to `r fmt(max(tr_curve$b), 3)` points of distrust per point of concern, `r tr_sig_txt` significant at 5% with errors clustered by country.
+- **Replication.** Two SCORE replications on later rounds of the survey, 2010 and 2010–2018, found `r fmt(tr_mark("SCORE_1634"), 3)` and `r fmt(tr_mark("SCORE_65wm6_DAR"), 3)`, both meeting the criterion of SCORE.
 :::
+
+[Read the case study](cases/trust/index.qmd){.home-go}
 :::
 
 ::: {.home-casecard .home-soon .home-reveal}

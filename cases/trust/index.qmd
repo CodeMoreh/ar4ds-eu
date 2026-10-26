@@ -1,0 +1,321 @@
+---
+title: "The immigration-and-trust case"
+subtitle: "Concern about immigration and distrust of national politics, European Social Survey 2002–2009"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tinytable)
+
+read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
+ess      <- read_data("trust_ess.csv")
+analysts <- read_data("analysts5.csv")
+marks    <- read_data("reference_marks.csv")
+repro    <- read_data("display_reproduction.csv")
+reliab   <- read_data("display_reliability.csv")
+curve    <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                     col_types = cols(stat_type = col_character()))
+
+# Fixed decimals and a true minus sign, for every number on the page
+fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+
+# one value from a record or display file, for inline use
+an <- \(id, col) analysts[[col]][analysts$id == id]
+mark <- \(id, col) marks[[col]][marks$id == id]
+rp <- \(id, col) repro[[col]][repro$id == id]
+alpha <- \(scale, cntry) reliab$alpha[reliab$scale == scale & reliab$cntry == cntry]
+
+paper <- ess |> filter(citizen %in% 1, minority %in% 0)
+cr_count <- n_distinct(paste(ess$cntry, ess$essround))
+miss_income <- mean(is.na(paper$hh_income_z))
+concern_alpha <- reliab |> filter(scale == "concern", cntry != "all")
+alpha_lo <- concern_alpha |> slice_min(alpha, n = 1)
+alpha_hi <- concern_alpha |> slice_max(alpha, n = 1)
+b_range <- range(analysts$b_refit)
+paper_set <- curve |> filter(controls == "paper")
+# the specification of the course closest to the model of 6U3LL: scales over
+# the answered items, as in the file of the analysts
+analogue <- curve |>
+  filter(outcome == "parliament", controls == "paper", weights == "none",
+         items == "available", fe == "country_round")
+near_oa <- marks |> filter(id %in% c("SCORE_jp7tr", "SCORE_65wm6", "SCORE_1634", "SCORE_65wm6_DAR",
+                                     "N8P2J", "456AD", "6U3LL"))
+
+# Table 1 of the paper (p. 214): respondents and mean distrust of parliament
+# by country, as published
+table1 <- tibble::tribble(
+  ~cntry, ~country,         ~n_paper, ~mean_paper,
+  "AT",   "Austria",        6310,     5.10,
+  "BE",   "Belgium",        6648,     5.19,
+  "CH",   "Switzerland",    6551,     4.41,
+  "DE",   "Germany",        10719,    5.73,
+  "DK",   "Denmark",        5843,     3.66,
+  "ES",   "Spain",          7189,     5.05,
+  "FI",   "Finland",        7946,     4.07,
+  "FR",   "France",         6835,     5.61,
+  "GB",   "United Kingdom", 7905,     5.73,
+  "GR",   "Greece",         6249,     5.62,
+  "IE",   "Ireland",        7187,     5.53,
+  "IT",   "Italy",          2698,     5.36,
+  "NL",   "Netherlands",    7344,     4.85,
+  "NO",   "Norway",         6653,     4.38,
+  "PT",   "Portugal",       7406,     6.15,
+  "SE",   "Sweden",         7249,     4.36
+)
+by_country <- paper |>
+  summarise(n = n(), rounds = paste(sort(unique(essround)), collapse = ", "),
+            mean_parl = mean(distrust_parl, na.rm = TRUE), .by = cntry) |>
+  right_join(table1, by = "cntry")
+stopifnot(all(by_country$n == by_country$n_paper))
+```
+
+This page presents the immigration-and-trust case. The case takes one claim of an article in *World Politics* by the original author (OA) [@McLaren2012CulturalDivideEurope], which asks whether citizens of Western European countries who see immigration as a threat to the national community trust their national politics less. Five independent analysts reanalysed the claim for the Multi100 project, two teams of the SCORE programme rebuilt its data from the European Social Survey (ESS), and two replications fitted its model to later rounds of the survey. The exercises begin where this page ends, and page numbers in quotations refer to the published article.
+
+## 1. The original study {#sec-study}
+
+### 1.1 The question {#sec-question}
+
+The paper starts from the observation that modern European states were built on notions of a shared national identity and that many of their citizens regard immigration as a threat to it, and it argues that this perception colours how they judge the institutions that govern the national community. Those who are most concerned "may believe that the political system (the elites and institutions) have sold out the public by failing to protect the national community from the potentially disruptive and divisive force of immigration", and they are also "likely to blame their political elites and institutions for allowing large-scale migration in the first place" (p. 205). The first of five propositions states the expectation that the claim of this case tests: "individuals expressing most concern about the impact of immigration on the national community will be most distrusting of politicians and political institutions" (p. 205). The other four concern the context, a long history of post-war immigration and a strong far-right party (pp. 208–209).
+
+Two features of the design follow from the argument, and both return as decisions of the specification menu. The first is the worry that the association might be spurious. Perhaps "some individuals are simply more negatively disposed toward most ideas they encounter" (p. 209), or perhaps distrust and hostility to immigration travel together on the political right, so the paper holds constant a long list of variables that are "likely to be strong proxies for any potential automatic correlation between concern about immigration and political distrust resulting from the ideological confluence of these attitudes" (p. 211). The second is the distinction, which the paper takes from Easton, between diffuse support for a political system and specific support for the people who run it at a given moment, since a respondent who distrusts parliament may simply dislike the current government. The paper therefore analyses three targets of trust and holds constant the known predictors of support for the government of the day, expecting that "any remaining covariance ... is likely to tell us something about diffuse support" (p. 202).
+
+### 1.2 The data and the measures {#sec-data-measures}
+
+The data are the first four rounds of the ESS, a cross-national survey that interviews a new random sample of adults in each country every two years, with fieldwork from 2002–2003 to 2008–2009 (note 41). The paper uses 16 countries of Western Europe and leaves out the newer democracies of Central and Eastern Europe, "because it is likely that the survey questions about immigration capture a very different phenomenon in the CEE countries", where they would be read as questions about "conationals coming from neighboring countries as a result of historical border changes" (pp. 212–213). Since the argument concerns members of the national community, the respondents of the paper are the `r big(nrow(paper))` citizens who do not belong to an ethnic minority, out of `r big(nrow(ess))` respondents in all (note 40). The same note puts the loss from these exclusions at 5,101 observations, a figure that matches no count in the extract, which holds `r big(nrow(ess) - nrow(paper))` respondents outside the sample of the paper.
+
+Distrust is measured by three questions on a scale from 0 (no trust at all) to 10 (complete trust), about the national parliament, politicians and the legal system, each turned round so that a high score means distrust. The paper keeps them apart, so that the finding can be shown for each target, "and this is precisely why the three indicators have not been combined into a single index here" (p. 212). Concern about immigration is the mean of three questions, each turned round so that a high score means concern: whether immigration is bad or good for the economy, whether it undermines or enriches cultural life, and whether it makes the country a worse or a better place to live. The paper reports an average Cronbach's alpha of 0.83, with a minimum of 0.75 in the Netherlands (pp. 231–232); on the course extract it is `r fmt(alpha("concern", "all"), 2)` among all the respondents of the paper and runs from `r fmt(alpha_lo$alpha, 2)` (`r alpha_lo$cntry`) to `r fmt(alpha_hi$alpha, 2)` (`r alpha_hi$cntry`) by country. @tbl-countries sets the extract of the course beside Table 1 of the paper.
+
+```{r}
+#| label: tbl-countries
+#| tbl-cap: "The respondents of the paper by country: the rounds in which each country took part, the number of respondents and the mean distrust of parliament (0–10), in the course extract and in Table 1 of the paper (p. 214). Sources: `data/trust_ess.csv` and the paper."
+#| echo: false
+by_country |>
+  transmute(
+    Country = country,
+    Rounds = rounds,
+    `Respondents, extract` = big(n),
+    `Respondents, Table 1` = big(n_paper),
+    `Distrust of parliament, extract` = fmt(mean_parl, 2),
+    `Distrust of parliament, Table 1` = fmt(mean_paper, 2)
+  ) |>
+  tt() |>
+  style_tt(j = 3:6, align = "r")
+```
+
+The counts agree in every country, and the means agree to within 0.03 points everywhere except in Portugal. The Italian round 2 was fielded in 2006 and is not part of the integrated file of that round, so the course reads it from a separate country file, without which the count for Italy would fall short of Table 1.
+
+### 1.3 The model and the result {#sec-result}
+
+The paper fits a three-level model in the HLM software, with respondents at the first level, country-rounds at the second and countries at the third, and with dummies for the rounds "to further guarantee robustness" (p. 215). A multilevel model is needed, the paper explains, because the analysis combines four rounds and variables measured for whole countries, so that "a technique that takes into account the potential underestimation of standard errors because of lack of uniqueness across observations is required" (p. 215). It holds constant 15 characteristics of the respondents, from their demographics and general outlook to their verdicts on the economy and on public services and their votes, which the [specification menu](menu.qmd#adjustment) lists, and six characteristics of the countries and rounds.
+
+Table 3 of the paper reports the coefficient of concern about immigration as 0.17 for distrust of parliament, 0.13 for politicians and 0.14 for the legal system, each with a standard error printed as 0.00 and p = 0.000, on "level 1, n=110,732; level 2, n=59; level 3, n=16" (pp. 218–219). The text reads the coefficients across the whole scale of concern: "after controlling for fairly powerful predictors of distrust in politics, concern about immigration has a statistically significant effect on distrust in politics, with maximum effects of 1.7 on the 11-point measure of distrust in parliament, 1.3 on distrust in politicians, and 1.4 on distrust of the legal system" (p. 217). The abstract states the finding in the sentence from which the claim of this case was taken: "The findings indicate that even after controlling for other predictors of trust in the political system, concerns about the effect of immigration on the national community have an impact on trust in politics" (p. 199).
+
+The data are cross-sections, so the coefficient describes how distrust differs between respondents who differ in concern, once the controls are held constant, and the language of "effect" and "impact" asks more of it. The paper addresses the direction of causation in one paragraph. It grants that "the key independent variable, concern about immigration, may, in fact, be caused by the dependent variable, political distrust", and reports that an analysis with instrumental variables on the first round of the ESS confirms the results: "(These results will be provided upon request.)" (pp. 226–228). Neither this analysis nor a panel study of British voters by the same author, which is cited as further support, is reported in the paper.
+
+## 2. SCORE and Multi100 {#sec-score}
+
+### 2.1 Reproduction, robustness and replication {#sec-repetition}
+
+SCORE, short for Systematizing Confidence in Open Research and Evidence, put claims from published social and behavioural research through three kinds of repetition [@AlipourfardEtAl2021SystematizingConfidenceOpen]: a reproduction repeats the original analysis on the original data, a robustness check applies different but defensible analyses to the same data, and a replication asks the same question of new data. The three studies were reported in *Nature* in 2026 [@MiskeEtAl2026InvestigatingReproducibilitySocial; @AczelEtAl2026InvestigatingAnalyticalRobustness; @TynerEtAl2026InvestigatingReplicabilitySocial]. This paper went through all three. SCORE received neither data nor code from OA, and its record notes that "There were links to data sets used in the paper, but none were functioning", so its two reproductions rebuilt the data from the ESS files (section 4). The robustness study was Multi100 (section 3), and two replications fitted the model to later rounds of the ESS (section 5).
+
+### 2.2 The claim and the Task 2 instruction {#sec-claim}
+
+Multi100 gave claims from 100 studies in the SCORE sample to independent analysts, 457 people who carried out 504 reanalyses in all [@AczelEtAl2026InvestigatingAnalyticalRobustness, p. 136]. Each claim is a sentence, taken from the abstract where possible, that corresponds to one statistically significant test, and where the lead team judged an expression "to be ambiguous or rhetorical, they replaced the expression with an ellipsis mark" [@AczelEtAl2026InvestigatingAnalyticalRobustness, Methods]. This claim reached the analysts as follows.
+
+> "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics" (p. 199)
+
+The ellipsis removes the opening words of the sentence, "The findings indicate that even after controlling for other predictors of trust in the political system,". As selected, then, the claim states an association between concern and trust without the condition that the paper attached to it, and the [specification menu](menu.qmd#adjustment) keeps an analysis without controls on the curve for that reason. SCORE fixed the test on the parliament column of Table 3 of the paper: "for the SCORE program, the parliament measure is used \[the author finds support using each measure\]".
+
+In Task 1 of Multi100 the analysts analysed the data as they judged best and drew one conclusion: evidence for the claim, evidence for the opposite, no evidence either way, or evidence for the null hypothesis. In Task 2 each produced a single statistical result under instructions that "always remained circumstantial (for example, data selection, exclusions and choice of measurement)" [@AczelEtAl2026InvestigatingAnalyticalRobustness, Methods]. The instruction for this claim read as follows.
+
+> "You should include unhappiness in your set of controls variables. You should focus on trust in parliament when estimating trust in politics in you analysis. You should not control for long-term country of immigration interaction with concern about immigration and popular far-right party interaction with concern about immigration in your analysis."
+
+The instruction fixed the outcome, kept one control that the paper uses against the reading of the association as general pessimism, and removed the interactions of Tables 4 and 5 of the paper, so that every analysis would estimate one coefficient of concern. Everything else was left to the analysts.
+
+::: {.callout-note collapse="true"}
+## The dossier on the OSF
+
+- The SCORE project of the paper: [osf.io/3ajr9](https://osf.io/3ajr9/)
+- Original materials, a list of files: [osf.io/k6ymx](https://osf.io/k6ymx/)
+- Power analysis for the replications: [osf.io/j9ge2](https://osf.io/j9ge2/)
+- Reproduction from the ESS files: [osf.io/jp7tr](https://osf.io/jp7tr/)
+- A second reproduction from the ESS files, with a replication on rounds 5–9: [osf.io/e48gd](https://osf.io/e48gd/)
+- Replication on round 5: [osf.io/rpumq](https://osf.io/rpumq/)
+- A reproduction "with author data & code", which holds only the list of claims: [osf.io/j9mpv](https://osf.io/j9mpv/)
+- Multi100: [osf.io/9jvbt](https://osf.io/9jvbt/), with one component for each analyst – N8P2J [osf.io/npavt](https://osf.io/npavt/), FQ1G7 [osf.io/q8r57](https://osf.io/q8r57/), LT39B [osf.io/y465m](https://osf.io/y465m/), 456AD [osf.io/e7pbq](https://osf.io/e7pbq/) and 6U3LL [osf.io/s7t9d](https://osf.io/s7t9d/)
+
+The scripts and reports of the SCORE teams and of the analysts are read on the OSF, and the course does not copy them.
+:::
+
+## 3. The five reanalyses {#sec-reanalysts}
+
+All five analysts worked from one file, `McLaren_SRD_final_data.csv`, which the SCORE reproduction osf.io/e48gd had built from the ESS and which Multi100 linked as the original materials, with the variables of the paper already coded. They spent between `r min(analysts$hours)` and `r max(analysts$hours)` hours on the two tasks. All five ticked "evidence for the claim" in Task 1, and all five reported a Task 2 result in the direction of the claim. The course refits each Task 2 analysis on the same file and places it on one scale, the change in distrust of parliament (0–10) that goes with one more point of concern (0–10). @tbl-analysts sets out what each analyst did.
+
+::: column-body-outset
+```{r}
+#| label: tbl-analysts
+#| tbl-cap: "The five reanalyses in Task 2, with the statistic as Multi100 recorded it and the coefficient of the course refit, in points of distrust per point of concern. Source: `data/analysts5.csv`."
+#| echo: false
+analysts |>
+  transmute(
+    Analyst = id,
+    Discipline = tolower(discipline),
+    Hours = as.character(hours),
+    Software = if_else(software == "JAMOVI", "jamovi", software),
+    Outcome = outcome,
+    Concern = concern,
+    Model = method,
+    Recorded = paste(statistic_type, "=", formatC(statistic_recorded, format = "fg", digits = 6)),
+    Respondents = big(n_refit),
+    Coefficient = fmt(b_refit, 3)
+  ) |>
+  tt() |>
+  style_tt(j = c(3, 9, 10), align = "r")
+```
+:::
+
+**N8P2J** fitted the model of Table 3 of the paper to distrust of parliament, which on the file of the analysts is exactly the model of the SCORE reproduction that built the file (t = 42.148). **6U3LL** fitted the same model without the unemployment rate. The file has no unemployment rate for Switzerland, so leaving the variable out keeps the Swiss respondents, and the analysis rests on `r big(an("6U3LL", "n_refit"))` respondents rather than `r big(an("N8P2J", "n_refit"))`. In Task 1 the same analyst also fitted the interactions of Tables 4 and 5 of the paper and reported that "when countries are long-term countries of immigration the effect of distrust is smaller (negative interaction)", the opposite of what the paper reports, for a reason that section 4.3 traces to the file.
+
+**FQ1G7** analysed trust in parliament with a random intercept for each country and a short list of controls, which leaves out the evaluations of the economy and of public services and the two vote controls. The coefficient, `r fmt(an("FQ1G7", "b_refit"), 3)` once turned round to distrust, is the largest of the five. The same analyst doubted the direction of the effect: "one could argue for an at least partially reverse direction of the effect, given that there is ample evidence that trust in authorities impacts on attitudinal variables", and concluded in Task 2 that "the analysis supports the original prediction of a correlation of concern about immigration with political trust, even though the data cannot warrant the predicted direction of the effect."
+
+**456AD** reported a sequence of models that shows how the coefficient depends on what is held constant. Without controls it was 0.320, with unhappiness 0.303, and with a longer list of individual controls and an intercept for each country 0.157. The longer list adds satisfaction with the government, which is not a control of the paper. **LT39B** measured concern with a single item, whether immigrants make the country a worse or a better place to live, held constant most controls of the paper together with satisfaction with the government, and tested the coefficient with a z statistic from Stata. Its coefficient, `r fmt(an("LT39B", "b_refit"), 3)`, is the smallest of the five, and it is a change per point of that one item rather than of the index.
+
+The five agree on the direction of the association and on its significance, and they agree that the evidence supports the claim. Their coefficients run from `r fmt(b_range[1], 3)` to `r fmt(b_range[2], 3)` points of distrust per point of concern, the largest about `r fmt(b_range[2] / b_range[1], 1)` times the smallest. Most of that spread comes from two decisions: what the analysis holds constant, which separates FQ1G7 from the others, and how concern is measured, which places LT39B at the bottom. The [specification menu](menu.qmd) takes up both, and the doubt that FQ1G7 raised about the direction of the effect is a question that no choice among the specifications can settle, which is why the causal graph of Task 2 addresses it.
+
+## 4. The reproduction and its lessons {#sec-reproduction}
+
+### 4.1 Two rebuilds from the ESS {#sec-rebuilds}
+
+Without data or code from OA, SCORE commissioned two reproductions from the source data, each of which rebuilt the variables of the paper from the ESS files and fitted the model of its Table 3 with the lme4 package in R. The reproduction osf.io/jp7tr (2020) found `r fmt(rp("SCORE_jp7tr", "b"), 3)` on `r big(rp("SCORE_jp7tr", "n"))` respondents in `r rp("SCORE_jp7tr", "country_rounds")` country-rounds (t = `r fmt(rp("SCORE_jp7tr", "statistic"), 3)`). The reproduction osf.io/e48gd (2022) found `r fmt(mark("SCORE_65wm6", "b"), 3)` on `r big(mark("SCORE_65wm6", "n"))` respondents (t = `r fmt(mark("SCORE_65wm6", "statistic"), 3)`), without Switzerland, for which the OECD series that it used holds no unemployment rate. Both coefficients fall within the tolerance of 15% that SCORE set around the published 0.17, and both p-values agree with the paper. Neither sample does. SCORE accepted samples between 94,122 and 127,342 around the 110,732 of the paper, and both reproductions analysed about 69,000 respondents.
+
+The samples differ because of missing answers. Household income is missing for `r pct(miss_income)` of the respondents of the paper, and for everyone in France and Ireland in round 1, so a model that leaves out every respondent with a missing answer, as both reproductions did, keeps about 70,000. The paper reports 110,732 respondents in every model without saying how it treated the missing answers, and SCORE could not know which rule produced that count. The data of the four rounds also hold `r cr_count` country-rounds where the paper reports 59 at the second level. Its appendix lists no far-right vote share for Ireland in round 4, so the model plausibly lost that country-round, while its count of respondents includes the Irish respondents of the round.
+
+### 4.2 The course rebuild {#sec-course-rebuild}
+
+The course extract was built from the same ESS files, and @tbl-repro sets it against the reproduction osf.io/jp7tr. The reproduction read the integrated files of the four rounds, which lack the Italian round 2. Fitted without that country-round, the model of the reproduction analyses exactly its `r big(rp("course_repro_59", "n"))` respondents and gives `r fmt(rp("course_repro_59", "b"), 4)` against its published `r fmt(rp("SCORE_jp7tr", "b"), 4)`, a gap of `r fmt(rp("SCORE_jp7tr", "b") - rp("course_repro_59", "b"), 4)`. The current version of lme4 reproduces the published coefficient from the public analysis file of the reproduction, so the software is not the cause. Swapping the codings of the course into that file one block of variables at a time puts the whole gap on the two vote controls. The reproduction counts the voters of the Dutch liberal party (the VVD, the "People's Party for Freedom and Democracy") in rounds 3 and 4 as voters for a far-right party, apparently taking it for the Party for Freedom, and it leaves three Belgian and Finnish party codes unlinked to the cabinets in which those parties sat. Respondent by respondent, the two files agree on 99.4% of the codes of each vote control.
+
+```{r}
+#| label: tbl-repro
+#| tbl-cap: "The model of the SCORE reproduction osf.io/jp7tr as published and refitted on the course extract, and the reference specification of the curve, which replaces the random intercepts with an intercept for every country-round and clusters its errors by country. Source: `data/display_reproduction.csv`."
+#| echo: false
+repro_lab <- c(
+  SCORE_jp7tr = "SCORE reproduction osf.io/jp7tr, as published",
+  course_repro_59 = "The same model on the course extract, without the Italian round 2",
+  course_repro_60 = "The same model on all 60 country-rounds of the extract",
+  course_reference_fe_59 = "Reference specification, respondents of the reproduction",
+  course_reference_fe = "Reference specification, all respondents of the extract"
+)
+repro |>
+  mutate(fe = startsWith(id, "course_reference")) |>
+  transmute(
+    Analysis = repro_lab[id],
+    Coefficient = fmt(b, 4),
+    SE = fmt(se, 5),
+    t = if_else(fe, paste0(fmt(statistic, 2), " (clustered, ", df, " df)"),
+                paste0(fmt(statistic, 2), " (model-based)")),
+    Respondents = big(n),
+    `Country-rounds` = as.character(country_rounds)
+  ) |>
+  tt() |>
+  style_tt(j = 2:6, align = "r")
+```
+
+Two careful rebuilds of the same variables part ways over coding decisions that no published table shows, and the reproduction of a published number from source data tests the description of the data as much as the number. The reference specification of the curve, which the browser lab can fit without a multilevel model, comes within 0.001 of the published reproduction on the same respondents. Its t is less than half as large, because its errors allow the respondents of one country to be alike, a difference that the [multiverse page](multiverse.qmd#inference) explains.
+
+### 4.3 The file of the analysts {#sec-analyst-file}
+
+The file that Multi100 gave the analysts differs from the paper in three ways that none of them flagged. The first is the dummy for long-term countries of immigration. The script that built the file states the rule of the paper in a comment and then codes the opposite:
+
+```
+#Greece, Spain, Portugal, Italy, and Ireland are given a code of 0
+#all other countries are given a code of 1.
+df <- df %>%
+  mutate(long_im_his = ifelse(cntry %in% c("GR", "ES", "PT", "IT", "IE"), 1, 0))
+```
+
+A reversed dummy turns round the sign of its interaction with concern. For distrust of politicians, the reproduction osf.io/e48gd, which built the file, found −0.076 for the interaction of Table 4 of the paper, against the published 0.06, scored that claim as not reproduced, and suggested "an error in reporting by the original author"; analyst 6U3LL found a "negative interaction" on the same file. The coding of the file explains both. A model without the interaction, such as every Task 2 analysis, leaves the coefficient of concern untouched. The second is the far-right vote, which counts the voters of several mainstream parties as far right, among them the Dutch liberals and the British Liberal Democrats, while the voters of Vlaams Belang in the Belgian round 4 count as 0. The third is the vote for a party in government, which the file codes as a vote for the single party that won the last election, missing the junior partners of coalitions. These codings matter for Task 3. On the file of the analysts, an intercept for every country-round in place of the random intercepts gives the same coefficient as the multilevel model of 6U3LL, so the gap between `r fmt(an("6U3LL", "b_refit"), 3)` on that file and `r fmt(analogue$b, 3)` for the same specification on the course extract lies in how the two files code their variables, not in the model.
+
+### 4.4 A recording slip {#sec-slip}
+
+Multi100 recorded the t of N8P2J with 62,088 degrees of freedom, where the refit gives `r big(an("N8P2J", "df_refit"))`, apparently a transposition of digits. The slip raises the partial correlation that Multi100 computed from the record from `r fmt(an("N8P2J", "r_refit"), 3)` to `r fmt(an("N8P2J", "r_recorded"), 3)`. The paper has slips of its own, such as a standard error of 0.43 for the far-right vote in its Table 5, where its Tables 3 and 4 print 0.04.
+
+## 5. The replications {#sec-replication}
+
+Two SCORE replications fitted the model to rounds of the ESS that the paper did not use, so their respondents are new. The replication osf.io/rpumq used round 5, fielded in 2010, and fitted a two-level model with post-stratification weights. It covers 13 of the 16 countries, because the integrated file of the round holds no Austrian or Italian sample and the Portuguese sample lacks household income, and it found `r fmt(mark("SCORE_1634", "b"), 3)` on `r big(mark("SCORE_1634", "n"))` respondents (t = `r fmt(mark("SCORE_1634", "statistic"), 2)`). Its auxiliary analyses gave 0.190 without weights and 0.177 with missing answers imputed. A data-analytic replication within osf.io/e48gd used rounds 5–9, fielded from 2010 to 2018 in 72 country-rounds of the 16 countries, and found `r fmt(mark("SCORE_65wm6_DAR", "b"), 3)` on `r big(mark("SCORE_65wm6_DAR", "n"))` respondents (t = `r fmt(mark("SCORE_65wm6_DAR", "statistic"), 2)`). Both met the criterion of SCORE, a positive coefficient that is significant at the 5% level.
+
+The replications show that the association held in the ESS for a decade after the period of the paper, with the same items in the same countries, and at almost the same size. They do not test the causal reading. Reverse causation and common causes would produce a stable association across rounds just as an effect of concern on distrust would, so a successful replication of this kind strengthens the evidence for the association and leaves the question raised by FQ1G7 where it was.
+
+## 6. Effect sizes on one scale {#sec-scale}
+
+Multi100 chose to "transform the reported point estimates into a standard effect-size measure" [@AczelEtAl2026InvestigatingAnalyticalRobustness, p. 136]. Each statistic became a partial correlation and then a Cohen's d: a t on its degrees of freedom gives $r = t / \sqrt{t^2 + df}$, an F with one numerator degree of freedom is read as the square of a t, and for a z statistic the code of Multi100 uses the number of respondents N in place of degrees of freedom, $r = \tanh(|z| / \sqrt{N - 3})$. @tbl-scale sets the recorded correlations beside the coefficients.
+
+```{r}
+#| label: tbl-scale
+#| tbl-cap: "The five reanalyses: the coefficient of the course refit in points of distrust per point of concern, the statistic as recorded, and the partial correlation computed by Multi100 from the record and by the course from the refit. Source: `data/analysts5.csv`."
+#| echo: false
+analysts |>
+  arrange(b_refit) |>
+  transmute(
+    Analyst = id,
+    Coefficient = fmt(b_refit, 3),
+    `Recorded statistic` = paste(statistic_type, "=", formatC(statistic_recorded, format = "fg", digits = 6)),
+    Respondents = big(n_recorded),
+    `r recorded` = fmt(r_recorded, 3),
+    `r refit` = fmt(r_refit, 3),
+    `d recorded` = fmt(d_recorded, 3)
+  ) |>
+  tt() |>
+  style_tt(j = c(2, 4:7), align = "r")
+```
+
+The recorded correlations run from `r fmt(min(analysts$r_recorded), 3)` to `r fmt(max(analysts$r_recorded), 3)`, and on this claim they order the analyses as the coefficients do, because all five fitted linear models of scales from 0 to 10 on samples of similar size. They rest on degrees of freedom of tens of thousands, which treat every respondent as independent, so they say nothing about how far the respondents of one country resemble one another. The course places every result on the scale of the claim, the change in distrust that goes with one more point of concern, which is the scale of the 0.17 of the paper. The "maximum effect" of the paper is the same coefficient multiplied by ten, the difference between the least and the most concerned respondents. @fig-marks places the published result, the reproductions, the five reanalyses and the replications on that scale.
+
+```{r}
+#| label: fig-marks
+#| fig-cap: "The published result, the two SCORE reproductions, the five reanalyses and the two SCORE replications, in points of distrust of parliament per point of concern, against the range of the 192 specifications on the curve of the claim (light) and of the 48 that hold constant the controls of the paper (dark). Sources: `data/reference_marks.csv`, `data/spec_curve.csv`."
+#| fig-alt: "Dot chart of ten results between 0.115 and 0.235. LT39B lies lowest at 0.115, 456AD at 0.157, OA 2012 at 0.17, the reproductions and replications and N8P2J between 0.178 and 0.186, 6U3LL at 0.191 and FQ1G7 highest at 0.235. A dark band runs from 0.117 to 0.179 and a light band to 0.326."
+#| fig-width: 7
+#| fig-height: 3.6
+#| echo: false
+mark_lab <- c(OA = "OA 2012", SCORE_jp7tr = "SCORE jp7tr", SCORE_65wm6 = "SCORE e48gd",
+              SCORE_1634 = "SCORE 2010", SCORE_65wm6_DAR = "SCORE 2010–18")
+marks |>
+  mutate(
+    label = coalesce(mark_lab[id], id),
+    label = reorder(label, b),
+    kind = case_when(id == "OA" ~ "published", data == "new" ~ "new data", .default = "original data")
+  ) |>
+  ggplot(aes(x = b, y = label, colour = kind, shape = kind)) +
+  annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
+           fill = "#d6dde5", alpha = 0.5) +
+  annotate("rect", xmin = min(paper_set$b), xmax = max(paper_set$b), ymin = -Inf, ymax = Inf,
+           fill = "#9fb1c2", alpha = 0.5) +
+  geom_point(size = 2.6) +
+  scale_colour_manual(values = c(published = "#8b1538", `original data` = "#1d2731", `new data` = "#1f5fa8"),
+                      name = NULL) +
+  scale_shape_manual(values = c(published = 16, `original data` = 16, `new data` = 17), name = NULL) +
+  coord_cartesian(xlim = c(0, 0.35)) +
+  labs(x = "points of distrust per point of concern", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+```
+
+Every result lies above zero and well away from it. The two reproductions, the two replications, N8P2J, 456AD and 6U3LL lie between `r fmt(min(near_oa$b), 3)` and `r fmt(max(near_oa$b), 3)`, close to the published 0.17 and to the upper end of the specifications that hold constant the controls of the paper, which reach `r fmt(max(paper_set$b), 3)`. FQ1G7 sits among the specifications that hold constant the demographics, outlook and ideology without the evaluations and the vote controls, and LT39B, with its single item, at the bottom.
+
+## 7. The data you will use {#sec-data}
+
+The ESS licenses its data under CC BY-NC-SA 4.0, which allows them to be shared and adapted for non-commercial purposes, with attribution and under the same licence, and the course ships a derived extract on those terms. `trust_ess.csv` holds every respondent of the 16 countries in rounds 1–4, `r big(nrow(ess))` rows and `r ncol(ess)` columns: the three trust items and the three immigration items, the controls of the paper and the weights of the survey, with the items turned round as the paper turns them and the vote controls built from the party questions. It is adapted from ESS Round 1, edition 6.7; ESS Round 2, edition 3.6, with the Italy country file of round 2; ESS Round 3, edition 3.7; and ESS Round 4, edition 4.6. The [codebook](data/trust_ess_codebook.md) gives the full citations with their DOIs and describes every column. The ESS asks that its datasets be linked from its Data Portal rather than hosted elsewhere, and anyone who wants the full files can download them from [ess.sikt.no](https://ess.sikt.no) after registering.
+
+The respondents of the paper are the `r big(nrow(paper))` rows with `citizen` = 1 and `minority` = 0. The scales are not stored in the file, because the rule for building them from their items is a decision of the [specification menu](menu.qmd). `trust_macro.csv` holds the country-level variables of the paper for the 60 country-rounds ([codebook](data/trust_macro_codebook.md)), with GDP per head and unemployment from the World Bank, since the OECD addresses that the paper gives no longer work. Every specification of the curve compares respondents within country-rounds, so these variables enter only the multilevel models that the course fits as checks. The file that Multi100 gave the analysts is public on the OSF ([osf.io/e48gd](https://osf.io/e48gd/)), and the workspace downloads it for Task 3 rather than shipping it. The [exercise overview](exercise.qmd) sets out what to do with all of them.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

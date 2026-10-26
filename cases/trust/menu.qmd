@@ -1,0 +1,346 @@
+---
+title: "Specification menu"
+subtitle: "The decisions of the analysis, by level"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tinytable)
+source("../../R/trust/_tools.R")
+
+read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
+menu       <- read_data("menu_options.csv")
+deviations <- read_data("menu_deviations.csv")
+options_d  <- read_data("display_options.csv")
+reliab     <- read_data("display_reliability.csv")
+ess        <- read_data("trust_ess.csv")
+curve      <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                       col_types = cols(stat_type = col_character()))
+
+# Fixed decimals and a true minus sign; signed shifts carry a plus sign
+fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn_n <- \(x) paste0(if_else(x > 0, "+", if_else(x < 0, "−", "")), format(round(abs(x)), big.mark = ",", trim = TRUE))
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+num_word <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                   "ten", "eleven", "twelve", "thirteen")[n]
+
+ref <- curve |> filter(is_reference)
+dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
+opt <- \(axis, option, col) options_d[[col]][options_d$axis == axis & options_d$option == option]
+spec <- \(outcome, controls, weights, items, fe) {
+  curve[curve$outcome == outcome & curve$controls == controls & curve$weights == weights &
+          curve$items == items & curve$fe == fe, ]
+}
+by_set <- curve |>
+  summarise(mean = mean(b), lo = min(b), hi = max(b), n = mean(n), cr = min(n_country_rounds),
+            .by = controls)
+bs <- \(set, col) by_set[[col]][by_set$controls == set]
+n_dec <- n_distinct(menu$axis)
+fixed_axes <- setdiff(unique(menu$axis), names(SPEC_AXES))
+
+# The adjustment sets fitted to one common sample, the respondents of the
+# reference specification, so that the coefficients differ only by what is
+# held constant: an intercept for every country-round, no weights
+common <- spec_frame(ess, controls = "paper")
+evaluations <- c("econ_dissat", "income_difficulty", "health_dissat", "educ_dissat")
+votes <- c("winner", "far_right_vote")
+steps <- tibble::tribble(
+  ~step,           ~label,
+  "none",          "No controls",
+  "demog",         "Demographics",
+  "outlook",       "… with outlook and ideology",
+  "outlook_votes", "… with outlook, ideology and the two vote controls",
+  "outlook_eval",  "… with outlook, ideology and the evaluations",
+  "paper",         "… with all the controls of the paper"
+)
+step_terms <- list(
+  none = character(0),
+  demog = CONTROL_TERMS$demog,
+  outlook = CONTROL_TERMS$outlook,
+  outlook_votes = c(CONTROL_TERMS$outlook, votes),
+  outlook_eval = c(CONTROL_TERMS$outlook, evaluations),
+  paper = CONTROL_TERMS$paper
+)
+common_fits <- steps |>
+  mutate(b = purrr::map_dbl(step, \(s) {
+    fit <- lm(reformulate(c("x", step_terms[[s]], "factor(cr)"), "y"), data = common)
+    unname(coef(fit)["x"])
+  }))
+cf <- \(s) common_fits$b[common_fits$step == s]
+stopifnot(abs(cf("paper") - ref$b) < 1e-8)
+cor_y <- \(v) cor(common[[v]], common$y)
+
+# Missing answers among the respondents of the paper
+paper_rows <- ess |> filter(citizen %in% 1, minority %in% 0)
+miss <- \(v) mean(is.na(paper_rows[[v]]))
+country_r <- paper_rows |>
+  mutate(concern = (imm_econ + imm_culture + imm_place) / 3) |>
+  summarise(concern = mean(concern, na.rm = TRUE), distrust = mean(distrust_parl, na.rm = TRUE),
+            .by = cntry) |>
+  with(cor(concern, distrust))
+se_ratio <- range(curve$se / curve$se_conv)
+example <- spec("index", "outlook", "design", "complete", "country_round")
+example_rank <- sum(curve$b > example$b + 1e-9) + 1
+```
+
+This page sets out every decision that an analysis of the claim has to make, the options that each decision offers, and whether each option answers the claim. The claim, in the wording that SCORE took from the paper of the original author (OA) [@McLaren2012CulturalDivideEurope], is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics". The [case study](index.qmd) sets out the study, the five reanalyses and the data. The [decision map](map.qmd) draws the same menu as a path from the data to a verdict, with every option selectable.
+
+`r stringr::str_to_sentence(num_word(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be built from the data, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
+
+## The estimand statement {#estimand}
+
+Write the statement that your analysis will complete:
+
+> **Among which respondents**, **counted with which weights**, the change in **distrust of which institution** that goes with one more point of *concern, measured how* (*how unanswered items count*), **holding what constant** (*how education, the votes and the missing answers are handled*).
+>
+> Estimated by *which comparison within countries and rounds*, tested *with which standard errors* and reported *on which scale*.
+
+Move one decision and reread the statement. If a bold slot changes, you have made an estimand decision, and you are answering a different question. If only a slot in italics within the first sentence changes, you have made a measurement decision, which leaves the question in place and changes how its parts are measured. If only the second sentence changes, you have made an estimation decision, which changes how the answer is reached. The completed statement is your estimand [@LundbergEtAl2021WhatYourEstimand], the quantity that your number estimates, and a reader needs it before the number means anything. The preregistration of Task 5 assembles it for you from your choices.
+
+## The curve of `r nrow(curve)` {#the-curve}
+
+Five decisions vary on the curve: the outcome (distrust of parliament, of politicians, of the legal system, or the mean of the three), the adjustment (no controls, the demographics, those with outlook and ideology, or all the controls of the paper), the weights (none, design weights, or design and population weights), the rule for unanswered items (every item of a scale answered, or the mean of the answered items) and the comparison within countries (an intercept for every country-round, or one for every country with a shift for every round). That gives `r paste(purrr::map_int(SPEC_AXES, length), collapse = " × ")` = `r nrow(curve)` specifications. The other `r num_word(length(fixed_axes))` decisions take a single option on the curve.
+
+Every estimate is the change in distrust (0–10) that goes with one more point of concern (0–10), and a value above zero is in the direction of the claim. All `r nrow(curve)` specifications lie above zero and are significant at the 5% level with errors clustered by country, from `r fmt(min(curve$b))` to `r fmt(max(curve$b))` points, with p never above `r format(signif(max(curve$p), 1), scientific = FALSE)`. The reference specification, the one closest to the model of the paper, takes distrust of parliament, the controls of the paper, no weights, every item answered and an intercept for every country-round: `r fmt(ref$b)` points, t = `r fmt(ref$stat, 2)` on `r ref$df` df, n = `r big(ref$n)`.
+
+Within the curve, what varies is the size of the estimate, and @tbl-shifts shows which decisions move it. Each row compares the specifications with an option against their twins that differ only in that decision.
+
+```{r}
+#| label: tbl-shifts
+#| tbl-cap: "What each option on the curve does to the estimate, against the first option of its decision on twin specifications that agree on every other decision, in points of distrust per point of concern, with the change in the number of respondents. Source: `data/menu_deviations.csv`."
+#| echo: false
+lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
+dec <- \(axis) menu$decision[menu$axis == axis][1]
+deviations |>
+  filter(option != baseline) |>
+  mutate(
+    Decision = purrr::map_chr(axis, dec),
+    Option = purrr::map2_chr(axis, option, lab),
+    Against = purrr::map2_chr(axis, baseline, lab)
+  ) |>
+  transmute(
+    Decision, Option, Against,
+    Pairs = n_pairs,
+    `Mean shift` = sgn(shift_mean, 4),
+    Smallest = sgn(shift_min, 4),
+    Largest = sgn(shift_max, 4),
+    `Change in respondents` = sgn_n(n_shift_mean),
+    `Still significant` = pct(sig_share, 0)
+  ) |>
+  tt() |>
+  style_tt(j = 4:9, align = "r")
+```
+
+The adjustment set moves the estimate most by far: the full controls of the paper lower it by `r fmt(abs(dv("controls", "paper", "shift_mean")))` points on average against no controls. The outcome moves it by up to `r fmt(abs(dv("outcome", "politicians", "shift_min")))`, and the weights, the rule for unanswered items and the comparison within countries each by less than `r fmt(max(abs(unlist(deviations |> filter(axis %in% c("weights", "items", "fe")) |> select(shift_min, shift_max)))), 2)`. No option moves any specification across the 5% threshold.
+
+## Level 1 – Estimands {#level-estimand}
+
+Each decision at this level rewrites a bold slot of the statement, so two analysts who decide differently are answering different questions, and their results are not rival estimates of one quantity.
+
+```{r}
+#| label: tbl-level1
+#| tbl-cap: "The estimand decisions. Options off the curve carry the judgement of the course in brackets. Source: `data/menu_options.csv`."
+#| echo: false
+judgement_txt <- c(kept = "on the curve", other_question = "another question",
+                   weaker_answer = "a weaker answer", check = "a check",
+                   unavailable = "not in the data")
+level_table <- \(lv) {
+  menu |>
+    filter(level == lv) |>
+    mutate(item = paste0(label, " <code>", option, "</code>")) |>
+    summarise(
+      on = paste(item[on_curve], collapse = " · "),
+      off = if (any(!on_curve)) {
+        paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = " · ")
+      } else {
+        "–"
+      },
+      .by = c(axis, decision)
+    ) |>
+    transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
+    tt()
+}
+level_table("estimand")
+```
+
+### Outcome {#outcome}
+
+The claim speaks of "trust in politics", and the paper measures it with three institutions, each on the trust scale of the ESS turned round so that 10 means no trust at all. SCORE tested the claim on parliament and Multi100 told the analysts to "focus on trust in parliament", so parliament is the outcome of the reference specification. Politicians and the legal system answer the claim as the paper states it, about "national politicians and political institutions" (p. 199), the legal system being "an unelected branch of the political system" (p. 230) whose inclusion argues against a verdict on the government of the day. The mean of the three answers the claim about trust in politics as one construct, with less measurement error than any single item: the three items have a Cronbach's alpha of `r fmt(reliab$alpha[reliab$scale == "trust" & reliab$cntry == "all"], 2)`. The paper declined to combine them so that the finding could be shown for each target, but several analysts built the mean in Task 1. All four stay on the curve. Against parliament, distrust of politicians lies `r fmt(abs(dv("outcome", "politicians", "shift_mean")))` points lower on average, the legal system `r fmt(abs(dv("outcome", "legal", "shift_mean")))` and the mean of the three `r fmt(abs(dv("outcome", "index", "shift_mean")))`. Trust in political parties, which the ESS asked only from round 2, and trust in the European Parliament, which the paper uses as a contrast for national institutions (pp. 213–214), answer other questions.
+
+### Adjustment {#adjustment}
+
+This is the decision that defines the estimand, and it carries almost all the spread of the curve. The four sets on the curve are nested. The demographics hold constant age, sex, education and household income. Outlook and ideology add unhappiness, dissatisfaction with life, how rarely the respondent meets friends, interpersonal distrust and left–right position. The controls of the paper add dissatisfaction with the economy, with household income and with health and education services, a vote for a party in government and a vote for a far-right party. Across the curve the mean coefficient is `r fmt(bs("none", "mean"))` without controls, `r fmt(bs("demog", "mean"))` with the demographics, `r fmt(bs("outlook", "mean"))` with outlook and ideology and `r fmt(bs("paper", "mean"))` with the controls of the paper.
+
+Which of these is the right answer depends on what each control is in the causal story, and a causal graph sets that out (@fig-dag). A variable that causes both concern and distrust is a **confounder**: it opens a path between them that runs through neither attitude, a 'backdoor' path, and holding it constant closes that path, so the coefficient comes closer to an effect of concern. A variable that concern causes and that in turn causes distrust is a **mediator**: it lies on the path of the effect, and holding it constant removes the part of the effect that runs through it, which answers a narrower question than the claim. A variable that both concern and distrust cause is a **collider**: the path through it is closed as long as it is left alone, and holding it constant opens it, creating an association between concern and distrust even if neither affects the other [@ColeEtAl2010IllustratingBiasDue; @GriffithEtAl2020ColliderBiasUndermines]. The same variable can play different roles in different graphs, and the data cannot say which graph is true.
+
+```{r}
+#| label: fig-dag
+#| fig-cap: "Three readings of the controls of the paper. In each panel, the demographic background, the general outlook and political ideology are common causes of concern and distrust, and the burgundy arrow is the effect that the claim is about. The panels differ in the evaluations of the economy and of public services and in the two vote controls: as common causes (left), as steps on the path from concern to distrust (centre), or as consequences of both attitudes (right)."
+#| fig-alt: "Three causal graphs with the same layout. Concern is on the left and distrust on the right, joined by a burgundy arrow. Background, outlook and ideology above have arrows into both. Below, evaluations and votes have arrows into both attitudes in the first panel, lie between them in the second, and receive arrows from both in the third."
+#| fig-width: 9
+#| fig-height: 3
+#| echo: false
+dag_nodes <- tibble::tribble(
+  ~node,         ~x,  ~y,
+  "concern",     0,   0,
+  "distrust",    4,   0,
+  "background",  2,   1.6,
+  "outlook",     0.5, 1.6,
+  "ideology",    3.5, 1.6,
+  "evaluations", 1.2, -1.4,
+  "votes",       2.8, -1.4
+)
+shared <- tibble::tribble(
+  ~from,        ~to,
+  "background", "concern",
+  "background", "distrust",
+  "outlook",    "concern",
+  "outlook",    "distrust",
+  "ideology",   "concern",
+  "ideology",   "distrust",
+  "concern",    "distrust"
+)
+disputed <- list(
+  "Common causes" = c("evaluations>concern", "evaluations>distrust", "votes>concern", "votes>distrust"),
+  "Steps on the path" = c("concern>evaluations", "evaluations>distrust", "concern>votes", "votes>distrust"),
+  "Consequences of both" = c("concern>evaluations", "distrust>evaluations", "concern>votes", "distrust>votes")
+)
+panel_levels <- names(disputed)
+dag_edges <- purrr::imap(disputed, \(e, panel) {
+  bind_rows(
+    shared |> mutate(kind = if_else(from == "concern" & to == "distrust", "claim", "shared")),
+    tibble::tibble(from = sub(">.*$", "", e), to = sub("^.*>", "", e), kind = "disputed")
+  ) |>
+    mutate(panel = panel)
+}) |>
+  bind_rows() |>
+  left_join(dag_nodes |> rename(from = node, x0 = x, y0 = y), by = "from") |>
+  left_join(dag_nodes |> rename(to = node, x1 = x, y1 = y), by = "to") |>
+  mutate(
+    len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
+    # stop each arrow short of the labels at both ends
+    trim = pmin(0.45, len / 3),
+    xs = x0 + trim * (x1 - x0) / len, ys = y0 + trim * (y1 - y0) / len,
+    xe = x1 - trim * (x1 - x0) / len, ye = y1 - trim * (y1 - y0) / len,
+    panel = factor(panel, levels = panel_levels)
+  )
+dag_labels <- tidyr::crossing(dag_nodes, panel = factor(panel_levels, levels = panel_levels)) |>
+  mutate(role = case_when(node %in% c("concern", "distrust") ~ "attitude",
+                          node %in% c("evaluations", "votes") ~ "disputed",
+                          .default = "common"))
+ggplot() +
+  geom_segment(data = dag_edges, aes(x = xs, y = ys, xend = xe, yend = ye, colour = kind),
+               linewidth = 0.6, arrow = grid::arrow(length = grid::unit(5, "pt"), type = "closed")) +
+  geom_label(data = dag_labels, aes(x = x, y = y, label = node, fill = role), colour = "white",
+             fontface = "bold", size = 3, linewidth = 0, label.padding = grid::unit(3, "pt")) +
+  facet_wrap(~panel, nrow = 1) +
+  scale_colour_manual(values = c(claim = "#8b1538", shared = "grey55", disputed = "#8c5a10"), guide = "none") +
+  scale_fill_manual(values = c(attitude = "#0e3b6a", common = "grey45", disputed = "#8c5a10"), guide = "none") +
+  coord_cartesian(xlim = c(-0.6, 4.6), ylim = c(-1.8, 2)) +
+  theme_void(base_size = 11) +
+  theme(strip.text = element_text(face = "bold", margin = margin(b = 4)))
+```
+
+The demographics are the least contested confounders, since age, sex, education and income are settled before either attitude forms. Outlook and ideology are the controls with which the paper argues against spuriousness, a general pessimism or an ideology on the right that produces both attitudes; they are confounders in the graph that the paper draws, although ideology and concern about immigration also shape each other, and interpersonal distrust could follow from concern as well as precede it. The evaluations and the votes are where the readings part. The paper holds the evaluations constant as predictors of support for the government of the day, so that what remains speaks to diffuse support for the system, and on that reading they are common causes. But a respondent who believes that immigration strains the economy and the public services may judge both more harshly because of that belief, which makes the evaluations steps on the path; and a respondent who distrusts the government may judge its record more harshly too, which makes them consequences of distrust as well. A vote for a far-right party is plausibly a consequence of concern, and a vote against the parties in government is plausibly a consequence of distrust, which makes both votes colliders in the right panel.
+
+@tbl-common fits the sets to one sample, the `r big(nrow(common))` respondents of the reference specification, so that the coefficients differ only in what is held constant.
+
+```{r}
+#| label: tbl-common
+#| tbl-cap: !expr 'sprintf("The coefficient of concern under nested sets of controls, fitted to the same %s respondents in %d country-rounds: distrust of parliament, no weights, every item answered, an intercept for every country-round. The fourth and fifth rows add the vote controls and the evaluations of the economy, household income, health services and education separately. Source: `data/trust_ess.csv`.", big(nrow(common)), n_distinct(common$cr))'
+#| echo: false
+common_fits |>
+  transmute(
+    `Held constant` = label,
+    Coefficient = fmt(b),
+    `Change from no controls` = if_else(step == "none", "–", sgn(b - cf("none")))
+  ) |>
+  tt() |>
+  style_tt(j = 2:3, align = "r")
+```
+
+On a common sample the demographics take `r fmt(cf("none") - cf("demog"))` off the coefficient, and outlook and ideology a further `r fmt(cf("demog") - cf("outlook"))`. Added to those, the two vote controls take only `r fmt(cf("outlook") - cf("outlook_votes"))`, and the evaluations `r fmt(cf("outlook") - cf("outlook_eval"))`. Dissatisfaction with the economy correlates more strongly with distrust of parliament (r = `r fmt(cor_y("econ_dissat"), 2)`) than concern about immigration does (r = `r fmt(cor(common$x, common$y), 2)`), and the evaluations of health and education services about as strongly as concern (r = `r fmt(cor_y("health_dissat"), 2)` and `r fmt(cor_y("educ_dissat"), 2)`), and they are also the variables whose place in the graph is least certain.
+
+The fall of the coefficient from `r fmt(cf("none"))` to `r fmt(cf("paper"))` is therefore not simply the replacement of a biased estimate by a better one. The part of it that comes from the demographics and from outlook is the removal of confounding, if the graph of the paper is right. The part that comes from the evaluations removes confounding if they are common causes, removes part of the effect if they are steps on the path, and adds a distortion of its own if they are consequences of both attitudes. Each reading is a defensible view of how political attitudes form, so the curve keeps all four sets, and the controls of the paper are on it because they define the claim that the paper makes. Your preregistration in Task 5 asks for one sentence, grounded in your graph, on which set answers the claim as you read it.
+
+Three options stay off the curve. The controls of the paper without unhappiness, the control that the Multi100 instruction required, give `r fmt(opt("controls", "paper_no_unhappy", "b"))` at the reference settings, a check. Adding satisfaction with the government, as LT39B and 456AD did, gives `r fmt(opt("controls", "paper_gov", "b"))`; satisfaction with the government is an evaluation of the people in power, which is very nearly what distrust of parliament and politicians measures, so the course treats it as a weaker answer. The country-level variables of the paper describe countries and rounds, and once every country-round has its own intercept they cannot explain any difference between its respondents, so they change nothing on the curve.
+
+### Weights {#weights}
+
+Without weights, the coefficient averages the associations within the country-rounds, and larger samples, and samples with more varied concern, count for more in that average. Design weights correct for unequal chances of selection within each national sample, so the estimate describes the adult population of each country. Multiplied by the population weight, they make each country count by the size of its adult population, so the estimate describes the adults of the 16 countries taken together, and Germany, France, the United Kingdom, Italy and Spain dominate it. The claim does not say which average it means, the paper and both SCORE reproductions are unweighted, and the replication on round 5 used post-stratification weights, so all three stay on the curve. Design weights move the estimate by `r sgn(dv("weights", "design", "shift_mean"))` on average and the population weights by `r sgn(dv("weights", "population", "shift_mean"))`. The post-stratification weight of the ESS, which also matches each sample to census margins, gives `r fmt(opt("weights", "post", "b"))` at the reference settings, and with the population weight `r fmt(opt("weights", "post_population", "b"))`; both are checks.
+
+### Respondents {#respondents}
+
+The paper analyses citizens who do not belong to an ethnic minority, because its argument concerns the national community as its members see it, and the course extract reproduces its count of `r big(nrow(paper_rows))` respondents exactly, country by country. Adding the non-citizens and the members of ethnic minorities changes the population to one in which many respondents are themselves immigrants, which answers another question, even though at the reference settings it gives `r fmt(opt("sample", "all_respondents", "b"))` on `r big(opt("sample", "all_respondents", "n"))` respondents. The countries of Central and Eastern Europe, which the paper leaves out because the questions on immigration would be read there as questions about conationals from neighbouring countries, answer a question about other societies, and the extract does not hold them.
+
+## Level 2 – Measurement {#level-measurement}
+
+The question stays the same, and these decisions change how its parts are measured.
+
+```{r}
+#| label: tbl-level2
+#| tbl-cap: "The measurement decisions. Source: `data/menu_options.csv`."
+#| echo: false
+level_table("measurement")
+```
+
+### Measure of concern {#concern}
+
+The index of the paper is the mean of three items, on the effect of immigration on the economy, on cultural life and on the country as a place to live, with a Cronbach's alpha of `r fmt(reliab$alpha[reliab$scale == "concern" & reliab$cntry == "all"], 2)`. A single item measures one facet of the concern with more random error than the mean of three, and random error in a predictor pulls its coefficient towards zero, a bias that is known as attenuation or regression dilution. At the reference settings the economic item gives `r fmt(opt("concern", "economy", "b"))`, the cultural item `r fmt(opt("concern", "culture", "b"))` and the item on the country as a place to live `r fmt(opt("concern", "place", "b"))`, against `r fmt(ref$b)` for the index. LT39B used the third item, and its coefficient is the lowest of the five analyses. The single items answer the claim less well, and they stay off the curve.
+
+### Unanswered items {#items}
+
+A scale (concern, interpersonal distrust, or the mean of the trust items) can count only for respondents who answered every item, the focal rule of the SCORE reproduction osf.io/jp7tr, or be the mean of the items that a respondent answered, its additional analysis and the rule of the file that Multi100 gave the analysts. The paper does not say which rule it used. The second keeps about `r big(dv("items", "available", "n_shift_mean"))` more respondents and moves the estimate by `r sgn(dv("items", "available", "shift_mean"), 4)` on average, and both stay on the curve.
+
+### Education, vote controls and missing answers {#coding}
+
+These three decisions take one option on the curve, and they matter only for the sets of controls that use the variables in question. The paper codes education from 0 to 6, the scale of the early rounds of the ESS, which the cumulative file no longer carries, so the curve uses the five harmonised levels, as both SCORE reproductions did. The vote controls follow the definitions of the paper: a vote for a party that sat in the cabinet on the day of the interview, and a vote for a party in the list of far-right parties of its appendix, non-voters counting as neither. Treating non-voters as missing instead keeps only voters, `r big(opt("votes", "nonvoters_missing", "n"))` respondents at the reference settings, and gives `r fmt(opt("votes", "nonvoters_missing", "b"))`; it answers the claim for voters only. The file of the analysts coded as winners the voters for the largest party of the last election, a check that the five refits on that file carry. Respondents with a missing answer on any variable of a specification are left out, which is what a regression does by default. Household income is missing for `r pct(miss("hh_income_z"))` of the respondents of the paper and left–right position for `r pct(miss("left_right"))`, so each set of controls has its own sample. Multiple imputation, which fills the gaps from the other answers, is a check, and the handling of the paper, which reports 110,732 respondents in every model without saying how it treated missing answers, cannot be rebuilt.
+
+## Level 3 – Estimation {#level-estimation}
+
+With the question and its measures fixed, these decisions change how the answer is reached, how uncertain it is said to be, and the scale on which it is reported.
+
+```{r}
+#| label: tbl-level3
+#| tbl-cap: "The estimation decisions. Source: `data/menu_options.csv`."
+#| echo: false
+level_table("estimation")
+```
+
+### Countries and rounds {#fe}
+
+Countries differ in how concerned their citizens are about immigration and in how much they distrust their parliament, for reasons of their own history: across the 16 countries the two means correlate at `r fmt(country_r, 2)`. The claim is about respondents, so every specification of the curve compares respondents within groups. An intercept for every country-round compares respondents surveyed in the same country at the same time, and an intercept for every country with a shift for every round compares respondents of the same country while letting the rounds move together. In the language of econometrics both are 'fixed effects', which here means an intercept for each group; in multilevel modelling the same words name the coefficients that do not vary between groups, which is a different thing. The two structures differ by `r sgn(dv("fe", "country_and_round", "shift_mean"))` on average, and both stay on the curve.
+
+The paper fits random intercepts for countries and country-rounds in a three-level model, which treats the groups as drawn from a population and lets their intercepts shrink towards a common mean. With hundreds of respondents in every country-round, its estimate of a coefficient measured on respondents is the same as that of the fixed effects to four decimals at the reference settings, `r fmt(opt("fe", "random_intercepts", "b"), 4)` against `r fmt(ref$b, 4)`; it needs lme4, which the browser lab does not run, so it is a check. One pooled regression without any intercepts for groups mixes the differences between countries into the estimate, `r fmt(opt("fe", "pooled", "b"))` at the reference settings, and answers the claim less well.
+
+### Standard errors {#errors}
+
+Respondents of the same country share institutions, media and a history, so their answers are not independent pieces of evidence, and conventional standard errors, which assume that they are, understate the uncertainty. The curve clusters the errors by country, which allows any pattern of similarity within a country across its rounds, and tests each coefficient against a t distribution on 15 degrees of freedom, one fewer than the 16 countries. Across the curve the clustered errors are `r fmt(se_ratio[1], 1)` to `r fmt(se_ratio[2], 1)` times the conventional ones, and every specification still clears the 5% threshold by a wide margin. Clustering by country-round, a check stored for every specification, gives smaller errors, because it treats the rounds of one country as independent. A wild cluster bootstrap by country, the usual remedy when clusters are few, agrees with the clustered test at the reference specification: none of its 9,999 draws gives a t as large as that of the data. The [multiverse page](multiverse.qmd#inference) sets the rules side by side.
+
+### Effect scale {#scale}
+
+The paper reports its coefficient on the original scales, 0.17 points of distrust in parliament per point of concern, and every point of the curve is placed on that scale. Both scales run from 0 to 10, so the coefficient reads directly. The "maximum effect" of the paper, the difference between the least and the most concerned respondents, is ten times the coefficient (`r fmt(10 * ref$b, 2)` at the reference specification). The standardised coefficient, `r fmt(ref$b_std)` at the reference specification, puts the outcomes on a common footing of standard deviations, and the partial correlation, `r fmt(ref$r)`, is the scale on which Multi100 compared the reanalyses. All three are checks, stored in the curve file.
+
+## Worked example
+
+**Choice:** outcome `index`, controls `outlook`, weights `design`, items `complete`, countries and rounds `country_round`; the respondents of the paper, the index of concern, five levels of education, the vote controls of the paper, complete cases, errors clustered by country, points of distrust per point of concern.
+
+**Justification, by level.** The claim speaks of "trust in politics" rather than of one institution, so the mean of the three trust items measures it most directly. The graph of Task 2 makes the demographics, outlook and ideology common causes of concern and distrust, while the evaluations and the votes may lie on the path of the effect or follow from both attitudes, so the analysis holds constant the first group and leaves the second alone. Design weights make each national sample stand for its population. The index of concern is the measure of the paper, and every item of a scale is required, so that every scale rests on the same items for everyone. An intercept for every country-round keeps each comparison within one national survey, and with 16 countries the errors are clustered by country.
+
+The specification gives `r fmt(example$b)` points of distrust per point of concern, t = `r fmt(example$stat, 2)` on `r example$df` df, on `r big(example$n)` respondents, and it ranks `r example_rank` of `r nrow(curve)` from the largest coefficient. A justification of this kind connects each choice to the wording of the claim or to the causal graph, at the level to which the choice belongs, and it is what the preregistration of Task 5 asks you to write before you run the model.
+
+## Declaring and reporting
+
+In Task 4 you explore the menu with `try_spec()`, changing one argument at a time, and an option off the curve is refused with its reason from `menu_options.csv`. In Task 5 you fix one specification in the preregistration block before you fit it: `prereg()` prints the declaration with its estimand statement, `run_spec()` fits it and `report_result()` sends it to the class chart on the [multiverse page](multiverse.qmd). The [exercise overview](exercise.qmd) sets out both tasks.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

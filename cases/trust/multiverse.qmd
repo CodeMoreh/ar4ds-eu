@@ -1,0 +1,538 @@
+---
+title: "Multiverse"
+subtitle: "The curve of the claim and the class results"
+engine: knitr
+format:
+  live-html:
+    toc: true
+    include-after-body: ../../_includes/track-choice.html
+    webr:
+      packages:
+        - ggplot2
+        - ggiraph
+resources:
+  - data/spec_curve.csv
+  - data/class_results.csv
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+{{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{r}
+#| label: setup
+#| include: false
+# The build-time chart is drawn by assets/chart/multiverse.js from the payload
+# built in R/trust/_chart_multiverse.R; the live class chart further down
+# runs in the browser through webR. Every number in the prose is read from
+# the data files here.
+source("../../R/trust/_chart_multiverse.R")
+library(ggplot2)
+library(tinytable)
+
+read_data <- \(f) readr::read_csv(file.path("data", f), show_col_types = FALSE)
+curve      <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                              col_types = readr::cols(stat_type = readr::col_character()))
+menu       <- read_data("menu_options.csv")
+marks      <- read_data("reference_marks.csv")
+analysts   <- read_data("analysts5.csv")
+deviations <- read_data("menu_deviations.csv")
+options_d  <- read_data("display_options.csv")
+inference  <- read_data("display_inference.csv")
+loo        <- read_data("display_loo.csv")
+means      <- read_data("display_country_means.csv")
+
+# Fixed decimals and a true minus sign; signed shifts carry a plus sign
+fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+                     .default = paste("p =", fmt(p, 3)))
+
+n_spec <- nrow(curve)
+ref <- curve |> filter(is_reference)
+n_options <- purrr::map_int(mv_axes$axis, \(a) n_distinct(curve[[a]]))
+dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
+mark <- \(id, col) marks[[col]][marks$id == id]
+inf <- \(start, col) inference[[col]][startsWith(inference$rule, start)]
+by_set <- curve |> summarise(lo = min(b), hi = max(b), mean = mean(b), .by = controls)
+bs <- \(set, col) by_set[[col]][by_set$controls == set]
+se_ratio <- range(curve$se / curve$se_conv)
+
+# Share of the variance of the 192 estimates carried by each decision, from the
+# sums of squares of a main-effects model; the residual holds the interactions
+variance <- anova(lm(b ~ outcome + controls + weights + items + fe, data = curve))
+var_share <- setNames(100 * variance$`Sum Sq` / sum(variance$`Sum Sq`), rownames(variance))
+max_other <- deviations |>
+  filter(axis != "controls") |>
+  summarise(m = max(abs(c(shift_min, shift_max)))) |>
+  pull(m)
+
+loo_range <- loo |> filter(b %in% range(b)) |> arrange(b)
+country_avg <- means |>
+  summarise(concern = mean(concern), distrust_parl = mean(distrust_parl), .by = cntry)
+r_rounds <- cor(means$concern, means$distrust_parl)
+```
+
+This page holds the curve of the claim of the immigration-and-trust case and the live chart of the class results. The claim, in the wording that SCORE took from the paper of the original author (OA) [@McLaren2012CulturalDivideEurope], is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics". The curve holds every specification that the [specification menu](menu.qmd) keeps for this claim, `r n_spec` in all, each fitted on the respondents of the course extract of the European Social Survey (ESS). A specification is one complete set of answers to the decisions of an analysis. Five decisions vary on the curve: the outcome (distrust of parliament, of politicians, of the legal system, or the mean of the three), the adjustment (no controls, the demographics, those with outlook and ideology, or all the controls of the paper), the weights (none, design weights, or design and population weights), the rule for unanswered items (every item answered, or the answered items) and the comparison within countries (an intercept for every country-round, or one for every country with a shift for every round), which gives `r paste(n_options, collapse = " × ")` = `r n_spec` specifications. Every specification keeps the citizens of the 16 countries who do not belong to an ethnic minority, measures concern with the index of three items, leaves out respondents with a missing answer, clusters its errors by country and reports the coefficient in points of distrust per point of concern. The [decision map](map.qmd) sets out every decision, including the options that are not on the curve, with the reason for each.
+
+```{r}
+#| label: chart-claim
+#| output: asis
+notes_claim <- paste(
+  "Each mark is one specification: a circle for p &lt; 0.05 and a cross for p &ge; 0.05, with errors clustered by country and t on 15 degrees of freedom.",
+  sprintf("All %d specifications are circles.", n_spec),
+  "The tags mark the published result of the original author (OA 2012), the two SCORE reproductions from the ESS files, the five Multi100 analysts and the two SCORE replications on later rounds (SCORE 2010 and SCORE 2010–18), each placed by its coefficient; the replications come from new data.",
+  "Click or tap a tag to hold its details open, and click again to release it.",
+  "<i>Colour by</i> colours the marks by one decision and adds rows under the curve that show where the specifications using each option fall in the ranking;",
+  "<i>Show only</i> keeps the specifications that use one option and fades the rest.",
+  "Hover over or tap a mark for its details, or focus the chart and use the arrow keys."
+)
+src_claim <- paste(
+  'Data: <a href="data/spec_curve_codebook.html">data/spec_curve.csv</a> and',
+  '<a href="data/reference_marks_codebook.html">data/reference_marks.csv</a>, with their codebooks.'
+)
+cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+  id = "mv-claim",
+  payload = mv_payload(curve, menu, marks, analysts),
+  title = "Specification curve of the claim",
+  sub = sprintf("%d specifications, with the published result, the reproductions, the five reanalyses and the replications", n_spec),
+  notes = notes_claim, src = src_claim
+))
+```
+
+All `r n_spec` specifications lie above zero, in the direction of the claim, and all `r sum(curve$p < 0.05)` have p < 0.05 with errors clustered by country, so every mark on the chart is a circle and the shaded band below zero is empty. The estimates run from `r fmt(max(curve$b))` down to `r fmt(min(curve$b))` points of distrust per point of concern. The reference specification, the one closest to the model of the paper, gives `r fmt(ref$b)` (t = `r fmt(ref$stat, 2)` on `r ref$df` df), against the 0.17 of Table 3 of the paper.
+
+## Reading the curve {#reading}
+
+Each mark is one specification, and the marks are ranked by their estimate, from the largest coefficient on the left to the smallest on the right. The estimate is the change in distrust, on the scale of 0 (complete trust) to 10 (no trust at all), that goes with one more point of concern about immigration, on its own scale of 0 to 10, among respondents of the same country and round who are alike on the controls of the specification. This is the scale of the coefficient of 0.17 that the paper reports. A value above zero means that more concerned respondents distrust the institution more, the direction of the claim, and the shaded band below zero would hold the results that run against it.
+
+The shape of a mark gives its class at the 5% level, an open circle for p < 0.05 and a cross for p ≥ 0.05. The p-value comes from errors clustered by country, which allow the respondents of one country to be alike in every round, with a t distribution on 15 degrees of freedom for the 16 countries. On this curve the clustered t runs from `r fmt(min(curve$stat), 1)` to `r fmt(max(curve$stat), 1)`, so that every specification clears the threshold by a wide margin and the shape carries no information; what varies between the specifications is the size of the coefficient. The pop-up of each mark gives two further tests, with conventional errors and with errors clustered by country-round, and the partial correlation by the rule of Multi100, which converts the conventional test.
+
+Choosing a decision under *Colour by* colours the marks by the option that each specification uses and adds a row for each option under the curve, with a tick at the rank of every specification that uses it, so that an option which pushes results towards one end of the curve shows as a bunched row. Colouring by the adjustment divides the curve into blocks. *Show only* keeps the specifications that use one option, fades the rest, and reports how many are shown and how many of them lie above zero with p < 0.05. The button above the chart downloads the data behind it, with the option codes that `try_spec()` takes as arguments. The share of specifications that agree with the claim describes this set of analyses. It is not the probability that the claim is true, a distinction that [section 6 of the multiverse module](../../companion/multiverse.qmd#sec-reading) explains.
+
+## Reference marks {#reference-marks}
+
+Ten tagged marks come from outside the curve: the published result of OA, tagged OA 2012; the two SCORE reproductions, which rebuilt the data of the paper from the ESS files; the five reanalyses that Multi100 recorded, tagged by the identifiers of the analysts; and the two SCORE replications, which fitted the model to later rounds of the ESS and so come from new data. Each is drawn as an ordinary mark in ink, at the end of a thin line to a tag that holds its pop-up open when clicked, and each is placed by its coefficient in points of distrust per point of concern. The published result is placed by the 0.17 of Table 3 of the paper, the reproductions and the replications by the coefficients that SCORE published, and the five analyses by the course refits on the file that Multi100 gave the analysts, which reproduce four recorded statistics exactly and the fifth to within 0.1%. Each mark is classed by its own test as published or recorded, and all ten are circles.
+
+```{r}
+#| label: tbl-marks
+#| tbl-cap: "The ten reference marks: the statistic as published or recorded, the respondents analysed, the coefficient by which the mark is placed, and the number of specifications on the curve with a larger coefficient. Sources: `data/reference_marks.csv`, `data/analysts5.csv`."
+mark_lab <- c(OA = "OA 2012", SCORE_jp7tr = "SCORE jp7tr", SCORE_65wm6 = "SCORE e48gd",
+              SCORE_1634 = "SCORE 2010", SCORE_65wm6_DAR = "SCORE 2010–18")
+marks |>
+  filter(on_chart) |>
+  mutate(
+    larger = purrr::map_int(b, \(x) sum(curve$b > x + 1e-9)),
+    stat = case_when(
+      is.na(statistic) ~ "SE printed as 0.00",
+      .default = paste(statistic_type, "=", formatC(statistic, format = "fg", digits = 6))
+    )
+  ) |>
+  arrange(desc(b)) |>
+  transmute(
+    Mark = coalesce(mark_lab[id], id),
+    Data = if_else(data == "new", "new rounds", "rounds 1–4"),
+    Statistic = stat,
+    Respondents = big(n),
+    Coefficient = fmt(b),
+    `Larger on the curve` = larger
+  ) |>
+  tt() |>
+  style_tt(j = 4:6, align = "r")
+```
+
+None of the ten is a point of the curve. The paper, the reproductions, N8P2J and 6U3LL fitted the multilevel model of the paper with its country-level variables, and the curve replaces the random intercepts with an intercept for every country-round, which gives almost the same coefficient on the same respondents. Fitted to the `r big(mark("SCORE_jp7tr", "n"))` respondents of the reproduction osf.io/jp7tr, the reference specification comes within 0.001 of its published coefficient, as the [case study](index.qmd#sec-course-rebuild) shows. These marks and the two replications sit between `r fmt(min(marks$b[marks$id %in% c("OA", "SCORE_jp7tr", "SCORE_65wm6", "N8P2J", "6U3LL", "SCORE_1634", "SCORE_65wm6_DAR")]))` and `r fmt(max(marks$b[marks$id %in% c("OA", "SCORE_jp7tr", "SCORE_65wm6", "N8P2J", "6U3LL", "SCORE_1634", "SCORE_65wm6_DAR")]))`, at the upper end of the specifications that hold constant the controls of the paper, which run from `r fmt(bs("paper", "lo"))` to `r fmt(bs("paper", "hi"))`; the remaining differences come from their samples and from how their files code the variables, as the case study explains. FQ1G7 held constant a short list of controls without the evaluations of the economy and of public services, and it sits among the specifications that hold constant outlook and ideology. 456AD and LT39B added satisfaction with the government to their controls, an option off the curve that lowers the coefficient, and LT39B measured concern with a single item, which lowers it further and places it at the very end of the curve.
+
+## What moved the estimate {#shifts}
+
+Every option on the curve can be set beside the first option of its decision on twin specifications, which agree on every other decision, and @fig-shifts summarises what each option does to the estimate. Holding constant the controls of the paper instead of nothing lowers the coefficient by `r fmt(abs(dv("controls", "paper", "shift_mean")))` on average (from `r sgn(dv("controls", "paper", "shift_min"))` to `r sgn(dv("controls", "paper", "shift_max"))` across its `r dv("controls", "paper", "n_pairs")` pairs), and holding constant outlook and ideology by `r fmt(abs(dv("controls", "outlook", "shift_mean")))`, while the demographics barely move it (`r sgn(dv("controls", "demog", "shift_mean"))`). No option of any other decision moves a specification by more than `r fmt(max_other)` points. Distrust of politicians lies `r fmt(abs(dv("outcome", "politicians", "shift_mean")))` below distrust of parliament on average, and the weights, the rule for unanswered items and the comparison within countries move the estimate by less than 0.01 on average. `r if (all(deviations$flips == 0)) "No option moves any specification across the 5% threshold." else "Some options move a specification across the 5% threshold."`
+
+```{r}
+#| label: fig-shifts
+#| fig-cap: "What each option on the curve does to the estimate, against the first option of its decision on twin specifications: the mean shift (point) and the smallest and largest shift (line), in points of distrust per point of concern. Source: `data/menu_deviations.csv`."
+#| fig-alt: "Dot-and-range chart of ten options. The controls of the paper shift the estimate by about −0.14 and outlook and ideology by about −0.08; politicians lie about −0.05 below parliament and the other outcomes about −0.025; the demographics, weights, answered items and country and round effects lie within about 0.01 of zero."
+#| fig-width: 7.5
+#| fig-height: 3.6
+lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
+dec <- \(axis) menu$decision[menu$axis == axis][1]
+deviations |>
+  filter(option != baseline) |>
+  mutate(
+    option_lab = paste0(purrr::map_chr(axis, dec), ": ", purrr::map2_chr(axis, option, lab)),
+    option_lab = reorder(option_lab, -shift_mean),
+    adjustment = axis == "controls"
+  ) |>
+  ggplot(aes(x = shift_mean, y = option_lab, colour = adjustment)) +
+  geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 0.8) +
+  geom_point(size = 2.6) +
+  scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
+  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  coord_cartesian(xlim = c(-0.16, 0.02)) +
+  labs(x = "shift in the estimate (points of distrust per point of concern)", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+Split by decision, the variance of the `r n_spec` estimates falls almost entirely on the adjustment, which carries `r pct(var_share[["controls"]] / 100)` of it, against `r pct(var_share[["outcome"]] / 100)` for the outcome, less than 1% for each of the other decisions, and `r pct(var_share[["Residuals"]] / 100)` for the interactions between decisions. Without controls the estimates run from `r fmt(bs("none", "lo"))` to `r fmt(bs("none", "hi"))`, with the demographics from `r fmt(bs("demog", "lo"))` to `r fmt(bs("demog", "hi"))`, with outlook and ideology from `r fmt(bs("outlook", "lo"))` to `r fmt(bs("outlook", "hi"))`, and with the controls of the paper from `r fmt(bs("paper", "lo"))` to `r fmt(bs("paper", "hi"))`. The four blocks are answers to four readings of the claim rather than four noisy estimates of one quantity: whether the evaluations of the economy and of public services, which carry most of the last step, are common causes, steps on the path or consequences of both attitudes is a question for the causal graph, as the [specification menu](menu.qmd#adjustment) sets out.
+
+## Inference with 16 countries {#inference}
+
+The paper prints a standard error of 0.00 for every coefficient of concern, so its tables give no test statistic, and the SCORE power analysis had to assume the largest error that would round to 0.00, 0.0049. @tbl-inference sets the reference specification under five rules of inference. The coefficient is the same under each, apart from the random-intercept model, which estimates it slightly differently, and only the uncertainty attached to it changes.
+
+```{r}
+#| label: tbl-inference
+#| tbl-cap: "The reference specification (distrust of parliament, the controls of the paper, no weights, every item answered, an intercept for every country-round) under five rules of inference. Source: `data/display_inference.csv`."
+inference |>
+  transmute(
+    Rule = case_when(
+      startsWith(rule, "conventional") ~ "Conventional errors",
+      startsWith(rule, "clustered by country-round") ~ "Clustered by country-round",
+      startsWith(rule, "clustered by country (") ~ "Clustered by country (the curve)",
+      startsWith(rule, "wild") ~ "Wild cluster bootstrap by country",
+      .default = "Random intercepts (multilevel model)"
+    ),
+    Coefficient = fmt(b, 4),
+    SE = if_else(is.na(se), "–", fmt(se, 4)),
+    t = fmt(stat, 1),
+    df = if_else(is.na(df), "–", big(df)),
+    p = if_else(p < 1e-4, "< 0.0001", fmt(p, 4))
+  ) |>
+  tt() |>
+  style_tt(j = 2:6, align = "r")
+```
+
+Conventional errors treat the `r big(ref$n)` respondents as independent pieces of evidence, which gives t = `r fmt(inf("conventional", "stat"), 1)`. The random-intercept model of the paper gives the same t. Its intercepts absorb the differences in the average level of distrust between countries and between country-rounds, but the model still assumes that the association of concern with distrust is the same everywhere and that the respondents of one country-round are otherwise independent, and neither assumption holds. The correlation of concern with distrust of parliament runs from about 0.17 in Italy to 0.38 in Norway, and respondents of the same country share institutions, media and events that the controls do not capture. Errors clustered by country allow for both: they let the residuals of the respondents of one country be related in any way, across all of its rounds, and they are `r fmt(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times the conventional ones at the reference specification, and `r fmt(se_ratio[1], 1)` to `r fmt(se_ratio[2], 1)` times across the curve. Clustering by country-round gives a value in between, because it treats the rounds of one country as independent.
+
+The price of clustering by country is that the evidence on the uncertainty rests on 16 clusters, and with few clusters even clustered errors can be too small. The curve therefore tests each coefficient against a t distribution on 15 degrees of freedom rather than a normal one, and a wild cluster bootstrap checks the result: it rebuilds the distribution of the clustered t under the null hypothesis of no association by multiplying the residuals of whole countries by random weights, 9,999 times, here with the six-point weights that Webb proposed for very few clusters. None of the 9,999 draws reaches the t of the data, so its p-value is below 1/10,000. The clustered t of the curve runs from `r fmt(min(curve$stat), 1)` to `r fmt(max(curve$stat), 1)`, and no rule changes the verdict of any specification. In the [EU-frames case](../eu-frames/multiverse.qmd), whose predictor varies only between country-years, the same few-cluster correction decides whether the reproduced result is significant; here the predictor varies between respondents within every country-round, and the association is strong enough to clear any threshold. The standard error printed as 0.00 hides a clustered error of `r fmt(inf("clustered by country (", "se"), 4)` at the reference specification, `r fmt(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times the conventional error, which itself rounds to 0.00, so a reader of the paper could not judge how far the 16 countries limit the precision of the estimate. The [statistics module](../../companion/stats-methods.qmd#sec-inference) treats inference with few clusters at more length.
+
+## Beside the curve {#beside}
+
+### Options off the curve {#options}
+
+Several options of the menu stay off the curve, because each answers another question, answers this one less well or checks an answer that the curve already holds. @tbl-options fits each of those that a linear model can fit alone, at the reference settings.
+
+```{r}
+#| label: tbl-options
+#| tbl-cap: "The options off the curve that a linear model can fit, each changed alone from the reference specification, with the test of errors clustered by country (model-based for the random intercepts), and the shift from the reference specification. Source: `data/display_options.csv`."
+judgement_txt <- c(kept = "on the curve", other_question = "another question",
+                   weaker_answer = "a weaker answer", check = "a check", unavailable = "not in the data")
+options_d |>
+  left_join(menu |> select(axis, option, label, decision, judgement), by = c("axis", "option")) |>
+  transmute(
+    Decision = decision,
+    Option = label,
+    Judgement = judgement_txt[judgement],
+    Coefficient = fmt(b),
+    Shift = sgn(shift),
+    t = fmt(stat, 1),
+    Respondents = big(n)
+  ) |>
+  tt() |>
+  style_tt(j = 4:7, align = "r")
+```
+
+The single items of concern lower the coefficient most, by about a third, because a single item measures the attitude with more random error than the mean of three, which pulls a coefficient towards zero. Satisfaction with the government lowers it by `r fmt(abs(options_d$shift[options_d$option == "paper_gov"]))`, because it is very nearly an evaluation of the institutions that the outcome asks about. The pooled regression, without intercepts for groups, raises it to `r fmt(options_d$b[options_d$option == "pooled"])`, and its t falls to `r fmt(options_d$stat[options_d$option == "pooled"], 1)`, because the differences between countries add to the association and to the noise around it. Every other option moves the estimate by less than 0.015.
+
+### Leaving out one country {#loo}
+
+With 16 countries, one of them could carry the result. @fig-loo refits the reference specification 16 times, each time without one country.
+
+```{r}
+#| label: fig-loo
+#| fig-cap: "The reference specification refitted without each country in turn, with 95% confidence intervals from errors clustered by the remaining 15 countries (t on 14 df). The dashed line is the estimate on all 16 countries. Source: `data/display_loo.csv`."
+#| fig-alt: "Dot-and-interval chart of 16 rows, one for each country left out. Every estimate lies between about 0.169 and 0.178, close to the dashed line at 0.175, with intervals from about 0.15 to 0.20."
+#| fig-width: 7
+#| fig-height: 3.8
+loo |>
+  mutate(
+    lo = b - qt(0.975, df) * se,
+    hi = b + qt(0.975, df) * se,
+    left_out = reorder(left_out, b)
+  ) |>
+  ggplot(aes(x = b, y = left_out)) +
+  geom_vline(xintercept = ref$b, linetype = "dashed", colour = "#8b1538") +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 0.7, colour = "#1d2733") +
+  geom_point(size = 2.4, colour = "#1d2733") +
+  coord_cartesian(xlim = c(0.12, 0.23)) +
+  labs(x = "points of distrust per point of concern, without the country", y = "country left out") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+The estimate moves only between `r fmt(loo_range$b[1])` (without `r loo_range$left_out[1]`) and `r fmt(loo_range$b[2])` (without `r loo_range$left_out[2]`), so no single country carries the result.
+
+### Between countries {#between}
+
+Every specification of the curve compares respondents within countries. Countries differ as well, and @fig-between sets the mean concern of each country against its mean distrust of parliament.
+
+```{r}
+#| label: fig-between
+#| fig-cap: "Mean concern about immigration and mean distrust of parliament in the 16 countries, averaged over the rounds in which each took part (labels), and in the 60 country-rounds (grey points), among the respondents of the paper, with design weights. Source: `data/display_country_means.csv`."
+#| fig-alt: "Scatter plot of 16 country labels and 60 grey points. Mean concern runs from about 3.9 to 6.6 and mean distrust from about 3.6 to 6.2; the points rise from lower left to upper right, with Greece most concerned and Portugal most distrustful."
+#| fig-width: 7
+#| fig-height: 4.2
+ggplot(means, aes(x = concern, y = distrust_parl)) +
+  geom_point(colour = "grey70", size = 1.6) +
+  geom_text(data = country_avg, aes(label = cntry), fontface = "bold", colour = "#0e3b6a", size = 3.6) +
+  labs(x = "mean concern about immigration (0–10)", y = "mean distrust of parliament (0–10)") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+Across the 60 country-rounds, mean concern and mean distrust of parliament correlate at `r fmt(r_rounds, 2)`. Where citizens worry more about immigration, they also distrust their parliament more, but countries differ in their histories of immigration, in their politics and in the performance of their governments, and any of these can move both means at once. The claim is about respondents, so the curve sets these differences aside, and the pooled regression, which mixes them in, is a weaker answer. The paper itself reads the correlation of national means as supporting evidence (p. 213), and its multilevel model estimates the country-level variables alongside the individual coefficient.
+
+## Robustness and replication {#replication}
+
+Within the original data the claim holds under every defensible analysis that the course can fit. All `r n_spec` specifications are positive and significant, from `r fmt(min(curve$b))` to `r fmt(max(curve$b))` points of distrust per point of concern, and the decisions of the menu change the size of the coefficient and never its sign or its verdict. Two SCORE replications asked the same question of new respondents, in later rounds of the ESS. The replication on round 5 (2010), with 13 of the 16 countries and post-stratification weights, found `r fmt(mark("SCORE_1634", "b"))` on `r big(mark("SCORE_1634", "n"))` respondents (t = `r fmt(mark("SCORE_1634", "statistic"), 2)`), and the replication on rounds 5–9 (2010–2018), with the three-level model, found `r fmt(mark("SCORE_65wm6_DAR", "b"))` on `r big(mark("SCORE_65wm6_DAR", "n"))` (t = `r fmt(mark("SCORE_65wm6_DAR", "statistic"), 2)`). Both met the criterion of SCORE, and both lie within 0.01 of the reproductions of the original model.
+
+A curve shows how much a conclusion depends on the decisions of the analysis, given one sample, and a replication shows whether the same analysis finds the same answer in another. This case has both, unlike the [housing-audit case](../housing/multiverse.qmd#robustness), whose claim survived every analysis of the original data and failed in a new experiment. Neither, however, speaks to the causal reading of the claim. Reverse causation, from distrust to concern, and common causes that no specification holds constant would produce a stable association across specifications and across rounds just as an effect of concern on distrust would, which is why the causal graph of Task 2 asks what a set of controls can and cannot settle.
+
+## Class results {#class-results}
+
+The live chart below shows the results that the class submits, over the curve of `r n_spec` specifications. Pressing *Run Code* runs the `refresh_multiverse()` function, which downloads the latest submissions and draws them over the curve. The marks of the curve stay faint, so that the class results lead, and the reference marks are left to the chart at the top of the page.
+
+Each submission sits at the rank of its specification on the curve and at the coefficient that it reports, and it is classed by looking its specification up in the curve file: a circle if the matching specification has p < 0.05, as all `r n_spec` do, and a cross if it has not. An open green circle is an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result. A filled black circle is a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. A submission whose label names no specification of the curve is not drawn, and a line under the chart counts such submissions. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two submissions share it. Hovering over a mark shows its tag, its specification and its statistics. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your marks in orange, joined in the order in which you submitted them.
+
+```{webr}
+#| label: live-multiverse-setup
+#| include: false
+#| autorun: true
+# Class submissions are served as CSV by a Cloudflare Worker in front of the
+# Google Sheet of the results Form; when the Worker cannot be reached the
+# chart falls back to the committed data/class_results.csv. The Sheet is shared
+# by the cases of the course, so only the rows whose label carries the word
+# "trust" after the tag are read. Base R throughout, apart from ggplot2 and
+# ggiraph, so that participants download nothing else.
+
+# ---- The Worker of the class results: replace this one line for a Form of its own
+worker_url <- "https://class-results.chris-moreh.workers.dev/"
+
+library(ggplot2)
+# ggiraph gives the submissions their hover boxes; when its download is
+# unavailable the chart falls back to a static ggplot
+have_ggiraph <- tryCatch({ library(ggiraph); TRUE }, error = function(e) FALSE)
+plain <- "#1f5fa8"; ink <- "#1d2733"; green <- "#009E73"; orange <- "#E69F00"
+grey_mid <- "#8a929a"; hilite <- "#8b1538"
+tooltip_css <- "background-color:#ffffff;color:#1d2733;border:1px solid #cdd3d9;padding:7px 9px;border-radius:6px;font-size:12px;line-height:1.45;box-shadow:0 2px 10px rgba(20,30,40,0.14);"
+
+# The backdrop is the curve of 192, ranked from the largest coefficient, as on
+# the chart at the top of the page.
+curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
+curve <- curve[order(-curve$b, curve$spec_id), ]   # r-style: keep – base R in webR, dplyr would be a download
+curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p < 0.05)
+axis_codes <- c("outcome", "controls", "weights", "items", "fe")
+curve_key <- do.call(paste, c(unname(as.list(curve[axis_codes])), sep = "|"))
+
+# A trust label, as the submission helpers write it:
+#   explore: [amber-otter-42] trust outcome=parliament controls=paper weights=none items=complete fe=country_round
+# The phase and the tag are read when present. Labels of the other cases
+# carry no "trust" at that place and are left out. The five decisions are
+# key=value pairs in any order; a label that does not name each of them exactly
+# once, or carries anything else, returns NA on every axis and so matches nothing.
+trust_pattern <- "^((explore|declared): )?(\\[([a-z0-9-]{1,24})\\] )?trust( (.*))?$"
+parse_axes <- function(rest) {
+  none <- setNames(rep(NA_character_, length(axis_codes)), axis_codes)
+  pairs <- regmatches(rest, gregexpr("[a-z_]+=[a-z_]+", rest))[[1]]
+  keys <- sub("=.*$", "", pairs)
+  if (length(pairs) != length(axis_codes) || anyDuplicated(keys) > 0 || !setequal(keys, axis_codes))
+    return(none)
+  if (nzchar(trimws(gsub("[a-z_]+=[a-z_]+", "", rest)))) return(none)
+  setNames(sub("^.*=", "", pairs), keys)[axis_codes]
+}
+
+read_clean <- function(path) {
+  d <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE, colClasses = "character")
+  names(d) <- tolower(trimws(names(d)))   # tolerate "B", " spec ", etc.
+  d
+}
+
+# my_tag is the tag that submit_exploration() and report_result() print. It is
+# reduced exactly as .clean_tag() in the submission helpers reduces a nickname
+# (transliterated to ASCII, lower case, single hyphens, at most 24 characters),
+# so that a nickname typed as the participant first wrote it still matches.
+clean_my_tag <- function(x) {
+  if (length(x) == 0 || is.na(x[1])) return("")
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x[1]))))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  gsub("-+$", "", substr(x, 1, 24))
+}
+
+html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
+fmt_num <- function(x, d) sub("^-", "−", formatC(x, format = "f", digits = d))
+fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.3f", p))
+as_num <- function(x) suppressWarnings(as.numeric(x))
+
+# The trust rows of the class CSV, parsed and looked up on the curve. Returns
+# the rows to draw, the number of trust rows, and the number that name no
+# specification of the curve (or carry no coefficient) and are therefore not drawn.
+prepare_class <- function(cls, my_tag = "") {
+  empty <- list(points = NULL, n_trust = 0L, n_off = 0L)
+  if (is.null(cls) || nrow(cls) == 0 || !("spec" %in% names(cls))) return(empty)
+  spec_raw <- trimws(ifelse(is.na(cls$spec), "", cls$spec))
+  m <- regmatches(spec_raw, regexec(trust_pattern, spec_raw))
+  is_trust <- lengths(m) > 0
+  if (!any(is_trust)) return(empty)
+  cls <- cls[is_trust, , drop = FALSE]
+  m <- m[is_trust]
+  n <- nrow(cls)
+  part <- function(k) vapply(m, function(g) g[k], character(1))   # r-style: keep – base R in webR
+  ph <- ifelse(part(3) == "explore", "explored", "declared")
+  tg <- ifelse(nzchar(part(5)), part(5), NA_character_)
+  rest <- part(7)
+  axes <- t(vapply(rest, parse_axes, character(length(axis_codes)), USE.NAMES = FALSE))   # r-style: keep – base R in webR
+  hit <- match(do.call(paste, c(lapply(seq_along(axis_codes), function(j) axes[, j]), sep = "|")),   # r-style: keep – base R in webR
+               curve_key)
+  b <- as_num(cls$b)
+  drawn <- !is.na(hit) & !is.na(b)
+  stat_txt <- function(i) {
+    st <- as_num(cls$t[i])
+    if (is.na(st)) return("")
+    d_f <- if ("df" %in% names(cls)) as_num(cls$df[i]) else NA
+    if (is.na(d_f)) paste0("<br/>t = ", fmt_num(st, 2)) else
+      paste0("<br/>t = ", fmt_num(st, 2), " on ", d_f, " df")
+  }
+  tip <- vapply(seq_len(n), function(i) paste0(   # r-style: keep – base R in webR
+    "<b>submission #", i, " (", ph[i], ")</b>",
+    if (is.na(tg[i])) "" else paste0("<br/>tag: ", tg[i]),
+    "<br/><b>b = ", fmt_num(b[i], 3), " points per point</b>", stat_txt(i),
+    if (is.na(hit[i])) "" else paste0("<br/>on the curve: ", fmt_p(curve$p[hit[i]]),
+                                      if (curve$sig[hit[i]]) " (circle)" else " (cross)"),
+    "<br/>", html_text(rest[i])
+  ), character(1))
+  points <- data.frame(n_lab = paste0("#", seq_len(n)), phase = ph, tag = tg, b = b,
+                       rank = curve$rank[hit], sig = curve$sig[hit], tip = tip,
+                       mine = nzchar(my_tag) & !is.na(tg) & tg == my_tag,
+                       stringsAsFactors = FALSE)[drawn, , drop = FALSE]
+  list(points = points, n_trust = n, n_off = sum(!drawn))
+}
+
+draw_class_chart <- function(cls, my_tag = "") {
+  ylim_lo <- 0; ylim_hi <- 0.4
+  pts <- cls$points
+  p <- ggplot() +
+    annotate("rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, fill = "#a10000", alpha = 0.045) +
+    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
+    geom_point(data = curve, aes(x = rank, y = b), colour = plain,
+               shape = ifelse(curve$sig, 1, 4), alpha = 0.3, size = 2.2, stroke = 0.5) +
+    scale_y_continuous(labels = function(x) sub("^-", "−", format(x, trim = TRUE))) +
+    labs(x = "Specifications of the curve, ranked from the largest coefficient",
+         y = "Points of distrust per point of concern", title = "Class submissions") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(face = "bold", colour = ink),
+          axis.title = element_text(colour = "#4f5b67"),
+          plot.caption = element_text(hjust = 0, size = 9, colour = "#4f5b67"),
+          legend.position = "bottom", panel.grid.minor = element_blank())
+  off_txt <- paste0(cls$n_off, " of ", cls$n_trust,
+                    " submission(s) name no specification of the curve of 192 and are not drawn.")
+  if (is.null(pts) || nrow(pts) == 0) {
+    p <- p + labs(subtitle = if (cls$n_trust == 0) "No submissions yet – press Run Code to refresh"
+                             else "No submission can be placed yet – press Run Code to refresh",
+                  caption = paste0("The curve: circles for p < 0.05 with errors clustered by country.",
+                                   if (cls$n_trust > 0) paste0("\n", off_txt) else ""))
+  } else {
+    sub_txt <- paste(nrow(pts), "class result(s) on the chart")
+    # The marks of the participant whose tag is typed into the live cell, as
+    # larger orange marks joined in the order of submission. They are drawn
+    # first, so that the marks on top keep their hover boxes.
+    if (any(pts$mine)) {
+      # a joining line needs two marks; one alone would print a ggplot notice
+      if (sum(pts$mine) > 1)
+        p <- p + geom_path(data = pts[pts$mine, , drop = FALSE], aes(x = rank, y = b),
+                           colour = orange, linewidth = 0.7, inherit.aes = FALSE)
+      p <- p + geom_point(data = pts[pts$mine, , drop = FALSE], aes(x = rank, y = b),
+                          shape = 1, size = 5.2, colour = orange, stroke = 1.6, inherit.aes = FALSE)
+      sub_txt <- paste0(sub_txt, " · tag ", my_tag, ": ", paste(pts$n_lab[pts$mine], collapse = ", "))
+    } else if (nzchar(my_tag)) {
+      sub_txt <- paste0(sub_txt, " · no mark carries the tag ", my_tag, " yet")
+    }
+    sig_pts <- pts[pts$sig, , drop = FALSE]
+    ns_pts <- pts[!pts$sig, , drop = FALSE]
+    point_layer <- if (have_ggiraph) geom_point_interactive else geom_point
+    point_aes <- if (have_ggiraph) {
+      aes(x = rank, y = b, colour = phase, shape = phase, tooltip = tip, data_id = n_lab)
+    } else {
+      aes(x = rank, y = b, colour = phase, shape = phase)
+    }
+    # submissions landing on the same specification stack their number tags
+    # vertically instead of overprinting
+    vj <- -1.1 - 1.15 * (ave(seq_len(nrow(pts)), pts$rank, FUN = seq_along) - 1)
+    p <- p +
+      point_layer(data = sig_pts, mapping = point_aes, size = 3.2, stroke = 1.2,
+                  show.legend = TRUE, inherit.aes = FALSE) +
+      geom_text(data = pts, aes(x = rank, y = b, label = n_lab), colour = ink, size = 2.6,
+                vjust = vj, inherit.aes = FALSE) +
+      scale_colour_manual(values = c(explored = green, declared = ink),
+                          limits = c("explored", "declared"),
+                          labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
+                          drop = FALSE) +
+      scale_shape_manual(values = c(explored = 1, declared = 16),
+                         limits = c("explored", "declared"),
+                         labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
+                         drop = FALSE) +
+      labs(subtitle = sub_txt,
+           caption = paste0("Each submission sits at the rank of its specification and at the coefficient that it ",
+                            "reports. Open circles: explored; filled circles: declared.\n", off_txt))
+    # a specification with p >= 0.05 is drawn as a cross, whatever the phase
+    if (nrow(ns_pts) > 0)
+      p <- p + point_layer(data = ns_pts, mapping = point_aes, shape = 4, size = 3.2, stroke = 1.2,
+                           show.legend = FALSE, inherit.aes = FALSE)
+    ylim_hi <- max(ylim_hi, max(pts$b) + 0.02)
+    ylim_lo <- min(ylim_lo, min(pts$b) - 0.02)
+  }
+  p <- p + coord_cartesian(xlim = c(1, nrow(curve)), ylim = c(ylim_lo, ylim_hi))
+  if (have_ggiraph) {
+    girafe(ggobj = p, width_svg = 9, height_svg = 5.6,
+           options = list(
+             opts_tooltip(css = tooltip_css, opacity = 1),
+             opts_hover(css = girafe_css(css = paste0("stroke:", hilite, ";stroke-width:2px;"))),
+             opts_hover_inv(css = "opacity:0.35;"),
+             opts_sizing(rescale = TRUE, width = 1),
+             opts_toolbar(saveaspng = FALSE)
+           ))
+  } else {
+    p
+  }
+}
+
+refresh_multiverse <- function(my_tag = "") {
+  my_tag <- clean_my_tag(my_tag)
+  cls <- NULL
+  if (nzchar(worker_url)) {
+    cls <- tryCatch({
+      download.file(paste0(worker_url, "?_=", as.numeric(Sys.time())), "class.csv", quiet = TRUE)
+      read_clean("class.csv")
+    }, error = function(e) NULL)
+  }
+  if (is.null(cls) && file.exists("data/class_results.csv")) {
+    cls <- tryCatch(read_clean("data/class_results.csv"), error = function(e) NULL)
+  }
+  draw_class_chart(prepare_class(cls, my_tag), my_tag)
+}
+```
+
+```{webr}
+#| label: live-multiverse
+#| autorun: true
+#| fig-width: 9
+#| fig-height: 5.6
+#| caption: "Press Run Code to refresh – pull the latest class results"
+my_tag <- ""   # your tag, e.g. "amber-otter-42", highlights your own marks
+refresh_multiverse(my_tag)
+```
+
+## Facilitator notes {#facilitator}
+
+Submissions go to a Google Form, land in a linked Google Sheet and are served as CSV, with permissive CORS headers, by a small Cloudflare Worker. Until a Form of its own is created, the immigration-and-trust case shares the Form, the Sheet and the Worker that were set up for the EU-frames case. The cell above fetches the CSV in the browser, keeps only the rows whose free-text spec field carries the word `trust` after the tag, and falls back to the committed `data/class_results.csv`, which holds only the header row, when the Worker cannot be reached. The spec field carries the phase (`explore:` or `declared:`), the tag of the participant in square brackets, the word `trust` and the five decisions of the curve as `key=value` pairs, for example `explore: [amber-otter-42] trust outcome=parliament controls=paper weights=none items=complete fe=country_round`. Each submission is placed by the coefficient `b` that it carries, in points of distrust per point of concern, at the rank of its specification, and classed by the p-value of the matching row of `data/spec_curve.csv`. A trust label that does not name each of the five decisions exactly once, or that names an option off the curve, matches no row and is counted under the chart without being drawn. The housing-audit chart ignores trust rows, but the EU-frames chart reads every row of the shared Sheet and would draw them as unclassed diamonds, so clear the data rows of the Sheet before a delivery of any case. Replacing the Form means editing the `worker_url` line of the cell above and the configuration blocks of the workspace helpers and the browser lab; the setup note `facilitator/live-results-setup.md` in the repository lists the steps.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::
