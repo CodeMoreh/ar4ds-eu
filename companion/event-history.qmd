@@ -1,0 +1,265 @@
+---
+title: "Event-history analysis"
+subtitle: "Censoring, the life table, person-period data and discrete-time models"
+bibliography: [../references.bib, ../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(readr)
+library(purrr)
+library(ggplot2)
+library(tinytable)
+source("../R/cohabitation/_tools.R")
+
+# The case numbers, strata and clusters are codes, so they are read as text
+unions <- read_csv("../cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
+                   col_types = cols(caseid = col_character(), stratum = col_character(),
+                                    psu = col_character()))
+
+# Fixed decimals and a true minus sign, for every number on the page
+fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+```
+
+This module of the [companion curriculum](index.qmd) works on the cohabitation case. The case takes a claim of the original authors (OAs) of an article in *Demography*, that American "cohabitors have increasingly become less likely to progress to marriage" [@KuoRaley2016DivergingPatternsUnion], which compares the first cohabitations of women interviewed by the National Survey of Family Growth (NSFG) in 1995 and in 2006–2010, and the [case study](../cases/cohabitation/index.qmd) describes it. The module builds the methods of that comparison from the beginning: why the time that each union was observed matters, the life table, the person-period data on which the paper fits its models, the discrete-time logit and complementary log-log models, separation as a competing outcome, and what a comparison of periods can and cannot separate. Every number is computed when the page is built, from the union file of the course in `cases/cohabitation/data/`, and the code is shown. The estimator of the course, `fit_spec()` in `R/cohabitation/_tools.R`, does the same arithmetic for every specification of the curve of the claim, with the weights and the design of the surveys.
+
+## 1. Time to an event and censoring {#sec-time}
+
+Event-history analysis asks how long it takes until something happens, and how that time differs between groups. Here the event is a marriage of the partners of a cohabiting union, and the clock starts in the month in which they moved in. Each woman of the union file reported when the union began and, if it had ended by the interview, when and how: in a marriage or in a separation. `spec_unions()` keeps the unions that the paper analyses, the first cohabitations that came before any marriage, begun in the five years before the interview (and, in the later survey, from 2005), and lasting at least a month.
+
+```{r}
+#| label: unions
+paper <- spec_unions(unions) |>
+  mutate(cohort = if_else(later == 1, "2005–2010", "1990–1995"))
+
+count(paper, cohort, outcome)
+
+paper |>
+  select(cohort, caseid, cm_start, cm_end, duration, outcome) |>
+  slice_head(n = 3, by = outcome)
+```
+
+`cm_start` and `cm_end` are century months, the months counted from January 1900, and `duration` is the number of months between them. A union that was still intact at the interview ends there, at the interview, and its outcome is not yet known: the couple might marry the next month, separate in a year, or stay as they are. Such a union is **censored**, more precisely right-censored, because the end of the observation cuts off the time at which its event might come. Censoring is not a flaw of these data. It is what every survey of unions in progress looks like, and in the cohorts of the paper `r pct(mean(paper$outcome[paper$cohort == "1990–1995"] == "intact"), 0)` and `r pct(mean(paper$outcome[paper$cohort == "2005–2010"] == "intact"), 0)` of the unions were censored.
+
+The simplest comparison, the share of unions that had become a marriage by the interview, mixes the event with the time that each union was observed. @tbl-censoring splits the unions by how long before the interview they began.
+
+```{r}
+#| label: tbl-censoring
+#| tbl-cap: "The share of unions that had become a marriage, or were still intact, by the interview, by the number of years between the start of the union and the interview (unweighted). Source: `cases/cohabitation/data/cohab_unions.csv`."
+paper |>
+  mutate(years = ceiling(since_start / 12)) |>
+  summarise(unions = n(), married = mean(outcome == "marriage"), intact = mean(outcome == "intact"),
+            .by = c(cohort, years)) |>
+  arrange(cohort, years) |>
+  transmute(Cohort = cohort, `Years before the interview` = as.character(years), Unions = big(unions),
+            `Married by the interview` = pct(married), `Still intact` = pct(intact)) |>
+  tt() |>
+  style_tt(j = 2:5, align = "r")
+```
+
+In both cohorts the share married rises with the time that a union had to become a marriage, from about one in seven or one in sixteen among the unions begun in the last year before the interview to one half or one third among those begun four to five years before. Two cohorts with the same behaviour but different mixes of recent and older unions would differ in this share, which is why the menu of the case treats it as a weaker answer. The methods below compare the cohorts month by month, so that each union counts for the time in which it was observed, and no longer.
+
+## 2. The life table {#sec-lifetable}
+
+A life table follows a cohort of unions through time. For each month since the start, it counts the unions still intact at the start of the month, the unions at risk, and the share of them that married or separated in it. That share is the **hazard**, the chance of the event in a month for a union that has not yet had it, and demographers also call it the transition rate. A censored union stays in the count for every month in which it was observed and leaves after its last one, so the table uses all the information that it holds without pretending to know its outcome.
+
+The table needs one row for every union and every month in which it was at risk, with the outcome of the union in its last month. `expand_grid()` repeats each union for the months 1 to 61 and keeps the months up to its end.
+
+```{r}
+#| label: life-table
+at_risk <- paper |>
+  expand_grid(month = 1:61) |>
+  filter(month <= duration + 1) |>
+  mutate(event = if_else(month == duration + 1, outcome, "intact"))
+
+life <- at_risk |>
+  summarise(
+    at_risk = sum(weight),
+    h_marriage = sum(weight * (event == "marriage")) / at_risk,
+    h_separation = sum(weight * (event == "separation")) / at_risk,
+    .by = c(cohort, month)
+  ) |>
+  arrange(cohort, month) |>
+  mutate(
+    cohabiting = cumprod(1 - h_marriage - h_separation),
+    married = cumsum(lag(cohabiting, default = 1) * h_marriage),
+    separated = cumsum(lag(cohabiting, default = 1) * h_separation),
+    married_ignoring_separation = 1 - cumprod(1 - h_marriage),
+    .by = cohort
+  )
+
+life |>
+  filter(month %in% c(12, 36, 60)) |>
+  select(cohort, month, h_marriage, h_separation, cohabiting, married, separated)
+lt <- \(cohort, month, col) life[[col]][life$cohort == cohort & life$month == month]
+```
+
+The month in which a couple moved in is month 1, and a union that ended in a marriage in its second month has its event in month 2. The weights of the surveys make the shares describe the population of women whom each survey represents. `cohabiting` is the share of unions still intact at the end of each month, the product of the shares that came through each month without either event; `married` adds up, month by month, the unions that married out of those still intact. By the end of the third year `r pct(lt("1990–1995", 36, "married"))` of the unions of 1990–1995 had become a marriage and `r pct(lt("1990–1995", 36, "separated"))` had dissolved, against `r pct(lt("2005–2010", 36, "married"))` and `r pct(lt("2005–2010", 36, "separated"))` of the unions of 2005–2010. The paper quotes 41% and 24% married within three years from a table that it did not publish. @fig-life draws the two cohorts.
+
+```{r}
+#| label: fig-life
+#| fig-cap: "The weighted shares of first premarital cohabitations that had become a marriage and that had dissolved, by the month since the couple moved in, for the unions begun in 1990–1995 and in 2005–2010. Source: `cases/cohabitation/data/cohab_unions.csv`."
+#| fig-alt: "Two panels of step lines. In the marriage panel the unions of 1990–1995 rise to about 45% by month 36 and those of 2005–2010 to about 29%; in the separation panel the unions of 2005–2010 lie above those of 1990–1995, at about 46% against 38% by month 36."
+#| fig-width: 7.5
+#| fig-height: 3.4
+life |>
+  select(cohort, month, married, separated) |>
+  pivot_longer(c(married, separated), names_to = "outcome", values_to = "share") |>
+  mutate(outcome = if_else(outcome == "married", "Became a marriage", "Dissolved")) |>
+  ggplot(aes(x = month, y = share, colour = cohort)) +
+  geom_step(linewidth = 0.9) +
+  facet_wrap(~outcome) +
+  scale_colour_manual(values = c(`1990–1995` = "#0e3b6a", `2005–2010` = "#8b1538"), name = NULL) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(x = "months since the couple moved in", y = "share of unions") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top")
+```
+
+Marriage and separation are competing events: a couple who separated can no longer marry each other. The column `married_ignoring_separation` shows what happens when the separations are treated like censored unions, as if the separated couples might still have married. It gives `r pct(lt("1990–1995", 36, "married_ignoring_separation"))` married within three years for the unions of 1990–1995, against `r pct(lt("1990–1995", 36, "married"))` when separation is counted as the competing event that it is. One minus a survival curve in which the competing event is censored describes a world without separations, and the share of unions that became a marriage in the world that existed needs both hazards, which is what the table above computes.
+
+## 3. Person-period data {#sec-person-period}
+
+The table of section 2, one row for every union and every month in which it was at risk, is **person-period data**, here person-months. The course estimator builds it with `person_months()`, which does what the code above did, with the outcome of each month in a column `y`.
+
+```{r}
+#| label: person-months
+months <- person_months(paper) |>
+  mutate(marry = as.integer(y == "marriage"), year_of_union = pmin(ceiling(month / 12), 5))
+
+# A union of 1995 that became a marriage in its third month
+months |>
+  filter(cycle == "1995", outcome == "marriage", duration == 2) |>
+  filter(caseid == first(caseid)) |>
+  select(cycle, caseid, month, y)
+
+nrow(months)
+count(months, cohort, y)
+```
+
+Each union contributes as many rows as the months in which it could end: a union that married in its third month gives three rows, two in which nothing happened and one with the marriage, and a union still intact after twenty months of observation gives twenty rows, none with an event. The `r big(nrow(paper))` unions of the paper become `r big(nrow(months))` person-months, of which `r sum(months$marry)` record a marriage. Censoring needs no special treatment in this layout: a censored union simply has no row with an event. The rows of one union belong to one couple, so they are not independent observations, and a model on them is a model of the monthly chance, not a sample of `r big(nrow(months))` people.
+
+That last point is where a test on the rows goes wrong. The share of person-month rows that record a marriage is a crude version of the monthly chance, but a test of two proportions on the rows treats every month as an independent draw, ignores how the chance changes with the time since the start, and leaves out the design of the survey. Analyst 5X3KG of Multi100 ran exactly that test, on a file whose 1995 rows were broken, and the [case study](../cases/cohabitation/index.qmd#sec-1995) tells that story.
+
+## 4. The discrete-time logit {#sec-logit}
+
+A **discrete-time event-history model** is a regression of the monthly outcome on the person-months. The logit version models the log odds that a couple marries in a month, given that they were still together at its start, as a sum of a baseline that depends on the time since the start and of the terms of interest [@Allison1982DiscreteTimeMethodsEvent]. A month in which the couple separated counts as a month without a marriage, after which the union leaves the risk set. The baseline is a choice of the analyst, and @tbl-logit fits the coefficient of the later cohort under three of them, without weights, beside a logit of having married by the interview on one row per union.
+
+```{r}
+#| label: logit
+fits <- list(
+  "No term for time" = glm(marry ~ later, family = binomial(), data = months),
+  "Months since the start, a straight line" = glm(marry ~ later + month, family = binomial(), data = months),
+  "A baseline for each year of the union" = glm(marry ~ later + factor(year_of_union), family = binomial(),
+                                                 data = months)
+)
+per_union <- glm(I(outcome == "marriage") ~ later, family = binomial(), data = paper)
+yearly <- coef(fits[[3]])
+```
+
+```{r}
+#| label: tbl-logit
+#| tbl-cap: "The coefficient of the later cohort in logits of marrying in the month on the person-months, under three baselines for the time since the start, and in a logit of having married by the interview on one row per union, without weights. Source: `cases/cohabitation/data/cohab_unions.csv`."
+#| echo: false
+tibble(
+  Model = c(paste("Person-months:", tolower(names(fits))), "One row per union: married by the interview"),
+  b = c(map_dbl(fits, \(m) coef(m)[["later"]]), coef(per_union)[["later"]])
+) |>
+  transmute(Model, Coefficient = fmt(b), `Odds ratio` = fmt(exp(b), 2)) |>
+  tt() |>
+  style_tt(j = 2:3, align = "r")
+```
+
+On the person-months the three baselines give almost the same coefficient, about `r fmt(coef(fits[[2]])[["later"]], 2)`: the odds that a couple of 2005–2010 married in a given month were less than half those of a couple of 1990–1995. The yearly baseline shows how the chance moves over the life of a union. Its coefficients for years 2 to 5 are `r paste(fmt(yearly[3:6], 2), collapse = ", ")` against the first year, so the monthly chance stayed roughly level for four years and fell in the fifth, which only the longest unions of the window reach. Because the two cohorts had similar mixes of union lengths, leaving out the time term barely matters here, but the assumption that the chance is the same in every month of a union is a strong one in general, and the menu treats it as a weaker answer. The logit on one row per union, `r fmt(coef(per_union)[["later"]], 2)`, answers another question, about the shares married by the interview, whose dependence on the time observed section 1 showed.
+
+## 5. The complementary log-log model {#sec-cloglog}
+
+Many demographers model the time to an event with a proportional hazards model, in which the covariates multiply a baseline hazard that is the same shape for everyone. When time is measured in whole months, as in a survey, the version of that model for grouped time is a binary regression of the monthly outcome with the complementary log-log link, $\log(-\log(1 - h))$, where $h$ is the monthly hazard [@Allison1982DiscreteTimeMethodsEvent]. Its coefficients are logs of hazard ratios, the ratio of the monthly rates of marrying in the two cohorts.
+
+```{r}
+#| label: cloglog
+cloglog <- glm(marry ~ later + month, family = binomial(link = "cloglog"), data = months)
+c(logit = coef(fits[[2]])[["later"]], cloglog = coef(cloglog)[["later"]])
+exp(c(logit = coef(fits[[2]])[["later"]], cloglog = coef(cloglog)[["later"]]))
+```
+
+The two coefficients differ by less than 0.01, `r fmt(coef(fits[[2]])[["later"]])` and `r fmt(coef(cloglog)[["later"]])`. When the monthly chance of an event is small, an odds of $h / (1 - h)$ is almost $h$, and a ratio of odds is almost a ratio of rates; here the chance of marrying is about `r pct(mean(months$marry), 1)` a month. With events that are common in each period, such as transitions measured in years, the two links part, and the choice between them is a choice between a ratio of odds and a ratio of rates. The curve of the case keeps both, beside the multinomial logit of the paper.
+
+## 6. Competing risks with a multinomial logit {#sec-competing}
+
+A union can end in two ways, and the logit of section 4 treats a separation only as the end of the time at risk of marrying. The paper models both transitions at once, with a **multinomial logit** of the three outcomes of a month (staying together, marrying, separating), staying together as the reference. Each outcome has its own equation, and each coefficient is the log of a ratio of the chance of that transition to the chance of staying together. In the language of event-history analysis these are cause-specific hazards, one for each competing risk.
+
+```{r}
+#| label: multinomial
+competing <- nnet::multinom(factor(y, levels = c("intact", "marriage", "separation")) ~ later + month,
+                            data = months, trace = FALSE)
+coef(competing)
+```
+
+The coefficient of the later cohort in the equation for marriage, `r fmt(coef(competing)["marriage", "later"])`, is close to that of the logit, `r fmt(coef(fits[[2]])[["later"]])`, because a separation is rare in any one month and the logit already took a separated couple out of the risk set. The equation for separation adds what the logit cannot say: the chance of separating rather than staying together differed little between the cohorts (`r fmt(coef(competing)["separation", "later"])` on the log scale, a ratio of `r fmt(exp(coef(competing)["separation", "later"]), 2)`), so the fall in marriage did not come with a rise in separation of the same size. Together the two equations give the cumulative shares of section 2, in which the later cohort ends up with fewer marriages and more separations because more of its unions were still at risk of separating when the earlier cohort would already have married.
+
+The course estimator fits the same model with the weights and the controls of the paper, and with errors that follow the strata and clusters of both surveys. Without the interaction of race-ethnicity and period that the published model holds, this is the reference specification of the curve.
+
+```{r}
+#| label: course-estimator
+fit_spec(unions)[, c("b", "se", "stat", "df", "ratio", "n", "n_unions")]
+fit_model(unions)$coef[c("later", "month"), ]
+```
+
+## 7. Period and cohort {#sec-period-cohort}
+
+The variable that Table 2 of the paper calls "Period" marks the cohort of a union, the years in which it began, and the text speaks of "cohabiting cohorts". A comparison of cohorts of unions can be confused with a comparison of periods, the calendar months in which the unions were at risk, and demographers distinguish the two. The cohort answers who formed unions when, and the period answers what was going on in the world, a recession or a change in the law, when the couples did or did not marry. Within the person-months, the calendar month is the month in which the union began plus the months since the start, minus one:
+
+```{r}
+#| label: period-cohort
+months <- months |>
+  mutate(calendar = cm_start + month - 1)
+
+identical(months$calendar - months$cm_start - months$month, rep(-1, nrow(months)))
+coef(glm(marry ~ month + cm_start + calendar, family = binomial(), data = months))
+```
+
+Because the three clocks add up exactly, a model can hold only two of them as straight lines, and `glm()` drops the third, as the `NA` shows. This is the identification problem of age, period and cohort models in another guise: the time since the start plays the part of age, the start month the part of the cohort, and the calendar month the part of the period. In the two surveys of the paper the problem goes deeper, because each survey observes only the five years before its interview, so the cohort of 1990–1995 was at risk only in the early 1990s and the cohort of 2005–2010 only in the late 2000s. The coefficient of the later cohort is at once a difference between cohorts and a difference between periods, and these data cannot separate the two. The claim speaks of cohabitors who "have increasingly become less likely" to marry, which can be read either way.
+
+More surveys do not remove the problem, but they do show whether the change continued. @tbl-surveys counts the person-months of every survey of the union file, each with the unions begun in the five years before its interview.
+
+```{r}
+#| label: tbl-surveys
+#| tbl-cap: "The person-months of each NSFG survey, with the unions begun in the five years before its interview, and the weighted monthly chance of marrying. Source: `cases/cohabitation/data/cohab_unions.csv`."
+unions |>
+  filter(in_window) |>
+  person_months() |>
+  summarise(
+    Unions = n_distinct(caseid),
+    Begun = paste0(min(year_start), "–", max(year_start)),
+    `Person-months` = n(),
+    Marriages = sum(y == "marriage"),
+    `Monthly chance of marrying` = weighted.mean(y == "marriage", weight),
+    .by = cycle
+  ) |>
+  mutate(cycle = c(`1995` = "1995", `2002` = "2002", `2006-10` = "2006–2010", `2011-13` = "2011–2013",
+                   `2013-15` = "2013–2015")[cycle],
+         across(c(Unions, `Person-months`, Marriages), big),
+         `Monthly chance of marrying` = pct(`Monthly chance of marrying`, 2)) |>
+  rename(Survey = cycle) |>
+  tt() |>
+  style_tt(j = 3:6, align = "r")
+```
+
+The monthly chance of marrying was highest among the unions of the early 1990s and lower in every later survey, with the steepest fall between the 1995 survey and the 2002 one. The cohorts of the later surveys overlap in their years, so the rows are not independent comparisons. The [multiverse page](../cases/cohabitation/multiverse.qmd#sec-surveys) fits the model of the course to each pair of surveys, which is how the case asks whether the decline replicates on new cohorts.
+
+## Try it
+
+1. Draw the life table of section 2 separately for women with and without a bachelor's degree. The paper finds the decline among cohabitors without a degree and not among graduates.
+2. Replace the straight line in the months of section 4 with a straight line and its square, and compare the coefficient of the later cohort with those of @tbl-logit.
+3. Fit the complementary log-log model of section 5 with the weights of the surveys (`weights = weight`, after scaling them to a mean of one) and compare its coefficient with the unweighted one. `fit_spec(unions, adjust = "none", model = "cloglog")` fits the same weighted model with errors that follow the design.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

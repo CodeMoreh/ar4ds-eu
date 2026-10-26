@@ -1,0 +1,597 @@
+---
+title: "Multiverse"
+subtitle: "The curve of the claim and the class results"
+engine: knitr
+format:
+  live-html:
+    toc: true
+    include-after-body: ../../_includes/track-choice.html
+    webr:
+      packages:
+        - ggplot2
+        - ggiraph
+resources:
+  - data/spec_curve.csv
+  - data/class_results.csv
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+{{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{r}
+#| label: setup
+#| include: false
+# The build-time chart is drawn by assets/chart/multiverse.js from the payload
+# built in R/cohabitation/_chart_multiverse.R; the live class chart further
+# down runs in the browser through webR. Every number in the prose is read
+# from the data files here.
+source("../../R/cohabitation/_chart_multiverse.R")
+library(ggplot2)
+library(tinytable)
+
+read_data <- \(f) readr::read_csv(file.path("data", f), show_col_types = FALSE)
+curve      <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                              col_types = readr::cols(stat_type = readr::col_character()))
+menu       <- read_data("menu_options.csv")
+marks      <- read_data("reference_marks.csv")
+analysts   <- read_data("analysts5.csv")
+deviations <- read_data("menu_deviations.csv")
+# a column that holds only "t" would be read as logical without its type
+options_d  <- readr::read_csv("data/display_options.csv", show_col_types = FALSE,
+                              col_types = readr::cols(stat_type = readr::col_character()))
+inference  <- read_data("display_inference.csv")
+lifetable  <- read_data("display_lifetable.csv")
+shares     <- read_data("display_shares.csv")
+subgroups  <- read_data("display_subgroups.csv")
+
+# Fixed decimals and a true minus sign; signed shifts carry a plus sign
+fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+                     .default = paste("p =", fmt(p, 3)))
+
+n_spec <- nrow(curve)
+ref <- curve |> filter(is_reference)
+n_options <- purrr::map_int(mv_axes$axis, \(a) n_distinct(curve[[a]]))
+dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
+mark <- \(id, col) marks[[col]][marks$mark == id]
+an <- \(id, col) analysts[[col]][analysts$id == id]
+opt <- \(changed, option, col) options_d[[col]][options_d$changed == changed & options_d$option == option]
+inf <- \(rule, col) inference[[col]][inference$errors == rule]
+sh <- \(cohort, type, group, col) shares[[col]][shares$cohort == cohort & shares$group_type == type & shares$group == group]
+sg <- \(model, group, col) subgroups[[col]][subgroups$model == model & subgroups$group == group]
+oa_rank <- sum(curve$b < mark("OA", "b") - 1e-9)
+
+# Share of the variance of the 144 estimates carried by each decision, from the
+# sums of squares of a main-effects model; the residual holds the interactions
+variance <- anova(lm(b ~ cohorts + horizon + adjust + weights + time + model, data = curve))
+var_share <- setNames(100 * variance$`Sum Sq` / sum(variance$`Sum Sq`), rownames(variance))
+by_window <- curve |> summarise(lo = min(b), hi = max(b), mean = mean(b), .by = cohorts)
+bw <- \(w, col) by_window[[col]][by_window$cohorts == w]
+lt36 <- lifetable |> filter(group_type == "all", month == 36)
+lt <- \(cohort, col) lt36[[col]][lt36$cohort == cohort]
+```
+
+This page holds the curve of the claim of the cohabitation case and the live chart of the class results. The claim, in the wording that SCORE and Multi100 took from the paper of the original authors (OAs) [@KuoRaley2016DivergingPatternsUnion], is that "cohabitors have increasingly become less likely to progress to marriage". The curve holds every specification that the [specification menu](menu.qmd) keeps for this claim, `r n_spec` in all, each fitted on the first premarital cohabitations that the course rebuilt from the National Survey of Family Growth (NSFG) of 1995 and of 2006–2010. A specification is one complete set of answers to the decisions of an analysis. Six decisions vary on the curve: the cohorts compared (the window of the paper, or the same five-year window in both surveys), the time frame (every observed month, or the first three years of each union), the adjustment (none, the age at the start, or age with race-ethnicity and education), the weights (the survey weights, or none), the time since the start (a straight line in the months, or a separate baseline for each year of the union) and the model (a multinomial logit, a logit or a complementary log-log model), which gives `r paste(n_options, collapse = " × ")` = `r n_spec` specifications. Every specification keeps women aged 15–44 and their first cohabitation that came before any marriage, takes the union histories rebuilt from the dates of the NSFG, codes education as the paper does, leaves out unions that lasted less than a month, analyses person-months, tests with errors that follow the design of both surveys and reports the coefficient on the log scale. The [decision map](map.qmd) sets out every decision, including the options that are not on the curve, with the reason for each.
+
+```{r}
+#| label: chart-claim
+#| output: asis
+notes_claim <- paste(
+  "Each mark is one specification: a circle for p &lt; 0.05 and a cross for p &ge; 0.05, with design-based errors that follow the strata and clusters of both surveys.",
+  sprintf("All %d specifications are circles.", n_spec),
+  "The tags mark the published result of the original authors (OAs 2016), which is the change for non-Hispanic white women in a model with an interaction of race-ethnicity and period, and the one Multi100 analysis whose estimate is on the scale of the curve (456AP), which compares NSFG 2002 with 2013–2015 on the file that SCORE built.",
+  "Click or tap a tag to hold its details open, and click again to release it.",
+  "<i>Colour by</i> colours the marks by one decision and adds rows under the curve that show where the specifications using each option fall in the ranking;",
+  "<i>Show only</i> keeps the specifications that use one option and fades the rest.",
+  "Hover over or tap a mark for its details, or focus the chart and use the arrow keys."
+)
+src_claim <- paste(
+  'Data: <a href="data/spec_curve_codebook.html">data/spec_curve.csv</a> and',
+  '<a href="data/reference_marks_codebook.html">data/reference_marks.csv</a>, with their codebooks.'
+)
+cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+  id = "mv-claim",
+  payload = mv_payload(curve, menu, marks, analysts),
+  title = "Specification curve of the claim",
+  sub = sprintf("%d specifications, with the published result and the analysis of 456AP", n_spec),
+  notes = notes_claim, src = src_claim
+))
+```
+
+All `r n_spec` specifications lie below zero, in the direction of the claim, and all `r sum(curve$p < 0.05)` have p < 0.05 with design-based errors, so every mark on the chart is a circle and the shaded band above zero is empty. The estimates run from `r fmt(min(curve$b))` to `r fmt(max(curve$b))` on the log scale, which means that the cohabitors of the later cohort married at `r fmt(min(curve$ratio), 2)` to `r fmt(max(curve$ratio), 2)` times the monthly chance of those of the earlier one. The reference specification, the model of the paper without its interaction of race-ethnicity and period, gives `r fmt(ref$b)` (SE `r fmt(ref$se)`, t = `r fmt(ref$stat, 2)` on `r ref$df` df), a ratio of `r fmt(ref$ratio, 2)`: in any month of the first five years, a couple of 2005–2010 was about half as likely to marry as a couple of 1990–1995 who were alike in age, race-ethnicity and education.
+
+## Reading the curve {#reading}
+
+Each mark is one specification, and the marks are ranked by their estimate, from the largest decline on the left to the smallest on the right. The estimate is the coefficient of the later cohort in a discrete-time model of marriage, fitted to one row for every month in which a union could end: the log of the ratio of the monthly chance that a cohabiting couple of 2005–2010 married to that of a couple of 1990–1995, with the other terms of the specification held constant. The chance is an odds for the logit, the chance of marrying rather than staying together for the multinomial logit and a rate for the complementary log-log model, and with chances of one or two per cent a month the three nearly coincide. This is the scale of the −0.683 that the paper reports. A value below zero means that the later cohort married less, the direction of the claim, and the shaded band above zero would hold the results that run against it. The [specification menu](menu.qmd#person-months) explains person-months and the discrete-time model, and the [event-history module](../../companion/event-history.qmd) works through them.
+
+The shape of a mark gives its class at the 5% level, an open circle for p < 0.05 and a cross for p ≥ 0.05. The p-value comes from errors that follow the design of the two surveys: the NSFG sampled clusters of households within strata, so women of one cluster resemble one another more than women drawn at random would, and the months of one union are not independent observations either. The test is a t on the clusters minus the strata minus the coefficients plus one, `r min(curve$df)` to `r max(curve$df)` degrees of freedom across the curve. On this curve the design-based t runs from `r fmt(min(curve$stat), 2)` to `r fmt(max(curve$stat), 2)`, so that every specification clears the threshold by a wide margin and the shape carries no information; what varies is the size of the decline. The pop-up of each mark gives the ratio of monthly chances, the person-months, unions and marriages analysed, two further tests, with errors clustered by woman and with conventional errors, and the partial correlation by the rule of Multi100.
+
+Choosing a decision under *Colour by* colours the marks by the option that each specification uses and adds a row for each option under the curve, with a tick at the rank of every specification that uses it, so that an option which pushes results towards one end of the curve shows as a bunched row. Colouring by the cohorts compared divides the curve into two blocks. *Show only* keeps the specifications that use one option, fades the rest, and reports how many are shown and how many of them lie below zero with p < 0.05. The button above the chart downloads the data behind it, with the option codes that `try_spec()` takes as arguments. The share of specifications that agree with the claim describes this set of analyses. It is not the probability that the claim is true, a distinction that [section 6 of the multiverse module](../../companion/multiverse.qmd#sec-reading) explains.
+
+## Reference marks {#reference-marks}
+
+Two tagged marks come from outside the curve. The published result, tagged OAs 2016, is the coefficient of the period 2005–2010 in Model 2 of Table 2 of the paper, `r fmt(mark("OA", "b"))` (SE `r fmt(mark("OA", "se"), 2)`), the value that Multi100 recorded for the claim. Model 2 holds an interaction of race-ethnicity and period, and beside such an interaction the coefficient of the period is the change for the reference group alone, non-Hispanic white women. It therefore answers a narrower question than the curve, which estimates the change for all cohabitors, and it sits among the specifications with the smallest declines: `r oa_rank` of the `r n_spec` lie further below zero. The course refit of Model 2 on the rebuilt unions gives `r fmt(mark("OA_refit", "b"))` (SE `r fmt(mark("OA_refit", "se"))`), and the same model without the interaction, the reference specification, gives `r fmt(ref$b)`, as the [case study](index.qmd#sec-result) explains.
+
+The second mark, 456AP, is the one Multi100 analysis whose estimate is a coefficient on the scale of the curve: a multinomial logit on the person-months of NSFG 2002 against those of 2013–2015, on the file that SCORE built, without weights and without a term for the time since the start, `r fmt(mark("456AP", "b"))` (z = `r fmt(mark("456AP", "stat"), 2)`). The analyst set the 1995 rows of that file aside as faulty, so the mark compares other cohorts than the claim, and it lies above every specification of the curve. The other four analyses have no estimate on this scale. Each compared the surveys in a different way, and three of them used the 1995 rows of the file, whose cohort of unions holds 376 unions instead of the 929 of the paper, almost all of them separations. @tbl-analysts sets out each analysis with the statistic that Multi100 recorded, its refit on the file of the analysts and its refit on the same file with the 1995 rows rebuilt from the unions of the course.
+
+::: column-body-outset
+```{r}
+#| label: tbl-analysts
+#| tbl-cap: "The five Multi100 analyses: the statistic that Multi100 recorded, the course refit on the file that SCORE built and Multi100 gave the analysts, and the same analysis on that file with its 1995 rows rebuilt from the 929 unions of the paper. The estimate is the slope per year of five survey coefficients for 73FDT, the difference in the share of rows that record a marriage for 5X3KG and a log-odds coefficient otherwise; negative values point the way of the claim. Source: `data/analysts5.csv`."
+stat_txt <- \(type, x, d = 3) case_when(
+  is.na(x) ~ "none recorded",
+  type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(x, d)),
+  .default = paste(type, "=", fmt(x, d))
+)
+# the recorded statistic with the digits that Multi100 recorded
+recorded_txt <- \(type, x) case_when(
+  is.na(x) ~ "none recorded",
+  type == "chi2" ~ paste0("χ<sup>2</sup> = ", gsub("-", "−", formatC(x, format = "fg", digits = 5))),
+  .default = paste(type, "=", gsub("-", "−", formatC(x, format = "fg", digits = 5)))
+)
+upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
+analysts |>
+  transmute(
+    Analyst = id,
+    Surveys = upper_first(gsub("-", "–", comparison)),
+    `Unit and model` = upper_first(paste0(unit, "; ", outcome_model)),
+    Recorded = recorded_txt(statistic_type, statistic_recorded),
+    `SCORE file` = paste0(stat_txt(stat_type_refit, stat_refit), " (", sgn(estimate_refit), ")"),
+    `1995 rebuilt` = paste0(stat_txt(stat_type_refit, stat_repaired), " (", sgn(estimate_repaired), ")"),
+    `Task 1` = task1
+  ) |>
+  tt() |>
+  style_tt(j = 4:6, align = "r")
+```
+:::
+
+The four recorded statistics come out exactly on the file of the analysts, and the fifth analysis, for which Multi100 recorded no statistic, comes out at the values of the report of the analyst. With the 1995 rows rebuilt, every analysis that uses them points the way of the claim. The logit of N8ZYW moves from z = `r sgn(an("N8ZYW", "stat_refit"), 2)` to `r fmt(an("N8ZYW", "stat_repaired"), 2)`, the test of 5X3KG from more marriage in the later rows to less, and the logit of JDA15 from z = `r fmt(an("JDA15", "stat_refit"), 2)` to `r fmt(an("JDA15", "stat_repaired"), 2)`. 73FDT keeps a negative slope, and 456AP, which does not use 1995, is unchanged. The disagreement that Multi100 recorded on this claim came from the file, not from the data of the paper, and the [case study](index.qmd#sec-file) traces how the 1995 rows were built.
+
+## What moved the estimate {#shifts}
+
+Every option on the curve can be set beside the first option of its decision on twin specifications, which agree on every other decision, and @fig-shifts summarises what each option does to the estimate. Taking the same five-year window in both surveys moves the estimate by `r sgn(dv("cohorts", "five_years", "shift_mean"))` on average, towards zero (from `r sgn(dv("cohorts", "five_years", "shift_min"))` to `r sgn(dv("cohorts", "five_years", "shift_max"))` across its `r dv("cohorts", "five_years", "n_pairs")` pairs), because the later cohort then reaches back to unions begun in 2001–2004. Leaving out the weights moves it by `r sgn(dv("weights", "unweighted", "shift_mean"))`, away from zero, and holding age, race-ethnicity and education constant by `r sgn(dv("adjust", "composition", "shift_mean"))`. The three-year horizon (`r sgn(dv("horizon", "three_years", "shift_mean"), 4)`), the yearly baseline (`r sgn(dv("time", "yearly", "shift_mean"), 4)`), the logit (`r sgn(dv("model", "logit", "shift_mean"), 4)`) and the complementary log-log model (`r sgn(dv("model", "cloglog", "shift_mean"), 4)`) leave it almost where it was. `r if (all(deviations$flips == 0)) "No option moves any specification across the 5% threshold." else "Some options move a specification across the 5% threshold."`
+
+```{r}
+#| label: fig-shifts
+#| fig-cap: "What each option on the curve does to the estimate, against the first option of its decision on twin specifications: the mean shift (point) and the smallest and largest shift (line), on the log scale. A positive shift moves the estimate towards zero. Source: `data/menu_deviations.csv`."
+#| fig-alt: "Dot-and-range chart of eight options. The same window in both surveys shifts the estimate by about +0.095, from +0.084 to +0.110; leaving out the weights by about −0.05; age, race-ethnicity and education by about +0.03; the other five options lie within about 0.015 of zero."
+#| fig-width: 7.5
+#| fig-height: 3.6
+lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
+dec <- \(axis) menu$decision[menu$axis == axis][1]
+deviations |>
+  filter(option != baseline) |>
+  mutate(
+    option_lab = paste0(purrr::map_chr(axis, dec), ": ", purrr::map2_chr(axis, option, lab)),
+    option_lab = reorder(option_lab, shift_mean),
+    window = axis == "cohorts"
+  ) |>
+  ggplot(aes(x = shift_mean, y = option_lab, colour = window)) +
+  geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 0.8) +
+  geom_point(size = 2.6) +
+  scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
+  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  coord_cartesian(xlim = c(-0.1, 0.12)) +
+  labs(x = "shift in the estimate (log scale)", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+Split by decision, the variance of the `r n_spec` estimates falls mostly on the cohorts compared, which carry `r pct(var_share[["cohorts"]] / 100)` of it, and on the weights, with `r pct(var_share[["weights"]] / 100)`, against `r pct(var_share[["adjust"]] / 100)` for the adjustment, less than 1% for each of the other decisions, and `r pct(var_share[["Residuals"]] / 100)` for the interactions between decisions. With the window of the paper the estimates run from `r fmt(bw("paper", "lo"))` to `r fmt(bw("paper", "hi"))`, and with the same window in both surveys from `r fmt(bw("five_years", "lo"))` to `r fmt(bw("five_years", "hi"))`. Both windows answer the claim about the cohorts of the paper. The window of the paper makes the later cohort as recent as the survey allows, and the symmetric window selects the two cohorts by the same rule, at the price of a later cohort that reaches back to 2001 and so stands closer in time to the earlier one. The weights matter because the NSFG sampled Black and Hispanic women, and from 2002 women aged 15–24, at higher rates than others, and the decline was steeper among Hispanic women than among white women, as [the groups behind the claim](#sec-subgroups) show.
+
+## Inference {#inference}
+
+@tbl-inference sets the reference specification under the three rules of inference of the menu. The coefficient is the same under each, and only the uncertainty attached to it changes.
+
+```{r}
+#| label: tbl-inference
+#| tbl-cap: "The reference specification (the cohorts of the paper, every observed month, age, race-ethnicity and education held constant, weighted, months since the start as a straight line, a multinomial logit) under three rules of inference. Source: `data/display_inference.csv`."
+inference |>
+  transmute(
+    Rule = c(design = "Design-based (the curve)", woman = "Clustered by woman", model = "Conventional")[errors],
+    Coefficient = fmt(b),
+    SE = fmt(se),
+    Statistic = paste(stat_type, "=", fmt(stat, 2)),
+    df = if_else(is.finite(df), big(df), "–"),
+    p = if_else(p < 1e-4, "< 0.0001", fmt(p, 4))
+  ) |>
+  tt() |>
+  style_tt(j = 2:6, align = "r")
+```
+
+Conventional errors treat each of the `r big(ref$n)` person-months as an independent piece of evidence, and they are a quarter smaller than the design-based errors. Clustering by woman allows the months of one union to be related, which brings the error close to the design-based one, `r fmt(inf("woman", "se"))` against `r fmt(inf("design", "se"))`, and the strata and clusters of the two surveys add a little more. The paper reports SE 0.14 for the coefficient of Model 2, and the design-based refit gives `r fmt(mark("OA_refit", "se"))`, while conventional errors would give `r fmt(opt("adjust", "race_period", "se_model"))`, which suggests that the OAs used the design. Under any of the three rules, every specification of the curve is significant by a wide margin, and the choice of errors matters here only for the width of the intervals.
+
+## Beside the curve {#beside}
+
+The curve holds one kind of answer, a coefficient from a model of monthly chances. The displays below hold descriptions that the model summarises, the groups behind the average, and the same comparison on other surveys.
+
+### The life table {#sec-lifetable}
+
+A life table follows each cohort of unions month by month: of the unions still intact at the start of a month, the share that married in it and the share that separated, and from those shares, the cumulative share that had become a marriage by the end of each month. Separation competes with marriage, since a couple that has separated can no longer marry each other, so the table counts both, and the shares married, separated and still cohabiting sum to one. @fig-lifetable draws the share married for the two cohorts of the paper.
+
+```{r}
+#| label: fig-lifetable
+#| fig-cap: "The weighted share of first premarital cohabitations that had become a marriage, by the month since the couple moved in, for the unions begun in 1990–1995 and in 2005–2010, with separation as a competing outcome. The dashed line marks the end of the third year. Source: `data/display_lifetable.csv`."
+#| fig-alt: "Two rising step lines. The line of the unions of 1990–1995 rises faster and reaches about 45% at month 36 and about 51% at month 60; the line of 2005–2010 reaches about 29% at month 36 and about 32% at month 60."
+#| fig-width: 7
+#| fig-height: 3.8
+lifetable |>
+  filter(group_type == "all") |>
+  ggplot(aes(x = month, y = married, colour = cohort)) +
+  geom_vline(xintercept = 36, linetype = "dashed", colour = "#9aa8b3") +
+  geom_step(linewidth = 0.9) +
+  scale_colour_manual(values = c(`1990-1995` = "#0e3b6a", `2005-2010` = "#8b1538"),
+                      labels = c("begun 1990–1995", "begun 2005–2010"), name = NULL) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
+  labs(x = "months since the couple moved in", y = "share married") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top")
+```
+
+By the end of the third year `r pct(lt("1990-1995", "married"))` of the unions of 1990–1995 had become a marriage and `r pct(lt("1990-1995", "separated"))` had dissolved, against `r pct(lt("2005-2010", "married"))` and `r pct(lt("2005-2010", "separated"))` of the unions of 2005–2010. The paper quotes 41% and 35%, and 24% and 41%, from a life table that it did not publish. The course table is a few points higher in every cell, and its fall in marriage between the cohorts, `r fmt(100 * (lt("2005-2010", "married") - lt("1990-1995", "married")), 1)` points, is close to the 17 points of the paper. The life table answers the claim in shares that anyone can read, but it cannot hold age, race-ethnicity and education constant in the way that the model does, which is why the menu keeps it as a check beside the curve.
+
+### Marriage within three years {#sec-shares}
+
+The paper is about the growing difference between educational groups, and @fig-shares sets out the share married within three years for each group in both cohorts.
+
+```{r}
+#| label: fig-shares
+#| fig-cap: "The weighted share of unions that had become a marriage by the end of the third year, by education and by race-ethnicity, for the unions begun in 1990–1995 (open circles) and in 2005–2010 (filled circles). The number of unions of each group in each cohort is in brackets. Source: `data/display_shares.csv`."
+#| fig-alt: "Dumbbell chart of eight groups. Among graduates the share rises slightly from 50% to 55%; among the other three educational groups it roughly halves, from 45% to 24% with some college, from 47% to 20% with a high school diploma and from 35% to 17% without one. By race-ethnicity it falls in every group."
+#| fig-width: 7.5
+#| fig-height: 4
+group_lab <- c(college = "College degree", some_college = "Some college", hs = "High school diploma",
+               less_hs = "Less than high school", white = "Non-Hispanic white", black = "Black",
+               hispanic = "Hispanic", other = "Other")
+shares |>
+  filter(group_type != "all") |>
+  mutate(
+    n_lab = paste(unions[cohort == "1990-1995"], unions[cohort == "2005-2010"], sep = " / "),
+    .by = c(group_type, group)
+  ) |>
+  mutate(
+    label = factor(paste0(group_lab[group], " (", n_lab, ")"),
+                   levels = rev(unique(paste0(group_lab[group], " (", n_lab, ")")))),
+    panel = if_else(group_type == "education", "By education", "By race-ethnicity")
+  ) |>
+  ggplot(aes(x = married_3y, y = label)) +
+  geom_line(aes(group = label), colour = "#9aa8b3", linewidth = 0.8) +
+  geom_point(aes(shape = cohort), size = 2.8, colour = "#1d2733", stroke = 1) +
+  scale_shape_manual(values = c(`1990-1995` = 1, `2005-2010` = 16),
+                     labels = c("begun 1990–1995", "begun 2005–2010"), name = NULL) +
+  scale_x_continuous(labels = scales::label_percent(), limits = c(0, 0.6)) +
+  facet_wrap(~panel, ncol = 1, scales = "free_y") +
+  labs(x = "share married within three years", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top")
+```
+
+Within three years, marriage fell among cohabitors without a bachelor's degree, from `r pct(sh("1990-1995", "education", "some_college", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "some_college", "married_3y"), 0)` with some college, from `r pct(sh("1990-1995", "education", "hs", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "hs", "married_3y"), 0)` with a high school diploma and from `r pct(sh("1990-1995", "education", "less_hs", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "less_hs", "married_3y"), 0)` without one, and not among graduates, whose share went from `r pct(sh("1990-1995", "education", "college", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "college", "married_3y"), 0)`. This is the divergence that the paper puts at the centre of its argument. By race-ethnicity the share fell in every group. The group of other non-Hispanic women holds `r sh("1990-1995", "race", "other", "unions")` and `r sh("2005-2010", "race", "other", "unions")` unions, too few for its shares to mean much.
+
+### The groups behind the claim {#sec-subgroups}
+
+The two models of the paper estimate the change separately for each group, by adding the coefficient of the period to its interaction with the group. @fig-subgroups draws those changes on the log scale of the curve.
+
+```{r}
+#| label: fig-subgroups
+#| fig-cap: "The change in the monthly chance of marrying between the cohorts, by education (Model 1 of the paper) and by race-ethnicity (Model 2), refitted on the rebuilt unions with design-based errors and 95% intervals; circles have p < 0.05 and crosses p ≥ 0.05. The burgundy row is the coefficient of the claim, the change for non-Hispanic white women, and the dashed line is the reference specification. Source: `data/display_subgroups.csv`."
+#| fig-alt: "Dot-and-interval chart of eight groups. College graduates −0.13 with an interval crossing zero; some college −0.86, high school −1.24, less than high school −0.92; non-Hispanic white −0.69, Black −0.40 with an interval crossing zero, Hispanic −1.14, other −1.61 with a wide interval."
+#| fig-width: 7.5
+#| fig-height: 3.8
+subgroups |>
+  mutate(
+    lo = b - qt(0.975, df) * se,
+    hi = b + qt(0.975, df) * se,
+    label = factor(group_lab[group], levels = rev(group_lab)),
+    panel = if_else(model == "educ_period", "Model 1: by education", "Model 2: by race-ethnicity"),
+    claim = model == "race_period" & group == "white",
+    shape = if_else(p < 0.05, "p < 0.05", "p ≥ 0.05")
+  ) |>
+  ggplot(aes(x = b, y = label, colour = claim)) +
+  geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  geom_vline(xintercept = ref$b, colour = "#1d2733", linetype = "dashed") +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 0.7) +
+  geom_point(aes(shape = shape), size = 2.6, stroke = 1.1) +
+  scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
+  scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
+  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  facet_wrap(~panel, ncol = 1, scales = "free_y") +
+  labs(x = "change between the cohorts (log scale)", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top")
+```
+
+The change is `r fmt(sg("educ_period", "college", "b"), 2)` for graduates (`r pe(sg("educ_period", "college", "p"))`), `r fmt(sg("educ_period", "some_college", "b"), 2)` with some college, `r fmt(sg("educ_period", "hs", "b"), 2)` with a high school diploma and `r fmt(sg("educ_period", "less_hs", "b"), 2)` without one. By race-ethnicity it is `r fmt(sg("race_period", "white", "b"), 2)` for non-Hispanic white women, the coefficient of the claim, `r fmt(sg("race_period", "black", "b"), 2)` for Black women (`r pe(sg("race_period", "black", "p"))`), `r fmt(sg("race_period", "hispanic", "b"), 2)` for Hispanic women and `r fmt(sg("race_period", "other", "b"), 2)` for the other group. The coefficient of the period in each model of the paper is the change for its reference group: in Model 1 the graduates, among whom nothing changed, and in Model 2 the white women, whose decline lies close to the average. The reference specification of the curve pools the groups, and its `r fmt(ref$b)` sits between them.
+
+### Other surveys {#sec-surveys}
+
+The NSFG was fielded again in 2002, 2011–2013 and 2013–2015, and the course rebuilt the unions of every cycle in the same way. @tbl-surveys fits the reference specification to other pairs of surveys, each taking the unions begun in the five years before the interview.
+
+```{r}
+#| label: tbl-surveys
+#| tbl-cap: "The reference specification fitted to other pairs of NSFG surveys, with the unions begun in the five years before each interview (in 2006–2010 from 2005 only, as the paper chose them), design-based errors. NSFG 2011–2015 pools the surveys of 2011–2013 and 2013–2015. Sources: `data/spec_curve.csv`, `data/display_options.csv`."
+pair_lab <- c(`1995_2006` = "NSFG 1995 and 2006–2010 (the paper)", `2002_2006` = "NSFG 2002 and 2006–2010",
+              `2006_2011` = "NSFG 2006–2010 and 2011–2015", `2002_2011` = "NSFG 2002 and 2011–2015",
+              `1995_2011` = "NSFG 1995 and 2011–2015")
+bind_rows(
+  ref |> mutate(option = "1995_2006"),
+  options_d |> filter(changed == "comparison")
+) |>
+  mutate(option = factor(option, levels = names(pair_lab))) |>
+  arrange(option) |>
+  transmute(
+    Surveys = pair_lab[as.character(option)],
+    Coefficient = fmt(b),
+    Ratio = fmt(ratio, 2),
+    SE = fmt(se),
+    t = fmt(stat, 2),
+    df = as.character(df),
+    p = if_else(p < 1e-4, "< 0.0001", fmt(p, 3)),
+    `Person-months` = big(n),
+    Unions = big(n_unions)
+  ) |>
+  tt() |>
+  style_tt(j = 2:9, align = "r")
+```
+
+Across the fifteen years between the cohorts of 1990–1995 and of 2011–2015 the decline is larger than that of the paper, `r fmt(opt("comparison", "1995_2011", "b"))`, and between the cohorts of the 2002 survey (begun in 1997–2002) and those of 2011–2015 it is `r fmt(opt("comparison", "2002_2011", "b"))` (`r pe(opt("comparison", "2002_2011", "p"))`). Between surveys closer in time the decline is smaller and not significant at 5%: `r fmt(opt("comparison", "2002_2006", "b"))` between 2002 and 2006–2010 (`r pe(opt("comparison", "2002_2006", "p"))`) and `r fmt(opt("comparison", "2006_2011", "b"))` between 2006–2010 and 2011–2015 (`r pe(opt("comparison", "2006_2011", "p"))`). The claim says that cohabitors "have increasingly become less likely" to marry, which reads as a change that continued, and these pairs suggest a decline spread over two decades rather than one that happened in a few years. They are other questions, about other cohorts, so the menu keeps them off the curve.
+
+## Robustness and replication {#replication}
+
+Within the data of the paper, the claim holds under every defensible analysis that the course can fit. All `r n_spec` specifications are negative and significant, from `r fmt(min(curve$b))` to `r fmt(max(curve$b))` on the log scale, and the decisions of the menu change the size of the decline and never its sign or its verdict. Multi100 recorded a different picture: two of the five analysts found evidence for the claim, one found evidence neither way and two found evidence for the opposite. That disagreement did not come from the decisions that the curve varies. It came from the 1995 rows of the file that every analyst received, and once those rows are rebuilt every analysis that uses them agrees with the curve on the direction.
+
+The SCORE replication of the paper ([osf.io/u8x9s](https://osf.io/u8x9s/)) tested a different coefficient. It took the interaction of some college and period from Model 1 of the paper, the claim that the replication was set to test, and fitted the model to NSFG 2002 against 2011–2013 and 2013–2015 on its own file, without weights. It found `r fmt(mark("SCORE_replication", "b"))` (SE `r fmt(mark("SCORE_replication", "se"))`, z = `r fmt(mark("SCORE_replication", "stat"), 2)`, `r pe(mark("SCORE_replication", "p"))`) and judged the claim not replicated. The coefficient that Multi100 gave the analysts, the change between the cohorts, replicates on the later surveys that the course rebuilt: `r fmt(mark("course_2002_2011", "b"))` between 2002 and 2011–2015 and `r fmt(mark("course_1995_2011", "b"))` between 1995 and 2011–2015, both with p < 0.001. The [case study](index.qmd#sec-replication) sets out both replications. A curve shows how much a conclusion depends on the decisions of an analysis, given one set of data, and a replication shows whether new data give the same answer. This case has both for the claim of Multi100. It also shows that the data on which an analysis runs can decide its result more than any decision of the analysis, since every disagreement of the five analysts goes back to one cohort of one file.
+
+## Class results {#class-results}
+
+The live chart below shows the results that the class submits, over the curve of `r n_spec` specifications. Pressing *Run Code* runs the `refresh_multiverse()` function, which downloads the latest submissions and draws them over the curve. The marks of the curve stay faint, so that the class results lead, and the reference marks are left to the chart at the top of the page.
+
+Each submission sits at the rank of its specification on the curve and at the coefficient that it reports, on the log scale, and it is classed by looking its specification up in the curve file: a circle if the matching specification has p < 0.05, as all `r n_spec` do, and a cross if it has not. An open green circle is an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result. A filled black circle is a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. A submission whose label names no specification of the curve is not drawn, and a line under the chart counts such submissions. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two submissions share it. Hovering over a mark shows its tag, its specification and its statistics. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your marks in orange, joined in the order in which you submitted them.
+
+```{webr}
+#| label: live-multiverse-setup
+#| include: false
+#| autorun: true
+# Class submissions are served as CSV by a Cloudflare Worker in front of the
+# Google Sheet of the results Form; when the Worker cannot be reached the
+# chart falls back to the committed data/class_results.csv. The Sheet is shared
+# by the cases of the course, so only the rows whose label carries the word
+# "cohabitation" after the tag are read. Base R throughout, apart from ggplot2
+# and ggiraph, so that participants download nothing else.
+
+# ---- The Worker of the class results: replace this one line for a Form of its own
+worker_url <- "https://class-results.chris-moreh.workers.dev/"
+
+library(ggplot2)
+# ggiraph gives the submissions their hover boxes; when its download is
+# unavailable the chart falls back to a static ggplot
+have_ggiraph <- tryCatch({ library(ggiraph); TRUE }, error = function(e) FALSE)
+plain <- "#1f5fa8"; ink <- "#1d2733"; green <- "#009E73"; orange <- "#E69F00"
+grey_mid <- "#8a929a"; hilite <- "#8b1538"
+tooltip_css <- "background-color:#ffffff;color:#1d2733;border:1px solid #cdd3d9;padding:7px 9px;border-radius:6px;font-size:12px;line-height:1.45;box-shadow:0 2px 10px rgba(20,30,40,0.14);"
+
+# The backdrop is the curve of 144, ranked from the largest decline, as on the
+# chart at the top of the page.
+curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
+curve <- curve[order(curve$b, curve$spec_id), ]   # r-style: keep – base R in webR, dplyr would be a download
+curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p < 0.05)
+axis_codes <- c("cohorts", "horizon", "adjust", "weights", "time", "model")
+curve_key <- do.call(paste, c(unname(as.list(curve[axis_codes])), sep = "|"))
+
+# A cohabitation label, as the submission helpers write it:
+#   explore: [amber-otter-42] cohabitation cohorts=paper horizon=five_years adjust=composition weights=weighted time=linear model=mlogit
+# The phase and the tag are read when present. Labels of the other cases
+# carry no "cohabitation" at that place and are left out. The six decisions
+# are key=value pairs in any order; a label that does not name each of them
+# exactly once, or carries anything else, returns NA on every axis and so
+# matches nothing.
+cohabitation_pattern <- "^((explore|declared): )?(\\[([a-z0-9-]{1,24})\\] )?cohabitation( (.*))?$"
+parse_axes <- function(rest) {
+  none <- setNames(rep(NA_character_, length(axis_codes)), axis_codes)
+  pairs <- regmatches(rest, gregexpr("[a-z_]+=[a-z_]+", rest))[[1]]
+  keys <- sub("=.*$", "", pairs)
+  if (length(pairs) != length(axis_codes) || anyDuplicated(keys) > 0 || !setequal(keys, axis_codes))
+    return(none)
+  if (nzchar(trimws(gsub("[a-z_]+=[a-z_]+", "", rest)))) return(none)
+  setNames(sub("^.*=", "", pairs), keys)[axis_codes]
+}
+
+read_clean <- function(path) {
+  d <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE, colClasses = "character")
+  names(d) <- tolower(trimws(names(d)))   # tolerate "B", " spec ", etc.
+  d
+}
+
+# my_tag is the tag that submit_exploration() and report_result() print. It is
+# reduced exactly as .clean_tag() in the submission helpers reduces a nickname
+# (transliterated to ASCII, lower case, single hyphens, at most 24 characters),
+# so that a nickname typed as the participant first wrote it still matches.
+clean_my_tag <- function(x) {
+  if (length(x) == 0 || is.na(x[1])) return("")
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x[1]))))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  gsub("-+$", "", substr(x, 1, 24))
+}
+
+html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
+fmt_num <- function(x, d) sub("^-", "−", formatC(x, format = "f", digits = d))
+fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.3f", p))
+as_num <- function(x) suppressWarnings(as.numeric(x))
+
+# The cohabitation rows of the class CSV, parsed and looked up on the curve.
+# Returns the rows to draw, the number of cohabitation rows, and the number
+# that name no specification of the curve (or carry no coefficient) and are
+# therefore not drawn.
+prepare_class <- function(cls, my_tag = "") {
+  empty <- list(points = NULL, n_case = 0L, n_off = 0L)
+  if (is.null(cls) || nrow(cls) == 0 || !("spec" %in% names(cls))) return(empty)
+  spec_raw <- trimws(ifelse(is.na(cls$spec), "", cls$spec))
+  m <- regmatches(spec_raw, regexec(cohabitation_pattern, spec_raw))
+  is_case <- lengths(m) > 0
+  if (!any(is_case)) return(empty)
+  cls <- cls[is_case, , drop = FALSE]
+  m <- m[is_case]
+  n <- nrow(cls)
+  part <- function(k) vapply(m, function(g) g[k], character(1))   # r-style: keep – base R in webR
+  ph <- ifelse(part(3) == "explore", "explored", "declared")
+  tg <- ifelse(nzchar(part(5)), part(5), NA_character_)
+  rest <- part(7)
+  axes <- t(vapply(rest, parse_axes, character(length(axis_codes)), USE.NAMES = FALSE))   # r-style: keep – base R in webR
+  hit <- match(do.call(paste, c(lapply(seq_along(axis_codes), function(j) axes[, j]), sep = "|")),   # r-style: keep – base R in webR
+               curve_key)
+  b <- as_num(cls$b)
+  drawn <- !is.na(hit) & !is.na(b)
+  stat_txt <- function(i) {
+    st <- as_num(cls$t[i])
+    if (is.na(st)) return("")
+    d_f <- if ("df" %in% names(cls)) as_num(cls$df[i]) else NA
+    if (is.na(d_f)) paste0("<br/>t = ", fmt_num(st, 2)) else
+      paste0("<br/>t = ", fmt_num(st, 2), " on ", d_f, " df")
+  }
+  tip <- vapply(seq_len(n), function(i) paste0(   # r-style: keep – base R in webR
+    "<b>submission #", i, " (", ph[i], ")</b>",
+    if (is.na(tg[i])) "" else paste0("<br/>tag: ", tg[i]),
+    "<br/><b>b = ", fmt_num(b[i], 3), " on the log scale</b>", stat_txt(i),
+    if (is.na(hit[i])) "" else paste0("<br/>on the curve: ", fmt_p(curve$p[hit[i]]),
+                                      if (curve$sig[hit[i]]) " (circle)" else " (cross)"),
+    "<br/>", html_text(rest[i])
+  ), character(1))
+  points <- data.frame(n_lab = paste0("#", seq_len(n)), phase = ph, tag = tg, b = b,
+                       rank = curve$rank[hit], sig = curve$sig[hit], tip = tip,
+                       mine = nzchar(my_tag) & !is.na(tg) & tg == my_tag,
+                       stringsAsFactors = FALSE)[drawn, , drop = FALSE]
+  list(points = points, n_case = n, n_off = sum(!drawn))
+}
+
+draw_class_chart <- function(cls, my_tag = "") {
+  ylim_lo <- -1; ylim_hi <- 0.1
+  pts <- cls$points
+  p <- ggplot() +
+    annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf, fill = "#a10000", alpha = 0.045) +
+    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
+    geom_point(data = curve, aes(x = rank, y = b), colour = plain,
+               shape = ifelse(curve$sig, 1, 4), alpha = 0.3, size = 2.2, stroke = 0.5) +
+    scale_y_continuous(labels = function(x) sub("^-", "−", format(x, trim = TRUE))) +
+    labs(x = "Specifications of the curve, ranked from the largest decline",
+         y = "Coefficient of the later cohort (log scale)", title = "Class submissions") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(face = "bold", colour = ink),
+          axis.title = element_text(colour = "#4f5b67"),
+          plot.caption = element_text(hjust = 0, size = 9, colour = "#4f5b67"),
+          legend.position = "bottom", panel.grid.minor = element_blank())
+  off_txt <- paste0(cls$n_off, " of ", cls$n_case,
+                    " submission(s) name no specification of the curve of 144 and are not drawn.")
+  if (is.null(pts) || nrow(pts) == 0) {
+    p <- p + labs(subtitle = if (cls$n_case == 0) "No submissions yet – press Run Code to refresh"
+                             else "No submission can be placed yet – press Run Code to refresh",
+                  caption = paste0("The curve: circles for p < 0.05 with design-based errors.",
+                                   if (cls$n_case > 0) paste0("\n", off_txt) else ""))
+  } else {
+    sub_txt <- paste(nrow(pts), "class result(s) on the chart")
+    # The marks of the participant whose tag is typed into the live cell, as
+    # larger orange marks joined in the order of submission. They are drawn
+    # first, so that the marks on top keep their hover boxes.
+    if (any(pts$mine)) {
+      # a joining line needs two marks; one alone would print a ggplot notice
+      if (sum(pts$mine) > 1)
+        p <- p + geom_path(data = pts[pts$mine, , drop = FALSE], aes(x = rank, y = b),
+                           colour = orange, linewidth = 0.7, inherit.aes = FALSE)
+      p <- p + geom_point(data = pts[pts$mine, , drop = FALSE], aes(x = rank, y = b),
+                          shape = 1, size = 5.2, colour = orange, stroke = 1.6, inherit.aes = FALSE)
+      sub_txt <- paste0(sub_txt, " · tag ", my_tag, ": ", paste(pts$n_lab[pts$mine], collapse = ", "))
+    } else if (nzchar(my_tag)) {
+      sub_txt <- paste0(sub_txt, " · no mark carries the tag ", my_tag, " yet")
+    }
+    sig_pts <- pts[pts$sig, , drop = FALSE]
+    ns_pts <- pts[!pts$sig, , drop = FALSE]
+    point_layer <- if (have_ggiraph) geom_point_interactive else geom_point
+    point_aes <- if (have_ggiraph) {
+      aes(x = rank, y = b, colour = phase, shape = phase, tooltip = tip, data_id = n_lab)
+    } else {
+      aes(x = rank, y = b, colour = phase, shape = phase)
+    }
+    # submissions landing on the same specification stack their number tags
+    # vertically instead of overprinting
+    vj <- -1.1 - 1.15 * (ave(seq_len(nrow(pts)), pts$rank, FUN = seq_along) - 1)
+    p <- p +
+      point_layer(data = sig_pts, mapping = point_aes, size = 3.2, stroke = 1.2,
+                  show.legend = TRUE, inherit.aes = FALSE) +
+      geom_text(data = pts, aes(x = rank, y = b, label = n_lab), colour = ink, size = 2.6,
+                vjust = vj, inherit.aes = FALSE) +
+      scale_colour_manual(values = c(explored = green, declared = ink),
+                          limits = c("explored", "declared"),
+                          labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
+                          drop = FALSE) +
+      scale_shape_manual(values = c(explored = 1, declared = 16),
+                         limits = c("explored", "declared"),
+                         labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
+                         drop = FALSE) +
+      labs(subtitle = sub_txt,
+           caption = paste0("Each submission sits at the rank of its specification and at the coefficient that it ",
+                            "reports. Open circles: explored; filled circles: declared.\n", off_txt))
+    # a specification with p >= 0.05 is drawn as a cross, whatever the phase
+    if (nrow(ns_pts) > 0)
+      p <- p + point_layer(data = ns_pts, mapping = point_aes, shape = 4, size = 3.2, stroke = 1.2,
+                           show.legend = FALSE, inherit.aes = FALSE)
+    ylim_hi <- max(ylim_hi, max(pts$b) + 0.05)
+    ylim_lo <- min(ylim_lo, min(pts$b) - 0.05)
+  }
+  p <- p + coord_cartesian(xlim = c(1, nrow(curve)), ylim = c(ylim_lo, ylim_hi))
+  if (have_ggiraph) {
+    girafe(ggobj = p, width_svg = 9, height_svg = 5.6,
+           options = list(
+             opts_tooltip(css = tooltip_css, opacity = 1),
+             opts_hover(css = girafe_css(css = paste0("stroke:", hilite, ";stroke-width:2px;"))),
+             opts_hover_inv(css = "opacity:0.35;"),
+             opts_sizing(rescale = TRUE, width = 1),
+             opts_toolbar(saveaspng = FALSE)
+           ))
+  } else {
+    p
+  }
+}
+
+refresh_multiverse <- function(my_tag = "") {
+  my_tag <- clean_my_tag(my_tag)
+  cls <- NULL
+  if (nzchar(worker_url)) {
+    cls <- tryCatch({
+      download.file(paste0(worker_url, "?_=", as.numeric(Sys.time())), "class.csv", quiet = TRUE)
+      read_clean("class.csv")
+    }, error = function(e) NULL)
+  }
+  if (is.null(cls) && file.exists("data/class_results.csv")) {
+    cls <- tryCatch(read_clean("data/class_results.csv"), error = function(e) NULL)
+  }
+  draw_class_chart(prepare_class(cls, my_tag), my_tag)
+}
+```
+
+```{webr}
+#| label: live-multiverse
+#| autorun: true
+#| fig-width: 9
+#| fig-height: 5.6
+#| caption: "Press Run Code to refresh – pull the latest class results"
+my_tag <- ""   # your tag, e.g. "amber-otter-42", highlights your own marks
+refresh_multiverse(my_tag)
+```
+
+## Facilitator notes {#facilitator}
+
+Submissions go to a Google Form, land in a linked Google Sheet and are served as CSV, with permissive CORS headers, by a small Cloudflare Worker. Until a Form of its own is created, the cohabitation case shares the Form, the Sheet and the Worker that were set up for the EU-frames case. The cell above fetches the CSV in the browser, keeps only the rows whose free-text spec field carries the word `cohabitation` after the tag, and falls back to the committed `data/class_results.csv`, which holds only the header row, when the Worker cannot be reached. The spec field carries the phase (`explore:` or `declared:`), the tag of the participant in square brackets, the word `cohabitation` and the six decisions of the curve as `key=value` pairs, for example `explore: [amber-otter-42] cohabitation cohorts=paper horizon=five_years adjust=composition weights=weighted time=linear model=mlogit`. Each submission is placed by the coefficient `b` that it carries, on the log scale, at the rank of its specification, and classed by the p-value of the matching row of `data/spec_curve.csv`. A cohabitation label that does not name each of the six decisions exactly once, or that names an option off the curve, matches no row and is counted under the chart without being drawn. The housing-audit and immigration-and-trust charts ignore cohabitation rows, but the EU-frames chart reads every row of the shared Sheet and would draw them as unclassed diamonds, so clear the data rows of the Sheet before a delivery of any case. Replacing the Form means editing the `worker_url` line of the cell above and the configuration blocks of the workspace helpers and the browser lab; the setup note `facilitator/live-results-setup.md` in the repository lists the steps.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

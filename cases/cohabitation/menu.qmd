@@ -1,0 +1,352 @@
+---
+title: "Specification menu"
+subtitle: "The decisions of the analysis, by level"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tinytable)
+source("../../R/cohabitation/_tools.R")
+
+read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
+menu       <- read_data("menu_options.csv")
+deviations <- read_data("menu_deviations.csv")
+shares     <- read_data("display_shares.csv")
+repro      <- read_data("display_reproduction.csv")
+inference  <- read_data("display_inference.csv")
+analysts   <- read_data("analysts5.csv")
+score_file <- read_data("display_score_file.csv")
+# columns that hold only "t" would be read as logical without their type
+curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                  col_types = cols(stat_type = col_character()))
+options_d <- read_csv("data/display_options.csv", show_col_types = FALSE,
+                      col_types = cols(stat_type = col_character()))
+unions <- read_csv("data/cohab_unions.csv", show_col_types = FALSE,
+                   col_types = cols(caseid = col_character(), stratum = col_character(),
+                                    psu = col_character()))
+
+# Fixed decimals and a true minus sign; signed shifts carry a plus sign
+fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn_n <- \(x) paste0(if_else(x > 0, "+", if_else(x < 0, "−", "")), format(round(abs(x)), big.mark = ",", trim = TRUE))
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+pe <- \(p) case_when(p < 0.001 ~ "p < 0.001", .default = paste("p =", fmt(p, 3)))
+num_word <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                   "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen")[n]
+
+ref <- curve |> filter(is_reference)
+dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
+opt <- \(changed, option, col) options_d[[col]][options_d$changed == changed & options_d$option == option]
+sh <- \(cohort, col) shares[[col]][shares$cohort == cohort & shares$group_type == "all"]
+inf <- \(rule, col) inference[[col]][inference$errors == rule]
+an <- \(id, col) analysts[[col]][analysts$id == id]
+rp <- \(model, term, eq, col) repro[[col]][repro$model == model & repro$term == term & repro$equation == eq]
+by_set <- curve |>
+  summarise(mean = mean(b), lo = min(b), hi = max(b), .by = adjust)
+bs <- \(set, col) by_set[[col]][by_set$adjust == set]
+by_weight <- curve |> summarise(lo = min(b), hi = max(b), .by = weights)
+bw <- \(w, col) by_weight[[col]][by_weight$weights == w]
+n_dec <- n_distinct(menu$axis)
+fixed_axes <- setdiff(unique(menu$axis), names(SPEC_AXES))
+
+# The unions of the paper and their person-months at the reference settings
+paper <- spec_unions(unions)
+months <- spec_frame(unions)
+pm <- months |>
+  summarise(months = n(), marriages = sum(y == "marriage"),
+            h = weighted.mean(y == "marriage", w), .by = later)
+pmv <- \(later, col) pm[[col]][pm$later == later]
+composition <- paper |>
+  summarise(hispanic = weighted.mean(race == "hispanic", weight), age = weighted.mean(age_start, weight),
+            .by = cycle)
+recoded <- paper |>
+  summarise(moved = sum(educ != educ_score), n = n(), .by = cycle)
+wider <- spec_unions(unions, cohorts = "five_years")
+
+# One row per union against person-months: a logit of having married by the
+# interview, and the logit of a marriage in the month, unweighted and without
+# other terms, on the unions of the paper
+per_union <- glm(I(outcome == "marriage") ~ later, family = binomial(), data = paper)
+per_month <- glm(I(y == "marriage") ~ later, family = binomial(), data = months)
+b_union <- unname(coef(per_union)["later"])
+b_month <- unname(coef(per_month)["later"])
+mean_length <- paper |> summarise(m = mean(duration + 1), .by = cycle)
+
+example <- curve |>
+  filter(cohorts == "five_years", horizon == "three_years", adjust == "none", weights == "weighted",
+         time == "yearly", model == "cloglog")
+example_rank <- sum(curve$b < example$b - 1e-9) + 1
+
+# The estimand statement of the reference specification, assembled from the
+# phrases of menu_options.csv in the order that its codebook sets
+on_curve_phrase <- \(axis, option = NULL) {
+  rows <- menu[menu$axis == axis, ]
+  if (is.null(option)) rows$phrase[rows$on_curve][1] else rows$phrase[rows$option == option]
+}
+ph <- \(a) on_curve_phrase(a, if (a %in% names(REFERENCE)) REFERENCE[[a]] else NULL)
+cap <- \(t) paste0(toupper(substr(t, 1, 1)), substring(t, 2))
+statement_ref <- sprintf(
+  "%s, %s %s, the change in %s %s, %s, %s (%s, %s, %s). %s %s, %s, %s %s.",
+  cap(ph("sample")), ph("cohorts"), ph("comparison"), ph("outcome"), ph("horizon"), ph("weights"),
+  ph("adjust"), ph("histories"), ph("education"), ph("short"), ph("model"), ph("unit"), ph("time"),
+  ph("errors"), ph("scale")
+)
+```
+
+This page sets out every decision that an analysis of the claim has to make, the options that each decision offers, and whether each option answers the claim. The claim, in the wording that SCORE and Multi100 took from the paper of the original authors (OAs) [@KuoRaley2016DivergingPatternsUnion], is that "cohabitors have increasingly become less likely to progress to marriage". The [case study](index.qmd) sets out the study, the five reanalyses, the file that the analysts received and the data. The [decision map](map.qmd) draws the same menu as a path from the data to a verdict, with every option selectable.
+
+`r stringr::str_to_sentence(num_word(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be built from the data, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
+
+## The estimand statement {#estimand}
+
+Write the statement that your analysis will complete:
+
+> **Among which women and unions**, **which cohorts of unions** **in which surveys**, the change in **what counts as progress to marriage** **over what time**, **counted with which weights**, **holding what constant** (*how the union histories are built*, *how education is coded*, *what happens to very short unions*).
+>
+> Estimated by *which model* *on which rows*, *with which baseline for the time since the start*, tested *with which standard errors* and reported *on which scale*.
+
+For the reference specification of the course it reads:
+
+> `r statement_ref`
+
+Move one decision and reread the statement. If a bold slot changes, you have made an estimand decision, and you are answering a different question. If only a slot in italics within the first sentence changes, you have made a measurement decision, which leaves the question in place and changes how its parts are measured. If only the second sentence changes, you have made an estimation decision, which changes how the answer is reached. The completed statement is your estimand [@LundbergEtAl2021WhatYourEstimand], the quantity that your number estimates, and a reader needs it before the number means anything. The preregistration of Task 5 assembles it for you from your choices.
+
+## Person-months and the discrete-time model {#person-months}
+
+The claim is about a change in how often cohabiting couples went on to marry, and the unions in the data were observed for different lengths of time. A union begun in 1990 had been under way for five years when its partner was interviewed in 1995; one begun in 1995 for a few months. A union still intact at the interview has an outcome that nobody yet knows: it might become a marriage the next month, or never. Demographers call such a union censored, and they handle it by asking a question that every month of every union can answer. In each month in which a couple were still living together unmarried at its start, did they marry, separate, or stay as they were?
+
+The data that answer this question are person-period data, here person-months: each union becomes one row for every month in which it could end, from the month in which the couple moved in to the month in which they married, separated or were interviewed, with its outcome in the last row and every earlier row recording that nothing happened. The share of rows that end in a marriage, among the unions still intact at the start of a month, is the monthly chance of marrying, which demographers call the hazard or the transition rate. A censored union contributes every month in which it was observed, and no more. The `r big(nrow(paper))` unions of the paper become `r big(nrow(months))` person-months: `r big(pmv(0, "months"))` in the earlier cohort, with `r pmv(0, "marriages")` marriages, and `r big(pmv(1, "months"))` in the later one, with `r pmv(1, "marriages")`. Weighted, the monthly chance of marrying was `r pct(pmv(0, "h"), 2)` in the earlier cohort and `r pct(pmv(1, "h"), 2)` in the later one.
+
+A discrete-time event-history model is a regression on these rows. A logit of marrying in the month, with a term for the time since the start of the union, estimates how the monthly chance differs between the cohorts; a complementary log-log model of the same rows is the version of the proportional hazards model for time measured in whole months; and a multinomial logit of marrying or separating against staying together, the model of the paper, estimates both transitions at once, so that separation is treated as what demographers call a competing risk. Every specification of the curve reports the coefficient of the later cohort in the equation for marriage, the log of the ratio of its monthly chance to that of the earlier cohort. The [event-history module](../../companion/event-history.qmd) builds the person-months, the life table and the three models step by step.
+
+## The curve of `r nrow(curve)` {#the-curve}
+
+Six decisions vary on the curve: the cohorts compared (the window of the paper, or the same five-year window in both surveys), the time frame (every observed month, or the first three years), the adjustment (none, the age at the start, or age with race-ethnicity and education), the weights (the survey weights, or none), the time since the start (a straight line in the months, or a separate baseline for each year of the union) and the model (a multinomial logit, a logit or a complementary log-log model). That gives `r paste(purrr::map_int(SPEC_AXES, length), collapse = " × ")` = `r nrow(curve)` specifications. The other `r num_word(length(fixed_axes))` decisions take a single option on the curve.
+
+Every estimate is the coefficient of the later cohort on the log scale, and a value below zero is in the direction of the claim. All `r nrow(curve)` specifications lie below zero and are significant at the 5% level with errors that follow the design of the surveys, from `r fmt(min(curve$b))` to `r fmt(max(curve$b))`, with p never above `r format(signif(max(curve$p), 1), scientific = FALSE)`. The reference specification, the model of the paper without its interaction of race-ethnicity and period, takes the cohorts of the paper, every observed month, age, race-ethnicity and education, the weights, a straight line in the months and the multinomial logit: `r fmt(ref$b)`, t = `r fmt(ref$stat, 2)` on `r ref$df` df, a ratio of `r fmt(ref$ratio, 2)`, on `r big(ref$n)` person-months.
+
+Within the curve, what varies is the size of the estimate, and @tbl-shifts shows which decisions move it. Each row compares the specifications with an option against their twins that differ only in that decision.
+
+```{r}
+#| label: tbl-shifts
+#| tbl-cap: "What each option on the curve does to the estimate, against the first option of its decision on twin specifications that agree on every other decision, on the log scale, with the change in the number of person-months. A positive shift moves the estimate towards zero. Source: `data/menu_deviations.csv`."
+#| echo: false
+lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
+dec <- \(axis) menu$decision[menu$axis == axis][1]
+deviations |>
+  filter(option != baseline) |>
+  mutate(
+    Decision = purrr::map_chr(axis, dec),
+    Option = purrr::map2_chr(axis, option, lab),
+    Against = purrr::map2_chr(axis, baseline, lab)
+  ) |>
+  transmute(
+    Decision, Option, Against,
+    Pairs = n_pairs,
+    `Mean shift` = sgn(shift_mean, 4),
+    Smallest = sgn(shift_min, 4),
+    Largest = sgn(shift_max, 4),
+    `Change in person-months` = sgn_n(n_shift_mean),
+    `Still significant` = pct(sig_share, 0)
+  ) |>
+  tt() |>
+  style_tt(j = 4:9, align = "r")
+```
+
+The window of the later cohort moves the estimate most, by `r sgn(dv("cohorts", "five_years", "shift_mean"))` on average, and the weights next, by `r sgn(dv("weights", "unweighted", "shift_mean"))`. Holding age, race-ethnicity and education constant moves it by `r sgn(dv("adjust", "composition", "shift_mean"))`, and every other option by less than 0.015. No option moves any specification across the 5% threshold.
+
+## Level 1 – Estimands {#level-estimand}
+
+Each decision at this level rewrites a bold slot of the statement, so two analysts who decide differently are answering different questions, and their results are not rival estimates of one quantity.
+
+```{r}
+#| label: tbl-level1
+#| tbl-cap: "The estimand decisions. Options off the curve carry the judgement of the course in brackets. Source: `data/menu_options.csv`."
+#| echo: false
+judgement_txt <- c(kept = "on the curve", other_question = "another question",
+                   weaker_answer = "a weaker answer", check = "a check",
+                   unavailable = "not in the data")
+level_table <- \(lv) {
+  menu |>
+    filter(level == lv) |>
+    mutate(item = paste0(label, " <code>", option, "</code>")) |>
+    summarise(
+      on = paste(item[on_curve], collapse = " · "),
+      off = if (any(!on_curve)) {
+        paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = " · ")
+      } else {
+        "–"
+      },
+      .by = c(axis, decision)
+    ) |>
+    transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
+    tt()
+}
+level_table("estimand")
+```
+
+### Surveys compared {#comparison}
+
+The paper compares the NSFG of 1995 with that of 2006–2010, and so does every specification of the curve. The NSFG was fielded in 2002, 2011–2013 and 2013–2015 as well, and the SCORE replication and three of the Multi100 analysts used those surveys. Other pairs of surveys compare other cohorts of unions: 2002 against 2006–2010 gives `r fmt(opt("comparison", "2002_2006", "b"))` at the reference settings (`r pe(opt("comparison", "2002_2006", "p"))`), 2006–2010 against 2011–2015 gives `r fmt(opt("comparison", "2006_2011", "b"))` (`r pe(opt("comparison", "2006_2011", "p"))`), 2002 against 2011–2015 gives `r fmt(opt("comparison", "2002_2011", "b"))` and 1995 against 2011–2015 gives `r fmt(opt("comparison", "1995_2011", "b"))`. Comparisons of new cohorts are replications of the claim rather than answers to it, and the [case study](index.qmd#sec-replication) takes them up there. A linear trend over all five surveys, which 73FDT and JDA15 fitted, asks whether marriage declined steadily, which the claim does not assert. All of these stay off the curve as other questions.
+
+### Cohorts compared {#cohorts}
+
+Within the two surveys, the paper keeps unions begun no more than five years before the interview and, in the later survey, only those begun from 2005, so that the cohorts are 1990–1995 and 2005–2010. Applying the five-year rule alone to both surveys selects the two cohorts in the same way, at the cost of a later cohort that reaches back to unions begun in 2001: it adds `r big(nrow(wider) - nrow(paper))` unions and about `r big(dv("cohorts", "five_years", "n_shift_mean"))` person-months. Both windows answer the claim about the cohorts of the paper, and both stay on the curve, the window of the paper in the reference specification. The symmetric window moves the estimate by `r sgn(dv("cohorts", "five_years", "shift_mean"))` on average (`r sgn(dv("cohorts", "five_years", "shift_min"))` to `r sgn(dv("cohorts", "five_years", "shift_max"))`), towards zero, because its later cohort lies closer in time to the earlier one.
+
+### Time frame {#horizon}
+
+The coefficient averages the difference between the cohorts over every observed month of the unions, at most five years, or over the first three years only, the horizon of the life table that the paper quotes. Most marriages of cohabitors happen in the first years of a union, and the three-year horizon matches the descriptive result of the paper. Both stay on the curve, and the three-year horizon moves the estimate by `r sgn(dv("horizon", "three_years", "shift_mean"), 4)` on average.
+
+### Outcome {#outcome}
+
+The claim speaks of progress to marriage, and the curve measures it as the paper does, as the monthly chance that a cohabiting couple marries. Three other measures stay off the curve. The share of unions that had become a marriage by the interview, the measure of three of the analysts, depends on how long each union had been observed, so it mixes the timing of the interview into the answer: `r pct(sh("1990-1995", "married_by_interview"))` of the unions of 1990–1995 against `r pct(sh("2005-2010", "married_by_interview"))` of those of 2005–2010, a weaker answer. The share married within three years, from the life table, answers the claim in absolute terms, `r pct(sh("1990-1995", "married_3y"))` against `r pct(sh("2005-2010", "married_3y"))`, but it cannot hold the composition of the cohorts constant in the same model; it is a check, which the [multiverse page](multiverse.qmd#sec-lifetable) draws. Separation is another claim of the paper: in Model 2 its period coefficient is `r fmt(rp(2, "later", "separation", "b"))` on the rebuilt unions (published `r fmt(rp(2, "later", "separation", "b_published"))`), so among white women the chance of separating barely changed while the chance of marrying fell.
+
+### Adjustment {#adjustment}
+
+This is the decision that defines the estimand most sharply, because the population of cohabitors changed between the cohorts. Cohabitation spread, and the share of Hispanic women among cohabitors almost doubled, from `r pct(composition$hispanic[composition$cycle == "1995"])` to `r pct(composition$hispanic[composition$cycle == "2006-10"])` weighted, while the mean age at the start stayed at `r fmt(composition$age[composition$cycle == "1995"], 1)`. The three sets on the curve are nested. The first holds constant only the time since the start of the union, which every specification includes. The second adds the age at the start and its square. The third adds race-ethnicity and education, the controls of the paper without its interactions. Across the curve the mean coefficient is `r fmt(bs("none", "mean"))` without adjustment, `r fmt(bs("age", "mean"))` with age and `r fmt(bs("composition", "mean"))` with age, race-ethnicity and education.
+
+Which of these answers the claim depends on what "cohabitors" means, and a causal graph sets out the choice (@fig-dag). Nothing in the graph causes the period in which a union began, so among all women the comparison of periods needs nothing held constant. But every analysis of these data keeps only women who cohabited, and whether a woman cohabits depends on her education and race-ethnicity and on the period, because cohabitation spread. Cohabiting is therefore a common effect of the period and of the characteristics of the woman, a **collider**. Keeping only cohabitors conditions on it, which opens paths from the period to marriage through education and race-ethnicity: among cohabitors, the later period goes with a different mix of women, who would marry at different rates even if nothing else had changed. Holding education and race-ethnicity constant closes those paths [@ColeEtAl2010IllustratingBiasDue].
+
+```{r}
+#| label: fig-dag
+#| fig-cap: "A causal graph of the claim. The period shapes who cohabits, and so do education and race-ethnicity, which also shape whether a cohabiting couple marries. Every analysis of cohabitors keeps only the women who cohabited (the outlined node), which conditions on a common effect of the period and of the characteristics of the woman. The burgundy arrow is the change that the claim is about."
+#| fig-alt: "A causal graph. The period is on the left and marriage on the right, joined by a burgundy arrow. Race-ethnicity, education and the age at the start lie above, with arrows into marriage; education also points to the age at the start. Below, an outlined node for cohabiting receives arrows from the period, education and race-ethnicity."
+#| fig-width: 7
+#| fig-height: 3.6
+#| echo: false
+dag_nodes <- tibble::tribble(
+  ~node,            ~x,  ~y,
+  "period",         0,   0,
+  "marriage",       4,   0,
+  "race-ethnicity", 1.2, 1.6,
+  "education",      2.6, 1.8,
+  "age at start",   3.6, 1.1,
+  "cohabits",       2,   -1.4
+)
+dag_edges <- tibble::tribble(
+  ~from,            ~to,
+  "period",         "cohabits",
+  "education",      "cohabits",
+  "race-ethnicity", "cohabits",
+  "education",      "marriage",
+  "race-ethnicity", "marriage",
+  "education",      "age at start",
+  "age at start",   "marriage",
+  "period",         "marriage"
+) |>
+  mutate(kind = if_else(from == "period" & to == "marriage", "claim", "other")) |>
+  left_join(dag_nodes |> rename(from = node, x0 = x, y0 = y), by = "from") |>
+  left_join(dag_nodes |> rename(to = node, x1 = x, y1 = y), by = "to") |>
+  mutate(
+    len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
+    # stop each arrow short of the labels at both ends
+    trim = pmin(0.5, len / 3),
+    xs = x0 + trim * (x1 - x0) / len, ys = y0 + trim * (y1 - y0) / len,
+    xe = x1 - trim * (x1 - x0) / len, ye = y1 - trim * (y1 - y0) / len
+  )
+dag_labels <- dag_nodes |>
+  mutate(role = case_when(node %in% c("period", "marriage") ~ "claim",
+                          node == "cohabits" ~ "selected", .default = "other"))
+ggplot() +
+  geom_segment(data = dag_edges, aes(x = xs, y = ys, xend = xe, yend = ye, colour = kind),
+               linewidth = 0.6, arrow = grid::arrow(length = grid::unit(5, "pt"), type = "closed")) +
+  geom_label(data = filter(dag_labels, role != "selected"), aes(x = x, y = y, label = node, fill = role),
+             colour = "white", fontface = "bold", size = 3.4, linewidth = 0,
+             label.padding = grid::unit(4, "pt")) +
+  geom_label(data = filter(dag_labels, role == "selected"), aes(x = x, y = y, label = node),
+             colour = "#1d2731", fill = "white", fontface = "bold", size = 3.4, linewidth = 0.8,
+             label.padding = grid::unit(4, "pt")) +
+  scale_colour_manual(values = c(claim = "#8b1538", other = "grey55"), guide = "none") +
+  scale_fill_manual(values = c(claim = "#0e3b6a", other = "grey45"), guide = "none") +
+  coord_cartesian(xlim = c(-0.6, 4.6), ylim = c(-1.8, 2.1)) +
+  theme_void(base_size = 11)
+```
+
+Without adjustment, the coefficient describes the two populations of cohabitors as they were, the change in who cohabits included. With race-ethnicity and education, it describes the change within groups of women of the same characteristics. Both are readings of "cohabitors" that a careful analyst could hold, and the Task 2 instruction of Multi100, which removed only the interactions, points to the second. The age at the start is a different case: if the later cohort had moved in at another age because of the period, holding age constant would remove part of the change, but the mean age did not move, so the two sets with and without age differ by only `r sgn(dv("adjust", "age", "shift_mean"), 4)` on average. All three sets stay on the curve, with age, race-ethnicity and education in the reference specification.
+
+Four options stay off the curve. The two models of the paper add an interaction of period with race-ethnicity (Model 2, `r fmt(opt("adjust", "race_period", "b"))` at the reference settings) or with education (Model 1, `r fmt(opt("adjust", "educ_period", "b"))`, `r pe(opt("adjust", "educ_period", "p"))`), and beside an interaction the coefficient of the period is the change for the reference group alone, non-Hispanic white women or college graduates. They answer narrower questions, and the [case study](index.qmd#sec-result) explains them. The total length of the union, which the file of the analysts carries, is known only once a union has ended and depends on how it ended, so holding it constant compares unions by their outcome: `r fmt(opt("adjust", "total_duration", "b"))` at the reference settings, a weaker answer. Plans to marry at the start of the union were asked only in 2006–2010, so they cannot be held constant across the cohorts.
+
+### Weights {#weights}
+
+With the final weights of each survey, the estimate describes the population of women aged 15–44 that the survey represents. Without them, it describes the sample, in which the groups that the NSFG sampled at higher rates count for more: Black and Hispanic women, and from 2002 women aged 15–24 as well. The paper reports weighted results, and NCHS asks users to weight. The file that SCORE built carried no weights, so every Multi100 analysis and the SCORE replication are unweighted. The claim does not say which population it means, and the unweighted estimate is the one that the analysts could compute, so both stay on the curve, the weights in the reference specification. Leaving them out moves the estimate by `r sgn(dv("weights", "unweighted", "shift_mean"))` on average (`r sgn(dv("weights", "unweighted", "shift_min"))` to `r sgn(dv("weights", "unweighted", "shift_max"))`), away from zero: weighted specifications run from `r fmt(bw("weighted", "lo"))` to `r fmt(bw("weighted", "hi"))`, and unweighted ones from `r fmt(bw("unweighted", "lo"))` to `r fmt(bw("unweighted", "hi"))`. The [weights module](../../companion/weighting.qmd) explains what survey weights do.
+
+### Women and unions {#sample}
+
+The paper analyses women aged 15–44 and their first cohabitation, if it came before any marriage. Men cannot be compared, because the 1995 survey interviewed only women, and later cohabitations, after a first one or after a marriage, are another population of unions, less often followed by marriage. One option stays on the curve, men are not in the data, and every cohabitation is another question.
+
+## Level 2 – Measurement {#level-measurement}
+
+The question stays the same, and these decisions change how its parts are measured.
+
+```{r}
+#| label: tbl-level2
+#| tbl-cap: "The measurement decisions. Source: `data/menu_options.csv`."
+#| echo: false
+level_table("measurement")
+```
+
+### Union histories {#histories}
+
+The start, end and outcome of each union are rebuilt from the dates that each woman reported, following the recode specifications of the NSFG. The rebuild reproduces the counts of Table 1 of the paper exactly, 929 unions of 1990–1995 and 1,142 of 2005–2010 with their outcomes. The person-month file of SCORE, which Multi100 gave the analysts, took the end of every 1995 union from the month in which the woman stopped living with a former partner, which exists only for unions that dissolved, so its 1995 cohort holds `r score_file$unions[score_file$source == "SCORE file" & score_file$cycle == "1995"]` unions, `r score_file$separations[score_file$source == "SCORE file" & score_file$cycle == "1995"]` of them separations and `r score_file$marriages[score_file$source == "SCORE file" & score_file$cycle == "1995"]` marriages. Any analysis that uses those rows answers the claim wrongly: the test of 5X3KG gives $\chi^2$ = `r fmt(an("5X3KG", "stat_refit"), 2)` for more marriage in the later survey on the file and `r fmt(an("5X3KG", "stat_repaired"), 2)` for less with the 1995 rows rebuilt. The rebuild stays on the curve, and the SCORE file stays off it as a weaker answer, the nearest of the judgements of the course to a construction error; the [case study](index.qmd#sec-1995) explains how the error arose.
+
+### Education {#education}
+
+The four groups of education of Table 1 come out exactly with the associate degree counted as some college and with the correction that NCHS published for the coding of the GED in 2006–2010. The SCORE file counts the associate degree as college and uses the education recode as released, which moves `r recoded$moved[recoded$cycle == "1995"]` of the `r big(recoded$n[recoded$cycle == "1995"])` women of 1995 and `r recoded$moved[recoded$cycle == "2006-10"]` of the `r big(recoded$n[recoded$cycle == "2006-10"])` of 2006–2010 into another group and gives `r fmt(opt("education", "score", "b"))` at the reference settings. The coding of the paper stays on the curve, and the other is a check. It matters only for the adjustment that holds education constant.
+
+### Very short unions {#short}
+
+The paper leaves out 30 unions that lasted less than a month, since "such a short co-residential arrangement is more ambiguous in its status as a union" (Data and Methods), and the rebuild finds them. Keeping them gives `r fmt(opt("short", "keep", "b"))` at the reference settings, a check, and the curve leaves them out, as the paper does.
+
+## Level 3 – Estimation {#level-estimation}
+
+With the question and its measures fixed, these decisions change how the answer is reached, how uncertain it is said to be, and the scale on which it is reported.
+
+```{r}
+#| label: tbl-level3
+#| tbl-cap: "The estimation decisions. Source: `data/menu_options.csv`."
+#| echo: false
+level_table("estimation")
+```
+
+### Unit of analysis {#unit}
+
+Person-months are the design of the paper and the design that handles unions of different lengths and unions still intact at the interview. Three analysts used one row per union instead, with its outcome at the interview, which treats a union begun a month before the interview like one of five years: it asks whether the union had become a marriage by then, however long it had been observed. On the unions of the paper, without weights or other terms, a logit of having married by the interview gives `r fmt(b_union)` for the later cohort, against `r fmt(b_month)` for a logit of marrying in the month on the person-months; the two numbers answer different questions. The first compares the shares married by the interview, which depend on how long each union had been observed, here `r fmt(mean_length$m[mean_length$cycle == "1995"], 1)` and `r fmt(mean_length$m[mean_length$cycle == "2006-10"], 1)` months on average in the two cohorts, and the second compares the monthly chances, whatever the length of observation. A test of two proportions on the person-month rows, which 5X3KG used, is a crude version of the monthly chance, but it treats the months of one union as independent, ignores the time since the start and leaves out the design of the survey. Both stay off the curve as weaker answers.
+
+### Time since the start {#time}
+
+The chance of marrying changes over the life of a union, and the model needs a baseline for it. The paper controls for the "duration of union", which the curve enters as a straight line in the months since the start, or as a separate baseline for each year of the union, which lets the chance rise and fall freely from year to year. The two differ by `r sgn(dv("time", "yearly", "shift_mean"), 4)` on average, and both stay on the curve. Without any time term, as 456AP fitted, the chance is assumed to be the same in every month of a union, a weaker assumption to defend, although here it moves the reference estimate only to `r fmt(opt("time", "none", "b"), 4)`.
+
+### Model {#model}
+
+The multinomial logit of marrying or separating against staying together is the model of the paper. A logit of marrying in the month treats a separation as the end of the time at risk of marrying, and a complementary log-log model of the same rows is the discrete-time version of the proportional hazards model. All three estimate the log of a ratio of monthly chances of marrying, an odds, a chance relative to staying together and a rate, and with chances of one or two per cent a month they nearly coincide: against the multinomial logit on twin specifications, the logit moves the estimate by `r sgn(dv("model", "logit", "shift_mean"), 4)` and the complementary log-log model by `r sgn(dv("model", "cloglog", "shift_mean"), 4)`. All three stay on the curve, the multinomial logit in the reference specification. The linear probability model gives the difference in the monthly chance itself, `r fmt(opt("model", "lpm", "b"), 4)` at the reference settings, a monthly chance lower by `r fmt(100 * abs(opt("model", "lpm", "b")), 1)` percentage points; it is on another scale, and it stays off the curve as a check.
+
+### Standard errors {#errors}
+
+The NSFG sampled clusters of households within strata, and the months of one union are not independent observations, so conventional errors, which treat every person-month as a separate piece of evidence, understate the uncertainty. The curve uses errors that follow the design of both surveys, computed by linearisation from the strata and clusters, with a t on the clusters minus the strata minus the coefficients plus one as its degrees of freedom. At the reference specification they give SE `r fmt(inf("design", "se"))` (t = `r fmt(inf("design", "stat"), 2)` on `r inf("design", "df")` df), errors clustered by woman `r fmt(inf("woman", "se"))`, and conventional errors `r fmt(inf("model", "se"))`, a quarter smaller. The paper reports SE 0.14 for its Model 2, and the refit with errors that follow the design gives `r fmt(rp(2, "later", "marriage", "se"))`, which suggests that the OAs used the design. Clustering by woman is stored on every row of the curve as a check, and conventional errors are a weaker answer.
+
+### Effect scale {#scale}
+
+The paper reports its coefficient on the log scale, and every point of the curve is placed on that scale. The ratio of the monthly chances, `r fmt(ref$ratio, 2)` at the reference specification, says the same thing in a form that is easier to read: the couples of the later cohort married at about half the monthly rate of those of the earlier one. The partial correlation by the rule of Multi100, `r fmt(ref$r)` at the reference specification, is the scale on which Multi100 compared the reanalyses, and it is close to zero in any analysis of person-months, because the person-months stand in for the sample size and almost every month records no event. The ratio and the correlation are checks, stored in the curve file.
+
+## Worked example
+
+**Choice:** cohorts `five_years`, time frame `three_years`, adjustment `none`, weights `weighted`, time since the start `yearly`, model `cloglog`; women aged 15–44 and their first premarital cohabitation in the NSFG of 1995 and 2006–2010, marriage in the month as the outcome, the rebuilt union histories, education as in the paper, very short unions left out, person-months, errors that follow the design, the log scale.
+
+**Justification, by level.** The claim speaks of cohabitors as a population, and the spread of cohabitation is part of what changed, so the analysis compares the cohabitors of the two periods as they were, without adjustment, and uses the weights so that each cohort describes the women whom its survey represents. The same five-year window in both surveys selects the two cohorts by the same rule, and the first three years are the horizon of the descriptive result of the paper, in which most marriages of cohabitors happen. The union histories, the coding of education and the very short unions follow the paper. A complementary log-log model reads the coefficient as a ratio of monthly rates, the proportional hazards model of demography in whole months, with a separate baseline for each year of the union, and the errors follow the design of the surveys.
+
+The specification gives `r fmt(example$b)` on the log scale, a ratio of `r fmt(example$ratio, 2)`, t = `r fmt(example$stat, 2)` on `r example$df` df, on `r big(example$n)` person-months, and it ranks `r example_rank` of `r nrow(curve)` from the largest decline. A justification of this kind connects each choice to the wording of the claim or to the causal graph, at the level to which the choice belongs, and it is what the preregistration of Task 5 asks you to write before you run the model.
+
+## Declaring and reporting
+
+In Task 4 you explore the menu with `try_spec()`, changing one argument at a time, and an option off the curve is refused with its reason from `menu_options.csv`. In Task 5 you fix one specification in the preregistration block before you fit it: `prereg()` prints the declaration with its estimand statement, `run_spec()` fits it and `report_result()` sends it to the class chart on the [multiverse page](multiverse.qmd). The [exercise overview](exercise.qmd) sets out both tasks.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

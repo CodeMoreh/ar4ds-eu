@@ -1,0 +1,414 @@
+---
+title: "The cohabitation case"
+subtitle: "Cohabitors and marriage in the National Survey of Family Growth, 1995 and 2006–2010"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tinytable)
+source("../../R/cohabitation/_tools.R")
+
+read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
+unions <- read_csv("data/cohab_unions.csv", show_col_types = FALSE,
+                   col_types = cols(caseid = col_character(), stratum = col_character(),
+                                    psu = col_character()))
+score <- read_data("score_person_months.csv")
+analysts <- read_data("analysts5.csv")
+marks <- read_data("reference_marks.csv")
+repro <- read_data("display_reproduction.csv")
+score_file <- read_data("display_score_file.csv")
+shares <- read_data("display_shares.csv")
+# columns that hold only "t" would be read as logical without their type
+curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                  col_types = cols(stat_type = col_character()))
+options_d <- read_csv("data/display_options.csv", show_col_types = FALSE,
+                      col_types = cols(stat_type = col_character()))
+
+# Fixed decimals and a true minus sign, for every number on the page
+fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
+big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
+pe <- \(p) case_when(p < 0.001 ~ "p < 0.001", .default = paste("p =", fmt(p, 3)))
+
+# one value from a record or display file, for inline use
+an <- \(id, col) analysts[[col]][analysts$id == id]
+mark <- \(id, col) marks[[col]][marks$mark == id]
+rp <- \(model, term, col, eq = "marriage") {
+  repro[[col]][repro$model == model & repro$term == term & repro$equation == eq]
+}
+sf <- \(source, cycle, col) score_file[[col]][score_file$source == source & score_file$cycle == cycle]
+opt <- \(changed, option, col) options_d[[col]][options_d$changed == changed & options_d$option == option]
+ref <- curve |> filter(is_reference)
+
+# The unions of the paper, rebuilt from the NSFG, and their composition
+paper <- spec_unions(unions)
+outcomes <- count(paper, cycle, outcome)
+oc <- \(cycle, outcome) outcomes$n[outcomes$cycle == cycle & outcomes$outcome == outcome]
+composition <- paper |>
+  summarise(
+    unions = n(),
+    less_hs = weighted.mean(educ == "less_hs", weight),
+    hs = weighted.mean(educ == "hs", weight),
+    some_college = weighted.mean(educ == "some_college", weight),
+    college = weighted.mean(educ == "college", weight),
+    white = weighted.mean(race == "white", weight),
+    black = weighted.mean(race == "black", weight),
+    hispanic = weighted.mean(race == "hispanic", weight),
+    other = weighted.mean(race == "other", weight),
+    median_age = median(age_interview),
+    .by = cycle
+  )
+short_unions <- unions |>
+  filter(cycle %in% c("1995", "2006-10"), since_start <= 60, duration < 1,
+         cycle == "1995" | from_2005)
+
+# The 1995 unions of the paper that the SCORE file holds, by outcome, and
+# the rows of each survey that record a marriage in the file
+score_last <- score |>
+  slice_max(MONTHNUM, n = 1, by = CASEID)
+in_file <- paper |>
+  filter(cycle == "1995") |>
+  mutate(in_score = caseid %in% as.character(score_last$CASEID)) |>
+  count(outcome, in_score)
+kept <- \(o) sum(in_file$n[in_file$outcome == o & in_file$in_score])
+rows_married <- score |>
+  filter(P95 == 1 | P10 == 1) |>
+  summarise(rows = n(), married = sum(OUTCOME == 2), .by = P95)
+rm_ <- \(p95, col) rows_married[[col]][rows_married$P95 == p95]
+
+# Table 1 of the paper, as published
+table1 <- tibble::tribble(
+  ~row,                     ~p1995, ~p2006,
+  "Unions",                  929,    1142,
+  "Became a marriage",       340,    194,
+  "Dissolved",               347,    504,
+  "Intact at the interview", 242,    444,
+  "Less than high school",   16.37,  16.08,
+  "High school or GED",      36.12,  33.78,
+  "Some college",            26.32,  28.39,
+  "College or more",         21.18,  21.75,
+  "Non-Hispanic white",      72.49,  58.04,
+  "Black",                   14.06,  17.02,
+  "Hispanic",                10.20,  18.96,
+  "Non-Hispanic other",      3.25,   5.98,
+  "Median age at interview", 23,     23
+)
+```
+
+This page presents the cohabitation case. The case takes one claim of an article in *Demography* by the original authors (OAs) [@KuoRaley2016DivergingPatternsUnion], which compares the first cohabitations of American women begun in the early 1990s with those begun in the late 2000s and asks how often they became a marriage. Five independent analysts reanalysed the claim for the Multi100 project, all of them on a file that the SCORE programme had built for its replication of the paper, and the course rebuilt the unions of the paper from the public files of the National Survey of Family Growth (NSFG). The exercises begin where this page ends. Quotations come from the author manuscript in PubMed Central (PMC5026877), which has no page numbers, so they are located by its sections, with the two page numbers of the published version that SCORE and Multi100 recorded.
+
+## 1. The original study {#sec-study}
+
+### 1.1 The retreat from marriage {#sec-question}
+
+By the time of the paper, "approaching two-thirds of first marriages are preceded by cohabitation" in the United States (Introduction), while a smaller share of cohabiting couples went on to marry. The paper reads this change against two perspectives on family change. The Second Demographic Transition (SDT) explains it by ideational change, a growing emphasis on individual autonomy, and expects cohabitation to follow a course in which it "may first emerge as a deviant status; however, as it becomes more prevalent, it moves to a prelude to marriage, and then ultimately cohabitation becomes a union setting equivalent to marriage" (Background). Whether cohabitation is a stage on the way to marriage or an alternative to it is therefore the question behind the claim. The diverging-destinies thesis, which the paper takes from McLanahan, "contends that economic and other institutional forces condition the influence of ideational change": marriage has come to require resources, a stable income and a household of one's own, and "Whereas the socially and economically advantaged have the resources to meet these new demands of marriage, the less-educated and minorities may not" (Background).
+
+The two perspectives lead to two expectations, which the paper sets side by side: "In sum, as the SDT theory leads us to expect to see an overall decline in the odds of marriage among more recent cohabiting cohorts, the diverging-destinies perspective predicts that the decline is accompanied by growing differentials among cohabitors of different race-ethnic and educational backgrounds" (Background). The first expectation is the claim of this case. The second, an educational gradient that steepens over time, is the main finding of the paper. A further question of the paper, whether lower intentions to marry explain the gradient, uses a measure that only the later survey holds, and the course leaves it aside.
+
+### 1.2 The data and the unions {#sec-data}
+
+The data are two cycles of the NSFG, a survey of the National Center for Health Statistics (NCHS) of people aged 15–44. Cycle 5 interviewed 10,847 women from January to October 1995, and the survey of 2006–2010 interviewed 12,279 women and 10,403 men from June 2006 to June 2010 (Data and Methods). The 1995 survey interviewed only women, so the paper uses women from both. Each woman reports the history of her unions, with the month in which she began to live with each partner, the month of each marriage and the month in which each union ended. A first premarital cohabitation is the first time that a woman lived with a partner, if that came before any marriage.
+
+The paper keeps the first premarital cohabitations that "were initiated no more than five years prior to the interviews" and, in the later survey, only those begun from 2005, so that the two cohorts of unions began in 1990–1995 and in 2005–2010. It leaves out "30 premarital cohabitations that last for less than a month", because "such a short co-residential arrangement is more ambiguous in its status as a union" (Data and Methods). That gives 929 unions in the earlier cohort and 1,142 in the later one. The course rebuilt the unions from the public files of both surveys, and @tbl-sample sets the rebuild beside the counts and shares that the paper publishes.
+
+```{r}
+#| label: tbl-sample
+#| tbl-cap: "The two cohorts of unions in the course rebuild and in Table 1 of the paper: the unions and their outcomes by the interview, the weighted shares by education and race-ethnicity (%) and the median age at the interview. Sources: `data/cohab_unions.csv` and the paper."
+#| echo: false
+course <- composition |>
+  transmute(
+    cycle,
+    vals = purrr::pmap(list(unions, less_hs, hs, some_college, college, white, black, hispanic, other,
+                            median_age, cycle),
+                       \(u, l, h, s, c, w, b, hi, o, a, cy) c(u, oc(cy, "marriage"), oc(cy, "separation"),
+                                                             oc(cy, "intact"), 100 * c(l, h, s, c, w, b, hi, o), a))
+  )
+course_of <- \(cy) course$vals[[which(course$cycle == cy)]]
+show <- \(x, i) if (i <= 4 || i == 13) big(x) else fmt(x, 2)
+table1 |>
+  mutate(
+    i = row_number(),
+    c1995 = course_of("1995"),
+    c2006 = course_of("2006-10")
+  ) |>
+  transmute(
+    ` ` = row,
+    `1990–1995, rebuild` = purrr::map2_chr(c1995, i, show),
+    `1990–1995, paper` = purrr::map2_chr(p1995, i, show),
+    `2005–2010, rebuild` = purrr::map2_chr(c2006, i, show),
+    `2005–2010, paper` = purrr::map2_chr(p2006, i, show)
+  ) |>
+  tt() |>
+  style_tt(j = 2:5, align = "r")
+```
+
+The rebuild reproduces Table 1 of the paper exactly, once an associate degree counts as some college and the GED holders of the later survey are coded as NCHS corrected them in a published note. The 30 short unions of the paper are `r nrow(filter(short_unions, cycle == "1995"))` and `r nrow(filter(short_unions, cycle == "2006-10"))` in the rebuild. The composition of cohabitors changed between the cohorts: the share of Hispanic women almost doubled, from `r pct(composition$hispanic[composition$cycle == "1995"])` to `r pct(composition$hispanic[composition$cycle == "2006-10"])`, while the share of graduates stayed near a fifth.
+
+### 1.3 The model and the result {#sec-result}
+
+The paper models what happens to a union month by month. "First, we convert data into person-month data sets with the first month indicating the month when cohabitation started and last month the month when cohabitation was ended either by marriage or separation or the month when interview was conducted for those whose first premarital cohabitation remained intact at the time of interview (i.e., censoring). Then, we estimate multivariate discrete-time event history models with multinomial logistic regression" (Empirical Strategy; p. 928 of the published version). Each union becomes one row for every month in which it could end, and in each row the couple either marry, separate or stay together. A union still intact at the interview is censored: its outcome is not yet known, and its rows count as months in which nothing happened. A multinomial logit of the three outcomes of each month is a discrete-time event-history model with two competing events, which the [specification menu](menu.qmd#person-months) explains. The models hold constant "duration of union and cohabitor's age at union initiation (and its squared term)" (Measures), education and race-ethnicity.
+
+The paper first describes the decline with a life table, by which 41% of the unions of 1990–1995 and 24% of those of 2005–2010 had become a marriage by the end of the third year (Results). Table 2 then reports two models on 54,291 person-months, weighted. Model 1 adds interactions of education and period, so that its main effects of education describe the earlier cohort. The interactions are negative and significant, −0.963 (SE 0.34) for less than high school, −1.017 (0.30) for a high school diploma and −0.725 (0.27) for some college, while the period coefficient of Model 1, the change for college graduates, is −0.137 (0.18). Model 2 adds interactions of race-ethnicity and period instead, and its period coefficient is **−0.683 (SE 0.14), p < .001**.
+
+The sentence of the claim comes from the conclusions: "In line with the SDT perspective and findings from previous studies (e.g., Kennedy and Bumpass 2008), the results of current analysis suggest that cohabitors have increasingly become less likely to progress to marriage" (Conclusions; p. 932). The next sentence states the main finding: "Following the diverging-destinies prediction, the current analysis shows that educational disparities in the odds of transitioning into marriage have become larger over time, primarily the result of sharp declines in marriage among some-college or high-school educated cohabitors in the recent period."
+
+The coefficient that Multi100 attached to the claim needs a careful reading. It comes from Model 2, which includes the interaction of race-ethnicity and period. Beside an interaction, the coefficient of the period is the change for the reference group of race-ethnicity alone, non-Hispanic white women, and the change for each other group adds its own interaction term. The text of the paper interprets the main effects of race-ethnicity in Model 2 as "the results for the 1990–95 cohabiting cohort" (Results) and never interprets its period coefficient. The −0.683 is therefore a change for white women, not the average change for all cohabitors that the sentence of the claim describes. The same model without the interaction gives `r fmt(ref$b)` on the rebuilt unions, the reference specification of the course, and the [multiverse page](multiverse.qmd#sec-subgroups) sets out the change for each group.
+
+## 2. SCORE and Multi100 {#sec-score}
+
+### 2.1 Reproduction, robustness and replication {#sec-repetition}
+
+SCORE, short for Systematizing Confidence in Open Research and Evidence, put claims from published social and behavioural research through three kinds of repetition [@AlipourfardEtAl2021SystematizingConfidenceOpen]. A reproduction repeats the original analysis on the original data, a robustness check applies different but defensible analyses to the same data, and a replication asks the same question of new data. The three studies were reported in *Nature* in 2026 [@MiskeEtAl2026InvestigatingReproducibilitySocial; @AczelEtAl2026InvestigatingAnalyticalRobustness; @TynerEtAl2026InvestigatingReplicabilitySocial]. This paper went through two of them. The OAs shared no data or code, and no reproduction by SCORE was recorded: the dossier of the paper on the Open Science Framework (OSF) holds no reproduction component. The robustness study was Multi100 (section 3), and a SCORE replication fitted the model to later surveys of the NSFG (section 5).
+
+### 2.2 The claim and the Task 2 instruction {#sec-claim}
+
+Multi100 gave claims from 100 studies in the SCORE sample to independent analysts, 457 people who carried out 504 reanalyses in all [@AczelEtAl2026InvestigatingAnalyticalRobustness, p. 136]. Each claim is a sentence, or a part of one, that corresponds to one statistically significant test. This claim reached the analysts as follows.
+
+> "cohabitors have increasingly become less likely to progress to marriage" (p. 932)
+
+It is the closing clause of the sentence quoted above, cut where the sentence reads "the results of current analysis suggest that", so that the claim keeps neither the hedge nor the theory that the result was said to support. Multi100 tied it to the period coefficient of Model 2, recorded as "b = -0.683, SE = (0.14), p < .001", which it converted into z = −4.8786 on 54,291 person-months.
+
+In Task 1 of Multi100 the analysts analysed the data as they judged best and drew one conclusion, and in Task 2 each produced a single statistical result under instructions that "always remained circumstantial (for example, data selection, exclusions and choice of measurement)" [@AczelEtAl2026InvestigatingAnalyticalRobustness, Methods]. The instruction for this claim read as follows.
+
+> "You should not include interactions between education and period in your analysis."
+
+The instruction removed the interaction that carries the main finding of the paper, so that every analysis would estimate one change between the periods. It said nothing of the interaction of race-ethnicity and period, which is the reason why the recorded coefficient is a change for white women.
+
+::: {.callout-note collapse="true"}
+## The dossier on the OSF
+
+- The SCORE project of the paper: [osf.io/kv38j](https://osf.io/kv38j/)
+- Original materials, three empty components: [osf.io/q27ua](https://osf.io/q27ua/)
+- Power analysis, with no public files: [osf.io/gzu2r](https://osf.io/gzu2r/)
+- Replication on secondary data, with its report: [osf.io/u8x9s](https://osf.io/u8x9s/); its analysis files, among them the person-month file, its data dictionary and the script: [osf.io/jkzdq](https://osf.io/jkzdq/); the audit of the replication: [osf.io/zcy2e](https://osf.io/zcy2e/)
+- Multi100: [osf.io/b69nv](https://osf.io/b69nv/), with one component for each analyst – 73FDT [osf.io/k7zq2](https://osf.io/k7zq2/), N8ZYW [osf.io/dymz4](https://osf.io/dymz4/), 456AP [osf.io/2m38h](https://osf.io/2m38h/), 5X3KG [osf.io/q6skv](https://osf.io/q6skv/) and JDA15 [osf.io/uxgzp](https://osf.io/uxgzp/)
+
+The scripts and reports of the SCORE team and of the analysts are read on the OSF, and the course does not copy them. The course ships one file of the dossier, the person-month file, which section 4 describes.
+:::
+
+## 3. The five reanalyses {#sec-reanalysts}
+
+All five analysts worked from one file, the person-month file that the SCORE replication had built from five surveys of the NSFG, which Multi100 linked as the original materials. They spent between `r min(analysts$hours)` and `r max(analysts$hours)` hours on the two tasks, between October 2022 and May 2023. @tbl-analysts sets out what each did in Task 2.
+
+::: column-body-outset
+```{r}
+#| label: tbl-analysts
+#| tbl-cap: "The five reanalyses in Task 2, with the statistic that Multi100 recorded and the conclusion of Task 1 as Multi100 plotted it. Source: `data/analysts5.csv`."
+#| echo: false
+recorded_txt <- \(type, x) case_when(
+  is.na(x) ~ "none recorded",
+  type == "chi2" ~ paste0("χ<sup>2</sup> = ", gsub("-", "−", formatC(x, format = "fg", digits = 5))),
+  .default = paste(type, "=", gsub("-", "−", formatC(x, format = "fg", digits = 5)))
+)
+upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
+analysts |>
+  transmute(
+    Analyst = id,
+    Discipline = tolower(discipline),
+    Hours = as.character(hours),
+    Software = software,
+    Surveys = upper_first(gsub("-", "–", comparison)),
+    Unit = upper_first(unit),
+    Model = upper_first(outcome_model),
+    Recorded = recorded_txt(statistic_type, statistic_recorded),
+    `Task 1` = task1
+  ) |>
+  tt() |>
+  style_tt(j = c(3, 8), align = "r")
+```
+:::
+
+**73FDT** took one row per woman, the last month of her union with its final outcome, fitted a multinomial logit of the outcome on the five surveys, with the total length of the union and age, and regressed the five marriage coefficients on the year of each survey: F(1, 3) = 12.86 for a declining slope. **456AP** looked at the counts first: "the data for 1995 in the OSF dataset seemed faulty, since there were only 4 marriages on record (in the paper 340 marriages were listed for 1995). I thus decided to exclude the 1995 data from the analysis." The analyst fitted a multinomial logit to the person-months of 2002 and 2013–2015 and found `r fmt(an("456AP", "estimate_refit"))` (z = −5.02).
+
+**N8ZYW** compared one row per woman of 1995 and of 2006–2010 in a logit of marriage against no marriage. The notes of the analyst record "NSFG 95 cycle: 4 people ended up in a marriage", report an odds ratio of 18.68 for the later survey and conclude: "Cohabitors have increasingly become more likely to progress to marriage." **5X3KG** compared the share of person-month rows that record a marriage in the two surveys with a test of two proportions, $\chi^2(1)$ = 47.474 for more marriage in the later rows. The analysis was meant "to compare the proportion of respondents in the 95 cohort who ended up marrying, to that proportion in the 2010 cohort", but each row of the file is a month, not a respondent. **JDA15** fitted a logit of marriage to one row per woman of the five surveys, on the years since 1995, and found −0.008 a year (z = −1.13), noting that "this estimand does not exactly capture the hypothesis in question".
+
+Two analysts concluded in Task 1 that the data showed evidence for the claim (73FDT and 456AP), one that they showed evidence neither way (JDA15), and two that they showed evidence for the opposite (N8ZYW and 5X3KG). Most of that split came from the file that they shared rather than from the choices that they made.
+
+## 4. The file of the analysts {#sec-file}
+
+### 4.1 The person-month file {#sec-score-file}
+
+The SCORE replication built its own analysis file from five surveys of the NSFG, 1995, 2002, 2006–2010, 2011–2013 and 2013–2015, and posted it on the OSF in December 2021: `r big(nrow(score))` person-months of `r big(n_distinct(score$CASEID))` women. Each woman contributes one row for every month of her first premarital cohabitation, with the outcome of the union in the last row (1 intact, 2 a marriage, 3 a separation) and the earlier rows reading intact. The file carries dummies for the survey, education and race-ethnicity, the age at the start of the union and the total length of the union in months, but no weights, strata or clusters. Multi100 linked the replication as the original materials of the claim, so this file was the data of every analyst.
+
+### 4.2 The 1995 rows {#sec-1995}
+
+@tbl-score-file sets the unions of the file beside those of the course rebuild, survey by survey, each rebuilt survey taking the unions begun in the five years before the interview.
+
+```{r}
+#| label: tbl-score-file
+#| tbl-cap: "The unions of each survey in the person-month file of SCORE and in the course rebuild, with their outcomes by the interview. Source: `data/display_score_file.csv`."
+#| echo: false
+cycle_lab <- c(`1995` = "1995", `2002` = "2002", `2006-10` = "2006–2010", `2011-13` = "2011–2013",
+               `2013-15` = "2013–2015")
+score_file |>
+  mutate(cycle = cycle_lab[cycle]) |>
+  select(source, cycle, unions, marriages, separations, intact) |>
+  tidyr::pivot_wider(names_from = source, values_from = c(unions, marriages, separations, intact)) |>
+  transmute(
+    Survey = cycle,
+    `Unions, SCORE file` = big(`unions_SCORE file`),
+    `Unions, rebuild` = big(unions_rebuilt),
+    `Marriages, SCORE file` = big(`marriages_SCORE file`),
+    `Marriages, rebuild` = big(marriages_rebuilt),
+    `Separations, SCORE file` = big(`separations_SCORE file`),
+    `Separations, rebuild` = big(separations_rebuilt),
+    `Intact, SCORE file` = big(`intact_SCORE file`),
+    `Intact, rebuild` = big(intact_rebuilt)
+  ) |>
+  tt() |>
+  style_tt(j = 2:9, align = "r")
+```
+
+The 1995 cohort of the file holds `r sf("SCORE file", "1995", "unions")` unions, of which `r sf("SCORE file", "1995", "intact")` were intact at the interview, `r sf("SCORE file", "1995", "marriages")` had become a marriage and `r sf("SCORE file", "1995", "separations")` had dissolved, where the paper and the rebuild hold 929: 242, 340 and 347. The other surveys are close to the rebuild: every union of the file in those surveys is a union of the rebuild with the same outcome and length, and the cohort of 2006–2010 holds the 1,142 unions of the paper and 8 more.
+
+The reason lies in how the end of a union is found. From 2002 the NSFG releases a recode, COH1DUR, which gives the months between the start of the first cohabitation and its end. The 1995 file has no such recode, so the end has to be built from the dates of the history of the woman, as the recode specification of Cycle 5 describes: the marriage to the husband with whom the union began, the month in which she stopped living with that partner, or the interview. The data dictionary of the SCORE replication builds the 1995 length as "STOPOTH0 - STRTOTH0", the month in which the woman stopped living with her first former partner minus the month in which she began to. That month exists only for a partner with whom she no longer lived, so the rule gives the right length for a union that dissolved and no length at all for a union that became a marriage or was still intact. Of the 929 unions of the paper the file holds `r kept("separation")` of the 347 separations, `r kept("marriage")` of the 340 marriages and `r kept("intact")` of the 242 intact unions. In the rows of the file, `r rm_(1, "married")` of the `r big(rm_(1, "rows"))` months of 1995 record a marriage, against `r rm_(0, "married")` of the `r big(rm_(0, "rows"))` months of 2006–2010, so any comparison of the two surveys on the file finds that marriage became far more common.
+
+### 4.3 The course rebuild {#sec-rebuild}
+
+The course rebuilt every first premarital cohabitation of the five surveys from the public files, by the rules that the [codebook](data/cohab_unions_codebook.md) of the union file describes. The rebuild reproduces the coefficients of Table 2 of the paper closely, as @tbl-table2 shows, with the weights and with errors that follow the design of both surveys.
+
+```{r}
+#| label: tbl-table2
+#| tbl-cap: "The marriage equation of Table 2 of the paper (marrying against staying together), as published and refitted on the rebuilt unions, with standard errors in brackets. The models also hold constant the months since the start, the age at the start and its square, whose coefficients the paper does not print. Source: `data/display_reproduction.csv`."
+#| echo: false
+term_lab <- c(later = "2005–2010", black = "Black", hispanic = "Hispanic", other = "Non-Hispanic other",
+              less_hs = "Less than high school", hs = "High school or GED", some_college = "Some college",
+              later_less_hs = "Less than high school × period", later_hs = "High school × period",
+              later_some_college = "Some college × period", later_black = "Black × period",
+              later_hispanic = "Hispanic × period", later_other = "Other × period")
+cell <- \(b, se) if_else(is.na(b), "", paste0(fmt(b), " (", fmt(se, 2), ")"))
+repro |>
+  filter(equation == "marriage", term %in% names(term_lab)) |>
+  mutate(published = cell(b_published, se_published), refit = cell(b, se)) |>
+  select(model, term, published, refit) |>
+  tidyr::pivot_wider(names_from = model, values_from = c(published, refit)) |>
+  mutate(term = factor(term, levels = names(term_lab))) |>
+  arrange(term) |>
+  transmute(
+    Term = term_lab[as.character(term)],
+    `Model 1, published` = coalesce(published_1, ""),
+    `Model 1, refit` = coalesce(refit_1, ""),
+    `Model 2, published` = coalesce(published_2, ""),
+    `Model 2, refit` = coalesce(refit_2, "")
+  ) |>
+  tt() |>
+  style_tt(j = 2:5, align = "r")
+```
+
+The period coefficient of Model 2 comes out at `r fmt(rp(2, "later", "b"))` (SE `r fmt(rp(2, "later", "se"))`) against the published −0.683 (0.14), and the interaction of some college and period in Model 1 at `r fmt(rp(1, "later_some_college", "b"))` (`r fmt(rp(1, "later_some_college", "se"))`) against −0.725 (0.27). Apart from the constants, every published error is matched to within 0.01, and the errors match those that follow the design of the surveys, not conventional ones, so the OAs used the design. Two figures of the paper do not come out. The paper reports 54,291 person-months for its 2,071 unions, and the construction that it describes gives `r big(ref$n)`; no construction that the course tried gives 54,291. The life table of the rebuild has `r pct(shares$married_3y[shares$cohort == "1990-1995" & shares$group == "all"])` and `r pct(shares$married_3y[shares$cohort == "2005-2010" & shares$group == "all"])` married within three years where the paper quotes 41% and 24%, although the fall between the cohorts is close to that of the paper.
+
+### 4.4 What a reproduction establishes {#sec-lesson}
+
+@tbl-repaired refits the five analyses on the file of the analysts, and then on the same file with its 1995 rows replaced by the 929 unions of the rebuild, written in the conventions of the file.
+
+```{r}
+#| label: tbl-repaired
+#| tbl-cap: "The five reanalyses: the statistic as Multi100 recorded it, the course refit on the person-month file of SCORE, and the same analysis on that file with its 1995 rows rebuilt. Source: `data/analysts5.csv`."
+#| echo: false
+stat_txt <- \(type, x) case_when(
+  is.na(x) ~ "none recorded",
+  type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(x)),
+  .default = paste(type, "=", fmt(x))
+)
+analysts |>
+  transmute(
+    Analyst = id,
+    Recorded = recorded_txt(statistic_type, statistic_recorded),
+    `SCORE file` = stat_txt(stat_type_refit, stat_refit),
+    `1995 rows rebuilt` = stat_txt(stat_type_refit, stat_repaired)
+  ) |>
+  tt() |>
+  style_tt(j = 2:4, align = "r")
+```
+
+Every statistic that Multi100 recorded for this claim reproduces from the file, and so does the odds ratio in the report of N8ZYW. With the 1995 rows rebuilt, every analysis that uses them points the way of the claim, the test of 5X3KG among them ($\chi^2$ = `r fmt(an("5X3KG", "stat_repaired"), 2)` for less marriage in the later rows). The disagreement that Multi100 recorded on this claim, two analysts for the opposite and one for neither, goes back to one cohort of one file.
+
+A reproduction of this kind shows that the code and the file produce the number on record. It does not show that the file measures what the paper measured, and here it did not. Every member of the class reproduces $\chi^2(1)$ = 47.474 exactly in Task 3, and the result runs against the claim. The error is of an ordinary kind. The rule that takes the end of a 1995 union from the date on which the woman stopped living with her partner is correct for every union that dissolved, and its consequence shows only in the counts. The data dictionary states the rule, the paper prints the counts in its text and in Table 1, and setting the two side by side reveals the gap, which is what 456AP did. The other analysts had a few hours and a file that came with the materials of the study, and they took it as given. The lesson of the case is about where a check belongs: before any model, a count of the cases and their outcomes set against the published description of the sample.
+
+Two other features of the file shaped the analyses. It carries the total length of each union, which is known only once the union has ended and depends on how it ended, so that holding it constant compares unions by their outcome. The replication script, 73FDT, N8ZYW and JDA15 hold it constant, and in Model 2 on the rebuilt unions it moves the period coefficient from `r fmt(rp(2, "later", "b"))` to −0.608. And the file has no weights, so every analysis of it describes the sample rather than the population of women whom the survey represents.
+
+## 5. The replications {#sec-replication}
+
+The SCORE replication of the paper ([osf.io/u8x9s](https://osf.io/u8x9s/)) tested a different coefficient from the one that Multi100 gave the analysts, the interaction of some college and period in Model 1: "The coefficient SOMECOLLEGE_PERIOD is negative", and "The corresponding p value is less than 0.05, two tailed". Its script fits Model 1 of the paper without weights, on the person-month file, with the total length of the union in place of the months since the start. What the report calls its "reproduction dataset" compares 2002 with 2006–2010, described as "a focal reproduction analysis that uses just the original observations (survey years 2002 and 2010)", although the paper compared 1995 with 2006–2010; it gives `r fmt(mark("SCORE_reproduction", "b"))` (z = `r fmt(mark("SCORE_reproduction", "stat"), 2)`). The report prints its p-value as 0.02484, ten times the value of `r fmt(mark("SCORE_reproduction", "p"), 4)` that its own script gives. The "replication dataset" compares 2002 with 2011–2013 and 2013–2015 pooled, `r big(mark("SCORE_replication", "n"))` person-months of 2,437 women, and gives `r fmt(mark("SCORE_replication", "b"))` (SE `r fmt(mark("SCORE_replication", "se"))`, z = `r fmt(mark("SCORE_replication", "stat"), 2)`, `r pe(mark("SCORE_replication", "p"))`): "The claim was not replicated in the 'replication dataset'." The power of the replication was put at 0.89 for an effect as large as the original and 0.36 for one half its size.
+
+The coefficient of the claim of this case, the change between cohorts of cohabitors, can be put to new cohorts as well, by fitting the reference specification of the course to other pairs of surveys, rebuilt like the cohorts of the paper. Between the unions of the 2002 survey (begun in 1997–2002) and those of 2011–2015 the decline is `r fmt(opt("comparison", "2002_2011", "b"))` (`r pe(opt("comparison", "2002_2011", "p"))`), on cohorts that the paper did not use, and between 1995 and 2011–2015 it is `r fmt(opt("comparison", "1995_2011", "b"))`. Between surveys closer in time it is smaller and not significant at 5%, `r fmt(opt("comparison", "2002_2006", "b"))` between 2002 and 2006–2010 (`r pe(opt("comparison", "2002_2006", "p"))`) and `r fmt(opt("comparison", "2006_2011", "b"))` between 2006–2010 and 2011–2015 (`r pe(opt("comparison", "2006_2011", "p"))`). The claim as Multi100 recorded it therefore replicates on new cohorts a decade or more apart, while the interaction that SCORE tested came out at about half its published size and not significant. SCORE and Multi100 attached the same paper to two different coefficients, and a verdict of "not replicated" on one says nothing directly about the other.
+
+## 6. Effect sizes on one scale {#sec-scale}
+
+Multi100 chose to "transform the reported point estimates into a standard effect-size measure" [@AczelEtAl2026InvestigatingAnalyticalRobustness, p. 136]. Each statistic became a partial correlation: for a z statistic the code of Multi100 uses the number of rows N in place of degrees of freedom, $r = \tanh(|z| / \sqrt{N - 3})$, an F with one numerator degree of freedom gives $r = \sqrt{F / (F + df)}$, and a $\chi^2$ is read as the square of a z, which carries no sign. @tbl-scale sets out the result.
+
+```{r}
+#| label: tbl-scale
+#| tbl-cap: "The published result and the five reanalyses, with the statistic as published or recorded, the sample size that Multi100 recorded and the partial correlation that Multi100 computed. Sources: `data/reference_marks.csv`, `data/analysts5.csv`."
+#| echo: false
+bind_rows(
+  tibble(Result = "OAs 2016", stat = paste("z =", fmt(mark("OA", "stat"), 2)), n = mark("OA", "n"),
+         r = mark("OA", "r")),
+  analysts |>
+    transmute(Result = id, stat = recorded_txt(statistic_type, statistic_recorded),
+              n = if_else(is.na(n_recorded), NA_real_, n_recorded), r = r_recorded)
+) |>
+  transmute(
+    Result,
+    Statistic = stat,
+    `Sample size recorded` = if_else(is.na(n), "–", big(n)),
+    `r recorded` = if_else(is.na(r), "–", fmt(r))
+  ) |>
+  tt() |>
+  style_tt(j = 3:4, align = "r")
+```
+
+The recorded correlations run from `r fmt(min(analysts$r_recorded, na.rm = TRUE))` to `r fmt(max(analysts$r_recorded, na.rm = TRUE))`, and they do not order the analyses by the evidence that each found. The 0.900 of 73FDT converts an F on 3 degrees of freedom from a regression on five points. The `r fmt(an("5X3KG", "r_recorded"))` of 5X3KG is positive although the analyst found the opposite of the claim, because a $\chi^2$ has no sign. And the correlation of any analysis of person-months is close to zero, `r fmt(mark("OA", "r"))` for the published result, because the number of person-months stands in for the sample size and almost every month records no event: across the curve of the course it runs from `r fmt(min(curve$r))` to `r fmt(max(curve$r))`.
+
+The course places results on the scale of the claim, the coefficient of the later cohort in a discrete-time model, which is the log of the ratio of the monthly chances of marrying in the two cohorts. The reference specification gives `r fmt(ref$b)`, a ratio of `r fmt(ref$ratio, 2)`: couples of 2005–2010 married at about half the monthly rate of couples of 1990–1995. @fig-marks places on that scale the one analysis that has an estimate on it, with the published result, its refit, the reference specification and the two replications of the course.
+
+```{r}
+#| label: fig-marks
+#| fig-cap: "Results on the scale of the claim, the coefficient of the later cohort on the log scale, against the range of the 144 specifications of the curve (shaded). Negative values mean that the later cohort married less. Sources: `data/reference_marks.csv`, `data/spec_curve.csv`."
+#| fig-alt: "Dot chart of six results between −0.98 and −0.45, with a shaded band from −0.83 to −0.63 for the curve. The course replication of 1995 against 2011–2015 lies lowest at −0.98, the reference specification at −0.73, the published result and its refit near −0.68, 456AP at −0.53 and the replication of 2002 against 2011–2015 at −0.45."
+#| fig-width: 7
+#| fig-height: 3.2
+#| echo: false
+mark_lab <- c(OA = "OAs 2016 (white women)", OA_refit = "Model 2 refitted", reference = "Reference specification",
+              `456AP` = "456AP (2002 and 2013–2015)", course_2002_2011 = "Course, 2002 and 2011–2015",
+              course_1995_2011 = "Course, 1995 and 2011–2015")
+marks |>
+  filter(mark %in% names(mark_lab)) |>
+  mutate(
+    label = reorder(mark_lab[mark], -b),
+    kind = case_when(mark == "OA" ~ "published", mark %in% c("OA_refit", "reference") ~ "surveys of the paper",
+                     .default = "other surveys")
+  ) |>
+  ggplot(aes(x = b, y = label, colour = kind, shape = kind)) +
+  annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
+           fill = "#d6dde5", alpha = 0.6) +
+  geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  geom_point(size = 2.6) +
+  scale_colour_manual(values = c(published = "#8b1538", `surveys of the paper` = "#1d2731",
+                                 `other surveys` = "#1f5fa8"), name = NULL) +
+  scale_shape_manual(values = c(published = 16, `surveys of the paper` = 16, `other surveys` = 17), name = NULL) +
+  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  coord_cartesian(xlim = c(-1.1, 0.05)) +
+  labs(x = "coefficient of the later cohort (log scale)", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+```
+
+The published result and its refit lie among the specifications with the smallest declines, because they are the change for white women. 456AP and the replication from 2002 lie above the curve, on later cohorts, and the replication from 1995 lies below it, on cohorts further apart.
+
+## 7. The data you will use {#sec-data-use}
+
+The NSFG public-use files are in the public domain: "Most of the information on the CDC and ATSDR websites is not subject to copyright, is in the public domain", in the words of the Centers for Disease Control and Prevention, of which NCHS is part. Their use is bound by the data use restrictions of NCHS, which ask users to "Use the data in this dataset for statistical reporting and analysis only", forbid any "intentional identification or disclosure of an individual", and ask users not to "link this dataset with individually identifiable data from other NCHS or non-NCHS datasets". The course therefore ships the files that it derived from them. `cohab_unions.csv` holds every woman of the five surveys whose first cohabitation came before any marriage, `r big(nrow(unions))` rows, with the start, end and outcome of the union, the age at the start, education, race-ethnicity and the weight, stratum and cluster of her survey ([codebook](data/cohab_unions_codebook.md)). `cohab_months.csv` holds the person-months of the two cohorts of the paper ([codebook](data/cohab_months_codebook.md)).
+
+`score_person_months.csv` is the file that Multi100 gave the analysts, shipped byte for byte, with its original name, address and MD5 sum in its [codebook](data/score_person_months_codebook.md), so that Task 3 and the five analyses run without a connection. The report of the SCORE replication states: "All materials on this OSF project may be shared publicly." The models of the course start from the union file, which the estimator turns into person-months for each specification of the [specification menu](menu.qmd). The [exercise overview](exercise.qmd) sets out what to do with all three.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

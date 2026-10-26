@@ -66,6 +66,19 @@ tr_sig_txt <- if (tr_sig == tr_spec) "every one of them" else paste(tr_sig, "of 
 tr_for <- sum(tr_analysts$task1 == "evidence for the claim")
 tr_for_txt <- if (tr_for == 5) "All five" else paste(tools::toTitleCase(in_words(tr_for)), "of the five")
 
+# The cohabitation case
+c_curve <- case_data("cohabitation", "spec_curve.csv")
+c_analysts <- case_data("cohabitation", "analysts5.csv")
+c_marks <- case_data("cohabitation", "reference_marks.csv")
+c_mark <- \(id, col = "b") c_marks[[col]][c_marks$mark == id]
+c_score <- case_data("cohabitation", "display_score_file.csv")
+c_unions <- nrow(case_data("cohabitation", "cohab_unions.csv"))
+c_spec <- nrow(c_curve)
+c_sig <- sum(c_curve$b < 0 & c_curve$p < 0.05)
+c_sig_txt <- if (c_sig == c_spec) "every one of them" else paste(c_sig, "of them")
+c_count <- \(outcome) sum(c_analysts$task1 == outcome)
+c_1995_marriages <- c_score$marriages[c_score$source == "SCORE file" & c_score$cycle == "1995"]
+
 # The EU-frames case
 e_curve <- case_data("eu-frames", "spec_curve.csv")
 e_analysts <- case_data("eu-frames", "analysts5.csv")
@@ -153,24 +166,26 @@ A paper of 2012 in *World Politics* asked, from the European Social Survey, whet
 [Read the case study](cases/trust/index.qmd){.home-go}
 :::
 
-::: {.home-casecard .home-soon .home-reveal}
-[3]{.home-rung} [In preparation]{.home-badge}
+::: {.home-casecard .home-reveal}
+[3]{.home-rung}
 
-### The cohabitation case {.unnumbered .unlisted}
+### [The cohabitation case](cases/cohabitation/index.qmd) {.unnumbered .unlisted}
 
 [Life histories · one day]{.home-meta}
 
-A paper of 2016 in *Demography* reported that cohabiting couples without a college degree had become less likely to go on to marry.
+A paper of 2016 in *Demography* compared the first cohabitations of American women begun in the early 1990s with those begun in the late 2000s, and found that the couples of the later cohort married less often. The claim is that "cohabitors have increasingly become less likely to progress to marriage".
 
-**What it teaches.** Person-period data, discrete-time event-history models, competing risks and comparisons between periods.
+**What it teaches.** Censoring and the life table, person-period data, discrete-time event-history models, competing risks, comparisons between periods, and what a reproduction does not show.
 
-**The data.** The public-use files of the National Survey of Family Growth for 1995 and 2006–2010, which are in the public domain, and from which the course will build the histories of the unions.
+**The data.** The first premarital cohabitations of `r big(c_unions)` women in five surveys of the National Survey of Family Growth, 1995 to 2013–2015, rebuilt from the public-use files, which are in the public domain, and shipped with the workspace beside the file that Multi100 gave the analysts.
 
 ::: {.home-3r}
-- **Reproduction.** SCORE did not complete one.
-- **Robustness.** The five Multi100 analysts split three ways: two found evidence for the claim, one found evidence neither way, and two found evidence for the opposite.
-- **Replication.** The replication by SCORE failed (z = −1.62, p = 0.11).
+- **Reproduction.** SCORE recorded none. The course rebuilt the unions of the paper exactly and refits the published coefficient at `r fmt(c_mark("OA_refit"), 3)` against −0.683. The file of the analysts reproduces every statistic that Multi100 recorded, but its 1995 rows hold `r c_1995_marriages` marriages where the paper has 340.
+- **Robustness.** `r tools::toTitleCase(in_words(c_count("Same conclusion")))` Multi100 analysts found evidence for the claim, `r in_words(c_count("No effect/inconclusive"))` evidence neither way and `r in_words(c_count("Opposite effect"))` the opposite, all on that file. The `r c_spec` specifications of the curve run from `r fmt(min(c_curve$b), 3)` to `r fmt(max(c_curve$b), 3)` on the log scale, `r c_sig_txt` significant at 5%.
+- **Replication.** The SCORE replication tested another coefficient of the paper, the interaction of some college and period, and did not replicate it (z = `r fmt(c_mark("SCORE_replication", "stat"), 2)`, p = `r fmt(c_mark("SCORE_replication", "p"), 2)`). The change of the claim holds on later surveys rebuilt by the course (`r fmt(c_mark("course_2002_2011"), 3)` between 2002 and 2011–2015).
 :::
+
+[Read the case study](cases/cohabitation/index.qmd){.home-go}
 :::
 
 ::: {.home-casecard .home-reveal}
