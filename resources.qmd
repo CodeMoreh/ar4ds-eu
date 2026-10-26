@@ -6,20 +6,20 @@ bibliography: [references.bib, references-new.bib]
 
 ## Glossary {#glossary}
 
-The four terms below follow the definitions in @NosekEtAl2025BriefGlossaryTerms. They are not interchangeable, and the course depends on the difference: a finding can survive every robustness check on its own data and still fail on new data, or survive the checks and still be one that nobody can recompute from the original materials. The column 'In this course' notes where each idea appears in the two cases that are taught now.
+The four terms below follow the definitions in @NosekEtAl2025BriefGlossaryTerms. They are not interchangeable, and the course depends on the difference: a finding can survive every robustness check on its own data and still fail on new data, or survive the checks and still be one that nobody can recompute from the original materials. The column 'In this course' notes where each idea appears in the four cases.
 
 | Term | Definition | In this course |
 |------------------------|------------------------|------------------------|
-| **Reproducibility** | Same question · same data · same analysis → same result | Tested across the SCORE sample by @MiskeEtAl2026InvestigatingReproducibilitySocial. In the EU-frames case, the result reported by the original author (OA) was not reproducible from the original materials; in the housing-audit case, SCORE never attempted a reproduction, but the four statistics that Multi100 recorded for the analysts reproduce exactly from the public file. In both, the class reproduces a recorded value in Task 3 |
-| **Robustness** | Same question · same data · justifiable alternative analysis → stable result | The Multi100 design [@AczelEtAl2026InvestigatingAnalyticalRobustness]; the five analysts of each claim; the specification menu and the curve of the claim in Tasks 4 and 5, with 64 specifications in the housing-audit case and 864 in the EU-frames case |
-| **Replicability** | Same question · independent new data → same result | Tested across the SCORE sample by @TynerEtAl2026InvestigatingReplicabilitySocial. For the housing-audit claim, a preregistered audit of 3,050 housing authorities found no significant gap; for the EU-frames claim, a replication on later Eurobarometer waves was judged not successful |
+| **Reproducibility** | Same question · same data · same analysis → same result | Tested across the SCORE sample by @MiskeEtAl2026InvestigatingReproducibilitySocial. In the EU-frames case, the result reported by the original author (OA) was not reproducible from the original materials; in the immigration-and-trust case, the OA supplied no data or code, and two reproductions from the ESS files came close to the published coefficient without matching its sample; in the housing-audit case, SCORE never attempted a reproduction, and the SCORE dossier of the cohabitation case holds none. In every case the class reproduces in Task 3 a value that Multi100 recorded for one of the analysts |
+| **Robustness** | Same question · same data · justifiable alternative analysis → stable result | The Multi100 design [@AczelEtAl2026InvestigatingAnalyticalRobustness]; the five analysts of each claim; the specification menu and the curve of the claim in Tasks 4 and 5, with 64 specifications in the housing-audit case, 192 in the immigration-and-trust case, 144 in the cohabitation case and 864 in the EU-frames case |
+| **Replicability** | Same question · independent new data → same result | Tested across the SCORE sample by @TynerEtAl2026InvestigatingReplicabilitySocial. For the housing-audit claim, a preregistered audit of 3,050 housing authorities found no significant gap; for the immigration-and-trust claim, two replications on later rounds of the ESS found the same positive and significant association; for the cohabitation claim, a replication on later NSFG surveys, which tested an interaction of education and period rather than the coefficient that Multi100 used, did not replicate it; for the EU-frames claim, a replication on later Eurobarometer waves was judged not successful |
 | **Repeatability** | Umbrella term covering all three above | Used in the glossary of Nosek and colleagues as the overarching category |
 
 ------------------------------------------------------------------------
 
 ## The cases
 
-Each case has a case study that tells its story in full, and the records below are the public deposits on which those pages are built. The immigration-and-trust case and the cohabitation case are in preparation, and their records will join this section with their pages.
+Each case has a case study that tells its story in full, and the records below are the public deposits on which those pages are built.
 
 ### The housing-audit case
 
@@ -46,6 +46,57 @@ Each case has a case study that tells its story in full, and the records below a
 | The Multi100 project | The project as a whole, with the claims of all hundred studies | <https://osf.io/q5h2c/> |
 
 The three activities of SCORE ended in three different places on the same paper. The reproduction was never attempted. The five reanalyses agreed on the direction of the gap and split three to two on whether the data supported the claim, and the replication with new names and a wider set of authorities found no significant gap. The [case study](cases/housing/index.qmd) tells the story in full.
+
+### The immigration-and-trust case
+
+**The paper.** @McLaren2012CulturalDivideEurope, published in *World Politics*: <https://doi.org/10.1017/S0043887112000032>. Its web appendix, which lists the far-right parties of each country and their shares of the vote, is held by the University of Nottingham (eprints.nottingham.ac.uk/1566), with a copy in the SCORE dossier.
+
+**The data.** The European Social Survey, rounds 1–4, from the ESS Data Portal (<https://ess.sikt.no/>), licensed by ESS ERIC under CC BY-NC-SA 4.0. The course extract `cases/trust/data/trust_ess.csv` is adapted from those rounds and carries the same licence; its [codebook](cases/trust/data/trust_ess_codebook.md) lists the editions read and every change made to them. The country variables come from the appendix of the paper, the World Bank and Eurostat ([codebook](cases/trust/data/trust_macro_codebook.md)).
+
+**SCORE and Multi100 on the OSF.** The paper went through two reproductions from the ESS files, because the original author (OA) supplied no data or code, and through two replications on later rounds. The analysis file of the second reproduction is the file that Multi100 gave the five analysts; it states no licence, so the workspace downloads it when Task 3 runs rather than shipping it.
+
+| Component | What it holds | Address |
+|---|---|---|
+| SCORE project of the paper | The parent of the components below | <https://osf.io/3ajr9/> |
+| Original materials | A list of files | <https://osf.io/k6ymx/> |
+| Power analysis | The power analysis for the replications | <https://osf.io/j9ge2/> |
+| Reproduction | A reproduction from the ESS files, with its report and code; the web appendix of the paper is in its sub-component <https://osf.io/j5fhy/> | <https://osf.io/jp7tr/> |
+| Reproduction and replication | A second reproduction from the ESS files, whose analysis file the five analysts received, and a replication on rounds 5–9 | <https://osf.io/e48gd/> |
+| Replication | A replication on round 5 | <https://osf.io/rpumq/> |
+| Reproduction with author data | A reproduction "with author data & code", which holds only the list of claims | <https://osf.io/j9mpv/> |
+| Multi100 | The five reanalyses of the claim | <https://osf.io/9jvbt/> |
+| N8P2J | The model of Table 3 of the paper on distrust of parliament | <https://osf.io/npavt/> |
+| FQ1G7 | Trust in parliament with a random intercept for each country and eleven controls, in jamovi | <https://osf.io/q8r57/> |
+| LT39B | A single immigration item, with country dummies and random intercepts, in Stata | <https://osf.io/y465m/> |
+| 456AD | The index over the answered items, with shorter controls, in Stata | <https://osf.io/e7pbq/> |
+| 6U3LL | The model of Table 3 without unemployment, the result that Task 3 reproduces | <https://osf.io/s7t9d/> |
+
+The reproductions came close to the published coefficient of 0.17 without matching the sample of the paper, the five reanalyses all found the association that the paper reports, and both replications found it again on later rounds. The [case study](cases/trust/index.qmd) tells the story in full, including how the rebuild of the course and the SCORE reproduction coded the vote controls differently.
+
+### The cohabitation case
+
+**The paper.** The paper of the original authors (OAs) [@KuoRaley2016DivergingPatternsUnion], published in *Demography*: <https://doi.org/10.1007/s13524-016-0483-9>. The author manuscript is open in PubMed Central (PMC5026877).
+
+**The data.** The public-use files of the National Survey of Family Growth (NSFG), released by the National Center for Health Statistics (NCHS) at <https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Datasets/NSFG/>. They are in the public domain, and their use is bound by the NCHS data use restrictions: statistical reporting and analysis only, and no attempt to identify a respondent. The course rebuilds the first premarital cohabitations of five cycles into `cases/cohabitation/data/cohab_unions.csv` ([codebook](cases/cohabitation/data/cohab_unions_codebook.md)) and turns them into person-months ([codebook](cases/cohabitation/data/cohab_months_codebook.md)).
+
+**SCORE and Multi100 on the OSF.** The OAs supplied no data or code, the dossier holds no reproduction, and the replication team built a person-month file from the NSFG that the five analysts then received. That file is public, and the course ships it as `cases/cohabitation/data/score_person_months.csv` ([codebook](cases/cohabitation/data/score_person_months_codebook.md)).
+
+| Component | What it holds | Address |
+|---|---|---|
+| SCORE project of the paper | The parent of the components below | <https://osf.io/kv38j/> |
+| Original materials | Three empty components | <https://osf.io/q27ua/> |
+| Power analysis | No public files | <https://osf.io/gzu2r/> |
+| Replication | The replication on secondary data, with its report | <https://osf.io/u8x9s/> |
+| Replication files | The person-month file (<https://osf.io/b6p3j/>), its data dictionary and the script | <https://osf.io/jkzdq/> |
+| Audit of the replication | The audit of the replication | <https://osf.io/zcy2e/> |
+| Multi100 | The five reanalyses of the claim | <https://osf.io/b69nv/> |
+| 73FDT | A multinomial logit on the five surveys, then a regression of the five marriage coefficients on the year | <https://osf.io/k7zq2/> |
+| N8ZYW | A logit of marriage on the later survey, in jamovi | <https://osf.io/dymz4/> |
+| 456AP | A multinomial logit on the person-months of 2002 and 2013–2015 | <https://osf.io/2m38h/> |
+| 5X3KG | A test of two proportions on the rows of 1995 and 2006–2010, the result that Task 3 reproduces | <https://osf.io/q6skv/> |
+| JDA15 | A logit of marriage on the five surveys with years since 1995 | <https://osf.io/uxgzp/> |
+
+The five reanalyses split two to one to two on the claim, largely because of what the person-month file holds for 1995, and the replication on later surveys, which tested an interaction of education and period, did not replicate it. The [case study](cases/cohabitation/index.qmd) tells the story in full; read it after Task 3 if you follow the one-day track, because it gives away what the task asks you to find.
 
 ### The EU-frames case
 

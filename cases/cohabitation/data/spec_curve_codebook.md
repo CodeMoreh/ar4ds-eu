@@ -1,6 +1,6 @@
 # Codebook: `spec_curve.csv`
 
-The curve of the claim of the cohabitation case, "cohabitors have increasingly become less likely to progress to marriage", in the wording that SCORE and Multi100 took from the paper of the original authors (OAs, p. 932): every specification that the specification menu of the course keeps, 144 rows, fitted once on the union file `cohab_unions.csv` ([codebook](cohab_unions_codebook.md)). The file is written by `R/cohabitation/03_spec_curve.R` with the estimator of `R/cohabitation/_tools.R` (`fit_spec()`), which uses base R, dplyr, tidyr and purrr only, so that the workspace and the browser lab run the identical code; `R/cohabitation/check_parity.R` checks it against survey, svyVGAM and nnet.
+The curve of the claim of the cohabitation case, "cohabitors have increasingly become less likely to progress to marriage", in the wording that Multi100 took from the paper of the original authors (OAs, p. 932): every specification that the specification menu of the course keeps, 144 rows, fitted once on the union file `cohab_unions.csv` ([codebook](cohab_unions_codebook.md)). The file is written by `R/cohabitation/03_spec_curve.R` with the estimator of `R/cohabitation/_tools.R` (`fit_spec()`), which uses base R, dplyr, tidyr and purrr only, so that the workspace and the browser lab run the identical code; `R/cohabitation/check_parity.R` checks it against survey, svyVGAM and nnet.
 
 ## The specifications
 

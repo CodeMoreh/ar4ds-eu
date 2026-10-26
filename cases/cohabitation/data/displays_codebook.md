@@ -14,7 +14,7 @@ Models 1 and 2 of Table 2 of the paper refitted on the rebuilt unions, every coe
 | `b`, `se` | The course refit and its design-based error |
 | `b_published`, `se_published` | The values of Table 2 |
 
-The refit comes close throughout. The period coefficient of Model 2, the coefficient of the claim, is −0.686 (SE 0.138) against −0.683 (0.14); the interaction of some college and period in Model 1, the claim of the SCORE replication, is −0.729 (0.275) against −0.725 (0.27). The largest gaps are in the constants of the marriage equations (−6.13 against −5.82 in Model 2) and in the interactions of education and period in Model 1 (−0.79 against −0.96 for less than high school, −1.11 against −1.02 for a high school diploma); apart from the constants, every error agrees with the published one to within 0.01.
+The refit comes close throughout. The period coefficient of Model 2, the coefficient of the claim, is −0.686 (SE 0.138) against −0.683 (0.14); the interaction of some college and period in Model 1, the claim of the SCORE replication, is −0.729 (0.275) against −0.725 (0.27). The largest gaps are in the constants of the marriage equations (−6.13 against −5.82 in Model 2) and in the interactions of education and period in Model 1 (−0.79 against −0.96 for less than high school, −1.11 against −1.02 for a high school diploma); apart from the constants, every error agrees with the published one to within about 0.01 (the largest gap, 0.010, is in the separation equation of Model 1).
 
 ## `display_lifetable.csv`
 

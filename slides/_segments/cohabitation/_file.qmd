@@ -40,11 +40,11 @@ ggplot(file_long, aes(source, n, fill = outcome)) +
 ```
 
 ::: {.small}
-In 1995 the file holds **`r sf("SCORE file", "1995", "unions")` unions: `r sf("SCORE file", "1995", "intact")` intact, `r sf("SCORE file", "1995", "marriages")` marriages and `r sf("SCORE file", "1995", "separations")` separations**, where the paper and the rebuild hold 929: 242, 340 and 347. In every other survey the file and the rebuild are close.
+In 1995 the file holds **`r sf("SCORE file", "1995", "unions")` unions: `r sf("SCORE file", "1995", "intact")` intact, `r sf("SCORE file", "1995", "marriages")` marriages and `r sf("SCORE file", "1995", "separations")` separations**, where the paper and the rebuild hold 929: 242, 340 and 347. In every other survey each union of the file is a union of the rebuild with the same outcome, although the windows of years differ a little.
 :::
 
 ::: notes
-Go. [read out the counts in chat] Three hundred and seventy-six unions of 1995, and four marriages. Here is the whole file beside the rebuild of the course, survey by survey: on the left of each pair the file that the analysts received, on the right the unions rebuilt from the survey, with marriages in blue. In 2002, in 2006 to 2010 and in the two later surveys, the two agree closely, and in 2006 to 2010 the file holds the eleven hundred and forty-two unions of the paper and eight more. In 1995 they do not. The file holds fewer than half of the unions, and almost every one of them ended in a separation. Three hundred and forty marriages of the paper are four in the file. That is why every comparison of 1995 with a later survey, on this file, finds that marriage became more common.
+Go. [read out the counts in chat] Three hundred and seventy-six unions of 1995, and four marriages. Here is the whole file beside the rebuild of the course, survey by survey: on the left of each pair the file that the analysts received, on the right the unions rebuilt from the survey, with marriages in blue. In 2002, in 2006 to 2010 and in the two later surveys, the two hold the same kinds of unions, in slightly different windows of years, and in 2006 to 2010 the file holds the eleven hundred and forty-two unions of the paper and eight more. In 1995 they do not. The file holds fewer than half of the unions, and almost every one of them ended in a separation. Three hundred and forty marriages of the paper are four in the file. That is why a comparison of the share of unions or of months that end in a marriage, 1995 against a later survey, finds on this file that marriage became more common.
 :::
 
 ## The 1995 rows of the file {#the-1995-rows-of-the-file .smaller}
@@ -52,16 +52,16 @@ Go. [read out the counts in chat] Three hundred and seventy-six unions of 1995, 
 ::: {.small}
 - From 2002 the NSFG releases a recode, COH1DUR, with the length of the first cohabitation. The 1995 file has none, so the length has to be built from the dates of the history of each woman
 - The data dictionary of the SCORE replication builds it as **"STOPOTH0 - STRTOTH0"**: the month in which the woman stopped living with her first former partner, minus the month in which she began to
-- That date exists only for a partner with whom she **no longer lived**. The rule is right for every union that dissolved, and gives no length to a union that became a marriage or was still intact
+- That date exists only for a partner with whom she **no longer lived**. The rule is right for almost every union that dissolved, and gives no length to a union that became a marriage or was still intact
 - Of the 929 unions of the paper, the file holds **`r kept("separation")` of the 347 separations, `r kept("marriage")` of the 340 marriages and `r kept("intact")` of the 242 intact unions**
 :::
 
 ::: {.fragment .claimcard}
-"the data for 1995 in the OSF dataset seemed faulty, since there were only 4 marriages on record (in the paper 340 marriages were listed for 1995). I thus decided to exclude the 1995 data from the analysis." <span class="src">456AP, Task 1 of Multi100</span>
+"the data for 1995 in the OSF dataset seemed faulty, since there were only 4 marriages on record (in the paper 340 marriages were listed for 1995). I thus decided to exclude the 1995 data from the analysis." <span class="src">456AP, Task 2 of Multi100</span>
 :::
 
 ::: notes
-How did it happen? From 2002 the survey releases a ready-made measure of how long the first cohabitation lasted. The 1995 file has none, so the length has to be built by hand from the dates in the history of each woman. The team that built the file used the month in which the woman stopped living with her first former partner, minus the month in which she began. That is a sensible rule, and it is exactly right for every union that dissolved. But a stop date exists only for a partner with whom she no longer lived, so a union that became a marriage, or was still going, gets no length and drops out. Three hundred and forty-six of the separations survive, two of the marriages, three of the intact unions. [advance] One analyst, 456AP, counted first, found the gap, and left 1995 out.
+How did it happen? From 2002 the survey releases a ready-made measure of how long the first cohabitation lasted. The 1995 file has none, so the length has to be built by hand from the dates in the history of each woman. The team that built the file used the month in which the woman stopped living with her first former partner, minus the month in which she began. That is a sensible rule, and it is right for almost every union that dissolved. But a stop date exists only for a partner with whom she no longer lived, so a union that became a marriage, or was still going, gets no length and drops out. Three hundred and forty-six of the separations survive, two of the marriages, three of the intact unions. [advance] One analyst, 456AP, counted first, found the gap, and left 1995 out.
 :::
 
 ## The five analyses on a repaired file {#the-five-analyses-on-a-repaired-file .smaller}

@@ -40,8 +40,9 @@ composition <- paper_unions |>
             .by = cycle)
 cmp <- \(cycle_code, col) composition[[col]][composition$cycle == cycle_code]
 # One row for every month in which a union could end, as person_months() of
-# the workspace builds them: an intact union contributes `duration` + 1
-# months less the last one, a union that ended `duration` + 1 months
+# the workspace builds them: every union contributes `duration` + 1
+# months, from the month in which the couple moved in to the month of the
+# marriage, the separation or the interview
 n_person_months <- sum(paper_unions$duration + 1)
 n_pm_marriages <- sum(paper_unions$outcome == "marriage")
 

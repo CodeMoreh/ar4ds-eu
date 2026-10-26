@@ -99,7 +99,7 @@ display_fit <- displays |>
 display_other <- tibble::tribble(
   ~axis, ~option, ~text,
   "outcome", "married_by_interview",
-  sprintf("From the life table: %.1f%% of the unions of 1990–1995 had become a marriage by the interview, against %.1f%% of those of 2005–2010, whatever their length.",
+  sprintf("Weighted, %.1f%% of the unions of 1990–1995 had become a marriage by the interview, against %.1f%% of those of 2005–2010, whatever their length.",
           sh("1990-1995", "married_by_interview"), sh("2005-2010", "married_by_interview")),
   "outcome", "cumulative_3y",
   sprintf("From the life table: %.1f%% of the unions of 1990–1995 had become a marriage within three years, against %.1f%% of those of 2005–2010.",
@@ -118,7 +118,7 @@ display_other <- tibble::tribble(
   sprintf("5X3KG tested the shares of rows that record a marriage on the SCORE file: chi-square = %s for more marriage in the later survey; with the 1995 rows rebuilt, %s for less.",
           f3(an("5X3KG", "stat_refit"), 3), f3(an("5X3KG", "stat_repaired"), 2)),
   "comparison", "trend",
-  sprintf("JDA15 fitted a trend over the five surveys on the SCORE file: z = %s per year; with the 1995 rows rebuilt, z = %s. 73FDT regressed five survey coefficients on the year: F = %s.",
+  sprintf("JDA15 fitted a trend over the five surveys on the SCORE file: z = %s for the yearly trend; with the 1995 rows rebuilt, z = %s. 73FDT regressed five survey coefficients on the year: F = %s.",
           f3(an("JDA15", "stat_refit"), 2), f3(an("JDA15", "stat_repaired"), 2), f3(an("73FDT", "stat_refit"), 2))
 )
 display <- bind_rows(display_fit, display_other)
