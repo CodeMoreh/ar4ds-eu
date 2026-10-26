@@ -119,11 +119,13 @@ curve_base <- function(colour_by = NULL) {
     p + ggplot2::geom_point(ggplot2::aes(shape = sig), colour = plain, alpha = 0.45, size = 2.6, stroke = 0.8)
   } else {
     p + ggplot2::geom_point(ggplot2::aes(shape = sig, colour = .data[[colour_by]]), alpha = 0.75, size = 2.6, stroke = 0.9) +
-      ggplot2::scale_colour_manual(values = pop_cols, labels = pop_labels, breaks = names(pop_cols), name = NULL)
+      ggplot2::scale_colour_manual(values = pop_cols, labels = pop_labels, breaks = names(pop_cols), name = NULL,
+                                   guide = ggplot2::guide_legend(order = 1))
   }
   p +
     ggplot2::scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
-                       labels = c("p < 0.05", "p ≥ 0.05"), name = NULL, drop = FALSE) +
+                       labels = c("p < 0.05", "p ≥ 0.05"), name = NULL, drop = FALSE,
+                       guide = ggplot2::guide_legend(order = 2)) +
     ggplot2::scale_y_continuous(labels = \(x) fmt_num(x, 0)) +
     ggplot2::labs(x = sprintf("specification, ranked by the estimate (%d)", nrow(curve)),
          y = "Hispanic minus comparison\nnames (points)") +
@@ -142,7 +144,7 @@ mark_layer <- function(m) {
     dplyr::summarise(rank = mean(rank), b_pp = mean(b_pp), sig = all(sig),
               label = paste(tag, collapse = " · "), .by = spot) |>
     dplyr::arrange(rank) |>
-    dplyr::mutate(lab_y = b_pp + rep(c(5.5, 9), length.out = n()))
+    dplyr::mutate(lab_y = b_pp + rep(c(5.5, 9), length.out = dplyr::n()))
   list(
     ggplot2::geom_segment(data = tags, ggplot2::aes(x = rank, xend = rank, y = b_pp, yend = lab_y),
                  colour = "#9aa3ab", linewidth = 0.35, inherit.aes = FALSE),

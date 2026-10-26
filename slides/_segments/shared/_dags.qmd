@@ -40,12 +40,12 @@ gg <- function(d, ttl, cap, accent = d_red) {
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.32)) +
     ggplot2::labs(title = ttl, caption = cap) +
     ggplot2::theme(
-      plot.title = element_text(face = "bold", colour = ncl_blue,
+      plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
                                 hjust = 0.5, size = 16,
-                                margin = margin(b = 10)),
-      plot.caption = element_text(hjust = 0.5, size = 11,
+                                margin = ggplot2::margin(b = 10)),
+      plot.caption = ggplot2::element_text(hjust = 0.5, size = 11,
                                   colour = grey_mid, lineheight = 1.05,
-                                  margin = margin(t = 10)))
+                                  margin = ggplot2::margin(t = 10)))
 }
   patchwork::wrap_plots(
     gg(conf, "Confounder Z",
@@ -80,13 +80,13 @@ The causal graph is the second of those three steps, and these three small graph
 set.seed(11)
 n <- 130; x <- rnorm(n); y <- 0.6 * x + rnorm(n, 0, 0.85)
 df <- tibble::tibble(x, y)
-ggplot(df, aes(x, y)) +
-  geom_point(colour = ncl_blue, alpha = 0.5, size = 2.3) +
-  geom_smooth(method = "lm", se = FALSE, colour = d_red, linewidth = 1.2) +
-  annotate("text", x = min(x), y = max(y), hjust = 0, vjust = 1,
+ggplot2::ggplot(df, ggplot2::aes(x, y)) +
+  ggplot2::geom_point(colour = ncl_blue, alpha = 0.5, size = 2.3) +
+  ggplot2::geom_smooth(method = "lm", se = FALSE, colour = d_red, linewidth = 1.2) +
+  ggplot2::annotate("text", x = min(x), y = max(y), hjust = 0, vjust = 1,
            label = paste0("r = ", format(round(cor(x, y), 2), nsmall = 2)),
            colour = d_red, fontface = "bold", size = 6.5) +
-  labs(x = "X", y = "Y") + theme_slide(16)
+  ggplot2::labs(x = "X", y = "Y") + theme_slide(16)
 ```
 
 :::
@@ -150,8 +150,8 @@ path_panel <- function(adjust_z = FALSE) {
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.40)) +
     ggplot2::labs(title = if (adjust_z) "Adjust for Z → back-door closed"
                           else "Back-door path X ← Z → Y is open") +
-    ggplot2::theme(plot.title = element_text(face = "bold", colour = ncl_blue,
-                                hjust = 0.5, size = 15, margin = margin(b = 8)))
+    ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
+                                hjust = 0.5, size = 15, margin = ggplot2::margin(b = 8)))
   if (adjust_z) {
     zc <- ggdag::pull_dag_data(td) |>
       dplyr::filter(name == "Z") |>
@@ -191,6 +191,7 @@ A DAG is read through its paths. Association flows along every open path between
 # Mediator graph with the two routes coloured: the DIRECT effect X -> Y (green)
 # and the INDIRECT route X -> M -> Y (amber). Together they make the total
 # effect; adjusting for M leaves only the direct one. Reuses `med`.
+# dplyr, which has a method for the graph object of ggdag; datawizard has not
 td <- ggdag::tidy_dagitty(med) |>
   dplyr::mutate(edge_kind = dplyr::if_else(name == "X" & to == "Y", "direct", "indirect"))
 ggplot2::ggplot(td,
@@ -260,8 +261,8 @@ p_sel <- ggplot2::ggplot(tds,
   ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.22)) +
   ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.45)) +
   ggplot2::labs(title = "Condition on collider S → spurious A–B link") +
-  ggplot2::theme(plot.title = element_text(face = "bold", colour = ncl_blue,
-                              hjust = 0.5, size = 14, margin = margin(b = 8)))
+  ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
+                              hjust = 0.5, size = 14, margin = ggplot2::margin(b = 8)))
 
 clp <- ggdag::dagify(X2 ~ X1 + Y1, Y2 ~ Y1 + X1,
   coords = list(x = c(X1 = 0, Y1 = 0, X2 = 2, Y2 = 2),
@@ -283,8 +284,8 @@ p_clp <- ggplot2::ggplot(tdc,
   ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.18)) +
   ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.30)) +
   ggplot2::labs(title = "Panel feedback: X now → Y later, but also Y → X") +
-  ggplot2::theme(plot.title = element_text(face = "bold", colour = ncl_blue,
-                              hjust = 0.5, size = 14, margin = margin(b = 8)))
+  ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
+                              hjust = 0.5, size = 14, margin = ggplot2::margin(b = 8)))
 patchwork::wrap_plots(p_sel, p_clp, nrow = 1)
 ```
 

@@ -59,7 +59,7 @@ Everything that belongs to a case carries its name in its path (`cases/<case>/`,
 | `data/` | Data that more than one case uses: the published estimates of the 29 teams of Silberzahn et al. (2018), with their codebook |
 | `_includes/`, `_variables.yml` | The next-delivery callout of the opening page and its script, the navbar item that shows the chosen track; site-wide facts, the addresses of each case, and the block that schedules a delivery |
 | `style/`, `assets/` | The site and slide themes, the filter that prints the case label on every case page and companion module, and the chart code of the multiverse pages |
-| `.github/workflows/publish.yml` | CI: render and deploy to GitHub Pages |
+| `.github/workflows/publish.yml` | CI: render and deploy to GitHub Pages. Every executable page comes from the committed `_freeze/` except the opening page, so the workflow installs R with only the packages that its chunk and the render need (knitr, rmarkdown, yaml, readr and datawizard) |
 
 ## The data
 

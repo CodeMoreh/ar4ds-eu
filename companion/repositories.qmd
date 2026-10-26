@@ -7,17 +7,11 @@ bibliography: [../references.bib, ../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(tinytable)
-
-read_data <- \(f) read_csv(file.path("../cases/housing/data", f), show_col_types = FALSE)
-audit    <- read_data("housing_audit.csv")
-marks    <- read_data("reference_marks.csv")
-analysts <- read_data("analysts5.csv")
+audit    <- readr::read_csv("../cases/housing/data/housing_audit.csv", show_col_types = FALSE)
+marks    <- readr::read_csv("../cases/housing/data/reference_marks.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("../cases/housing/data/analysts5.csv", show_col_types = FALSE)
 
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-big <- \(x) format(x, big.mark = ",")
 mark <- \(id, col) marks[[col]][marks$id == id]
 no_thirds <- sum(is.na(audit$pop_third))
 ```
@@ -66,7 +60,7 @@ The OAs deposited their replication package in the collection of the *American J
 
 **The blinding.** The ReadMe explains why the public file differs from the file of the paper. The census codes that matched each housing authority to its community "would reveal the identities of the housing authorities / officials in the data", and the continuous values of the community characteristics "also uniquely identify the observations". The ReadMe gives the reason why that matters: "Whether or not a housing official responded, particularly to an ostensible minority applicant, is very sensitive and potentially harmful information." The OAs therefore replaced population, percent white, Black and Hispanic, the poverty rate and the HUD assessment score with thirds of their distributions, lower, middle and top. The ReadMe states the consequence: the public data "will enable public replication of some results in full (the experimental results that do not require demographic variables), and approximations of others (the results that do require demographics)".
 
-What that means for a reproduction can be stated exactly. Every comparison between groups of names reproduces from the public file, which is why Task 3 recovers the χ^2^ of analyst 8PTRZ to the third decimal. The model of the paper with community covariates does not. Refitted on the thirds, it gives z = `r fmt(mark("OA_blinded", "statistic"), 2)` and a gap of `r fmt(mark("OA_blinded", "b_pp"))` points, against the published z = `r fmt(mark("OA", "statistic"), 2)` and `r fmt(mark("OA", "b_pp"))` points. The difference is approximate by design and has a documented cause, so a reproduction that finds it has learned something about the file and nothing against the paper. The public file also holds `r big(nrow(audit))` emails where the paper reports 1,017, and `r no_thirds` of them carry no community thirds. The [codebook of the course file](../cases/housing/data/housing_audit_codebook.md) records each of these features of the data.
+What that means for a reproduction can be stated exactly. Every comparison between groups of names reproduces from the public file, which is why Task 3 recovers the χ^2^ of analyst 8PTRZ to the third decimal. The model of the paper with community covariates does not. Refitted on the thirds, it gives z = `r fmt(mark("OA_blinded", "statistic"), 2)` and a gap of `r fmt(mark("OA_blinded", "b_pp"))` points, against the published z = `r fmt(mark("OA", "statistic"), 2)` and `r fmt(mark("OA", "b_pp"))` points. The difference is approximate by design and has a documented cause, so a reproduction that finds it has learned something about the file and nothing against the paper. The public file also holds `r format(nrow(audit), big.mark = ",")` emails where the paper reports 1,017, and `r no_thirds` of them carry no community thirds. The [codebook of the course file](../cases/housing/data/housing_audit_codebook.md) records each of these features of the data.
 
 **The verification note.** The record carries a note: "This dataset underwent an independent verification process that replicated the tables and figures in the primary article. For the supplementary materials, verification was performed solely for the successful execution of code." The verification was carried out by the Odum Institute at the University of North Carolina at Chapel Hill, and the article was awarded the Open Materials badge of COS. The note does not say on which data file the verification ran, and the identifiable file was never public, so the note and the ReadMe are best read together: the tables and figures were verified, and a reader with the public file can reproduce the experimental results exactly and the models with covariates approximately.
 
@@ -96,7 +90,7 @@ SCORE, short for Systematizing Confidence in Open Research and Evidence, put cla
 | [`2ug8x`](https://osf.io/2ug8x/) | The replication with new data: the preregistration, uploaded on 5 May 2020, the final report, uploaded on 7 October 2020, and six sub-components (materials for the ethics review, methods and materials, data, analysis, power, and an audit of the replication) | **Not replicated**: no difference in greetings by name, z = 0.66, p = 0.511 on a random draw of 738 replies |
 | [`38rsh`](https://osf.io/38rsh/) | Multi100, with one sub-component for each of the five analysts | Three analysts read their results as evidence for the claim and two as evidence neither for nor against it |
 
-The replication also has a registration of its own, [osf.io/v6wd8](https://osf.io/v6wd8/), "Replication of a Research Claim from Einstein & Glick (2017), from The American Journal of Political Science". It was registered on 14 May 2020 with the OSF Preregistration template, kept under an embargo until 13 May 2024, and carries the DOI 10.17605/OSF.IO/V6WD8. The embargo kept the plan private while the replication ran and the results were reported, and the date of registration, which the embargo did not change, still shows that the plan came first. The final report lists the ways in which the analysis departed from the plan, among them a logistic regression with covariates and the exclusion of county-level housing authorities, both added to match the model of the paper. The replication emailed `r big(3050)` housing authorities, and the Data sub-component of its project, [osf.io/xseqg](https://osf.io/xseqg/), holds a deidentified data file, uploaded on 27 September 2020, with a do-file that runs the analysis without the identifying variables and a dictionary of the variables. A reader of the record can therefore check the plan against the report and has the data and the code with which to run the analysis again.
+The replication also has a registration of its own, [osf.io/v6wd8](https://osf.io/v6wd8/), "Replication of a Research Claim from Einstein & Glick (2017), from The American Journal of Political Science". It was registered on 14 May 2020 with the OSF Preregistration template, kept under an embargo until 13 May 2024, and carries the DOI 10.17605/OSF.IO/V6WD8. The embargo kept the plan private while the replication ran and the results were reported, and the date of registration, which the embargo did not change, still shows that the plan came first. The final report lists the ways in which the analysis departed from the plan, among them a logistic regression with covariates and the exclusion of county-level housing authorities, both added to match the model of the paper. The replication emailed `r format(3050, big.mark = ",")` housing authorities, and the Data sub-component of its project, [osf.io/xseqg](https://osf.io/xseqg/), holds a deidentified data file, uploaded on 27 September 2020, with a do-file that runs the analysis without the identifying variables and a dictionary of the variables. A reader of the record can therefore check the plan against the report and has the data and the code with which to run the analysis again.
 
 That table is what a well-kept record lets a reader establish without emailing anyone: a reproduction that SCORE planned and never carried out, a robustness study in which five analysts reached two different verdicts, although every statistic that Multi100 recorded comes from a gap in the same direction, and a replication with new data that found no difference, with its plan registered before its results. Each of those statements can be checked, because the materials sit in a public tree with dates on every file. The [case study](../cases/housing/index.qmd#sec-score) sets the same record in the story of the paper.
 
@@ -108,7 +102,7 @@ Multi100 gave the claim of the paper to five analysts, each of whom chose an ana
 #| label: tbl-multi100
 #| tbl-cap: "The five Multi100 components of the paper on the OSF, with what each holds and the verdict of the analyst in Task 1 of Multi100. Sources: the components themselves and `cases/housing/data/analysts5.csv`."
 #| echo: false
-components <- tibble(
+components <- tibble::tibble(
   id        = c("8PTRZ", "UYV3F", "EWFMI", "25N5D", "P9W8Y"),
   Component = c("j8wvh", "3672s", "jhvca", "v8zah", "pzwbm"),
   Holds     = c("the scripts of the analyst", "a review document only", "the scripts of the analyst",
@@ -116,12 +110,12 @@ components <- tibble(
 )
 
 components |>
-  left_join(analysts, by = "id") |>
-  transmute(Analyst = id,
+  dplyr::left_join(analysts, by = "id") |>
+  dplyr::transmute(Analyst = id,
             Component = sprintf("[osf.io/%s](https://osf.io/%s/)", Component, Component),
             Discipline = discipline, Holds, `Task 1 verdict` = task1) |>
-  tt() |>
-  format_tt(j = "Component", markdown = TRUE)
+  tinytable::tt() |>
+  tinytable::format_tt(j = "Component", markdown = TRUE)
 ```
 
 Four of the five analysts left their code, and the course reproduces all four statistics that Multi100 recorded from the public file. The scripts are read on the OSF, and the course does not copy them, since they belong to their authors and the OSF is where they are kept with their dates.

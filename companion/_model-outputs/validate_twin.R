@@ -1,4 +1,4 @@
-# ########################################################################### #
+###############################################################################
 # Title:        Does the twin reproduce the analysis?
 # Purpose:      Fit one specification on the real respondents and on the
 #               synthetic twin, and put the two coefficient vectors side by
@@ -26,12 +26,7 @@
 #               A coefficient comparison: aggregate, and committed.
 # Author:       Chris Moreh
 # Last updated: 2026-07-30
-# ########################################################################### #
-
-suppressPackageStartupMessages({
-  library(dplyr); library(purrr); library(readr); library(tidyr); library(lme4)
-})
-
+###############################################################################
 LEVELS <- list(
   edu3  = c("low", "mid", "high"),
   ses   = c("manual", "self_employed", "manager", "white_collar",
@@ -41,7 +36,7 @@ LEVELS <- list(
 
 prep <- function(d) {
   d |>
-    mutate(edu3  = factor(edu3,  levels = LEVELS$edu3),
+    dplyr::mutate(edu3  = factor(edu3,  levels = LEVELS$edu3),
            ses   = factor(ses,   levels = LEVELS$ses),
            urban = factor(urban, levels = LEVELS$urban),
            mage    = age    - mean(age,    na.rm = TRUE),
@@ -54,9 +49,9 @@ fit_anchor <- function(d, y, cluster = "cy") {
   f <- reformulate(c("female", "mage", "edu3", "ses", "urban",
                      "mgrowth", "munemp", "(1 | cntry)",
                      paste0("(1 | ", cluster, ")")), response = y)
-  m <- lmer(f, data = d, REML = FALSE, control = lmerControl(calc.derivs = FALSE))
+  m <- lme4::lmer(f, data = d, REML = FALSE, control = lme4::lmerControl(calc.derivs = FALSE))
   fx <- summary(m)$coefficients
-  tibble(outcome = y, term = rownames(fx),
+  tibble::tibble(outcome = y, term = rownames(fx),
          estimate = fx[, "Estimate"], se = fx[, "Std. Error"])
 }
 
@@ -64,7 +59,7 @@ source("companion/_model-outputs/_load_respondents.R")
 real <- prep(ind)
 TWIN_DEFAULT <- "cases/eu-frames/data/EUframes_person_full.csv"
 twin_file <- Sys.getenv("TWIN_FILE", TWIN_DEFAULT)
-twin <- prep(read_csv(twin_file, show_col_types = FALSE))
+twin <- prep(readr::read_csv(twin_file, show_col_types = FALSE))
 
 # The committed comparison table describes the committed twin, and only that.
 # Pointing $TWIN_FILE at a candidate build and letting it write to the committed
@@ -76,20 +71,18 @@ out_file <- if (identical(twin_file, TWIN_DEFAULT)) {
 } else {
   f <- file.path("companion/_model-outputs",
                  paste0("twin_validation_", tools::file_path_sans_ext(basename(twin_file)), ".csv"))
-  cat("NOTE: non-default twin, writing to", f,
-      "and leaving the committed table alone\n")
+  message("a twin other than the committed one: the table goes to ", f,
+          ", and the committed table is left alone")
   f
 }
 
-cat("real:", nrow(real), "respondents | twin:", nrow(twin), "\n\n")
-
 outcomes <- c("cosmo", "util", "comm", "lib")
-cat("Fitting on the real respondents...\n")
-r_fit <- map(outcomes, \(y) { cat("  ", y, "\n"); fit_anchor(real, y) }) |>
-  list_rbind() |> rename(real = estimate, real_se = se)
-cat("Fitting on the twin...\n")
-t_fit <- map(outcomes, \(y) { cat("  ", y, "\n"); fit_anchor(twin, y) }) |>
-  list_rbind() |> rename(twin = estimate, twin_se = se)
+r_fit <- purrr::map(outcomes, \(y) fit_anchor(real, y)) |>
+  purrr::list_rbind() |>
+  datawizard::data_rename(select = c("estimate", "se"), replacement = c("real", "real_se"))
+t_fit <- purrr::map(outcomes, \(y) fit_anchor(twin, y)) |>
+  purrr::list_rbind() |>
+  datawizard::data_rename(select = c("estimate", "se"), replacement = c("twin", "twin_se"))
 
 # Two yardsticks, because they answer different questions. Against the real
 # fit's own standard error: does the twin reproduce the coefficient to the
@@ -98,31 +91,27 @@ t_fit <- map(outcomes, \(y) { cat("  ", y, "\n"); fit_anchor(twin, y) }) |>
 # standard error: is the difference larger than the twin's own sampling noise?
 # That is the question a reader quoting a number from the twin actually has.
 comp <- r_fit |>
-  left_join(t_fit, by = c("outcome", "term")) |>
-  mutate(gap = twin - real, gap_in_se = gap / real_se,
+  dplyr::left_join(t_fit, by = c("outcome", "term")) |>
+  datawizard::data_modify(gap = twin - real, gap_in_se = gap / real_se,
          z = gap / sqrt(real_se^2 + twin_se^2))
 
-write_csv(comp |> mutate(across(where(is.numeric), \(x) signif(x, 6))), out_file)
+readr::write_csv(comp |> dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 6))), out_file)
 
-cat("\n--- the macro slopes, which are what the case is about ---\n")
-print(comp |> filter(term %in% c("munemp", "mgrowth")) |>
-        select(outcome, term, real, twin, gap_in_se) |>
-        mutate(across(where(is.numeric), \(x) signif(x, 4))) |>
-        as.data.frame(), right = FALSE)
+# The macro slopes, which are what the case is about, and being unemployed
+# against manual workers
+comp |>
+  datawizard::data_filter(term %in% c("munemp", "mgrowth", "sesunemployed")) |>
+  datawizard::data_select(select = c("outcome", "term", "real", "twin", "gap_in_se")) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 4))) |>
+  print()
 
-cat("\n--- being unemployed, against manual workers ---\n")
-print(comp |> filter(term == "sesunemployed") |>
-        select(outcome, real, twin, gap_in_se) |>
-        mutate(across(where(is.numeric), \(x) signif(x, 4))) |>
-        as.data.frame(), right = FALSE)
-
-cat("\n--- every coefficient, summarised ---\n")
-cat("  terms compared:", nrow(comp), "\n")
-cat("  within 1 SE of the real estimate:",
-    sum(abs(comp$gap_in_se) < 1), "\n")
-cat("  within 2 SE:", sum(abs(comp$gap_in_se) < 2), "\n")
-worst <- comp |> slice_max(abs(gap_in_se), n = 6)
-cat("\n  furthest off:\n")
-print(worst |> select(outcome, term, real, twin, gap_in_se) |>
-        mutate(across(where(is.numeric), \(x) signif(x, 4))) |>
-        as.data.frame(), right = FALSE)
+# Every coefficient: how many lie within one and two standard errors of the
+# real estimate, and the six furthest off
+tibble::tibble(terms = nrow(comp), within_1_se = sum(abs(comp$gap_in_se) < 1),
+               within_2_se = sum(abs(comp$gap_in_se) < 2)) |>
+  print()
+comp |>
+  dplyr::slice_max(abs(gap_in_se), n = 6) |>
+  datawizard::data_select(select = c("outcome", "term", "real", "twin", "gap_in_se")) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 4))) |>
+  print()

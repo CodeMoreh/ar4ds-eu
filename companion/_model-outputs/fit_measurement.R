@@ -1,4 +1,4 @@
-# ########################################################################### #
+###############################################################################
 # Title:        The thirteen EU-meaning items: dimensionality and the scales
 # Purpose:      Everything the measurement module displays about the framing
 #               instrument, computed once on the licensed respondent file and
@@ -27,12 +27,7 @@
 #               directory.
 # Author:       Chris Moreh
 # Last updated: 2026-09-07
-# ########################################################################### #
-
-suppressPackageStartupMessages({
-  library(dplyr); library(purrr); library(tidyr); library(psych); library(lavaan)
-})
-t0 <- Sys.time()
+###############################################################################
 out <- "companion/_model-outputs"
 
 source("companion/_model-outputs/_load_respondents.R")
@@ -56,7 +51,7 @@ items <- tibble::tribble(
   "it13", "More crime",                  "communitarian",
   "it14", "Not enough border control",   "communitarian"
 ) |>
-  mutate(valence = if_else(scale %in% c("cosmopolitan", "utilitarian"), "positive", "negative"))
+  datawizard::data_modify(valence = dplyr::if_else(scale %in% c("cosmopolitan", "utilitarian"), "positive", "negative"))
 
 X <- as.matrix(p[, items$var])
 storage.mode(X) <- "numeric"
@@ -65,41 +60,41 @@ n <- nrow(X)
 ## ---- prevalence -------------------------------------------------------------------
 
 prevalence <- items |>
-  mutate(share_mentioning = colMeans(X)[var],
+  datawizard::data_modify(share_mentioning = colMeans(X)[var],  # r-style: keep – the 0/1 items as a matrix
          n_respondents = n)
 datawizard::data_write(prevalence, file.path(out, "items_prevalence.csv"), verbose = FALSE)
 
 ## ---- tetrachoric correlations and their eigenvalues ------------------------------
 
-tet <- tetrachoric(X, correct = 0.5)$rho
+tet <- psych::tetrachoric(X, correct = 0.5)$rho
 dimnames(tet) <- list(items$item, items$item)
-tet_long <- as.data.frame(tet) |>
-  mutate(item = rownames(tet)) |>
-  pivot_longer(-item, names_to = "with", values_to = "tetrachoric")
+tet_long <- as.data.frame(tet) |>  # r-style: keep – the matrix as a frame, before it is made long
+  datawizard::data_modify(item = rownames(tet)) |>
+  tidyr::pivot_longer(-item, names_to = "with", values_to = "tetrachoric")
 datawizard::data_write(tet_long, file.path(out, "items_tetrachoric.csv"), verbose = FALSE)
 
 ev <- eigen(tet)$values
 set.seed(20260907)
-pa <- fa.parallel(tet, n.obs = n, fm = "minres", fa = "fa", plot = FALSE, n.iter = 20)
-datawizard::data_write(tibble(factor = seq_along(ev), eigenvalue = ev,
+pa <- psych::fa.parallel(tet, n.obs = n, fm = "minres", fa = "fa", plot = FALSE, n.iter = 20)
+datawizard::data_write(tibble::tibble(factor = seq_along(ev), eigenvalue = ev,
                               parallel_mean = pa$fa.sim, n_respondents = n),
                        file.path(out, "efa_eigen.csv"), verbose = FALSE)
 
 ## ---- exploratory solutions ----------------------------------------------------------
 
-efa <- map(c(2, 4), function(k) {
-  f <- fa(tet, nfactors = k, n.obs = n, fm = "minres", rotate = "oblimin")
+efa <- purrr::map(c(2, 4), \(k) {
+  f <- psych::fa(tet, nfactors = k, n.obs = n, fm = "minres", rotate = "oblimin")
   L <- unclass(f$loadings)
-  list(loadings = tibble(solution = paste0(k, "-factor"), item = items$item, scale = items$scale,
+  list(loadings = tibble::tibble(solution = paste0(k, "-factor"), item = items$item, scale = items$scale,
                          valence = items$valence, communality = f$communality) |>
-         bind_cols(as_tibble(L) |> setNames(paste0("F", seq_len(k)))),
-       phi = as_tibble(f$Phi, .name_repair = "minimal") |>
+         dplyr::bind_cols(tibble::as_tibble(L) |> setNames(paste0("F", seq_len(k)))),
+       phi = tibble::as_tibble(f$Phi, .name_repair = "minimal") |>
          setNames(paste0("F", seq_len(k))) |>
-         mutate(solution = paste0(k, "-factor"), factor = paste0("F", seq_len(k)), .before = 1),
+         dplyr::mutate(solution = paste0(k, "-factor"), factor = paste0("F", seq_len(k)), .before = 1),
        varacc = 100 * sum(f$Vaccounted["Proportion Var", ]))
 })
-datawizard::data_write(bind_rows(map(efa, "loadings")), file.path(out, "efa_loadings.csv"), verbose = FALSE)
-datawizard::data_write(bind_rows(map(efa, "phi")), file.path(out, "efa_factor_corr.csv"), verbose = FALSE)
+datawizard::data_write(dplyr::bind_rows(purrr::map(efa, "loadings")), file.path(out, "efa_loadings.csv"), verbose = FALSE)
+datawizard::data_write(dplyr::bind_rows(purrr::map(efa, "phi")), file.path(out, "efa_factor_corr.csv"), verbose = FALSE)
 
 ## ---- confirmatory comparison ----------------------------------------------------------
 
@@ -120,25 +115,25 @@ models <- list(
     positive =~ it1 + it2 + it3 + it4 + it5 + it6 + it7
     negative =~ it9 + it10 + it11 + it12 + it13 + it14"
 )
-d_items <- as.data.frame(X)
-fits <- imap(models, function(m, nm) {
-  fit <- cfa(m, data = d_items, ordered = names(d_items), estimator = "WLSMV", std.lv = TRUE)
-  fm <- fitMeasures(fit, c("chisq.scaled", "df.scaled", "cfi.scaled", "tli.scaled",
+d_items <- as.data.frame(X)  # r-style: keep – lavaan reads the items from a plain data frame
+fits <- purrr::imap(models, \(m, nm) {
+  fit <- lavaan::cfa(m, data = d_items, ordered = names(d_items), estimator = "WLSMV", std.lv = TRUE)
+  fm <- lavaan::fitMeasures(fit, c("chisq.scaled", "df.scaled", "cfi.scaled", "tli.scaled",
                             "rmsea.scaled", "srmr"))
-  list(fit = tibble(model = nm, chisq = fm[["chisq.scaled"]], df = fm[["df.scaled"]],
+  list(fit = tibble::tibble(model = nm, chisq = fm[["chisq.scaled"]], df = fm[["df.scaled"]],
                     cfi = fm[["cfi.scaled"]], tli = fm[["tli.scaled"]],
                     rmsea = fm[["rmsea.scaled"]], srmr = fm[["srmr"]], n_respondents = n),
-       loadings = standardizedSolution(fit) |>
-         filter(op == "=~") |>
-         transmute(model = nm, factor = lhs, var = rhs, loading = est.std) |>
-         left_join(items |> select(var, item), by = "var"),
-       corr = standardizedSolution(fit) |>
-         filter(op == "~~", lhs != rhs) |>
-         transmute(model = nm, factor = lhs, with = rhs, correlation = est.std))
+       loadings = lavaan::standardizedSolution(fit) |>
+         dplyr::filter(op == "=~") |>
+         dplyr::transmute(model = nm, factor = lhs, var = rhs, loading = est.std) |>
+         dplyr::left_join(items |> dplyr::select(var, item), by = "var"),
+       corr = lavaan::standardizedSolution(fit) |>
+         dplyr::filter(op == "~~", lhs != rhs) |>
+         dplyr::transmute(model = nm, factor = lhs, with = rhs, correlation = est.std))
 })
-datawizard::data_write(bind_rows(map(fits, "fit")), file.path(out, "cfa_fit.csv"), verbose = FALSE)
-datawizard::data_write(bind_rows(c(map(fits, "loadings"), map(fits, "corr"))) |>
-                         select(model, factor, var, item, loading, with, correlation),
+datawizard::data_write(dplyr::bind_rows(purrr::map(fits, "fit")), file.path(out, "cfa_fit.csv"), verbose = FALSE)
+datawizard::data_write(dplyr::bind_rows(c(purrr::map(fits, "loadings"), purrr::map(fits, "corr"))) |>
+                         datawizard::data_select(select = c("model", "factor", "var", "item", "loading", "with", "correlation")),
                        file.path(out, "cfa_loadings.csv"), verbose = FALSE)
 
 ## ---- reliability of each scale, as the items stand ------------------------------------
@@ -147,22 +142,29 @@ scales <- list(cosmopolitan = c("it1", "it3", "it5", "it6", "it7"), utilitarian 
                communitarian = c("it9", "it12", "it13", "it14"), libertarian = c("it10", "it11"),
                positive = c("it1", "it2", "it3", "it4", "it5", "it6", "it7"),
                negative = c("it9", "it10", "it11", "it12", "it13", "it14"))
-reliability <- imap(scales, function(v, nm) {
+reliability <- purrr::imap(scales, \(v, nm) {
   r <- tet[items$item[match(v, items$var)], items$item[match(v, items$var)]]
-  k <- length(v)
-  rbar <- mean(r[lower.tri(r)])
-  tibble(scale = nm, items = k, mean_tetrachoric = rbar,
-         ordinal_alpha = k * rbar / (1 + (k - 1) * rbar),
-         mean_prevalence = mean(colMeans(X[, v])))
-}) |> list_rbind()
+  # ordinal alpha: Cronbach's alpha on the tetrachoric matrix (Zumbo,
+  # Gadermann and Zeisser 2007, Journal of Modern Applied Statistical Methods),
+  # from psych::alpha(), which reads a correlation matrix as one
+  tibble::tibble(scale = nm, items = length(v), mean_tetrachoric = mean(r[lower.tri(r)]),
+                 ordinal_alpha = psych::alpha(r, warnings = FALSE)$total$std.alpha,
+                 mean_prevalence = mean(colMeans(X[, v])))  # r-style: keep – the 0/1 items as a matrix
+}) |> purrr::list_rbind()
 datawizard::data_write(reliability, file.path(out, "scale_reliability.csv"), verbose = FALSE)
 
 ## ---- computed facts reported for verification ------------------------------------------
 
-cat("respondents:", n, "\n")
-cat("eigenvalues:", round(ev, 2), "\n")
-cat("parallel analysis (a formality at this n):", pa$nfact, "factors\n")
-cat("variance accounted, 2 and 4 factors:", round(map_dbl(efa, "varacc"), 1), "\n")
-print(bind_rows(map(fits, "fit")) |> mutate(across(where(is.numeric), function(x) round(x, 3))))
-print(reliability |> mutate(across(where(is.numeric), function(x) round(x, 3))))
-cat("elapsed:", round(as.numeric(difftime(Sys.time(), t0, units = "mins")), 1), "minutes\n")
+# the respondents, the eigenvalues, the number of factors that the parallel
+# analysis suggests (a formality at this n), and the variance that the two- and
+# four-factor solutions account for
+print(n)
+print(round(ev, 2))
+print(pa$nfact)
+print(round(purrr::map_dbl(efa, "varacc"), 1))
+dplyr::bind_rows(purrr::map(fits, "fit")) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 3))) |>
+  print()
+reliability |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 3))) |>
+  print()

@@ -7,32 +7,23 @@ bibliography: [../references.bib, ../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(tidyr)
-library(readr)
-library(purrr)
-library(ggplot2)
-library(lmerTest)
-library(fixest)
-library(tinytable)
-
-twin  <- read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
-panel <- read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
-edu   <- read_csv("../cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
-  mutate(edu3 = factor(edu3, levels = c("low", "mid", "high")),
+twin  <- readr::read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
+panel <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+edu   <- readr::read_csv("../cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
+  datawizard::data_modify(edu3 = factor(edu3, levels = c("low", "mid", "high")),
          munemp = unemp - mean(unemp), mgrowth = growth - mean(growth))
-claim2 <- read_csv("_model-outputs/claim2_fits.csv", show_col_types = FALSE)
+claim2 <- readr::read_csv("_model-outputs/claim2_fits.csv", show_col_types = FALSE)
 fmt <- \(x, d = 4) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
-valid <- read_csv("_model-outputs/twin_validation.csv", show_col_types = FALSE)
-real_ml <- read_csv("_model-outputs/person_multilevel_real.csv",
+valid <- readr::read_csv("_model-outputs/twin_validation.csv", show_col_types = FALSE)
+real_ml <- readr::read_csv("_model-outputs/person_multilevel_real.csv",
                     show_col_types = FALSE)
-grad <- read_csv("_model-outputs/prevalence_gradient.csv", show_col_types = FALSE)
+grad <- readr::read_csv("_model-outputs/prevalence_gradient.csv", show_col_types = FALSE)
 
 # Reference categories are the published ones: manual workers, large towns,
 # lowest education band. They do not change the macro slopes but they are what
 # every contrast below is read against.
 twin <- twin |>
-  mutate(edu3  = factor(edu3, levels = c("low", "mid", "high")),
+  datawizard::data_modify(edu3  = factor(edu3, levels = c("low", "mid", "high")),
          ses   = factor(ses, levels = c("manual", "self_employed", "manager",
                                         "white_collar", "house_person",
                                         "unemployed", "retired", "student")),
@@ -72,8 +63,8 @@ What licenses a number from the twin is the validation, not the care taken in bu
 #| label: tbl-validation
 #| tbl-cap: "Every coefficient of OA's published model, fitted on 416,698 real respondents and on the twin. The last column is the difference over the two-sample standard error."
 valid |>
-  summarise(
-    `coefficients compared` = n(),
+  dplyr::summarise(
+    `coefficients compared` = dplyr::n(),
     `within 1 standard error` = sum(abs(z) < 1),
     `within 2 standard errors` = sum(abs(z) < 2),
     `largest discrepancy` = round(max(abs(z)), 2))
@@ -91,7 +82,7 @@ fit <- function(y) {
   f <- reformulate(c("female", "mage", "edu3", "ses", "urban",
                      "mgrowth", "munemp", "(1 | cntry)", "(1 | cy)"),
                    response = y)
-  lmer(f, data = twin, REML = FALSE)
+  lmerTest::lmer(f, data = twin, REML = FALSE)
 }
 m_cosmo <- fit("cosmo")
 
@@ -99,9 +90,9 @@ parameters::model_parameters(m_cosmo, effects = "fixed",
                              ci_method = "satterthwaite")
 ```
 
-Among the macro terms, a one-point rise in a country's unemployment rate goes with a fall of about `r sprintf("%.4f", abs(fixef(m_cosmo)[["munemp"]]))` in an individual's cosmopolitan framing score, net of who they are.
+Among the macro terms, a one-point rise in a country's unemployment rate goes with a fall of about `r sprintf("%.4f", abs(lme4::fixef(m_cosmo)[["munemp"]]))` in an individual's cosmopolitan framing score, net of who they are.
 
-The term `sesunemployed` is the respondent's own employment status. Being unemployed rather than a manual worker moves the score by `r sprintf("%.3f", fixef(m_cosmo)[["sesunemployed"]])` – roughly `r round(abs(fixef(m_cosmo)[["sesunemployed"]] / fixef(m_cosmo)[["munemp"]]))` times as much per unit. Individual circumstance matters far more to an individual than the national rate does.
+The term `sesunemployed` is the respondent's own employment status. Being unemployed rather than a manual worker moves the score by `r sprintf("%.3f", lme4::fixef(m_cosmo)[["sesunemployed"]])` – roughly `r round(abs(lme4::fixef(m_cosmo)[["sesunemployed"]] / lme4::fixef(m_cosmo)[["munemp"]]))` times as much per unit. Individual circumstance matters far more to an individual than the national rate does.
 
 ```{r}
 #| label: published-refits
@@ -123,11 +114,11 @@ That depends on a quantity that neither coefficient contains: how much a country
 
 ```{r}
 #| label: arithmetic
-b_ind  <- fixef(m_cosmo)[["sesunemployed"]]
-b_ctx  <- fixef(m_cosmo)[["munemp"]]
+b_ind  <- lme4::fixef(m_cosmo)[["sesunemployed"]]
+b_ctx  <- lme4::fixef(m_cosmo)[["munemp"]]
 grad_w <- grad$gradient[2]
 
-tibble(
+tibble::tibble(
   quantity = c("individual effect of being unemployed",
                "extra unemployed share per point of the national rate",
                "compositional contribution to the country-level slope",
@@ -135,7 +126,7 @@ tibble(
                "compositional share of it"),
   value = c(b_ind, grad_w, b_ind * grad_w, b_ctx,
             b_ind * grad_w / b_ctx)) |>
-  mutate(value = signif(value, 3))
+  datawizard::data_modify(value = signif(value, 3))
 ```
 
 So the compositional path accounts for roughly `r sprintf("%.0f%%", 100 * b_ind * grad_w / b_ctx)` of the country-level association, because an effect several times the size, spread over a group that barely grows, moves the average hardly at all.
@@ -153,13 +144,13 @@ The course panel and OA's own model are both defensible readings of the same cla
 #| tbl-cap: "The unemployment coefficient on cosmopolitan framing under two designs. The aggregate model is C6HJR's published Multi100 specification; the individual model is OA's published one, fitted on the twin."
 agg <- lm(mcosmo ~ unemp + growth + factor(year) + factor(cntry), data = panel)
 
-tibble(
+tibble::tibble(
   design = c("country-year panel, two-way fixed effects",
              "individual, country and country-year random intercepts"),
   n = c(nrow(panel), nrow(twin)),
-  estimate = c(coef(agg)[["unemp"]], fixef(m_cosmo)[["munemp"]]),
+  estimate = c(coef(agg)[["unemp"]], lme4::fixef(m_cosmo)[["munemp"]]),
   removes_common_year_shocks = c("yes", "no")) |>
-  mutate(estimate = signif(estimate, 3))
+  datawizard::data_modify(estimate = signif(estimate, 3))
 ```
 
 The individual-level estimate is about half again as large, and the reason is in the last column. OA's design includes country and country-wave random intercepts but **no year effects**. Nothing in it removes a shock that hit every country at once, and 2009 brought such a shock: unemployment rose everywhere and EU framing moved everywhere, for reasons that include but are not limited to unemployment. The two-way fixed-effects design removes that shock and OA's design does not, so part of the shock ends up in her estimate.
@@ -173,11 +164,11 @@ The disagreement between the designs is starker on the libertarian dimension:
 m_lib <- fit("lib")
 agg_lib <- lm(mlib ~ unemp + growth + factor(year) + factor(cntry), data = panel)
 
-tibble(design = c("country-year panel", "individual"),
-       estimate = c(coef(agg_lib)[["unemp"]], fixef(m_lib)[["munemp"]]),
+tibble::tibble(design = c("country-year panel", "individual"),
+       estimate = c(coef(agg_lib)[["unemp"]], lme4::fixef(m_lib)[["munemp"]]),
        t = c(summary(agg_lib)$coefficients["unemp", "t value"],
              coef(summary(m_lib))["munemp", "t value"])) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3)))
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 On the panel, unemployment has almost no association with libertarian framing, while at individual level the association is clear. When an effect appears under one defensible design and not under another, that is a strong argument for fixing the design in a preregistration before any model is fitted.
@@ -195,17 +186,17 @@ ml <- list(
   "with a random slope"     = cosmo ~ unemp + (1 + unemp | cntry) + (1 | cy))
 keys <- c("two_level", "three_level", "slopes")
 
-imap(ml, \(f, nm) {
-  m <- lmer(f, data = twin)
+purrr::imap(ml, \(f, nm) {
+  m <- lmerTest::lmer(f, data = twin)
   p <- coef(summary(m))["unemp", ]
   k <- keys[match(nm, names(ml))]
-  tibble(structure = nm,
+  tibble::tibble(structure = nm,
          twin_estimate = p[["Estimate"]], twin_t = p[["t value"]],
          twin_df = p[["df"]],
          real_estimate = rv(k, "unemp"), real_df = rv(k, "unemp", "df"))
 }) |>
-  list_rbind() |>
-  mutate(across(where(is.numeric), \(x) signif(x, 4)))
+  purrr::list_rbind() |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 4)))
 ```
 
 In the first row, declaring only the country level lets the model treat every respondent as fresh information about unemployment, and the degrees of freedom run into the tens of thousands on the twin and into the hundreds of thousands on the real file. But the predictor takes only 270 distinct values in the whole dataset. A model that reports six-figure degrees of freedom for a variable with 270 distinct values is counting people as though they were countries.
@@ -217,15 +208,15 @@ The variance components below lead to the same conclusion.
 ```{r}
 #| label: tbl-vc
 #| tbl-cap: "Variance components, on the twin and on the real respondents. Standard deviations, from the country and country-year model."
-m3 <- lmer(cosmo ~ unemp + (1 | cntry) + (1 | cy), data = twin)
-vc <- as.data.frame(VarCorr(m3))
+m3 <- lmerTest::lmer(cosmo ~ unemp + (1 | cntry) + (1 | cy), data = twin)
+vc <- as.data.frame(lme4::VarCorr(m3))  # r-style: keep – the VarCorr method lists the variance components as rows
 
-tibble(component = c("between countries", "between country-years", "between people"),
+tibble::tibble(component = c("between countries", "between country-years", "between people"),
        twin = c(vc$sdcor[vc$grp == "cntry"], vc$sdcor[vc$grp == "cy"], sigma(m3)),
        real = c(rv("three_level", "cntry: (Intercept)"),
                 rv("three_level", "cy: (Intercept)"),
                 rv("three_level", "Residual: NA"))) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3)))
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 Variation between people accounts for far more than either of the other components, around `r sprintf("%.0f%%", 100 * sigma(m3)^2 / (sigma(m3)^2 + sum(vc$sdcor[vc$grp != "Residual"]^2)))` of the total. The share reflects the shape of the outcome at this level. A respondent who mentions two things and finds one of them cosmopolitan scores exactly one half. The score is bounded, takes only a few values, and its scatter within any cell is enormous compared with the differences between cells. That is also why so many respondents add so little precision to the estimate for a country-level predictor.
@@ -264,35 +255,35 @@ The estimand statement, in the form that the [specification menu](../cases/eu-fr
 
 ```{r}
 #| label: claim2-cells
-m_edu <- feols(mcosmo ~ edu3 * munemp + edu3 * mgrowth | cntry + year,
+m_edu <- fixest::feols(mcosmo ~ edu3 * munemp + edu3 * mgrowth | cntry + year,
                data = edu, weights = ~n, vcov = ~cntry)
 parameters::model_parameters(m_edu, keep = "edu3|munemp") |>
-  as.data.frame() |>
-  select(Parameter, Coefficient, SE, t, p) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
-  tt()
+  as.data.frame() |>  # r-style: keep – drops the print method of parameters, so that the table shows plain columns
+  datawizard::data_select(select = c("Parameter", "Coefficient", "SE", "t", "p")) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3))) |>
+  tinytable::tt()
 ```
 
 ```{r}
 #| label: tbl-claim2
 #| tbl-cap: "The education gap and its interaction with unemployment on the cosmopolitan scale, under three designs and two rules for the respondents who named nothing. The published model is fitted on the real respondents with OA's covariates and random intercepts for countries and country-waves; the fixed-effects model on the same respondents with errors clustered by country-year; the cell model on the education-band panel, which is built under the zero rule. Coefficient, with t in brackets. The first row is OA's Table 3, Model 1."
 fitted_rows <- claim2 |>
-  filter(outcome == "cosmo",
+  datawizard::data_filter(outcome == "cosmo",
          term %in% c("unemployment", "education: high", "mid x unemployment", "high x unemployment")) |>
-  mutate(rule = if_else(grepl("dropped", model), "no-opinion dropped", "no-opinion scored zero"),
-         design = case_when(grepl("^published", model) ~ "published model, respondents",
+  datawizard::data_modify(rule = dplyr::if_else(grepl("dropped", model), "no-opinion dropped", "no-opinion scored zero"),
+         design = dplyr::case_when(grepl("^published", model) ~ "published model, respondents",
                             level == "respondent"      ~ "fixed effects, respondents",
                             TRUE                       ~ "fixed effects, education-band cells"),
          value = paste0(fmt(estimate), " (", fmt(statistic, 2), ")")) |>
-  select(design, rule, term, value) |>
-  pivot_wider(names_from = term, values_from = value) |>
-  arrange(design, rule)
-oa_row <- tibble(design = "OA, Table 3 Model 1", rule = "no-opinion dropped",
+  datawizard::data_select(select = c("design", "rule", "term", "value")) |>
+  tidyr::pivot_wider(names_from = term, values_from = value) |>
+  datawizard::data_arrange(c("design", "rule"))
+oa_row <- tibble::tibble(design = "OA, Table 3 Model 1", rule = "no-opinion dropped",
                  unemployment = "−0.0034 (−4.03)", `education: high` = "0.0771 (41.79)",
                  `mid x unemployment` = "−0.0014 (−3.23)", `high x unemployment` = "−0.0031 (−6.93)")
-bind_rows(oa_row, fitted_rows) |>
-  select(design, rule, unemployment, `education: high`, `mid x unemployment`, `high x unemployment`) |>
-  tt()
+dplyr::bind_rows(oa_row, fitted_rows) |>
+  dplyr::select(design, rule, unemployment, `education: high`, `mid x unemployment`, `high x unemployment`) |>
+  tinytable::tt()
 ```
 
 The published design under the published rule reproduces OA's interaction almost exactly, −0.0029 against her −0.0031, with a t of −6.82 against her −6.93. The other terms of the row are further apart, the education gap 0.0933 against her 0.0771 and the unemployment slope −0.0044 against −0.0034, and the change from her Eurostat unemployment series to the World Bank series used in the course does not account for the gap: on the education-band panel, swapping one unemployment series for another moves the education gap by less than 0.0001. The refit also keeps 382,335 respondents, where the note to her Table 3 reports 335,566. That row is the reproduction, and it is the one to quote. The next row changes one thing, the rule for the respondents who named no item at all: OA's code dropped them, because dividing by a mentions total of zero left them missing, and the course scores them zero on every scale, as the Multi100 reanalyses did. The interaction halves. The respondents who name nothing are disproportionately low-educated, and scoring them zero pulls down the cosmopolitan mean of the low band in every cell in a way that does not move with unemployment, so the gap between the bands and its movement both change. A decision that the [missing-answers module](missingness.qmd) classifies as a measurement choice therefore moves the coefficient on which the claim rests.
@@ -305,13 +296,13 @@ The results reported in the paper include two qualifications that a replication 
 #| label: tbl-claim2-outcomes
 #| tbl-cap: "The high × unemployment interaction on all four scales: OA's Table 3, Model 1, and the published model refitted on the real respondents with the no-opinion respondents dropped, as her code dropped them. Coefficient, with t in brackets."
 claim2 |>
-  filter(grepl("^published", model), grepl("dropped", model), term == "high x unemployment") |>
-  transmute(outcome, refitted = paste0(fmt(estimate), " (", fmt(statistic, 2), ")")) |>
-  left_join(tibble(outcome = c("cosmo", "util", "comm", "lib"),
+  datawizard::data_filter(grepl("^published", model), grepl("dropped", model), term == "high x unemployment") |>
+  dplyr::transmute(outcome, refitted = paste0(fmt(estimate), " (", fmt(statistic, 2), ")")) |>
+  dplyr::left_join(tibble::tibble(outcome = c("cosmo", "util", "comm", "lib"),
                    published = c("−0.0031 (−6.93)", "−0.0004 (−1.73)", "0.0020 (5.63)", "0.0015 (4.84)")),
             by = "outcome") |>
-  select(outcome, published, refitted) |>
-  tt()
+  datawizard::data_select(select = c("outcome", "published", "refitted")) |>
+  tinytable::tt()
 ```
 
 **A replication exercise of your own.** The pieces for a second exercise in the style of the first are all on this page: a claim card, an estimand statement, a public dataset on which the aggregate design runs in the browser lab or the workspace, the respondent file for anyone who built it, and OA's published values to reproduce. The menu is smaller than the one for the first claim, and each of its axes is a decision that you can defend or not. The axes are the frame set, the scoring rule, the rule for the respondents who named nothing, the education coding (the published three bands, or the four bands that keep students separate), the estimator (random intercepts, fixed effects, or cells), the sample, the weight, and whether growth enters beside unemployment. Fix one specification in a preregistration, as in Task 5, then run it and set the interaction you get against the rows of the table above. The table already shows that two of those decisions, the design and the no-opinion rule, decide whether the claim is found.

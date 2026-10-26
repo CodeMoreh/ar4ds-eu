@@ -1,4 +1,4 @@
-# ########################################################################### #
+###############################################################################
 # Title:        Joint calibration for the simulated person-level twin
 # Purpose:      Estimate the joint distribution of the framing instrument and
 #               the covariates, so the twin reproduces the relationships among
@@ -32,13 +32,7 @@
 #               aggregate throughout, and no respondent record is written.
 # Author:       Chris Moreh
 # Last updated: 2026-07-30
-# ########################################################################### #
-
-suppressPackageStartupMessages({
-  library(dplyr); library(tidyr); library(purrr); library(readr)
-  library(psych); library(nnet)
-})
-
+###############################################################################
 set.seed(20260730)
 
 source("companion/_model-outputs/_load_respondents.R")
@@ -55,11 +49,11 @@ RILE_COVERAGE <- mean(!is.na(ind$rile))
 # rather than as its three bands: banding first would throw away variation the
 # twin then could not put back.
 lat <- ind |>
-  transmute(
+  dplyr::transmute(
     age, edu, female, unemployed,
     urban_i = match(urban, c("rural", "small_town", "large_town")),
     rile,
-    across(all_of(items), \(x) as.integer(x))
+    dplyr::across(dplyr::all_of(items), \(x) as.integer(x))
   )
 
 # Left-right is a ten-point scale, which the polychoric estimator declines to
@@ -74,12 +68,10 @@ DICH <- c("female", "unemployed", items)
 # standard error of any one of these is under 0.005, and the polychoric step
 # over 190 pairs is quadratic in nothing but time.
 N_CORR <- 60000
-sub <- lat |> slice_sample(n = min(N_CORR, nrow(lat)))
+sub <- lat |> dplyr::slice_sample(n = min(N_CORR, nrow(lat)))
 
-cat("Estimating the latent correlation matrix on", nrow(sub), "respondents",
-    "over", ncol(sub), "variables...\n")
-mc <- mixedCor(data = as.data.frame(sub), c = CONT, p = POLY, d = DICH,
-               use = "pairwise.complete.obs", smooth = TRUE)
+mc <- psych::mixedCor(data = as.data.frame(sub), c = CONT, p = POLY, d = DICH,  # r-style: keep – mixedCor() takes a plain data frame
+                      use = "pairwise.complete.obs", smooth = TRUE)
 R <- mc$rho
 # mixedCor returns the blocks in c/p/d order regardless of input order, so the
 # matrix is put back into a stated order here; the generator reads the names,
@@ -87,43 +79,42 @@ R <- mc$rho
 ord <- c(CONT, POLY, DICH)
 R <- R[ord, ord]
 
-corr_long <- as.data.frame(as.table(R)) |>
+corr_long <- as.data.frame(as.table(R)) |>  # r-style: keep – the matrix in long form, in the order of the committed file
   setNames(c("var1", "var2", "r")) |>
-  filter(as.character(var1) < as.character(var2)) |>
-  mutate(r = signif(r, 6))
-write_csv(corr_long, "companion/_model-outputs/joint_corr.csv")
-cat("  wrote", nrow(corr_long), "correlations\n")
+  datawizard::data_filter(as.character(var1) < as.character(var2)) |>
+  datawizard::data_modify(r = signif(r, 6))
+readr::write_csv(corr_long, "companion/_model-outputs/joint_corr.csv")
 
 # --- marginals --------------------------------------------------------------
 # Continuous variables travel as a hundred-point quantile grid, which carries
 # the shape without carrying anyone's value: every printed number is the
 # boundary between two centiles of a 400,000-respondent distribution.
 q_grid <- seq(0.005, 0.995, length.out = 100)
-cont_marg <- map(c("age", "edu"), \(v) tibble(
+cont_marg <- purrr::map(c("age", "edu"), \(v) tibble::tibble(
   variable = v, kind = "quantile", level = as.character(q_grid),
   value = as.numeric(quantile(ind[[v]], q_grid, na.rm = TRUE)))) |>
-  list_rbind()
+  purrr::list_rbind()
 
-cat_marg <- bind_rows(
-  ind |> count(urban) |> filter(!is.na(urban)) |>
-    transmute(variable = "urban", kind = "share", level = urban,
+cat_marg <- dplyr::bind_rows(
+  ind |> dplyr::count(urban) |> datawizard::data_filter(!is.na(urban)) |>
+    dplyr::transmute(variable = "urban", kind = "share", level = urban,
               value = n / sum(n)),
-  ind |> filter(!is.na(rile)) |> count(rile) |>
-    transmute(variable = "rile", kind = "share", level = as.character(rile),
+  ind |> datawizard::data_filter(!is.na(rile)) |> dplyr::count(rile) |>
+    dplyr::transmute(variable = "rile", kind = "share", level = as.character(rile),
               value = n / sum(n)),
-  tibble(variable = c("female", "unemployed", "rile_observed"),
+  tibble::tibble(variable = c("female", "unemployed", "rile_observed"),
          kind = "rate", level = "1",
          value = c(mean(ind$female, na.rm = TRUE),
                    mean(ind$unemployed, na.rm = TRUE), RILE_COVERAGE))
 )
 
 item_marg <- ind |>
-  summarise(across(all_of(items), \(x) mean(x, na.rm = TRUE))) |>
-  pivot_longer(everything(), names_to = "variable", values_to = "value") |>
-  mutate(kind = "rate", level = "1")
+  dplyr::summarise(dplyr::across(dplyr::all_of(items), \(x) mean(x, na.rm = TRUE))) |>
+  tidyr::pivot_longer(dplyr::everything(), names_to = "variable", values_to = "value") |>
+  datawizard::data_modify(kind = "rate", level = "1")
 
-write_csv(bind_rows(cont_marg, cat_marg, item_marg) |>
-            mutate(value = signif(value, 6)),
+readr::write_csv(dplyr::bind_rows(cont_marg, cat_marg, item_marg) |>
+            datawizard::data_modify(value = signif(value, 6)),
           "companion/_model-outputs/joint_marginals.csv")
 
 # --- how each dimension's mentions divide across its items ------------------
@@ -138,55 +129,50 @@ dim_of <- c(it1 = "cosmo", it3 = "cosmo", it5 = "cosmo", it6 = "cosmo",
             it9 = "comm",  it12 = "comm", it13 = "comm", it14 = "comm",
             it10 = "lib",  it11 = "lib")
 item_split <- item_marg |>
-  mutate(dimension = dim_of[variable]) |>
-  mutate(share_within_dimension = value / sum(value), .by = dimension) |>
-  select(item = variable, dimension, mention_rate = value,
+  datawizard::data_modify(dimension = dim_of[variable]) |>
+  dplyr::mutate(share_within_dimension = value / sum(value), .by = dimension) |>
+  dplyr::select(item = variable, dimension, mention_rate = value,
          share_within_dimension) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 6)))
-write_csv(item_split, "companion/_model-outputs/joint_item_split.csv")
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 6)))
+readr::write_csv(item_split, "companion/_model-outputs/joint_item_split.csv")
 
 # --- occupation beyond the unemployed indicator ------------------------------
 # Conditional on not being unemployed, which of the seven remaining groups a
 # respondent falls into. Fitted on a subsample for speed; the coefficients are
 # a small table and the categories are large, so the estimates are stable.
 ses_all <- ind |>
-  filter(!is.na(ses), ses != "unemployed",
+  datawizard::data_filter(!is.na(ses), ses != "unemployed",
          !is.na(age), !is.na(edu), !is.na(urban)) |>
-  mutate(ses = factor(ses, levels = c("manual", "self_employed", "manager",
+  datawizard::data_modify(ses = factor(ses, levels = c("manual", "self_employed", "manager",
                                       "white_collar", "house_person",
                                       "retired", "student")))
-ses_dat <- ses_all |> slice_sample(n = min(80000L, nrow(ses_all)))
+ses_dat <- ses_all |> dplyr::slice_sample(n = min(80000L, nrow(ses_all)))
 
-cat("Fitting the conditional occupation model on", nrow(ses_dat), "respondents...\n")
-m_ses <- multinom(ses ~ age + I(age^2) + edu + female + urban,
+m_ses <- nnet::multinom(ses ~ age + I(age^2) + edu + female + urban,
                   data = ses_dat, trace = FALSE, maxit = 400)
-ses_coef <- as.data.frame(coef(m_ses)) |>
+ses_coef <- as.data.frame(coef(m_ses)) |>  # r-style: keep – the coefficient matrix with its rows named
   tibble::rownames_to_column("category") |>
-  pivot_longer(-category, names_to = "term", values_to = "estimate") |>
-  mutate(estimate = signif(estimate, 6))
-write_csv(ses_coef, "companion/_model-outputs/joint_ses_conditional.csv")
+  tidyr::pivot_longer(-category, names_to = "term", values_to = "estimate") |>
+  datawizard::data_modify(estimate = signif(estimate, 6))
+readr::write_csv(ses_coef, "companion/_model-outputs/joint_ses_conditional.csv")
 
 # --- what the calibration says ----------------------------------------------
-cat("\n--- correlations worth reading ---\n")
-show <- corr_long |>
-  filter((var1 %in% c("age", "edu", "female", "unemployed", "urban_i") &
-          var2 %in% c("age", "edu", "female", "unemployed", "urban_i")) |
-         (var1 == "unemployed" & var2 %in% items) |
-         (var2 == "unemployed" & var1 %in% items)) |>
-  arrange(desc(abs(r)))
-print(head(as.data.frame(show), 18), right = FALSE)
+# The correlations among the covariates and of unemployment with the items,
+# the largest of them first: an independent draw of the covariates would set
+# every one of these to zero
+corr_long |>
+  datawizard::data_filter((var1 %in% c("age", "edu", "female", "unemployed", "urban_i") &
+                             var2 %in% c("age", "edu", "female", "unemployed", "urban_i")) |
+                            (var1 == "unemployed" & var2 %in% items) |
+                            (var2 == "unemployed" & var1 %in% items)) |>
+  dplyr::arrange(dplyr::desc(abs(r))) |>
+  head(18) |>
+  print()
 
-cat("\n--- how far the independence assumption was off ---\n")
-covs <- c("age", "edu", "female", "unemployed", "urban_i")
-off <- corr_long |> filter(var1 %in% covs, var2 %in% covs)
-cat("  largest covariate-covariate correlation:", signif(max(abs(off$r)), 3),
-    "between", off$var1[which.max(abs(off$r))], "and",
-    off$var2[which.max(abs(off$r))], "\n")
-cat("  the previous generator drew all of these independently\n")
-
-item_pairs <- corr_long |> filter(var1 %in% items, var2 %in% items)
-cat("\n  item-item correlations: median", signif(median(item_pairs$r), 3),
-    "| range", signif(min(item_pairs$r), 3), "to",
-    signif(max(item_pairs$r), 3), "over", nrow(item_pairs), "pairs\n")
-cat("  left-right observed for", sprintf("%.1f%%", 100 * RILE_COVERAGE),
-    "of respondents (12 of 16 waves)\n")
+# The spread of the item-item correlations, and the share of respondents with
+# a left-right placement (12 of 16 waves)
+item_pairs <- corr_long |> datawizard::data_filter(var1 %in% items, var2 %in% items)
+tibble::tibble(pairs = nrow(item_pairs), median_r = signif(median(item_pairs$r), 3),
+               min_r = signif(min(item_pairs$r), 3), max_r = signif(max(item_pairs$r), 3),
+               rile_observed = sprintf("%.1f%%", 100 * RILE_COVERAGE)) |>
+  print()

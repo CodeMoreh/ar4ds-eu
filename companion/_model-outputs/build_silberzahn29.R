@@ -11,9 +11,6 @@
 # Last updated: 2026-07-31
 ################################################################################
 
-library(dplyr)
-library(readr)
-library(stringr)
 
 src <- "https://osf.io/download/yprcx/"
 
@@ -22,26 +19,26 @@ raw <- src |>
   url() |>
   readLines(warn = FALSE) |>
   paste(collapse = "\n") |>
-  str_replace_all("\r", "\n") |>
+  stringr::str_replace_all("\r", "\n") |>
   I() |>
-  read_csv(show_col_types = FALSE)
+  readr::read_csv(show_col_types = FALSE)
 
 # Two published forks, both worth naming on the slide: the response
 # distribution the team assumed, and how it handled the non-independence of
 # repeated players and referees. "misc" holds the two teams whose approach
 # (Dirichlet-process clustering, Tobit) sits outside the three families.
 sz <- raw |>
-  transmute(
+  dplyr::transmute(
     team          = Team,
-    approach      = str_squish(Analytic.Approach),
-    distribution  = recode(Distribution, misc = "Other"),
+    approach      = stringr::str_squish(Analytic.Approach),
+    distribution  = dplyr::recode(Distribution, misc = "Other"),
     clustering    = Non_independence,
     or            = OR,
     or_lo         = OR_lo,
     or_hi         = OR_hi,
     significant   = or_lo > 1 | or_hi < 1
   ) |>
-  arrange(distribution, or)
+  datawizard::data_arrange(c("distribution", "or"))
 
 # The paper's own summary, as a guard: anything that moves here means the
 # source file changed under us.
@@ -53,4 +50,4 @@ stopifnot(
   sum(sz$significant) == 20
 )
 
-write_csv(sz, "data/silberzahn29.csv")
+readr::write_csv(sz, "data/silberzahn29.csv")

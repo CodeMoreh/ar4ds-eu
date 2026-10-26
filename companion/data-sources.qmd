@@ -8,42 +8,37 @@ subtitle: "Foundation to intermediate – where the data come from, and how the 
 #| include: false
 # Figures for section 3.3, read from the series file and from the comparison of
 # every option of the full menu with its twins on the curve of the claim.
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(tidyr)
-  library(readr)
-})
-series <- read_csv("../cases/eu-frames/data/macro/predictor_measures.csv", show_col_types = FALSE) |>
-  filter(between(year, 2004, 2013), !is.na(value))
-curve <- read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
-forks <- read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
-  filter(curve == "positive")
-devs <- read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
-  filter(curve == "positive", axis == "measure")
+series <- readr::read_csv("../cases/eu-frames/data/macro/predictor_measures.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(dplyr::between(year, 2004, 2013), !is.na(value))
+curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive")
+devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive", axis == "measure")
 
 pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
 num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x)
 below_sig <- \(d) 100 * mean(d$supports & d$sig)
 dv <- \(op, col) devs[[col]][devs$option == op]
-cover <- \(m, col) series |> filter(measure == m) |> summarise(cells = n(), countries = n_distinct(cntry)) |> pull(col)
+cover <- \(m, col) series |> dplyr::filter(measure == m) |> dplyr::summarise(cells = dplyr::n(), countries = dplyr::n_distinct(cntry)) |> dplyr::pull(col)
 
 # the four full-coverage unemployment series, with the means of each country and
 # of each year removed (sequential demeaning is exact on a balanced panel)
 full <- c("wb_nat", "es_1574_act", "es_2064_pop", "es_2564_lfs")
 within_cor <- series |>
-  filter(measure %in% full) |>
-  mutate(value = value - mean(value), .by = c(measure, cntry)) |>
-  mutate(value = value - mean(value), .by = c(measure, year)) |>
-  pivot_wider(id_cols = c(cntry, year), names_from = measure, values_from = value) |>
-  select(all_of(full)) |>
+  datawizard::data_filter(measure %in% full) |>
+  dplyr::mutate(value = value - mean(value), .by = c(measure, cntry)) |>
+  dplyr::mutate(value = value - mean(value), .by = c(measure, year)) |>
+  tidyr::pivot_wider(id_cols = c(cntry, year), names_from = measure, values_from = value) |>
+  dplyr::select(dplyr::all_of(full)) |>
   cor()
 cor_range <- range(within_cor[upper.tri(within_cor)])
-names_cy <- read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE) |> distinct(cntry, country)
+names_cy <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE) |> dplyr::distinct(cntry, country)
 tips_pre <- series |>
-  filter(measure == "es_1574_tips", year < 2009) |>
-  distinct(cntry) |>
-  left_join(names_cy, by = "cntry") |>
-  pull(country) |>
+  datawizard::data_filter(measure == "es_1574_tips", year < 2009) |>
+  dplyr::distinct(cntry) |>
+  dplyr::left_join(names_cy, by = "cntry") |>
+  dplyr::pull(country) |>
   sort()
 ```
 
@@ -220,7 +215,6 @@ The unemployment rate and GDP growth come from the World Development Indicators 
 There are two ways to get them. On the site, open [data.worldbank.org](https://data.worldbank.org/), search the indicator code, choose the countries and years and download a CSV. In R, the `WDI` package does the same in one call and returns a tidy country-year table:
 
 ```r
-library(WDI)
 macro <- WDI(
   country   = c("AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GB",
                 "GR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO",
@@ -240,7 +234,7 @@ The specification menu offers more than one published series for each of the two
 
 The four unemployment series that cover all 270 country-years differ in age band and denominator, and the population-based series of KQXUE is a different quantity from a labour-force rate, but within countries they move together. Once the mean of each country and of each year is removed, they correlate with one another at between `r num(cor_range[1])` and `r num(cor_range[2])`, so all four stay on the curve, where the choice among them carries `r pp(forks$share[forks$axis == "measure"])` of the variance of the claim-aligned partial correlations.
 
-The other two series left the curve, because choosing either of them changes who is in the analysis as well as how the economy is measured. The table `tipsun20` has rows for `r cover("es_1574_tips", "cells")` of the 270 country-years, in `r cover("es_1574_tips", "countries")` countries, with none for the United Kingdom and, before 2009, rows for only `r paste(tips_pre, collapse = " and ")`. Choosing it therefore halves the panel and moves the question towards the crisis years: swapped into the `r dv("es_1574_tips", "n_pairs")` unemployment specifications of the curve, it leaves `r pp(dv("es_1574_tips", "below_zero_sig"))` of them below zero with bootstrap p < 0.05, against `r pp(below_sig(filter(curve, predictor == "unemp")))` of the unemployment specifications on the curve itself, and it changes the class of `r pp(dv("es_1574_tips", "class_changes"))` of the pairs. It is a decision about the sample presented as one about the measure, which is why the [decision map](../cases/eu-frames/map.qmd) rewrites the population in the estimand statement when the series is chosen. The Eurostat growth series has no row for the United Kingdom, `r cover("es_growth", "cells")` country-years in `r cover("es_growth", "countries")` countries, which costs one country for the same reason, although within the countries that it covers it moves with the World Bank series and leaves the class of every one of its `r dv("es_growth", "n_pairs")` pairs unchanged. Coverage of this kind is worth checking before any series is merged, since a merge that silently drops rows changes the population of the question without changing a line of the model.
+The other two series left the curve, because choosing either of them changes who is in the analysis as well as how the economy is measured. The table `tipsun20` has rows for `r cover("es_1574_tips", "cells")` of the 270 country-years, in `r cover("es_1574_tips", "countries")` countries, with none for the United Kingdom and, before 2009, rows for only `r paste(tips_pre, collapse = " and ")`. Choosing it therefore halves the panel and moves the question towards the crisis years: swapped into the `r dv("es_1574_tips", "n_pairs")` unemployment specifications of the curve, it leaves `r pp(dv("es_1574_tips", "below_zero_sig"))` of them below zero with CR2 p < 0.05, against `r pp(below_sig(dplyr::filter(curve, predictor == "unemp")))` of the unemployment specifications on the curve itself, and it changes the class of `r pp(dv("es_1574_tips", "class_changes"))` of the pairs. It is a decision about the sample presented as one about the measure, which is why the [decision map](../cases/eu-frames/map.qmd) rewrites the population in the estimand statement when the series is chosen. The Eurostat growth series has no row for the United Kingdom, `r cover("es_growth", "cells")` country-years in `r cover("es_growth", "countries")` countries, which costs one country for the same reason, although within the countries that it covers it moves with the World Bank series and leaves the class of every one of its `r dv("es_growth", "n_pairs")` pairs unchanged. Coverage of this kind is worth checking before any series is merged, since a merge that silently drops rows changes the population of the question without changing a line of the model.
 
 ### 3.4 The panel itself, on the Open Science Framework {#sec-osf}
 

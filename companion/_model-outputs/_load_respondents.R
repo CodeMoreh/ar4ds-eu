@@ -1,4 +1,4 @@
-# ########################################################################### #
+###############################################################################
 # Title:        _load_respondents.R – the one respondent-level data frame
 # Purpose:      Every script in this folder that touches the licensed
 #               respondents reads the same file, the one that participants
@@ -9,13 +9,12 @@
 #               joined by country-year from the committed panel, and the
 #               cluster identifiers. A script that needs a different scoring
 #               rule builds it from the items itself.
+# Author:       Chris Moreh
+# Last updated: 2026-09-09
 # Sourced by:   fit_measurement.R, calibrate_items.R, calibrate_joint.R,
 #               fit_person_anchor.R, fit_person_multilevel.R, validate_twin.R,
 #               fit_models.R, fit_items_glm.R
-# Author:       Chris Moreh
-# Last updated: 2026-09-09
-# ########################################################################### #
-
+###############################################################################
 # The file lives outside every repository. The default is the private folder
 # of the workspace on the facilitator's machine; a participant running these
 # scripts sets EB_RESPONDENTS to their own copy. Paths are relative to the
@@ -35,15 +34,15 @@ if (!file.exists(.respondents_path))
 .items13 <- unlist(.items, use.names = FALSE)
 
 .panel <- readr::read_csv(file.path(.root, "cases/eu-frames/data/EUframes_cy.csv"), show_col_types = FALSE) |>
-  dplyr::select(cntry, year, unemp, growth, bailout)
+  datawizard::data_select(select = c("cntry", "year", "unemp", "growth", "bailout"))
 
 ind <- readRDS(.respondents_path) |>
   dplyr::mutate(
-    k       = rowSums(dplyr::across(dplyr::all_of(.items13))),
-    n_cosmo = rowSums(dplyr::across(dplyr::all_of(.items$cosmo))),
-    n_util  = rowSums(dplyr::across(dplyr::all_of(.items$util))),
-    n_comm  = rowSums(dplyr::across(dplyr::all_of(.items$comm))),
-    n_lib   = rowSums(dplyr::across(dplyr::all_of(.items$lib))),
+    k       = datawizard::row_sums(dplyr::pick(dplyr::all_of(.items13))),
+    n_cosmo = datawizard::row_sums(dplyr::pick(dplyr::all_of(.items$cosmo))),
+    n_util  = datawizard::row_sums(dplyr::pick(dplyr::all_of(.items$util))),
+    n_comm  = datawizard::row_sums(dplyr::pick(dplyr::all_of(.items$comm))),
+    n_lib   = datawizard::row_sums(dplyr::pick(dplyr::all_of(.items$lib))),
     cosmo   = dplyr::if_else(k == 0, 0, n_cosmo / k),
     util    = dplyr::if_else(k == 0, 0, n_util  / k),
     comm    = dplyr::if_else(k == 0, 0, n_comm  / k),
@@ -53,6 +52,8 @@ ind <- readRDS(.respondents_path) |>
     cy      = paste(cntry, year, sep = "_"),
     cyw     = paste(cntry, eb, sep = "_")
   ) |>
+  # dplyr rather than datawizard::data_join(), which may reorder rows: the
+  # scripts that draw subsamples from this frame depend on its row order
   dplyr::left_join(.panel, by = c("cntry", "year"))
 
 rm(.root, .respondents_path, .items, .items13, .panel)

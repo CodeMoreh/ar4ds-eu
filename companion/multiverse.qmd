@@ -7,74 +7,65 @@ bibliography: [../references.bib, ../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(purrr)
-library(ggplot2)
-library(tinytable)
-
-read_data <- \(f) read_csv(file.path("../cases/housing/data", f), show_col_types = FALSE)
-curve     <- read_data("spec_curve.csv")
-menu      <- read_data("menu_options.csv")
-outcomes  <- read_data("display_outcomes.csv")
-subgroups <- read_data("display_subgroups.csv")
-analysts  <- read_data("analysts5.csv")
-n_emails  <- nrow(read_data("housing_audit.csv"))
+curve     <- readr::read_csv("../cases/housing/data/spec_curve.csv", show_col_types = FALSE)
+menu      <- readr::read_csv("../cases/housing/data/menu_options.csv", show_col_types = FALSE)
+outcomes  <- readr::read_csv("../cases/housing/data/display_outcomes.csv", show_col_types = FALSE)
+subgroups <- readr::read_csv("../cases/housing/data/display_subgroups.csv", show_col_types = FALSE)
+analysts  <- readr::read_csv("../cases/housing/data/analysts5.csv", show_col_types = FALSE)
+n_emails  <- nrow(readr::read_csv("../cases/housing/data/housing_audit.csv", show_col_types = FALSE))
 
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 pct <- \(x, d = 1) paste0(fmt(x, d), "%")
-pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+pe <- \(p) dplyr::case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
                      .default = paste("p =", fmt(p, 3)))
-num_word <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-                   "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen")[n]
 
 n_spec <- nrow(curve)
 n_neg_sig <- sum(curve$b_pp < 0 & curve$p < 0.05)
-n_decisions <- n_distinct(menu$axis)
+n_decisions <- dplyr::n_distinct(menu$axis)
 n_off <- sum(!menu$on_curve)
 judged <- \(j) sum(menu$judgement == j)
 variance <- anova(lm(b_pp ~ comparison + population + uncoded + model + adjust, data = curve))
 var_share <- setNames(100 * variance$`Sum Sq` / sum(variance$`Sum Sq`), rownames(variance))
-by_pop <- curve |> summarise(lo = min(b_pp), hi = max(b_pp), .by = population)
+by_pop <- curve |> dplyr::summarise(lo = min(b_pp), hi = max(b_pp), .by = population)
 bp <- \(pop, col) by_pop[[col]][by_pop$population == pop]
-no_evidence <- analysts |> filter(task1 == "no evidence either way") |> pull(id)
+no_evidence <- analysts |> datawizard::data_filter(task1 == "no evidence either way") |> dplyr::pull(id)
 
 # The EU-frames case, for section 9; pct_eu() takes values already in per cent and
 # rounds halves up, as the specification menu of that case does, so that the pages agree
-eu_curve <- read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
-forks <- read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
-  filter(curve == "positive")
-devs <- read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
-  filter(curve == "positive")
-eu_menu <- read_csv("../cases/eu-frames/data/menu_options.csv", show_col_types = FALSE)
-periods <- read_csv("../cases/eu-frames/data/display_periods.csv", show_col_types = FALSE)
-loo <- read_csv("../cases/eu-frames/data/display_loo.csv", show_col_types = FALSE)
-bailout <- read_csv("../cases/eu-frames/data/display_bailout.csv", show_col_types = FALSE)
-cnames <- read_csv("../cases/eu-frames/data/display_country_means.csv", show_col_types = FALSE) |>
-  select(cntry, country)
+eu_curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive")
+devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive")
+eu_menu <- readr::read_csv("../cases/eu-frames/data/menu_options.csv", show_col_types = FALSE)
+periods <- readr::read_csv("../cases/eu-frames/data/display_periods.csv", show_col_types = FALSE)
+loo <- readr::read_csv("../cases/eu-frames/data/display_loo.csv", show_col_types = FALSE)
+bailout <- readr::read_csv("../cases/eu-frames/data/display_bailout.csv", show_col_types = FALSE)
+cnames <- readr::read_csv("../cases/eu-frames/data/display_country_means.csv", show_col_types = FALSE) |>
+  datawizard::data_select(select = c("cntry", "country"))
 
 # fixed decimals and a true minus sign
 num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
 pct_eu <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
 minus <- \(x) gsub("-", "−", format(x), fixed = TRUE)
 
-# shares of a set of curve rows below zero, and below zero with bootstrap p < 0.05
+# shares of a set of curve rows below zero, and below zero with CR2 p < 0.05
 below <- \(d) 100 * mean(d$supports)
 below_sig <- \(d) 100 * mean(d$supports & d$sig)
 fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
-dv <- \(ax, op, col) devs[[col]][devs$axis == ax & devs$option == op & devs$rule == "wcr_rademacher"]
-eu_ref <- eu_curve |> filter(is_reference)
-twoway <- eu_curve |> filter(estimator == "fe_twoway")
-country <- eu_curve |> filter(estimator == "fe_country")
+dv <- \(ax, op, col) devs[[col]][devs$axis == ax & devs$option == op & devs$rule == "cr2"]
+eu_ref <- eu_curve |> datawizard::data_filter(is_reference)
+twoway <- eu_curve |> datawizard::data_filter(estimator == "fe_twoway")
+country <- eu_curve |> datawizard::data_filter(estimator == "fe_country")
 
 # the displays of section 9.5: the reproduced specification and its country twin
 is_ref_spec <- \(d) d$outcome == "mcosmo" & d$predictor == "unemp" & d$copredictor == "none" &
   d$pred_form == "raw"
 per_ref <- \(smp, col) periods[[col]][is_ref_spec(periods) & periods$estimator == "fe_twoway" &
                                         periods$sample == smp]
-per_unemp <- periods |> filter(predictor == "unemp")
-loo_two <- loo |> filter(estimator == "fe_twoway", left_out != "none")
-loo_cty <- loo |> filter(estimator == "fe_country", left_out != "none")
+per_unemp <- periods |> datawizard::data_filter(predictor == "unemp")
+loo_two <- loo |> datawizard::data_filter(estimator == "fe_twoway", left_out != "none")
+loo_cty <- loo |> datawizard::data_filter(estimator == "fe_country", left_out != "none")
 vs <- \(cc) loo_two$variation_share[loo_two$left_out == cc]
 ba <- \(grp, col) bailout[[col]][bailout$outcome == "mcosmo" & bailout$predictor == "unemp" &
                                    bailout$estimator == "fe_twoway" & bailout$group == grp]
@@ -99,7 +90,7 @@ Rohrer, Hullman and Gelman ask the question that organises the current debate, w
 
 The three purposes impose different rules for building the set of specifications. A multiverse built for critique may mix analyses that answer slightly different questions, since its aim is to show that researchers plausibly disagree about the question, and "it may be perfectly sensible to include analyses with different estimands as long as it is plausible that researchers may try out different estimands" [@RohrerEtAl2026WhatsMultiverseGood, p. 6]. The same set cannot then be read as inference about one quantity. Hullman puts the condition in a companion blog post: "what kinds of equivalence are needed will also depend on your goal in using a multiverse" [@Hullman2026WhatMultiverseGood].
 
-The course builds its artefacts to different rules for that reason. The [specification menu](../cases/housing/menu.qmd) of `r num_word(n_decisions)` decisions, the [decision map](../cases/housing/map.qmd) and the class chart serve reflection, since they make visible how much a result depends on decisions that look arbitrary from outside, and they show options that answer other questions beside those that answer the claim. The curve of `r n_spec` is built to the standard that inference would require and is used to persuade: every specification on it is meant to answer the claim as the course reads it, and the two decisions that leave two estimands on it, the comparison group and the emails counted, are named as such. The EU-frames case applies the same rules to a menu of fourteen decisions, and section 9 reads its curve against the arguments of sections 3 to 6.
+The course builds its artefacts to different rules for that reason. The [specification menu](../cases/housing/menu.qmd) of `r xfun::numbers_to_words(n_decisions)` decisions, the [decision map](../cases/housing/map.qmd) and the class chart serve reflection, since they make visible how much a result depends on decisions that look arbitrary from outside, and they show options that answer other questions beside those that answer the claim. The curve of `r n_spec` is built to the standard that inference would require and is used to persuade: every specification on it is meant to answer the claim as the course reads it, and the two decisions that leave two estimands on it, the comparison group and the emails counted, are named as such. The EU-frames case applies the same rules to a menu of fourteen decisions, and section 9 reads its curve against the arguments of sections 3 to 6.
 
 ::: {.callout-tip}
 ## Try it
@@ -113,14 +104,14 @@ The most direct empirical disagreement in the recent literature is between a stu
 
 Auspurg replies that "Multiverse analyses are only informative when all included models represent equally plausible strategies for estimating the same estimand" [@Auspurg2025RobustnessBetterAssessed, p. 1]. Her charge is that their set is heterogeneous, in statistical quality and in what each model estimates, so that its distribution pools numbers that cannot be compared. She names four kinds of nonequivalence: statistically inferior models ("Many models do not include fixed effects or cluster-robust SE, which are standard in panel data analyses" [@Auspurg2025RobustnessBetterAssessed, p. 1]); unstable country subsets; causal misspecification from randomly combined covariates; and measurement nonequivalence, where "Outcomes differ in scope … and are sometimes negatively correlated. This clearly indicates that they do not reflect the same construct" [@Auspurg2025RobustnessBetterAssessed, p. 1]. Restricting it to the 1,152 models that she classes as justified, against 91,008 unjustified ones, turns a 60/40 split among the significant coefficients into 97% pointing the same way. She rules out choosing models by their fit, noting that "Ironically, the authors' own fit criterion (AIC) consistently favors unjustified models" [@Auspurg2025RobustnessBetterAssessed, p. 1], and puts the remedy before estimation, in "thorough, theory-based model selection" [@Auspurg2025RobustnessBetterAssessed, p. 2]. The constructive version of the same demand is the rule of estimand consistency in the book by Young and Cumberworth, under which "any 'necessary control' requires a clear causal diagram or definitional justification supported by prior research" [@YoungCumberworth2025MultiverseAnalysisComputational, p. 57]. They are also explicit that "there is nothing in the distribution of estimates per se that tells us which is the true effect" [@YoungCumberworth2025MultiverseAnalysisComputational, p. 119].
 
-The course applied her test to its own menu. For every option of the `r num_word(n_decisions)` decisions, the course asked whether that option is a justifiable way of answering the claim as the course reads it. Of the `r nrow(menu)` options, `r judged("kept")` are on the curve and `r n_off` are not: `r judged("other_question")` answer another question, `r judged("weaker_answer")` answer this one less well, `r judged("check")` check an answer that the curve already holds, and `r judged("unavailable")` cannot be fitted on the public file. The options that answer another question are off the curve but stay in the course, and @tbl-off shows why they would not belong in a count of votes on the claim: each gives its own answer to its own question.
+The course applied her test to its own menu. For every option of the `r xfun::numbers_to_words(n_decisions)` decisions, the course asked whether that option is a justifiable way of answering the claim as the course reads it. Of the `r nrow(menu)` options, `r judged("kept")` are on the curve and `r n_off` are not: `r judged("other_question")` answer another question, `r judged("weaker_answer")` answer this one less well, `r judged("check")` check an answer that the curve already holds, and `r judged("unavailable")` cannot be fitted on the public file. The options that answer another question are off the curve but stay in the course, and @tbl-off shows why they would not belong in a count of votes on the claim: each gives its own answer to its own question.
 
 ```{r}
 #| label: tbl-off
 #| tbl-cap: "Options that answer another question than the claim, with the result that each gives on the housing-audit data: a difference in percentage points against the white names, as a difference in proportions with an HC2 test. Sources: `cases/housing/data/display_outcomes.csv`, `cases/housing/data/display_subgroups.csv`."
-row_out <- \(o, cn, label) outcomes |> filter(outcome == o, contrast == cn) |> mutate(Option = label)
-row_sub <- \(start, label) subgroups |> filter(startsWith(subgroup, start)) |> mutate(Option = label)
-bind_rows(
+row_out <- \(o, cn, label) outcomes |> dplyr::filter(outcome == o, contrast == cn) |> dplyr::mutate(Option = label)
+row_sub <- \(start, label) subgroups |> dplyr::filter(startsWith(subgroup, start)) |> dplyr::mutate(Option = label)
+dplyr::bind_rows(
   row_out("reply", "hispanic", "Outcome: any reply"),
   row_out("reply24", "hispanic", "Outcome: reply within 24 hours"),
   row_out("named", "black", "Comparison: Black names, greeted by name"),
@@ -128,9 +119,9 @@ bind_rows(
   row_sub("female", "Names: female names only"),
   row_sub("replies from officials", "Who replied: officials with Hispanic names")
 ) |>
-  transmute(Option, `Gap (points)` = fmt(b_pp), p = pe(p), Emails = n) |>
-  tt() |>
-  style_tt(j = 2:4, align = "r")
+  dplyr::transmute(Option, `Gap (points)` = fmt(b_pp), p = pe(p), Emails = n) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:4, align = "r")
 ```
 
 On this case the pruning removes little that would change the picture of the claim itself. The options off the curve give answers to their own questions, some in the direction of the claim on fewer emails or with less precision, and one, the speed of replies, in the other direction. Counted as votes on the claim they would mix questions, and kept as displays they describe the experiment. The decisions that remain on the curve move the size of the gap, and none of them moves its sign.
@@ -175,7 +166,7 @@ The housing-audit curve is small and unanimous. The EU-frames case shows the sam
 
 ### 9.1 Pruning a menu of fourteen decisions {#sec-eu-pruning}
 
-The EU-frames case applied the test of Auspurg, and the stricter standard that Rohrer and colleagues set for a multiverse used for inference, to its own menu. Every option of every decision was asked one question, whether it is a justifiable way of answering the claim as the course reads it, and the options that failed left the curve without leaving the course. Three of her categories reappeared. The pooled estimator, fitted without country effects, falls in her first category, and so do the conventional standard errors of the fixed-effects designs, which treat the ten years of a country as independent although the residuals of a country correlate from one year to the next; the curve keeps the two fixed-effects designs and classes every point by a wild cluster bootstrap by country, as the [statistical methods module](stats-methods.qmd#sec-inference) explains. The four restricted samples, two periods and two sets of excluded countries, are versions of her second category, and the findings that they carry moved to the displays of section 9.5. Her fourth category, measurement nonequivalence, described the outcome axis of the full menu, on which six framing scales of different scope stood in for 'EU framing'.
+The EU-frames case applied the test of Auspurg, and the stricter standard that Rohrer and colleagues set for a multiverse used for inference, to its own menu. Every option of every decision was asked one question, whether it is a justifiable way of answering the claim as the course reads it, and the options that failed left the curve without leaving the course. Three of her categories reappeared. The pooled estimator, fitted without country effects, falls in her first category, and so do the conventional standard errors of the fixed-effects designs, which treat the ten years of a country as independent although the residuals of a country correlate from one year to the next; the curve keeps the two fixed-effects designs and classes every point by CR2 errors clustered by country with Satterthwaite degrees of freedom, as the [statistical methods module](stats-methods.qmd#sec-inference) explains. The four restricted samples, two periods and two sets of excluded countries, are versions of her second category, and the findings that they carry moved to the displays of section 9.5. Her fourth category, measurement nonequivalence, described the outcome axis of the full menu, on which six framing scales of different scope stood in for 'EU framing'.
 
 The four scales of the paper are shares of one instrument that sum to one for each respondent who mentions anything, and the two composites are sums of them, so whatever raises one share must lower the others, and [the simulation module](simulation.qmd#sec-outcomes) lets you examine the arithmetic directly. Under the convention of the course panel, which scores a respondent who mentions nothing as zero, the cell means of the positive and the negative composites sum to one minus the share of silent respondents, so that a confirmation of the claim on the negative composite largely counts the result on the positive composite a second time. The communitarian scale also contains the item "unemployment", which ties the outcome to the predictor by content. The curve of the claim therefore keeps the three positive scales that the claim names, scored as shares, as the paper scores them, while the negative scales have a curve of their own as the other half of the first hypothesis of the paper, and the count of items, which measures how much a respondent says about the EU rather than how the EU is framed, is taught in the [items module](measurement.qmd).
 
@@ -186,29 +177,29 @@ The four scales of the paper are shares of one instrument that sum to one for ea
 #| echo: false
 #| fig-width: 7.5
 #| fig-height: 5
-#| fig-cap: !expr 'paste0("Options that left the curve of the claim, each swapped into the specifications of the curve to which it applies: the share of the refitted specifications that lie below zero with p < 0.05. The vertical line marks the curve itself (", pct_eu(below_sig(eu_curve)), "). Each option is tested under the rule that fits it: the wild cluster bootstrap for linear models fitted by least squares, errors clustered by country on 26 degrees of freedom for random effects, the beta family and the imputed variants, and CR2 for the within–between model. The two imputation engines cover 24 specifications; the count stands for the rate, whose t and partial correlation are identical. Sources: `cases/eu-frames/data/menu_deviations.csv`, `cases/eu-frames/data/menu_options.csv`.")'
+#| fig-cap: !expr 'paste0("Options that left the curve of the claim, each swapped into the specifications of the curve to which it applies: the share of the refitted specifications that lie below zero with p < 0.05. The vertical line marks the curve itself (", pct_eu(below_sig(eu_curve)), "). Each option is tested under the rule that fits it: CR2 errors with Satterthwaite degrees of freedom for linear models fitted by least squares and for the within–between model, and errors clustered by country on 26 degrees of freedom for random effects, the beta family and the imputed variants. The two imputation engines cover 24 specifications; the count stands for the rate, whose t and partial correlation are identical. Sources: `cases/eu-frames/data/menu_deviations.csv`, `cases/eu-frames/data/menu_options.csv`.")'
 judgement_label <- c(other_question = "answers another question",
                      weaker_answer = "answers this question less well",
                      check = "a check of an answer on the eu_curve")
-rule_kept <- c("wcr_rademacher", "re_cr1_g1", "rewb_cr2", "beta_cr1_g1", "mi_rubin_cr1_g1")
+rule_kept <- c("cr2", "re_cr1_g1", "rewb_cr2", "beta_cr1_g1", "mi_rubin_cr1_g1")
 off <- devs |>
-  filter(!on_curve, axis != "se", option != "rate", rule %in% rule_kept) |>
-  left_join(eu_menu |> select(axis, option, label, judgement), by = c("axis", "option")) |>
-  mutate(judgement = factor(judgement_label[judgement], judgement_label),
+  datawizard::data_filter(!on_curve, axis != "se", option != "rate", rule %in% rule_kept) |>
+  dplyr::left_join(eu_menu |> datawizard::data_select(select = c("axis", "option", "label", "judgement")), by = c("axis", "option")) |>
+  datawizard::data_modify(judgement = factor(judgement_label[judgement], judgement_label),
          label = reorder(label, below_zero_sig))
-ggplot(off, aes(below_zero_sig, label, colour = judgement)) +
-  geom_vline(xintercept = below_sig(eu_curve), colour = "#8b1538", linewidth = 0.5) +
-  geom_segment(aes(x = 0, xend = below_zero_sig, yend = label), linewidth = 0.4, alpha = 0.5) +
-  geom_point(size = 2.2) +
-  scale_colour_manual(values = c("#0e3b6a", "#0f6b6b", "#8c5a10"), name = NULL) +
-  scale_x_continuous(limits = c(0, 100), labels = \(x) paste0(x, "%")) +
-  guides(colour = guide_legend(nrow = 2)) +
-  labs(x = "below zero with p < 0.05", y = NULL) +
-  theme_minimal(base_size = 11) +
-  theme(legend.position = "bottom", panel.grid.major.y = element_blank())
+ggplot2::ggplot(off, ggplot2::aes(below_zero_sig, label, colour = judgement)) +
+  ggplot2::geom_vline(xintercept = below_sig(eu_curve), colour = "#8b1538", linewidth = 0.5) +
+  ggplot2::geom_segment(ggplot2::aes(x = 0, xend = below_zero_sig, yend = label), linewidth = 0.4, alpha = 0.5) +
+  ggplot2::geom_point(size = 2.2) +
+  ggplot2::scale_colour_manual(values = c("#0e3b6a", "#0f6b6b", "#8c5a10"), name = NULL) +
+  ggplot2::scale_x_continuous(limits = c(0, 100), labels = \(x) paste0(x, "%")) +
+  ggplot2::guides(colour = ggplot2::guide_legend(nrow = 2)) +
+  ggplot2::labs(x = "below zero with p < 0.05", y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.major.y = ggplot2::element_blank())
 ```
 
-Read against Auspurg, the pruning changes the picture in the direction that her reply to Ganslmeier and Vlandas leads one to expect. Of the specifications on the curve, `r pct_eu(below(eu_curve))` lie below zero and `r pct_eu(below_sig(eu_curve))` lie below zero with bootstrap p < 0.05. The options that answer other questions pull the share down furthest, pooled OLS to `r pct_eu(dv("estimator", "pooled_cl", "below_zero_sig"))` and the exclusion of the bailout countries to `r pct_eu(dv("sample", "no_bailout", "below_zero_sig"))`, while the options that answer the same question in another way stay close to the curve, among them the split rule for silent respondents at `r pct_eu(dv("noop", "split", "below_zero_sig"))`. The options that left the curve remain on the menu, the decision map and the class chart as material for reflection, each with its reason attached. That is a disclosure, and disclosure does not supply the justification that Auspurg demands; the justification lies in the reasons, which a reader can contest option by option.
+Read against Auspurg, the pruning changes the picture in the direction that her reply to Ganslmeier and Vlandas leads one to expect. Of the specifications on the curve, `r pct_eu(below(eu_curve))` lie below zero and `r pct_eu(below_sig(eu_curve))` lie below zero with CR2 p < 0.05. The options that answer other questions pull the share down furthest, pooled OLS to `r pct_eu(dv("estimator", "pooled_cl", "below_zero_sig"))` and the exclusion of the bailout countries to `r pct_eu(dv("sample", "no_bailout", "below_zero_sig"))`, while the options that answer the same question in another way stay close to the curve, among them the split rule for silent respondents at `r pct_eu(dv("noop", "split", "below_zero_sig"))`. The options that left the curve remain on the menu, the decision map and the class chart as material for reflection, each with its reason attached. That is a disclosure, and disclosure does not supply the justification that Auspurg demands; the justification lies in the reasons, which a reader can contest option by option.
 
 ::: {.callout-tip}
 ## Try it
@@ -224,7 +215,7 @@ A participant choosing one specification from a fourteen-decision menu after nin
 
 ### 9.3 The fork chart {#sec-eu-forks}
 
-The fork chart of the EU-frames case decomposes the variance of the claim-aligned partial correlation across the `r nrow(eu_curve)` specifications of the curve by decision. The estimator carries `r pct_eu(fk("estimator"))`, the predictor `r pct_eu(fk("predictor"))`, the choice among the three positive scales `r pct_eu(fk("outcome"))` and the adjustment set `r pct_eu(fk("copredictor"))`, while the decisions of measurement together carry a few per cent and the interactions between decisions `r pct_eu(fk("interactions"))`. Moving the estimator alone changes whether a specification lies below zero with bootstrap p < 0.05 in `r pct_eu(fk("estimator", "crossing_rate"))` of the pairs, and moving the predictor alone in `r pct_eu(fk("predictor", "crossing_rate"))`. Numbers like these invite a particular over-claim when they are put to the critics.
+The fork chart of the EU-frames case decomposes the variance of the claim-aligned partial correlation across the `r nrow(eu_curve)` specifications of the curve by decision. The estimator carries `r pct_eu(fk("estimator"))`, the predictor `r pct_eu(fk("predictor"))`, the choice among the three positive scales `r pct_eu(fk("outcome"))` and the adjustment set `r pct_eu(fk("copredictor"))`, while the decisions of measurement together carry a few per cent and the interactions between decisions `r pct_eu(fk("interactions"))`. Moving the estimator alone changes whether a specification lies below zero with CR2 p < 0.05 in `r pct_eu(fk("estimator", "crossing_rate"))` of the pairs, and moving the predictor alone in `r pct_eu(fk("predictor", "crossing_rate"))`. Numbers like these invite a particular over-claim when they are put to the critics.
 
 The over-claim would be that the dispersion on the curve is estimator dispersion rather than estimand dispersion, so that Auspurg's diagnosis no longer applies. The critics would reply that the estimator fork *is* an estimand fork in their sense, and on this curve the course agrees with them. Both designs that remain compare a country with itself over time, but the two-way design does so relative to the common European path of each year, while the design with country effects alone keeps the changes that every member state went through together, so that the two answer related but different questions, as the [statistical methods module](stats-methods.qmd#sec-two-designs) explains. The curve keeps both because both are defensible readings of the claim, and it names them as two estimands rather than presenting their spread as uncertainty about one quantity. The predictor is a fork of the same kind, since unemployment and GDP growth are two measures of 'poor national economic performance' between which the claim does not choose.
 
@@ -232,11 +223,11 @@ The decomposition supports a more modest reading, in which it *locates* where th
 
 ### 9.4 The strength of the evidence {#sec-eu-reading}
 
-The rule of section 6 applies with more force to a larger curve. The share of the specifications of the EU-frames case that support its claim – `r pct_eu(below(eu_curve))` below zero on the curve of `r nrow(eu_curve)`, `r pct_eu(below_sig(eu_curve))` below zero with bootstrap p < 0.05 – is a description of a curated set of analyses, not the probability that the claim is true.
+The rule of section 6 applies with more force to a larger curve. The share of the specifications of the EU-frames case that support its claim – `r pct_eu(below(eu_curve))` below zero on the curve of `r nrow(eu_curve)`, `r pct_eu(below_sig(eu_curve))` below zero with CR2 p < 0.05 – is a description of a curated set of analyses, not the probability that the claim is true.
 
 When the course quotes these shares, they describe the curve that you are looking at, and the [inference reading](../cases/eu-frames/reading-inference.qmd) exists to police the boundary between that description and any claim about evidence. For the permutation test designed in that reading, this means that a probabilistic device, the permutation p-value, is applied to an object that the current literature says should be read possibilistically. The reading explains what the test licenses under its sharp null, the hypothesis that the effect is zero in every unit, and this module adds a warning about everything that the test does not license.
 
-Rohrer and colleagues also observe that a multiverse persuades only under a precondition: "This can only work if the results are fairly unambiguous across specifications" [@RohrerEtAl2026WhatsMultiverseGood, p. 3]. On the curve of the claim the direction of the association meets that precondition, but the strength of the evidence does not, since whether a specification clears the 5% threshold depends mainly on the estimator: `r pct_eu(below_sig(country))` of the specifications with country effects alone lie below zero with bootstrap p < 0.05, against `r pct_eu(below_sig(twoway))` of the two-way ones, and the reproduced specification itself has a bootstrap p-value of `r num(eu_ref$p_wcr)`. The curve can therefore persuade a reader that the association runs in the direction of the claim within countries, and it leaves open whether the evidence is strong once the changes common to all of Europe are removed, which is a question about the estimand as much as about the data. The threshold itself carries its usual meaning here, because the bootstrap tests each specification against the variation of the countries, whose CR2 degrees of freedom (a median of `r num(median(eu_curve$df_cr2), 1)` across the curve) suggest that about a dozen of them effectively carry the information, rather than against the hundreds of thousands of respondents that make almost any coefficient significant in a respondent-level model. If you ever build a multiverse to defend a result of your own, this is the precondition to check before you lean on it.
+Rohrer and colleagues also observe that a multiverse persuades only under a precondition: "This can only work if the results are fairly unambiguous across specifications" [@RohrerEtAl2026WhatsMultiverseGood, p. 3]. On the curve of the claim the direction of the association meets that precondition, but the strength of the evidence does not, since whether a specification clears the 5% threshold depends mainly on the estimator: `r pct_eu(below_sig(country))` of the specifications with country effects alone lie below zero with CR2 p < 0.05, against `r pct_eu(below_sig(twoway))` of the two-way ones, and the reproduced specification itself has a CR2 p-value of `r num(eu_ref$p_cr2)`. The curve can therefore persuade a reader that the association runs in the direction of the claim within countries, and it leaves open whether the evidence is strong once the changes common to all of Europe are removed, which is a question about the estimand as much as about the data. The threshold itself carries its usual meaning here, because the CR2 test refers each specification to the variation of the countries, whose Satterthwaite degrees of freedom (a median of `r num(median(eu_curve$df_cr2), 1)` across the curve) suggest that about a dozen of them effectively carry the information, rather than against the hundreds of thousands of respondents that make almost any coefficient significant in a respondent-level model. If you ever build a multiverse to defend a result of your own, this is the precondition to check before you lean on it.
 
 The class chart of the EU-frames case is a many-analysts demonstration in the sense of section 6, with every declared specification, fixed in the Task 5 preregistration before it was run, drawn in black, and the specifications that were tried with `try_spec()` and submitted with `submit_exploration()` in Task 4 drawn in green. On this curve the class will not agree on the strength of the evidence, and it may not agree on the direction. Disagreement among the analysts in a class is no verdict on robustness in either direction, but it demonstrates that the dispersion documented by the many-analysts literature is real, reproducible and, once the menu and the preregistrations are on the table, *explainable*. The chart therefore serves reflection, practised as a group, and this is also the answer to anyone who asks why the class chart is allowed to straddle zero.
 
@@ -257,30 +248,30 @@ The four sample restrictions of the EU-frames menu left the curve because each c
 #| echo: false
 #| fig-width: 8
 #| fig-height: 4
-#| fig-cap: "The 36 core specifications of the curve on the full panel and on each half of it, by design. Open circles have bootstrap p < 0.05 and crosses p ≥ 0.05; the lines join the fits of one specification, and the burgundy line is the reproduced specification and its twin with country effects alone. The vertical axis is the claim-aligned partial correlation, so below zero is the direction of the claim. Source: `cases/eu-frames/data/display_periods.csv`."
+#| fig-cap: "The 36 core specifications of the curve on the full panel and on each half of it, by design. Open circles have CR2 p < 0.05 and crosses p ≥ 0.05; the lines join the fits of one specification, and the burgundy line is the reproduced specification and its twin with country effects alone. The vertical axis is the claim-aligned partial correlation, so below zero is the direction of the claim. Source: `cases/eu-frames/data/display_periods.csv`."
 per_plot <- periods |>
-  mutate(design = factor(design_label[estimator], design_label),
+  datawizard::data_modify(design = factor(design_label[estimator], design_label),
          period = factor(sample, c("all", "y2004_2008", "y2009_2013"),
                          c("2004–2013", "2004–2008", "2009–2013")),
-         p_class = if_else(p_wcr < 0.05, "p < 0.05", "p ≥ 0.05"),
+         p_class = dplyr::if_else(p_cr2 < 0.05, "p < 0.05", "p ≥ 0.05"),
          spec = paste(outcome, predictor, copredictor, pred_form),
          reproduced = is_ref_spec(periods))
-ggplot(per_plot, aes(period, r_ca, group = spec)) +
-  geom_hline(yintercept = 0, colour = "grey70") +
-  geom_line(colour = "#0e3b6a", linewidth = 0.3, alpha = 0.25) +
-  geom_point(aes(shape = p_class), colour = "#0e3b6a", size = 2, alpha = 0.5) +
-  geom_line(data = filter(per_plot, reproduced), colour = "#8b1538", linewidth = 0.7) +
-  geom_point(data = filter(per_plot, reproduced), aes(shape = p_class),
+ggplot2::ggplot(per_plot, ggplot2::aes(period, r_ca, group = spec)) +
+  ggplot2::geom_hline(yintercept = 0, colour = "grey70") +
+  ggplot2::geom_line(colour = "#0e3b6a", linewidth = 0.3, alpha = 0.25) +
+  ggplot2::geom_point(ggplot2::aes(shape = p_class), colour = "#0e3b6a", size = 2, alpha = 0.5) +
+  ggplot2::geom_line(data = datawizard::data_filter(per_plot, reproduced), colour = "#8b1538", linewidth = 0.7) +
+  ggplot2::geom_point(data = datawizard::data_filter(per_plot, reproduced), ggplot2::aes(shape = p_class),
              colour = "#8b1538", size = 2.4) +
-  scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
-  scale_y_continuous(labels = minus) +
-  facet_wrap(vars(design)) +
-  labs(x = NULL, y = "claim-aligned partial r") +
-  theme_minimal(base_size = 11) +
-  theme(legend.position = "bottom", panel.grid.minor = element_blank())
+  ggplot2::scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
+  ggplot2::scale_y_continuous(labels = minus) +
+  ggplot2::facet_wrap(ggplot2::vars(design)) +
+  ggplot2::labs(x = NULL, y = "claim-aligned partial r") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank())
 ```
 
-For the reproduced specification the slope is `r num(per_ref("all", "b"), 5)` on the full panel (bootstrap p = `r num(per_ref("all", "p_wcr"))`), `r num(per_ref("y2004_2008", "b"), 5)` on 2004–2008 (p = `r num(per_ref("y2004_2008", "p_wcr"), 4)`) and `r num(per_ref("y2009_2013", "b"), 5)` on 2009–2013 (p = `r num(per_ref("y2009_2013", "p_wcr"))`), so that each half on its own gives a steeper slope than the panel as a whole, and among the 24 unemployment specifications `r pct_eu(below_sig(filter(per_unemp, sample == "all")))` lie below zero with bootstrap p < 0.05 on the full panel, `r pct_eu(below_sig(filter(per_unemp, sample == "y2004_2008")))` on 2004–2008 and `r pct_eu(below_sig(filter(per_unemp, sample == "y2009_2013")))` on 2009–2013. Neither half is a second answer to whether framing changed with the crisis. The earlier window contains no crisis, so its slope describes how framing tracked the smaller fluctuations of those years, and the later one drops the comparison with the years before the crisis and asks how framing moved with the deepening and easing of the crisis once it had begun. Read together, the two halves suggest that the association is not confined to the crisis years, and that it is somewhat stronger once the crisis had started.
+For the reproduced specification the slope is `r num(per_ref("all", "b"), 5)` on the full panel (CR2 p = `r num(per_ref("all", "p_cr2"))`), `r num(per_ref("y2004_2008", "b"), 5)` on 2004–2008 (p = `r num(per_ref("y2004_2008", "p_cr2"), 4)`) and `r num(per_ref("y2009_2013", "b"), 5)` on 2009–2013 (p = `r num(per_ref("y2009_2013", "p_cr2"))`), so that each half on its own gives a steeper slope than the panel as a whole, and among the 24 unemployment specifications `r pct_eu(below_sig(dplyr::filter(per_unemp, sample == "all")))` lie below zero with CR2 p < 0.05 on the full panel, `r pct_eu(below_sig(dplyr::filter(per_unemp, sample == "y2004_2008")))` on 2004–2008 and `r pct_eu(below_sig(dplyr::filter(per_unemp, sample == "y2009_2013")))` on 2009–2013. Neither half is a second answer to whether framing changed with the crisis. The earlier window contains no crisis, so its slope describes how framing tracked the smaller fluctuations of those years, and the later one drops the comparison with the years before the crisis and asks how framing moved with the deepening and easing of the crisis once it had begun. Read together, the two halves suggest that the association is not confined to the crisis years, and that it is somewhat stronger once the crisis had started.
 
 @fig-loo leaves one country out at a time, from the reproduced specification and from its twin with country effects alone. The variation that identifies the two-way slope is concentrated in a few countries: once the fixed effects are removed, Greece holds `r pct_eu(vs("GR"))` of the variation in unemployment that is left, Spain `r pct_eu(vs("ES"))`, Poland `r pct_eu(vs("PL"))` and Ireland `r pct_eu(vs("IE"))`.
 
@@ -289,60 +280,59 @@ For the reproduced specification the slope is `r num(per_ref("all", "b"), 5)` on
 #| echo: false
 #| fig-width: 8
 #| fig-height: 6.2
-#| fig-cap: "The slope of the cosmopolitan share on unemployment with one country left out at a time, under each design. Open circles have bootstrap p < 0.05 and crosses p ≥ 0.05; the burgundy line marks the slope on all 27 countries. Countries are ordered by the two-way slope without them. Source: `cases/eu-frames/data/display_loo.csv`."
+#| fig-cap: "The slope of the cosmopolitan share on unemployment with one country left out at a time, under each design. Open circles have CR2 p < 0.05 and crosses p ≥ 0.05; the burgundy line marks the slope on all 27 countries. Countries are ordered by the two-way slope without them. Source: `cases/eu-frames/data/display_loo.csv`."
 country_order <- loo_two |>
-  left_join(cnames, by = c("left_out" = "cntry")) |>
-  arrange(desc(b)) |>
-  pull(country)
+  dplyr::left_join(cnames, by = c("left_out" = "cntry")) |>
+  datawizard::data_arrange("-b") |>
+  dplyr::pull(country)
 loo_plot <- loo |>
-  filter(left_out != "none") |>
-  left_join(cnames, by = c("left_out" = "cntry")) |>
-  mutate(design = factor(design_label[estimator], design_label),
+  datawizard::data_filter(left_out != "none") |>
+  dplyr::left_join(cnames, by = c("left_out" = "cntry")) |>
+  datawizard::data_modify(design = factor(design_label[estimator], design_label),
          country = factor(country, country_order),
-         p_class = if_else(p_wcr < 0.05, "p < 0.05", "p ≥ 0.05"))
+         p_class = dplyr::if_else(p_cr2 < 0.05, "p < 0.05", "p ≥ 0.05"))
 loo_full <- loo |>
-  filter(left_out == "none") |>
-  mutate(design = factor(design_label[estimator], design_label))
-ggplot(loo_plot, aes(b, country)) +
-  geom_vline(xintercept = 0, colour = "grey70") +
-  geom_vline(data = loo_full, aes(xintercept = b), colour = "#8b1538", linewidth = 0.6) +
-  geom_point(aes(shape = p_class), colour = "#0e3b6a", size = 2) +
-  scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
-  scale_x_continuous(labels = minus, n.breaks = 4) +
-  facet_wrap(vars(design), scales = "free_x") +
-  labs(x = "slope per point of unemployment, without the country", y = "country left out") +
-  theme_minimal(base_size = 11) +
-  theme(legend.position = "bottom", panel.grid.minor = element_blank())
+  datawizard::data_filter(left_out == "none") |>
+  datawizard::data_modify(design = factor(design_label[estimator], design_label))
+ggplot2::ggplot(loo_plot, ggplot2::aes(b, country)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "grey70") +
+  ggplot2::geom_vline(data = loo_full, ggplot2::aes(xintercept = b), colour = "#8b1538", linewidth = 0.6) +
+  ggplot2::geom_point(ggplot2::aes(shape = p_class), colour = "#0e3b6a", size = 2) +
+  ggplot2::scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
+  ggplot2::scale_x_continuous(labels = minus, n.breaks = 4) +
+  ggplot2::facet_wrap(ggplot2::vars(design), scales = "free_x") +
+  ggplot2::labs(x = "slope per point of unemployment, without the country", y = "country left out") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank())
 ```
 
-Leaving out one country moves the two-way slope between `r num(min(loo_two$b), 5)` (without `r cnames$country[cnames$cntry == loo_two$left_out[which.min(loo_two$b)]]`) and `r num(max(loo_two$b), 5)` (without `r cnames$country[cnames$cntry == loo_two$left_out[which.max(loo_two$b)]]`). None of the 27 two-way refits reaches bootstrap p < 0.05, as the full panel does not, while `r sum(loo_cty$p_wcr < 0.05)` of the 27 refits with country effects alone do. The display replaces a single hand-picked exclusion, such as leaving out Greece and Spain together, with the complete set, and its 27 refits are 27 checks of one answer rather than 27 answers.
+Leaving out one country moves the two-way slope between `r num(min(loo_two$b), 5)` (without `r cnames$country[cnames$cntry == loo_two$left_out[which.min(loo_two$b)]]`) and `r num(max(loo_two$b), 5)` (without `r cnames$country[cnames$cntry == loo_two$left_out[which.max(loo_two$b)]]`). Under the CR2 test, `r sum(loo_two$p_cr2 < 0.05)` of the 27 two-way refits reach p < 0.05, although the full panel does not (p = `r num(per_ref("all", "p_cr2"))`), and `r sum(loo_cty$p_cr2 < 0.05)` of the 27 refits with country effects alone do. The display replaces a single hand-picked exclusion, such as leaving out Greece and Spain together, with the complete set, and its 27 refits are 27 checks of one answer rather than 27 answers.
 
-@tbl-bailout fits the three positive scales on unemployment in the eight countries that received financial assistance and in the other nineteen separately, and tests the difference between the two groups in one model on all 270 cells. With eight clusters the Rademacher bootstrap can draw only 256 distinct sign patterns, so the table reads the Webb signs for the bailout countries.
+@tbl-bailout fits the three positive scales on unemployment in the eight countries that received financial assistance and in the other nineteen separately, and tests the difference between the two groups in one model on all 270 cells. With eight clusters the Satterthwaite degrees of freedom of the CR2 test fall to between `r num(min(bailout$df_cr2[bailout$group == "bailout"]), 1)` and `r num(max(bailout$df_cr2[bailout$group == "bailout"]), 1)` for the bailout countries, which makes their test strict.
 
 ```{r}
 #| label: tbl-bailout
 #| echo: false
-#| tbl-cap: "Slopes on unemployment in the eight bailout countries (Cyprus, Greece, Hungary, Ireland, Latvia, Portugal, Romania, Spain), in the other nineteen, and the difference between the two, estimated in one model on all 270 cells with an interaction. Bootstrap p-values in brackets, with Webb signs for the bailout countries and Rademacher signs otherwise. Source: `cases/eu-frames/data/display_bailout.csv`."
+#| tbl-cap: "Slopes on unemployment in the eight bailout countries (Cyprus, Greece, Hungary, Ireland, Latvia, Portugal, Romania, Spain), in the other nineteen, and the difference between the two, estimated in one model on all 270 cells with an interaction. CR2 p-values in brackets, on Satterthwaite degrees of freedom. Source: `cases/eu-frames/data/display_bailout.csv`."
 bailout |>
-  filter(predictor == "unemp") |>
-  mutate(p = if_else(group == "bailout", p_wcr_webb, p_wcr),
-         cell = paste0(num(b, 5), " (", num(p), ")")) |>
-  select(outcome, estimator, group, cell) |>
+  datawizard::data_filter(predictor == "unemp") |>
+  datawizard::data_modify(cell = paste0(num(b, 5), " (", num(p_cr2), ")")) |>
+  datawizard::data_select(select = c("outcome", "estimator", "group", "cell")) |>
   tidyr::pivot_wider(names_from = group, values_from = cell) |>
-  mutate(outcome = factor(outcome, c("mcosmo", "mutil", "mpos")),
+  datawizard::data_modify(outcome = factor(outcome, c("mcosmo", "mutil", "mpos")),
          estimator = factor(estimator, names(design_label))) |>
-  arrange(outcome, estimator) |>
-  transmute(Scale = c(mcosmo = "cosmopolitan", mutil = "utilitarian",
+  datawizard::data_arrange(c("outcome", "estimator")) |>
+  dplyr::transmute(Scale = c(mcosmo = "cosmopolitan", mutil = "utilitarian",
                       mpos = "positive composite")[as.character(outcome)],
             Design = design_label[as.character(estimator)],
             `Bailout countries` = bailout, `Other countries` = other,
             Difference = difference) |>
-  tt() |>
-  style_tt(j = 3:5, align = "r") |>
-  style_tt(fontsize = 0.8)
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:5, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
 ```
 
-For the reproduced specification the slope is `r num(ba("bailout", "b"), 5)` in the bailout countries (Webb p = `r num(ba("bailout", "p_wcr_webb"))`) and +`r num(ba("other", "b"), 5)` in the others (p = `r num(ba("other", "p_wcr"), 2)`), and the difference of `r num(ba("difference", "b"), 5)` has bootstrap p = `r num(ba("difference", "p_wcr"))`. The pattern holds for the cosmopolitan share and the positive composite under the two-way design, while the utilitarian scale does not share it.
+For the reproduced specification the slope is `r num(ba("bailout", "b"), 5)` in the bailout countries (CR2 p = `r num(ba("bailout", "p_cr2"))`, on `r num(ba("bailout", "df_cr2"), 1)` degrees of freedom) and +`r num(ba("other", "b"), 5)` in the others (p = `r num(ba("other", "p_cr2"), 2)`, on `r num(ba("other", "df_cr2"), 1)`), and the difference of `r num(ba("difference", "b"), 5)` has CR2 p = `r num(ba("difference", "p_cr2"))`. The pattern holds for the cosmopolitan share and the positive composite under the two-way design, while the utilitarian scale does not share it.
 
 Read together, the three displays suggest that the association between unemployment and positive framing is concentrated in the countries in which the crisis was deepest, and appears in both halves of the decade, which is what a reader of the claim needs to know about it. The reason for keeping them off the curve is the requirement of section 2. A curve that mixed the full panel with its halves and its subsets would count answers about different populations as votes on one question, and its share of supporting specifications would then depend on how many restrictions the menu happened to offer. As displays, the same fits show how the association varies across the population of the claim, which is a finding in its own right, without being read as evidence that the claim is robust or fragile.
 

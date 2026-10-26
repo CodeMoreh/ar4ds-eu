@@ -13,8 +13,10 @@ execute:
 render time. Under freeze, Quarto would key the cache on the source of this
 page alone and ignore edits to _variables.yml, so flipping delivery.active
 would silently have no effect. The chunks are cheap, so re-executing them on
-every render costs nothing. The page therefore runs R in CI, where only knitr,
-rmarkdown and yaml are installed, which is why its own chunk uses base R.
+every render costs nothing. The page therefore runs R in CI, which installs
+knitr, rmarkdown and yaml for the render and readr and datawizard for the
+chunk below (.github/workflows/publish.yml); a package that the chunk starts
+to use has to be added there too.
 
 The page uses a custom layout: every section is a fenced div with a home-
 class (styled in style/home.css), and the case cards, the track cards, their
@@ -32,19 +34,19 @@ come from the fact sheet of each case and its data files. -->
 #| label: numbers
 #| include: false
 # Numbers quoted on the page, read from the committed data files of the cases.
-# Base R only: this page executes in CI, where no tidyverse package is
-# installed.
-case_data <- \(slug, file) read.csv(file.path("cases", slug, "data", file)) # r-style: keep – no readr in CI
+# This page executes in CI, which installs readr and datawizard for it
+# (.github/workflows/publish.yml).
 fmt <- \(x, d = 1) sub("^-", "\u2212", formatC(x, format = "f", digits = d))
-big <- \(x) format(x, big.mark = ",")
 in_words <- \(n) c("none", "one", "two", "three", "four", "five")[n + 1]
 
 # The housing-audit case
-h_curve <- case_data("housing", "spec_curve.csv")
-h_analysts <- case_data("housing", "analysts5.csv")
-h_emails <- nrow(case_data("housing", "housing_audit.csv"))
-coded <- subset(case_data("housing", "audit_original.csv"), !is.na(ProperName)) # r-style: keep – no dplyr in CI
-tab_8ptrz <- with(coded, table(startsWith(TreatmentGroup, "Hispanic"), ProperName))
+h_curve <- readr::read_csv("cases/housing/data/spec_curve.csv", show_col_types = FALSE)
+h_analysts <- readr::read_csv("cases/housing/data/analysts5.csv", show_col_types = FALSE)
+h_emails <- nrow(readr::read_csv("cases/housing/data/housing_audit.csv", show_col_types = FALSE))
+coded <- readr::read_csv("cases/housing/data/audit_original.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_modify(hispanic_name = startsWith(TreatmentGroup, "Hispanic"))
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded)  # r-style: keep – chisq.test() takes a table
 
 h_spec <- nrow(h_curve)
 h_sig <- sum(h_curve$b_pp < 0 & h_curve$p < 0.05)
@@ -54,9 +56,9 @@ chi_8ptrz <- h_analysts$statistic_recorded[h_analysts$id == "8PTRZ"]
 chi_plain <- unname(chisq.test(tab_8ptrz, correct = FALSE)$statistic)
 
 # The immigration-and-trust case
-tr_curve <- case_data("trust", "spec_curve.csv")
-tr_analysts <- case_data("trust", "analysts5.csv")
-tr_marks <- case_data("trust", "reference_marks.csv")
+tr_curve <- readr::read_csv("cases/trust/data/spec_curve.csv", show_col_types = FALSE)
+tr_analysts <- readr::read_csv("cases/trust/data/analysts5.csv", show_col_types = FALSE)
+tr_marks <- readr::read_csv("cases/trust/data/reference_marks.csv", show_col_types = FALSE)
 tr_mark <- \(id, col = "b") tr_marks[[col]][tr_marks$id == id]
 tr_spec <- nrow(tr_curve)
 tr_sig <- sum(tr_curve$b > 0 & tr_curve$p < 0.05)
@@ -66,12 +68,12 @@ tr_for_txt <- if (tr_for == 5) "All five" else paste(tools::toTitleCase(in_words
 t_6u3ll <- tr_analysts$statistic_recorded[tr_analysts$id == "6U3LL"]
 
 # The cohabitation case
-c_curve <- case_data("cohabitation", "spec_curve.csv")
-c_analysts <- case_data("cohabitation", "analysts5.csv")
-c_marks <- case_data("cohabitation", "reference_marks.csv")
+c_curve <- readr::read_csv("cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE)
+c_analysts <- readr::read_csv("cases/cohabitation/data/analysts5.csv", show_col_types = FALSE)
+c_marks <- readr::read_csv("cases/cohabitation/data/reference_marks.csv", show_col_types = FALSE)
 c_mark <- \(id, col = "b") c_marks[[col]][c_marks$mark == id]
-c_score <- case_data("cohabitation", "display_score_file.csv")
-c_unions <- nrow(case_data("cohabitation", "cohab_unions.csv"))
+c_score <- readr::read_csv("cases/cohabitation/data/display_score_file.csv", show_col_types = FALSE)
+c_unions <- nrow(readr::read_csv("cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE))
 c_spec <- nrow(c_curve)
 c_sig <- sum(c_curve$b < 0 & c_curve$p < 0.05)
 c_sig_txt <- if (c_sig == c_spec) "every one of them" else paste(c_sig, "of them")
@@ -80,9 +82,9 @@ c_1995_marriages <- c_score$marriages[c_score$source == "SCORE file" & c_score$c
 chi_5x3kg <- c_analysts$statistic_recorded[c_analysts$id == "5X3KG"]
 
 # The EU-frames case
-e_curve <- case_data("eu-frames", "spec_curve.csv")
-e_analysts <- case_data("eu-frames", "analysts5.csv")
-e_cells <- nrow(case_data("eu-frames", "EUframes_cy.csv"))
+e_curve <- readr::read_csv("cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+e_analysts <- readr::read_csv("cases/eu-frames/data/analysts5.csv", show_col_types = FALSE)
+e_cells <- nrow(readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE))
 e_spec <- nrow(e_curve)
 t_c6hjr <- e_analysts$statistic[e_analysts$analyst_id == "C6HJR"]
 ```
@@ -133,7 +135,7 @@ A field experiment published in 2017 sent the same short email to about a thousa
 
 **What it teaches.** Proportions and the chi-square test, the linear probability model set against the logit, what conditioning on a reply does to an experiment, randomisation inference and statistical power.
 
-**The data.** One file of `r big(h_emails)` emails, released into the public domain (CC0) and shipped with the workspace.
+**The data.** One file of `r format(h_emails, big.mark = ",")` emails, released into the public domain (CC0) and shipped with the workspace.
 
 ::: {.home-3r}
 - **Reproduction.** SCORE never attempted one, although the data and code are public. The four statistics that Multi100 recorded for the analysts reproduce exactly from the public file.
@@ -155,10 +157,10 @@ A paper of 2012 in *World Politics* asked, from the European Social Survey, whet
 
 **What it teaches.** Attitude scales and their reliability, regression with controls and what a causal graph says about them, survey weights, country fixed effects set against random intercepts, inference with 16 countries, and the question of reverse causation.
 
-**The data.** Rounds 1 to 4 of the European Social Survey in 16 countries, `r big(tr_mark("OA", "n"))` respondents in the sample of the paper, as a derived extract that the workspace ships under CC BY-NC-SA 4.0.
+**The data.** Rounds 1 to 4 of the European Social Survey in 16 countries, `r format(tr_mark("OA", "n"), big.mark = ",")` respondents in the sample of the paper, as a derived extract that the workspace ships under CC BY-NC-SA 4.0.
 
 ::: {.home-3r}
-- **Reproduction.** The paper came without data or code. Two SCORE reproductions rebuilt the data from the survey files and found `r fmt(tr_mark("SCORE_jp7tr"), 3)` and `r fmt(tr_mark("SCORE_65wm6"), 3)` against the published 0.17, on about 69,000 respondents rather than `r big(tr_mark("OA", "n"))`.
+- **Reproduction.** The paper came without data or code. Two SCORE reproductions rebuilt the data from the survey files and found `r fmt(tr_mark("SCORE_jp7tr"), 3)` and `r fmt(tr_mark("SCORE_65wm6"), 3)` against the published 0.17, on about 69,000 respondents rather than `r format(tr_mark("OA", "n"), big.mark = ",")`.
 - **Robustness.** `r tr_for_txt` Multi100 analysts found evidence for the claim, with coefficients from `r fmt(min(tr_analysts$b_refit), 3)` to `r fmt(max(tr_analysts$b_refit), 3)`. The `r tr_spec` specifications of the curve of the claim run from `r fmt(min(tr_curve$b), 3)` to `r fmt(max(tr_curve$b), 3)` points of distrust per point of concern, `r tr_sig_txt` significant at 5% with errors clustered by country.
 - **Replication.** Two SCORE replications on later rounds of the survey, 2010 and 2010–2018, found `r fmt(tr_mark("SCORE_1634"), 3)` and `r fmt(tr_mark("SCORE_65wm6_DAR"), 3)`, both meeting the criterion of SCORE.
 :::
@@ -177,7 +179,7 @@ A paper of 2016 in *Demography* compared the first cohabitations of American wom
 
 **What it teaches.** Censoring and the life table, person-period data, discrete-time event-history models, competing risks, comparisons between periods, and what a reproduction does not show.
 
-**The data.** The first premarital cohabitations of `r big(c_unions)` women in five surveys of the National Survey of Family Growth, 1995 to 2013–2015, rebuilt from the public-use files, which are in the public domain, and shipped with the workspace beside the file that Multi100 gave the analysts.
+**The data.** The first premarital cohabitations of `r format(c_unions, big.mark = ",")` women in five surveys of the National Survey of Family Growth, 1995 to 2013–2015, rebuilt from the public-use files, which are in the public domain, and shipped with the workspace beside the file that Multi100 gave the analysts.
 
 ::: {.home-3r}
 - **Reproduction.** SCORE recorded none. The course rebuilt the unions of the paper exactly and refits the published coefficient at `r fmt(c_mark("OA_refit"), 3)` against −0.683. The file of the analysts reproduces every statistic that Multi100 recorded, and Task 3 asks what that reproduction rests on.
@@ -197,7 +199,7 @@ A paper of 2016 in *Demography* compared the first cohabitations of American wom
 
 A sociological paper of 2016 asked whether the economic crisis changed how citizens of the European Union frame the Union. The claim is that "poor national economic performances significantly decrease positive EU-framing dimensions".
 
-**What it teaches.** Aggregating repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r big(e_spec)` specifications.
+**What it teaches.** Aggregating repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r format(e_spec, big.mark = ",")` specifications.
 
 **The data.** A panel of `r e_cells` country-years built from Eurobarometer surveys and shipped with the workspace. The respondent files behind it come from the GESIS archive, under a free account and terms that do not allow them to be passed on.
 
@@ -534,7 +536,7 @@ Work through the decisions that lie between the data and a result, try alternati
 <details>
 <summary><span class="home-n">Task 5</span>Declaration and report</summary>
 
-Declare one specification in a short preregistration, run it, report it, and find where it sits among the defensible alternatives on the curve of the claim: the `r h_spec` specifications of the [housing-audit curve](cases/housing/multiverse.qmd), the `r tr_spec` of the [immigration-and-trust curve](cases/trust/multiverse.qmd), the `r c_spec` of the [cohabitation curve](cases/cohabitation/multiverse.qmd) or the `r big(e_spec)` of the [EU-frames curve](cases/eu-frames/multiverse.qmd).
+Declare one specification in a short preregistration, run it, report it, and find where it sits among the defensible alternatives on the curve of the claim: the `r h_spec` specifications of the [housing-audit curve](cases/housing/multiverse.qmd), the `r tr_spec` of the [immigration-and-trust curve](cases/trust/multiverse.qmd), the `r c_spec` of the [cohabitation curve](cases/cohabitation/multiverse.qmd) or the `r format(e_spec, big.mark = ",")` of the [EU-frames curve](cases/eu-frames/multiverse.qmd).
 
 </details>
 

@@ -7,22 +7,20 @@ bibliography: [../references.bib, ../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-suppressPackageStartupMessages(library(dplyr))
 pw <- datawizard::data_read("../cases/eu-frames/data/teney_panel_weights.csv", verbose = FALSE)
 cy <- datawizard::data_read("../cases/eu-frames/data/EUframes_cy.csv", verbose = FALSE)
 curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
-  filter(curve == "positive")
+  datawizard::data_filter(curve == "positive")
 devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
-  filter(curve == "positive", axis == "weights")
+  datawizard::data_filter(curve == "positive", axis == "weights")
 dev_rows <- readr::read_csv("../cases/eu-frames/data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
-  filter(curve == "positive", axis == "weights")
+  datawizard::data_filter(curve == "positive", axis == "weights")
 # percentages round halves up, as the specification menu does; pct() takes a
 # proportion and pc() a value already in per cent
 pc <- \(x) paste0(formatC(floor(x * 10^1 + 0.5) / 10^1, format = "f", digits = 1), "%")
 pct <- \(x) pc(100 * x)
 pc_small <- \(x) if (x < 0.1) "less than 0.1%" else pc(x)
-show_fit <- \(file) cat(readLines(file.path("_model-outputs", file)), sep = "\n")
 num <- \(x, d = 3) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
 sig <- \(x) gsub("-", "−", formatC(x, format = "g", digits = 3), fixed = TRUE)
 fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
@@ -32,14 +30,14 @@ below_sig <- \(d) 100 * mean(d$supports & d$sig)
 # the reproduced specification and its twin with design-weighted cells, as they
 # stand on the curve, and the same two under each regression weight
 ref_spec <- \(d) d |>
-  filter(outcome == "mcosmo", predictor == "unemp", copredictor == "none",
+  dplyr::filter(outcome == "mcosmo", predictor == "unemp", copredictor == "none",
          estimator == "fe_twoway", noop == "zero", item_set == "all",
          measure == "wb_nat", pred_form == "raw")
-c6hjr <- bind_rows(
+c6hjr <- dplyr::bind_rows(
   curve |> ref_spec() |>
-    transmute(cell_weight, reg_weight = "none", b, t, p = p_wcr, r = r_ca),
+    dplyr::transmute(cell_weight, reg_weight = "none", b, t = t_cr2, df = df_cr2, p = p_cr2, r = r_ca),
   dev_rows |> ref_spec() |>
-    transmute(cell_weight, reg_weight = option, b = b_dev, t = t_dev, p = p_dev, r = r_ca_dev)
+    dplyr::transmute(cell_weight, reg_weight = option, b = b_dev, t = t_dev, df = df_dev, p = p_dev, r = r_ca_dev)
 )
 cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]
 ```
@@ -66,7 +64,7 @@ The first is a *measurement* decision, because it changes how well the number in
 
 Every Eurobarometer wave is released with survey weights, because the people who complete an interview never quite match the population. Some groups are easier to reach than others, some refuse more often, and the achieved sample tilts accordingly. The **W1 national weight** reverses that tilt so that the weighted sample matches the known distribution of the national population by sex, age, region and size of locality.
 
-Applying it changes the country-year means by a small but not negligible amount. Across the `r nrow(pw)` cells, the largest change to the cosmopolitan scale is `r sig(max(abs(pw$w_mcosmo - cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))])))` on a 0–1 scale whose mean is about 0.51, and the weighted and unweighted cell means correlate at `r round(cor(pw$w_mcosmo, cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))]), 4)`. Because the two versions move together, the choice almost never changes a result. On the curve of the claim the cell weighting carries `r pc_small(fk("cell_weight"))` of the variance of the claim-aligned partial correlation, and moving it alone changes whether a specification lies below zero with bootstrap p < 0.05 in `r pc(fk("cell_weight", "crossing_rate"))` of the pairs. Both options stay on the curve, the design-weighted mean as the better estimator of a national quantity in principle, and the mean of the respondents as interviewed because it is the one that the original study and the course panel use.
+Applying it changes the country-year means by a small but not negligible amount. Across the `r nrow(pw)` cells, the largest change to the cosmopolitan scale is `r sig(max(abs(pw$w_mcosmo - cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))])))` on a 0–1 scale whose mean is about 0.51, and the weighted and unweighted cell means correlate at `r round(cor(pw$w_mcosmo, cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))]), 4)`. Because the two versions move together, the choice almost never changes a result. On the curve of the claim the cell weighting carries `r pc_small(fk("cell_weight"))` of the variance of the claim-aligned partial correlation, and moving it alone changes whether a specification lies below zero with CR2 p < 0.05 in `r pc(fk("cell_weight", "crossing_rate"))` of the pairs. Both options stay on the curve, the design-weighted mean as the better estimator of a national quantity in principle, and the mean of the respondents as interviewed because it is the one that the original study and the course panel use.
 
 ::: {.callout-important title="Choosing among Eurobarometer weights"}
 A Eurobarometer file contains several weight variables, and they are not interchangeable. The **national** weight (`W1`) makes the sample from each country representative *of that country*. The **European** weights (`W5` onwards, "WEIGHT EU6" to "WEIGHT EU27" and their relatives) additionally scale each country by its population, so that pooling all respondents together gives an estimate for the EU population as a whole. An **extrapolation factor** (`WEX`) grosses the sample up to population counts.
@@ -93,7 +91,7 @@ Once you have `r nrow(pw)` country-year means, you have to decide how much each 
 #| echo: false
 #| tbl-cap: "The four regression weights on the menu."
 tinytable::tt(
-  data.frame(
+  tibble::tibble(
     Setting = c("`none`", "`n_cell`", "`n_eff`", "`pop`"),
     `What it weights by` = c("nothing; every cell counts once",
       "respondents interviewed", "effective sample size",
@@ -104,8 +102,7 @@ tinytable::tt(
       "The same argument, using the precision that the weighting actually leaves",
       "The claim is about Europeans. A German counts as much as a Maltese"),
     Kind = c("estimand: the average country", "precision", "precision",
-             "estimand: the average European"),
-    check.names = FALSE)) |>
+             "estimand: the average European"))) |>
   tinytable::style_tt(fontsize = 0.8)
 ```
 
@@ -130,30 +127,29 @@ The table below shows the reproduced specification (cosmopolitan framing on raw 
 ```{r}
 #| label: tbl-c6hjr
 #| echo: false
-#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is that of the conventional fit and p is the bootstrap p-value that classes the curve. Sources: `cases/eu-frames/data/spec_curve.csv` and `cases/eu-frames/data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is the coefficient divided by its CR2 standard error, clustered by country, df are its Satterthwaite degrees of freedom, and p is the CR2 p-value that classes the curve. Sources: `cases/eu-frames/data/spec_curve.csv` and `cases/eu-frames/data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   c6hjr |>
-    arrange(factor(reg_weight, c("none", "n_cell", "n_eff", "pop")),
+    dplyr::arrange(factor(reg_weight, c("none", "n_cell", "n_eff", "pop")),
             factor(cell_weight, c("unweighted", "design"))) |>
-    transmute(`Cell mean` = ifelse(cell_weight == "design", "design-weighted", "as interviewed"),
+    dplyr::transmute(`Cell mean` = dplyr::if_else(cell_weight == "design", "design-weighted", "as interviewed"),
               `Regression weight` = reg_weight,
-              b = num(b, 5), t = num(t, 2), `bootstrap p` = num(p), r = num(r, 3)) |>
-    as.data.frame()) |>
-  tinytable::style_tt(j = 3:6, align = "r") |>
+              b = num(b, 5), `CR2 t` = num(t, 2), df = num(df, 1), `CR2 p` = num(p), r = num(r, 3))) |>
+  tinytable::style_tt(j = 3:7, align = "r") |>
   tinytable::style_tt(fontsize = 0.8)
 ```
 
-Every row lies below zero, so no weighting choice reverses the direction of the association, but its strength and the verdict on it change. The partial correlation runs from `r num(max(c6hjr$r), 3)` to `r num(min(c6hjr$r), 3)` across eight versions of a specification that any methods section would describe in the same sentence, and the two kinds of weight pull in **opposite directions**. Precision weighting by the respondent count weakens the result, from t = `r num(cw("unweighted", "none", "t"), 2)` to t = `r num(cw("unweighted", "n_cell", "t"), 2)` in the conventional fit and from a bootstrap p of `r num(cw("unweighted", "none", "p"))` to `r num(cw("unweighted", "n_cell", "p"))`. Population weighting strengthens it, to t = `r num(cw("unweighted", "pop", "t"), 2)` and p = `r num(cw("unweighted", "pop", "p"))`. An analyst who reasons "I should weight, because weighting is more careful" without saying which argument they are making could end up with either.
+Every row lies below zero, so no weighting choice reverses the direction of the association, but its strength and the verdict on it change. The partial correlation runs from `r num(max(c6hjr$r), 3)` to `r num(min(c6hjr$r), 3)` across eight versions of a specification that any methods section would describe in the same sentence, and the two kinds of weight pull in **opposite directions**. Precision weighting by the respondent count weakens the result, from a CR2 t of `r num(cw("unweighted", "none", "t"), 2)` to `r num(cw("unweighted", "n_cell", "t"), 2)` and from a p of `r num(cw("unweighted", "none", "p"))` to `r num(cw("unweighted", "n_cell", "p"))`. Population weighting strengthens the coefficient against its standard error, to t = `r num(cw("unweighted", "pop", "t"), 2)`, but the test becomes no more decisive, with p = `r num(cw("unweighted", "pop", "p"))`, because the Satterthwaite degrees of freedom fall from `r num(cw("unweighted", "none", "df"), 1)` to `r num(cw("unweighted", "pop", "df"), 1)`. A weight in proportion to population hands most of the information to the few largest countries, and the degrees of freedom count how few of them are left carrying it. An analyst who reasons "I should weight, because weighting is more careful" without saying which argument they are making could end up with either.
 
-Kish's correction changes almost nothing. With cells as interviewed, `n_eff` and `n_cell` are the same weight, because a cell mean that uses no survey weights has an effective sample size equal to its number of respondents, and with design-weighted cells they give t = `r num(cw("design", "n_eff", "t"), 2)` and `r num(cw("design", "n_cell", "t"), 2)`. $n_\text{eff}$ is the correct precision weight, but the design effects in this panel are small enough that choosing it over `n_cell` does not change the conclusion.
+Kish's correction changes almost nothing. With cells as interviewed, `n_eff` and `n_cell` are the same weight, because a cell mean that uses no survey weights has an effective sample size equal to its number of respondents, and with design-weighted cells they give CR2 t values of `r num(cw("design", "n_eff", "t"), 2)` and `r num(cw("design", "n_cell", "t"), 2)`. $n_\text{eff}$ is the correct precision weight, but the design effects in this panel are small enough that choosing it over `n_cell` does not change the conclusion.
 
-The same holds across the curve. Swapped into every one of its `r nrow(curve)` specifications, the respondent weight leaves `r pc(dv("n_cell", "below_zero_sig"))` of them below zero with bootstrap p < 0.05 and the effective sample size `r pc(dv("n_eff", "below_zero_sig"))`, against `r pc(below_sig(curve))` on the curve itself, and each changes the class of `r pc(dv("n_cell", "class_changes"))` of the pairs. The curve keeps only the unweighted fit, because the precision weights rest on an argument that the error structure of these data does not support, and the population weight, which the next section takes up, answers another question.
+The same holds across the curve. Swapped into every one of its `r nrow(curve)` specifications, the respondent weight leaves `r pc(dv("n_cell", "below_zero_sig"))` of them below zero with CR2 p < 0.05 and the effective sample size `r pc(dv("n_eff", "below_zero_sig"))`, against `r pc(below_sig(curve))` on the curve itself, and each changes the class of `r pc(dv("n_cell", "class_changes"))` of the pairs. The curve keeps only the unweighted fit, because the precision weights rest on an argument that the error structure of these data does not support, and the population weight, which the next section takes up, answers another question.
 
 ## The average European
 
 Weighting by adult population changes the quantity to the average European, in which the largest member state counts `r round(max(pw$pop_15plus) / min(pw$pop_15plus))` times as much as the smallest. That is a defensible estimand, the one that a reader interested in the climate of opinion in the Union as a whole would want, but it is not the estimand of the claim. The claim concerns how a national economy shapes the framing of its citizens, so its unit is the member state, and the unweighted fit, in which Malta counts as much as Germany, is what a claim about national economies asks for. A result about the average European can therefore neither confirm nor undermine a result about the average member state, and it belongs in an analysis with its own estimand statement rather than among the robustness checks of the claim.
 
-Across the curve the population weight leaves `r pc(dv("pop", "below_zero"))` of the specifications below zero, slightly more than the curve itself, but only `r pc(dv("pop", "below_zero_sig"))` below zero with bootstrap p < 0.05, and it changes the class of `r pc(dv("pop", "class_changes"))` of the pairs. The fall in significance most probably reflects the weight itself, which lets a few large countries dominate the fit and leaves fewer countries to carry the evidence, while at the reproduced specification, as the table above shows, the same weight strengthens the result. The two estimands diverge in ways that a single specification does not reveal, which is a further reason for reporting the population-weighted analysis on its own terms.
+Across the curve the population weight leaves `r pc(dv("pop", "below_zero"))` of the specifications below zero, slightly more than the curve itself, but only `r pc(dv("pop", "below_zero_sig"))` below zero with CR2 p < 0.05, and it changes the class of `r pc(dv("pop", "class_changes"))` of the pairs. The fall in significance most probably reflects the weight itself, which lets a few large countries dominate the fit and leaves fewer countries to carry the evidence, while at the reproduced specification, as the table above shows, the same weight strengthens the result. The two estimands diverge in ways that a single specification does not reveal, which is a further reason for reporting the population-weighted analysis on its own terms.
 
 ## The denominator
 
@@ -166,10 +162,9 @@ That would be a defensible convention if the no-opinion rate were the same every
 #| echo: false
 #| tbl-cap: "The four highest and four lowest no-opinion rates."
 tinytable::tt(
-  pw |> summarise(rate = mean(noop_rate), .by = cntry) |>
-    arrange(desc(rate)) |> slice(c(1:4, (n() - 3):n())) |>
-    transmute(Country = cntry, `No opinion` = pct(rate)) |>
-    as.data.frame()) |>
+  pw |> dplyr::summarise(rate = mean(noop_rate), .by = cntry) |>
+    datawizard::data_arrange("-rate") |> dplyr::slice(c(1:4, (dplyr::n() - 3):dplyr::n())) |>
+    dplyr::transmute(Country = cntry, `No opinion` = pct(rate))) |>
   tinytable::style_tt(j = 2, align = "r") |>
   tinytable::style_tt(fontsize = 0.8)
 ```
@@ -193,16 +188,14 @@ Of the other weights in the file, W3 ("WEIGHT GERMANY") and W4 ("WEIGHT UNITED K
 In R, design-based estimation is the job of the survey package [@Lumley2004AnalysisComplexSurvey]. You declare the design once – weights, and where the data supply them, clusters and strata – and then every estimator in the package takes it into account:
 
 ```r
-library(survey)
-
-des <- svydesign(ids = ~1, weights = ~w1, data = person)   # weights only; the file has no primary sampling unit (PSU) ids
-m_svy <- svyglm(cosmo ~ unemp, design = des)
+des <- survey::svydesign(ids = ~1, weights = ~w1, data = person)   # weights only; the file has no primary sampling unit (PSU) ids
+m_svy <- survey::svyglm(cosmo ~ unemp, design = des)
 summary(m_svy)
 ```
 
 ```{r}
 #| echo: false
-show_fit("svyglm.txt")
+writeLines(readLines(file.path("_model-outputs", "svyglm.txt")))
 ```
 
 The W1-weighted pooled slope is +0.0001 with t = 0.8, which is no association at all, and its sign is the opposite of the one that the claim predicts. The weights have corrected the *representation* of the sample, but they cannot correct a mis-specified model, and this is the pooled estimator of [section 3 of the statistics module](stats-methods.qmd#sec-pooled) again, blending within-country and between-country variation across 27 countries. The output also shows that `svyglm()` reports design-robust (linearised) standard errors by default. There is no classical standard-error option to forget, which is one reason that survey statisticians like the package.
@@ -229,27 +222,25 @@ mixed cosmo [pw = weight] || country: || cquarter:, pwscale(size)
 
 ```r
 # the R equivalent – lmer() defaults to REML, so request maximum likelihood to match Stata
-lmer(cosmo ~ 1 + (1 | country) + (1 | cquarter), data = d, REML = FALSE)
+lme4::lmer(cosmo ~ 1 + (1 | country) + (1 | cquarter), data = d, REML = FALSE)
 
 # the design-weighted equivalent – WeMix, pseudo-maximum-likelihood, one weight per level
-mix(cosmo ~ 1 + (1 | country), data = d, weights = c("weight", "w_country"))
+WeMix::mix(cosmo ~ 1 + (1 | country), data = d, weights = c("weight", "w_country"))
 ```
 
 On the data of this case, supplying a constant weight of 1 at the country level reproduces the common 'weights at level 1 only' scenario:
 
 ```r
-library(WeMix)
-
 person <- person |>
-  mutate(w_lvl2 = 1)   # unit weight at the country level – weighting at level 1 only
-m_wemix <- mix(cosmo ~ unemp + (1 | cntry), data = person,
+  dplyr::mutate(w_lvl2 = 1)   # unit weight at the country level – weighting at level 1 only
+m_wemix <- WeMix::mix(cosmo ~ unemp + (1 | cntry), data = person,
                weights = c("w1", "w_lvl2"))
 summary(m_wemix)
 ```
 
 ```{r}
 #| echo: false
-show_fit("wemix_2lvl.txt")
+writeLines(readLines(file.path("_model-outputs", "wemix_2lvl.txt")))
 ```
 
 Compare this with the unweighted two-level fit of [section 6 of the statistics module](stats-methods.qmd#sec-multilevel), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule from section 3 of the statistics module applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
@@ -286,14 +277,13 @@ The `collapse` command averages every respondent equally, so the survey weights 
 # from the extract of the European Social Survey that the course ships and from
 # the files of its curve; the objects of the section carry the prefix tr_
 source("../R/trust/_tools.R")
-tr_read <- \(f) readr::read_csv(file.path("../cases/trust/data", f), show_col_types = FALSE)
-tr_ess <- tr_read("trust_ess.csv")
+tr_ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
 tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
                             col_types = readr::cols(stat_type = readr::col_character()))
-tr_opts <- tr_read("display_options.csv") |> filter(axis == "weights")
-tr_devs <- tr_read("menu_deviations.csv") |> filter(axis == "weights")
-tr_menu <- tr_read("menu_options.csv") |> filter(axis == "weights")
-tr_marks <- tr_read("reference_marks.csv")
+tr_opts <- readr::read_csv("../cases/trust/data/display_options.csv", show_col_types = FALSE) |> datawizard::data_filter(axis == "weights")
+tr_devs <- readr::read_csv("../cases/trust/data/menu_deviations.csv", show_col_types = FALSE) |> datawizard::data_filter(axis == "weights")
+tr_menu <- readr::read_csv("../cases/trust/data/menu_options.csv", show_col_types = FALSE) |> datawizard::data_filter(axis == "weights")
+tr_marks <- readr::read_csv("../cases/trust/data/reference_marks.csv", show_col_types = FALSE)
 tr_country <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Germany",
                 DK = "Denmark", ES = "Spain", FI = "Finland", FR = "France",
                 GB = "the United Kingdom", GR = "Greece", IE = "Ireland", IT = "Italy",
@@ -303,33 +293,33 @@ tr_names <- \(codes) {
   n <- unname(tr_country[codes])
   if (length(n) == 1) n else paste(paste(n[-length(n)], collapse = ", "), "and", n[length(n)])
 }
-tr_sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), num(x, d))
+tr_sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), num(x, d))
 tr_dv <- \(option, col) tr_devs[[col]][tr_devs$option == option]
 
 # the respondents of the paper: citizens who do not belong to an ethnic minority
-tr_paper <- tr_ess |> filter(citizen %in% 1, minority %in% 0)
+tr_paper <- tr_ess |> datawizard::data_filter(citizen %in% 1, minority %in% 0)
 
 # the weights by country: Kish design effects among the respondents of the
 # paper, and the adult population that the population weight stands for,
 # pweight x the respondents of the country-round in the data file x 10,000
-tr_kish <- \(w) length(w) * sum(w^2) / sum(w)^2
+tr_kish <- \(w) length(w) * sum(w^2) / sum(w)^2  # r-style: PENDING – Kish design effect; no package found
 tr_deff <- tr_paper |>
-  summarise(design = tr_kish(dweight), post = tr_kish(pspwght), .by = cntry)
-tr_flat <- tr_deff |> filter(round(design, 2) == 1) |> arrange(cntry) |> pull(cntry)
-tr_dw_mean <- tr_ess |> summarise(m = mean(dweight), .by = c(cntry, essround)) |> pull(m)
+  dplyr::summarise(design = tr_kish(dweight), post = tr_kish(pspwght), .by = cntry)
+tr_flat <- tr_deff |> datawizard::data_filter(round(design, 2) == 1) |> datawizard::data_arrange("cntry") |> dplyr::pull(cntry)
+tr_dw_mean <- tr_ess |> dplyr::summarise(m = mean(dweight), .by = c(cntry, essround)) |> dplyr::pull(m)
 stopifnot(all(abs(tr_dw_mean - 1) < 5e-4))
 tr_adults <- tr_ess |>
-  summarise(adults = first(pweight) * n() * 1e4, .by = c(cntry, essround)) |>
-  summarise(adults = mean(adults), rounds = n(), .by = cntry)
+  dplyr::summarise(adults = dplyr::first(pweight) * dplyr::n() * 1e4, .by = c(cntry, essround)) |>
+  dplyr::summarise(adults = mean(adults), rounds = dplyr::n(), .by = cntry)
 ad <- \(c) tr_adults$adults[tr_adults$cntry == c] / 1e6
-tr_big5 <- tr_adults |> slice_max(adults, n = 5) |> pull(cntry)
+tr_big5 <- tr_adults |> dplyr::slice_max(adults, n = 5) |> dplyr::pull(cntry)
 
 # the reference specification under the five ways of using the weights
 tr_five <- tr_curve |>
-  filter(outcome == "parliament", controls == "paper", items == "complete", fe == "country_round") |>
-  select(option = weights, b, se, stat) |>
-  bind_rows(tr_opts |> select(option, b, se, stat)) |>
-  left_join(tr_menu |> select(option, label, on_curve), by = "option")
+  datawizard::data_filter(outcome == "parliament", controls == "paper", items == "complete", fe == "country_round") |>
+  dplyr::select(option = weights, b, se, stat) |>
+  dplyr::bind_rows(tr_opts |> datawizard::data_select(select = c("option", "b", "se", "stat"))) |>
+  dplyr::left_join(tr_menu |> datawizard::data_select(select = c("option", "label", "on_curve")), by = "option")
 tw <- \(o, col) tr_five[[col]][tr_five$option == o]
 
 # The fixed-effects coefficient as a weighted average of one slope per country.
@@ -339,26 +329,28 @@ tw <- \(o, col) tr_five[[col]][tr_five$option == o]
 # total and its slope the ratio of its two sums.
 tr_decompose <- \(weights) {
   frame <- spec_frame(tr_ess, weights = weights)
-  terms <- CONTROL_TERMS$paper
-  m <- demean(as.matrix(frame[, c("y", "x", terms)]), frame$cr, frame$w)
-  z <- m[, terms]
-  x <- m[, "x"] - drop(z %*% solve(crossprod(z, frame$w * z), crossprod(z, frame$w * m[, "x"])))
-  tibble::tibble(cntry = frame$cntry, w = frame$w, x = x, y = m[, "y"]) |>
-    summarise(sxx = sum(w * x^2), sxy = sum(w * x * y), .by = cntry) |>
-    mutate(share = sxx / sum(sxx), slope = sxy / sxx, weights = weights)
+  # concern net of the controls and of the country-round intercepts, as the
+  # residual of the weighted fit, and distrust net of the intercepts, both by
+  # fixest (Bergé, Butts and McDermott 2026, arXiv:2601.21749)
+  x_form <- stats::as.formula(paste("x ~", paste(CONTROL_TERMS$paper, collapse = " + "), "| cr"))
+  tibble::tibble(cntry = frame$cntry, w = frame$w,
+                 x = stats::resid(fixest::feols(x_form, data = frame, weights = ~w)),
+                 y = as.vector(fixest::demean(frame$y, frame$cr, weights = frame$w))) |>
+    dplyr::summarise(sxx = sum(w * x^2), sxy = sum(w * x * y), .by = cntry) |>
+    dplyr::mutate(share = sxx / sum(sxx), slope = sxy / sxx, weights = weights)
 }
-tr_shares <- purrr::map(c("none", "design", "population"), tr_decompose) |> bind_rows()
-tr_sums <- tr_shares |> summarise(b = sum(share * slope), .by = weights)
+tr_shares <- purrr::map(c("none", "design", "population"), tr_decompose) |> dplyr::bind_rows()
+tr_sums <- tr_shares |> dplyr::summarise(b = sum(share * slope), .by = weights)
 stopifnot(all(abs(tr_sums$b - purrr::map_dbl(tr_sums$weights, tw, col = "b")) < 1e-10))
 sh <- \(c, w, col = "share") tr_shares[[col]][tr_shares$cntry == c & tr_shares$weights == w]
 tr_group <- \(codes, w) sum(tr_shares$share[tr_shares$cntry %in% codes & tr_shares$weights == w])
 tr_moved <- tr_shares |>
-  filter(weights != "population") |>
-  select(cntry, weights, share) |>
+  datawizard::data_filter(weights != "population") |>
+  datawizard::data_select(select = c("cntry", "weights", "share")) |>
   tidyr::pivot_wider(names_from = weights, values_from = share) |>
-  summarise(m = max(abs(design - none))) |>
-  pull(m)
-tr_slopes <- tr_shares |> filter(weights == "none") |> arrange(slope)
+  dplyr::summarise(m = max(abs(design - none))) |>
+  dplyr::pull(m)
+tr_slopes <- tr_shares |> datawizard::data_filter(weights == "none") |> datawizard::data_arrange("slope")
 # the prose names the steepest and two of the three flattest slopes, and the
 # countries with fewer than four rounds
 stopifnot(tr_slopes$cntry[nrow(tr_slopes)] == "GB", all(c("IT", "ES") %in% tr_slopes$cntry[1:3]),
@@ -390,9 +382,9 @@ The **population size weight** (`pweight`) is constant within each country-round
 #| echo: false
 #| tbl-cap: "The reference specification of the immigration-and-trust case under each use of the weights, with errors clustered by country (t on 15 df). The shift is the change from the fit without weights. Sources: `cases/trust/data/spec_curve.csv` for the three options on the curve and `cases/trust/data/display_options.csv` for the two off it."
 tr_five |>
-  mutate(option = factor(option, c("none", "design", "population", "post", "post_population"))) |>
-  arrange(option) |>
-  transmute(
+  datawizard::data_modify(option = factor(option, c("none", "design", "population", "post", "post_population"))) |>
+  datawizard::data_arrange("option") |>
+  dplyr::transmute(
     Weights = label,
     Variable = c(none = "–", design = "dweight", population = "dweight × pweight",
                  post = "pspwght", post_population = "pspwght × pweight")[as.character(option)],
@@ -403,13 +395,12 @@ tr_five |>
       post = "the adult population of each country, matched to its population margins",
       post_population = "the adults of the 16 countries as one population, matched to population margins"
     )[as.character(option)],
-    `On the curve` = if_else(on_curve, "yes", "no, a check"),
+    `On the curve` = dplyr::if_else(on_curve, "yes", "no, a check"),
     Coefficient = num(b),
-    Shift = if_else(option == "none", "–", tr_sgn(b - tw("none", "b"))),
+    Shift = dplyr::if_else(option == "none", "–", tr_sgn(b - tw("none", "b"))),
     `Clustered SE` = num(se, 4),
     t = num(stat, 1)
   ) |>
-  as.data.frame() |>
   tinytable::tt() |>
   tinytable::style_tt(j = 5:8, align = "r") |>
   tinytable::style_tt(fontsize = 0.8)
@@ -422,12 +413,12 @@ The coefficient moves by little, from `r num(min(tr_five$b))` to `r num(max(tr_f
 #| echo: false
 #| tbl-cap: "The reference specification as a weighted average of one slope per country: the share of each country in the estimate and the slope among its respondents, without weights and with design and population weights, beside the adult population that the population weight assigns to the country (the mean over its rounds). Within each pair of columns, the sum of share × slope is the coefficient. Source: `cases/trust/data/trust_ess.csv`."
 tr_shares |>
-  filter(weights != "design") |>
-  select(cntry, weights, share, slope) |>
+  datawizard::data_filter(weights != "design") |>
+  datawizard::data_select(select = c("cntry", "weights", "share", "slope")) |>
   tidyr::pivot_wider(names_from = weights, values_from = c(share, slope)) |>
-  left_join(tr_adults, by = "cntry") |>
-  arrange(desc(share_population)) |>
-  transmute(
+  dplyr::left_join(tr_adults, by = "cntry") |>
+  datawizard::data_arrange("-share_population") |>
+  dplyr::transmute(
     Country = unname(tr_country_short[cntry]),
     Rounds = as.character(rounds),
     `Adults (millions)` = num(adults / 1e6, 1),
@@ -436,7 +427,6 @@ tr_shares |>
     `Share, design and population` = pct(share_population),
     `Slope, design and population` = num(slope_population)
   ) |>
-  as.data.frame() |>
   tinytable::tt() |>
   tinytable::style_tt(j = 2:7, align = "r") |>
   tinytable::style_tt(fontsize = 0.8)

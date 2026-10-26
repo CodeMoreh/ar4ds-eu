@@ -101,18 +101,18 @@ And this is what happens when you press render. You write one source file, with 
 ## The package layer {.smaller .deepdive run="tools"}
 
 ::: {.toolgrid style="--cols: 4"}
-<div class="tool"><img src="pics/tools/pkg-tidyverse.png" alt="tidyverse"><span class="name">tidyverse</span><span class="what">Reading, reshaping, plotting. One grammar across all of it.</span></div>
-<div class="tool"><img src="pics/tools/pkg-easystats.png" alt="easystats"><span class="name">easystats</span><span class="what">Model output as tidy data: parameters, performance, effect sizes.</span></div>
+<div class="tool"><img src="pics/tools/pkg-easystats.png" alt="easystats"><span class="name">easystats</span><span class="what">Data work with datawizard, and model output as tidy data: parameters, performance, effect sizes.</span></div>
+<div class="tool"><img src="pics/tools/pkg-tidyverse.png" alt="tidyverse"><span class="name">tidyverse</span><span class="what">Reading files, and the verbs that datawizard lacks. One grammar across all of it.</span></div>
 <div class="tool"><img src="pics/tools/pkg-modelsummary.png" alt="modelsummary"><span class="name">modelsummary</span><span class="what">Regression tables you can publish, from the fitted objects.</span></div>
 <div class="tool"><img src="pics/tools/pkg-marginaleffects.png" alt="marginaleffects"><span class="name">marginaleffects</span><span class="what">Predictions, contrasts and marginal effects from almost any model.</span></div>
 :::
 
 ::: {.fragment .small}
-The tasks also use **`dagitty`** for causal graphs, which **`ggdag`** draws more neatly where it is installed. The setup page lists the full set, and the check script in your workspace reports anything that is missing.
+Your figures come from **`tinyplot`**, and the causal graphs from **`dagitty`**, which **`ggdag`** draws more neatly where it is installed. The setup page lists the full set, and the check script in your workspace reports anything that is missing.
 :::
 
 ::: notes
-A word about packages, because this is where the advantage of R actually lies. The tidyverse gives you one consistent grammar for reading data, reshaping it and plotting it, so once you have learned the verbs they work everywhere. Easystats turns model output back into tidy data – coefficients, fit statistics, effect sizes – instead of the printed blob that summary gives you. Modelsummary builds publication-ready regression tables straight from fitted model objects, so your table cannot disagree with your model. And marginaleffects computes predictions, contrasts and marginal effects from almost any model you can fit, which is how you get from a coefficient to a statement in the units that your reader thinks in. The tasks also use dagitty for the causal graphs, and ggdag where it is installed, and the check script in your workspace reports anything that is missing.
+A word about packages, because this is where the advantage of R actually lies. Easystats comes first in this course. Its datawizard package does the data work, filtering, selecting and summarising, and the rest of the family turns model output back into tidy data – coefficients, fit statistics, effect sizes – instead of the printed blob that summary gives you. The tidyverse reads the files and covers the few verbs that datawizard lacks. Modelsummary builds publication-ready regression tables straight from fitted model objects, so your table cannot disagree with your model. And marginaleffects computes predictions, contrasts and marginal effects from almost any model you can fit, which is how you get from a coefficient to a statement in the units that your reader thinks in. The figures that you draw come from tinyplot and the causal graphs from dagitty, and the check script in your workspace reports anything that is missing.
 :::
 
 ## Version control {#version-control-in-one-slide .smaller .deepdive run="tools"}

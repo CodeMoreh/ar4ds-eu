@@ -53,32 +53,32 @@ A brief history, because the vocabulary is a mess and knowing which word came fr
 # A binary decision tree over four choices: 16 end points, one path
 # highlighted. Drawn from coordinates rather than data – an illustration of
 # the structure of a sequence of decisions, not a result.
-seg <- map(1:4, \(k) {
+seg <- purrr::map(1:4, \(k) {
   n_parent <- 2^(k - 1)
-  map(seq_len(n_parent), \(j) {
+  purrr::map(seq_len(n_parent), \(j) {
     y0 <- (j - 0.5) / n_parent
-    tibble(x = k - 1, xend = k, y = y0, yend = c(y0 - 0.5 / 2^k, y0 + 0.5 / 2^k))
+    tibble::tibble(x = k - 1, xend = k, y = y0, yend = c(y0 - 0.5 / 2^k, y0 + 0.5 / 2^k))
   }) |>
-    bind_rows()
+    dplyr::bind_rows()
 }) |>
-  bind_rows()
-route <- tibble(x = 0:3, xend = 1:4,
+  dplyr::bind_rows()
+route <- tibble::tibble(x = 0:3, xend = 1:4,
                 y = c(0.5, 0.75, 0.875, 0.9375),
                 yend = c(0.75, 0.875, 0.9375, 0.96875))
 
-ggplot() +
-  geom_segment(data = seg, aes(x, y, xend = xend, yend = yend),
+ggplot2::ggplot() +
+  ggplot2::geom_segment(data = seg, ggplot2::aes(x, y, xend = xend, yend = yend),
                colour = "#c7ccd2", linewidth = 0.5) +
-  geom_segment(data = route, aes(x, y, xend = xend, yend = yend),
+  ggplot2::geom_segment(data = route, ggplot2::aes(x, y, xend = xend, yend = yend),
                colour = d_red, linewidth = 1.1) +
-  annotate("text", x = 0:3 + 0.5, y = -0.06,
+  ggplot2::annotate("text", x = 0:3 + 0.5, y = -0.06,
            label = c("outcome", "sample", "model", "covariates"),
            colour = ncl_blue, fontface = "bold", size = 4.2) +
-  annotate("text", x = 4.05, y = 0.96875, hjust = 0,
+  ggplot2::annotate("text", x = 4.05, y = 0.96875, hjust = 0,
            label = "the one you published",
            colour = d_red, fontface = "bold", size = 4.2) +
-  coord_cartesian(xlim = c(0, 5.6), ylim = c(-0.1, 1.05), clip = "off") +
-  theme_void()
+  ggplot2::coord_cartesian(xlim = c(0, 5.6), ylim = c(-0.1, 1.05), clip = "off") +
+  ggplot2::theme_void()
 ```
 
 ::: {.small}

@@ -7,7 +7,6 @@ bibliography: ../references.bib
 ```{r}
 #| label: setup
 #| include: false
-suppressPackageStartupMessages({ library(dplyr); library(tidyr); library(ggplot2); library(tinytable) })
 prev <- datawizard::data_read("_model-outputs/items_prevalence.csv", verbose = FALSE)
 tet  <- datawizard::data_read("_model-outputs/items_tetrachoric.csv", verbose = FALSE)
 eig  <- datawizard::data_read("_model-outputs/efa_eigen.csv", verbose = FALSE)
@@ -17,18 +16,17 @@ cfa  <- datawizard::data_read("_model-outputs/cfa_fit.csv", verbose = FALSE)
 rel  <- datawizard::data_read("_model-outputs/scale_reliability.csv", verbose = FALSE)
 pct <- function(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)
 num <- function(x, d = 2) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
-big <- function(x) format(x, big.mark = ",")
 n_resp <- prev$n_respondents[1]
 
 scale_order <- c("cosmopolitan", "utilitarian", "communitarian", "libertarian")
-item_order  <- prev |> mutate(scale = factor(scale, scale_order)) |> arrange(scale) |> pull(item)
+item_order  <- prev |> datawizard::data_modify(scale = factor(scale, scale_order)) |> datawizard::data_arrange("scale") |> dplyr::pull(item)
 tet_r <- function(a, b) tet$tetrachoric[tet$item == a & tet$with == b]
 
-l4 <- load |> filter(solution == "4-factor")
-l2 <- load |> filter(solution == "2-factor")
+l4 <- load |> datawizard::data_filter(solution == "4-factor")
+l2 <- load |> datawizard::data_filter(solution == "2-factor")
 ld <- function(item, f, sol = l4) sol[[f]][sol$item == item]
-phi4 <- phi |> filter(solution == "4-factor")
-phi2 <- phi |> filter(solution == "2-factor")
+phi4 <- phi |> datawizard::data_filter(solution == "4-factor")
+phi2 <- phi |> datawizard::data_filter(solution == "2-factor")
 fit <- function(m, col) cfa[[col]][cfa$model == m]
 alpha <- function(s) rel$ordinal_alpha[rel$scale == s]
 # the caption of the loadings table, built here because a colon inside a YAML
@@ -38,9 +36,9 @@ alpha <- function(s) rel$ordinal_alpha[rel$scale == s]
 curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 neg <- readr::read_csv("../cases/eu-frames/data/spec_curve_negative.csv", show_col_types = FALSE)
 forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
-  filter(curve == "positive")
+  datawizard::data_filter(curve == "positive")
 devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
-  filter(curve == "positive", axis == "construction")
+  datawizard::data_filter(curve == "positive", axis == "construction")
 dev_rows <- readr::read_csv("../cases/eu-frames/data/menu_deviations_rows.csv.gz", show_col_types = FALSE)
 pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
 below_sig <- \(d) 100 * mean(d$supports & d$sig)
@@ -48,20 +46,20 @@ fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
 dv <- \(op, col) devs[[col]][devs$option == op]
 # the reproduced specification, with the frame set and the item set left free
 at_ref <- \(d) d |>
-  filter(predictor == "unemp", copredictor == "none", estimator == "fe_twoway",
+  dplyr::filter(predictor == "unemp", copredictor == "none", estimator == "fe_twoway",
          noop == "zero", cell_weight == "unweighted", measure == "wb_nat", pred_form == "raw")
 r_at <- \(d, out, items = "all") at_ref(d) |>
-  filter(outcome == out, item_set == items) |>
-  pull(r_ca)
+  dplyr::filter(outcome == out, item_set == items) |>
+  dplyr::pull(r_ca)
 count_ref <- at_ref(dev_rows) |>
-  filter(axis == "construction", option == "count", outcome == "mcosmo", item_set == "all")
+  datawizard::data_filter(axis == "construction", option == "count", outcome == "mcosmo", item_set == "all")
 # cell means at the standard measurement settings, share and count side by side
 cell_wide <- datawizard::data_read("../cases/eu-frames/data/teney_panel_measurement.csv", verbose = FALSE) |>
-  filter(item_set == "all", noop == "zero", cell_weight == "unweighted",
+  datawizard::data_filter(item_set == "all", noop == "zero", cell_weight == "unweighted",
          outcome %in% c("mcosmo", "mpos", "mneg")) |>
-  pivot_wider(id_cols = c(cntry, year), names_from = c(construction, outcome),
+  tidyr::pivot_wider(id_cols = c(cntry, year), names_from = c(construction, outcome),
               values_from = value) |>
-  mutate(total = count_mpos + count_mneg,
+  dplyr::mutate(total = count_mpos + count_mneg,
          pos_within = share_mpos - mean(share_mpos),
          neg_within = (1 - share_mneg) - mean(1 - share_mneg), .by = cntry)
 
@@ -78,17 +76,17 @@ The tables of sections 1 to 9 are read from files that were written before the p
 
 The question is the Eurobarometer item that asks "What does the European Union mean to you personally?", with a card of fourteen answers of which any number may be chosen, and it is the source of every framing scale in the case. OA sets one of the fourteen aside, the Euro, and builds the four scales from the remaining thirteen [@Teney2016DoesEUEconomic, p. 623], grounding the grouping in an earlier categorical principal component analysis of a single wave which had found that "these answer categories build four distinct dimensions of EU framing across the 27 EU countries" [@Teney2016DoesEUEconomic, p. 623]. The construction of each scale is stated in one sentence: "For each of the framing dimensions, the scale is composed of the sum of the mentioned items belonging to the specific framing dimension, divided by the total number of items mentioned by the respondent", so that the four scales "measure the relative frequency with which the respondent associates each frame to the EU" [@Teney2016DoesEUEconomic, p. 623]. That sentence is the share rule of the menu, and the count rule and the per-item rate are the two departures from it that the Multi100 analysts and the course have taken.
 
-@tbl-items lists the thirteen answers under the scale to which each was assigned, with the share of all `r big(n_resp)` respondents who named it. The course adds two composites to the four published scales, a positive one made of the cosmopolitan and utilitarian items together and a negative one made of the communitarian and libertarian items together, because the claim under test speaks of positive and negative dimensions in the plural and singles out none of them.
+@tbl-items lists the thirteen answers under the scale to which each was assigned, with the share of all `r format(n_resp, big.mark = ",")` respondents who named it. The course adds two composites to the four published scales, a positive one made of the cosmopolitan and utilitarian items together and a negative one made of the communitarian and libertarian items together, because the claim under test speaks of positive and negative dimensions in the plural and singles out none of them.
 
 ```{r}
 #| label: tbl-items
 #| tbl-cap: "The thirteen answer options, the scale each was assigned to in the original paper, and the share of respondents naming each. The 'Euro' option is the fourteenth and is set aside throughout, following the original paper. Shares are over all respondents interviewed in the sixteen waves, those who named nothing included."
 prev |>
-  mutate(scale = factor(scale, scale_order), valence = if_else(valence == "positive", "positive", "negative")) |>
-  arrange(scale) |>
-  transmute(Item = item, Scale = as.character(scale), Valence = valence, `Named by` = pct(share_mentioning)) |>
-  tt() |>
-  style_tt(j = 4, align = "r")
+  datawizard::data_modify(scale = factor(scale, scale_order), valence = dplyr::if_else(valence == "positive", "positive", "negative")) |>
+  datawizard::data_arrange("scale") |>
+  dplyr::transmute(Item = item, Scale = as.character(scale), Valence = valence, `Named by` = pct(share_mentioning)) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 4, align = "r")
 ```
 
 Freedom to travel is the one answer that about half of respondents give, and the rest are named by between roughly a tenth and three tenths, with social protection and the loss of cultural identity the rarest. Those prevalences matter for what follows, because a scale is only as informative as the answers it is made of, and a scale of two rarely named items has less to work with than a scale of five common ones.
@@ -111,18 +109,18 @@ Each answer is a yes or a no, and the ordinary correlation between two yes-or-no
 #| fig-height: 6.8
 #| fig-cap: "Tetrachoric correlations among the thirteen items, times one hundred, over all respondents. Items are ordered by the scale they were assigned to: cosmopolitan and utilitarian above the line, communitarian and libertarian below it."
 tet_plot <- tet |>
-  mutate(item = factor(item, item_order), with = factor(with, rev(item_order)))
-ggplot(tet_plot, aes(item, with, fill = tetrachoric)) +
-  geom_tile(colour = "white") +
-  geom_text(aes(label = round(100 * tetrachoric)), size = 3,
-            colour = ifelse(abs(tet_plot$tetrachoric) > 0.45, "white", "#1a1a1a")) +
-  scale_fill_gradient2(low = "#96131b", mid = "white", high = "#0e3b6a", limits = c(-0.6, 0.6),
+  datawizard::data_modify(item = factor(item, item_order), with = factor(with, rev(item_order)))
+ggplot2::ggplot(tet_plot, ggplot2::aes(item, with, fill = tetrachoric)) +
+  ggplot2::geom_tile(colour = "white") +
+  ggplot2::geom_text(ggplot2::aes(label = round(100 * tetrachoric)), size = 3,
+            colour = dplyr::if_else(abs(tet_plot$tetrachoric) > 0.45, "white", "#1a1a1a")) +
+  ggplot2::scale_fill_gradient2(low = "#96131b", mid = "white", high = "#0e3b6a", limits = c(-0.6, 0.6),
                        name = "tetrachoric r") +
-  geom_hline(yintercept = 13 - 7 + 0.5, colour = "#3c4a56") +
-  geom_vline(xintercept = 7.5, colour = "#3c4a56") +
-  labs(x = NULL, y = NULL) +
-  theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_text(angle = 40, hjust = 1), panel.grid = element_blank(),
+  ggplot2::geom_hline(yintercept = 13 - 7 + 0.5, colour = "#3c4a56") +
+  ggplot2::geom_vline(xintercept = 7.5, colour = "#3c4a56") +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 40, hjust = 1), panel.grid = ggplot2::element_blank(),
         legend.position = "right")
 ```
 
@@ -139,17 +137,17 @@ A correlation matrix of thirteen items has thirteen eigenvalues, and their sizes
 #| fig-width: 6.5
 #| fig-height: 3.4
 #| fig-cap: "Eigenvalues of the tetrachoric matrix (points), with the mean eigenvalue of random data of the same size (dashed) from a parallel analysis. With over four hundred thousand respondents the random benchmark is almost exactly one, so the parallel analysis is a formality here, and what matters is the size of the gaps between the eigenvalues."
-ggplot(eig, aes(factor, eigenvalue)) +
-  geom_line(aes(y = parallel_mean), linetype = "dashed", colour = "#5b6b78") +
-  geom_line(colour = "#0e3b6a") +
-  geom_point(colour = "#0e3b6a", size = 2.2) +
-  geom_hline(yintercept = 1, colour = "#b7c2cc") +
-  scale_x_continuous(breaks = 1:13) +
-  labs(x = "dimension", y = "eigenvalue") +
-  theme_minimal(base_size = 11)
+ggplot2::ggplot(eig, ggplot2::aes(factor, eigenvalue)) +
+  ggplot2::geom_line(ggplot2::aes(y = parallel_mean), linetype = "dashed", colour = "#5b6b78") +
+  ggplot2::geom_line(colour = "#0e3b6a") +
+  ggplot2::geom_point(colour = "#0e3b6a", size = 2.2) +
+  ggplot2::geom_hline(yintercept = 1, colour = "#b7c2cc") +
+  ggplot2::scale_x_continuous(breaks = 1:13) +
+  ggplot2::labs(x = "dimension", y = "eigenvalue") +
+  ggplot2::theme_minimal(base_size = 11)
 ```
 
-Read as a count of dimensions, the figure suggests two with a possible third, and the count rests on the items alone, without any assumption about which answers belong together. Two dimensions would be the valence split that the correlation matrix has already shown, and the next section asks whether a third and a fourth are the published split within each valence. The parallel analysis that is usually consulted at this point, which compares each eigenvalue with what random data of the same dimensions would produce, suggests five, but with `r big(n_resp)` respondents the random benchmark is almost exactly one for every dimension, so that criterion reduces to counting eigenvalues above one and has little to add at this sample size.
+Read as a count of dimensions, the figure suggests two with a possible third, and the count rests on the items alone, without any assumption about which answers belong together. Two dimensions would be the valence split that the correlation matrix has already shown, and the next section asks whether a third and a fourth are the published split within each valence. The parallel analysis that is usually consulted at this point, which compares each eigenvalue with what random data of the same dimensions would produce, suggests five, but with `r format(n_resp, big.mark = ",")` respondents the random benchmark is almost exactly one for every dimension, so that criterion reduces to counting eigenvalues above one and has little to add at this sample size.
 
 ## 5. Exploratory solutions {#sec-efa}
 
@@ -158,15 +156,15 @@ Exploratory factor analysis asks which underlying dimensions, unconstrained by a
 ```{r}
 #| label: tbl-efa4
 #| tbl-cap: !expr cap_efa4
-show <- function(x) ifelse(abs(x) < 0.30, "", num(x))
+show <- function(x) dplyr::if_else(abs(x) < 0.30, "", num(x))
 l4 |>
-  mutate(item = factor(item, item_order)) |>
-  arrange(item) |>
-  transmute(Item = as.character(item), `Published scale` = scale,
+  datawizard::data_modify(item = factor(item, item_order)) |>
+  datawizard::data_arrange("item") |>
+  dplyr::transmute(Item = as.character(item), `Published scale` = scale,
             `Factor 1` = show(F1), `Factor 2` = show(F2), `Factor 3` = show(F3), `Factor 4` = show(F4),
             Communality = num(communality)) |>
-  tt() |>
-  style_tt(j = 3:7, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:7, align = "r")
 ```
 
 Two of the four factors reproduce the two negative scales of the original paper, item for item. The communitarian four, unemployment, loss of cultural identity, more crime and border control, load on one factor and on nothing else, with more crime the strongest at `r num(ld("More crime", "F2"))`; bureaucracy and waste of money load on a factor of their own at `r num(ld("Bureaucracy", "F3"))` and `r num(ld("Waste of money", "F3"))`. The two are distinct and related, correlating at `r num(phi4$F3[phi4$factor == "F2"])`, which is the pattern one would want from two dimensions of a single negative stance towards the EU. The positive side does not reproduce the published split. Peace, democracy, economic prosperity and social protection form one factor, cutting across the line between cosmopolitan and utilitarian framing, and it is the two utilitarian items that load highest on it; freedom to travel and cultural diversity form another, with stronger say in the world divided between the two at `r num(ld("Stronger say in the world", "F1"))` and `r num(ld("Stronger say in the world", "F4"))`. Read substantively, the data split the positive meanings of the EU not into a civic and an economic set but into a set of benefits that the EU delivers, peace and democracy alongside prosperity and protection, and a set of things that the EU lets one do and be, travel and diversity, with a stronger say in the world belonging a little to each. The two positive factors correlate at `r num(phi4$F4[phi4$factor == "F1"])`, which is lower than the correlation between the two negative ones.
@@ -175,17 +173,17 @@ The two-factor solution is simpler still, and it is the solution to which the ei
 
 ## 6. A confirmatory comparison {#sec-cfa}
 
-An exploratory solution is chosen by the data, so it is bound to fit the data it was chosen from. A confirmatory model states an assignment of items to dimensions in advance and asks how far the correlations it implies depart from the correlations found. @tbl-cfa compares three such models, fitted to the binary items by diagonally weighted least squares, the estimator built for this kind of data: the published four-scale model, the four-factor model read off @tbl-efa4 with stronger say in the world allowed to belong to both positive factors, and the two-factor valence model. The indices are the usual ones. The comparative fit index and the Tucker–Lewis index read upward towards one, and the root mean square error of approximation and the standardised root mean square residual read downward towards zero. By the customary thresholds a comparative fit index above 0.95 and a root mean square error below 0.05 count as good, and the chi-square is reported for completeness only, because with `r big(n_resp)` respondents it rejects every model that is not exactly true.
+An exploratory solution is chosen by the data, so it is bound to fit the data it was chosen from. A confirmatory model states an assignment of items to dimensions in advance and asks how far the correlations it implies depart from the correlations found. @tbl-cfa compares three such models, fitted to the binary items by diagonally weighted least squares, the estimator built for this kind of data: the published four-scale model, the four-factor model read off @tbl-efa4 with stronger say in the world allowed to belong to both positive factors, and the two-factor valence model. The indices are the usual ones. The comparative fit index and the Tucker–Lewis index read upward towards one, and the root mean square error of approximation and the standardised root mean square residual read downward towards zero. By the customary thresholds a comparative fit index above 0.95 and a root mean square error below 0.05 count as good, and the chi-square is reported for completeness only, because with `r format(n_resp, big.mark = ",")` respondents it rejects every model that is not exactly true.
 
 ```{r}
 #| label: tbl-cfa
 #| tbl-cap: "Three confirmatory models of the thirteen items, fitted on all respondents with the diagonally weighted least squares estimator and robust corrections. The data-driven model is the four-factor exploratory structure refitted as a confirmatory one, and is expected to fit better than the published model on the data it was read from."
 cfa |>
-  mutate(model = c(published = "Published four scales", data_driven = "Data-driven four factors", valence = "Two valence factors")[model]) |>
-  transmute(Model = model, `Chi-square (df)` = sprintf("%s (%d)", big(round(chisq)), as.integer(df)),
+  datawizard::data_modify(model = c(published = "Published four scales", data_driven = "Data-driven four factors", valence = "Two valence factors")[model]) |>
+  dplyr::transmute(Model = model, `Chi-square (df)` = sprintf("%s (%d)", format(round(chisq), big.mark = ","), as.integer(df)),
             CFI = num(cfi, 3), TLI = num(tli, 3), RMSEA = num(rmsea, 3), SRMR = num(srmr, 3)) |>
-  tt() |>
-  style_tt(j = 2:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:6, align = "r")
 ```
 
 The three models order as the exploratory analysis leads one to expect, and none of them reaches the conventional threshold of 0.95 on the comparative fit index. The data-driven model does best on every index, with a comparative fit index of `r num(fit("data_driven", "cfi"), 3)` against `r num(fit("published", "cfi"), 3)` for the published scales and `r num(fit("valence", "cfi"), 3)` for the valence model, and the root mean square error is below 0.05 for all three, at `r num(fit("data_driven", "rmsea"), 3)`, `r num(fit("published", "rmsea"), 3)` and `r num(fit("valence", "rmsea"), 3)`. The published scales are a defensible reading of the items, though not a privileged one. A structure read off the data fits better, as it is bound to, and the difference between the two is confined to the positive side, where economic prosperity and social protection load with peace and democracy instead of forming a scale of their own. At the same time, the finer structure improves on the valence split by a margin that is real but modest, so a reader who prefers the two composites for their reliability, which the next section quantifies, or for their fit to the wording of the claim, gives up less than the four-scale vocabulary suggests.
@@ -198,12 +196,12 @@ How far a short scale, such as one of two answers, can be trusted as a measure o
 #| label: tbl-rel
 #| tbl-cap: "Reliability of the six scales on the menu, from the tetrachoric correlations among their items. Ordinal alpha is Cronbach's alpha computed on the tetrachoric matrix. Mean prevalence is the average share of respondents naming an item of the scale."
 rel |>
-  mutate(scale = factor(scale, c(scale_order, "positive", "negative"))) |>
-  arrange(scale) |>
-  transmute(Scale = as.character(scale), Items = items, `Mean tetrachoric r` = num(mean_tetrachoric),
+  datawizard::data_modify(scale = factor(scale, c(scale_order, "positive", "negative"))) |>
+  datawizard::data_arrange("scale") |>
+  dplyr::transmute(Scale = as.character(scale), Items = items, `Mean tetrachoric r` = num(mean_tetrachoric),
             `Ordinal alpha` = num(ordinal_alpha), `Mean prevalence` = pct(mean_prevalence)) |>
-  tt() |>
-  style_tt(j = 2:5, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:5, align = "r")
 ```
 
 The two composites are the most reliable constructs on the menu, at `r num(alpha("positive"))` and `r num(alpha("negative"))`, because reliability grows with the number of items as well as with their agreement, and the two two-item scales are the least, the utilitarian at `r num(alpha("utilitarian"))` and the libertarian at `r num(alpha("libertarian"))`, although the two libertarian items agree with each other more closely than the items of either positive scale do. In the country-year panel on which the course fits its models, a low reliability means that the cell mean of a two-item scale is noisier for the same number of respondents, so that an association with unemployment is harder to detect on the utilitarian scale than on the cosmopolitan one, for a reason unrelated to whether the association exists. Reliability is a property of the construct, which is why the menu does not offer it as a choice. It still bears on the choice of outcome, and it is one of the reasons for the care with which the outcome axis is read on the results page.
@@ -218,33 +216,33 @@ The scoring rule is a different kind of decision, one about the question itself,
 
 ## 9. The outcome on the curve {#sec-curve-outcome}
 
-When the course asked of every option on its menu whether it is a justifiable way of answering the claim, read as a claim about change within countries over time, three of the decisions made on this page came out in a way that the full menu does not show. The [decision map](../cases/eu-frames/map.qmd) lays out every option of every decision, on the curve and off it, and the [specification menu](../cases/eu-frames/menu.qmd) gives the reasoning for each; this section takes the three that concern the construction of the outcome. The numbers come from the curve of the claim (`cases/eu-frames/data/spec_curve.csv`), the curve of the negative scales (`cases/eu-frames/data/spec_curve_negative.csv`) and the comparison of every option of the full menu with its twins on the curve (`cases/eu-frames/data/menu_deviations.csv`), all fitted on country-year aggregates and classed, like every point of the curve, by the wild cluster bootstrap by country.
+When the course asked of every option on its menu whether it is a justifiable way of answering the claim, read as a claim about change within countries over time, three of the decisions made on this page came out in a way that the full menu does not show. The [decision map](../cases/eu-frames/map.qmd) lays out every option of every decision, on the curve and off it, and the [specification menu](../cases/eu-frames/menu.qmd) gives the reasoning for each; this section takes the three that concern the construction of the outcome. The numbers come from the curve of the claim (`cases/eu-frames/data/spec_curve.csv`), the curve of the negative scales (`cases/eu-frames/data/spec_curve_negative.csv`) and the comparison of every option of the full menu with its twins on the curve (`cases/eu-frames/data/menu_deviations.csv`), all fitted on country-year aggregates and classed, like every point of the curve, by CR2 errors clustered by country with Satterthwaite degrees of freedom.
 
 ### The negative scales {#sec-negative}
 
-The claim under test names the positive dimensions of framing, and the hypothesis from which it was taken has a second half, that poor economic performance increases the negative ones [@Teney2016DoesEUEconomic, p. 621]. The communitarian and libertarian scales and the negative composite answer that second half, so they have a curve of their own, made of the same `r nrow(neg)` specifications, which the [Multiverse page](../cases/eu-frames/multiverse.qmd#negative-scales) draws beside the curve of the claim. On it `r pp(below_sig(neg))` of the specifications lie in the direction of the hypothesis with bootstrap p < 0.05, against `r pp(below_sig(curve))` on the curve of the claim. Two features of the scales explain why the two curves are not to be read as two independent confirmations. The first is that the four shares of a respondent who names anything sum to one, so that under the zero rule the cell means of the two composites add up to one minus the share of respondents who named nothing. Reversed so that it points the way of the claim, the negative composite is therefore the positive composite plus the rate of saying nothing, and once the mean of each country is removed the two correlate at `r num(cor(cell_wide$pos_within, cell_wide$neg_within))` across the 270 country-years, so that a result on the negative composite counts much of the positive result a second time. The second is that the communitarian scale contains the item 'unemployment', which ties the outcome to the predictor by content. At the reproduced specification its claim-aligned partial correlation is `r num(r_at(neg, "mcomm"), 3)` with all thirteen items and `r num(r_at(neg, "mcomm", "un"), 3)` without that one. The libertarian scale, for its part, moves little with the economy: `r pp(below_sig(filter(neg, outcome == "mlib")))` of its specifications lie in the direction of the hypothesis with bootstrap p < 0.05, against `r pp(below_sig(filter(neg, outcome == "mcomm")))` of the communitarian ones, so that any statement about 'the negative dimensions' depends on which of the two scales carries it.
+The claim under test names the positive dimensions of framing, and the hypothesis from which it was taken has a second half, that poor economic performance increases the negative ones [@Teney2016DoesEUEconomic, p. 621]. The communitarian and libertarian scales and the negative composite answer that second half, so they have a curve of their own, made of the same `r nrow(neg)` specifications, which the [Multiverse page](../cases/eu-frames/multiverse.qmd#negative-scales) draws beside the curve of the claim. On it `r pp(below_sig(neg))` of the specifications lie in the direction of the hypothesis with CR2 p < 0.05, against `r pp(below_sig(curve))` on the curve of the claim. Two features of the scales explain why the two curves are not to be read as two independent confirmations. The first is that the four shares of a respondent who names anything sum to one, so that under the zero rule the cell means of the two composites add up to one minus the share of respondents who named nothing. Reversed so that it points the way of the claim, the negative composite is therefore the positive composite plus the rate of saying nothing, and once the mean of each country is removed the two correlate at `r num(cor(cell_wide$pos_within, cell_wide$neg_within))` across the 270 country-years, so that a result on the negative composite counts much of the positive result a second time. The second is that the communitarian scale contains the item 'unemployment', which ties the outcome to the predictor by content. At the reproduced specification its claim-aligned partial correlation is `r num(r_at(neg, "mcomm"), 3)` with all thirteen items and `r num(r_at(neg, "mcomm", "un"), 3)` without that one. The libertarian scale, for its part, moves little with the economy: `r pp(below_sig(dplyr::filter(neg, outcome == "mlib")))` of its specifications lie in the direction of the hypothesis with CR2 p < 0.05, against `r pp(below_sig(dplyr::filter(neg, outcome == "mcomm")))` of the communitarian ones, so that any statement about 'the negative dimensions' depends on which of the two scales carries it.
 
 ### Count and rate {#sec-count}
 
-The paper scores each scale as a share of the mentions of the respondent, and the curve keeps that rule because the claim concerns how citizens frame the EU, which is a matter of composition. A count of the items of the scale that a respondent mentions measures something else, how much the respondent says about the EU in that register, and across the 270 country-years it mostly tracks how much respondents say about the EU at all. The cosmopolitan count correlates at `r num(cor(cell_wide$count_mcosmo, cell_wide$total))` with the mean number of items that respondents in the cell mention, the cosmopolitan share at `r num(cor(cell_wide$share_mcosmo, cell_wide$total))`, and the two versions of the same scale correlate with each other at only `r num(cor(cell_wide$share_mcosmo, cell_wide$count_mcosmo))`. The count therefore answers a neighbouring question, whether people say more or fewer positive things about the EU when the economy worsens, and it is the construct that the reanalysts KEVF1 and 018OL used, which matters for reading their results. The per-item rate divides the count by the number of items in the scale, which puts a two-item and a five-item scale on one footing and after @tbl-rel looks like a consideration in its favour. Dividing by a constant, however, leaves the test and the partial correlation of a linear model exactly as they are for the count, so the rate answers the same question about volume. Swapped into the `r dv("count", "n_pairs")` specifications of the curve, the count leaves `r pp(dv("count", "below_zero"))` of them below zero but only `r pp(dv("count", "below_zero_sig"))` below zero with bootstrap p < 0.05, against `r pp(below_sig(curve))` on the curve itself, and it changes the class of `r pp(dv("count", "class_changes"))` of the pairs. At the reproduced specification the claim-aligned partial correlation falls from `r num(r_at(curve, "mcosmo"), 3)` with the share to `r num(count_ref$r_ca_dev, 3)` with the count, with a bootstrap p-value of `r num(count_ref$p_dev, 2)`.
+The paper scores each scale as a share of the mentions of the respondent, and the curve keeps that rule because the claim concerns how citizens frame the EU, which is a matter of composition. A count of the items of the scale that a respondent mentions measures something else, how much the respondent says about the EU in that register, and across the 270 country-years it mostly tracks how much respondents say about the EU at all. The cosmopolitan count correlates at `r num(cor(cell_wide$count_mcosmo, cell_wide$total))` with the mean number of items that respondents in the cell mention, the cosmopolitan share at `r num(cor(cell_wide$share_mcosmo, cell_wide$total))`, and the two versions of the same scale correlate with each other at only `r num(cor(cell_wide$share_mcosmo, cell_wide$count_mcosmo))`. The count therefore answers a neighbouring question, whether people say more or fewer positive things about the EU when the economy worsens, and it is the construct that the reanalysts KEVF1 and 018OL used, which matters for reading their results. The per-item rate divides the count by the number of items in the scale, which puts a two-item and a five-item scale on one footing and after @tbl-rel looks like a consideration in its favour. Dividing by a constant, however, leaves the test and the partial correlation of a linear model exactly as they are for the count, so the rate answers the same question about volume. Swapped into the `r dv("count", "n_pairs")` specifications of the curve, the count leaves `r pp(dv("count", "below_zero"))` of them below zero but only `r pp(dv("count", "below_zero_sig"))` below zero with CR2 p < 0.05, against `r pp(below_sig(curve))` on the curve itself, and it changes the class of `r pp(dv("count", "class_changes"))` of the pairs. At the reproduced specification the claim-aligned partial correlation falls from `r num(r_at(curve, "mcosmo"), 3)` with the share to `r num(count_ref$r_ca_dev, 3)` with the count, with a CR2 p-value of `r num(count_ref$p_dev, 2)`.
 
 ### The item set {#sec-item-set}
 
-Both item sets stay on the curve. The thirteen items are the published measure, and the set without 'unemployment' removes a content overlap between outcome and predictor. The item enters the denominator of every share, so when more people name unemployment as a meaning of the EU every other share falls mechanically, and part of a decline in positive shares can then be the rise of that one item rather than a change in how positively the EU is framed. The original paper removes the item from the communitarian scale in a robustness check [@Teney2016DoesEUEconomic, p. 633, fn. 5], and the course set drops it from every denominator as well. On the curve of the claim `r pp(below_sig(filter(curve, item_set == "all")))` of the specifications with all thirteen items lie below zero with bootstrap p < 0.05, against `r pp(below_sig(filter(curve, item_set == "un")))` of those without the item. The decision carries `r pp(fk("item_set"))` of the variance of the curve, and moving it alone changes the class of `r pp(fk("item_set", "crossing_rate"))` of the pairs of specifications that differ in nothing else. At the reproduced specification the claim-aligned partial correlation moves from `r num(r_at(curve, "mcosmo"), 3)` to `r num(r_at(curve, "mcosmo", "un"), 3)`. The difference between the two sets is the part of the result that the overlap carries, and the curve keeps both so that the size of that part stays visible.
+Both item sets stay on the curve. The thirteen items are the published measure, and the set without 'unemployment' removes a content overlap between outcome and predictor. The item enters the denominator of every share, so when more people name unemployment as a meaning of the EU every other share falls mechanically, and part of a decline in positive shares can then be the rise of that one item rather than a change in how positively the EU is framed. The original paper removes the item from the communitarian scale in a robustness check [@Teney2016DoesEUEconomic, p. 633, fn. 5], and the course set drops it from every denominator as well. On the curve of the claim `r pp(below_sig(dplyr::filter(curve, item_set == "all")))` of the specifications with all thirteen items lie below zero with CR2 p < 0.05, against `r pp(below_sig(dplyr::filter(curve, item_set == "un")))` of those without the item. The decision carries `r pp(fk("item_set"))` of the variance of the curve, and moving it alone changes the class of `r pp(fk("item_set", "crossing_rate"))` of the pairs of specifications that differ in nothing else. At the reproduced specification the claim-aligned partial correlation moves from `r num(r_at(curve, "mcosmo"), 3)` to `r num(r_at(curve, "mcosmo", "un"), 3)`. The difference between the two sets is the part of the result that the overlap carries, and the curve keeps both so that the size of that part stays visible.
 
 ## Try it {#try-it}
 
 The committed correlation matrix is all that the exploratory analyses need. The code below rebuilds it from `companion/_model-outputs/items_tetrachoric.csv`, refits the four-factor solution of @tbl-efa4, and then asks for three factors, which is the solution that the eigenvalues leave open and which the page does not show. Where stronger say in the world goes, and which of the two positive factors survives when only one is allowed beside the two negative ones, is the question to answer.
 
 ```r
-library(dplyr); library(tidyr); library(psych)
-tet <- read.csv("companion/_model-outputs/items_tetrachoric.csv") |>
-  pivot_wider(names_from = with, values_from = tetrachoric)
-R <- as.matrix(tet[, -1]); rownames(R) <- tet$item
+R <- readr::read_csv("companion/_model-outputs/items_tetrachoric.csv", show_col_types = FALSE) |>
+  tidyr::pivot_wider(names_from = with, values_from = tetrachoric) |>
+  tibble::column_to_rownames("item") |>
+  as.matrix()
 n <- 416698
 
-fa(R, nfactors = 4, n.obs = n, fm = "minres", rotate = "oblimin")   # the table above
-fa(R, nfactors = 3, n.obs = n, fm = "minres", rotate = "oblimin")   # the open question
+psych::fa(R, nfactors = 4, n.obs = n, fm = "minres", rotate = "oblimin")   # the table above
+psych::fa(R, nfactors = 3, n.obs = n, fm = "minres", rotate = "oblimin")   # the open question
 ```
 
 A second exercise stays closer to the menu. Fit the four-factor solution with a varimax rotation instead, which forces the factors to be uncorrelated, and compare the loadings of the two negative factors with the oblique ones above. The difference reflects the correlation of `r num(phi4$F3[phi4$factor == "F2"])` between them.
@@ -258,22 +256,21 @@ A second exercise stays closer to the menu. Fit the four-factor solution with a 
 # from the extract of the European Social Survey that the course ships and from
 # the files of its curve; the objects of the section carry the prefix tr_
 source("../R/trust/_tools.R")
-tr_read <- \(f) readr::read_csv(file.path("../cases/trust/data", f), show_col_types = FALSE)
-tr_ess <- tr_read("trust_ess.csv")
+tr_ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
 tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
                             col_types = readr::cols(stat_type = readr::col_character()))
-tr_rel <- tr_read("display_reliability.csv")
-tr_opts <- tr_read("display_options.csv")
-tr_devs <- tr_read("menu_deviations.csv")
+tr_rel <- readr::read_csv("../cases/trust/data/display_reliability.csv", show_col_types = FALSE)
+tr_opts <- readr::read_csv("../cases/trust/data/display_options.csv", show_col_types = FALSE)
+tr_devs <- readr::read_csv("../cases/trust/data/menu_deviations.csv", show_col_types = FALSE)
 tr_country <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Germany",
                 DK = "Denmark", ES = "Spain", FI = "Finland", FR = "France",
                 GB = "the United Kingdom", GR = "Greece", IE = "Ireland", IT = "Italy",
                 NL = "the Netherlands", NO = "Norway", PT = "Portugal", SE = "Sweden")
-tr_sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), num(x, d))
+tr_sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), num(x, d))
 tr_dv <- \(axis, option, col) tr_devs[[col]][tr_devs$axis == axis & tr_devs$option == option]
 
 # the respondents of the paper: citizens who do not belong to an ethnic minority
-tr_paper <- tr_ess |> filter(citizen %in% 1, minority %in% 0)
+tr_paper <- tr_ess |> datawizard::data_filter(citizen %in% 1, minority %in% 0)
 tr_concern <- CONCERN_ITEMS$index
 tr_trust <- OUTCOME_ITEMS$index
 tr_social <- c("distrust_people", "unfair_people", "unhelpful_people")
@@ -288,59 +285,57 @@ tr_missing <- purrr::map_dbl(purrr::set_names(c(tr_concern, tr_trust)), \(v) mea
 # Cronbach's alpha of the three scales by country and pooled: concern and trust
 # from the display file, interpersonal distrust computed here by the same rule
 # (the respondents of the paper who answered all three items)
-tr_social_rows <- tr_paper |> select(cntry, all_of(tr_social)) |> tidyr::drop_na()
-tr_alpha <- bind_rows(
-  tr_rel |> select(scale, cntry, alpha),
+tr_social_rows <- tr_paper |> dplyr::select(cntry, dplyr::all_of(tr_social)) |> tidyr::drop_na()
+tr_alpha <- dplyr::bind_rows(
+  tr_rel |> datawizard::data_select(select = c("scale", "cntry", "alpha")),
   tr_social_rows |>
-    summarise(alpha = performance::cronbachs_alpha(pick(all_of(tr_social))), .by = cntry) |>
-    mutate(scale = "social"),
+    dplyr::summarise(alpha = performance::cronbachs_alpha(dplyr::pick(dplyr::all_of(tr_social))), .by = cntry) |>
+    datawizard::data_modify(scale = "social"),
   tibble::tibble(scale = "social", cntry = "all",
                  alpha = performance::cronbachs_alpha(tr_social_rows[tr_social]))
 )
 stopifnot(abs(performance::cronbachs_alpha(tidyr::drop_na(tr_paper[tr_concern])) -
                 tr_rel$alpha[tr_rel$scale == "concern" & tr_rel$cntry == "all"]) < 1e-8)
 tr_alpha_sum <- tr_alpha |>
-  filter(cntry != "all") |>
-  summarise(mean_c = mean(alpha), lo = min(alpha), lo_c = cntry[which.min(alpha)],
+  datawizard::data_filter(cntry != "all") |>
+  dplyr::summarise(mean_c = mean(alpha), lo = min(alpha), lo_c = cntry[which.min(alpha)],
             hi = max(alpha), hi_c = cntry[which.max(alpha)], .by = scale) |>
-  left_join(tr_alpha |> filter(cntry == "all") |> select(scale, pooled = alpha), by = "scale") |>
-  mutate(mean_r = purrr::map_dbl(scale, \(s) mean(tr_cors(
+  dplyr::left_join(tr_alpha |> datawizard::data_filter(cntry == "all") |> dplyr::select(scale, pooled = alpha), by = "scale") |>
+  datawizard::data_modify(mean_r = purrr::map_dbl(scale, \(s) mean(tr_cors(
     list(concern = tr_concern, trust = tr_trust, social = tr_social)[[s]]))))
 tr_a <- \(s, col) tr_alpha_sum[[col]][tr_alpha_sum$scale == s]
-# alpha of k items that correlate at r on average, for standardised items
-tr_sb <- \(k, r) k * r / (1 + (k - 1) * r)
 
 # a single item of concern against the index: attenuation by reliability
-tr_ref <- tr_curve |> filter(is_reference)
+tr_ref <- tr_curve |> datawizard::data_filter(is_reference)
 tr_rbar <- tr_a("concern", "mean_r")
 tr_ratio <- tr_rbar / tr_a("concern", "pooled")
 tr_single <- \(o) tr_opts$b[tr_opts$axis == "concern" & tr_opts$option == o]
 
 # the respondents of the paper by the number of items of concern answered
 tr_answered <- tr_paper |>
-  mutate(answered = rowSums(!is.na(pick(all_of(tr_concern)))),
-         concern = scale_mean(pick(everything()), tr_concern, "available")) |>
-  summarise(n = n(), concern = mean(concern, na.rm = TRUE),
+  dplyr::mutate(answered = length(tr_concern) - datawizard::row_count(dplyr::pick(dplyr::all_of(tr_concern)), count = NA),
+         concern = scale_mean(dplyr::pick(dplyr::everything()), tr_concern, "available")) |>
+  dplyr::summarise(n = dplyr::n(), concern = mean(concern, na.rm = TRUE),
             distrust = mean(distrust_parl, na.rm = TRUE), .by = answered) |>
-  arrange(desc(answered))
+  datawizard::data_arrange("-answered")
 tr_skipped <- tr_paper |>
-  filter(rowSums(is.na(pick(all_of(tr_concern)))) %in% 1:2) |>
-  summarise(across(all_of(tr_concern), \(v) mean(is.na(v))))
+  dplyr::filter(datawizard::row_count(dplyr::pick(dplyr::all_of(tr_concern)), count = NA) %in% 1:2) |>
+  dplyr::summarise(dplyr::across(dplyr::all_of(tr_concern), \(v) mean(is.na(v))))
 tr_av <- tr_curve |>
-  filter(outcome == "parliament", controls == "paper", weights == "none",
+  datawizard::data_filter(outcome == "parliament", controls == "paper", weights == "none",
          items == "available", fe == "country_round")
 
 # the four outcomes at the reference settings, and the three items and their
 # mean fitted on one sample, the respondents who answered every item
 tr_out_ref <- tr_curve |>
-  filter(controls == "paper", weights == "none", items == "complete", fe == "country_round")
+  datawizard::data_filter(controls == "paper", weights == "none", items == "complete", fe == "country_round")
 tr_o <- \(o, col) tr_out_ref[[col]][tr_out_ref$outcome == o]
 tr_common <- tr_paper |>
-  mutate(x = scale_mean(pick(everything()), tr_concern, "complete"),
-         soc_distrust = scale_mean(pick(everything()), tr_social, "complete"),
-         index = scale_mean(pick(everything()), tr_trust, "complete"),
+  dplyr::mutate(x = scale_mean(dplyr::pick(dplyr::everything()), tr_concern, "complete"),
+         soc_distrust = scale_mean(dplyr::pick(dplyr::everything()), tr_social, "complete"),
+         index = scale_mean(dplyr::pick(dplyr::everything()), tr_trust, "complete"),
          cr = paste0(cntry, essround)) |>
-  select(cr, all_of(tr_trust), index, x, all_of(CONTROL_TERMS$paper)) |>
+  dplyr::select(cr, dplyr::all_of(tr_trust), index, x, dplyr::all_of(CONTROL_TERMS$paper)) |>
   tidyr::drop_na()
 tr_common_b <- c(tr_trust, "index") |>
   purrr::set_names() |>
@@ -358,7 +353,7 @@ tr_var <- anova(lm(b ~ outcome + controls + weights + items + fe, data = tr_curv
 tr_share <- setNames(tr_var$`Sum Sq` / sum(tr_var$`Sum Sq`), trimws(rownames(tr_var)))
 ```
 
-The immigration-and-trust case takes a claim from a study by the original author (OA) of that case: that citizens of Western European countries who are more concerned about the effect of immigration on the national community trust their national politics less [@McLaren2012CulturalDivideEurope]. In this section OA refers to that author. Both sides of the claim are scales, built from questions of the European Social Survey (ESS) that are answered on a scale from 0 to 10. Since these are not yes-or-no answers, the ordinary correlations between the items and the ordinary Cronbach's alpha do the work that the tetrachoric correlations and the ordinal alpha did in [section 3](#sec-correlations) and [section 7](#sec-reliability). The course ships the respondent-level extract of this case, `cases/trust/data/trust_ess.csv`, under the licence of the ESS, so every number below is computed from it when the page is built, among the `r big(nrow(tr_paper))` respondents whom the paper analyses: the citizens of the 16 countries who do not belong to an ethnic minority. The [case study](../cases/trust/index.qmd) describes the study and the data, and the [specification menu](../cases/trust/menu.qmd) sets out the decisions to which this section returns.
+The immigration-and-trust case takes a claim from a study by the original author (OA) of that case: that citizens of Western European countries who are more concerned about the effect of immigration on the national community trust their national politics less [@McLaren2012CulturalDivideEurope]. In this section OA refers to that author. Both sides of the claim are scales, built from questions of the European Social Survey (ESS) that are answered on a scale from 0 to 10. Since these are not yes-or-no answers, the ordinary correlations between the items and the ordinary Cronbach's alpha do the work that the tetrachoric correlations and the ordinal alpha did in [section 3](#sec-correlations) and [section 7](#sec-reliability). The course ships the respondent-level extract of this case, `cases/trust/data/trust_ess.csv`, under the licence of the ESS, so every number below is computed from it when the page is built, among the `r format(nrow(tr_paper), big.mark = ",")` respondents whom the paper analyses: the citizens of the 16 countries who do not belong to an ethnic minority. The [case study](../cases/trust/index.qmd) describes the study and the data, and the [specification menu](../cases/trust/menu.qmd) sets out the decisions to which this section returns.
 
 ### 10.1 The items and the index {#sec-trust-items}
 
@@ -366,7 +361,7 @@ The ESS asked the respondents of its first four rounds three questions about imm
 
 ```{r}
 #| label: tbl-trust-items
-#| tbl-cap: !expr 'sprintf("The three items of concern about immigration and the three items of distrust, each turned round so that 10 stands for the most concern or the least trust, among the %s respondents of the paper. Missing is the share of them without an answer. Source: `cases/trust/data/trust_ess.csv`.", big(nrow(tr_paper)))'
+#| tbl-cap: !expr 'sprintf("The three items of concern about immigration and the three items of distrust, each turned round so that 10 stands for the most concern or the least trust, among the %s respondents of the paper. Missing is the share of them without an answer. Source: `cases/trust/data/trust_ess.csv`.", format(nrow(tr_paper), big.mark = ","))'
 tibble::tribble(
   ~item,            ~Item,                                               ~ESS,
   "imm_econ",       "Immigration is bad for the economy",                "imbgeco",
@@ -376,27 +371,27 @@ tibble::tribble(
   "distrust_pol",   "Distrust of politicians",                           "trstplt",
   "distrust_legal", "Distrust of the legal system",                      "trstlgl"
 ) |>
-  transmute(Item, `ESS variable` = ESS,
+  dplyr::transmute(Item, `ESS variable` = ESS,
             Mean = num(purrr::map_dbl(item, tr_mean_item, f = mean)),
             SD = num(purrr::map_dbl(item, tr_mean_item, f = sd)),
             Missing = pct(tr_missing[item])) |>
-  tt() |>
-  style_tt(j = 3:5, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:5, align = "r")
 ```
 
 The three items of concern correlate with one another at between `r num(min(tr_cors(tr_concern)))` and `r num(max(tr_cors(tr_concern)))`, against the 0.58 to 0.65 that the paper reports, so they share much of what they measure without being copies of one another. The item on cultural life has the lowest mean, which means that respondents worry less, on average, about what immigration does to cultural life than about what it does to the economy or to the country as a place to live. Between `r pct(min(tr_missing))` and `r pct(max(tr_missing))` of the respondents left each of the six items unanswered, and section 10.3 takes up what that does to a scale.
 
 ### 10.2 Reliability {#sec-trust-reliability}
 
-Cronbach's alpha compares the variance of a sum of items with the variances of the items taken one at a time. When the items vary together, their sum varies more than the items alone would make it vary, and alpha approaches one; when they are unrelated, it falls towards zero. It grows with the average correlation between the items and with their number. Three items that correlate at `r num(tr_rbar)`, the average for the items of concern, give an alpha of about `r num(tr_sb(3, tr_rbar))`, and six items correlating at the same level would give `r num(tr_sb(6, tr_rbar))`. Read as a reliability, alpha estimates the share of the variance of a scale that comes from what its items have in common rather than from the noise of each answer, on the assumption that every item measures the same disposition equally well. @tbl-trust-alpha gives it for the three scales of the case. Besides the index of concern and the mean of the three trust items, these include interpersonal distrust, the mean of three items on whether most people can be trusted, would be fair and try to be helpful, which the paper holds constant as a control.
+Cronbach's alpha compares the variance of a sum of items with the variances of the items taken one at a time. When the items vary together, their sum varies more than the items alone would make it vary, and alpha approaches one; when they are unrelated, it falls towards zero. It grows with the average correlation between the items and with their number. Three items that correlate at `r num(tr_rbar)`, the average for the items of concern, give an alpha of about `r num(psych::alpha(matrix(tr_rbar, 3, 3) + diag(1 - tr_rbar, 3))$total$std.alpha)`, and six items correlating at the same level would give `r num(psych::alpha(matrix(tr_rbar, 6, 6) + diag(1 - tr_rbar, 6))$total$std.alpha)`. Read as a reliability, alpha estimates the share of the variance of a scale that comes from what its items have in common rather than from the noise of each answer, on the assumption that every item measures the same disposition equally well. @tbl-trust-alpha gives it for the three scales of the case. Besides the index of concern and the mean of the three trust items, these include interpersonal distrust, the mean of three items on whether most people can be trusted, would be fair and try to be helpful, which the paper holds constant as a control.
 
 ```{r}
 #| label: tbl-trust-alpha
 #| tbl-cap: "Cronbach's alpha of the three scales of the case, among the respondents of the paper who answered all three items of a scale: pooled over the 16 countries, the mean of the 16 country values, and the countries where it is lowest and highest. The mean correlation is the average correlation between two items of the scale. The last column gives the values reported in the paper, pp. 231–233. Sources: `cases/trust/data/display_reliability.csv` and, for interpersonal distrust, `cases/trust/data/trust_ess.csv`."
 tr_alpha_sum |>
-  mutate(scale = factor(scale, c("concern", "trust", "social"))) |>
-  arrange(scale) |>
-  transmute(
+  datawizard::data_modify(scale = factor(scale, c("concern", "trust", "social"))) |>
+  datawizard::data_arrange("scale") |>
+  dplyr::transmute(
     Scale = c(concern = "Concern about immigration", trust = "Distrust of the three institutions",
               social = "Interpersonal distrust")[as.character(scale)],
     `Mean correlation` = num(mean_r),
@@ -407,8 +402,8 @@ tr_alpha_sum |>
     `In the paper` = c(concern = "0.83 on average; lowest 0.75 (NL)", trust = "not reported",
                        social = "0.76")[as.character(scale)]
   ) |>
-  tt() |>
-  style_tt(j = 2:4, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:4, align = "r")
 ```
 
 For the index of concern the extract agrees with the paper. Its alpha is `r num(tr_a("concern", "pooled"))` among all the respondents of the paper, the mean of the 16 country values is `r num(tr_a("concern", "mean_c"))`, which is the average that the paper reports, and the lowest value is in `r tr_country[[tr_a("concern", "lo_c")]]` (`r num(tr_a("concern", "lo"))`), where the paper also places its minimum of 0.75. The paper adds that the three items "load onto a single factor in every country" [@McLaren2012CulturalDivideEurope, p. 232]. Interpersonal distrust is the least reliable of the three scales, at `r num(tr_a("social", "pooled"))` against the 0.76 that the paper reports, and as low as `r num(tr_a("social", "lo"))` in `r tr_country[[tr_a("social", "lo_c")]]`. Because it is a control, its reliability bears on how far the analysis actually holds constant what the control stands for. A confounder that is measured with error is held constant only in part, and the part that is left over stays in the coefficient of concern.
@@ -423,20 +418,20 @@ A respondent who answers two of the three items of a scale leaves the analyst wi
 #| label: tbl-trust-answered
 #| tbl-cap: "The respondents of the paper by the number of the three items of concern that they answered, with their mean concern over the items answered and their mean distrust of parliament. Source: `cases/trust/data/trust_ess.csv`."
 tr_answered |>
-  transmute(
+  dplyr::transmute(
     `Items answered` = as.character(answered),
-    Respondents = big(n),
+    Respondents = format(n, big.mark = ","),
     Share = pct(n / sum(n)),
-    `Mean concern` = if_else(is.nan(concern), "–", num(concern)),
+    `Mean concern` = dplyr::if_else(is.nan(concern), "–", num(concern)),
     `Mean distrust of parliament` = num(distrust)
   ) |>
-  tt() |>
-  style_tt(j = 2:5, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:5, align = "r")
 ```
 
 The respondents with a partial answer are few, `r pct(sum(tr_answered$n[tr_answered$answered %in% 1:2]) / nrow(tr_paper))` of the respondents of the paper, and they are not a random slice of them. Over the items that they did answer, they are more concerned about immigration than those who answered all three, and they distrust parliament more. The item that they skip most often is the one on the economy, which `r pct(tr_skipped$imm_econ)` of them left unanswered, against `r pct(tr_skipped$imm_culture)` for cultural life and `r pct(tr_skipped$imm_place)` for the country as a place to live.
 
-The respondents who answered none of the three have no score under either rule, and each rule makes a different assumption about those who answered some of them. The complete rule leaves them out, which does no harm only if they resemble the respondents who answered everything, and @tbl-trust-answered suggests that they do not. The available rule keeps them, on the assumption that a skipped item would have been answered like the items that were answered, and it gives them a scale built from fewer items, which carries more error. Neither assumption can be checked against answers that were never given, so both rules stay on the curve. Swapped into twin specifications, which agree on every other decision, the available rule keeps `r big(round(tr_dv("items", "available", "n_shift_mean")))` more respondents on average and moves the estimate by `r tr_sgn(tr_dv("items", "available", "shift_mean"), 4)` on average, from `r tr_sgn(tr_dv("items", "available", "shift_min"), 4)` to `r tr_sgn(tr_dv("items", "available", "shift_max"), 4)`. At the reference settings it gives `r num(tr_av$b, 3)` on `r big(tr_av$n)` respondents, against `r num(tr_ref$b, 3)` on `r big(tr_ref$n)`.
+The respondents who answered none of the three have no score under either rule, and each rule makes a different assumption about those who answered some of them. The complete rule leaves them out, which does no harm only if they resemble the respondents who answered everything, and @tbl-trust-answered suggests that they do not. The available rule keeps them, on the assumption that a skipped item would have been answered like the items that were answered, and it gives them a scale built from fewer items, which carries more error. Neither assumption can be checked against answers that were never given, so both rules stay on the curve. Swapped into twin specifications, which agree on every other decision, the available rule keeps `r format(round(tr_dv("items", "available", "n_shift_mean")), big.mark = ",")` more respondents on average and moves the estimate by `r tr_sgn(tr_dv("items", "available", "shift_mean"), 4)` on average, from `r tr_sgn(tr_dv("items", "available", "shift_min"), 4)` to `r tr_sgn(tr_dv("items", "available", "shift_max"), 4)`. At the reference settings it gives `r num(tr_av$b, 3)` on `r format(tr_av$n, big.mark = ",")` respondents, against `r num(tr_ref$b, 3)` on `r format(tr_ref$n, big.mark = ",")`.
 
 ### 10.4 The three trust items {#sec-trust-outcome}
 
@@ -454,40 +449,38 @@ All four outcomes stay on the curve of the claim. Parliament is the outcome of t
 #| label: tbl-trust-outcomes
 #| tbl-cap: "The four outcomes on the curve at the reference settings, in points of distrust (0–10) per point of concern (0–10), with errors clustered by country (t on 15 df) and the partial correlation by the rule of Multi100. Each specification has its own analysed respondents. Source: `cases/trust/data/spec_curve.csv`."
 tr_out_ref |>
-  mutate(outcome = factor(outcome, SPEC_AXES$outcome)) |>
-  arrange(outcome) |>
-  transmute(
+  datawizard::data_modify(outcome = factor(outcome, SPEC_AXES$outcome)) |>
+  datawizard::data_arrange("outcome") |>
+  dplyr::transmute(
     Outcome = c(parliament = "Parliament", politicians = "Politicians", legal = "Legal system",
                 index = "Mean of the three")[as.character(outcome)],
     Coefficient = num(b, 3),
     `Clustered SE` = num(se, 4),
     t = num(stat, 1),
     `Partial r` = num(r, 3),
-    Respondents = big(n)
+    Respondents = format(n, big.mark = ",")
   ) |>
-  tt() |>
-  style_tt(j = 2:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:6, align = "r")
 ```
 
 Across the curve, set against parliament on twin specifications, distrust of politicians lies `r num(abs(tr_dv("outcome", "politicians", "shift_mean")), 3)` points lower on average (from `r tr_sgn(tr_dv("outcome", "politicians", "shift_min"))` to `r tr_sgn(tr_dv("outcome", "politicians", "shift_max"))`), the legal system `r num(abs(tr_dv("outcome", "legal", "shift_mean")), 3)` and the mean of the three `r num(abs(tr_dv("outcome", "index", "shift_mean")), 3)`, and no pair changes the verdict at the 5% level. The outcome carries `r pct(tr_share[["outcome"]])` of the variance of the `r nrow(tr_curve)` estimates, against `r pct(tr_share[["controls"]])` for the adjustment, so the choice of institution moves the size of the result far less than the choice of what to hold constant.
 
-The mean of the three shows what random error in an outcome does and does not do. On the `r big(nrow(tr_common))` respondents who answered every item, the sample on which the mean is analysed, the three institutions give `r num(tr_common_b[["distrust_parl"]], 3)` for parliament, `r num(tr_common_b[["distrust_pol"]], 3)` for politicians and `r num(tr_common_b[["distrust_legal"]], 3)` for the legal system. Their average, `r num(mean(tr_common_b[tr_trust]), 3)`, is exactly the coefficient of the mean, because the regression of an average of outcomes on the same predictors is the average of their regressions. Averaging the items therefore places the coefficient among those of its items and does not raise it. Error in an outcome adds noise around the regression line without pulling the coefficient towards zero, unlike error in a predictor. What averaging changes is the precision: the mean has the smallest clustered standard error of the four and the largest partial correlation, `r num(tr_o("index", "r"), 3)` against `r num(tr_o("parliament", "r"), 3)` for parliament, because part of the noise of each item cancels out in the average. That is the case for the mean as a measure. The argument of the paper for the separate items concerns the question, and the curve keeps both.
+The mean of the three shows what random error in an outcome does and does not do. On the `r format(nrow(tr_common), big.mark = ",")` respondents who answered every item, the sample on which the mean is analysed, the three institutions give `r num(tr_common_b[["distrust_parl"]], 3)` for parliament, `r num(tr_common_b[["distrust_pol"]], 3)` for politicians and `r num(tr_common_b[["distrust_legal"]], 3)` for the legal system. Their average, `r num(mean(tr_common_b[tr_trust]), 3)`, is exactly the coefficient of the mean, because the regression of an average of outcomes on the same predictors is the average of their regressions. Averaging the items therefore places the coefficient among those of its items and does not raise it. Error in an outcome adds noise around the regression line without pulling the coefficient towards zero, unlike error in a predictor. What averaging changes is the precision: the mean has the smallest clustered standard error of the four and the largest partial correlation, `r num(tr_o("index", "r"), 3)` against `r num(tr_o("parliament", "r"), 3)` for parliament, because part of the noise of each item cancels out in the average. That is the case for the mean as a measure. The argument of the paper for the separate items concerns the question, and the curve keeps both.
 
 ## Try it {#sec-trust-try}
 
 In the workspace of the case the extract is `data/trust_ess.csv`. The code below computes the alpha of the index of concern in each country. Find the country where it is lowest, and work out which of the three items, left out, would lower it most there. Then compute the alpha of the three trust items, and of parliament and politicians alone, and decide whether the legal system adds to the reliability of the mean, and whether that matters for the argument of the paper in section 10.4.
 
 ```r
-library(dplyr); library(purrr); library(performance)
 ess <- readr::read_csv("data/trust_ess.csv", show_col_types = FALSE)
 concern <- c("imm_econ", "imm_culture", "imm_place")
 
 ess |>
-  filter(citizen == 1, minority == 0) |>
-  select(cntry, all_of(concern)) |>
+  datawizard::data_filter(citizen == 1, minority == 0) |>
+  datawizard::data_select(select = c("cntry", concern)) |>
   tidyr::drop_na() |>
-  split(~cntry) |>
-  map_dbl(\(d) cronbachs_alpha(select(d, -cntry)))
+  dplyr::summarise(alpha = performance::cronbachs_alpha(dplyr::pick(dplyr::all_of(concern))), .by = cntry)
 ```
 
 ## Sources and provenance {#sec-sources}

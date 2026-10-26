@@ -1,4 +1,4 @@
-# ########################################################################### #
+###############################################################################
 # Title:        Person-level extract carrying the original author's full
 #               regression variable set (SUPERSEDED)
 # Purpose:      Kept as the record of the build that the course's private
@@ -33,18 +33,13 @@
 #               fully synthetic files ever leave this directory.
 # Author:       Chris Moreh
 # Last updated: 2026-07-30
-# ########################################################################### #
-
-suppressPackageStartupMessages({
-  library(haven); library(dplyr); library(purrr); library(readr); library(tibble)
-})
-
+###############################################################################
 rawdir <- "_planning_data/raw"
 
 # The wave inventory, item positions and country variables are the verified
 # ones from the companion article's build; the covariate columns below are
 # resolved by label instead.
-waves <- tribble(
+waves <- tibble::tribble(
   ~file,                ~eb,    ~year, ~cntry_v,   ~items_from, ~items_style, ~w1_v,
   "ZA4056_v1-0-1.dta", "61.0",  2004,  "isocntry",  63,   "v", "v9",
   "ZA4229_v1-1-0.dta", "62.0",  2004,  "v7",        105,  "v", "v8",
@@ -87,7 +82,7 @@ covariate_labels <- c(
 )
 
 label_of <- function(d) {
-  map_chr(d, function(x) {
+  purrr::map_chr(d, \(x) {
     l <- attr(x, "label"); if (is.null(l)) "" else as.character(l)
   })
 }
@@ -109,41 +104,40 @@ read_wave <- function(w) {
   items <- if (w$items_style == "v") paste0("v", w$items_from:(w$items_from + 13))
            else paste0(w$items_style, "_", 1:14)
 
-  head <- read_dta(file.path(rawdir, w$file), n_max = 0)
+  head <- haven::read_dta(file.path(rawdir, w$file), n_max = 0)
   nm <- names(head); lab <- label_of(head)
-  cov <- imap_chr(covariate_labels, \(p, k) resolve(nm, lab, p, w$file, k))
+  cov <- purrr::imap_chr(covariate_labels, \(p, k) resolve(nm, lab, p, w$file, k))
 
   cols <- c(w$cntry_v, items, w$w1_v, na.omit(unname(cov)))
-  d <- read_dta(file.path(rawdir, w$file), col_select = all_of(cols))
+  d <- haven::read_dta(file.path(rawdir, w$file), col_select = dplyr::all_of(cols))
   d <- d[, cols]
   names(d) <- c("cntry", paste0("it", 1:14), "w1", names(cov)[!is.na(cov)])
-  for (miss in names(cov)[is.na(cov)]) d[[miss]] <- NA_real_
+  for (miss in names(cov)[is.na(cov)]) d[[miss]] <- NA_real_  # r-style: keep – adds a missing column for each covariate that the wave lacks
 
-  d <- d |> mutate(across(starts_with("it"), \(x) as.numeric(x)))
+  d <- d |> dplyr::mutate(dplyr::across(dplyr::starts_with("it"), \(x) as.numeric(x)))
   vals <- unique(na.omit(unlist(d[paste0("it", 1:14)])))
   stopifnot("framing items not coded 0/1" = all(vals %in% c(0, 1)))
 
   d |>
-    mutate(cntry = as.character(cntry),
-           cntry = recode(cntry, "DE-E" = "DE", "DE-W" = "DE",
+    dplyr::mutate(cntry = as.character(cntry),
+           cntry = dplyr::recode(cntry, "DE-E" = "DE", "DE-W" = "DE",
                           "GB-GBN" = "GB", "GB-NIR" = "GB"),
            eb = w$eb, year = w$year,
-           across(c(age, gender, edu, occ, urban, rile, w1), \(x) as.numeric(x))) |>
-    filter(cntry %in% eu27)
+           dplyr::across(c(age, gender, edu, occ, urban, rile, w1), \(x) as.numeric(x))) |>
+    dplyr::filter(cntry %in% eu27)
 }
 
 # --- read ------------------------------------------------------------------
-cat("Resolving covariates and reading 16 waves...\n")
-mapping <- map(seq_len(nrow(waves)), function(i) {
+mapping <- purrr::map(seq_len(nrow(waves)), \(i) {
   w <- waves[i, ]
-  head <- read_dta(file.path(rawdir, w$file), n_max = 0)
+  head <- haven::read_dta(file.path(rawdir, w$file), n_max = 0)
   nm <- names(head); lab <- label_of(head)
   c(file = w$file,
-    imap_chr(covariate_labels, \(p, k) resolve(nm, lab, p, w$file, k)))
-}) |> bind_rows()
+    purrr::imap_chr(covariate_labels, \(p, k) resolve(nm, lab, p, w$file, k)))
+}) |> dplyr::bind_rows()
 print(as.data.frame(mapping), right = FALSE)
 
-ind <- map(seq_len(nrow(waves)), \(i) read_wave(waves[i, ])) |> bind_rows()
+ind <- purrr::map(seq_len(nrow(waves)), \(i) read_wave(waves[i, ])) |> dplyr::bind_rows()
 cat("\nperson-level rows:", nrow(ind), "\n")
 
 # --- the published variable constructions ----------------------------------
@@ -158,15 +152,15 @@ cat("\nperson-level rows:", nrow(ind), "\n")
 # here: it folds the unemployed together with students, retirees and house
 # persons under 'not working'.
 ind <- ind |>
-  mutate(
+  datawizard::data_modify(
     female = as.integer(gender == 2),
-    edu    = if_else(edu %in% c(0, 97, 99), NA_real_, edu),
-    edu    = if_else(edu == 98, age, edu),
-    edu3   = case_when(edu < 16              ~ "low",
+    edu    = dplyr::if_else(edu %in% c(0, 97, 99), NA_real_, edu),
+    edu    = dplyr::if_else(edu == 98, age, edu),
+    edu3   = dplyr::case_when(edu < 16              ~ "low",
                        edu >= 16 & edu <= 19 ~ "mid",
                        edu > 19              ~ "high",
                        TRUE                  ~ NA_character_),
-    ses    = case_when(occ %in% 5:9   ~ "self_employed",
+    ses    = dplyr::case_when(occ %in% 5:9   ~ "self_employed",
                        occ %in% 10:12 ~ "manager",
                        occ %in% 13:14 ~ "white_collar",
                        occ %in% 15:18 ~ "manual",
@@ -176,27 +170,27 @@ ind <- ind |>
                        occ == 2       ~ "student",
                        TRUE           ~ NA_character_),
     unemployed = as.integer(ses == "unemployed"),
-    urban  = case_when(urban == 1 ~ "rural", urban == 2 ~ "small_town",
+    urban  = dplyr::case_when(urban == 1 ~ "rural", urban == 2 ~ "small_town",
                        urban == 3 ~ "large_town", TRUE ~ NA_character_),
-    rile   = if_else(rile %in% 1:10, rile, NA_real_)
+    rile   = dplyr::if_else(rile %in% 1:10, rile, NA_real_)
   )
 
 # Relative-frequency scales, exactly as published: each dimension's mentions
 # over the respondent's total mentions, and zero for anyone who mentions
 # nothing.
 ind <- ind |>
-  mutate(
-    s_cosmo = rowSums(across(all_of(paste0("it", dim_idx$cosmo)))),
-    s_util  = rowSums(across(all_of(paste0("it", dim_idx$util)))),
-    s_comm  = rowSums(across(all_of(paste0("it", dim_idx$comm)))),
-    s_lib   = rowSums(across(all_of(paste0("it", dim_idx$lib)))),
-    s_all   = rowSums(across(all_of(paste0("it", c(1:7, 9:14))))),
-    cosmo = if_else(s_cosmo == 0, 0, s_cosmo / s_all),
-    util  = if_else(s_util  == 0, 0, s_util  / s_all),
-    comm  = if_else(s_comm  == 0, 0, s_comm  / s_all),
-    lib   = if_else(s_lib   == 0, 0, s_lib   / s_all),
-    pos   = if_else(s_cosmo + s_util == 0, 0, (s_cosmo + s_util) / s_all),
-    neg   = if_else(s_comm  + s_lib  == 0, 0, (s_comm  + s_lib)  / s_all)
+  dplyr::mutate(
+    s_cosmo = rowSums(dplyr::across(dplyr::all_of(paste0("it", dim_idx$cosmo)))),
+    s_util  = rowSums(dplyr::across(dplyr::all_of(paste0("it", dim_idx$util)))),
+    s_comm  = rowSums(dplyr::across(dplyr::all_of(paste0("it", dim_idx$comm)))),
+    s_lib   = rowSums(dplyr::across(dplyr::all_of(paste0("it", dim_idx$lib)))),
+    s_all   = rowSums(dplyr::across(dplyr::all_of(paste0("it", c(1:7, 9:14))))),
+    cosmo = dplyr::if_else(s_cosmo == 0, 0, s_cosmo / s_all),
+    util  = dplyr::if_else(s_util  == 0, 0, s_util  / s_all),
+    comm  = dplyr::if_else(s_comm  == 0, 0, s_comm  / s_all),
+    lib   = dplyr::if_else(s_lib   == 0, 0, s_lib   / s_all),
+    pos   = dplyr::if_else(s_cosmo + s_util == 0, 0, (s_cosmo + s_util) / s_all),
+    neg   = dplyr::if_else(s_comm  + s_lib  == 0, 0, (s_comm  + s_lib)  / s_all)
   )
 
 # The 13 binary items are kept. They are what the joint synthesis has to
@@ -205,45 +199,44 @@ ind <- ind |>
 # than being modelled as if they were free-standing outcomes.
 keep_items <- paste0("it", c(1:7, 9:14))
 
-panel <- read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+panel <- readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 ind <- ind |>
-  select(cntry, year, eb, w1, all_of(keep_items),
+  dplyr::select(cntry, year, eb, w1, dplyr::all_of(keep_items),
          age, female, edu, edu3, ses, unemployed, urban, rile,
          cosmo, util, comm, lib, pos, neg) |>
-  left_join(panel |> select(cntry, year, unemp, growth, bailout),
+  dplyr::left_join(panel |> datawizard::data_select(select = c("cntry", "year", "unemp", "growth", "bailout")),
             by = c("cntry", "year"))
 
 dir.create("_planning_data", showWarnings = FALSE)
 saveRDS(ind, "_planning_data/person_level_full.rds")
-cat("written: _planning_data/person_level_full.rds (", nrow(ind), "rows )\n")
 
 # --- validation ------------------------------------------------------------
 # The aggregation has to reproduce the committed panel, or something in the
 # item mapping has moved.
 agg <- ind |>
-  summarise(mcosmo = mean(cosmo), mutil = mean(util), mcomm = mean(comm),
+  dplyr::summarise(mcosmo = mean(cosmo), mutil = mean(util), mcomm = mean(comm),
             mlib = mean(lib), mpos = mean(pos), mneg = mean(neg),
-            n_cy = n(), .by = c(cntry, year))
-chk <- agg |> inner_join(panel, by = c("cntry", "year"),
+            n_cy = dplyr::n(), .by = c(cntry, year))
+chk <- agg |> dplyr::inner_join(panel, by = c("cntry", "year"),
                          suffix = c("_new", "_pub"))
 cat("\ncells matched:", nrow(chk), "of", nrow(panel), "\n")
-walk(c("mcosmo", "mutil", "mcomm", "mlib", "mpos", "mneg"), \(v)
+purrr::walk(c("mcosmo", "mutil", "mcomm", "mlib", "mpos", "mneg"), \(v)
   cat(sprintf("  max |diff| %-7s %.2e\n", v,
               max(abs(chk[[paste0(v, "_new")]] - chk[[paste0(v, "_pub")]])))))
 cat("  n_cy identical:", all(chk$n_cy_new == chk$n_cy_pub), "\n")
 
-cat("\ncoverage (share non-missing):\n")
+# coverage: the share of each covariate that is not missing
 cov_tbl <- ind |>
-  summarise(across(c(age, female, edu3, ses, urban, rile, w1),
+  dplyr::summarise(dplyr::across(c(age, female, edu3, ses, urban, rile, w1),
                    \(x) round(mean(!is.na(x)), 4)))
 print(as.data.frame(cov_tbl), right = FALSE)
 
-cat("\nsocio-economic position:\n")
-print(ind |> count(ses) |> mutate(share = round(n / sum(n), 4)) |>
-        arrange(desc(n)) |> as.data.frame(), right = FALSE)
+# socio-economic position
+print(ind |> dplyr::count(ses) |> datawizard::data_modify(share = round(n / sum(n), 4)) |>
+        datawizard::data_arrange("-n") |> as.data.frame(), right = FALSE)
 
-cat("\nunemployed share by year, against the published rate:\n")
+# the unemployed share by year, against the published rate
 print(ind |>
-  summarise(unemployed_share = round(100 * mean(unemployed, na.rm = TRUE), 2),
+  dplyr::summarise(unemployed_share = round(100 * mean(unemployed, na.rm = TRUE), 2),
             published_rate = round(mean(unemp), 2), .by = year) |>
-  arrange(year) |> as.data.frame(), right = FALSE)
+  datawizard::data_arrange("year") |> as.data.frame(), right = FALSE)

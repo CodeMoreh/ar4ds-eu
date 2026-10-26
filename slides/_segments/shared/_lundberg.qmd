@@ -14,18 +14,18 @@ steps <- tibble::tibble(
           "identification\nassumptions (DAG)",
           "where the R\ncode enters")
 )
-ggplot(steps, aes(x, 1)) +
-  geom_tile(width = 0.8, height = 0.7, fill = ncl_blue) +
-  geom_text(aes(label = lab), colour = "white", fontface = "bold",
+ggplot2::ggplot(steps, ggplot2::aes(x, 1)) +
+  ggplot2::geom_tile(width = 0.8, height = 0.7, fill = ncl_blue) +
+  ggplot2::geom_text(ggplot2::aes(label = lab), colour = "white", fontface = "bold",
             size = 5.2, vjust = -0.3) +
-  geom_text(aes(label = sub), colour = "white", size = 3.6, vjust = 2.0) +
-  annotate("segment", x = 1.42, xend = 1.58, y = 1, yend = 1,
-           arrow = arrow(length = unit(0.18, "cm")), linewidth = 1) +
-  annotate("segment", x = 2.42, xend = 2.58, y = 1, yend = 1,
-           arrow = arrow(length = unit(0.18, "cm")), linewidth = 1) +
-  scale_x_continuous(limits = c(0.5, 3.5)) +
-  labs(x = NULL, y = NULL) +
-  theme_void()
+  ggplot2::geom_text(ggplot2::aes(label = sub), colour = "white", size = 3.6, vjust = 2.0) +
+  ggplot2::annotate("segment", x = 1.42, xend = 1.58, y = 1, yend = 1,
+           arrow = ggplot2::arrow(length = ggplot2::unit(0.18, "cm")), linewidth = 1) +
+  ggplot2::annotate("segment", x = 2.42, xend = 2.58, y = 1, yend = 1,
+           arrow = ggplot2::arrow(length = ggplot2::unit(0.18, "cm")), linewidth = 1) +
+  ggplot2::scale_x_continuous(limits = c(0.5, 3.5)) +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_void()
 ```
 
 ::: {.none}

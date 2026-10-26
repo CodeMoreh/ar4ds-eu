@@ -7,59 +7,52 @@ bibliography: [../references.bib, ../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(tidyr)
-library(readr)
-library(purrr)
-library(ggplot2)
-library(lmerTest)
 set.seed(20260731)
 
-sim   <- read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
-panel <- read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
-sweep <- read_csv("_model-outputs/sim_recovery_joint.csv", show_col_types = FALSE)
-valid <- read_csv("_model-outputs/twin_validation.csv", show_col_types = FALSE)
-marg  <- read_csv("_model-outputs/joint_marginals.csv", show_col_types = FALSE)
-corr  <- read_csv("_model-outputs/joint_corr.csv", show_col_types = FALSE)
-bcoef <- read_csv("_model-outputs/item_probit_coef.csv", show_col_types = FALSE)
+sim   <- readr::read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
+panel <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+sweep <- readr::read_csv("_model-outputs/sim_recovery_joint.csv", show_col_types = FALSE)
+valid <- readr::read_csv("_model-outputs/twin_validation.csv", show_col_types = FALSE)
+marg  <- readr::read_csv("_model-outputs/joint_marginals.csv", show_col_types = FALSE)
+corr  <- readr::read_csv("_model-outputs/joint_corr.csv", show_col_types = FALSE)
+bcoef <- readr::read_csv("_model-outputs/item_probit_coef.csv", show_col_types = FALSE)
 
 DIMS <- c("cosmo", "util", "comm", "lib")
 
 # The specification that the twin reproduces at cell level: C6HJR's published Multi100 specification
 # with a growth co-predictor, one step along the co-predictor fork.
-c6hjr_spec <- \(y) as.formula(
-  paste0(y, " ~ unemp + growth + factor(year) + factor(cntry)"))
+c6hjr_terms <- c("unemp", "growth", "factor(year)", "factor(cntry)")
 
 # What the recipe plants at cell level is the coefficient of the panel itself,
 # because the generator solves each country-year's item thresholds until its
 # expected dimension means ARE those in the panel. Computed here rather than
 # read from a file, so it cannot go stale against the panel it comes from.
-planted <- map(c(DIMS, "pos", "neg"), \(v) {
-  cf <- coef(lm(c6hjr_spec(paste0("m", v)), data = panel))
-  tibble(outcome = v, planted_unemp = cf[["unemp"]],
+planted <- purrr::map(c(DIMS, "pos", "neg"), \(v) {
+  cf <- coef(lm(reformulate(c6hjr_terms, response = paste0("m", v)), data = panel))
+  tibble::tibble(outcome = v, planted_unemp = cf[["unemp"]],
          planted_growth = cf[["growth"]])
-}) |> list_rbind()
+}) |> purrr::list_rbind()
 
 sim <- sim |>
-  mutate(edu3 = factor(edu3, levels = c("low", "mid", "high")),
+  datawizard::data_modify(edu3 = factor(edu3, levels = c("low", "mid", "high")),
          ses = factor(ses, levels = c("manual", "self_employed", "manager",
                                       "white_collar", "house_person",
                                       "unemployed", "retired", "student")),
          urban = factor(urban, levels = c("large_town", "rural", "small_town")))
 
 sim_cells <- sim |>
-  summarise(across(c(all_of(DIMS), pos, neg), mean),
-            unemp = first(unemp), growth = first(growth),
+  dplyr::summarise(dplyr::across(c(dplyr::all_of(DIMS), pos, neg), mean),
+            unemp = dplyr::first(unemp), growth = dplyr::first(growth),
             .by = c(cntry, year))
 
 # Dispersion measures that the null-world and design sections need, derived here
 # rather than pasted so that regenerating the twin cannot leave them stale.
-m_cells   <- lmer(mcosmo ~ unemp + (1 | cntry), data = panel)
-SD_CNTRY  <- as.data.frame(VarCorr(m_cells))$sdcor[1]
+m_cells   <- lmerTest::lmer(mcosmo ~ unemp + (1 | cntry), data = panel)
+SD_CNTRY  <- as.data.frame(lme4::VarCorr(m_cells))$sdcor[1]  # r-style: keep – the VarCorr method lists the variance components as rows
 SD_CY     <- sigma(m_cells)
 SD_PERSON <- sim |>
-  summarise(v = var(cosmo), .by = c(cntry, year)) |>
-  summarise(sd = sqrt(mean(v))) |> pull(sd)
+  dplyr::summarise(v = var(cosmo), .by = c(cntry, year)) |>
+  dplyr::summarise(sd = sqrt(mean(v))) |> dplyr::pull(sd)
 MEAN_COSMO <- mean(sim$cosmo)
 B_COSMO <- planted$planted_unemp[planted$outcome == "cosmo"]
 
@@ -96,8 +89,8 @@ Simulating the instrument gives the shares their exact zeros and ones, makes the
 
 ```{r}
 #| label: coef-sizes
-bcoef |> slice_max(abs(estimate), n = 6) |>
-  mutate(estimate = signif(estimate, 3))
+bcoef |> dplyr::slice_max(abs(estimate), n = 6) |>
+  datawizard::data_modify(estimate = signif(estimate, 3))
 ```
 
 Occupation dominates that list, which is why the twin includes it. An earlier version left occupation out of the answer stage entirely – respondents had an occupation, but it had no bearing on what they said – and the result reproduced the macro slopes while getting two thirds of the coefficients in the model wrong. [Section 2](#sec-recover) describes how that was found.
@@ -107,9 +100,9 @@ Occupation dominates that list, which is why the twin includes it. An earlier ve
 ```{r}
 #| label: glimpse
 sim |>
-  slice_sample(n = 6) |>
-  select(cntry, year, age, edu3, ses, urban, cosmo, util, comm, lib, unemp) |>
-  arrange(cntry, year)
+  dplyr::slice_sample(n = 6) |>
+  datawizard::data_select(select = c("cntry", "year", "age", "edu3", "ses", "urban", "cosmo", "util", "comm", "lib", "unemp")) |>
+  dplyr::arrange(cntry, year)
 ```
 
 ```{r}
@@ -117,8 +110,8 @@ sim |>
 # The share columns are stored rounded to six decimals, so four of them can
 # drift from their sum: the identities need a tolerance, not ==.
 identities <- sim |>
-  filter(cosmo + util + comm + lib > 0) |>
-  summarise(
+  datawizard::data_filter(cosmo + util + comm + lib > 0) |>
+  dplyr::summarise(
     `dimensions sum to 1` = all(abs(cosmo + util + comm + lib - 1) < 5e-6),
     `pos + neg = 1`       = all(abs(pos + neg - 1) < 5e-6),
     `share exactly 0`     = mean(cosmo == 0),
@@ -136,14 +129,14 @@ At **cell level** the planted value is the coefficient from the panel itself, be
 
 ```{r}
 #| label: recover
-map(planted$outcome, \(v) {
-  cf <- coef(lm(c6hjr_spec(v), data = sim_cells))
-  tibble(outcome = v, sim_unemp = cf[["unemp"]], sim_growth = cf[["growth"]])
+purrr::map(planted$outcome, \(v) {
+  cf <- coef(lm(reformulate(c6hjr_terms, response = v), data = sim_cells))
+  tibble::tibble(outcome = v, sim_unemp = cf[["unemp"]], sim_growth = cf[["growth"]])
 }) |>
-  list_rbind() |>
-  left_join(planted, by = "outcome") |>
-  select(outcome, planted_unemp, sim_unemp, planted_growth, sim_growth) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3)))
+  purrr::list_rbind() |>
+  dplyr::left_join(planted, by = "outcome") |>
+  datawizard::data_select(select = c("outcome", "planted_unemp", "sim_unemp", "planted_growth", "sim_growth")) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 Rising unemployment pushes framing away from **both** cosmopolitan and utilitarian terms and towards communitarian ones. Growth works differently, lifting utilitarian framing most, which makes sense because that dimension is built from the economic-prosperity and social-protection items. The pattern comes from the real panel, which the twin reproduces by construction.
@@ -155,31 +148,31 @@ The simulated coefficients are close to the planted values without matching them
 #| fig-width: 8
 #| fig-height: 3.6
 #| fig-cap: "Independent draws from the same recipe, each refitted with C6HJR's published Multi100 specification. Red marks show the planted coefficient. The unemployment slopes sit consistently outside their marks, which is the bias that the text discusses."
-ggplot(sweep, aes(sim_unemp, outcome)) +
-  geom_point(alpha = 0.45, colour = "#00205b", size = 1.6) +
-  geom_point(data = planted, aes(planted_unemp, outcome),
+ggplot2::ggplot(sweep, ggplot2::aes(sim_unemp, outcome)) +
+  ggplot2::geom_point(alpha = 0.45, colour = "#00205b", size = 1.6) +
+  ggplot2::geom_point(data = planted, ggplot2::aes(planted_unemp, outcome),
              colour = "#c8102e", shape = 124, size = 8) +
-  labs(x = "estimated unemployment slope", y = NULL) +
-  theme_minimal(base_size = 12)
+  ggplot2::labs(x = "estimated unemployment slope", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12)
 ```
 
 ```{r}
 #| label: sweep-summary
 planted_long <- planted |>
-  select(outcome, sim_unemp = planted_unemp, sim_growth = planted_growth) |>
-  pivot_longer(-outcome, names_to = "slope", values_to = "planted")
+  dplyr::select(outcome, sim_unemp = planted_unemp, sim_growth = planted_growth) |>
+  tidyr::pivot_longer(-outcome, names_to = "slope", values_to = "planted")
 
 sweep_summary <- sweep |>
-  pivot_longer(c(sim_unemp, sim_growth), names_to = "slope",
+  tidyr::pivot_longer(c(sim_unemp, sim_growth), names_to = "slope",
                values_to = "estimate") |>
-  summarise(draws = n(), mean_estimate = mean(estimate),
+  dplyr::summarise(draws = dplyr::n(), mean_estimate = mean(estimate),
             sd_estimate = sd(estimate), .by = c(outcome, slope)) |>
-  left_join(planted_long, by = c("outcome", "slope")) |>
-  mutate(gap_in_ses = (mean_estimate - planted) / (sd_estimate / sqrt(draws)))
+  dplyr::left_join(planted_long, by = c("outcome", "slope")) |>
+  datawizard::data_modify(gap_in_ses = (mean_estimate - planted) / (sd_estimate / sqrt(draws)))
 
 sweep_summary |>
-  arrange(slope, outcome) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3)))
+  dplyr::arrange(slope, outcome) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 The last column is the test: each remaining gap as a multiple of the standard error of the mean across draws. `r sum(abs(sweep_summary$gap_in_ses) < 2)` of the `r nrow(sweep_summary)` fall inside two standard errors, and the ones outside are not scattered. Every unemployment slope misses in the same direction, with the estimate from the twin larger in magnitude than the planted value by `r sprintf("%.0f", 100 * (median(abs(sweep_summary$mean_estimate[sweep_summary$slope == "sim_unemp"]) / abs(sweep_summary$planted[sweep_summary$slope == "sim_unemp"])) - 1))` per cent at the median. The median is used because the planted slope of libertarian framing is nearly zero, so any absolute error there is an enormous proportion of it, and a mean would report a number driven entirely by the one quantity with almost nothing in it to estimate.
@@ -197,7 +190,7 @@ At **individual level** the planted values are not those of the panel. They are 
 ```{r}
 #| label: validation-summary
 valid |>
-  summarise(coefficients = n(),
+  dplyr::summarise(coefficients = dplyr::n(),
             `within 1 SE` = sum(abs(z) < 1),
             `within 2 SE` = sum(abs(z) < 2),
             largest = round(max(abs(z)), 2))
@@ -224,9 +217,9 @@ Which framing scale you treat as 'EU framing' is a decision about the claim itse
 ```{r}
 #| label: outcome-spread
 planted |>
-  select(outcome, unemp = planted_unemp, growth = planted_growth) |>
-  mutate(ratio_to_cosmo = unemp / unemp[outcome == "cosmo"],
-         across(where(is.numeric), \(x) signif(x, 3)))
+  dplyr::select(outcome, unemp = planted_unemp, growth = planted_growth) |>
+  dplyr::mutate(ratio_to_cosmo = unemp / unemp[outcome == "cosmo"],
+         dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 On unemployment the signs follow the pattern that the claim-alignment convention of the course describes, with both positive framings declining as unemployment rises and both negative ones gaining. Growth does not follow the convention. There the cosmopolitan dimension moves with the communitarian one and utilitarian framing with the libertarian, so the split runs between whichever dimension is gaining and whichever are giving way, and which is which depends on the predictor. Libertarian framing is the weak case in that reading, since its growth coefficient is under one per cent of the communitarian one in size and what the two share is a sign rather than a magnitude. What claim alignment actually rests on is narrower and does hold exactly here: `pos` and `neg` partition the mentions, so `neg` = 1 − `pos` for every mentioner and reverse-coding the negative composite is exact arithmetic.
@@ -252,11 +245,11 @@ The twin is built to reproduce the effects that age, sex, education, occupation 
 ```{r}
 #| label: individual
 valid |>
-  filter(outcome == "cosmo",
+  datawizard::data_filter(outcome == "cosmo",
          !term %in% c("(Intercept)", "munemp", "mgrowth")) |>
-  select(term, real, twin, z) |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
-  arrange(desc(abs(real)))
+  datawizard::data_select(select = c("term", "real", "twin", "z")) |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3))) |>
+  dplyr::arrange(dplyr::desc(abs(real)))
 ```
 
 Education is the largest individual effect in the file: graduates score about `r sprintf("%.2f", valid$real[valid$outcome == "cosmo" & valid$term == "edu3high"])` higher on cosmopolitan framing than those who left school by fifteen, and the twin returns `r sprintf("%.2f", valid$twin[valid$outcome == "cosmo" & valid$term == "edu3high"])`. The `z` column expresses each gap as a multiple of the standard error of the difference, so an absolute value below two means that the twin reproduces that coefficient as well as a second sample of its size would.
@@ -277,13 +270,13 @@ The statistical methods module presents a contrast that it can only display, bec
 
 ```{r}
 #| label: df-story
-m3     <- lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year), data = sim)
+m3     <- lmerTest::lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year), data = sim)
 naive  <- lm(cosmo ~ unemp, data = sim)
 m3_par <- parameters::model_parameters(m3, ci_method = "satterthwaite")
 
-df_tbl <- tibble(
+df_tbl <- tibble::tibble(
   model = c("naive OLS, clustering ignored", "three-level random intercepts"),
-  estimate = c(coef(naive)[["unemp"]], fixef(m3)[["unemp"]]),
+  estimate = c(coef(naive)[["unemp"]], lme4::fixef(m3)[["unemp"]]),
   se = c(sqrt(diag(vcov(naive)))[["unemp"]],
          m3_par$SE[m3_par$Parameter == "unemp"]),
   t = estimate / se,
@@ -293,12 +286,13 @@ df_tbl <- tibble(
 # worth having the within-country slope to hand: it is the one that the
 # multilevel fit leans towards, while the naive fit blends it with the
 # between-country one.
+cell_sizes <- sim |> dplyr::count(cntry, year)
 cells_w <- sim_cells |>
-  left_join(count(sim, cntry, year), by = c("cntry", "year"))
+  dplyr::left_join(cell_sizes, by = c("cntry", "year"))
 B_WITHIN <- coef(lm(cosmo ~ unemp + factor(cntry), data = cells_w,
                     weights = n))[["unemp"]]
 
-df_tbl |> mutate(across(where(is.numeric), \(x) signif(x, 3)))
+df_tbl |> dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 The naive row treats forty thousand respondents as independent pieces of evidence. The multilevel row counts only the few hundred effectively independent units, because respondents inside a country-year share one unemployment value and so provide largely overlapping information about it. Whenever the predictor is measured at a higher level, a person-level sample size suggests a precision that the design does not have. Respecting the structure costs degrees of freedom, and here it changes the estimate too: the naive fit is a different weighted average of between-country and within-country variation, landing at `r signif(df_tbl$estimate[1], 3)` against the multilevel `r signif(df_tbl$estimate[2], 3)`, which is close to the within-country slope of `r signif(B_WITHIN, 3)`. Neither of the two is the planted coefficient, because both leave out the year effects that C6HJR's published Multi100 specification includes. This is also why, in Part 1 of the workshop, two Multi100 analysts fitting person-level models to the same claim could reach such different strengths of evidence.
@@ -317,14 +311,14 @@ POP_COSMO <- weighted.mean(panel$mcosmo, panel$n_cy)
 ERR_UNW   <- mean(sim$cosmo) - POP_COSMO
 ERR_WTD   <- weighted.mean(sim$cosmo, sim$w1) - POP_COSMO
 
-tibble(
+tibble::tibble(
   quantity = c("mean age", "mean cosmopolitan share"),
   unweighted = c(mean(sim$age), mean(sim$cosmo)),
   weighted = c(weighted.mean(sim$age, sim$w1),
                weighted.mean(sim$cosmo, sim$w1)),
   population = c(AGE_REF, POP_COSMO)
 ) |>
-  mutate(across(where(is.numeric), \(x) round(x, 3)))
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 3)))
 ```
 
 The achieved sample is about four years too young, and weighting recovers the population age almost exactly. Because age affects framing in the recipe, that composition error propagates into the outcome: unweighted, the cosmopolitan share sits `r sprintf("%.3f", ERR_UNW)` above the population value, and weighting removes about `r sprintf("%.0f", 100 * (1 - abs(ERR_WTD) / abs(ERR_UNW)))` per cent of that. Weighting re-balances who is counted, so it matters only to the extent that the people who were over- or under-counted differ on the outcome.
@@ -355,35 +349,35 @@ The [inference reading](../cases/eu-frames/reading-inference.qmd) argues that to
 simulate_null <- function(seed) {
   set.seed(seed)
   cells <- panel |>
-    select(cntry, year, n_cy, unemp) |>
-    mutate(n_sim = pmax(1L, as.integer(round(n_cy * 0.10))),
-           u_cy = rnorm(n(), 0, SD_CY))
+    dplyr::select(cntry, year, n_cy, unemp) |>
+    dplyr::mutate(n_sim = pmax(1L, as.integer(round(n_cy * 0.10))),
+           u_cy = rnorm(dplyr::n(), 0, SD_CY))
   cells |>
-    left_join(cells |> distinct(cntry) |>
-                mutate(u_c = rnorm(n(), 0, SD_CNTRY)), by = "cntry") |>
-    uncount(n_sim) |>
-    mutate(cosmo = pmin(pmax(MEAN_COSMO + 0 * unemp + u_c + u_cy +
-                               rnorm(n(), 0, SD_PERSON), 0), 1))
+    dplyr::left_join(cells |> dplyr::distinct(cntry) |>
+                dplyr::mutate(u_c = rnorm(dplyr::n(), 0, SD_CNTRY)), by = "cntry") |>
+    tidyr::uncount(n_sim) |>
+    dplyr::mutate(cosmo = pmin(pmax(MEAN_COSMO + 0 * unemp + u_c + u_cy +
+                               rnorm(dplyr::n(), 0, SD_PERSON), 0), 1))
 }
 
 d_null <- simulate_null(2026)
 null_fits <- list(
   pooled      = \(d) lm(cosmo ~ unemp, data = d),
-  country_re  = \(d) lmer(cosmo ~ unemp + (1 | cntry), data = d),
-  three_level = \(d) lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year), data = d),
+  country_re  = \(d) lmerTest::lmer(cosmo ~ unemp + (1 | cntry), data = d),
+  three_level = \(d) lmerTest::lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year), data = d),
   cell_means  = \(d) lm(mcosmo ~ unemp,
-                        data = summarise(d, mcosmo = mean(cosmo),
-                                         unemp = first(unemp),
+                        data = dplyr::summarise(d, mcosmo = mean(cosmo),
+                                         unemp = dplyr::first(unemp),
                                          .by = c(cntry, year)))
 ) |>
-  imap(\(f, nm) {
+  purrr::imap(\(f, nm) {
     p <- parameters::model_parameters(f(d_null))
-    tibble(estimator = nm, estimate = p$Coefficient[p$Parameter == "unemp"],
+    tibble::tibble(estimator = nm, estimate = p$Coefficient[p$Parameter == "unemp"],
            p_value = p$p[p$Parameter == "unemp"])
   }) |>
-  list_rbind()
+  purrr::list_rbind()
 
-null_fits |> mutate(across(where(is.numeric), \(x) signif(x, 3)))
+null_fits |> dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 Every row estimates a quantity known to be zero, and on this seed `r sum(null_fits$p_value < 0.05)` of the four reject it at the five per cent level. Rerun with a different seed (the function takes one for that purpose) and the two extremes hold. Over thirty draws the pooled row, which treats forty thousand clustered respondents as independent, rejects in about six draws in ten. The three-level row, which counts only the units that actually provide information about unemployment, rejects rarely – blocks of thirty draws put it anywhere from none to one in ten – and is the closest of the four to the five per cent that a valid test should deliver. The other two rows fall between those extremes and move about from one block of seeds to the next.
@@ -396,25 +390,25 @@ A multiverse of four estimators fitted to a null world shows what a full-scale p
 #| fig-height: 6
 #| fig-cap: "A lineup: nine cell-level scatters of mean simulated cosmopolitan framing against unemployment. Eight permute the unemployment series within country; one is the real structure of the twin. Pick the panel that looks like an effect before reading on."
 real_panel <- sample(1:9, 1)
-map(1:9, \(i) {
+purrr::map(1:9, \(i) {
   d <- if (i == real_panel) sim_cells else
-    sim_cells |> mutate(unemp = sample(unemp), .by = cntry)
-  d |> mutate(panel = i)
+    sim_cells |> dplyr::mutate(unemp = sample(unemp), .by = cntry)
+  d |> dplyr::mutate(panel = i)
 }) |>
-  list_rbind() |>
-  ggplot(aes(unemp, cosmo)) +
-  geom_point(alpha = 0.4, size = 0.8, colour = "#00205b") +
-  geom_smooth(method = "lm", se = FALSE, linewidth = 0.6, colour = "#c8102e") +
-  facet_wrap(~panel) +
-  labs(x = "unemployment (%)", y = "cell mean, simulated cosmopolitan share") +
-  theme_minimal(base_size = 12)
+  purrr::list_rbind() |>
+  ggplot2::ggplot(ggplot2::aes(unemp, cosmo)) +
+  ggplot2::geom_point(alpha = 0.4, size = 0.8, colour = "#00205b") +
+  ggplot2::geom_smooth(method = "lm", se = FALSE, linewidth = 0.6, colour = "#c8102e") +
+  ggplot2::facet_wrap(~panel) +
+  ggplot2::labs(x = "unemployment (%)", y = "cell mean, simulated cosmopolitan share") +
+  ggplot2::theme_minimal(base_size = 12)
 ```
 
 ```{r}
 #| label: lineup-answer
 #| echo: false
 #| output: asis
-cat(sprintf("::: {.callout-note collapse=\"true\"}\n## Which panel is real?\nPanel %d. If you picked it, you have informally rejected the null by eye, which is the logic of a permutation test applied visually. If you could not, that is itself evidence about how strong a level-2 relationship of this size looks at this sample size.\n:::\n", real_panel))
+cat(sprintf("::: {.callout-note collapse=\"true\"}\n## Which panel is real?\nPanel %d. If you picked it, you have informally rejected the null by eye, which is the logic of a permutation test applied visually. If you could not, that is itself evidence about how strong a level-2 relationship of this size looks at this sample size.\n:::\n", real_panel))  # r-style: keep – output: asis writes this callout into the page
 ```
 
 ## 9. Design checks {#sec-design}
@@ -426,31 +420,31 @@ Power analysis for multilevel designs rarely has clean formulas, and the standar
 simulate_design <- function(k, seed, per_cell = 1) {
   set.seed(seed)
   cells <- panel |>
-    select(cntry, year, n_cy, unemp) |>
-    crossing(clone = seq_len(k)) |>
-    mutate(cntry = paste0(cntry, "_", clone),
+    dplyr::select(cntry, year, n_cy, unemp) |>
+    tidyr::crossing(clone = seq_len(k)) |>
+    dplyr::mutate(cntry = paste0(cntry, "_", clone),
            n_sim = pmax(1L, as.integer(round(n_cy * 0.10 * per_cell))),
-           u_cy = rnorm(n(), 0, SD_CY))
+           u_cy = rnorm(dplyr::n(), 0, SD_CY))
   cells |>
-    left_join(cells |> distinct(cntry) |>
-                mutate(u_c = rnorm(n(), 0, SD_CNTRY)), by = "cntry") |>
-    uncount(n_sim) |>
-    mutate(cosmo = pmin(pmax(MEAN_COSMO + B_COSMO * unemp + u_c + u_cy +
-                               rnorm(n(), 0, SD_PERSON), 0), 1))
+    dplyr::left_join(cells |> dplyr::distinct(cntry) |>
+                dplyr::mutate(u_c = rnorm(dplyr::n(), 0, SD_CNTRY)), by = "cntry") |>
+    tidyr::uncount(n_sim) |>
+    dplyr::mutate(cosmo = pmin(pmax(MEAN_COSMO + B_COSMO * unemp + u_c + u_cy +
+                               rnorm(dplyr::n(), 0, SD_PERSON), 0), 1))
 }
 
 list(c(k = 1, per_cell = 1), c(k = 1, per_cell = 4), c(k = 4, per_cell = 1)) |>
-  map(\(d) {
-    m <- lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year),
+  purrr::map(\(d) {
+    m <- lmerTest::lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year),
               data = simulate_design(d[["k"]], seed = 20260727 + d[["k"]],
                                      per_cell = d[["per_cell"]]))
     p <- parameters::model_parameters(m, ci_method = "satterthwaite")
-    tibble(countries = 27 * d[["k"]], respondents = nobs(m),
+    tibble::tibble(countries = 27 * d[["k"]], respondents = nobs(m),
            se = p$SE[p$Parameter == "unemp"],
            df = p$df_error[p$Parameter == "unemp"])
   }) |>
-  list_rbind() |>
-  mutate(across(where(is.numeric), \(x) signif(x, 3)))
+  purrr::list_rbind() |>
+  dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
 Quadrupling the respondents inside the existing country-years does improve precision, but much less than quadrupling the countries does, and it adds almost no degrees of freedom, because the number of units that provide independent information about unemployment has not changed. No feasible amount of extra survey data inside the existing 27 countries would do what 81 more countries would, and no choice on the specification menu can manufacture level-2 information that the design does not contain. That is why the estimates in this literature have wide uncertainty bands, and simulation can measure the best precision that a design could reach before any data are collected under it. A methodological literature sets out how to do this systematically, by stating the aims, data-generating mechanisms, estimands, methods and performance measures of a simulation study before it is run [@MorrisEtAl2019UsingSimulationStudies], and it is the natural next reading.

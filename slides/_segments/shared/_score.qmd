@@ -75,14 +75,14 @@ mw <- tibble::tribble(
   "In hand\n(+38 rebuilt)",  182,
   "Assessed",             143
 )
-mw <- mw |> dplyr::mutate(stage = factor(stage, levels = stage))
-ggplot(mw, aes(stage, n, fill = stage)) +
-  geom_col(width = 0.65) +
-  geom_text(aes(label = n), vjust = -0.4, fontface = "bold",
+mw <- mw |> datawizard::data_modify(stage = factor(stage, levels = stage))
+ggplot2::ggplot(mw, ggplot2::aes(stage, n, fill = stage)) +
+  ggplot2::geom_col(width = 0.65) +
+  ggplot2::geom_text(ggplot2::aes(label = n), vjust = -0.4, fontface = "bold",
             colour = ncl_blue, size = 6) +
-  scale_fill_manual(values = c(ncl_blue, orange, grey_mid, green)) +
-  ylim(0, 660) +
-  labs(x = NULL, y = "papers") +
+  ggplot2::scale_fill_manual(values = c(ncl_blue, orange, grey_mid, green)) +
+  ggplot2::ylim(0, 660) +
+  ggplot2::labs(x = NULL, y = "papers") +
   theme_slide(16)
 ```
 
@@ -183,18 +183,18 @@ sh <- tibble::tibble(
                  levels = c("Original", "Replication")),
   r = c(0.25, 0.10)
 )
-ggplot(sh, aes(r, y = 1)) +
-  geom_line(aes(group = 1), colour = grey_mid, linewidth = 2) +
-  geom_point(aes(colour = stage), size = 8) +
-  geom_text(aes(label = sprintf("%.2f", r)), vjust = -1.6,
+ggplot2::ggplot(sh, ggplot2::aes(r, y = 1)) +
+  ggplot2::geom_line(ggplot2::aes(group = 1), colour = grey_mid, linewidth = 2) +
+  ggplot2::geom_point(ggplot2::aes(colour = stage), size = 8) +
+  ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", r)), vjust = -1.6,
             fontface = "bold", colour = ncl_blue, size = 6) +
-  geom_text(aes(label = stage), vjust = 3.2, colour = ncl_blue, size = 5) +
-  scale_colour_manual(values = c(ncl_blue, orange)) +
-  scale_x_continuous(limits = c(0, 0.3)) +
-  labs(x = "median effect size (r)", y = NULL) +
+  ggplot2::geom_text(ggplot2::aes(label = stage), vjust = 3.2, colour = ncl_blue, size = 5) +
+  ggplot2::scale_colour_manual(values = c(ncl_blue, orange)) +
+  ggplot2::scale_x_continuous(limits = c(0, 0.3)) +
+  ggplot2::labs(x = "median effect size (r)", y = NULL) +
   theme_slide(16) +
-  theme(axis.text.y = element_blank(),
-        panel.grid.major.y = element_blank())
+  ggplot2::theme(axis.text.y = ggplot2::element_blank(),
+        panel.grid.major.y = ggplot2::element_blank())
 ```
 
 ::: {.small}

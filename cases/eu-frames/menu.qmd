@@ -1,7 +1,7 @@
 ---
 title: "Specification menu"
 subtitle: "The fourteen decisions, by level"
-bibliography: ../../references.bib
+bibliography: [../../references.bib, ../../references-new.bib]
 aliases:
   - /exercise/spec-menu.html
 ---
@@ -244,7 +244,7 @@ The linear model fits the cell means directly; the beta family fits them through
 
 ### Inference
 
-All the inference rules estimate the same slope and differ only in how uncertain they say it is. Conventional errors treat the 270 country-years as independent, which they are not: in the reproduced model the residuals of a country correlate 0.53 from one year to the next. Errors clustered by country allow any correlation within a country, at the price of resting on 27 clusters, and the variation that identifies the slope is concentrated in a few of them, so that the 27 clusters behave like about ten. The standard clustered errors (CR1, tested on 26 df) assume clusters of similar influence and overstate the evidence when that is not so. The CR2 correction of Bell and McCaffrey (2002), tested on Satterthwaite degrees of freedom in the form of Pustejovsky and Tipton (2018), is the remedy for few or unbalanced clusters, and it classes every point of the curve. The correction adjusts the clustered errors for the unequal influence of the countries, and the Satterthwaite degrees of freedom, whose median on the curve is `r num(stats::median(curve$df_cr2), 1)`, say how many countries effectively carry the information.
+All the inference rules estimate the same slope and differ only in how uncertain they say it is. Conventional errors treat the 270 country-years as independent, which they are not: in the reproduced model the residuals of a country correlate 0.53 from one year to the next. Errors clustered by country allow any correlation within a country, at the price of resting on 27 clusters, and the variation that identifies the slope is concentrated in a few of them, so that the 27 clusters behave like about ten. The standard clustered errors (CR1, tested on 26 df) assume clusters of similar influence and overstate the evidence when that is not so. The CR2 correction of @BellMcCaffrey2002BiasReductionStandard, tested on Satterthwaite degrees of freedom in the form of @PustejovskyTipton2018SmallsampleMethodsClusterrobust, is the remedy for few or unbalanced clusters, and it classes every point of the curve. The correction adjusts the clustered errors for the unequal influence of the countries, and the Satterthwaite degrees of freedom, whose median on the curve is `r num(stats::median(curve$df_cr2), 1)`, say how many countries effectively carry the information.
 
 @tbl-inference gives the reproduced specification under each rule. The partial correlation stays the same throughout, but the p-value runs from `r num(inf("fe_twoway", "conventional", "p"), 5)` under conventional errors to `r num(inf("fe_twoway", "cr2_satterthwaite", "p"), 4)` under CR2, which is why the course does not call the reproduced result significant at 5% without saying under which errors. Across the curve, the share of specifications below zero with p < 0.05 is `r pct(sig_rule("p_conv"))` under conventional errors, `r pct(sig_rule("p_cr1"))` under CR1 and `r pct(sig_rule("p_cr2"))` under CR2.
 

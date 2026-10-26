@@ -14,9 +14,10 @@
 # no change to any page. A delivery that names one of the tracks in
 # delivery.track also gets a line linking the page of that track.
 #
-# Base R only, and no dependency beyond yaml. The page that includes this chunk,
+# Base R and yaml, which reads the file. The page that includes this chunk,
 # index.qmd, is the only one rendered with freeze: false, so the chunk executes in
-# CI, where the workflow installs knitr, rmarkdown and yaml and nothing else.
+# CI, where the workflow installs knitr, rmarkdown, yaml and the two packages that
+# the chunk of index.qmd calls (readr and datawizard).
 
 find_variables_file <- function() {
   candidates <- c("_variables.yml", "../_variables.yml", "../../_variables.yml")

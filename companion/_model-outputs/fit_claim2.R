@@ -1,4 +1,4 @@
-# ########################################################################### #
+###############################################################################
 # Title:        Claim 2 – the education gap, on the respondents and on the
 #               education-band panel
 # Purpose:      Compute the tables the individual-level module quotes for the
@@ -22,13 +22,7 @@
 # Writes:       companion/_model-outputs/claim2_fits.csv
 # Author:       Chris Moreh
 # Last updated: 2026-09-09
-# ########################################################################### #
-
-suppressPackageStartupMessages({
-  library(dplyr); library(purrr); library(readr); library(tibble); library(tidyr)
-  library(lme4); library(lmerTest); library(fixest)
-})
-
+###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 
 # Reference categories as published: manual workers, large towns, the lowest
@@ -36,8 +30,8 @@ source("companion/_model-outputs/_load_respondents.R")
 # main effect of unemployment is the slope at the reference band, which is how
 # the published table reads.
 ind <- ind |>
-  filter(!is.na(edu3), !is.na(ses), !is.na(urban), !is.na(age), !is.na(female)) |>
-  mutate(edu3  = factor(edu3, levels = c("low", "mid", "high")),
+  datawizard::data_filter(!is.na(edu3), !is.na(ses), !is.na(urban), !is.na(age), !is.na(female)) |>
+  datawizard::data_modify(edu3  = factor(edu3, levels = c("low", "mid", "high")),
          ses   = factor(ses, levels = c("manual", "self_employed", "manager",
                                         "white_collar", "house_person",
                                         "unemployed", "retired", "student")),
@@ -49,8 +43,8 @@ ind <- ind |>
 DIMS <- c("cosmo", "util", "comm", "lib")
 
 tidy_terms <- function(est, se, stat, p, terms, keep) {
-  tibble(term = terms, estimate = est, se = se, statistic = stat, p = p) |>
-    filter(term %in% keep)
+  tibble::tibble(term = terms, estimate = est, se = se, statistic = stat, p = p) |>
+    dplyr::filter(term %in% keep)
 }
 keep <- c("munemp", "mgrowth", "edu3mid", "edu3high",
           "edu3mid:munemp", "edu3high:munemp", "edu3mid:mgrowth", "edu3high:mgrowth",
@@ -67,50 +61,50 @@ fit_published <- function(y, data, rule) {
   f <- reformulate(c("female", "mage", "ses", "urban",
                      "edu3 * munemp", "edu3 * mgrowth",
                      "(1 | cntry)", "(1 | cyw)"), response = y)
-  m <- lmer(f, data = data, REML = FALSE,
-            control = lmerControl(calc.derivs = FALSE))
+  m <- lmerTest::lmer(f, data = data, REML = FALSE,
+            control = lme4::lmerControl(calc.derivs = FALSE))
   ct <- coef(summary(m))
   tidy_terms(ct[, "Estimate"], ct[, "Std. Error"], ct[, "t value"], ct[, "Pr(>|t|)"],
              rownames(ct), keep) |>
-    mutate(outcome = y,
+    dplyr::mutate(outcome = y,
            model = paste0("published: respondents in country-waves in countries, no-opinion ", rule),
            level = "respondent", n = nrow(data))
 }
-published <- bind_rows(
-  map(DIMS, \(y) fit_published(y, filter(ind, k > 0), "dropped")) |> list_rbind(),
-  map(DIMS, \(y) fit_published(y, ind, "scored zero")) |> list_rbind()
+published <- dplyr::bind_rows(
+  purrr::map(DIMS, \(y) fit_published(y, dplyr::filter(ind, k > 0), "dropped")) |> purrr::list_rbind(),
+  purrr::map(DIMS, \(y) fit_published(y, ind, "scored zero")) |> purrr::list_rbind()
 )
 
 # --- 2. the same interaction under country and year fixed effects ----------------
 # Under both no-opinion rules, as above.
 fit_fe <- function(y, data, rule) {
   f <- as.formula(paste(y, "~ female + mage + ses + urban + edu3 * munemp + edu3 * mgrowth | cntry + year"))
-  m <- feols(f, data = data, vcov = ~cy)
-  ct <- coeftable(m)
+  m <- fixest::feols(f, data = data, vcov = ~cy)
+  ct <- fixest::coeftable(m)
   tidy_terms(ct[, 1], ct[, 2], ct[, 3], ct[, 4], rownames(ct), keep) |>
-    mutate(outcome = y,
+    dplyr::mutate(outcome = y,
            model = paste0("respondents, country and year fixed effects, errors clustered by country-year, no-opinion ", rule),
            level = "respondent", n = nobs(m))
 }
-fe_resp <- bind_rows(
-  map(DIMS, \(y) fit_fe(y, filter(ind, k > 0), "dropped")) |> list_rbind(),
-  map(DIMS, \(y) fit_fe(y, ind, "scored zero")) |> list_rbind()
+fe_resp <- dplyr::bind_rows(
+  purrr::map(DIMS, \(y) fit_fe(y, dplyr::filter(ind, k > 0), "dropped")) |> purrr::list_rbind(),
+  purrr::map(DIMS, \(y) fit_fe(y, ind, "scored zero")) |> purrr::list_rbind()
 )
 
 # --- 3. the aggregate route on the education-band panel --------------------------
-edu <- read_csv("cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
-  mutate(edu3 = factor(edu3, levels = c("low", "mid", "high")),
+edu <- readr::read_csv("cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
+  datawizard::data_modify(edu3 = factor(edu3, levels = c("low", "mid", "high")),
          munemp  = unemp - mean(unemp),
          mgrowth = growth - mean(growth))
 
-fe_cells <- map(DIMS, \(y) {
+fe_cells <- purrr::map(DIMS, \(y) {
   f <- as.formula(paste0("m", y, " ~ edu3 * munemp + edu3 * mgrowth | cntry + year"))
-  m <- feols(f, data = edu, weights = ~n, vcov = ~cntry)
-  ct <- coeftable(m)
+  m <- fixest::feols(f, data = edu, weights = ~n, vcov = ~cntry)
+  ct <- fixest::coeftable(m)
   tidy_terms(ct[, 1], ct[, 2], ct[, 3], ct[, 4], rownames(ct), keep) |>
-    mutate(outcome = y, model = "education-band cells, country and year fixed effects, weighted by n",
+    dplyr::mutate(outcome = y, model = "education-band cells, country and year fixed effects, weighted by n",
            level = "cell", n = nobs(m))
-}) |> list_rbind()
+}) |> purrr::list_rbind()
 
 # Interaction terms are named in whichever order the package chose; one name
 # per quantity so the page can join on it.
@@ -121,8 +115,8 @@ canon <- c("munemp" = "unemployment", "mgrowth" = "growth",
            "edu3mid:mgrowth" = "mid x growth", "mgrowth:edu3mid" = "mid x growth",
            "edu3high:mgrowth" = "high x growth", "mgrowth:edu3high" = "high x growth")
 
-fits <- bind_rows(published, fe_resp, fe_cells) |>
-  mutate(term = unname(canon[term])) |>
-  select(outcome, level, model, n, term, estimate, se, statistic, p)
+fits <- dplyr::bind_rows(published, fe_resp, fe_cells) |>
+  datawizard::data_modify(term = unname(canon[term])) |>
+  datawizard::data_select(select = c("outcome", "level", "model", "n", "term", "estimate", "se", "statistic", "p"))
 
-write_csv(fits, "companion/_model-outputs/claim2_fits.csv")
+readr::write_csv(fits, "companion/_model-outputs/claim2_fits.csv")

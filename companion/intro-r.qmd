@@ -17,9 +17,7 @@ knitr::opts_knit$set(root.dir = "../cases/housing")
 #| label: page-numbers
 #| include: false
 # The numbers quoted in the prose, computed from the files of the course.
-suppressPackageStartupMessages(library(dplyr))
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-big <- \(x) format(x, big.mark = ",")
 
 page_audit <- readr::read_csv("data/housing_audit.csv", show_col_types = FALSE)
 page_curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
@@ -32,30 +30,30 @@ n_coded     <- sum(!is.na(page_audit$named))
 
 share_of <- \(rows, g) 100 * mean(rows$y[rows$group == g])
 replies_wh <- page_audit |>
-  filter(!is.na(named), group %in% c("white", "hispanic")) |>
-  mutate(y = named)
+  datawizard::data_filter(!is.na(named), group %in% c("white", "hispanic")) |>
+  datawizard::data_modify(y = named)
 delivered_wh <- page_audit |>
-  filter(!is.na(reply), group %in% c("white", "hispanic")) |>
-  mutate(y = if_else(reply == 1, named, 0)) |>
-  filter(!is.na(y))
+  datawizard::data_filter(!is.na(reply), group %in% c("white", "hispanic")) |>
+  datawizard::data_modify(y = dplyr::if_else(reply == 1, named, 0)) |>
+  datawizard::data_filter(!is.na(y))
 white_share <- share_of(replies_wh, "white")
 hisp_share  <- share_of(replies_wh, "hispanic")
 gap_replies <- hisp_share - white_share
 gap_all     <- share_of(delivered_wh, "hispanic") - share_of(delivered_wh, "white")
-ref_row     <- page_curve |> filter(is_reference)
+ref_row     <- page_curve |> datawizard::data_filter(is_reference)
 published   <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE) |>
-  filter(id == "OA")
+  datawizard::data_filter(id == "OA")
 
 # The curve of the EU-frames case, for the figures quoted in section 17, read
 # from the folder of that case beside the housing one; none of the code shown
 # in sections 14 to 18 runs.
 eu_curve <- readr::read_csv("../eu-frames/data/spec_curve.csv", show_col_types = FALSE)
-eu_ref   <- eu_curve |> filter(is_reference)
+eu_ref   <- eu_curve |> datawizard::data_filter(is_reference)
 num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
 pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
 ```
 
-This is the first module of the [companion curriculum](index.qmd), and it is written for the person who arrives with no R at all: a student, a professional from another field, or anyone curious about how the analysis of the course is built. It does not assume that you have programmed before. Sections 1 to 13 work on one file, the housing-audit data, which holds one row for each of the `r big(n_emails)` emails that the original authors (OAs) sent to public housing authorities in the United States, signed with names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect]. The [case study](../cases/housing/index.qmd) tells the story of the experiment. Here it serves as a dataset small enough to look at whole, with an outcome that is either yes or no, which makes it a good place to learn. By the end you will be able to read the file into R, look at it, reshape it with a handful of verbs, compute the share of replies that greeted the sender by name and the difference between two such shares, set the result out as a table and as a figure, and fit your first specification with the helper that the exercise uses.
+This is the first module of the [companion curriculum](index.qmd), and it is written for the person who arrives with no R at all: a student, a professional from another field, or anyone curious about how the analysis of the course is built. It does not assume that you have programmed before. Sections 1 to 13 work on one file, the housing-audit data, which holds one row for each of the `r format(n_emails, big.mark = ",")` emails that the original authors (OAs) sent to public housing authorities in the United States, signed with names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect]. The [case study](../cases/housing/index.qmd) tells the story of the experiment. Here it serves as a dataset small enough to look at whole, with an outcome that is either yes or no, which makes it a good place to learn. By the end you will be able to read the file into R, look at it, reshape it with a handful of verbs, compute the share of replies that greeted the sender by name and the difference between two such shares, set the result out as a table and as a figure, and fit your first specification with the helper that the exercise uses.
 
 Sections 14 to 18 take the same tools further on the country-year panel of the EU-frames case, a table of 270 rows built from Eurobarometer surveys: reading other file formats and fetching data from an archive, the three dialects in which R is written, the grammar of graphics in more depth, the specification curve of that case, and the habit of naming the estimand before a model is read. They are for a second reading, or for a track on the EU-frames case.
 
@@ -64,7 +62,7 @@ Unlike many pages that teach R, this one runs its code in sections 1 to 13. Ever
 ::: {.callout-tip}
 ## Try it
 
-The browser lab is the quickest way to follow along on a first read, since there is nothing to install. It loads the data for you as an object called `audit` and has dplyr and ggplot2 ready, but it does not hold readr or tinytable. Skip the line that reads the file in [section 6](#sec-reading) and the formatted table in [section 11](#sec-table); everything else runs there as printed.
+The browser lab is the quickest way to follow along on a first read, since there is nothing to install. It loads the data for you as an object called `audit` and has datawizard, dplyr and tinyplot ready, but it does not hold readr, tinytable or ggplot2. Skip the line that reads the file in [section 6](#sec-reading), the formatted table in [section 11](#sec-table) and the ggplot2 figures at the end of [section 12](#sec-ggplot); everything else runs there as printed.
 :::
 
 ## 1. R and the IDE {#sec-what}
@@ -165,12 +163,12 @@ Using a package takes two steps, and the difference between them trips nearly ev
 #| eval: false
 install.packages("pak")   # once on a new machine: the installer of the course # r-style: keep – the one-off bootstrap of pak
 pak::pak("readr")         # step 1: download a package to your machine – once
-library(readr)            # step 2: load it into the session – every session
+readr::read_csv("data/housing_audit.csv")   # step 2: call a function by its package and its name
 ```
 
-`pak::pak()` downloads a package, together with everything that it depends on, and stores it on your machine. You run it once, and again only when you want an update. `library()` takes an installed package and attaches it to the running session, so that its functions can be called by name, and it belongs at the top of every script that needs it. The two error messages that you will meet most often come from mixing the steps up: `there is no package called 'readr'` means that step 1 never happened on this machine, and `could not find function "read_csv"` usually means that step 2 is missing from the current session.
+`pak::pak()` downloads a package, together with everything that it depends on, and stores it on your machine. You run it once, and again only when you want an update. The second step is the call itself, and the course writes every function that does not come with R by the name of its package, two colons and the name of the function, as in `readr::read_csv()`. Written that way, a line works in any session on a machine where the package is installed, and anyone who reads it can see at once where each function comes from, which matters when two packages offer functions of the same name. You will also meet the older habit of attaching a package to the session with `library(readr)` at the top of a script, after which its functions can be called by their names alone. The two error messages that you will meet most often come from these two steps: `there is no package called 'readr'` means that step 1 never happened on this machine, and `could not find function "read_csv"` means that the function was called by its name alone in a session to which its package was never attached.
 
-The form `pak::pak()` with two colons calls a function through the name of its package without attaching the package, and you will meet it in code by people who want the source of every function to be visible on the line that uses it. In the workspace, `R/check_setup.R` checks the six packages that the exercise needs (dplyr, purrr, readr, ggplot2, dagitty and rmarkdown) and, if any are missing, prints the line that installs them.
+In the workspace, `R/check_setup.R` checks the twelve packages that the exercise needs (dplyr, purrr, readr, tibble, datawizard, parameters, sandwich, marginaleffects, effectsize, tinyplot, dagitty and rmarkdown) and, if any are missing, prints the line that installs them.
 
 ## 6. Reading the data {#sec-reading}
 
@@ -178,9 +176,7 @@ You will rarely type data by hand. Most data arrive as a **CSV** file, short for
 
 ```{r}
 #| label: read-data
-library(readr)
-
-audit <- read_csv("data/housing_audit.csv")
+audit <- readr::read_csv("data/housing_audit.csv")
 ```
 
 The message that follows the call reports how many rows and columns were read and which type readr inferred for each column: `chr` for character columns such as `name` and `group`, `dbl` for numbers. Reading that message is the first check on any import.
@@ -202,38 +198,36 @@ Data reach researchers in other formats too. The OAs deposited their file in the
 
 ## 7. Looking at the data {#sec-looking}
 
-Before any analysis, look at what you have. The first question to ask of any dataset is what a row is, and here a row is one email. `glimpse()` from dplyr, the package of [section 9](#sec-verbs), turns the table on its side, with one line per column, its type and its first values, which fits all sixteen columns on one screen:
+Before any analysis, look at what you have. The first question to ask of any dataset is what a row is, and here a row is one email. `data_peek()` from datawizard, the package of [section 9](#sec-verbs), turns the table on its side, with one line per column, its type and its first values, which fits all sixteen columns on one screen:
 
 ```{r}
 #| label: glimpse
-library(dplyr)
-
-glimpse(audit)
+datawizard::data_peek(audit)
 ```
 
-`count()` tallies the rows by the values of one or more columns. It answers the first questions about an experiment, how many emails each group of names received and how many of them drew a reply:
+`data_tabulate()` counts the rows for each value of a column and gives each count as a percentage. It answers the first questions about an experiment, how many emails each group of names received and how many of them drew a reply:
 
 ```{r}
 #| label: count-group
-count(audit, group)
-count(audit, reply)
+datawizard::data_tabulate(audit, select = "group")
+datawizard::data_tabulate(audit, select = "reply")
 ```
 
-The `NA` in the second table is the `r n_bounced` emails that bounced and never reached an official. Counting two columns at once shows how the outcome depends on the reply:
+The `NA` in the second table is the `r n_bounced` emails that bounced and never reached an official, and the column of valid percentages leaves them out. Tabulating one column by another shows how the outcome depends on the reply:
 
 ```{r}
 #| label: count-two
-count(audit, reply, named)
+datawizard::data_tabulate(audit, select = "named", by = "reply")
 ```
 
-Read the rows of that table one at a time, since together they explain every missing value in the outcome. An email without a reply (`reply` is 0) has no greeting, so `named` is missing. A reply carries a greeting code of 1 or 0, except for `r n_replies - n_coded` replies that nobody coded. A bounced email has neither. These are the counts that every analysis of the course starts from: `r big(n_emails)` emails, `r n_bounced` bounced, `r n_delivered` delivered, `r n_replies` replies and `r n_coded` replies with a greeting code.
+Read the table one column at a time, since together the columns explain every missing value in the outcome. An email without a reply (the column headed 0) has no greeting, so `named` is missing. A reply (the column headed 1) carries a greeting code of 1 or 0, except for `r n_replies - n_coded` replies that nobody coded. A bounced email (the column headed `NA`) has neither. These are the counts that every analysis of the course starts from: `r format(n_emails, big.mark = ",")` emails, `r n_bounced` bounced, `r n_delivered` delivered, `r n_replies` replies and `r n_coded` replies with a greeting code.
 
 Your IDE can also show the data as a spreadsheet. `View(audit)` opens the data viewer, where you can sort and filter the rows by clicking. Filters in the viewer change only what you are looking at and leave the data frame in your session as it was, so they are a way of looking, not of analysing.
 
 ::: {.callout-tip}
 ## Try it
 
-Run `count(audit, name, group)` and check that the six names fall into the three groups as the case study says. Then run `count(audit, hard_email, reply)`: the column `hard_email` is 1 where the address of the authority could not be found quickly on its own website and was taken from the list of housing authorities kept by the Department of Housing and Urban Development (HUD). Did the harder addresses reply less often? You can answer that by eye from the counts, and section 9 shows how to compute it.
+Run `datawizard::data_tabulate(audit, select = "name", by = "group")` and check that the six names fall into the three groups as the case study says. Then run `datawizard::data_tabulate(audit, select = "reply", by = "hard_email")`: the column `hard_email` is 1 where the address of the authority could not be found quickly on its own website and was taken from the list of housing authorities kept by the Department of Housing and Urban Development (HUD). Did the harder addresses reply less often? You can answer that by eye from the counts, and section 9 shows how to compute it.
 :::
 
 ## 8. The pipe {#sec-pipe}
@@ -251,62 +245,64 @@ audit$reply |> mean(na.rm = TRUE) |> round(3)
 
 Both lines give the share of delivered emails that drew a reply. On one short line the gain is small, but it grows with every step of the chains in the next section, which is why nearly all modern R is written this way. You will also meet an older pipe, `%>%`, from a package called magrittr, in code written before 2021, when the native `|>` became part of R. Read the two in the same way, and write `|>`, as all the materials of the course do.
 
-## 9. The dplyr verbs {#sec-verbs}
+## 9. The datawizard verbs {#sec-verbs}
 
-The dplyr package gives each common operation on a table a named verb. Each takes a data frame as its first argument and returns a data frame, which is what lets the verbs be chained with the pipe:
+The datawizard package, one of the easystats packages of [section 15](#sec-dialects), gives each common operation on a table a named verb. Each takes a data frame as its first argument and returns a data frame, which is what lets the verbs be chained with the pipe:
 
-- `filter()` keeps the rows that meet a condition;
-- `select()` keeps the columns that you name;
-- `mutate()` adds a column or changes one;
-- `summarise()` collapses many rows into one row of summaries, and with `group_by()` into one row per group;
-- `count()` tallies rows, as section 7 showed.
+- `data_filter()` keeps the rows that meet a condition;
+- `data_select()` keeps the columns that you name;
+- `data_modify()` adds a column or changes one;
+- `data_summary()` collapses many rows into one row of summaries, and with `by` into one row per group;
+- `data_tabulate()` counts rows, as section 7 showed.
 
-**`filter()`** takes a condition, and the operators of a condition are worth learning together: `==` for 'equals' (two signs, because one sign assigns), `!=` for 'does not equal', `>` and `<`, `%in%` for 'is one of', `!` for 'not', and `&` for 'and'. `is.na()` asks whether a value is missing, so `!is.na(reply)` keeps the emails that have a reply status, the delivered ones:
+The dplyr package of the tidyverse has a verb for each of these, `filter()`, `select()`, `mutate()`, `summarise()` and `count()`, and you will meet them in code written by others and in a few places in the code of the course, where datawizard has no verb for the job. The course uses datawizard first, so that one family of packages covers the data work and the reading of models.
+
+**`data_filter()`** takes a condition, and the operators of a condition are worth learning together: `==` for 'equals' (two signs, because one sign assigns), `!=` for 'does not equal', `>` and `<`, `%in%` for 'is one of', `!` for 'not', and `&` for 'and'. `is.na()` asks whether a value is missing, so `!is.na(reply)` keeps the emails that have a reply status, the delivered ones:
 
 ```{r}
 #| label: filter
 audit |>
-  filter(!is.na(reply)) |>
-  count(group)
+  datawizard::data_filter(!is.na(reply)) |>
+  datawizard::data_tabulate(select = "group")
 ```
 
-**`select()`** narrows the table to the columns that matter for the task in hand, which makes it easier to read:
+**`data_select()`** narrows the table to the columns that matter for the task in hand, which makes it easier to read. The names of the columns go in quotes, inside `c()`:
 
 ```{r}
 #| label: select
 audit |>
-  select(name, group, reply, named)
+  datawizard::data_select(select = c("name", "group", "reply", "named"))
 ```
 
-**`mutate()`** makes a new column from existing ones. The comparison `group == "hispanic"` is TRUE for the emails signed with Hispanic names and FALSE for the rest, and storing it as a column lets you count it:
+**`data_modify()`** makes a new column from existing ones. The comparison `group == "hispanic"` is TRUE for the emails signed with Hispanic names and FALSE for the rest, and storing it as a column lets you count it:
 
 ```{r}
 #| label: mutate
 audit |>
-  mutate(hispanic_name = group == "hispanic") |>
-  count(hispanic_name)
+  datawizard::data_modify(hispanic_name = group == "hispanic") |>
+  datawizard::data_tabulate(select = "hispanic_name")
 ```
 
-**`group_by()` and `summarise()`** together answer 'what is this for each group?'. `n()` counts the rows of a group, and `sum()` and `mean()` work as they did on a vector. The chain below keeps the delivered emails, groups them by the group of the name, and reports the delivered emails, the replies and the reply rate of each group, which are the numbers typed by hand in [section 3](#sec-objects):
+**`data_summary()`** with `by` answers 'what is this for each group?'. Inside it, `n()` counts the rows of a group, and `sum()` and `mean()` work as they did on a vector. The chain below keeps the delivered emails and reports, for each group of names, the delivered emails, the replies and the reply rate, which are the numbers typed by hand in [section 3](#sec-objects):
 
 ```{r}
 #| label: group-summarise
 audit |>
-  filter(!is.na(reply)) |>
-  group_by(group) |>
-  summarise(
+  datawizard::data_filter(!is.na(reply)) |>
+  datawizard::data_summary(
     delivered  = n(),
     replies    = sum(reply),
-    reply_rate = mean(reply)
+    reply_rate = mean(reply),
+    by = "group"
   )
 ```
 
-Read the chain aloud and it is almost English: take the emails, keep the delivered ones, group them by the group of the name, and for each group report three numbers. A reviewer who can read the code can check it, which is why the scripts of the course are written in these verbs. The same summary can be written without `group_by()`, by giving `summarise()` the argument `.by = group`. The workspace uses that shorter form, and the two give the same table, except that `.by` keeps the groups in the order in which they first appear in the data.
+Read the chain aloud and it is almost English: take the emails, keep the delivered ones, and for each group of names report three numbers. A reviewer who can read the code can check it, which is why the scripts of the course are written in these verbs. `data_summary()` sorts the groups alphabetically, and it prints the reply rates to two decimals while keeping every digit in the table that it returns, so a rate rounds only when you round it, as section 11 does.
 
 ::: {.callout-tip}
 ## Try it
 
-Rewrite the chain above so that it groups by `name` instead of `group`, and find the name that drew the fewest replies. Then group by `hard_email` and answer the question left open at the end of section 7.
+Rewrite the chain above so that it summarises by `name` instead of `group` (`by = "name"`), and find the name that drew the fewest replies. Then summarise by `hard_email` and answer the question left open at the end of section 7.
 :::
 
 ## 10. A share and a difference in shares {#sec-shares}
@@ -316,36 +312,36 @@ The claim of the case is that replies to emails signed with Hispanic names were 
 ```{r}
 #| label: shares
 shares <- audit |>
-  filter(!is.na(named), group %in% c("white", "hispanic")) |>
-  summarise(
+  datawizard::data_filter(!is.na(named), group %in% c("white", "hispanic")) |>
+  datawizard::data_summary(
     replies = n(),
     greeted = sum(named),
     share   = mean(named),
-    .by = group
+    by = "group"
   )
 
 shares
 ```
 
-`r fmt(white_share)`% of the replies to white names opened with the name of the sender, against `r fmt(hisp_share)`% of the replies to Hispanic names. The difference between the two shares is the estimate that the course starts from. Inside `summarise()`, square brackets pick out the value of one group, and multiplying by 100 turns a difference in shares into a difference in percentage points:
+`r fmt(white_share)`% of the replies to white names opened with the name of the sender, against `r fmt(hisp_share)`% of the replies to Hispanic names. The difference between the two shares is the estimate that the course starts from. Inside `data_summary()`, square brackets pick out the value of one group, and multiplying by 100 turns a difference in shares into a difference in percentage points:
 
 ```{r}
 #| label: gap
 shares |>
-  summarise(gap_points = 100 * (share[group == "hispanic"] - share[group == "white"]))
+  datawizard::data_summary(gap_points = 100 * (share[group == "hispanic"] - share[group == "white"]))
 ```
 
 A gap of `r fmt(gap_replies, 2)` points is the raw difference that the paper reports, and it is the **reference specification** of the course, the analysis against which every alternative on the [specification menu](../cases/housing/menu.qmd) is compared. The published estimate of `r fmt(published$b_pp)` points comes from a different calculation, a logistic regression with covariates, which the [binary-outcomes module](binary-outcomes.qmd) fits step by step, and the two agree closely.
 
-That gap is counted among the replies only. An email that drew no reply has no greeting, so it plays no part in the calculation. The other way to count is to keep every delivered email and treat a missing reply as a reply without a greeting by name. `if_else()` makes that column: where `reply` is 1 it keeps the greeting code, and elsewhere it puts 0. The five uncoded replies are still missing afterwards and are filtered out.
+That gap is counted among the replies only. An email that drew no reply has no greeting, so it plays no part in the calculation. The other way to count is to keep every delivered email and treat a missing reply as a reply without a greeting by name. `if_else()` from dplyr makes that column inside `data_modify()`: where `reply` is 1 it keeps the greeting code, and elsewhere it puts 0. The five uncoded replies are still missing afterwards and are filtered out.
 
 ```{r}
 #| label: shares-delivered
 audit |>
-  filter(!is.na(reply), group %in% c("white", "hispanic")) |>
-  mutate(greeted = if_else(reply == 1, named, 0)) |>
-  filter(!is.na(greeted)) |>
-  summarise(emails = n(), share = mean(greeted), .by = group)
+  datawizard::data_filter(!is.na(reply), group %in% c("white", "hispanic")) |>
+  datawizard::data_modify(greeted = dplyr::if_else(reply == 1, named, 0)) |>
+  datawizard::data_filter(!is.na(greeted)) |>
+  datawizard::data_summary(emails = n(), share = mean(greeted), by = "group")
 ```
 
 Counted this way, the gap is `r fmt(gap_all, 2)` points. The two numbers answer two questions. Among the replies, the comparison asks whether officials who answered wrote differently to the two groups of names. Among all delivered emails, it asks whether the name changed the chance of receiving a reply that greeted the sender by name at all, which mixes the decision to reply with the tone of the reply. Which emails are counted is the second argument of `try_spec()` in Task 4, and of all the decisions on the menu it is the one that moves the estimate furthest. The [causal-graphs module](dags.qmd#sec-collider) explains why the comparison among replies needs care, and the [audit-experiments module](experiments.qmd#sec-posttreatment) works through what each comparison assumes.
@@ -358,64 +354,116 @@ Compute the same gap between the Black and the white names, among the coded repl
 
 ## 11. A first table {#sec-table}
 
-A summary built with dplyr is already a table, and printing it in the console is enough while you work. For a report, the numbers need readable column names, sensible rounding and a caption. The chain below builds one row per group of names with the five counts that the case rests on and two percentages:
+A summary built with datawizard is already a table, and printing it in the console is enough while you work. For a report, the numbers need readable column names, sensible rounding and a caption. The chain below builds one row per group of names with the five counts that the case rests on and two percentages:
 
 ```{r}
 #| label: by-group
 by_group <- audit |>
-  filter(!is.na(reply)) |>
-  summarise(
+  datawizard::data_filter(!is.na(reply)) |>
+  datawizard::data_summary(
     delivered = n(),
     replies   = sum(reply),
     coded     = sum(!is.na(named)),
     greeted   = sum(named, na.rm = TRUE),
-    .by = group
+    by = "group"
   ) |>
-  mutate(
+  datawizard::data_modify(
     reply_pct   = 100 * replies / delivered,
     greeted_pct = 100 * greeted / coded
   ) |>
-  arrange(desc(greeted_pct))
+  datawizard::data_arrange("-greeted_pct")
 
 by_group
 ```
 
-`sum(!is.na(named))` counts the replies that carry a greeting code, because each TRUE counts as 1. `arrange(desc(greeted_pct))` sorts the rows from the largest share of greetings to the smallest. The tinytable package then sets the same numbers out as a table for a report. `transmute()` renames and rounds the columns in one step, keeping only the ones that it names, and `tt()` draws the table. The caption and the label beginning `tbl-` are chunk options, which the [Quarto module](quarto.qmd#sec-crossref) explains; they give the table a number that the prose can refer to, as in @tbl-groups.
+`sum(!is.na(named))` counts the replies that carry a greeting code, because each TRUE counts as 1. `data_arrange("-greeted_pct")` sorts the rows from the largest share of greetings to the smallest, the minus sign asking for the descending order. The tinytable package then sets the same numbers out as a table for a report. `transmute()` from dplyr renames and rounds the columns in one step, keeping only the ones that it names, which no single verb of datawizard does, and `tt()` draws the table. The caption and the label beginning `tbl-` are chunk options, which the [Quarto module](quarto.qmd#sec-crossref) explains; they give the table a number that the prose can refer to, as in @tbl-groups.
 
 ```{r}
 #| label: tbl-groups
 #| tbl-cap: "Replies and greetings by name, by the group that the names were meant to indicate. Greetings are counted among the replies that carry a greeting code. Source: `cases/housing/data/housing_audit.csv`."
-library(tinytable)
-
 by_group |>
-  transmute(
+  dplyr::transmute(
     Names                 = c(white = "White", black = "Black", hispanic = "Hispanic")[group],
     Delivered             = delivered,
     Replies               = replies,
     `Replied (%)`         = round(reply_pct, 1),
     `Greeted by name (%)` = round(greeted_pct, 1)
   ) |>
-  tt()
+  tinytable::tt()
 ```
 
-tinytable is not among the six packages of the workspace, so install it with `pak::pak("tinytable")` before you try this. The names in backticks, such as `` `Replied (%)` ``, are column names that contain spaces or symbols, which R accepts only inside backticks.
+tinytable is not among the twelve packages of the workspace, so install it with `pak::pak("tinytable")` before you try this. The names in backticks, such as `` `Replied (%)` ``, are column names that contain spaces or symbols, which R accepts only inside backticks.
 
-Task 3 builds a different kind of table, a cross-tabulation of two columns, with the base function `xtabs()`, and passes it to a test. The first look at that table is `count(audit, group, named)`, which holds the same counts in long form.
+Task 3 builds a different kind of table, a cross-tabulation of two columns, with the base function `xtabs()`, and passes it to a test. The first look at that table is `datawizard::data_tabulate(audit, select = "named", by = "group")`, which holds the same counts and the missing codes beside them.
 
 ## 12. A first figure {#sec-ggplot}
 
-The ggplot2 package draws almost every chart of the course. Its name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts: the data, a mapping from columns to visual properties such as position and colour, and the shapes that are drawn, called geoms. Scales, labels and a theme finish the figure. A bar chart and a scatterplot are two fillings of the same parts, so once you know the parts you can read the code of any figure on this site.
-
-The figure below shows the share of replies that greeted the sender by name for each of the six names. First the data, one row per name:
+Two packages draw the figures of the course. tinyplot draws every figure that you make yourself, in the workspace and in the browser lab, and ggplot2 draws the figures of the pages and slides of this site. Both describe a chart by the same few decisions: which column goes on which axis, which column sets the colour, and what kind of mark is drawn. The figures below show the share of replies that greeted the sender by name for each of the six names, first with tinyplot and then with ggplot2. First the data, one row per name:
 
 ```{r}
 #| label: by-name
 by_name <- audit |>
-  filter(!is.na(named)) |>
-  summarise(share = 100 * mean(named), replies = n(), .by = c(group, name))
+  datawizard::data_filter(!is.na(named)) |>
+  datawizard::data_summary(share = 100 * mean(named), replies = n(), by = c("group", "name"))
 
 by_name
 ```
+
+### tinyplot {#sec-tinyplot}
+
+tinyplot extends the graphics system that comes with R itself and needs no other package, which is why it is light enough to run in the browser lab [@McDermottEtAl2026TinyplotLightweightExtension]. A plot is one call with two parts: a **formula** with the data, which says what goes on which axis, and a **type**, which says what to draw.
+
+```{r}
+#| label: fig-tinyplot-first
+#| fig-cap: "The share of replies that greeted the sender by name, by name: the first draft with tinyplot."
+#| fig-height: 3
+tinyplot::tinyplot(share ~ name, data = by_name, type = "p", flip = TRUE)
+```
+
+The formula `share ~ name` is read 'share by name', as in a model formula: the column before the tilde goes on the vertical axis and the column after it on the horizontal one. `type = "p"` draws points, and `flip = TRUE` turns the chart on its side, so that the names are read down the vertical axis. The default look writes the labels of that axis along it, so that only some of the names fit, and the theme of the next figure sets them upright. Other types draw other marks, among them `"l"` for lines, `"s"` for the steps of a life table, `"barplot"` for bars and `"boxplot"` for boxes.
+
+Three changes make the figure readable. A vertical bar in the formula, `share ~ name | group`, colours each mark by a third column and adds a legend that explains the colours. `type = "barplot"` draws one bar per row, with a length equal to the value in the data. And `reorder(name, share)`, applied to the data before the plot, sorts the names by the value being plotted rather than alphabetically.
+
+```{r}
+#| label: fig-tinyplot-names
+#| fig-cap: "The share of replies that greeted the sender by name, by the name that signed the email, drawn with tinyplot. Source: `cases/housing/data/housing_audit.csv`."
+#| fig-alt: "Bar chart of six names. Emily, Brett and Tyrone lie near 60%, Shanice near 52%, Gabriela near 46% and Santiago near 37%; the bars of the two Hispanic names are burgundy."
+#| fig-height: 3.4
+by_name_sorted <- by_name |>
+  datawizard::data_modify(name  = reorder(name, share),
+                          group = factor(group, levels = c("white", "black", "hispanic"),
+                                         labels = c("white", "Black", "Hispanic")))
+
+tinyplot::tinytheme("minimal")
+tinyplot::tinyplot(share ~ name | group, data = by_name_sorted, type = "barplot", flip = TRUE,
+                   palette = c("grey60", "#4a78ab", "#8b1538"),
+                   legend = list(title = "Names meant to indicate"),
+                   xlab = NA, ylab = "Replies that greeted the sender by name (%)")
+tinyplot::tinytheme()
+```
+
+`palette` gives one colour for each group, in the order of the levels of the factor, which is why the groups are made a factor first, with the labels that the legend should show. `legend` sets the title of the legend. `xlab` and `ylab` supply the words on the axes; with `flip = TRUE`, `xlab` still belongs to the column after the tilde, now drawn vertically, and `NA` leaves it blank. `tinytheme("minimal")` sets the look of everything that carries no data, the gridlines, the frame and the type, until `tinytheme()` without an argument restores the default.
+
+A third column can also split a figure into panels with shared axes, which are called **facets**. The chart below compares the female and the male names of each group, with `facet = ~name_sex`. Make the column of the facets a factor first, so that each panel is headed by its label:
+
+```{r}
+#| label: fig-tinyplot-facets
+#| fig-cap: "The share of replies that greeted the sender by name, by the group of the name, for the female and the male names. Source: `cases/housing/data/housing_audit.csv`."
+#| fig-height: 3
+by_sex <- audit |>
+  datawizard::data_filter(!is.na(named)) |>
+  datawizard::data_summary(share = 100 * mean(named), by = c("group", "name_sex")) |>
+  datawizard::data_modify(name_sex = factor(name_sex, labels = c("female names", "male names")))
+
+tinyplot::tinyplot(share ~ group, facet = ~name_sex, data = by_sex, type = "barplot",
+                   xlab = NA, ylab = "Greeted by name (%)")
+```
+
+Both Hispanic names drew fewer greetings than the names of the other two groups, and the gap is larger for the male name, Santiago, than for the female one, Gabriela. A tinyplot is drawn straight onto the plotting device and is not stored as an object, so a figure is written to a file by opening the file first, with `png("names.png", width = 7, height = 4, units = "in", res = 300)`, drawing, and closing the file with `dev.off()`.
+
+### ggplot2 {#sec-first-ggplot}
+
+The ggplot2 package draws the figures of the pages and slides of this site. Its name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts: the data, a mapping from columns to visual properties such as position and colour, and the shapes that are drawn, called geoms. Scales, labels and a theme finish the figure. A bar chart and a scatterplot are two fillings of the same parts, so once you know the parts you can read the code of any figure on this site.
 
 A plot needs data, a mapping and at least one geom, and everything else has a default good enough to start with:
 
@@ -423,40 +471,38 @@ A plot needs data, a mapping and at least one geom, and everything else has a de
 #| label: fig-first
 #| fig-cap: "The share of replies that greeted the sender by name, by name: the first draft."
 #| fig-height: 3
-library(ggplot2)
-
-ggplot(by_name, aes(x = share, y = name)) +
-  geom_col()
+ggplot2::ggplot(by_name, ggplot2::aes(x = share, y = name)) +
+  ggplot2::geom_col()
 ```
 
 `ggplot()` receives the data frame. `aes()` is the **aesthetic mapping**, which says that the share governs the horizontal position and the name the vertical position. `geom_col()` draws one bar per row, with a length equal to the value in the data. Its cousin `geom_bar()` counts the rows for you instead, and reaching for the wrong one of the two is a frequent small frustration. Layers are joined with `+`, never with the pipe: ggplot2 settled on `+` years before R had a native pipe, and typing `|>` where `+` belongs is among the commonest errors of the first week.
 
-The bars come out in alphabetical order and in one colour. Two changes make the figure readable. `reorder(name, share)` sorts the names by the value being plotted, and `fill = group` inside `aes()` **maps** the colour of each bar to the group of its name, so that ggplot2 adds a legend explaining the colours. A property given outside `aes()`, such as `fill = "#0e3b6a"` in `geom_col()`, is **set** instead: one fixed value for every bar, with no legend because there is nothing to explain.
+The bars come out in alphabetical order and in one colour. The same two changes make the figure readable. `reorder(name, share)` sorts the names by the value being plotted, and `fill = group` inside `aes()` **maps** the colour of each bar to the group of its name, so that ggplot2 adds a legend explaining the colours. A property given outside `aes()`, such as `fill = "#0e3b6a"` in `geom_col()`, is **set** instead: one fixed value for every bar, with no legend because there is nothing to explain.
 
 ```{r}
 #| label: fig-names
 #| fig-cap: "The share of replies that greeted the sender by name, by the name that signed the email. Source: `cases/housing/data/housing_audit.csv`."
 #| fig-alt: "Bar chart of six names. Emily, Brett and Tyrone lie near 60%, Shanice near 52%, Gabriela near 46% and Santiago near 37%; the bars of the two Hispanic names are burgundy."
 #| fig-height: 3.4
-ggplot(by_name, aes(x = share, y = reorder(name, share), fill = group)) +
-  geom_col(width = 0.7) +
-  scale_fill_manual(
+ggplot2::ggplot(by_name, ggplot2::aes(x = share, y = reorder(name, share), fill = group)) +
+  ggplot2::geom_col(width = 0.7) +
+  ggplot2::scale_fill_manual(
     values = c(white = "grey60", black = "#4a78ab", hispanic = "#8b1538"),
     labels = c(white = "white", black = "Black", hispanic = "Hispanic"),
     name   = "Names meant to indicate"
   ) +
-  labs(x = "Replies that greeted the sender by name (%)", y = NULL) +
-  theme_minimal(base_size = 12)
+  ggplot2::labs(x = "Replies that greeted the sender by name (%)", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12)
 ```
 
 The **scale** decides which colours the mapping uses. `scale_fill_manual()` names a colour for each group, and giving `values` and `labels` as named vectors, with `white = …` rather than a bare list of colours, means that the assignment cannot reverse itself if the groups arrive in another order. `labs()` supplies the words, which deserve more care than beginners give them, because a column name such as `share` means nothing to a reader who has not opened the codebook. `theme_minimal()` sets the look of everything that carries no data, and its `base_size` scales all the type at once.
 
-Read the figure as the claim of the case. Both Hispanic names drew fewer greetings by name than any other name, and the two names that were meant to indicate each group do not always agree, which is why the design used a male and a female name for every group. A plot is an ordinary R object, so it can be stored under a name and written to a file with `ggsave("names.png", p, width = 7, height = 4)`, which takes its dimensions in inches.
+Read the figure as the claim of the case. Both Hispanic names drew fewer greetings by name than any other name, and the two names that were meant to indicate each group do not always agree, which is why the design used a male and a female name for every group. Unlike a tinyplot, a ggplot2 plot is an ordinary R object, so it can be stored under a name and written to a file with `ggplot2::ggsave("names.png", p, width = 7, height = 4)`, which takes its dimensions in inches.
 
 ::: {.callout-tip}
 ## Try it
 
-Add `geom_text(aes(label = round(share, 1)), hjust = -0.2)` to the last figure, so that each bar carries its value. Then move `fill = group` out of `aes()` and into `geom_col()`, read the error that it raises, and replace it with `fill = "#0e3b6a"`, a colour set rather than mapped. Finally, add `facet_wrap(vars(group))` and decide whether three small panels say more than one chart does.
+Add `ggplot2::geom_text(ggplot2::aes(label = round(share, 1)), hjust = -0.2)` to the last figure, so that each bar carries its value. Then move `fill = group` out of `aes()` and into `geom_col()`, read the error that it raises, and replace it with `fill = "#0e3b6a"`, a colour set rather than mapped. Finally, add `ggplot2::facet_wrap(ggplot2::vars(group))` and decide whether three small panels say more than one chart does. In tinyplot, the same three changes are `type = "text"` with `labels = round(by_name$share, 1)`, `col = "#0e3b6a"` in place of the vertical bar in the formula, and `facet = ~group`.
 :::
 
 ## 13. A first look at `try_spec()` {#sec-try-spec}
@@ -516,24 +562,20 @@ That is the whole of Task 4 in miniature: change one decision at a time, read wh
 This section and the four that follow it work on the EU-frames case. Its data begin as Eurobarometer surveys, which the GESIS data archive distributes as **Stata** (`.dta`) and **SPSS** (`.sav`) files, because those are the packages that much of survey research historically ran on. R reads both through the `haven` package, one function per format (the file names below are illustrative – none of these files ship with the course):
 
 ```r
-library(haven)
-
-eb <- read_dta("eurobarometer_wave.dta")   # Stata; read_sav() reads SPSS
+eb <- haven::read_dta("eurobarometer_wave.dta")   # Stata; haven::read_sav() reads SPSS
 ```
 
-These formats differ from a CSV in storing **labelled data**. A Stata or SPSS survey file records that a column called `eu_meaning` contains the answers to the question "What does the EU mean to you?", and that its stored values 1, 2, 3 stand for named answer options. `haven` keeps all of that: labelled columns print with their question text attached, and `as_factor()` turns the numeric codes into their labels when you want to work with the words rather than the numbers.
+These formats differ from a CSV in storing **labelled data**. A Stata or SPSS survey file records that a column called `eu_meaning` contains the answers to the question "What does the EU mean to you?", and that its stored values 1, 2, 3 stand for named answer options. `haven` keeps all of that: labelled columns print with their question text attached, and `as_label()` from the sjlabelled package turns the numeric codes into their labels when you want to work with the words rather than the numbers, leaving out the labels of codes that no respondent gave, which `as_factor()` from haven would keep.
 
 ```r
-eb$eu_meaning                # prints with its question and value labels attached
-as_factor(eb$eu_meaning)     # codes become their labels: a factor
+eb$eu_meaning                            # prints with its question and value labels attached
+sjlabelled::as_label(eb$eu_meaning)      # codes become their labels: a factor
 ```
 
 Many organisations keep their data in **Excel** files, and the `readxl` package reads them one sheet at a time, since a workbook is really a stack of tables:
 
 ```r
-library(readxl)
-
-rates <- read_excel("unemployment_rates.xlsx", sheet = "annual")
+rates <- readxl::read_excel("unemployment_rates.xlsx", sheet = "annual")
 ```
 
 Treat what arrives from a spreadsheet with mild suspicion. Excel displays one thing and stores another often enough – dates especially – that column types should be checked with `summary()` straight after every import.
@@ -541,9 +583,7 @@ Treat what arrives from a spreadsheet with mild suspicion. Excel displays one th
 Finally, **Parquet** and **Feather** are the newer columnar formats, which store a table column by column, and you will increasingly meet them where datasets are large or move between programming languages. They are compressed and fast, and unlike a CSV they store the type of each column inside the file, so nothing has to be re-inferred on reading. The `arrow` package reads both, and the small `nanoparquet` package reads and writes Parquet without needing any other package:
 
 ```r
-library(arrow)
-
-panel <- read_parquet("EUframes_cy.parquet")   # read_feather() for Feather
+panel <- arrow::read_parquet("EUframes_cy.parquet")   # arrow::read_feather() for Feather
 ```
 
 Whatever the source format, what you end up with in R is the same data frame, and everything downstream – the verbs of sections 8 and 9, the models fitted in later modules – proceeds identically. Every `read_` function here also has a `write_` counterpart (`write_csv()`, `write_dta()`, `write_parquet()`, and `write_xlsx()` from the `writexl` package), so R also serves as the converter between all of these formats. The course ships its data as CSV all the same, because for tables of a few hundred or a thousand rows the efficiency of the binary formats buys nothing, while plain text can be opened in anything, compared line by line or read in an email.
@@ -555,10 +595,9 @@ Most data come from an archive, a statistical office or a repository, and for ma
 **Indicators from the international organisations and statistical offices**, which are open and need no account. The `WDI` package (and `wbstats`, which covers more of the World Bank databases) queries the World Bank indicators by their codes, which is how the macro variables of the EU-frames panel were obtained:
 
 ```r
-library(WDI)
-macro <- WDI(country = c("DE", "FR", "GB"),
-             indicator = c(unemp = "SL.UEM.TOTL.NE.ZS", growth = "NY.GDP.MKTP.KD.ZG"),
-             start = 2004, end = 2013)
+macro <- WDI::WDI(country = c("DE", "FR", "GB"),
+                  indicator = c(unemp = "SL.UEM.TOTL.NE.ZS", growth = "NY.GDP.MKTP.KD.ZG"),
+                  start = 2004, end = 2013)
 ```
 
 The `eurostat` package does the same for the Eurostat tables (`get_eurostat("une_rt_a")` fetches the annual unemployment table, with `restatapi` as an alternative that uses the newer API, the interface through which programs request data from Eurostat); `OECD` and the general-purpose `rsdmx` query the OECD and any other service that publishes in SDMX, the standard format in which many statistical agencies exchange data; `Rilostat` reaches ILOSTAT; `onsr` the Office for National Statistics; `wid` the World Inequality Database. Each returns a long, tidy table, one row per country and period, that pivots into whatever shape a model needs.
@@ -581,52 +620,48 @@ crisis <- euframes[euframes$year >= 2009, c("country", "year", "unemp", "mcosmo"
 
 It works, and code written this way twenty years ago still runs. Its weakness is that the brackets spell out the mechanics of the selection, so the reader must decode positions and conditions to reconstruct what the line is for.
 
-**The tidyverse** is the dominant modern dialect, a family of packages that share one design philosophy and can be installed and attached under the single name `tidyverse` [@WickhamEtAl2019WelcomeTidyverse]. You have already met two of its members, `readr` and `dplyr`, whose verbs [section 9](#sec-verbs) introduced. Chained with the pipe, the same task reads as a list of named steps:
+**The tidyverse** is the dominant modern dialect, a family of packages that share one design philosophy and can be installed and attached under the single name `tidyverse` [@WickhamEtAl2019WelcomeTidyverse]. You have already met two of its members, readr, whose `read_csv()` section 6 used, and dplyr, whose `if_else()` and `transmute()` sections 10 and 11 used. In dplyr, the same task reads as a list of named steps:
 
 ```r
-library(dplyr)
-
 euframes |>
-  filter(year >= 2009) |>              # crisis-period rows only
-  select(country, year, unemp, mcosmo) # the columns of interest
+  dplyr::filter(year >= 2009) |>              # crisis-period rows only
+  dplyr::select(country, year, unemp, mcosmo) # the columns of interest
 ```
 
-`mutate()` derives a new column from existing ones, and `summarise()` reduces the table to a single row (or, with `group_by()`, one row per group). The pipeline below adds a plain-language crisis flag, groups the country-years by whether a bailout programme was active, and reports the average cosmopolitan-framing score in each group:
+`dplyr::mutate()` derives a new column from existing ones, and `dplyr::summarise()` reduces the table to a single row (or, with `dplyr::group_by()`, one row per group). The pipeline below adds a plain-language crisis flag, groups the country-years by whether a bailout programme was active, and reports the average cosmopolitan-framing score in each group:
 
 ```r
 euframes |>
-  mutate(crisis = year >= 2009) |>            # a new TRUE/FALSE column
-  group_by(bailout) |>                        # split by bailout status
-  summarise(
-    n_cells    = n(),                         # how many country-years
+  dplyr::mutate(crisis = year >= 2009) |>     # a new TRUE/FALSE column
+  dplyr::group_by(bailout) |>                 # split by bailout status
+  dplyr::summarise(
+    n_cells    = dplyr::n(),                  # how many country-years
     mean_cosmo = mean(mcosmo),                # their average outcome
     mean_unemp = mean(unemp)
   )
 ```
 
-Read the chain aloud and it is almost English: take the panel, add a crisis flag, group by bailout status, and for each group report the count and two averages. Readability of that kind serves reproducibility, because a reviewer who can read the code can check it, and that is why the scripts of the course are built from these verbs.
+Read the chain aloud and it is almost English: take the panel, add a crisis flag, group by bailout status, and for each group report the count and two averages. Readability of that kind serves reproducibility, because a reviewer who can read the code can check it, and that is why the scripts of the course are built from chains of named verbs.
 
-**easystats** is the third dialect, which the course facilitator uses and recommends. It is likewise a family of packages under one installable name, `easystats` [@LudeckeEtAl2022EasystatsFrameworkEasy], but it is built mainly for what happens *after* a model is fitted, whereas the tidyverse is at its best preparing data *before* one. It has a data-preparation member too – `datawizard`, whose verbs are modelled on those of dplyr –
+**easystats** is the third dialect, and the one that the course reaches for first. It is likewise a family of packages under one installable name, `easystats` [@LudeckeEtAl2022EasystatsFrameworkEasy]. Its data-preparation member is datawizard, the package of sections 7 to 11, whose verbs are modelled on those of dplyr, and the course uses it wherever it has the verb that a task needs, before turning to dplyr:
 
 ```r
-library(datawizard)
-
 euframes |>
-  data_filter(year >= 2009) |>
-  data_select(c("country", "year", "unemp", "mcosmo"))
+  datawizard::data_filter(year >= 2009) |>
+  datawizard::data_select(select = c("country", "year", "unemp", "mcosmo"))
 ```
 
-– but its main contribution begins once a model exists, and that is the subject of [section 18](#sec-easystats). The three dialects are used together, in layers. Base R is always underneath, the tidyverse gives data work a grammar of named verbs, and easystats gives the modelling stage one of its own.
+The other members are built for what happens *after* a model is fitted, the subject of [section 18](#sec-easystats). The three dialects are used together, in layers. Base R is always underneath, datawizard and the tidyverse give data work a grammar of named verbs, and the rest of easystats gives the modelling stage one of its own.
 
 ::: {.callout-tip}
 ## Try it
 
-Write a chain on `euframes` that keeps only Greece (`filter(country == "Greece")`), selects `year`, `unemp` and `mcosmo`, and prints the result. Then extend it with `summarise()` to report Greece's mean unemployment across the whole period. If you are curious, redo the first step in base R and in `datawizard`, and notice that you can already read all three.
+Write a chain on `euframes` that keeps only Greece (`datawizard::data_filter(country == "Greece")`), selects `year`, `unemp` and `mcosmo`, and prints the result. Then extend it with `datawizard::data_summary()` to report the mean unemployment of Greece across the whole period. If you are curious, redo the first step in base R and in dplyr, and notice that you can already read all three.
 :::
 
 ## 16. The grammar of graphics {#sec-grammar}
 
-[Section 12](#sec-ggplot) drew a first figure from the housing-audit data, and this section takes the grammar further on the EU-frames panel. Section 15 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart that the course draws from its own data is built with it – the charts on the slides, the live class chart on the multiverse page of each case, the small country panels in the EU-frames browser lab – so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd), which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and two figures in the [statistics module](stats-methods.qmd): the rotating plane of section 2, drawn with rgl, and the forest plot of section 10, drawn by metafor.
+[Section 12](#sec-ggplot) drew a first figure from the housing-audit data, and this section takes the grammar further on the EU-frames panel. Section 15 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart on the pages and slides of the course is built with it, so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The figures that you draw yourself, in the workspaces and the browser labs, and the live class charts on the multiverse page of each case, are drawn with tinyplot ([section 12](#sec-tinyplot)), which is light enough to run in a browser. The other exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd), which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and two figures in the [statistics module](stats-methods.qmd): the rotating plane of section 2, drawn with rgl, and the forest plot of section 10, drawn by metafor.
 
 The name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts, much as a grammar describes how words combine into sentences. ggplot2 therefore has no separate function for each chart type. It splits a figure into parts that recombine freely: the data, the mapping from columns to visual properties, the geometric shapes drawn, the scales that decide what those shapes look like, the panels that the plot is divided into, and last the labels and the styling. A scatterplot and a bar chart are two fillings of the same slots, and once you know the slots you can read the figures on this site, including kinds you have not met yet.
 
@@ -637,8 +672,8 @@ A plot needs data, a mapping, and at least one geom. Everything else has a defau
 ```r
 library(ggplot2)
 
-ggplot(euframes, aes(x = unemp, y = mcosmo)) +
-  geom_point()
+ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
+  ggplot2::geom_point()
 ```
 
 Three things happen there. `ggplot()` receives the data frame and declares which columns drive the picture. `aes()` is the **aesthetic mapping**, and it states that the unemployment rate governs horizontal position while the cosmopolitan-framing score governs vertical position. `geom_point()` adds a **geom**, a layer of geometric shapes, drawing one point per row – 270 points for 270 country-years. Axis ranges, tick marks, gridlines and the panel background are all inferred from the data, which is why this bare version is already a readable figure.
@@ -651,12 +686,12 @@ Every visual property of a layer can be given two ways, and confusing them is th
 
 ```r
 # MAPPED: colour comes from a column, so the points differ and a legend appears
-ggplot(euframes, aes(x = unemp, y = mcosmo, colour = factor(bailout))) +
-  geom_point()
+ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo, colour = factor(bailout))) +
+  ggplot2::geom_point()
 
 # SET: colour is a constant, identical for every point, and no legend appears
-ggplot(euframes, aes(x = unemp, y = mcosmo)) +
-  geom_point(colour = "#0e3b6a", alpha = 0.5)
+ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
+  ggplot2::geom_point(colour = "#0e3b6a", alpha = 0.5)
 ```
 
 `alpha` controls opacity, running from 0 for invisible to 1 for solid, and setting it below 1 is the standard remedy for a scatterplot where points pile up on one another. The constant `"#0e3b6a"` is a hex colour code, the dark blue that the course figures use.
@@ -668,9 +703,9 @@ Leaving out the `factor()` wrapped around `bailout` produces the wrong figure wi
 A figure can have as many layers as you need, each with its own geom, and they are drawn in the order written, so later layers cover earlier ones.
 
 ```r
-ggplot(euframes, aes(x = unemp, y = mcosmo)) +
-  geom_point(alpha = 0.4, colour = "#848c94") +
-  geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15)
+ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
+  ggplot2::geom_point(alpha = 0.4, colour = "#848c94") +
+  ggplot2::geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15)
 ```
 
 The grey points are drawn first and the trend line over them. `geom_smooth()` fits a line through the cloud and draws it with a band showing the uncertainty around it, and `method = "lm"` asks for a straight line from the same least-squares method that the statistical methods module uses to fit models. R then prints the message `` `geom_smooth()` using formula = 'y ~ x' ``, which only reports the relationship that was fitted and needs no action. Reference layers behave the same way: `geom_hline(yintercept = 0)` rules a horizontal line at zero, and section 17 uses one to split a figure into results that support a claim and results that do not.
@@ -678,9 +713,9 @@ The grey points are drawn first and the trend line over them. `geom_smooth()` fi
 Line thickness is set with `linewidth`, whereas point size and type size are set with `size`, and mixing the two up is behind a great many warnings.
 
 ```r
-geom_line(linewidth = 0.4)   # the thickness of a drawn line
-geom_point(size = 0.7)       # the area of a plotted point
-geom_text(size = 3.5)        # the height of a piece of type
+ggplot2::geom_line(linewidth = 0.4)   # the thickness of a drawn line
+ggplot2::geom_point(size = 0.7)       # the area of a plotted point
+ggplot2::geom_text(size = 3.5)        # the height of a piece of type
 ```
 
 Passing `size` to a line geom still works, but R warns "Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0. Please use `linewidth` instead." The reason that the two names survive side by side is that `size` on a point means an area and on text a height, neither of which is a line thickness.
@@ -690,14 +725,14 @@ Passing `size` to a line geom still works, but R warns "Using `size` aesthetic f
 The mapping says which column drives colour; the **scale** decides which colours it drives, and the same holds for positions, sizes and shapes. Every mapping gets a default scale, and you override it whenever the default is not what a reader needs.
 
 ```r
-ggplot(euframes, aes(x = unemp, y = mcosmo, colour = factor(bailout))) +
-  geom_point(alpha = 0.8) +
-  scale_colour_manual(
+ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo, colour = factor(bailout))) +
+  ggplot2::geom_point(alpha = 0.8) +
+  ggplot2::scale_colour_manual(
     name   = "Assistance programme",
     values = c("0" = "#848c94", "1" = "#a10000"),
     labels = c("0" = "none", "1" = "bailout")
   ) +
-  scale_x_continuous(breaks = seq(0, 30, by = 5))
+  ggplot2::scale_x_continuous(breaks = seq(0, 30, by = 5))
 ```
 
 `scale_colour_manual()` names a colour for each level of the variable. Giving `values` and `labels` as *named* vectors, with `"0" = …` rather than a bare pair, means the assignment cannot silently reverse itself if the data ever arrives in a different order. The colours that the course uses throughout are `#0e3b6a` (dark blue), `#E69F00` (orange), `#009E73` (green), `#a10000` (dark red) and `#848c94` (mid grey), with `#c7ccd2` reserved as the muted grey for results that are not statistically significant. The orange and green belong to a palette built to stay distinguishable under the commonest forms of colour vision deficiency, which is why the deck never rests an argument on a red-green contrast alone.
@@ -705,12 +740,12 @@ ggplot(euframes, aes(x = unemp, y = mcosmo, colour = factor(bailout))) +
 Position scales follow the same override logic, and one of their arguments catches people out. `scale_x_continuous(breaks = …)` decides where the tick marks fall, but the sibling argument `limits` **removes** every row outside the range before any statistic is computed, so a smoother is refitted on whatever rows remain.
 
 ```r
-p_trend <- ggplot(euframes, aes(x = unemp, y = mcosmo)) +
-  geom_point(alpha = 0.4, colour = "#848c94") +
-  geom_smooth(method = "lm", colour = "#0e3b6a")
+p_trend <- ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
+  ggplot2::geom_point(alpha = 0.4, colour = "#848c94") +
+  ggplot2::geom_smooth(method = "lm", colour = "#0e3b6a")
 
-p_trend + scale_y_continuous(limits = c(0.30, 0.50))   # drops rows, then refits
-p_trend + coord_cartesian(ylim = c(0.30, 0.50))        # keeps every row, only zooms
+p_trend + ggplot2::scale_y_continuous(limits = c(0.30, 0.50))   # drops rows, then refits
+p_trend + ggplot2::coord_cartesian(ylim = c(0.30, 0.50))        # keeps every row, only zooms
 ```
 
 Run the first of those and R warns "Removed 163 rows containing non-finite outside the scale range (`stat_smooth()`)", and the trend line you are looking at now runs through 107 country-years rather than 270. `coord_cartesian()` zooms the finished figure instead and leaves the computation untouched, so it is the one to use when you only want a closer look.
@@ -720,33 +755,33 @@ Run the first of those and R warns "Removed 163 rows containing non-finite outsi
 **Faceting** repeats the same plot once per group, on shared axes, so the groups can be compared by eye instead of by disentangling overlapping series. A country-year table suits it well, since each country can have a panel of its own.
 
 ```r
-ggplot(euframes, aes(x = year, y = mcosmo)) +
-  geom_line(colour = "grey55", linewidth = 0.4) +
-  geom_point(size = 0.7) +
-  facet_wrap(~ cntry, ncol = 6) +
-  scale_x_continuous(breaks = c(2004, 2008, 2013))
+ggplot2::ggplot(euframes, ggplot2::aes(x = year, y = mcosmo)) +
+  ggplot2::geom_line(colour = "grey55", linewidth = 0.4) +
+  ggplot2::geom_point(size = 0.7) +
+  ggplot2::facet_wrap(~ cntry, ncol = 6) +
+  ggplot2::scale_x_continuous(breaks = c(2004, 2008, 2013))
 ```
 
-Twenty-seven small panels appear, one per country code, each showing that country's cosmopolitan-framing series across the decade. The browser lab of the EU-frames case draws this figure early in the exercise, so that the crisis years are in view before any model is fitted and it is plain how differently the countries move. The `~ cntry` is a one-sided formula, with nothing to the left of the `~`. The `lm()` call in section 18 uses the same syntax with an outcome written on the left. `ncol` fixes the shape of the grid. Where two grouping variables matter, `facet_grid(rows = vars(a), cols = vars(b))` crosses them into a matrix of panels.
+Twenty-seven small panels appear, one per country code, each showing the cosmopolitan-framing series of that country across the decade. The browser lab of the EU-frames case draws the same figure with tinyplot early in the exercise, so that the crisis years are in view before any model is fitted and it is plain how differently the countries move. The `~ cntry` is a one-sided formula, with nothing to the left of the `~`. The `lm()` call in section 18 uses the same syntax with an outcome written on the left. `ncol` fixes the shape of the grid. Where two grouping variables matter, `facet_grid(rows = vars(a), cols = vars(b))` crosses them into a matrix of panels.
 
 ### Labels and themes
 
 Two layers finish a figure. `labs()` supplies the words – axis titles, plot title, subtitle, caption, legend name – and it deserves more care than beginners give it, because a column name such as `mcosmo` means nothing to a reader who has not opened the codebook. The **theme** then governs everything with no data behind it: type size, gridlines, background, the position of the legend.
 
 ```r
-ggplot(euframes, aes(x = unemp, y = mcosmo)) +
-  geom_point(alpha = 0.4, colour = "#848c94") +
-  geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15) +
-  labs(
+ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
+  ggplot2::geom_point(alpha = 0.4, colour = "#848c94") +
+  ggplot2::geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15) +
+  ggplot2::labs(
     x       = "Unemployment rate (%)",
     y       = "Cosmopolitan framing (share of respondents)",
     title   = "Where unemployment is higher, cosmopolitan framing is lower",
     caption = "270 country-years, EU-frames dataset"
   ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    panel.grid.minor = element_blank(),
-    plot.title       = element_text(face = "bold"),
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(
+    panel.grid.minor = ggplot2::element_blank(),
+    plot.title       = ggplot2::element_text(face = "bold"),
     legend.position  = "top"
   )
 ```
@@ -756,13 +791,13 @@ ggplot(euframes, aes(x = unemp, y = mcosmo)) +
 A plot is an ordinary R object, so you can store it under a name, extend it later, and write it to a file:
 
 ```r
-p <- ggplot(euframes, aes(x = unemp, y = mcosmo)) +
-  geom_point(alpha = 0.4, colour = "#848c94") +
-  labs(x = "Unemployment rate (%)", y = "Cosmopolitan framing")
+p <- ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
+  ggplot2::geom_point(alpha = 0.4, colour = "#848c94") +
+  ggplot2::labs(x = "Unemployment rate (%)", y = "Cosmopolitan framing")
 
-p + geom_smooth(method = "lm") + theme_minimal(base_size = 12)
+p + ggplot2::geom_smooth(method = "lm") + ggplot2::theme_minimal(base_size = 12)
 
-ggsave("figures/framing_unemployment.png", p, width = 7, height = 5, dpi = 300)
+ggplot2::ggsave("figures/framing_unemployment.png", p, width = 7, height = 5, dpi = 300)
 ```
 
 `ggsave()` takes its dimensions in inches and writes whichever format the file extension names. When you do not name a plot, it saves the last one drawn, which is convenient but can save the wrong figure, so name the object.
@@ -775,86 +810,79 @@ Draw the scatterplot of `unemp` against `mcosmo`, then change one thing at a tim
 
 ### From the pipe to the plot
 
-Reshaping and drawing usually happen in one chain, with dplyr passing its result straight to ggplot2. The chain uses `|>` while it is still working on data and switches to `+` once `ggplot()` appears.
+Reshaping and drawing usually happen in one chain, with datawizard passing its result straight to ggplot2. The chain uses `|>` while it is still working on data and switches to `+` once `ggplot()` appears.
 
 ```r
-library(dplyr)
-
 euframes |>
-  filter(year >= 2009) |>
-  group_by(cntry) |>
-  summarise(mean_unemp = mean(unemp)) |>
-  ggplot(aes(x = reorder(cntry, mean_unemp), y = mean_unemp)) +
-  geom_col(fill = "#0e3b6a") +
-  labs(x = NULL, y = "Mean unemployment, 2009–2013 (%)") +
-  theme_minimal(base_size = 11)
+  datawizard::data_filter(year >= 2009) |>
+  datawizard::data_summary(mean_unemp = mean(unemp), by = "cntry") |>
+  ggplot2::ggplot(ggplot2::aes(x = reorder(cntry, mean_unemp), y = mean_unemp)) +
+  ggplot2::geom_col(fill = "#0e3b6a") +
+  ggplot2::labs(x = NULL, y = "Mean unemployment, 2009–2013 (%)") +
+  ggplot2::theme_minimal(base_size = 11)
 ```
 
-`reorder()` sorts the country codes by the value being plotted rather than alphabetically, which turns a jumble of bars into a ranking you can read at a glance. `geom_col()` draws a bar whose height is the number stored in the data, which is what you want once `summarise()` has already done the counting; its cousin `geom_bar()` counts the rows for you instead, and reaching for the wrong one of the two is a frequent small frustration.
+`reorder()` sorts the country codes by the value being plotted rather than alphabetically, which turns a jumble of bars into a ranking you can read at a glance. `geom_col()` draws a bar whose height is the number stored in the data, which is what you want once `data_summary()` has already done the counting; its cousin `geom_bar()` counts the rows for you instead, and reaching for the wrong one of the two is a frequent small frustration.
 
-Where two figures belong side by side, the **patchwork** package composes whole plots with the same `+` that adds layers. Attach it with `library(patchwork)`, then `p1 + p2` sets two plot objects in a row and `patchwork::wrap_plots(plots, nrow = 1)` does the same for a list of them.
+Where two figures belong side by side, the **patchwork** package composes whole plots. `patchwork::wrap_plots(p1, p2)` sets two plot objects in a row, and `patchwork::wrap_plots(plots, nrow = 1)` does the same for a list of them; with the package attached by `library(patchwork)`, `p1 + p2` does it with the same `+` that adds layers.
 
 ::: {.callout-tip}
 ## Try it
 
-Build a chain that keeps the crisis years, groups by `year`, and reports the mean of `mcosmo` and the mean of `mneg` per year, then pipe it into a plot with two `geom_line()` layers in different colours. You will find yourself wanting a legend and not getting one, because both colours were set rather than mapped. The remedy is to reshape the data into long form, with one row per year and outcome, using `pivot_longer()` from the tidyr package, and then to map `colour` to the column that names the outcome.
+Build a chain that keeps the crisis years, groups by `year`, and reports the mean of `mcosmo` and the mean of `mneg` per year, then pipe it into a plot with two `geom_line()` layers in different colours. You will find yourself wanting a legend and not getting one, because both colours were set rather than mapped. The remedy is to reshape the data into long form, with one row per year and outcome, using `data_to_long()` from datawizard (or `pivot_longer()` from tidyr), and then to map `colour` to the column that names the outcome.
 :::
 
 ## 17. Reading the specification curve {#sec-speccurve}
 
 The central figure of the course is a **specification curve**, and you now have every part needed to build one yourself. A hypothesis about a dataset admits many defensible analyses, and if you fit all of them and line the results up in order, you can see the range of answers that the data supports instead of the single answer that one analyst happened to report.
 
-`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether the result lies below the 5% threshold of the wild cluster bootstrap by country, the test that the course uses to class every point, and `is_reference` marks the specification that the EU-frames tracks reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
+`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [statistics module](stats-methods.qmd#sec-inference) explains it), and `is_reference` marks the specification that the EU-frames tracks reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
 
 ```r
-library(readr)
-library(dplyr)
-library(ggplot2)
+curve <- readr::read_csv("data/spec_curve.csv") |>
+  datawizard::data_modify(r_ca = dplyr::if_else(predictor == "growth", -r, r)) |>   # claim alignment
+  datawizard::data_arrange("r_ca") |>
+  datawizard::data_modify(rank = 1:n())
 
-curve <- read_csv("data/spec_curve.csv") |>
-  mutate(r_ca = if_else(predictor == "growth", -r, r)) |>   # claim alignment
-  arrange(r_ca) |>
-  mutate(rank = row_number())
-
-reproduced <- filter(curve, is_reference)
+reproduced <- datawizard::data_filter(curve, is_reference)
 ```
 
 The claim under test is that poor economic performance depresses the positive framing of the EU. With unemployment as the predictor, a negative correlation supports it, because a rise in unemployment is a worsening of the economy. With GDP growth as the predictor, support means a *positive* correlation instead, because a fall in growth is the worsening, and plotting the raw numbers together would scatter agreeing results on opposite sides of zero. **Claim alignment** repairs that. Flip the sign wherever the predictor is growth, and afterwards a negative value means support for every row alike. `if_else()` performs the flip, and the `_ca` suffix is the naming habit of the course for any claim-aligned quantity. The file already carries the aligned value in a column of the same name, so the line rebuilds something that you can check against the stored column. Sorting by the aligned value and numbering the rows then gives each specification a rank, and that rank becomes the horizontal axis.
 
 ```r
-ggplot(curve, aes(x = rank, y = r_ca)) +
-  geom_hline(yintercept = 0, linewidth = 0.4, colour = "#848c94") +
-  geom_point(aes(shape = sig), size = 1.1, alpha = 0.5, colour = "#0e3b6a") +
-  geom_point(data = reproduced, colour = "#8b1538", size = 3) +
-  annotate(
+ggplot2::ggplot(curve, ggplot2::aes(x = rank, y = r_ca)) +
+  ggplot2::geom_hline(yintercept = 0, linewidth = 0.4, colour = "#848c94") +
+  ggplot2::geom_point(ggplot2::aes(shape = sig), size = 1.1, alpha = 0.5, colour = "#0e3b6a") +
+  ggplot2::geom_point(data = reproduced, colour = "#8b1538", size = 3) +
+  ggplot2::annotate(
     "text",
     x = reproduced$rank, y = reproduced$r_ca - 0.08,
     label = "the reproduced specification\nt = -3.804",
     colour = "#8b1538", fontface = "bold", size = 3.2, hjust = 1
   ) +
-  scale_shape_manual(
+  ggplot2::scale_shape_manual(
     name   = NULL,
     values = c("TRUE" = 1, "FALSE" = 4),
-    labels = c("TRUE" = "bootstrap p < 0.05", "FALSE" = "bootstrap p ≥ 0.05")
+    labels = c("TRUE" = "CR2 p < 0.05", "FALSE" = "CR2 p ≥ 0.05")
   ) +
-  coord_cartesian(ylim = c(-0.65, 0.2)) +
-  labs(
+  ggplot2::coord_cartesian(ylim = c(-0.65, 0.2)) +
+  ggplot2::labs(
     x     = "specification, ranked by claim-aligned partial correlation",
     y     = "claim-aligned partial correlation",
     title = "The curve of the claim"
   ) +
-  theme_minimal(base_size = 12) +
-  theme(legend.position = "top", panel.grid.minor = element_blank())
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(legend.position = "top", panel.grid.minor = ggplot2::element_blank())
 ```
 
 Almost everything in that block has come up already: a reference line, a layer of small points whose shape is mapped to a logical column, a second point layer drawn from a *different* data frame, a manual scale, a zoom, labels and a theme. The manual scale sets the convention of the charts of the course, an open circle for a result below the 5% threshold and a cross for one above it, drawn at the same size and in translucent ink so that dense stretches of the curve stay readable and the class of a point is read from its shape rather than from a colour. `data = reproduced` inside the geom overrides the frame given to `ggplot()`, and that is how a single row gets picked out and emphasised. `annotate()` is the one function you have not met. It adds a mark that comes from no column at all, since you supply the coordinates and the text yourself, and that is why its position is read off `reproduced` rather than mapped.
 
-Every point below the grey line is an analysis in the direction of the claim. Of the `r nrow(eu_curve)` specifications, `r pct(100 * mean(eu_curve$supports))` lie below it and `r pct(100 * mean(eu_curve$supports & eu_curve$sig))` lie below it with a bootstrap p-value under 0.05. The aligned correlations run from `r num(min(eu_curve$r_ca))` to `r num(max(eu_curve$r_ca))`, so the curve holds firm support and a few results on the other side of zero. The burgundy point is the specification that the EU-frames tracks reproduce in Task 3, the one with the t-statistic of −3.804, which is also the specification that analyst C6HJR submitted to Multi100. Of the other specifications, `r sum(eu_curve$r_ca < eu_ref$r_ca)` lie further below zero than it does, and with a bootstrap p-value of `r num(eu_ref$p_wcr)` it is drawn as a cross. The submitted analysis was neither an outlier nor a cherry-pick, and yet the same menu, worked through in good faith by any competent analyst, would have produced a great many other numbers, most of them further in the direction of the claim.
+Every point below the grey line is an analysis in the direction of the claim. Of the `r nrow(eu_curve)` specifications, `r pct(100 * mean(eu_curve$supports))` lie below it and `r pct(100 * mean(eu_curve$supports & eu_curve$sig))` lie below it with a CR2 p-value under 0.05. The aligned correlations run from `r num(min(eu_curve$r_ca))` to `r num(max(eu_curve$r_ca))`, so the curve holds firm support and a few results on the other side of zero. The burgundy point is the specification that the EU-frames tracks reproduce in Task 3, the one with the t-statistic of −3.804, which is also the specification that analyst C6HJR submitted to Multi100. Of the other specifications, `r sum(eu_curve$r_ca < eu_ref$r_ca)` lie further below zero than it does, and with a CR2 p-value of `r num(eu_ref$p_cr2)` it is drawn as a cross. The submitted analysis was neither an outlier nor a cherry-pick, and yet the same menu, worked through in good faith by any competent analyst, would have produced a great many other numbers, most of them further in the direction of the claim.
 
 ::: {.callout-tip}
 ## Try it
 
-Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first point layer and delete the fixed `colour = "#0e3b6a"` that follows it, keeping the shapes as they are. The two colours largely separate along the ranking, which is why the estimator is the decision that moves the curve most, and the [Multiverse page](../cases/eu-frames/multiverse.qmd) explains what the two designs compare. Then try `facet_wrap(~ predictor)` on the same figure and ask yourself which of the two pictures you would rather a reviewer saw.
+Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first point layer and delete the fixed `colour = "#0e3b6a"` that follows it, keeping the shapes as they are. The two colours largely separate along the ranking, which is why the estimator is the decision that moves the curve most, and the [Multiverse page](../cases/eu-frames/multiverse.qmd) explains what the two designs compare. Then try `ggplot2::facet_wrap(~ predictor)` on the same figure and ask yourself which of the two pictures you would rather a reviewer saw.
 :::
 
 ## 18. Naming the estimand {#sec-easystats}
@@ -870,12 +898,10 @@ m <- lm(mcosmo ~ unemp + growth, data = euframes)
 In base R you call `summary(m)` and read the printout. The easystats packages instead give you one function for each question you might ask of the fitted model:
 
 ```r
-library(easystats)
-
-model_parameters(m)    # the coefficient table as a tidy data frame, with confidence intervals
-model_performance(m)   # fit indices – R2, AIC and friends – in one row
-check_model(m)         # the assumption dashboard: residual plots, normality, influential rows
-report(m)              # the model written out in publishable sentences
+parameters::model_parameters(m)     # the coefficient table as a tidy data frame, with confidence intervals
+performance::model_performance(m)   # fit indices – R2, AIC and friends – in one row
+performance::check_model(m)         # the assumption dashboard: residual plots, normality, influential rows
+report::report(m)                   # the model written out in publishable sentences
 ```
 
 `model_parameters()` returns the coefficients as a data frame that you can filter, join or plot [@LudeckeEtAl2020ExtractingComputingExploring]; `check_model()` draws the standard diagnostic checks in one figure [@LudeckeEtAl2021PerformanceRPackage]; and `report()` writes the results paragraph itself, with the numbers drawn live from the object. In a rendered Quarto document the prose then cannot fall out of step with the model, as a number pasted in by hand can.
@@ -883,12 +909,12 @@ report(m)              # the model written out in publishable sentences
 One member of the family, `modelbased`, builds that habit into its functions [@MakowskiEtAl2025ModelbasedRPackage]. The coefficients in a table are whatever quantities the parameterisation of the model happens to produce, whereas these functions make you *name the quantity you want* – the **estimand** – and then compute that quantity from the model:
 
 ```r
-euframes <- euframes |> mutate(bailout = factor(bailout))
+euframes <- euframes |> datawizard::data_modify(bailout = factor(bailout))
 m2 <- lm(mcosmo ~ unemp + bailout, data = euframes)
 
-estimate_slopes(m, trend = "unemp")           # the unemployment slope, with its uncertainty
-estimate_means(m2, by = "bailout")            # expected framing with and without a bailout programme
-estimate_contrasts(m2, contrast = "bailout")  # the difference between those two expectations
+modelbased::estimate_slopes(m, trend = "unemp")           # the unemployment slope, with its uncertainty
+modelbased::estimate_means(m2, by = "bailout")            # expected framing with and without a bailout programme
+modelbased::estimate_contrasts(m2, contrast = "bailout")  # the difference between those two expectations
 ```
 
 An expected outcome under each condition, a slope, a contrast between scenarios: each is a quantity you can state in words before touching the software. (Under the bonnet these functions call the `marginaleffects` package, which does the job that Stata users will know from `margins`.) Saying what you want to estimate first, and only then deriving the analysis that estimates it, is what the course practises in Part 2, with the estimand and the causal graph, and again in Task 5, where you state your specification and the quantity that it estimates in the preregistration block of your report before running it.
@@ -901,8 +927,8 @@ For a fuller, self-paced grounding in R, these open resources are recommended:
 
 - **The Carpentries, "R for Reproducible Scientific Analysis" and "Programming with R".** <https://swcarpentry.github.io/r-novice-gapminder/> and <https://swcarpentry.github.io/r-novice-inflammation/>. Licensed CC BY 4.0, and the standard hands-on introductions to R for researchers, covering objects, vectors and data frames in far more depth than this page.
 - **The Turing Way, "Guide for Reproducible Research".** <https://book.the-turing-way.org/>. Licensed CC BY 4.0. Not an R tutorial as such, but the best short statement of why the habits that this module practises – scripts over console history, relative paths, one file for analysis and report – are worth building from the first day.
-- **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>. Its chapters on data transformation and on visualisation cover the verbs of section 9 and the grammar of sections 12 and 16 in full.
-- **The documentation of the packages**, which is readable as an introduction as well as a reference: [dplyr.tidyverse.org](https://dplyr.tidyverse.org/), [readr.tidyverse.org](https://readr.tidyverse.org/), [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), [vincentarelbundock.github.io/tinytable](https://vincentarelbundock.github.io/tinytable/), [easystats.github.io/easystats](https://easystats.github.io/easystats/), [haven.tidyverse.org](https://haven.tidyverse.org/), [readxl.tidyverse.org](https://readxl.tidyverse.org/), and the arrow R package site at [arrow.apache.org/docs/r](https://arrow.apache.org/docs/r/).
+- **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>. Its chapters on data transformation and on visualisation cover the dplyr counterparts of the verbs of section 9 and the grammar of ggplot2 in sections 12 and 16 in full.
+- **The documentation of the packages**, which is readable as an introduction as well as a reference: [easystats.github.io/datawizard](https://easystats.github.io/datawizard/), [grantmcdermott.com/tinyplot](https://grantmcdermott.com/tinyplot/), [dplyr.tidyverse.org](https://dplyr.tidyverse.org/), [readr.tidyverse.org](https://readr.tidyverse.org/), [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), [vincentarelbundock.github.io/tinytable](https://vincentarelbundock.github.io/tinytable/), [easystats.github.io/easystats](https://easystats.github.io/easystats/), [haven.tidyverse.org](https://haven.tidyverse.org/), [readxl.tidyverse.org](https://readxl.tidyverse.org/), and the arrow R package site at [arrow.apache.org/docs/r](https://arrow.apache.org/docs/r/).
 
 When you are ready for a first statistical model, the [binary-outcomes module](binary-outcomes.qmd) starts from the table of counts of section 10 and builds up to the logistic regression of the housing-audit paper, and the module on [the statistical methods behind the course](stats-methods.qmd) starts with a single `lm()` on the EU-frames panel and works up from there to the models that the EU-frames case requires.
 

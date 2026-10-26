@@ -31,15 +31,24 @@ jobs:
       # index.qmd runs with freeze: false so the next-delivery toggle in
       # _variables.yml re-evaluates on every render; that one page therefore
       # executes R in CI. Everything else still comes from the committed
-      # _freeze/ cache, so only the chunk-execution machinery and the yaml
-      # reader are installed here.
+      # _freeze/ cache, so only the chunk-execution machinery, the yaml reader
+      # and the two packages that the chunk of index.qmd calls (readr and
+      # datawizard) are installed here, as binaries from Posit Public Package
+      # Manager through pak.
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
       - name: Install R packages for the unfrozen page
-        run: Rscript -e 'install.packages(c("knitr", "rmarkdown", "yaml"))'
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::knitr
+            any::rmarkdown
+            any::yaml
+            any::readr
+            any::datawizard
 
       - name: Render site
         run: quarto render

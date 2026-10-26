@@ -30,8 +30,7 @@ format: html
 The housing-audit data hold one row per email.
 
 ```{r}
-library(readr)
-audit <- read_csv("data/housing_audit.csv")
+audit <- readr::read_csv("data/housing_audit.csv")
 nrow(audit)
 ```
 ````
@@ -96,11 +95,11 @@ A chunk opens with three backticks and the name of the engine in braces. Its opt
 #| label: count-emails
 # How many emails, and what came back?
 audit |>
-  summarise(emails    = n(),
-            bounced   = sum(is.na(reply)),
-            delivered = sum(!is.na(reply)),
-            replies   = sum(reply %in% 1),
-            coded     = sum(!is.na(named)))
+  datawizard::data_summary(emails    = n(),
+                           bounced   = sum(is.na(reply)),
+                           delivered = sum(!is.na(reply)),
+                           replies   = sum(reply %in% 1),
+                           coded     = sum(!is.na(named)))
 ```
 ````
 
@@ -188,16 +187,15 @@ A figure produced by a chunk becomes a numbered, captioned figure that the prose
 #| label: fig-names
 #| fig-cap: "Replies that greeted the sender by name, by the name that signed the email."
 #| fig-height: 3.6
-audit |>
-  filter(!is.na(named)) |>
-  summarise(greeted_pct = 100 * mean(named), .by = c(group, name)) |>
-  mutate(name = reorder(name, greeted_pct)) |>
-  ggplot(aes(x = greeted_pct, y = name, fill = group)) +
-  geom_col(width = 0.7)
+greeted <- audit |>
+  datawizard::data_filter(!is.na(named)) |>
+  datawizard::data_summary(greeted_pct = 100 * mean(named), by = c("group", "name"))
+
+tinyplot::tinyplot(greeted_pct ~ name | group, data = greeted, type = "barplot", flip = TRUE)
 ```
 ````
 
-The excerpt leaves out the scale, the labels and the text on the bars, which the report adds. The size option overrides the height of five inches that the header set, because six bars need less room than a scatterplot does. Tables work in the same way, with a `tbl-cap` and a label beginning `tbl-`. The case study captions its table of email counts "The emails in the public file." and gives it the label `tbl-counts`, so it is numbered and can be referred to in the same way.
+The excerpt leaves out the order of the bars, their colours and the labels, which the report adds. The size option overrides the height of five inches that the header set, because six bars need less room than a scatterplot does. Tables work in the same way, with a `tbl-cap` and a label beginning `tbl-`. The case study captions its table of email counts "The emails in the public file." and gives it the label `tbl-counts`, so it is numbered and can be referred to in the same way.
 
 With the prefix in place, Quarto numbers the item and lets you point at it from the prose. Write `@fig-names` in a sentence and the rendered text reads "Figure 1", as a link that takes the reader to it. The report already has three labelled figures, `fig-names`, `fig-dag` and `fig-curve`, and nothing yet refers to them, so adding a reference is a one-word edit that shows the whole mechanism working.
 
