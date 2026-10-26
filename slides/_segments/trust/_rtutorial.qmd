@@ -1,0 +1,196 @@
+<!-- DEEP DIVE START: R tutorial (9 slides). Optional depth – press d during
+     the talk, or load the deck with ?depth=0, and slides/nav-tools.html lifts
+     the whole run out of the DOM. The switch acts on the .deepdive class that
+     every slide in the run carries, so that class is the load-bearing part;
+     these markers are here for the reader. -->
+
+## R, in one slide {#r-in-one-slide .smaller .deepdive run="tools"}
+
+::: {.skiplink}
+[R tutorial · 9 slides · skip to Hands-on 2 →](#hands-on-2-the-data-the-estimand-and-the-graph)
+:::
+
+```{.r code-line-numbers="|1|3|5|7"}
+n_countries <- 16                 # <- assigns. "n_countries gets 16"
+
+mean(c(4, 7, 5))                  # a function: name, then arguments in ()
+
+ess$distrust_parl                 # $ picks one column out of a data frame
+
+ess |> nrow()                     # |> the pipe: send the left into the right
+```
+
+::: {.small}
+With four pieces of syntax you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
+:::
+
+::: notes
+If you have never written a line of R, this slide is most of what you need to read the rest. Four things. First, the arrow assigns: n countries gets sixteen. You will see the equals sign used the same way and both work, but the arrow is the convention. Second, a function is a name followed by round brackets holding its arguments: the mean of four, seven and five. Third, the dollar sign reaches inside a data frame to pull out one column, here the distrust of parliament of every respondent. And fourth, the pipe takes whatever is on its left and feeds it in as the first argument of whatever is on its right. Read it as the word "then", and long chains become sentences.
+:::
+
+## Getting data in {#getting-data-in .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|3|5"}
+library(readr)                                   # load a package
+
+ess <- read_csv("data/trust_ess.csv")            # read it, name it
+
+ess                                              # print it
+```
+
+::: {.small}
+What comes back is a **data frame**: a rectangle with one row per observation, here one respondent of the ESS, and one column per variable, each column of a single type. This one has `r fmt_n(nrow(ess))` rows and `r ncol(ess)` columns.
+
+`library()` makes the functions of a package available. It does **not** install the package; that happens once, and the setup page says how.
+:::
+
+::: notes
+Getting data in. The library line makes the functions of a package available for this session, and it does not install anything; installing is a separate step that you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on ess is our data. Typing the name on its own prints it. What you get back is a data frame, the central object of R: a rectangle with one row for each respondent and one column for each variable, every column holding a single type. Nearly every function that you will meet takes a data frame and hands one back, which is why the pipe works so well: the output of one step is the right shape to be the input of the next.
+:::
+
+## Inspecting the data {#inspecting-the-data .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|2|3|4"}
+glimpse(ess)                      # every column, its type, the first few values
+nrow(ess)                         # one row per respondent
+count(ess, cntry)                 # respondents in each country
+count(ess, is.na(hh_income_z))    # TRUE: household income not answered
+```
+
+::: {.fragment .small}
+`NA` is how R marks a missing value. Household income is missing for `r fmt_pct(miss_income)` of the respondents of the paper, and for everyone in France and Ireland in round 1. A model that leaves out every respondent with a missing answer therefore loses a quarter of the sample, and some country-rounds entirely.
+:::
+
+::: notes
+With the data loaded, look at them before any model touches them. Glimpse shows every column with its type and its first few values. nrow counts the rows, one per respondent. Count tells you how many respondents each country contributes. And the last line counts how many respondents left household income unanswered. [advance] NA is how R marks a missing value, and in this file it matters a great deal. Household income is missing for almost a quarter of the respondents of the paper, and for every respondent in France and Ireland in the first round. A model that drops every row with a missing answer, which is what R does by default, silently analyses a much smaller sample than the one you counted. Every serious error I have made was visible in the data before it reached a model.
+:::
+
+## Working with rows and columns {#working-with-rows-and-columns .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2|3|4|5"}
+paper <- ess |>
+  filter(citizen == 1, minority == 0) |>                           # the sample of the paper
+  select(cntry, essround, distrust_parl, imm_econ:imm_place) |>   # keep some columns
+  mutate(concern = (imm_econ + imm_culture + imm_place) / 3) |>   # make a new column
+  arrange(cntry)                                                  # sort
+```
+
+::: {.fragment .small}
+The sixth verb is `summarise()`, here with `.by`: collapse many rows into one per group.
+
+```{.r}
+paper |>
+  summarise(concern = mean(concern, na.rm = TRUE),
+            distrust = mean(distrust_parl, na.rm = TRUE), .by = cntry)
+```
+:::
+
+::: notes
+Five verbs get you a very long way, and they share one pattern: a data frame goes in and a data frame comes out. Filter keeps rows, here the citizens who do not belong to an ethnic minority, the sample of the paper. Select keeps columns, and the colon takes a run of neighbouring columns, the three immigration items. Mutate makes a new column, here concern as the mean of the three. Arrange sorts. Read it downwards as a sentence: take the respondents, then keep the sample of the paper, then keep these columns, then add concern, then sort by country. [advance] The sixth verb is summarise, which collapses many rows into one per group. These lines give you the mean concern and the mean distrust of each country, the bold labels of the scatter that you met earlier.
+:::
+
+## Scales from items {#scales-from-items .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1-3|4"}
+items <- paper |>
+  select(imm_econ, imm_culture, imm_place) |>
+  na.omit()                                                   # every item answered
+k <- ncol(items)
+k / (k - 1) * (1 - sum(map_dbl(items, var)) / var(rowSums(items)))   # Cronbach's alpha
+```
+
+::: {.small}
+Cronbach's alpha compares the variances of the items with the variance of their sum: near 1 when the items move together, near 0 when they do not. For concern it is **`r fmt_num(alpha_of("concern", "all"), 2)`**.
+
+The mean of `imm_econ + imm_culture + imm_place` counts only respondents who answered all three items; `rowMeans(..., na.rm = TRUE)` averages the answered ones. That is the decision `items` of the menu.
+:::
+
+::: notes
+A scale built from several items measures an attitude with less error than any one of them, provided the items move together, and Cronbach's alpha says how far they do. The first lines keep the three immigration items for the respondents who answered all of them. The formula then compares the variances of the separate items with the variance of their sum: if the items move together, the sum varies much more than the parts, and alpha comes out near one. For concern it is point eight four, close to the point eight three that the paper reports. One small decision hides in the arithmetic. Adding the three items and dividing by three gives nobody a score who skipped an item, while row means with na dot rm averages whatever was answered. Both are on the menu.
+:::
+
+## Model formulas {#model-formulas .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|3|5-6|8-9"}
+distrust_parl ~ concern + age + female            # "distrust explained by concern, age, sex"
+
+m <- lm(distrust_parl ~ concern + age + female, data = paper)
+
+fe <- lm(distrust_parl ~ concern + age + female + factor(paste(cntry, essround)),
+         data = paper)                            # an intercept for every country-round
+
+ri <- lme4::lmer(distrust_parl ~ concern + age + female + (1 | cntry),
+                 data = paper)                    # a random intercept for each country
+```
+
+::: {.small}
+The tilde `~` reads **outcome on the left, predictors on the right**; add predictors with `+`. `factor()` gives every group its own intercept (fixed effects); `(1 | cntry)` asks lme4 for random intercepts. The helpers of Task 4 use the first, the model of Task 3 the second.
+:::
+
+::: notes
+A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, more predictors added with a plus. lm fits a linear regression. Wrapping the country-round in factor gives every country-round its own intercept, so concern is compared only among respondents surveyed in the same country at the same time. These are fixed effects in the sense of the panel literature, not in the sense of multilevel modelling, where the same words name the coefficients that do not vary between groups. The last line asks lme4 for random intercepts instead, which treats the country intercepts as drawn from a distribution; that is the family of the model of the paper. You will fit the second kind in Task 3, and the helpers of Task 4 fit the first kind.
+:::
+
+## Plotting with ggplot2 {#plotting-with-ggplot2 .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1-3|4|5"}
+paper |>
+  summarise(concern = mean(concern, na.rm = TRUE),
+            distrust = mean(distrust_parl, na.rm = TRUE), .by = cntry) |>
+  ggplot(aes(x = concern, y = distrust, label = cntry)) +   # data, and what maps to what
+  geom_text()                                                # draw the labels
+```
+
+::: {.small}
+Three parts, always: the **data**, the **mapping** (`aes`) from variables to what you see, and one or more **geoms** that draw something. Layers stack with `+`.
+:::
+
+::: notes
+Plotting, briefly. A ggplot always has three parts. The data, here the mean concern and the mean distrust of parliament in each of the sixteen countries. The mapping, which is what aes does: it says which variable becomes which visual property, here concern on the horizontal axis, distrust on the vertical one, and the country code as the label. And one or more geoms that actually draw something, stacked with plus signs; this one writes the labels. Notice that the pipe carries the summarised data straight into ggplot, so the whole thing reads as one sentence from the respondents to the picture. The plot it makes is a rough version of the scatter of country means from earlier, and the first figure in Task 2 of your report.
+:::
+
+## Causal graphs in R {#causal-graphs-in-r .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2-4|5-6|7|8|11|12"}
+dag <- make_dag(
+  "background -> concern", "background -> distrust",
+  "pessimism -> concern",  "pessimism -> distrust",
+  "ideology -> concern",   "ideology -> distrust",
+  "concern -> far_right",  "distrust -> far_right",
+  "concern -> services",   "distrust -> services",
+  # "concern -> distrust",         # the arrow that the claim is about
+  exposure = "concern", outcome = "distrust"
+)
+
+adjustmentSets(dag)                                    # what must be held constant?
+isAdjustmentSet(dag, c("background", "pessimism", "ideology", "far_right", "services"))
+```
+
+::: {.small}
+Arrows are written **cause -> effect**, each in quotes, so a `#` takes an arrow out and the code still runs. `make_dag()` is a helper of the workspace, built on **dagitty**.
+:::
+
+::: notes
+The last piece of R is the one you use in the next task. A causal graph in the workspace is a list of arrows, written cause, then an arrow, then effect. The background, pessimism and ideology each point at both attitudes. Concern and distrust each point at the far-right vote and at the verdict on services. The arrow that the claim is about is commented out with a hash, so that you decide whether to switch it on. You also declare the exposure and the outcome. Then two questions for dagitty. adjustmentSets asks what you must hold constant to estimate the effect of concern, and isAdjustmentSet asks whether the five controls of the paper, written out in the last line, are such a set.
+:::
+
+## Common error messages {#common-error-messages .smaller .deepdive run="tools"}
+
+::: {.small}
+| What you see | What it usually means |
+|---|---|
+| `could not find function "try_spec"` | The helpers are not loaded – run `source("R/spec_tools.R")` |
+| `object 'paper' not found` | You ran this chunk before the one that creates it – go back up and run in order |
+| `cannot open file 'data_private/McLaren_SRD_final_data.csv'` | The file of Task 3 is not there yet – run `fetch_multi100()` while you are online |
+| `+` on the console, nothing happens | An unclosed bracket or quote. Press **Esc** and look for the missing `)` |
+:::
+
+::: {.fragment .small}
+Read the error. R error messages are terse but almost always literally true, and most of them name the thing that R could not find.
+:::
+
+::: notes
+These four errors will be most of what you meet in the tasks. "Could not find function" means that the helpers or the package are not loaded, so source the helper file. "Object paper not found" means that you ran a chunk before the one that creates the object; go back up and run them in order. "Cannot open file" with the name of the Multi100 file means that the download of Task 3 has not happened yet, so run fetch underscore multi100 while you have a connection. And if the console shows a plus sign and nothing happens, R thinks that you have not finished the command: there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. The general advice is the habit I would most like you to keep: read the error, because it usually names exactly what R could not find.
+:::
+
+<!-- DEEP DIVE END -->

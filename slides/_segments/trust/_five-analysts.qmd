@@ -1,0 +1,74 @@
+## The five analysts {#the-five-analysts}
+
+```{r}
+#| label: five-analysts
+#| fig-width: 10
+#| fig-height: 4.1
+# The published result and the five reanalyses (data/reference_marks.csv),
+# each placed by its coefficient, with a short note on the choice that set it
+# apart (data/analysts5.csv and the case study). The light band is the range
+# of the curve of the claim, the dark band the range of the specifications
+# that hold constant the controls of the paper.
+choice_note <- c(
+  OA = "Table 3, parliament",
+  FQ1G7 = "a short list of controls",
+  `6U3LL` = "Table 3 without unemployment",
+  N8P2J = "Table 3",
+  `456AD` = "shorter controls, with satisfaction with the government",
+  LT39B = "one item for concern, with satisfaction with the government"
+)
+five <- marks_all |>
+  filter(id %in% names(choice_note)) |>
+  mutate(lab = paste0(tag, "   ", choice_note[id]), oa = id == "OA") |>
+  arrange(desc(b)) |>
+  mutate(lab = factor(lab, levels = rev(lab)))
+paper_set <- filter(curve, controls == "paper")
+
+ggplot(five, aes(b, lab)) +
+  annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
+           fill = "#d6dde5", alpha = 0.6) +
+  annotate("rect", xmin = min(paper_set$b), xmax = max(paper_set$b), ymin = -Inf, ymax = Inf,
+           fill = "#9fb1c2", alpha = 0.55) +
+  geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
+  geom_point(aes(colour = oa), size = 5.5) +
+  geom_text(aes(label = fmt_num(b, 3)), hjust = -0.5, size = 5, colour = ink) +
+  scale_colour_manual(values = c(`FALSE` = ncl_blue, `TRUE` = burgundy), guide = "none") +
+  scale_x_continuous(limits = c(0, 0.35), labels = \(x) fmt_num(x, 2)) +
+  labs(x = "points of distrust per point of concern", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.small}
+All five ticked "evidence for the claim" in Task 1 of Multi100, and every coefficient lies well above zero. They still run from **`r fmt_num(min(analysts$b_refit), 3)`** to **`r fmt_num(max(analysts$b_refit), 3)`**, the largest about `r fmt_num(max(analysts$b_refit) / min(analysts$b_refit), 1)` times the smallest. The dark band is the range of the curve with the controls of the paper, the light band the whole curve.
+:::
+
+::: notes
+And here are the five, with the published result in burgundy for reference, each placed by its coefficient in points of distrust per point of concern, the scale of the claim. The course refitted every one of them on the file that they received, and the refits reproduce four of the recorded statistics exactly. On direction, everybody agrees, and all five concluded that the data were evidence for the claim. On size they do not: from point one one five to point two three five, a factor of two. Read the labels. 6U3LL and N8P2J fitted the model of the paper and sit just above it. FQ1G7, at the top, held constant a much shorter list of controls. And LT39B, at the bottom, measured concern with one item instead of three. The bands show where the curve of the course runs.
+:::
+
+## What the five analysts did {#what-the-five-analysts-did .smaller}
+
+```{r}
+#| label: five-table
+#| output: asis
+# The five reanalyses as a Markdown table, from data/analysts5.csv.
+rows <- analysts |>
+  arrange(desc(b_refit)) |>
+  mutate(stat = paste0("*", statistic_type, "* = ", formatC(statistic_recorded, format = "fg", digits = 6)),
+         line = paste0("| ", id, " | ", concern, " | ", method, " | ", stat, " | ",
+                       fmt_n(n_recorded), " | ", fmt_num(b_refit, 3), " |")) |>
+  pull(line)
+cat(c("::: {.fs-55}", # r-style: keep – writes the Markdown of the table
+      "| Analyst | Concern | Model | Recorded | Respondents | Coefficient |",
+      "|:--|:--|:--|--:|--:|--:|",
+      rows, ":::"), sep = "\n")
+```
+
+::: {.fragment .small}
+Two decisions carry most of the spread: **what is held constant**, which puts FQ1G7 at the top, and **how concern is measured**, which puts LT39B at the bottom. Neither decision is a mistake.
+:::
+
+::: notes
+The same five as a table. Four of them measured concern with the index of three items, built over whatever items a respondent answered, which is how the file that they received built it. LT39B used the single item about the country as a place to live. The models differ too: two fitted the three-level model of the paper in R, one fitted a model with a random intercept for each country in jamovi, and two used Stata, with country dummies and random intercepts, and added satisfaction with the government to the controls. They reported two t statistics, an F and two z statistics, which Multi100 converted onto one scale. [advance] Two decisions carry most of the spread, what is held constant and how concern is measured, and neither of them is a mistake: each is a reading of the claim that a careful analyst could defend.
+:::

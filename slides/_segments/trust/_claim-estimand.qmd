@@ -1,0 +1,120 @@
+## The estimand statement {#the-estimand-statement .smaller}
+
+::: {.claimcard}
+"Among [which respondents], counted with [which weights], the change in distrust of [which institution] that goes with one more point of [concern, measured how], holding [what] constant."
+:::
+
+::: {.small}
+- **Which institution** – parliament, as SCORE fixed the test, or politicians, the legal system, or the three together?
+- **Holding what constant** – nothing, as the claim was selected; the demographics; outlook and ideology as well; or every control of the paper?
+:::
+
+::: {.fragment}
+**In chat, now:** your statement for the claim, every bracket filled. Type it, hold it, send on "go".
+:::
+
+::: {.src}
+The template of the specification menu and the decision map on the course site, after @LundbergEtAl2021WhatYourEstimand.
+:::
+
+::: notes
+An estimand is the quantity that your number is meant to estimate, stated in words before any model is fitted. This is the template that the specification menu on the course site uses for our claim, with a bracket for each decision that changes the question. Some brackets have an obvious filling: the respondents are the citizens of the paper, and concern is the index of three items. Two brackets are open. Which institution: parliament, as SCORE fixed the test, or politicians, or the legal system, or all three together? And the big one, what is held constant: nothing, as the claim was selected, or the controls of the paper, as the abstract says? Fill in the brackets, type the statement in chat, hold it, and send on go. [go; read three or four aloud] If the chat splits on the last bracket, that is the same split as among the five analysts.
+:::
+
+## The causal graph of the claim {#the-causal-graph-of-the-claim .smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+#| label: trust-dag
+#| fig-width: 7.2
+#| fig-height: 5.6
+# The graph of Task 2 (the workspace file R/dag_starter.R), with the arrow
+# that the claim is about drawn as a dashed line.
+trust_dag("all")
+```
+:::
+::: {.column width="40%"}
+::: {.small}
+- **Above:** the respondent's background (age, sex, education, income), a general **pessimism** and **ideology** can each shape both concern and distrust
+- **Below:** a vote for a far-right party and the verdict on public **services** and the economy, which concern and distrust may each produce
+- The dashed line is the claim, the arrow that Task 2 leaves for you to switch on
+:::
+:::
+::::
+
+::: notes
+Here is the claim as a causal graph, the same graph that you finish in Task 2. Concern on the left, distrust on the right, and the dashed line between them is the claim, which the starter file leaves switched off for you to decide. Above, three things that can shape both attitudes: the background of the respondent, which is settled before either attitude forms; a general pessimism, the unhappy and dissatisfied outlook that the paper worried about; and ideology. Those are candidate confounders. Below, two things that may follow from the attitudes: a vote for a far-right party, and a harsh verdict on the public services and the economy. In this starter graph both concern and distrust point into them. Nothing here is data; it is a statement of what you believe about how the attitudes came about.
+:::
+
+## The controls of the paper {#the-controls-of-the-paper .smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+#| label: trust-dag-paper
+#| fig-width: 7.2
+#| fig-height: 5.6
+trust_dag("paper")
+```
+:::
+::: {.column width="40%"}
+::: {.small}
+- Holding the three common causes constant **closes** the paths through them, in pale grey: `adjustmentSets(dag)` returns exactly these three
+- The far-right vote and the verdict on services are common effects of concern and distrust, **colliders**. Holding them constant **opens** the paths in red
+- In this graph the controls of the paper are not an adjustment set: `isAdjustmentSet()` answers `FALSE`
+:::
+:::
+::::
+
+::: {.fragment .small}
+Comparing respondents who voted alike and judge the services alike can make concern and distrust go together even where concern has no effect on distrust at all [@ColeEtAl2010IllustratingBiasDue; @GriffithEtAl2020ColliderBiasUndermines].
+:::
+
+::: notes
+Now draw boxes around the five things that the paper holds constant. The three above, in blue boxes, are common causes, and holding them constant closes the paths that run through them: those arrows turn pale. That is exactly the set that dagitty asks for. The two below, in red boxes, are different. In this graph both concern and distrust point into them, which makes each a collider, and holding a collider constant opens a path between its causes. Among respondents who voted the same way and judge the services the same way, the more concerned can look more distrustful even if concern does nothing to distrust. [advance] So in this graph the controls of the paper are not an adjustment set. Whether the graph is right is another matter, and that is the next slide.
+:::
+
+## Three readings of the controls {#three-readings-of-the-controls .smaller}
+
+```{r}
+#| label: dag-readings
+#| fig-width: 11
+#| fig-height: 3.4
+# The far-right vote and the verdict on services as common causes, as steps
+# on the path from concern to distrust, or as consequences of both.
+dag_readings()
+```
+
+::: {.small}
+- **Common causes** – holding them constant removes confounding. This is the reading of the paper, which holds them constant as predictors of support for the government of the day
+- **Steps on the path** – holding them constant removes part of the effect and leaves a narrower, direct one
+- **Consequences of both** – holding them constant adds a distortion of its own
+:::
+
+::: {.fragment .small}
+The data cannot say which graph is true. Each is a defensible view of how political attitudes form, and the curve of the course keeps all four sets of controls for that reason.
+:::
+
+::: notes
+Three graphs, identical except for the two variables in bronze. On the left they are common causes: a respondent who judges the economy and the services harshly may grow both more concerned and more distrustful, and holding the verdict constant removes confounding. That is how the paper reads them. In the middle they are steps on the path: concern sours the verdict on the services, and the verdict feeds distrust, so holding it constant removes part of the very effect you want. On the right they are consequences of both attitudes, and holding them constant manufactures an association. [advance] Each graph is a defensible view of how political attitudes form, and the data cannot tell them apart. That is why the curve keeps all four sets of controls, and why your preregistration asks for one sentence, grounded in your graph, on which set answers the claim.
+:::
+
+## Reverse causation {#reverse-causation .smaller}
+
+::: {.claimcard}
+"one could argue for an at least partially reverse direction of the effect, given that there is ample evidence that trust in authorities impacts on attitudinal variables" <span class="src">FQ1G7, Task 1 of Multi100</span>
+:::
+
+::: {.small}
+- Replace the arrow of the claim with `"distrust -> concern"`: the path between the two stays open whatever is held constant, so **no set of controls** can tell the two directions apart in a survey that interviews each respondent once
+- The paper says that an analysis with instrumental variables confirms its direction, and adds "(These results will be provided upon request.)" (pp. 226–228)
+:::
+
+::: {.fragment .small}
+Separating the two directions needs another design, such as panel data that follow the same people over time [@LeszczenskyWolbring2022HowDealReverse].
+:::
+
+::: notes
+One of the five analysts, FQ1G7, raised a doubt that no specification on our menu can answer, and here it is in their own words: trust in authorities shapes attitudes, so the arrow might run the other way. Try it in Task 2. Replace the arrow of the claim with one from distrust to concern, and ask dagitty what to adjust for. The path between the two stays open whatever you hold constant, because it is the direct arrow itself. The ESS interviews each respondent once, so it compares people who differ in concern, and holds no record of anyone whose concern changed. The paper says that an instrumental-variables analysis confirmed its direction, and that the results are available on request, so a reader cannot check them. [advance] Settling the direction needs another design, such as panel data that follow the same people over time.
+:::

@@ -1,0 +1,55 @@
+## Task 2 of Multi100 {#task-2-of-multi100 .smaller}
+
+::: {.claimcard}
+"... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics"
+:::
+
+::: {.claimcard}
+"You should include unhappiness in your set of controls variables. You should focus on trust in parliament when estimating trust in politics in you analysis. You should not control for long-term country of immigration interaction with concern about immigration and popular far-right party interaction with concern about immigration in your analysis."
+:::
+
+::: {.small}
+The instruction for this claim, beside the request for a single main result from the family of *z*, *t*, *F* or $\chi^2$ tests. It fixes the outcome, keeps one control and removes the two interactions of Tables 4 and 5, so that every analysis estimates one coefficient of concern.
+:::
+
+::: {.src}
+The Multi100 record of the claim; @AczelEtAl2026InvestigatingAnalyticalRobustness.
+:::
+
+::: notes
+Here, word for word, is what the five Multi100 analysts of this claim were given for the second task: the claim as SCORE selected it, and an instruction in three sentences, typing slips included. Keep unhappiness among the controls, which is one of the variables that the paper uses against the reading of the association as general pessimism. Focus on trust in parliament. And leave out the two interactions of the paper, with a long history of immigration and with the strength of the far right, so that each analysis estimates a single coefficient of concern. That is the whole brief, together with the request that every analyst report one main result as a test statistic. Everything else was left to the analysts.
+:::
+
+## What the instruction left open {#what-the-instruction-left-open .smaller}
+
+::: {.small}
+- **The other controls** – the demographics only, outlook and ideology, the verdicts on the economy and the services, the two votes, satisfaction with the government
+- **The measure of concern** – the index of three items or a single item; every item answered, or the answered ones
+- **The model** – three levels with random intercepts, a random intercept for the country, country dummies, the country-level variables or none
+- **The respondents** – everyone with every answer, or a model without unemployment, which keeps the Swiss respondents
+- **The weights and the test** – none or design weights; a *t*, a *z* or an *F*
+:::
+
+::: {.fragment .small}
+The instruction pinned down the outcome and one control, and left open the decision that moves the estimate most: **what else is held constant**.
+:::
+
+::: notes
+So what did the instruction leave open? Nearly everything that matters. The other controls: one analyst kept a short list, two added satisfaction with the government, which the paper does not use. The measure of concern: the index of three items, or one item alone. The model: three levels, a single random intercept, country dummies, with or without the variables that describe countries. Even the respondents, because the file had no unemployment rate for Switzerland, so a model with unemployment quietly loses a whole country. And the weights and the test. [advance] The instruction pinned down the outcome and one control, and left open the decision that, as we will find this afternoon, moves the estimate most: what else is held constant. That is exactly where the five analysts parted company.
+:::
+
+## Analyst no. 6 {#analyst-no.-6}
+
+::: {.big}
+- Aim 1: **reproduce** the constrained result of analyst **6U3LL**
+:::
+
+  - **What 6U3LL did:** the three-level model of Table 3 without the unemployment rate, with random intercepts for countries and country-rounds, in R
+
+  - **What Multi100 recorded:** *t* = `r fmt_num(an("6U3LL", "statistic_recorded"), 3)` on `r fmt_n(an("6U3LL", "n_recorded"))` respondents (partial *r* = `r fmt_num(an("6U3LL", "r_recorded"), 3)`)
+
+  - **What you have:** the file that Multi100 gave the analysts, built from the ESS by the SCORE reproduction osf.io/e48gd, and R with lme4
+
+::: notes
+So here is your first job as the sixth analyst. Analyst 6U3LL, who described their discipline as psychology, fitted the model of Table 3 of the paper without the unemployment rate, a three-level model with random intercepts for countries and for country-rounds, in R. Leaving out unemployment kept the Swiss respondents, for whom the file holds no unemployment rate. Multi100 recorded a t of forty-six point six two five, on more than seventy-two thousand respondents. You have the same file that 6U3LL had, which a SCORE team built from the survey with the variables of the paper already coded, and you have R with lme4. The whole of reproducibility is the question of whether that is enough for you to get the recorded number back, to the third decimal.
+:::

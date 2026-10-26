@@ -1,0 +1,126 @@
+## Standard errors with 16 countries {#standard-errors-with-16-countries}
+
+```{r}
+#| label: inference-chart
+#| fig-width: 10
+#| fig-height: 3.6
+# The reference specification under four rules of inference
+# (data/display_inference.csv): the coefficient with its 95% interval, the
+# t and the df of each rule. The wild cluster bootstrap gives a p-value and no
+# standard error, so it is reported beneath the chart.
+rule_labels <- c("conventional (model-based) errors" = "conventional errors",
+                 "random intercepts (multilevel model)" = "random intercepts",
+                 "clustered by country-round (CR1)" = "clustered by country-round",
+                 "clustered by country (CR1), the curve" = "clustered by country (the curve)")
+inf_rows <- inference |>
+  filter(rule %in% names(rule_labels)) |>
+  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
+         lab = factor(rule_labels[rule], levels = rev(rule_labels)),
+         note = paste0("t = ", fmt_num(stat, 1), " on ", format(round(df), big.mark = ",", trim = TRUE), " df"),
+         curve_rule = startsWith(rule, "clustered by country ("))
+ggplot(inf_rows, aes(b, lab, colour = curve_rule)) +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.6) +
+  geom_point(size = 4.2) +
+  geom_text(aes(x = 0.205, label = note), hjust = 0, size = 4.8, colour = "grey30") +
+  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  coord_cartesian(xlim = c(0.15, 0.235)) +
+  labs(x = "points of distrust per point of concern, with 95% intervals", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+```
+
+::: {.small}
+The paper prints the standard error as 0.00. Clustered by country, it is `r fmt_num(inf("clustered by country (", "se"), 4)`, **`r fmt_num(inf("clustered by country (", "se") / inf("conventional", "se"), 1)` times** the conventional `r fmt_num(inf("conventional", "se"), 4)`; across the curve, `r fmt_num(min(curve$se / curve$se_conv), 1)` to `r fmt_num(max(curve$se / curve$se_conv), 1)` times. A wild cluster bootstrap by country: p below 1/10,000.
+:::
+
+::: notes
+Here is the question that the paper left its readers unable to ask. The coefficient is the same under every rule; what changes is how uncertain we say it is. Conventional errors treat seventy thousand respondents as seventy thousand independent pieces of evidence, and give a t of forty-one. The random-intercept model of the paper gives the same t. Clustering by country-round widens the interval, and clustering by country, the rule of the curve, widens it more than twice over, with a t of eighteen on fifteen degrees of freedom. The standard error printed as nought point nought nought is really nought point nought one once the countries are allowed to differ. And still the interval sits far from zero, and a bootstrap that resamples whole countries agrees. On this claim no rule of inference changes the verdict, which is itself worth knowing.
+:::
+
+## Respondents of one country {#respondents-of-one-country}
+
+```{r}
+#| label: within-country
+#| fig-width: 9.5
+#| fig-height: 3.9
+# The correlation of concern with distrust of parliament among the
+# respondents of the paper in each country (data/trust_ess.csv).
+ggplot(r_within, aes(r, factor(country, levels = country))) +
+  geom_segment(aes(x = 0, xend = r, yend = factor(country, levels = country)),
+               colour = "#c7ccd2", linewidth = 0.8) +
+  geom_point(size = 3.6, colour = ncl_blue) +
+  scale_x_continuous(limits = c(0, 0.42)) +
+  labs(x = "correlation of concern with distrust of parliament, within the country", y = NULL) +
+  theme_slide(13) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.small}
+Random intercepts let the level of distrust differ between countries, and assume that the association is the same everywhere and that respondents are otherwise independent. The association runs from `r fmt_num(min(r_within$r), 2)` in `r r_within$country[1]` to `r fmt_num(max(r_within$r), 2)` in `r r_within$country[nrow(r_within)]`, and respondents of one country share institutions, media and events. Errors clustered by country allow for both.
+:::
+
+::: notes
+Why should the respondents of one country count for less than independent evidence? Here is one reason, from the data. The correlation of concern with distrust of parliament is under point two in Italy, Portugal and Spain, and close to point four in Sweden and Norway. A model with random intercepts lets the average level of distrust differ between countries, but it still assumes that the association is the same everywhere, and that once the intercepts are in, one respondent tells you nothing about the next. Neither holds. Respondents of one country share institutions, newspapers, scandals and elections that no control in the model captures. Errors clustered by country let the residuals of one country be related in any way, across all its rounds. The price is that the evidence on uncertainty now rests on sixteen clusters, and that is the next problem.
+:::
+
+## Few clusters {#few-clusters .smaller}
+
+::: {.small}
+- With errors clustered by country, the evidence on the uncertainty rests on **16 clusters**, and with few clusters even clustered errors can be too small
+- The curve tests every coefficient against a ***t* distribution on 15 degrees of freedom** rather than the normal one
+- A **wild cluster bootstrap** checks the result: it rebuilds the distribution of the clustered *t* under no association, multiplying the residuals of whole countries by random weights 9,999 times. None of the draws reaches the *t* of the data
+:::
+
+::: {.fragment .small}
+Across the curve the clustered *t* runs from `r fmt_num(min(curve$stat), 1)` to `r fmt_num(max(curve$stat), 1)`, and no rule changes the verdict of any specification. In the EU-frames case, whose predictor varies only between country-years, the same correction decides whether the reproduced result is significant. Here concern varies between respondents inside every country-round.
+:::
+
+::: notes
+Clustering by country solves one problem and opens another. The evidence about uncertainty now comes from sixteen countries, and with that few clusters, even clustered errors tend to be too small. Two things protect the curve. Every coefficient is tested against a t distribution on fifteen degrees of freedom rather than the normal one. And a wild cluster bootstrap checks the answer: it builds the distribution of the t that we would get with no association at all, by flipping and scaling the residuals of whole countries, nearly ten thousand times. Not one draw comes near the t of the data. [advance] So here, nothing changes. In the EU-frames case on this site, the same correction decides whether the reproduced result is significant, because its predictor varies only between country-years. Here concern varies between respondents of the same country and round, so each of the sixteen clusters carries thousands of comparisons.
+:::
+
+## Leaving out one country {#leaving-out-one-country}
+
+```{r}
+#| label: loo-chart
+#| fig-width: 9.5
+#| fig-height: 4
+# The reference specification refitted without each country in turn, with
+# 95% intervals from errors clustered by the remaining 15 countries (t on 14
+# df); the dashed line is the estimate on all 16 (data/display_loo.csv).
+loo |>
+  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
+         country = reorder(country_names[left_out], b)) |>
+  ggplot(aes(b, country)) +
+  geom_vline(xintercept = curve_ref$b, linetype = "dashed", colour = burgundy) +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 0.9, colour = ink) +
+  geom_point(size = 3, colour = ink) +
+  coord_cartesian(xlim = c(0.12, 0.23)) +
+  labs(x = "points of distrust per point of concern, without the country", y = "country left out") +
+  theme_slide(13)
+```
+
+::: {.small}
+The estimate moves only between **`r fmt_num(min(loo$b), 3)`** (without `r country_names[loo$left_out[which.min(loo$b)]]`) and **`r fmt_num(max(loo$b), 3)`** (without `r country_names[loo$left_out[which.max(loo$b)]]`): no single country carries the result.
+:::
+
+::: notes
+With sixteen countries, one of them could carry the whole result, so here is the reference specification refitted sixteen times, each time without one country, with its interval from the fifteen that remain. The dashed line is the estimate on all sixteen. Leave out Norway, where the association is strongest, and the estimate falls a little; leave out Portugal, and it rises a little. Every estimate stays within a hundredth of the full one, and every interval sits far from zero. This is a cheap check, and worth running whenever a cross-national result rests on a modest number of countries, because a few clusters with unusual values can do more damage than any choice of standard error.
+:::
+
+## What the curve leaves out {#what-the-curve-leaves-out .smaller}
+
+::: {.small}
+- **The dependence.** All `r nrow(curve)` specifications use the same respondents, so they share their noise: `r nrow(curve)` of `r nrow(curve)` significant **describes** the curve, and is not `r nrow(curve)` independent confirmations
+- **The options off the curve**, and the specifications that nobody ran. The curve looks just as complete either way
+- **The data-building choices.** Everything upstream of the extract – how the votes were coded, which party counts as far right – is fixed for everyone here
+- **The causal reading.** Reverse causation and unmeasured common causes would produce the same curve as an effect of concern on distrust
+:::
+
+::: {.fragment .small}
+A curve is a **map of the menu you wrote**, and it cannot show whether that menu was the right one.
+:::
+
+::: notes
+Four things are missing from the curve, and a chart as tidy as ours makes it easy to forget them. First, the dependence: all hundred and ninety-two use the same respondents, so if sampling luck favoured the claim, it favoured every specification at once. A hundred per cent significant describes the curve; it is not a hundred and ninety-two confirmations. Second, what is not on it: options left off on purpose, and analyses that nobody wrote down. Third, everything upstream of the extract, such as how the votes were coded, which moved the reproduction in Part 3. And fourth, the causal reading, which no specification can test, because distrust driving concern would draw exactly this curve. [advance] A curve is a map of the menu you wrote, and it cannot show whether the menu was right.
+:::

@@ -1,0 +1,58 @@
+## Comparisons within country-rounds {#comparisons-within-country-rounds .smaller}
+
+::: {.small}
+- **An intercept for every country-round** compares concern only among respondents surveyed in the same country in the same round. Everything that differs between countries and rounds – the history of immigration, the institutions, the economy of that year – is set aside
+- These are **fixed effects** in the sense of the panel literature; in multilevel modelling the same words name the coefficients that do not vary between groups
+- **An intercept for every country, with a shift for every round**, compares respondents of one country across its rounds: `r fmt_signed(dev_of("fe", "country_and_round", "shift_mean"), 3)` on average against its twin
+:::
+
+::: {.fragment .fs-75}
+| At the reference settings | Coefficient |
+|:--|--:|
+| An intercept for every country-round (the curve) | `r fmt_num(curve_ref$b, 3)` |
+| Random intercepts for country-rounds, the family of the model of the paper | `r fmt_num(opt("random_intercepts", "b"), 3)` |
+| One pooled regression, without intercepts for groups | `r fmt_num(opt("pooled", "b"), 3)` |
+
+With hundreds of respondents in every country-round, random and fixed intercepts give the same answer. The pooled regression mixes the association between countries into the one within them.
+:::
+
+::: notes
+Every specification on the curve compares respondents within country-rounds. An intercept for every country in every round means that concern is compared only among people who were interviewed in the same country at the same time, so nothing that differs between countries or rounds can produce the association: not the history of immigration, not the institutions, not the economy of that year. Note the vocabulary: these are fixed effects as the panel literature uses the term. The second option gives each country one intercept and lets the rounds shift together, and it moves the estimate by three thousandths. [advance] The paper used random intercepts instead, and on these data they give the same coefficient, because every country-round holds hundreds of respondents. Only the pooled regression, which ignores countries altogether, moves it, by letting the association between countries leak in.
+:::
+
+## Attitude scales and their items {#attitude-scales-and-their-items}
+
+```{r}
+#| label: scale-items
+#| fig-width: 9.5
+#| fig-height: 3.4
+# The reference specification with concern measured by the index of three
+# items (spec_curve.csv) or by one item alone (display_options.csv), each with
+# its 95% interval from errors clustered by country (t on 15 df).
+item_labels <- c(index = "index of three items (the curve)", economy = "economy item",
+                 culture = "cultural life item", place = "place-to-live item")
+items_fit <- options_d |>
+  filter(axis == "concern") |>
+  select(option, b, se, df) |>
+  bind_rows(tibble(option = "index", b = curve_ref$b, se = curve_ref$se, df = curve_ref$df)) |>
+  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
+         lab = factor(item_labels[option], levels = rev(item_labels)),
+         index = option == "index")
+ggplot(items_fit, aes(b, lab, colour = index)) +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.2) +
+  geom_point(size = 4.2) +
+  geom_text(aes(label = fmt_num(b, 3)), vjust = -1.1, size = 4.8, show.legend = FALSE) +
+  scale_colour_manual(values = c(`TRUE` = ncl_blue, `FALSE` = plain), guide = "none") +
+  coord_cartesian(xlim = c(0, 0.22)) +
+  labs(x = "points of distrust per point of concern (reference settings), with 95% intervals", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+```
+
+::: {.small}
+A single item measures concern with more random error than the mean of three (alpha `r fmt_num(alpha_of("concern", "all"), 2)`), and random error in a predictor pulls its coefficient towards zero. LT39B used the place-to-live item and sits lowest of all the results, at `r fmt_num(an("LT39B", "b_refit"), 3)`.
+:::
+
+::: notes
+The second decision that the analysts split on is how concern is measured. Here is the reference specification four times: with the index of three items, as the paper builds it, and with each item on its own. Every single item gives a coefficient between a quarter and a third smaller. That is not because the items measure different things; they correlate at around point six. It is because any one item carries more random error than the mean of three, and random error in a predictor pulls its coefficient towards zero. The index averages part of that error away. LT39B measured concern with the place-to-live item, and with satisfaction with the government among the controls it sits lowest of every result we have. The curve keeps the index, and the single items stay on the menu as weaker answers.
+:::

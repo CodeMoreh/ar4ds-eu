@@ -1,0 +1,21 @@
+## Hands-on 2 – The data, the estimand and the graph {#hands-on-2-the-data-the-estimand-and-the-graph .smaller}
+
+::: {.small}
+**Task 2** has three pieces:
+
+1. **Look at the data.** Count the respondents, the countries, the country-rounds and the respondents of the paper; compute alpha for the three immigration items; compare the correlation of concern with distrust across countries and within them
+2. **Write the estimand statement.** Fill every bracket of the template for *this* claim, above all which institution and what is held constant
+3. **Finish the graph.** Take the `#` off `"concern -> distrust"` if you believe it, then run `adjustmentSets(dag)`, `paths(dag, Z = paper_set)` and `isAdjustmentSet(dag, paper_set)`; then try the two swaps that `R/dag_starter.R` offers
+:::
+
+::: {.fragment .small}
+Two sentences for your notes: **what does holding the controls of the paper constant do in your graph, and can any set of controls tell an effect of concern from an effect of distrust?**
+:::
+
+::: {.fragment .small}
+Whatever you decide here is your starting point on the menu in Task 4, and field 4 of the preregistration in Task 5.
+:::
+
+::: notes
+Your turn, with three pieces. First, the data: count what you have, and the respondents of the paper; then the alpha of the three items; then the correlation of concern with distrust across the sixteen country means and inside each country. Second, the estimand statement, every bracket filled for this claim, and in particular which institution and what you hold constant. Third, the graph. Switch on the arrow from concern to distrust if you believe it, then ask dagitty what has to be held constant, which paths are open once the controls of the paper are held constant, and whether those controls are an adjustment set. Then try the swaps in the starter file, which turn the far-right vote and the verdict on services into steps on the path. Then the two sentences for your notes. [state the time] Shout if you get stuck.
+:::

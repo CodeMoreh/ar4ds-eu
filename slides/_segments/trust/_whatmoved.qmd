@@ -1,0 +1,57 @@
+## What moved the estimate {#what-moved-the-estimate}
+
+```{r}
+#| label: shifts-chart
+#| fig-width: 10
+#| fig-height: 4
+# Each option on the curve against its twins that take the first option of
+# the same decision (data/menu_deviations.csv): the mean shift of the
+# estimate, with the smallest and largest shift as a bar. The adjustment sets
+# are drawn in burgundy.
+option_labels <- select(menu_opts, axis, option, decision, label)
+shift_rows <- deviations |>
+  filter(option != baseline) |>
+  left_join(option_labels, by = c("axis", "option")) |>
+  mutate(lab = reorder(paste0(decision, ": ", label), -shift_mean),
+         big = axis == "controls")
+other_max <- deviations |>
+  filter(axis != "controls") |>
+  summarise(m = max(abs(c(shift_min, shift_max)))) |>
+  pull(m)
+
+ggplot(shift_rows, aes(shift_mean, lab, colour = big)) +
+  geom_vline(xintercept = 0, colour = grey_mid) +
+  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 3, alpha = 0.35) +
+  geom_point(size = 4.2) +
+  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  scale_x_continuous(labels = \(x) paste0(if_else(x > 0, "+", ""), fmt_num(x, 2))) +
+  labs(x = "shift against the twin (points of distrust per point of concern)", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.fs-80}
+Holding constant the controls of the paper instead of nothing moves the estimate by **`r fmt_num(dev_of("controls", "paper", "shift_mean"), 3)`** on average, outlook and ideology by **`r fmt_num(dev_of("controls", "outlook", "shift_mean"), 3)`**. No option of any other decision moves a specification by more than `r fmt_num(other_max, 3)`, and none changes a test result.
+:::
+
+::: notes
+Which decisions did the work? This chart sets every option on the curve beside its twins, the specifications that are identical except for that one decision, and shows how far the estimate moves: the dot is the average shift, the bar runs from the smallest to the largest. One decision stands far apart from the rest, in burgundy: the adjustment set. Holding constant everything that the paper holds constant, instead of nothing, takes fourteen hundredths off the estimate, and outlook and ideology alone take about eight. The demographics barely move it. The outcome moves it by up to five hundredths, distrust of politicians lying lowest. The weights, the rule for unanswered items and the comparison within countries move it by almost nothing. And not one option changes whether a specification is significant. So on this claim, the argument has to happen about what is held constant.
+:::
+
+## The adjustment set on the curve {#the-adjustment-set-on-the-curve}
+
+```{r}
+#| label: curve-controls
+#| fig-width: 9.5
+#| fig-height: 4
+# The curve of 192 coloured by the adjustment set.
+curve_base("controls")
+```
+
+::: {.fs-80}
+Mean estimate: **`r fmt_num(bs("none", "mean"), 3)`** without controls, **`r fmt_num(bs("demog", "mean"), 3)`** with the demographics, **`r fmt_num(bs("outlook", "mean"), 3)`** with outlook and ideology, **`r fmt_num(bs("paper", "mean"), 3)`** with the controls of the paper. The adjustment set carries `r fmt_pct(var_share[["controls"]], 0)` of the variance of the `r nrow(curve)` estimates.
+:::
+
+::: notes
+Colour the curve by the adjustment set and its structure explains itself. The specifications without controls and with the demographics fill the left of the curve, around point two nine. Outlook and ideology bring the estimate down to about point two one. And the controls of the paper, in the darkest blue, fill the right-hand end, around point one five. Split the variance of the hundred and ninety-two estimates by decision, and the adjustment set carries more than nine tenths of it. These four blocks are not four noisy estimates of one quantity. They are answers to four readings of the claim, and which reading is right depends on the graph that you drew in Task 2: whether the verdicts on the economy and the services, and the votes, are common causes, steps on the path, or consequences of both attitudes.
+:::

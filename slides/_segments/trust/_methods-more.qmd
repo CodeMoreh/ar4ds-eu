@@ -1,0 +1,110 @@
+<!-- DEEP DIVE START: methods tutorial (5 slides). Optional depth, on the
+     .deepdive class – see the note at the start of _rtutorial.qmd. -->
+
+## Reliability by country {#reliability-by-country .smaller .deepdive run="methods"}
+
+::: {.skiplink}
+[Methods tutorial · 5 slides · skip to Hands-on 4 →](#hands-on-4-exploring-the-menu)
+:::
+
+```{r}
+#| label: reliability-chart
+#| fig-width: 9.5
+#| fig-height: 3.9
+# Cronbach's alpha of the three immigration items and of the three trust items
+# in each country and pooled, among the respondents of the paper who answered
+# all three (data/display_reliability.csv).
+scale_labels <- c(concern = "concern about immigration", trust = "trust in the three institutions")
+rel <- reliab |>
+  mutate(place = if_else(cntry == "all", "pooled", cntry),
+         scale = scale_labels[scale])
+rel_order <- rel |>
+  filter(scale == scale_labels[["concern"]]) |>
+  arrange(alpha) |>
+  pull(place)
+ggplot(rel, aes(alpha, factor(place, levels = rel_order), colour = scale)) +
+  geom_vline(xintercept = 0.7, colour = grey_mid, linetype = "22") +
+  geom_point(size = 3.4) +
+  scale_colour_manual(values = c(ncl_blue, orange), name = NULL) +
+  scale_x_continuous(limits = c(0.65, 0.95)) +
+  labs(x = "Cronbach's alpha", y = NULL) +
+  theme_slide(13) +
+  theme(legend.position = "top", legend.justification = "left")
+```
+
+::: {.small}
+Concern: `r fmt_num(alpha_of("concern", "all"), 2)` pooled, from `r fmt_num(min(reliab$alpha[reliab$scale == "concern" & reliab$cntry != "all"]), 2)` to `r fmt_num(max(reliab$alpha[reliab$scale == "concern" & reliab$cntry != "all"]), 2)` by country (the paper: an average of 0.83 and a minimum of 0.75). The three trust items reach `r fmt_num(alpha_of("trust", "all"), 2)`, and the paper keeps them apart all the same, "precisely" so that the finding can be shown for each institution (p. 212).
+:::
+
+::: notes
+The methods tutorial starts with the scales themselves. A scale is only as good as the agreement of its items, and that agreement can differ between countries, which matters in a comparative survey. Here is alpha for the three immigration items in each country, in blue, and for the three trust items, in orange. The immigration scale clears the usual threshold of point seven everywhere, lowest in the Netherlands and highest in the United Kingdom, close to what the paper reports. The trust items hang together just as well, and the paper still keeps them apart, so that the finding can be shown for parliament, politicians and the legal system separately. The menu offers their mean as a fourth outcome, which some analysts built in their free analyses, and the curve keeps it.
+:::
+
+## Survey weights {#survey-weights .smaller .deepdive run="methods"}
+
+::: {.small}
+- **No weights** – the coefficient is an average of the associations within the country-rounds in which large samples, and samples with varied concern, count for more
+- **Design weights** make each national sample stand for its adult population, correcting for unequal chances of selection
+- **Design and population weights** also make each country count by its adult population, so that the estimate describes the people of the 16 countries as one population
+- **Post-stratification weights** adjust the samples to census margins as well
+:::
+
+::: {.fragment .small}
+Against no weights on twin specifications: design weights `r fmt_signed(dev_of("weights", "design", "shift_mean"), 3)`, design and population weights `r fmt_signed(dev_of("weights", "population", "shift_mean"), 3)` on average. At the reference settings, post-stratification gives `r fmt_num(opt("post", "b"), 3)` and post-stratification with population weights `r fmt_num(opt("post_population", "b"), 3)`. The paper and both SCORE reproductions are unweighted.
+:::
+
+::: notes
+Weights decide whose answers count for how much, and so which population the estimate describes. Without weights, the coefficient averages the associations within the country-rounds, and a large sample, or one in which concern varies a lot, counts for more. Design weights correct for the unequal chances of selection that a sampling design builds in, so that each national sample stands for its adult population. Multiply in the population weights, and Germany counts for more than Ireland, so that the estimate describes the people of the sixteen countries taken together. Post-stratification goes a step further and matches the samples to census figures. [advance] On this claim none of it matters much: the design weights change the estimate in the third decimal, the population weights by less than one hundredth. The claim does not say which population average it means, so the curve keeps three.
+:::
+
+## Missing answers and the size of the sample {#missing-answers-and-the-size-of-the-sample .smaller .deepdive run="methods"}
+
+::: {.small}
+Among the `r fmt_n(nrow(paper_rows))` respondents of the paper:
+
+- **household income** is missing for `r fmt_pct(miss_income)`, and for everyone in France and Ireland in round 1
+- **left–right position** for `r fmt_pct(mean(is.na(paper_rows$left_right)))`, and **concern** with every item answered for `r fmt_pct(mean(is.na(paper_rows$concern)))`
+- a model that leaves out everyone with a missing answer, as both SCORE reproductions did, keeps **`r fmt_n(bs("paper", "n_lo"))` to `r fmt_n(bs("paper", "n_hi"))`** respondents with the controls of the paper, and **`r fmt_n(bs("none", "n_lo"))` to `r fmt_n(bs("none", "n_hi"))`** without controls
+:::
+
+::: {.fragment .small}
+The paper reports 110,732 respondents in every model and does not say how it treated missing answers. Averaging the answered items of each scale keeps about `r fmt_n(round(dev_of("items", "available", "n_shift_mean"), -2))` more respondents and moves the estimate by `r fmt_signed(dev_of("items", "available", "shift_mean"), 4)` on average.
+:::
+
+::: notes
+Missing answers decide the size of the sample, and here they decide it a great deal. Household income is missing for almost a quarter of the respondents of the paper, and for every respondent in France and Ireland in the first round. Left–right position is missing for one in ten. A model that leaves out every respondent with a missing answer, as both SCORE reproductions did, keeps about seventy thousand respondents once all the controls of the paper are in, against more than a hundred thousand with no controls. So the adjustment set also changes who is in the sample. [advance] The paper reports a hundred and ten thousand in every model and never says how it got there. Averaging the answered items of a scale recovers a few thousand respondents and barely moves the estimate. Multiple imputation is on the menu as a check.
+:::
+
+## Satisfaction with the government {#satisfaction-with-the-government .smaller .deepdive run="methods"}
+
+::: {.small}
+- LT39B and 456AD added **satisfaction with the government** to their controls. At the reference settings it moves the estimate from `r fmt_num(curve_ref$b, 3)` to `r fmt_num(opt("paper_gov", "b"), 3)`
+- It is an evaluation of the people in power, very nearly what distrust of parliament and of politicians measures, so holding it constant compares respondents who already agree about the government: **a weaker answer**
+- The controls of the paper **without unhappiness**, which the Multi100 instruction required: `r fmt_num(opt("paper_no_unhappy", "b"), 3)`, a check
+- The **country-level variables** of the paper cannot explain any difference between the respondents of one country-round, so they change nothing once every country-round has its own intercept
+:::
+
+::: notes
+Three options of the adjustment decision stay off the curve, and two of the five analysts chose one of them. LT39B and 456AD added satisfaction with the government to the controls. At the reference settings that takes the estimate from point one seven five to point one five two. The reason it stays off the curve is what the variable is: an evaluation of the people in power, which is very nearly what distrust of parliament and politicians measures. Holding it constant compares respondents who already agree about the government, and asks how much concern adds after that, which is a narrower question than the claim. The set of the paper without unhappiness, which the instruction ruled out, is a check, and it changes nothing. And the variables that describe countries cannot explain differences inside a country-round, so the fixed effects absorb them.
+:::
+
+## Effect sizes on one scale {#effect-sizes-on-one-scale .smaller .deepdive run="methods"}
+
+::: {.fs-80}
+| The reference specification as | Value |
+|:--|--:|
+| Points of distrust per point of concern (the curve) | `r fmt_num(curve_ref$b, 3)` |
+| The "maximum effect" of the paper, ten times the coefficient | `r fmt_num(10 * curve_ref$b, 2)` |
+| Standardised coefficient | `r fmt_num(curve_ref$b_std, 3)` |
+| Partial *r* by the rule of Multi100, $r = t / \sqrt{t^2 + \mathrm{df}}$, from the conventional *t* on `r fmt_n(curve_ref$df_conv)` df | `r fmt_num(curve_ref$r, 3)` |
+:::
+
+::: {.fragment .small}
+The same rule applied to the clustered *t* on `r curve_ref$df` df would give *r* = `r fmt_num(curve_ref$stat / sqrt(curve_ref$stat^2 + curve_ref$df), 3)`. The conversion counts respondents as the units of evidence: the recorded *r* of the five analysts, from `r fmt_num(min(analysts$r_recorded), 3)` to `r fmt_num(max(analysts$r_recorded), 3)`, rest on degrees of freedom in the tens of thousands.
+:::
+
+::: notes
+The last slide of the tutorial is about the scale on which a result is reported. The course reports points of distrust per point of concern, the scale of the point one seven of the paper. The paper itself also speaks of a maximum effect, which is the same coefficient times ten. A standardised coefficient puts both variables in standard deviations. And Multi100 converted every analysis into a partial correlation, from its test statistic and its degrees of freedom. [advance] That last conversion hides an assumption. Feed it the conventional t and seventy thousand degrees of freedom and you get point one five. Feed it the clustered t and fifteen degrees of freedom, one for each country but one, and you get nearly one. The rule treats the degrees of freedom as counting the units that carry the evidence, and it needs to be told which units those are.
+:::
+
+<!-- DEEP DIVE END -->

@@ -1,0 +1,50 @@
+## The curve of the claim {#the-curve-of-the-claim}
+
+```{r}
+#| label: spec-curve
+#| fig-width: 9.5
+#| fig-height: 4.1
+# The curve of 192 (data/spec_curve.csv), the chart that the Multiverse page
+# draws, with the reference specification tagged in ink. Built on
+# curve_base(), so that the next slide reuses this exact panel.
+curve_base() +
+  mark_layer(transmute(curve_ref, tag = "the reference specification", b, rank = rank,
+                       new_data = FALSE))
+```
+
+::: {.fs-75}
+Every combination of the five decisions that keep more than one option: **`r sum(curve$b > 0)` of `r nrow(curve)`** above zero and **`r sum(curve$b > 0 & curve$sig)`** significant at 5% with errors clustered by country, from **`r fmt_num(min(curve$b), 3)`** to **`r fmt_num(max(curve$b), 3)`** points of distrust per point of concern.
+:::
+
+::: {.src}
+cases/trust/data/spec_curve.csv: the height of a mark is the estimate, its shape the test with errors clustered by country (*t* on 15 df).
+:::
+
+::: notes
+This is the curve of the claim, the same curve over which the Multiverse page draws your results. A hundred and ninety-two specifications, every combination of the five decisions that keep more than one option, each one a mark, ranked from the largest estimate on the left to the smallest on the right. Every one is a justifiable answer to the claim on these data. Above zero is the direction of the claim, and look: every single mark is above zero, and every one is a circle, which means significant at five per cent with errors clustered by country. So on these data, direction and significance are not in dispute at all. What moves is the size, from a third of a point down to just over a tenth, nearly a factor of three. The tagged mark is the reference specification, the one closest to the model of the paper.
+:::
+
+## The published results on the curve {#the-published-results-on-the-curve}
+
+```{r}
+#| label: spec-overlay
+#| fig-width: 9.5
+#| fig-height: 4.1
+# The same panel with the published result, the two SCORE reproductions, the
+# five reanalyses and the two SCORE replications (data/reference_marks.csv),
+# each placed by its coefficient; the replications, from new data, are
+# triangles.
+curve_base() + mark_layer(filter(marks_all, on_chart))
+```
+
+::: {.resultline}
+Your own results are on the class chart of the [Multiverse](../cases/trust/multiverse.html) page, drawn over this same curve
+:::
+
+::: {.src}
+cases/trust/data/reference_marks.csv: the published coefficient for OA, the coefficients published by SCORE, and the course refit of each analysis for the five analysts.
+:::
+
+::: notes
+The same chart, nothing moved, with ten results dropped onto it. The published result, tagged OA 2012, the two SCORE reproductions, N8P2J and 6U3LL all sit together near the upper end of the specifications that hold constant the controls of the paper, because they all fitted the model of the paper. The two replications on later rounds of the survey, the triangles, land in the same place, from new respondents. 456AD sits a little lower, with satisfaction with the government among its controls. FQ1G7, with its short list of controls, sits among the specifications that hold constant outlook and ideology. And LT39B, with one item for concern, sits at the very end of the curve. So the spread among the five analysts is no wider than the spread among the justifiable specifications. Your own results are on the Multiverse page.
+:::

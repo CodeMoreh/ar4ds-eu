@@ -1,0 +1,114 @@
+## The question of the paper {#the-question-of-the-paper .smaller}
+
+::: {.small}
+- **The argument.** Modern states rest on a shared national community, and many citizens see immigration as a threat to it. Those most concerned "may believe that the political system (the elites and institutions) have sold out the public by failing to protect the national community" from immigration (p. 205)
+- **The expectation.** "individuals expressing most concern about the impact of immigration on the national community will be most distrusting of politicians and political institutions" (Proposition 1, p. 205)
+- **Two worries built into the design.** The association might be spurious, if "some individuals are simply more negatively disposed toward most ideas they encounter" (p. 209); and distrust of parliament might only be dislike of the government of the day
+:::
+
+::: {.fragment .small}
+The paper was published in 2012 in *World Politics* [@McLaren2012CulturalDivideEurope]. From here on I call its author **the original author (OA)**.
+:::
+
+::: notes
+The case of the day is a paper in World Politics, and I will call its author the original author, or OA, from here on, because the course is about the claim and its analyses rather than about the person who made it. The argument starts from the observation that European states were built on a shared sense of national community, and that many of their citizens now see immigration as a threat to it. Those who worry most, the paper argues, may feel that the political class has sold them out, and so trust it less. Two worries shaped the design, and both come back as decisions on our menu: that the association is spurious, because some people are negative about everything, and that distrust of parliament is only dislike of whoever governs at the moment.
+:::
+
+## The data and the measures {#the-data-and-the-measures .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+- The **European Social Survey** (ESS), rounds 1–4, with fieldwork from 2002–2003 to 2008–2009: a new random sample of adults in every country and round
+- **16 countries** of Western Europe in `r n_country_rounds` country-rounds; the newer democracies of Central and Eastern Europe are left out
+- **`r fmt_n(nrow(ess))` respondents**, of whom the paper keeps the **`r fmt_n(nrow(paper_rows))`** citizens who do not belong to an ethnic minority, because the argument concerns members of the national community
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+- **Distrust** of parliament, of politicians and of the legal system: each trust item (0–10) turned round, so that 10 means no trust at all; the paper keeps the three apart
+- **Concern about immigration**: the mean of three items, each turned round – immigration is bad for the economy, undermines cultural life, makes the country a worse place to live
+- Cronbach's alpha of the three items: **`r fmt_num(alpha_of("concern", "all"), 2)`** on the course extract, against an average of 0.83 in the paper
+:::
+:::
+::::
+
+::: {.src}
+[@McLaren2012CulturalDivideEurope, pp. 212–213 and 231–232]; cases/trust/data/trust_ess.csv and display_reliability.csv.
+:::
+
+::: notes
+The data are the first four rounds of the European Social Survey, which interviews a fresh random sample of adults in every country every two years. The paper uses sixteen countries of Western Europe and leaves out the newer democracies of the East, where questions about immigrants would be heard as questions about neighbours across a changed border. It also keeps only citizens who do not belong to an ethnic minority, because the argument is about members of the national community, which leaves a hundred and ten thousand respondents. Distrust is measured three times, for parliament, politicians and the legal system, each trust item turned round. Concern is the mean of three items about the economy, cultural life and the country as a place to live, and the three hang together well, with an alpha of point eight four.
+:::
+
+## Between and within countries {#between-and-within-countries}
+
+```{r}
+#| label: country-means
+#| fig-width: 9.5
+#| fig-height: 4.1
+# Mean concern and mean distrust of parliament in the 60 country-rounds (grey,
+# design-weighted, data/display_country_means.csv), with the mean of each
+# country over its rounds as a blue point and a bold label.
+country_avg <- means |>
+  summarise(across(c(concern, distrust_parl), mean), .by = cntry)
+ggplot(means, aes(concern, distrust_parl)) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "grey75", linewidth = 0.7) +
+  geom_point(colour = "grey70", size = 2.2) +
+  geom_point(data = country_avg, colour = ncl_blue, size = 3.2) +
+  ggrepel::geom_text_repel(data = country_avg, aes(label = cntry), fontface = "bold", colour = ncl_blue,
+                           size = 4.6, seed = 1, min.segment.length = 0.4, segment.colour = ncl_blue,
+                           box.padding = 0.35, point.padding = 0.2) +
+  labs(x = "mean concern about immigration (0–10)", y = "mean distrust\nof parliament (0–10)") +
+  theme_slide(15)
+```
+
+::: {.small}
+Across the 16 countries, mean concern and mean distrust of parliament correlate at **`r fmt_num(r_between, 2)`**. Among the respondents of one country, the correlation runs from **`r fmt_num(min(r_within$r), 2)`** (`r r_within$country[1]`) to **`r fmt_num(max(r_within$r), 2)`** (`r r_within$country[nrow(r_within)]`).
+:::
+
+::: notes
+Here is the association at two levels. Each grey point is one country in one round, and the bold labels are the countries averaged over their rounds. Where citizens worry more about immigration, they also distrust their parliament more: Greece and Portugal sit at the top right, the Nordic countries at the bottom left, and across the sixteen countries the correlation is about point seven. Inside each country the picture is much weaker. Among the respondents of one country the correlation runs from under point two in Italy to under point four in Norway. The claim is about respondents rather than countries, and countries differ in their histories of immigration, their politics and how well they are governed, any of which can move both averages at once. Hold on to the gap between the two levels; it decides the comparison that every model of the day makes.
+:::
+
+## The model and the result {#the-model-and-the-result .smaller}
+
+::: {.small}
+- A **three-level model** fitted in the HLM software: respondents in country-rounds in countries, with dummies for the rounds
+- **Fifteen controls** for the respondent – demographics, outlook, ideology, verdicts on the economy and on public services, and two votes – and six characteristics of countries and rounds
+- Table 3: concern about immigration **0.17** for distrust of parliament, 0.13 for politicians and 0.14 for the legal system, each with a standard error printed as **0.00** and p = 0.000, on 110,732 respondents, 59 country-rounds and 16 countries
+:::
+
+::: {.fragment .small}
+"maximum effects of 1.7 on the 11-point measure of distrust in parliament" (p. 217): the coefficient times ten, the difference between the least and the most concerned respondent who are alike on every control.
+:::
+
+::: {.src}
+[@McLaren2012CulturalDivideEurope, pp. 214–219].
+:::
+
+::: notes
+The paper fits a three-level model, with respondents inside country-rounds inside countries, because it combines four rounds with variables that describe whole countries. It holds constant fifteen characteristics of the respondent, from age and education to unhappiness, ideology, verdicts on the economy and the public services, and how the respondent voted, and six characteristics of countries and rounds. Table 3 gives the result: point one seven for distrust of parliament, a little lower for politicians and the legal system. One more point of concern goes with point one seven more points of distrust, among respondents who are alike on the controls. Note the standard error, printed as nought point nought nought, which leaves a reader no way to judge the uncertainty. We come back to that in Part 4. [advance] The text reads the coefficient across the whole scale: ten points of concern, one point seven of distrust.
+:::
+
+## The claim {#the-claim .smaller}
+
+::: {.claimcard}
+"The findings indicate that even after controlling for other predictors of trust in the political system, concerns about the effect of immigration on the national community have an impact on trust in politics." <span class="src">the abstract, p. 199</span>
+:::
+
+::: {.fragment .claimcard}
+"... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics" <span class="src">the claim as SCORE selected it for Multi100</span>
+:::
+
+::: {.fragment .small}
+SCORE fixed the test on the parliament column of Table 3: "for the SCORE program, the parliament measure is used \[the author finds support using each measure\]". The ellipsis removes the clause about the controls, so the claim as selected states an association without the condition that the paper attached to it.
+:::
+
+::: {.src}
+[@McLaren2012CulturalDivideEurope, p. 199]; the Multi100 record of the claim.
+:::
+
+::: notes
+This is the sentence of the abstract from which the claim was taken. Read it slowly: even after controlling for other predictors of trust, concern about immigration has an impact on trust in politics. [advance] And this is the claim as SCORE selected it and handed it to the five Multi100 analysts. Look at the ellipsis at the start. It removes the words "even after controlling for other predictors of trust in the political system". So the claim that the analysts received states an association between concern and trust, without saying what it is conditional on, while the paper clearly means a conditional one. [advance] SCORE fixed the test on distrust of parliament. Hold on to the missing clause, because the question of what to control for is the decision that moves the estimate most.
+:::
