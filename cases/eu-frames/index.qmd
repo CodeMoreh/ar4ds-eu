@@ -9,20 +9,15 @@ aliases:
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(tibble)
-library(tinytable)
-
 # Fixed decimals and a true minus sign, for every number shown in a table
 fmt <- function(x, digits = 3) {
   sprintf(paste0("%.", digits, "f"), x) |>
     sub(pattern = "^-", replacement = "−")
 }
 
-analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
-marks <- read_csv("data/reference_marks.csv", show_col_types = FALSE)
-inference <- read_csv("data/display_inference.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+marks <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+inference <- readr::read_csv("data/display_inference.csv", show_col_types = FALSE)
 
 # one value from the reference marks or the inference table, for inline use
 mark <- \(id, col) marks[[col]][marks$id == id]
@@ -230,29 +225,28 @@ The second is the construction of the outcome. Three analysts used the share of 
 
 The third is the treatment of the respondents who mention nothing, about 6.3% of those interviewed in the sixteen waves. The code of OA and that of KQXUE drop them by dividing by zero, C6HJR scored them 0, PRL47 ran both versions and reported the one without them, and KEVF1 and 018OL keep them with a score of 0 by construction, since a count or a mean needs no denominator of mentions.
 
-The two fixed-effects analyses, those of KQXUE and C6HJR with an intercept for each country, share one further problem, which concerns their standard errors rather than their estimates. Both used conventional errors, which treat the 270 country-years as 270 independent pieces of evidence, but the years of one country are not independent, and on the course panel the residuals of the C6HJR specification correlate at 0.53 from one year to the next within a country. Errors clustered by country allow any pattern of correlation within a country, at the price of resting on 27 countries rather than 270 cells, as the [statistics module](../../companion/stats-methods.qmd#sec-pooled) explains. The variation that identifies the slope is also concentrated in a few of those countries: once country and year effects are removed, Greece holds 17.5% of the remaining variation in unemployment, Spain 15.9% and Poland 10.6%. With so few clusters of such unequal weight, even the standard clustered test overstates the evidence. The course therefore classes every result by a wild cluster bootstrap by country, which rebuilds the distribution of the test statistic under the null hypothesis by flipping the signs of the residuals of whole countries at random, 9,999 times. @tbl-inference shows what each rule makes of the reproduced C6HJR result.
+The two fixed-effects analyses, those of KQXUE and C6HJR with an intercept for each country, share one further problem, which concerns their standard errors rather than their estimates. Both used conventional errors, which treat the 270 country-years as 270 independent pieces of evidence, but the years of one country are not independent, and on the course panel the residuals of the C6HJR specification correlate at 0.53 from one year to the next within a country. Errors clustered by country allow any pattern of correlation within a country, at the price of resting on 27 countries rather than 270 cells, as the [statistics module](../../companion/stats-methods.qmd#sec-pooled) explains. The variation that identifies the slope is also concentrated in a few of those countries: once country and year effects are removed, Greece holds 17.5% of the remaining variation in unemployment, Spain 15.9% and Poland 10.6%. With so few clusters of such unequal weight, even the standard clustered test overstates the evidence. The course therefore classes every result with errors clustered by country under the CR2 correction, which adjusts the clustered errors for the unequal weight of the countries (Bell and McCaffrey 2002), and tests them on Satterthwaite degrees of freedom, which count how many countries effectively carry the information (Pustejovsky and Tipton 2018). @tbl-inference shows what each rule makes of the reproduced C6HJR result.
 
 ```{r}
 #| label: tbl-inference
-#| tbl-cap: "The reproduced C6HJR estimate (b = −0.00347, partial r = −0.242) under four kinds of inference, on the course panel. Source: `data/display_inference.csv`."
+#| tbl-cap: "The reproduced C6HJR estimate (b = −0.00347, partial r = −0.242) under three kinds of inference, on the course panel. Source: `data/display_inference.csv`."
 #| echo: false
 inference |>
-  filter(estimator == "fe_twoway", inference != "wcr_webb") |>
-  transmute(
+  datawizard::data_filter(estimator == "fe_twoway") |>
+  dplyr::transmute(
     Inference = c(
       conventional = "Conventional standard errors",
       cr1_g1 = "Errors clustered by country, standard small-sample adjustment (CR1)",
-      cr2_satterthwaite = "Clustered errors with the CR2 correction, Satterthwaite degrees of freedom",
-      wcr_rademacher = "Wild cluster bootstrap by country"
+      cr2_satterthwaite = "Clustered errors with the CR2 correction, Satterthwaite degrees of freedom"
     )[inference],
-    t = if_else(is.na(t), "–", fmt(t, 2)),
-    df = case_when(is.na(df) ~ "–", df == round(df) ~ as.character(df), TRUE ~ sprintf("%.1f", df)),
-    p = if_else(p < 0.001, sprintf("%.4f", p), sprintf("%.3f", p))
+    t = fmt(t, 2),
+    df = dplyr::if_else(df == round(df), as.character(df), sprintf("%.1f", df)),
+    p = sprintf("%.4f", p)
   ) |>
-  tt()
+  tinytable::tt()
 ```
 
-The estimate and the partial correlation stay where they were under every rule, and only the verdict on significance changes. The CR2 correction allows for the unequal influence of the countries on the fit, and its Satterthwaite degrees of freedom indicate that the 27 countries carry about as much information as ten would. Under the rule that the course uses, the reproduced result is not significant at the 5% level (p = `r p2(inf("fe_twoway", "wcr_rademacher", "p"))`). The design of KQXUE, fitted on the same panel, stays significant under every correction (CR1 p = `r p2(inf("fe_country", "cr1_g1", "p"))`, CR2 p = `r p2(inf("fe_country", "cr2_satterthwaite", "p"))` on `r sprintf("%.1f", inf("fe_country", "cr2_satterthwaite", "df"))` degrees of freedom, bootstrap p = `r p2(inf("fe_country", "wcr_rademacher", "p"))`).
+The estimate and the partial correlation stay where they were under every rule, and only the verdict on significance changes. The CR2 correction allows for the unequal influence of the countries on the fit, and its Satterthwaite degrees of freedom indicate that the 27 countries carry about as much information as ten would. Under the rule that the course uses, the reproduced result falls just short of significance at the 5% level (p = `r sprintf("%.4f", inf("fe_twoway", "cr2_satterthwaite", "p"))` on `r sprintf("%.1f", inf("fe_twoway", "cr2_satterthwaite", "df"))` degrees of freedom), although it would pass under CR1 (p = `r p2(inf("fe_twoway", "cr1_g1", "p"))`). The design of KQXUE, fitted on the same panel, stays significant under every correction (CR1 p = `r p2(inf("fe_country", "cr1_g1", "p"))`, CR2 p = `r p2(inf("fe_country", "cr2_satterthwaite", "p"))` on `r sprintf("%.1f", inf("fe_country", "cr2_satterthwaite", "df"))` degrees of freedom).
 
 **KQXUE** worked at the level of the predictor and built the outcome as the paper did, and the facilitator's re-implementation recovers the result approximately (t = −6.71 against −7.17). The design has an intercept for each country but none for each year, so that the comparison within each country includes the changes that all of Europe went through in a given year. On the course panel, year effects absorb 29% of the variation of unemployment within countries, and without them the slope is larger (−0.00564 against −0.00347 for the two-way design) and open to confounding by any Europe-wide shift in framing that coincided with the crisis. Unemployment entered as a share of the whole population aged 20–64 rather than of the labour force, a different quantity, which in the facilitator's re-implementation averages 6.3% across the panel where the rate in the labour force averages 8.7%, and the Turkish Cypriot sample was merged into Cyprus, which the paper does not do. An error of data preparation is taken up in section 3.7.
 
@@ -299,11 +293,11 @@ The comparison with the original studies was preregistered as a tolerance region
 #| tbl-cap: "The five results as Multi100 recorded them, in the order of the recorded correlation, with the original study for reference. Source: the course file `data/analysts5.csv`, which reproduces the Multi100 record."
 #| echo: false
 analysts |>
-  arrange(r) |>
-  transmute(
+  datawizard::data_arrange("r") |>
+  dplyr::transmute(
     Result = analyst_id,
     Statistic = paste(statistic_type, "=", fmt(statistic)),
-    `Units in the formula` = if_else(
+    `Units in the formula` = dplyr::if_else(
       is.na(df1),
       paste("N =", prettyNum(n, big.mark = ",")),
       paste("df =", df1)
@@ -311,8 +305,8 @@ analysts |>
     `r recorded` = fmt(r),
     `d recorded` = fmt(d)
   ) |>
-  bind_rows(
-    tibble(
+  dplyr::bind_rows(
+    tibble::tibble(
       Result = "Original study",
       Statistic = "t = −4.03",
       `Units in the formula` = "–",
@@ -320,7 +314,7 @@ analysts |>
       `d recorded` = "not computed"
     )
   ) |>
-  tt()
+  tinytable::tt()
 ```
 
 The course places each result on the degrees of freedom of its own inference, which follows from the requirement that the degrees of freedom count the units that carry the evidence. Where the software of an analyst counted those units, the recorded value stands, as it does for KQXUE (−0.419) and C6HJR (−0.242) on their residual degrees of freedom and for 018OL (−0.060) and KEVF1 (−0.452) on Satterthwaite degrees of freedom, which for KEVF1 already count cells rather than respondents (section 3.6). PRL47, which reported a z without degrees of freedom, is converted on the Satterthwaite degrees of freedom of a refit of its design on the rebuilt respondents, which puts it at `r fmt(mark("PRL47", "r_placement"))` on `r sprintf("%.1f", mark("PRL47", "df_placement"))` degrees of freedom. The original study is placed differently. Its published coefficient belongs to a model with interactions between education and the two economic measures, so it is the slope of unemployment for the low-education band alone. The course places instead a refit of the same design without the interactions, whose slope is the average over the education bands, as in the five reanalyses (b = `r fmt(mark("OA", "b_natural"), 4)`, t = `r fmt(mark("OA", "statistic_placement"), 2)` on `r sprintf("%.1f", mark("OA", "df_placement"))` Satterthwaite degrees of freedom), which puts it at `r fmt(mark("OA", "r_placement"))`; the model with the interactions is taken up in the [individual-level module](../../companion/individual-level.qmd#sec-claim2). Both refits approximate the published designs rather than reproduce them, so the two placements are best read as the order of magnitude that each result takes when its own design sets the units, and the [data codebook](data/reference_marks_codebook.md) records what each refit leaves out.
@@ -341,7 +335,7 @@ The case suggests what to look for in any converted effect size, in the article 
 - **The degrees of freedom themselves.** The `mixed` command of Stata reports a z, and the rule for z then treats every respondent as an independent test of a national quantity.
 - **The sign.** It came from the box that each analyst ticked rather than from the estimate, which is how a negative estimate by 018OL entered the record as an effect in the opposite direction, d = −0.121.
 - **The coverage of each figure.** This claim counts in the analysis of conclusions and appears among the reanalysis effect sizes, but it enters no comparison with an original effect size.
-- **The clustered test.** Converting the clustered t of C6HJR (−2.31 on 26 degrees of freedom) would give r = −0.413 for an unchanged estimate, which is why the course keeps the correlation of the conventional fit and takes the clustered test only for the verdict on significance.
+- **The clustered test.** Converting the CR2 t of C6HJR (`r fmt(inf("fe_twoway", "cr2_satterthwaite", "t"), 2)` on `r sprintf("%.1f", inf("fe_twoway", "cr2_satterthwaite", "df"))` degrees of freedom) would give r = `r fmt(inf("fe_twoway", "cr2_satterthwaite", "r_formula"))` for an unchanged estimate, which is why the course keeps the correlation of the conventional fit and takes the clustered test only for the verdict on significance.
 - **The design.** Observational studies with several levels are where the choice of units matters most, so part of the lower robustness that the article reports for observational studies may reflect the conversion as well as the analyses, a possibility for discussion rather than a finding of the article.
 
 ### 4.6 Recomputing the correlations {#sec-task}
@@ -365,25 +359,29 @@ On 233 degrees of freedom the order becomes KQXUE, KEVF1, C6HJR, PRL47 and 018OL
 #| tbl-cap: "The five reanalyses and the original study on three conversions: as recorded, on the degrees of freedom of their own inference, and on the 233 degrees of freedom of the two-way design, in the order of the last. The degrees of freedom of PRL47 and of the original study come from refits of their designs (`data/reference_marks.csv`)."
 #| echo: false
 refit_df <- c(PRL47 = mark("PRL47", "df_placement"), `Original study` = mark("OA", "df_placement"))
+# the conversion rule of Multi100 (standard_correlation_coefficient.R in
+# marton-balazs-kovacs/multi100 on GitHub), r = t / sqrt(t^2 + df), which
+# effectsize::t_to_r() computes
 converted <- analysts |>
-  select(analyst_id, statistic, df1, r) |>
-  bind_rows(tibble(analyst_id = "Original study", statistic = mark("OA", "statistic_placement"), df1 = NA, r = NA)) |>
-  mutate(
-    df_own = coalesce(df1, refit_df[analyst_id]),
-    r_own = statistic / sqrt(statistic^2 + df_own),
-    r_233 = statistic / sqrt(statistic^2 + 233)
+  datawizard::data_select(select = c("analyst_id", "statistic", "df1", "r")) |>
+  dplyr::bind_rows(tibble::tibble(analyst_id = "Original study",
+                                  statistic = mark("OA", "statistic_placement"), df1 = NA, r = NA)) |>
+  dplyr::mutate(
+    df_own = dplyr::coalesce(df1, refit_df[analyst_id]),
+    r_own = effectsize::t_to_r(statistic, df_own)$r,
+    r_233 = effectsize::t_to_r(statistic, 233)$r
   ) |>
-  arrange(r_233)
+  datawizard::data_arrange("r_233")
 
 converted |>
-  transmute(
+  dplyr::transmute(
     Result = analyst_id,
-    `r recorded` = if_else(is.na(r), "–", fmt(r)),
-    `Own df` = if_else(df_own == round(df_own), as.character(df_own), sprintf("%.1f", df_own)),
+    `r recorded` = dplyr::if_else(is.na(r), "–", fmt(r)),
+    `Own df` = dplyr::if_else(df_own == round(df_own), as.character(df_own), sprintf("%.1f", df_own)),
     `r on own df` = fmt(r_own),
     `r on 233 df` = fmt(r_233)
   ) |>
-  tt()
+  tinytable::tt()
 ```
 :::
 

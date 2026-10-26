@@ -12,11 +12,9 @@
 #                chart of the blog post on the same claim, reimplemented here
 #                so that the course depends on no file outside this repository.
 # Author       : Chris Moreh
-# Last updated : 2026-10-25
+# Last updated : 2026-10-26
 # Sourced by   : cases/eu-frames/multiverse.qmd
 ################################################################################
-
-library(dplyr)
 
 # The decisions that vary on the two curves, in the order of the "Colour by"
 # and "Show only" menus. The keys are the short names that the payload and
@@ -54,19 +52,19 @@ mv_df <- \(x) sub("\\.0$", "", sprintf("%.1f", x))
 mv_clean <- \(x) x |>
   stringr::str_replace_all("(?<=\\d)-(?=\\d)", "–") |>
   stringr::str_replace_all("(?<![\\w.])-(?=[0-9.])", "−") |>
-  stringr::str_replace_all("whose bootstrap p is p_cluster_check", "whose bootstrap p gives the shape of this mark") |>
-  stringr::str_replace_all("p_wcr", "bootstrap p") |>
-  stringr::str_replace_all("p_cluster_check", "the bootstrap check") |>
+  stringr::str_replace_all("whose CR2 p is p_cluster_check", "whose CR2 p gives the shape of this mark") |>
+  stringr::str_replace_all("p_cr2", "CR2 p") |>
+  stringr::str_replace_all("p_cluster_check", "the CR2 check") |>
   stringr::str_replace_all("se_natural", "The standard error")
-mv_p_label <- \(p) if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
+mv_p_label <- \(p) dplyr::if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
 
 # ---- the labels of the menu ------------------------------------------------------
 # The options of one decision that occur on a curve, in the order of
 # cases/eu-frames/data/menu_options.csv, with their plain-language labels.
 mv_levels <- function(curve, options, axis_code) {
   lev <- options |>
-    filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
-    select("option", "label", "phrase")
+    dplyr::filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
+    dplyr::select("option", "label", "phrase")
   stopifnot(all(curve[[axis_code]] %in% lev$option))
   lev
 }
@@ -74,19 +72,19 @@ mv_levels <- function(curve, options, axis_code) {
 # ---- the reference marks ---------------------------------------------------------
 # Each mark is placed by rank among the specifications at r_placement, the
 # result converted on the degrees of freedom of its own inference. Its shape
-# follows the rule of the curve where the file gives the bootstrap check of
-# the design on the country-year cells, and the p-value as reported where the
+# follows the rule of the curve where the file gives the CR2 check of the
+# design on the country-year cells, and the p-value as reported where the
 # design cannot be fitted on those cells.
 mv_marks <- function(marks, curve_r) {
   n <- length(curve_r)
   marks |>
-    left_join(mv_menu_relation, by = "id") |>
-    mutate(
+    dplyr::left_join(mv_menu_relation, by = "id") |>
+    dplyr::mutate(
       rank      = findInterval(.data$r_placement, sort(curve_r)),
       p_num     = suppressWarnings(as.numeric(sub("^<\\s*", "", .data$p_recorded))),
-      sg        = as.integer(coalesce(.data$p_cluster_check, .data$p_num) < 0.05),
-      tag       = if_else(.data$id == "OA", "OA design", .data$id),
-      title     = case_when(
+      sg        = as.integer(dplyr::coalesce(.data$p_cluster_check, .data$p_num) < 0.05),
+      tag       = dplyr::if_else(.data$id == "OA", "OA design", .data$id),
+      title     = dplyr::case_when(
         .data$id == "OA"    ~ "The design of the original study (2016), refitted by the course without its education interactions",
         .data$id == "C6HJR" ~ "Multi100 reanalyst C6HJR, the specification that you reproduce in Task 3",
         .data$id == "PRL47" ~ "Multi100 reanalyst PRL47, model B8",
@@ -95,19 +93,19 @@ mv_marks <- function(marks, curve_r) {
       stat      = paste0(
         sprintf("%s = %s %s, %s", .data$statistic_type,
                 sub("^-", "−", as.character(.data$statistic_recorded)),
-                if_else(.data$id == "OA", "as printed in the paper, for the low-education band of the model with education interactions",
-                        "as recorded by Multi100"),
-                if_else(startsWith(.data$p_recorded, "<"), paste("p", .data$p_recorded),
-                        mv_p_label(.data$p_num))),
+                dplyr::if_else(.data$id == "OA", "as printed in the paper, for the low-education band of the model with education interactions",
+                               "as recorded by Multi100"),
+                dplyr::if_else(startsWith(.data$p_recorded, "<"), paste("p", .data$p_recorded),
+                               mv_p_label(.data$p_num))),
         # the mark of OA is the refit without the interactions, so its statistic is shown too
-        if_else(.data$id == "OA",
+        dplyr::if_else(.data$id == "OA",
                 sprintf("; placed by the refit without the interactions, t = %s",
                         sub("^-", "−", sprintf("%.2f", .data$statistic_placement))), "")),
-      shape     = if_else(.data$sg == 1L, "Circle", "Cross"),
-      shape_why = if_else(
+      shape     = dplyr::if_else(.data$sg == 1L, "Circle", "Cross"),
+      shape_why = dplyr::if_else(
         is.na(.data$p_cluster_check),
-        sprintf("%s, from the p-value as reported, which rests on the errors of the model itself; this design cannot be refitted on the country-year cells, so the bootstrap of the curve cannot test it", .data$shape),
-        sprintf("%s, from the bootstrap check of the design on the country-year cells (p = %.3f), the rule that classes every point of the curve", .data$shape, .data$p_cluster_check)
+        sprintf("%s, from the p-value as reported, which rests on the errors of the model itself; this design cannot be refitted on the country-year cells, so the rule of the curve cannot test it", .data$shape),
+        sprintf("%s, from the CR2 check of the design on the country-year cells (p = %.3f), the rule that classes every point of the curve", .data$shape, .data$p_cluster_check)
       ),
       lines     = purrr::pmap(
         list(.data$unit, .data$design, .data$df_recorded, .data$r_recorded, .data$df_placement,
@@ -134,8 +132,8 @@ mv_marks <- function(marks, curve_r) {
 mv_payload <- function(curve, options, marks = NULL, reversed = FALSE, file = "spec-curve.csv",
                        ref_text = "The reproduced specification of Task 3", target = "claim") {
   curve <- curve |>
-    arrange(.data$r_ca) |>
-    mutate(t_ca = if_else(sign(.data$r_ca) == sign(.data$r), .data$t, -.data$t))
+    dplyr::arrange(.data$r_ca) |>
+    dplyr::mutate(t_ca = dplyr::if_else(sign(.data$r_ca) == sign(.data$r), .data$t, -.data$t))
   levels <- purrr::map(mv_axes$axis, \(a) mv_levels(curve, options, a)) |>
     rlang::set_names(mv_axes$key)
   code <- purrr::map2(mv_axes$axis, levels, \(a, lev) match(curve[[a]], lev$option) - 1L) |>
@@ -147,14 +145,14 @@ mv_payload <- function(curve, options, marks = NULL, reversed = FALSE, file = "s
   list(
     summary = sprintf(paste(
       "Specification curve of %d specifications, ranked by claim-aligned partial correlation from %s to %s;",
-      "%s lie below zero, in the direction of the %s, and %s lie below zero with bootstrap p below 0.05."),
+      "%s lie below zero, in the direction of the %s, and %s lie below zero with p below 0.05 under CR2 errors clustered by country."),
       nrow(curve), mv_minus(min(curve$r_ca)), mv_minus(max(curve$r_ca)),
-      mv_pct(mean(curve$r_ca < 0)), target, mv_pct(mean(curve$r_ca < 0 & curve$p_wcr < 0.05))),
+      mv_pct(mean(curve$r_ca < 0)), target, mv_pct(mean(curve$r_ca < 0 & curve$p_cr2 < 0.05))),
     r = round(curve$r_ca, 4),
     st = round(curve$t_ca, 3),
     df = curve$df,
-    p = signif(curve$p_wcr, 3),
-    sg = as.integer(curve$p_wcr < 0.05),
+    p = signif(curve$p_cr2, 3),
+    sg = as.integer(curve$p_cr2 < 0.05),
     ref = if (any(curve$is_reference)) which(curve$is_reference) - 1L else -1L,
     refText = ref_text,
     reversed = reversed,

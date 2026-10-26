@@ -21,7 +21,7 @@ Before I show you the answer, commit to a guess. You have made these choices you
 # Two readings of each decision on the curve (cases/eu-frames/data/spec_curve_forks.csv): the
 # share of the variance of the claim-aligned partial r that its main effect
 # carries, and the share of pairs, differing only in that decision, whose two
-# members fall in different classes under the bootstrap. Ordered by the share
+# members fall in different classes under CR2. Ordered by the share
 # of the variance; the estimator in orange, the interactions in grey.
 fk <- curve_forks |>
   dplyr::mutate(
@@ -34,26 +34,26 @@ fk <- curve_forks |>
   ) |>
   dplyr::arrange(dplyr::if_else(axis == "interactions", -Inf, share)) |>
   dplyr::mutate(name = factor(name, levels = name))
-fk_fill <- scale_fill_manual(values = c(lead = orange, axis = ncl_blue, rest = grey_mid),
+fk_fill <- ggplot2::scale_fill_manual(values = c(lead = orange, axis = ncl_blue, rest = grey_mid),
                              guide = "none")
-p_share <- ggplot(fk, aes(share, name, fill = fill)) +
-  geom_col(width = 0.7) +
-  geom_text(aes(label = fmt_pct(share)), hjust = -0.15, colour = ncl_blue,
+p_share <- ggplot2::ggplot(fk, ggplot2::aes(share, name, fill = fill)) +
+  ggplot2::geom_col(width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_pct(share)), hjust = -0.15, colour = ncl_blue,
             fontface = "bold", size = 4.4) +
   fk_fill +
-  scale_x_continuous(limits = c(0, 0.55), labels = NULL) +
-  labs(x = "share of the variance", y = NULL) +
+  ggplot2::scale_x_continuous(limits = c(0, 0.55), labels = NULL) +
+  ggplot2::labs(x = "share of the variance", y = NULL) +
   theme_slide(15)
-p_cross <- ggplot(dplyr::filter(fk, axis != "interactions"), aes(crossing, name, fill = fill)) +
-  geom_col(width = 0.7) +
-  geom_text(aes(label = fmt_pct(crossing)), hjust = -0.15, colour = ncl_blue,
+p_cross <- ggplot2::ggplot(dplyr::filter(fk, axis != "interactions"), ggplot2::aes(crossing, name, fill = fill)) +
+  ggplot2::geom_col(width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_pct(crossing)), hjust = -0.15, colour = ncl_blue,
             fontface = "bold", size = 4.4) +
   fk_fill +
-  scale_y_discrete(drop = FALSE) +
-  scale_x_continuous(limits = c(0, 0.72), labels = NULL) +
-  labs(x = "pairs that change class when it moves alone", y = NULL) +
+  ggplot2::scale_y_discrete(drop = FALSE) +
+  ggplot2::scale_x_continuous(limits = c(0, 0.85), labels = NULL) +
+  ggplot2::labs(x = "pairs that change class when it moves alone", y = NULL) +
   theme_slide(15) +
-  theme(axis.text.y = element_blank())
+  ggplot2::theme(axis.text.y = ggplot2::element_blank())
 p_share + p_cross
 ```
 
@@ -63,11 +63,11 @@ p_share + p_cross
 :::
 
 ::: {.src}
-cases/eu-frames/data/spec_curve_forks.csv: main-effect shares of the variance over the curve, and class changes under the wild cluster bootstrap. The [decision map]({{< var site-url >}}cases/eu-frames/map.html) shows where each decision is made.
+cases/eu-frames/data/spec_curve_forks.csv: main-effect shares of the variance over the curve, and class changes under CR2 errors clustered by country. The [decision map]({{< var site-url >}}cases/eu-frames/map.html) shows where each decision is made.
 :::
 
 ::: notes
-The estimator accounts for the largest share of the variation on the curve, about forty-one per cent, and the predictor comes next at seventeen. The outcome scale, which many people bet on, carries nine. The estimator here is the choice between two estimands, with or without the year effects that remove what all member states went through together, which is why it does so much. The decisions about measurement that occupy so much of the methods literature – how to treat respondents who mention nothing, which published series, whether cells are weighted – carry about one per cent between them, and the interactions, combinations of decisions that matter beyond any single one, about a quarter. Now the right-hand panel, which asks a different question: how often does moving one decision, with everything else held, change whether a specification clears the bootstrap? The estimator and the predictor still lead. But the no-opinion rule, with almost no share of the variance, changes the class of about one pair in twelve. A decision can matter little across the curve and still decide whether your own result is significant. Whoever guessed the estimator in the chat: take the point.
+The estimator accounts for the largest share of the variation on the curve, about forty-one per cent, and the predictor comes next at seventeen. The outcome scale, which many people bet on, carries nine. The estimator here is the choice between two estimands, with or without the year effects that remove what all member states went through together, which is why it does so much. The decisions about measurement that occupy so much of the methods literature – how to treat respondents who mention nothing, which published series, whether cells are weighted – carry about one per cent between them, and the interactions, combinations of decisions that matter beyond any single one, about a quarter. Now the right-hand panel, which asks a different question: how often does moving one decision, with everything else held, change whether a specification clears the CR2 test? The predictor leads by far, with the outcome and the estimator behind it. But the no-opinion rule, with almost no share of the variance, still changes the class of about one pair in twenty-five. A decision can matter little across the curve and still decide whether your own result is significant. Whoever guessed the estimator in the chat: take the point.
 :::
 
 ## The reference results in the curve {#the-unit-of-analysis-does-the-work}
@@ -93,24 +93,24 @@ conv <- ref_marks |>
                               labels = c("own df (placed)", "233 df", "as recorded by Multi100, where it differs")))
 row_levels <- rev(ref_marks$tag)
 curve_q <- stats::quantile(spec_curve$r_ca, c(0.25, 0.5, 0.75))
-ggplot(conv, aes(r, factor(tag, levels = row_levels))) +
-  annotate("rect", xmin = min(spec_curve$r_ca), xmax = max(spec_curve$r_ca),
+ggplot2::ggplot(conv, ggplot2::aes(r, factor(tag, levels = row_levels))) +
+  ggplot2::annotate("rect", xmin = min(spec_curve$r_ca), xmax = max(spec_curve$r_ca),
            ymin = -Inf, ymax = Inf, fill = plain, alpha = 0.06) +
-  annotate("rect", xmin = curve_q[[1]], xmax = curve_q[[3]],
+  ggplot2::annotate("rect", xmin = curve_q[[1]], xmax = curve_q[[3]],
            ymin = -Inf, ymax = Inf, fill = plain, alpha = 0.10) +
-  geom_vline(xintercept = curve_q[[2]], colour = plain, linetype = "dashed", linewidth = 0.5) +
-  geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
-  geom_point(aes(shape = kind, colour = kind), size = 4.2, stroke = 1.1) +
-  geom_text(data = ref_marks, aes(x = 0.14, y = tag,
+  ggplot2::geom_vline(xintercept = curve_q[[2]], colour = plain, linetype = "dashed", linewidth = 0.5) +
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
+  ggplot2::geom_point(ggplot2::aes(shape = kind, colour = kind), size = 4.2, stroke = 1.1) +
+  ggplot2::geom_text(data = ref_marks, ggplot2::aes(x = 0.14, y = tag,
                                   label = sprintf("%d of %d further below zero", rank, nrow(spec_curve))),
             hjust = 0, size = 4, colour = grey_mid, inherit.aes = FALSE) +
-  scale_shape_manual(values = c(16, 1, 4), name = NULL) +
-  scale_colour_manual(values = c(ink, ink, d_red), name = NULL) +
-  scale_x_continuous(limits = c(-0.62, 0.52), breaks = seq(-0.6, 0, by = 0.2),
+  ggplot2::scale_shape_manual(values = c(16, 1, 4), name = NULL) +
+  ggplot2::scale_colour_manual(values = c(ink, ink, d_red), name = NULL) +
+  ggplot2::scale_x_continuous(limits = c(-0.62, 0.52), breaks = seq(-0.6, 0, by = 0.2),
                      labels = \(x) fmt_num(x, 1)) +
-  labs(x = "partial correlation r", y = NULL) +
+  ggplot2::labs(x = "partial correlation r", y = NULL) +
   theme_slide(15) +
-  theme(legend.position = "top", legend.justification = "left")
+  ggplot2::theme(legend.position = "top", legend.justification = "left")
 ```
 
 ::: {.small}
@@ -154,21 +154,21 @@ flips <- dplyr::bind_rows(
   dplyr::filter(sign_changes > 0) |>
   dplyr::arrange(sign_changes) |>
   dplyr::mutate(label = factor(label, levels = unique(label)))
-ggplot(flips, aes(sign_changes, label, fill = where)) +
-  geom_col(width = 0.7) +
-  geom_text(aes(label = fmt_pct(sign_changes)), hjust = -0.15, colour = ncl_blue,
+ggplot2::ggplot(flips, ggplot2::aes(sign_changes, label, fill = where)) +
+  ggplot2::geom_col(width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_pct(sign_changes)), hjust = -0.15, colour = ncl_blue,
             fontface = "bold", size = 4.2) +
-  facet_grid(where ~ ., scales = "free_y", space = "free_y") +
-  scale_fill_manual(values = c(`decisions on the curve` = ncl_blue,
+  ggplot2::facet_grid(where ~ ., scales = "free_y", space = "free_y") +
+  ggplot2::scale_fill_manual(values = c(`decisions on the curve` = ncl_blue,
                                `options off the curve` = d_red), guide = "none") +
-  scale_x_continuous(limits = c(0, 0.6), labels = NULL) +
-  labs(x = "pairs whose two members lie on different sides of zero", y = NULL) +
+  ggplot2::scale_x_continuous(limits = c(0, 0.6), labels = NULL) +
+  ggplot2::labs(x = "pairs whose two members lie on different sides of zero", y = NULL) +
   theme_slide(14) +
-  theme(strip.text.y = element_text(angle = 0, hjust = 0, colour = ncl_blue, face = "bold"))
+  ggplot2::theme(strip.text.y = ggplot2::element_text(angle = 0, hjust = 0, colour = ncl_blue, face = "bold"))
 ```
 
 ::: {.small}
-- On the curve, `r sum(spec_curve$r_ca > 0)` of the `r fmt_n(nrow(spec_curve))` specifications lie above zero, all of them GDP growth on the cosmopolitan scale, and `r if (any(spec_curve$r_ca > 0 & spec_curve$sig)) "some" else "none"` with bootstrap p < 0.05
+- On the curve, `r sum(spec_curve$r_ca > 0)` of the `r fmt_n(nrow(spec_curve))` specifications lie above zero, all of them GDP growth on the cosmopolitan scale, and `r if (any(spec_curve$r_ca > 0 & spec_curve$sig)) "some" else "none"` with CR2 p < 0.05
 - Off the curve the sign changes come from options that change the question: **pooled OLS** brings in the comparison between countries, and the samples **without the bailout countries** or **before the crisis** remove the cases that the claim is about
 :::
 
@@ -177,5 +177,5 @@ cases/eu-frames/data/spec_curve_forks.csv and cases/eu-frames/data/menu_deviatio
 :::
 
 ::: notes
-The curve can also be read for where the signs change. On the curve itself there is little to read: sixteen of the eight hundred and sixty-four specifications lie above zero, all of them growth on the cosmopolitan scale, and none of them clears the bootstrap. The estimator, which moves the estimates most, changes no signs at all. The sign changes come from options that the audit moved off the curve, and they are patterned. Swap pooled OLS into every specification and half of them change sign, because pooled OLS lets in the comparison between countries, where the association runs the other way. Leave out the bailout countries, or keep only the years before the crisis, and about a quarter change sign, because those samples remove the cases that the claim is most about. So when this claim flips, it flips for reasons that can be named, and each of those options answers another question, which is why it is taught beside the curve rather than on it.
+The curve can also be read for where the signs change. On the curve itself there is little to read: sixteen of the eight hundred and sixty-four specifications lie above zero, all of them growth on the cosmopolitan scale, and none of them clears the CR2 test. The estimator, which moves the estimates most, changes no signs at all. The sign changes come from options that the audit moved off the curve, and they are patterned. Swap pooled OLS into every specification and half of them change sign, because pooled OLS lets in the comparison between countries, where the association runs the other way. Leave out the bailout countries, or keep only the years before the crisis, and about a quarter change sign, because those samples remove the cases that the claim is most about. So when this claim flips, it flips for reasons that can be named, and each of those options answers another question, which is why it is taught beside the curve rather than on it.
 :::

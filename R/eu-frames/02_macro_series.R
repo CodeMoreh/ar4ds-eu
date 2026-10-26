@@ -24,12 +24,9 @@
 #               series keyed by measure rather than by analyst, plus a Eurostat
 #               GDP growth series, for the measure axis)
 # Author:       Chris Moreh
-# Last updated: 2026-10-24
+# Last updated: 2026-10-26
 ##############################################################################
 
-suppressPackageStartupMessages({
-  library(dplyr); library(tidyr); library(purrr)
-})
 source("R/eu-frames/_paths.R")
 dir.create(out_path("macro"), showWarnings = FALSE, recursive = TRUE)
 
@@ -42,13 +39,14 @@ read_eurostat <- function(path) {
   raw  <- readr::read_tsv(path, col_types = readr::cols(.default = "c"),
                           progress = FALSE)
   dims <- strsplit(sub("\\\\.*$", "", names(raw)[1]), ",")[[1]]
+  years <- trimws(names(raw)[-1])
   raw |>
-    set_names(c("key", trimws(names(raw)[-1]))) |>
-    separate_wider_delim(key, delim = ",", names = dims) |>
-    pivot_longer(-all_of(dims), names_to = "year", values_to = "value") |>
-    mutate(year  = as.integer(year),
-           value = suppressWarnings(as.numeric(sub(" .*$", "", trimws(value))))) |>
-    filter(!is.na(value))
+    purrr::set_names(c("key", years)) |>
+    tidyr::separate_wider_delim(key, delim = ",", names = dims) |>
+    datawizard::data_to_long(select = years, names_to = "year", values_to = "value") |>
+    datawizard::data_modify(year  = as.integer(year),
+                            value = suppressWarnings(as.numeric(sub(" .*$", "", trimws(value))))) |>
+    datawizard::data_filter(!is.na(value))
 }
 
 une_h <- read_eurostat("data-raw/eu-frames/eurostat/une_rt_a_h.tsv.gz")
@@ -57,13 +55,15 @@ lfs   <- read_eurostat("data-raw/eu-frames/eurostat/lfsa_urgan.tsv.gz")
 
 ## ---- the four analyst slices ----------------------------------------------
 
+# dplyr verbs, because the conditions arrive through ... and the values name
+# the arguments analyst and series
 pick <- function(tab, analyst, series, ...) {
   tab |>
-    filter(freq == "A", ...) |>
-    transmute(analyst_id = analyst, series = series, geo, year, unemp = value)
+    dplyr::filter(freq == "A", ...) |>
+    dplyr::transmute(analyst_id = analyst, series = series, geo, year, unemp = value)
 }
 
-series <- bind_rows(
+series <- dplyr::bind_rows(
   pick(une_h, "018OL", "une_rt_a_h Y15-74 PC_ACT T",
        age == "Y15-74", unit == "PC_ACT", sex == "T"),
   pick(une_h, "KQXUE", "une_rt_a_h Y20-64 PC_POP T",
@@ -81,16 +81,17 @@ series <- bind_rows(
 panel <- datawizard::data_read("cases/eu-frames/data/EUframes_cy.csv", verbose = FALSE)
 
 analyst_unemp <- series |>
-  mutate(cntry = recode(geo, EL = "GR", UK = "GB")) |>
-  filter(cntry %in% unique(panel$cntry), year %in% 2004:2013) |>
-  select(analyst_id, series, cntry, year, unemp) |>
-  bind_rows(
+  datawizard::data_modify(cntry = datawizard::recode_values(geo, recode = list(GR = "EL", GB = "UK"))) |>
+  datawizard::data_filter(cntry %in% unique(panel$cntry) & year %in% 2004:2013) |>
+  datawizard::data_select(select = c("analyst_id", "series", "cntry", "year", "unemp")) |>
+  dplyr::bind_rows(
     panel |>
-      transmute(analyst_id = "C6HJR",
-                series = "World Bank SL.UEM.TOTL.NE.ZS",
-                cntry, year, unemp)
+      dplyr::transmute(analyst_id = "C6HJR",
+                       series = "World Bank SL.UEM.TOTL.NE.ZS",
+                       cntry, year, unemp)
   ) |>
-  arrange(analyst_id, cntry, year)
+  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  dplyr::arrange(analyst_id, cntry, year)
 
 datawizard::data_write(analyst_unemp, out_path("macro", "analyst_unemployment.csv"),
                        verbose = FALSE)
@@ -102,26 +103,28 @@ datawizard::data_write(analyst_unemp, out_path("macro", "analyst_unemployment.cs
 ## Eurostat has withdrawn UK national accounts, so choosing it costs a country.
 
 growth_es <- read_eurostat("data-raw/eu-frames/eurostat/nama_10_gdp_growth.tsv.gz") |>
-  mutate(cntry = recode(geo, EL = "GR", UK = "GB")) |>
-  filter(cntry %in% unique(panel$cntry), year %in% 2004:2013) |>
-  transmute(measure = "es_growth", predictor = "growth",
-            source = "Eurostat nama_10_gdp B1GQ CLV_PCH_PRE",
-            cntry, year, value)
+  datawizard::data_modify(cntry = datawizard::recode_values(geo, recode = list(GR = "EL", GB = "UK"))) |>
+  datawizard::data_filter(cntry %in% unique(panel$cntry) & year %in% 2004:2013) |>
+  dplyr::transmute(measure = "es_growth", predictor = "growth",
+                   source = "Eurostat nama_10_gdp B1GQ CLV_PCH_PRE",
+                   cntry, year, value)
 
 measures <- analyst_unemp |>
-  mutate(measure = recode(analyst_id,
-                          C6HJR = "wb_nat",     `018OL` = "es_1574_act",
-                          KQXUE = "es_2064_pop", PRL47  = "es_2564_lfs",
-                          KEVF1 = "es_1574_tips"),
-         predictor = "unemp") |>
-  transmute(measure, predictor, source = series, cntry, year, value = unemp) |>
-  bind_rows(
-    panel |> transmute(measure = "wb_growth", predictor = "growth",
-                       source = "World Bank NY.GDP.MKTP.KD.ZG",
-                       cntry, year, value = growth),
+  datawizard::data_modify(
+    measure = datawizard::recode_values(analyst_id,
+                                        recode = list(wb_nat = "C6HJR", es_1574_act = "018OL",
+                                                      es_2064_pop = "KQXUE", es_2564_lfs = "PRL47",
+                                                      es_1574_tips = "KEVF1")),
+    predictor = "unemp") |>
+  dplyr::transmute(measure, predictor, source = series, cntry, year, value = unemp) |>
+  dplyr::bind_rows(
+    panel |> dplyr::transmute(measure = "wb_growth", predictor = "growth",
+                              source = "World Bank NY.GDP.MKTP.KD.ZG",
+                              cntry, year, value = growth),
     growth_es
   ) |>
-  arrange(predictor, measure, cntry, year)
+  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  dplyr::arrange(predictor, measure, cntry, year)
 
 datawizard::data_write(measures, out_path("macro", "predictor_measures.csv"),
                        verbose = FALSE)
@@ -129,13 +132,14 @@ datawizard::data_write(measures, out_path("macro", "predictor_measures.csv"),
 ## ---- coverage and divergence from the World Bank series -------------------
 
 analyst_unemp |>
-  left_join(panel |> select(cntry, year, wb = unemp), by = c("cntry", "year")) |>
-  summarise(cells      = n(),
-            countries  = n_distinct(cntry),
-            years      = paste0(min(year), "-", max(year)),
-            mean_rate  = round(mean(unemp), 2),
-            r_with_wb  = round(cor(unemp, wb), 4),
-            mean_abs_d = round(mean(abs(unemp - wb)), 3),
-            .by = c(analyst_id, series)) |>
+  dplyr::left_join(datawizard::data_select(panel, select = c("cntry", "year", wb = "unemp")),
+                   by = c("cntry", "year")) |>
+  dplyr::summarise(cells      = dplyr::n(),
+                   countries  = dplyr::n_distinct(cntry),
+                   years      = paste0(min(year), "-", max(year)),
+                   mean_rate  = round(mean(unemp), 2),
+                   r_with_wb  = round(stats::cor(unemp, wb), 4),
+                   mean_abs_d = round(mean(abs(unemp - wb)), 3),
+                   .by = c(analyst_id, series)) |>
   as.data.frame() |>
   print(row.names = FALSE)

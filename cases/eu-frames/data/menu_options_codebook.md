@@ -44,17 +44,15 @@ The inference options use the codes of the helpers. In `menu_deviations.csv` and
 
 | `menu_options.csv` | `menu_deviations.csv` (`axis` = `se`) | Column of `spec_curve.csv` |
 |:--|:--|:--|
-| `wcr` | (the rule of the curve, no row) | `p_wcr` |
-| `cr2` | `cr2` | `p_cr2` |
+| `cr2` | (the rule of the curve, no row; `cr2` is the `rule` of every linear refit) | `p_cr2` |
 | `cr1` | `cr1_g1` | `p_cr1` |
 | `conventional` | `conventional` | `p_conv` |
-| `wcr_webb` | `wcr_webb` | `p_wcr_webb` |
 
-The within–between model (`estimator` = `rewb`) and the bootstrap with Webb signs (`se` = `wcr_webb`) are options off the curve that appear in the deviation files; both are listed here so that the decision map can show them. The rate (`construction` = `rate`) has no pairs of its own in the deviation files, because in a linear model it gives the test of the count, and the decision map draws the pairs of the count for it.
+The within–between model (`estimator` = `rewb`) is an option off the curve that appears in the deviation files; it is listed here so that the decision map can show it. The rate (`construction` = `rate`) has no pairs of its own in the deviation files, because in a linear model it gives the test of the count, and the decision map draws the pairs of the count for it.
 
 ## Numbers quoted in the text
 
-The prose columns avoid numbers that the data files hold, which the pages compute when they render. A few figures are quoted in them from the audit of the menu, because no committed data file holds them: the correlation of the residuals of a country from one year to the next in the reproduced model (0.53); the share of the unexplained variation in that model that is sampling noise (about 7%); the share of the variation of growth within countries that is common to all countries in a year (59%); the share of the variation of unemployment within countries that year effects absorb (29%); and the claim-aligned correlation of the communitarian scale at the reproduced specification with and without the item "unemployment" (−0.495 and −0.290). The p-values of the reproduced specification under conventional errors and under the bootstrap (0.0002 and 0.110) are those of `display_inference.csv`, and the ratio of the largest to the smallest adult population of a country-year (215) is that of `teney_panel_weights.csv`.
+The prose columns avoid numbers that the data files hold, which the pages compute when they render. A few figures are quoted in them from the audit of the menu, because no committed data file holds them: the correlation of the residuals of a country from one year to the next in the reproduced model (0.53); the share of the unexplained variation in that model that is sampling noise (about 7%); the share of the variation of growth within countries that is common to all countries in a year (59%); the share of the variation of unemployment within countries that year effects absorb (29%); and the claim-aligned correlation of the communitarian scale at the reproduced specification with and without the item "unemployment" (−0.495 and −0.290). The number of countries that effectively carry the information ("about ten") is the Satterthwaite df of CR2 at the reproduced specification, and the p-value of that specification under conventional errors (0.0002) and its CR2 p-value, described as lying just above 0.05, are those of `display_inference.csv`; and the ratio of the largest to the smallest adult population of a country-year (215) is that of `teney_panel_weights.csv`.
 
 ## Editing
 

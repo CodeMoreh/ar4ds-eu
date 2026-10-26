@@ -20,7 +20,7 @@ The claim says "decrease positive dimensions": its curve holds the three positiv
 :::
 
 ::: notes
-We start with the outcome. One survey question – what does the EU mean to you personally – offers fourteen response options, of which the paper sets the euro aside and sorts the other thirteen into four scales. Cosmopolitan: peace, democracy, free movement, diversity, a stronger voice in the world. Utilitarian: prosperity and social protection. Communitarian: unemployment, loss of identity, crime, border control. Libertarian: bureaucracy and waste of money. And then two composites, all the positive items and all the negative ones. The third column trips people up, because for the negative framings the claim predicts a positive coefficient. [advance] The claim speaks of positive dimensions, so the curve of the claim keeps the three positive scales, and the negative ones get a curve of their own, because they test the other half of the hypothesis rather than offering another reading of this half. On the curve, the choice among the three positive scales accounts for about a tenth of the variation, and it changes whether a result clears the bootstrap in about a third of the pairs of specifications that differ only in the scale. Keep in mind, too, that the communitarian scale contains the item 'unemployment', which ties that outcome to the predictor by its content.
+We start with the outcome. One survey question – what does the EU mean to you personally – offers fourteen response options, of which the paper sets the euro aside and sorts the other thirteen into four scales. Cosmopolitan: peace, democracy, free movement, diversity, a stronger voice in the world. Utilitarian: prosperity and social protection. Communitarian: unemployment, loss of identity, crime, border control. Libertarian: bureaucracy and waste of money. And then two composites, all the positive items and all the negative ones. The third column trips people up, because for the negative framings the claim predicts a positive coefficient. [advance] The claim speaks of positive dimensions, so the curve of the claim keeps the three positive scales, and the negative ones get a curve of their own, because they test the other half of the hypothesis rather than offering another reading of this half. On the curve, the choice among the three positive scales accounts for about a tenth of the variation, and it changes whether a result clears the CR2 test in about a third of the pairs of specifications that differ only in the scale. Keep in mind, too, that the communitarian scale contains the item 'unemployment', which ties that outcome to the predictor by its content.
 :::
 
 ## Building a scale – mean, sum or share {#building-a-scale-mean-sum-or-share .smaller .deepdive run="methods"}
@@ -42,17 +42,17 @@ Among the five Multi100 analysts, one used a **mean**, one a **sum**, one a **sh
 :::
 
 ::: {.fragment .small}
-The curve keeps the **share**, as the paper scores it. Scored as a count, `r fmt_pct(dev_of("count"))` of the curve specifications lie below zero with bootstrap p < 0.05, against `r fmt_pct(share_sig(spec_curve))` as shares: a count measures how much a person says about the EU, which is another quantity.
+The curve keeps the **share**, as the paper scores it. Scored as a count, `r fmt_pct(dev_of("count"))` of the curve specifications lie below zero with CR2 p < 0.05, against `r fmt_pct(share_sig(spec_curve))` as shares: a count measures how much a person says about the EU, which is another quantity.
 :::
 
 ::: notes
-How do you turn five binary items into one number? There are three summaries, all defensible. The mean of the five, which gives you a proportion between nought and one and lets every item count equally. The sum, which is a count from nought to five: the same information on a different scale, so the coefficient will be five times bigger and mean the same thing. Or a share of all the respondent's mentions, which is what our panel uses, and the interesting one, because it is relative to how many boxes that person ticked overall. Somebody who ticked eight options contributes differently from somebody who ticked two. The mean and the sum do not work that way. And look at the fragment: among the five of us, one used a mean, one a sum, one a share, one three separate shares. All defensible, and not one of them the same quantity as the others. [advance] The curve keeps the share, which is how the paper scores the scales. Swap in the count and the share of specifications below zero with a bootstrap p under point zero five falls from about seventy-one per cent to about forty-eight, because a count measures how much a person says about the EU, which is a different thing from how that person frames it.
+How do you turn five binary items into one number? There are three summaries, all defensible. The mean of the five, which gives you a proportion between nought and one and lets every item count equally. The sum, which is a count from nought to five: the same information on a different scale, so the coefficient will be five times bigger and mean the same thing. Or a share of all the respondent's mentions, which is what our panel uses, and the interesting one, because it is relative to how many boxes that person ticked overall. Somebody who ticked eight options contributes differently from somebody who ticked two. The mean and the sum do not work that way. And look at the fragment: among the five of us, one used a mean, one a sum, one a share, one three separate shares. All defensible, and not one of them the same quantity as the others. [advance] The curve keeps the share, which is how the paper scores the scales. Swap in the count and the share of specifications below zero with a CR2 p under point zero five falls from about seventy-seven per cent to about fifty-one, because a count measures how much a person says about the EU, which is a different thing from how that person frames it.
 :::
 
 ## Claim alignment {#claim-alignment-and-why-the-room-needs-it .smaller .deepdive run="methods"}
 
 ```{.r code-line-numbers="|1|3"}
-d <- d |> mutate(mcomm_ca = 1 - mcomm)   # reverse-code a negative framing
+d <- d |> datawizard::data_modify(mcomm_ca = 1 - mcomm)   # reverse-code a negative framing
 
 # now: negative coefficient = supports the claim, whatever the outcome
 ```
@@ -104,15 +104,15 @@ The abstract says "poor economic performances". That names at least two things:
 :::
 
 ::: {.fragment .small}
-Refitted on our panel, the free-phase model of analyst C6HJR (`mpos ~ growth + unemp`, two-way fixed effects) puts the growth coefficient at **b = +`r fmt_num(growth_c6hjr$b, 5)`, t = `r fmt_num(growth_c6hjr$t, 2)`**, bootstrap p = `r fmt_num(growth_c6hjr$p_wcr)`: in the direction predicted by the claim but not significant.
+Refitted on our panel, the free-phase model of analyst C6HJR (`mpos ~ growth + unemp`, two-way fixed effects) puts the growth coefficient at **b = +`r fmt_num(growth_c6hjr$b, 5)`, t = `r fmt_num(growth_c6hjr$t, 2)`**, CR2 p = `r fmt_num(growth_c6hjr$p_cr2)`: in the direction predicted by the claim but not significant.
 :::
 
 ::: {.fragment .small}
-Across the `r nrow(dplyr::filter(spec_curve, predictor == "growth"))` growth specifications on the curve, **`r fmt_pct(share_below(dplyr::filter(spec_curve, predictor == "growth")))`** point in the direction predicted by the claim, but only **`r fmt_pct(share_sig(dplyr::filter(spec_curve, predictor == "growth")))`** lie below zero with bootstrap p < 0.05, against `r fmt_pct(share_sig(dplyr::filter(spec_curve, predictor == "unemp")))` of the `r nrow(dplyr::filter(spec_curve, predictor == "unemp"))` unemployment specifications. Direction without significance is a different kind of support.
+Across the `r nrow(dplyr::filter(spec_curve, predictor == "growth"))` growth specifications on the curve, **`r fmt_pct(share_below(dplyr::filter(spec_curve, predictor == "growth")))`** point in the direction predicted by the claim, but only **`r fmt_pct(share_sig(dplyr::filter(spec_curve, predictor == "growth")))`** lie below zero with CR2 p < 0.05, against `r fmt_pct(share_sig(dplyr::filter(spec_curve, predictor == "unemp")))` of the `r nrow(dplyr::filter(spec_curve, predictor == "unemp"))` unemployment specifications. Direction without significance is a different kind of support.
 :::
 
 ::: notes
-Which variable is the claim actually about? The abstract says "poor economic performances", and that phrase names at least two different things. One is the unemployment rate, which is what Multi100 instructed in its second task and where higher means worse. The other is GDP growth, which is what four of the five of us reached for when we were free to choose, and where higher means better – so the claim predicts a positive coefficient on the positive framings, not a negative one. Refit my own free-phase model on this panel, the positive framings on growth and unemployment with two-way fixed effects, and the growth coefficient comes out at plus point zero zero one seven with a t of one point six and a bootstrap p of about point three five: right direction, not significant. Across the ninety-six growth specifications on the curve, more than four in five point in the direction predicted by the claim, but only a third lie below zero with a bootstrap p under point zero five, against three quarters of the unemployment specifications. That is direction without significance, a different kind of support from what the unemployment specifications offer, and a reader deserves to be told which one they are getting.
+Which variable is the claim actually about? The abstract says "poor economic performances", and that phrase names at least two different things. One is the unemployment rate, which is what Multi100 instructed in its second task and where higher means worse. The other is GDP growth, which is what four of the five of us reached for when we were free to choose, and where higher means better – so the claim predicts a positive coefficient on the positive framings, not a negative one. Refit my own free-phase model on this panel, the positive framings on growth and unemployment with two-way fixed effects, and the growth coefficient comes out at plus point zero zero one seven with a t of one point six and a CR2 p of about point three five: right direction, not significant. Across the ninety-six growth specifications on the curve, more than four in five point in the direction predicted by the claim, but only a third lie below zero with a CR2 p under point zero five, against more than four in five of the unemployment specifications. That is direction without significance, a different kind of support from what the unemployment specifications offer, and a reader deserves to be told which one they are getting.
 :::
 
 ## Predictor form {#predictor-form-and-a-warning .smaller .deepdive run="methods"}
@@ -135,7 +135,7 @@ For that reason the curve has no separate centred rows. A robustness check that 
 :::
 
 ::: notes
-Predictor form. Raw unemployment asks what a one-point rise in the rate does. Logged unemployment asks what a proportional rise does, which is a substantively different claim: it says the step from four per cent to five matters more than the step from twenty to twenty-one, and for something like unemployment that is quite plausible. Those two are genuinely different models and they can give different answers: on the curve the form barely moves the estimates on average, yet switching it changes whether the bootstrap test is passed in about one pair in eleven. But now the warning. Centring and standardising are not. Subtracting a mean, or dividing by a standard deviation, is an affine change of scale: it moves the coefficient and its standard error by exactly the same factor, so the t, the partial r and the p-value are untouched. That is why our curve contains no separate centred rows at all. If you come across a robustness check that varies only the centring, it is the same analysis written differently.
+Predictor form. Raw unemployment asks what a one-point rise in the rate does. Logged unemployment asks what a proportional rise does, which is a substantively different claim: it says the step from four per cent to five matters more than the step from twenty to twenty-one, and for something like unemployment that is quite plausible. Those two are genuinely different models and they can give different answers: on the curve the form barely moves the estimates on average, yet switching it changes whether the CR2 test is passed in about one pair in thirty. But now the warning. Centring and standardising are not. Subtracting a mean, or dividing by a standard deviation, is an affine change of scale: it moves the coefficient and its standard error by exactly the same factor, so the t, the partial r and the p-value are untouched. That is why our curve contains no separate centred rows at all. If you come across a robustness check that varies only the centring, it is the same analysis written differently.
 :::
 
 ## Estimators for countries and years {#four-ways-to-handle-countries-and-years .smaller .deepdive run="methods"}
@@ -151,7 +151,7 @@ Predictor form. Raw unemployment asks what a one-point rise in the rate does. Lo
 :::
 
 ::: {.fragment .small}
-The two designs on the curve are two estimands. Below zero with bootstrap p < 0.05: `r fmt_pct(share_sig(dplyr::filter(spec_curve, estimator == "fe_country")))` of the country FE and `r fmt_pct(share_sig(dplyr::filter(spec_curve, estimator == "fe_twoway")))` of the two-way specifications.
+The two designs on the curve are two estimands. Below zero with CR2 p < 0.05: `r fmt_pct(share_sig(dplyr::filter(spec_curve, estimator == "fe_country")))` of the country FE and `r fmt_pct(share_sig(dplyr::filter(spec_curve, estimator == "fe_twoway")))` of the two-way specifications.
 :::
 
 ::: {.fragment .small}
@@ -159,7 +159,7 @@ Across the 27 country means the cosmopolitan slope is +`r fmt_num(bw_cosmo$b_bet
 :::
 
 ::: notes
-These estimators do not answer the same question, and that is the thing to hold on to. Two-way fixed effects compare each country with itself and remove whatever all of Europe went through in a given year. Country fixed effects compare each country with itself over time and keep that shared change in. Pooled OLS compares countries with each other and with themselves at once. Random effects blend the two comparisons and assume that stable country differences are unrelated to unemployment, and the within–between model estimates the two comparisons separately, which lets you check that assumption. [advance] The curve keeps the two fixed-effects designs, and they are two estimands rather than two ways of estimating one, which is why the share that clears the bootstrap is so different between them. [advance] Between countries the association has the opposite sign: countries with high unemployment give slightly more weight to the cosmopolitan meanings of the EU, not less, although that slope on its own is not significant. The within–between model rejects the equality that random effects assume, and pooled OLS, which mixes the two comparisons, leaves fewer than one twin in ten below zero with a p under point zero five.
+These estimators do not answer the same question, and that is the thing to hold on to. Two-way fixed effects compare each country with itself and remove whatever all of Europe went through in a given year. Country fixed effects compare each country with itself over time and keep that shared change in. Pooled OLS compares countries with each other and with themselves at once. Random effects blend the two comparisons and assume that stable country differences are unrelated to unemployment, and the within–between model estimates the two comparisons separately, which lets you check that assumption. [advance] The curve keeps the two fixed-effects designs, and they are two estimands rather than two ways of estimating one, which is why the share that clears the CR2 test is so different between them. [advance] Between countries the association has the opposite sign: countries with high unemployment give slightly more weight to the cosmopolitan meanings of the EU, not less, although that slope on its own is not significant. The within–between model rejects the equality that random effects assume, and pooled OLS, which mixes the two comparisons, leaves fewer than one twin in ten below zero with a p under point zero five.
 :::
 
 ## What fixed effects adjust for {#what-fixed-effects-actually-buy-you .smaller .deepdive run="methods"}
@@ -180,7 +180,7 @@ These estimators do not answer the same question, and that is the thing to hold 
 - A confounder that **varies within a country over time** – a national bailout, a change of government
 - **Reverse causation**: today's framing moving tomorrow's unemployment
 - Measurement error, selection into the sample
-- **The years of one country resembling each other** – a matter for the test, not the estimate, which is why the curve uses a wild cluster bootstrap by country
+- **The years of one country resembling each other** – a matter for the test, not the estimate, which is why the curve uses errors clustered by country with the CR2 correction
 :::
 :::
 ::::
@@ -190,7 +190,7 @@ This is the same statement as the DAG from Hands-on 2. `adjustmentSets()` on its
 :::
 
 ::: notes
-Fixed effects are often treated as a general remedy for confounding, so it is worth being precise about what they adjust for. They absorb anything stable about a country across the decade – institutions, history, size, whatever the country already thought about the EU in 2004. And they absorb anything common to a year across all countries: the crisis itself, a treaty, a Europe-wide media cycle. What they do not touch is anything that varies within a country over time, which is where the interesting confounders are – a national bailout programme, a change of government, a domestic scandal. They do nothing about reverse causation, where today's framing moves tomorrow's unemployment. And nothing about measurement error or selection. The last item is about the test rather than the estimate: the years of one country resemble each other, so conventional errors overstate the evidence, and the curve tests every slope by a wild cluster bootstrap by country. Then the fragment: run adjustmentSets on the solid part of the graph from Hands-on 2, before you wired in any of the pale nodes, and it returns country and year. The graph and the reproduced model are making the same claim.
+Fixed effects are often treated as a general remedy for confounding, so it is worth being precise about what they adjust for. They absorb anything stable about a country across the decade – institutions, history, size, whatever the country already thought about the EU in 2004. And they absorb anything common to a year across all countries: the crisis itself, a treaty, a Europe-wide media cycle. What they do not touch is anything that varies within a country over time, which is where the interesting confounders are – a national bailout programme, a change of government, a domestic scandal. They do nothing about reverse causation, where today's framing moves tomorrow's unemployment. And nothing about measurement error or selection. The last item is about the test rather than the estimate: the years of one country resemble each other, so conventional errors overstate the evidence, and the curve tests every slope with errors clustered by country, under the CR2 correction and on Satterthwaite degrees of freedom. Then the fragment: run adjustmentSets on the solid part of the graph from Hands-on 2, before you wired in any of the pale nodes, and it returns country and year. The graph and the reproduced model are making the same claim.
 :::
 
 ## The copredictor {#copredictor-control-or-second-exposure .smaller .deepdive run="methods"}
@@ -220,13 +220,13 @@ The copredictor axis looks like the most innocuous choice on the menu, and it is
 :::
 
 ::: {.fragment .small}
-| The reproduced specification on | Slope | Bootstrap p |
+| The reproduced specification on | Slope | CR2 p |
 |---|--:|--:|
-| all 270 country-years | `r fmt_num(period_of("all", "b"), 5)` | `r fmt_num(period_of("all", "p_wcr"))` |
-| 2004–2008 | `r fmt_num(period_of("y2004_2008", "b"), 5)` | `r fmt_num(period_of("y2004_2008", "p_wcr"))` |
-| 2009–2013 | `r fmt_num(period_of("y2009_2013", "b"), 5)` | `r fmt_num(period_of("y2009_2013", "p_wcr"))` |
-| the 8 bailout countries | `r fmt_num(bailout_of("bailout", "b"), 5)` | `r fmt_num(bailout_of("bailout", "p_wcr_webb"))`, Webb signs |
-| the other 19 | +`r fmt_num(bailout_of("other", "b"), 5)` | `r fmt_num(bailout_of("other", "p_wcr"))` |
+| all 270 country-years | `r fmt_num(period_of("all", "b"), 5)` | `r fmt_num(period_of("all", "p_cr2"), 4)` |
+| 2004–2008 | `r fmt_num(period_of("y2004_2008", "b"), 5)` | `r fmt_num(period_of("y2004_2008", "p_cr2"))` |
+| 2009–2013 | `r fmt_num(period_of("y2009_2013", "b"), 5)` | `r fmt_num(period_of("y2009_2013", "p_cr2"))` |
+| the 8 bailout countries | `r fmt_num(bailout_of("bailout", "b"), 5)` | `r fmt_num(bailout_of("bailout", "p_cr2"))`, on `r fmt_num(bailout_of("bailout", "df_cr2"), 1)` df |
+| the other 19 | +`r fmt_num(bailout_of("other", "b"), 5)` | `r fmt_num(bailout_of("other", "p_cr2"))` |
 :::
 
 ::: {.fragment .small}
@@ -234,7 +234,7 @@ An exclusion is a claim about **who the finding is meant to be about**, and so i
 :::
 
 ::: notes
-Sample. The curve uses all twenty-seven countries over the whole decade, and each restriction on this slide answers a different question, so the restrictions sit beside the curve as displays rather than on it. Splitting into 2004 to 2008 and 2009 to 2013 changes the population that the claim is about: the earlier window contains no crisis, and the later one loses the comparison with the years before it. [advance] In both halves the slope of the reproduced specification is steeper than on the full panel, and its bootstrap p is lower. Then the bailout countries. In the eight assisted countries the slope is negative, in the other nineteen it is slightly positive, and the difference between the two groups has a bootstrap p of point zero four. Leaving one country out at a time, by contrast, keeps the two-way slope negative every time. [advance] So an exclusion is a claim about who your finding is meant to be about, which makes it a question about the estimand.
+Sample. The curve uses all twenty-seven countries over the whole decade, and each restriction on this slide answers a different question, so the restrictions sit beside the curve as displays rather than on it. Splitting into 2004 to 2008 and 2009 to 2013 changes the population that the claim is about: the earlier window contains no crisis, and the later one loses the comparison with the years before it. [advance] In both halves the slope of the reproduced specification is steeper than on the full panel; its CR2 p is lower in the crisis years and about the same in the years before them. Then the bailout countries. In the eight assisted countries the slope is negative, in the other nineteen it is slightly positive, and the difference between the two groups has a CR2 p of about point zero two. Leaving one country out at a time, by contrast, keeps the two-way slope negative every time. [advance] So an exclusion is a claim about who your finding is meant to be about, which makes it a question about the estimand.
 :::
 
 ## Weights {#weights-whose-country-year-counts-more .smaller .deepdive run="methods"}
@@ -247,7 +247,7 @@ Each cell is a mean of very different numbers of respondents. Weighting by `n_cy
 :::
 
 ::: {.fragment .small}
-That changes the estimand, so whose average counts is one of the seven Level 1 decisions. The curve counts every country-year once. Weighted by respondents, `r fmt_pct(dev_of("n_cell"))` of its twins lie below zero with bootstrap p < 0.05, and weighted by adult population `r fmt_pct(dev_of("pop"))`, against `r fmt_pct(share_sig(spec_curve))` on the curve.
+That changes the estimand, so whose average counts is one of the seven Level 1 decisions. The curve counts every country-year once. Weighted by respondents, `r fmt_pct(dev_of("n_cell"))` of its twins lie below zero with CR2 p < 0.05, and weighted by adult population `r fmt_pct(dev_of("pop"))`, against `r fmt_pct(share_sig(spec_curve))` on the curve.
 :::
 
 ::: {.fragment .small}
@@ -255,7 +255,7 @@ The population weight answers another question, about the average European rathe
 :::
 
 ::: notes
-Weights. Each cell in the panel is a mean over a very different number of respondents, so weighting by that count says a country-year built from two thousand people should count for more than one built from five hundred. That sounds like a purely technical refinement, but it changes what you are studying. Unweighted, every country-year is one observation and you are studying countries – Malta counts as much as Germany. Weighted, cells count in proportion to the people behind them, and you have moved a long way towards studying people. That is a change of estimand, which is why in this course the weighting is one of the Level 1 decisions, chosen like the outcome or the estimator, instead of being left as an argument to the fitting function. [advance] The curve counts every country-year once, because the claim is about countries. Weight by respondents and the share of specifications that clear the bootstrap falls from about seventy-one per cent to about sixty; weight by adult population and it falls below half. [advance] The population weight is a fair choice for a different question, about the average European rather than the average member state, and the weighting module takes it up.
+Weights. Each cell in the panel is a mean over a very different number of respondents, so weighting by that count says a country-year built from two thousand people should count for more than one built from five hundred. That sounds like a purely technical refinement, but it changes what you are studying. Unweighted, every country-year is one observation and you are studying countries – Malta counts as much as Germany. Weighted, cells count in proportion to the people behind them, and you have moved a long way towards studying people. That is a change of estimand, which is why in this course the weighting is one of the Level 1 decisions, chosen like the outcome or the estimator, instead of being left as an argument to the fitting function. [advance] The curve counts every country-year once, because the claim is about countries. Weight by respondents and the share of specifications that clear the CR2 test falls from about seventy-seven per cent to about sixty-five; weight by adult population and it falls to a quarter. [advance] The population weight is a fair choice for a different question, about the average European rather than the average member state, and the weighting module takes it up.
 :::
 
 ## Making the axes comparable {.smaller .deepdive run="methods"}
@@ -269,7 +269,7 @@ A coefficient on a share and one on a count, or one from a model of country-year
 :::
 
 ::: {.fragment .small}
-The df must count the units that carry the evidence. Fed the clustered *t* of the reproduced specification on 26 df, the formula returns *r* = `r fmt_num(inference_of("cr1_g1", "r_formula"))` in place of `r fmt_num(curve_ref$r)` with the estimate unchanged, so the curve, and every class submission, takes its height from the conventional fit and its class from the bootstrap.
+The df must count the units that carry the evidence. Fed the clustered *t* of the reproduced specification on 26 df, the formula returns *r* = `r fmt_num(inference_of("cr1_g1", "r_formula"))` in place of `r fmt_num(curve_ref$r)` with the estimate unchanged, so the curve, and every class submission, takes its height from the conventional fit and its class from the CR2 test.
 :::
 
 ::: {.fragment .small}
@@ -281,7 +281,7 @@ Silberzahn's teams faced the same problem: four of the twenty-nine reported a co
 :::
 
 ::: notes
-Last, the conversion that puts every result on the class chart. A coefficient on a share and one on a count, or one from a model of respondents and one from a model of country-years, are not on the same scale, so an axis that holds both tells you nothing. Multi100, and this course after it, take the test statistic and its degrees of freedom, convert them to a partial correlation, and then apply claim alignment so that the sign means the same thing everywhere. [advance] The conversion is only as good as its degrees of freedom. Feed it the clustered t of my specification on twenty-six degrees of freedom and it returns minus point four one where the data say minus point two four, a larger number from weaker evidence. So the curve and your submissions take their height from the conventional fit and their class from the bootstrap, and submit underscore exploration and report underscore result send the right pair for you. [advance] Comparable is not the same as equivalent, though. Two analyses that estimate different quantities remain different once they sit side by side, which is the estimand problem from the red-card study again. Silberzahn and colleagues faced the same difficulty when four of their twenty-nine teams reported something other than an odds ratio. They converted everything to one scale and reported the median, which gives one number where a curve gives the whole distribution.
+Last, the conversion that puts every result on the class chart. A coefficient on a share and one on a count, or one from a model of respondents and one from a model of country-years, are not on the same scale, so an axis that holds both tells you nothing. Multi100, and this course after it, take the test statistic and its degrees of freedom, convert them to a partial correlation, and then apply claim alignment so that the sign means the same thing everywhere. [advance] The conversion is only as good as its degrees of freedom. Feed it the clustered t of my specification on twenty-six degrees of freedom and it returns minus point four one where the data say minus point two four, a larger number from weaker evidence. So the curve and your submissions take their height from the conventional fit and their class from the CR2 test, and submit underscore exploration and report underscore result send the right pair for you. [advance] Comparable is not the same as equivalent, though. Two analyses that estimate different quantities remain different once they sit side by side, which is the estimand problem from the red-card study again. Silberzahn and colleagues faced the same difficulty when four of their twenty-nine teams reported something other than an odds ratio. They converted everything to one scale and reported the median, which gives one number where a curve gives the whole distribution.
 :::
 
 <!-- DEEP DIVE END -->

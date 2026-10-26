@@ -26,12 +26,9 @@
 # Writes:       _planning_data/person_level.rds (GESIS-derived microdata,
 #               never committed or redistributed)
 # Author:       Chris Moreh
-# Last updated: 2026-10-24
+# Last updated: 2026-10-26
 ##############################################################################
 
-suppressPackageStartupMessages({
-  library(haven); library(dplyr); library(purrr)
-})
 source("R/eu-frames/_paths.R")
 
 waves <- tibble::tribble(
@@ -68,13 +65,13 @@ dim_idx <- list(cosmo = c(1, 3, 5, 6, 7), util = c(2, 4),
 edu_harmonise <- function(x, scheme) {
   x <- as.numeric(x)
   if (scheme == "cat11") {
-    case_when(x %in% c(1, 2, 11) ~ "le15", x %in% 3:6 ~ "e16_19",
-              x %in% 7:9 ~ "e20plus", x == 10 ~ "studying",
-              TRUE ~ NA_character_)
+    dplyr::case_when(x %in% c(1, 2, 11) ~ "le15", x %in% 3:6 ~ "e16_19",
+                     x %in% 7:9 ~ "e20plus", x == 10 ~ "studying",
+                     TRUE ~ NA_character_)
   } else {
-    case_when(x %in% c(1, 11) ~ "le15", x == 2 ~ "e16_19",
-              x == 3 ~ "e20plus", x == 10 ~ "studying",
-              TRUE ~ NA_character_)
+    dplyr::case_when(x %in% c(1, 11) ~ "le15", x == 2 ~ "e16_19",
+                     x == 3 ~ "e20plus", x == 10 ~ "studying",
+                     TRUE ~ NA_character_)
   }
 }
 
@@ -88,65 +85,69 @@ read_wave <- function(w) {
   }
   cols <- c(w$cntry_v, items, w$w1, w$age, w$gender, w$edu_rec)
   # read_dta returns the columns in file order, so the requested order is restored
-  d <- read_dta(file.path(raw_dir, w$file), col_select = all_of(cols)) |>
-    select(all_of(cols)) |>
-    set_names(c("cntry", paste0("it", 1:14), "oth", "dk", "w1", "age", "gender", "edu_raw")) |>
-    mutate(across(c(starts_with("it"), oth, dk), \(x) as.numeric(x)))
+  d <- haven::read_dta(file.path(raw_dir, w$file), col_select = dplyr::all_of(cols)) |>
+    datawizard::data_select(select = cols) |>
+    purrr::set_names(c("cntry", paste0("it", 1:14), "oth", "dk", "w1", "age", "gender",
+                       "edu_raw")) |>
+    dplyr::mutate(dplyr::across(c(dplyr::starts_with("it"), oth, dk), \(x) as.numeric(x)))
   vals <- unique(na.omit(unlist(d[c(paste0("it", 1:14), "oth", "dk")])))
   stopifnot("framing items not coded 0/1" = all(vals %in% c(0, 1)))
+  # dplyr::mutate() and dplyr::filter(), because the expressions name the
+  # argument w and the vector eu27, which datawizard verbs cannot see from here
   d |>
-    mutate(cntry = as.character(cntry),
-           cntry = recode(cntry, "DE-E" = "DE", "DE-W" = "DE",
-                          "GB-GBN" = "GB", "GB-NIR" = "GB"),
-           eb = w$eb, year = w$year,
-           w1 = as.numeric(w1),
-           age = as.numeric(age),
-           female = as.integer(as.numeric(gender) == 2),
-           edu4 = edu_harmonise(edu_raw, w$edu_scheme)) |>
-    select(-gender, -edu_raw) |>
-    filter(cntry %in% eu27)
+    dplyr::mutate(cntry = as.character(cntry),
+                  cntry = datawizard::recode_values(cntry, recode = list(DE = c("DE-E", "DE-W"),
+                                                                         GB = c("GB-GBN", "GB-NIR"))),
+                  eb = w$eb, year = w$year,
+                  w1 = as.numeric(w1),
+                  age = as.numeric(age),
+                  female = as.integer(as.numeric(gender) == 2),
+                  edu4 = edu_harmonise(edu_raw, w$edu_scheme)) |>
+    datawizard::data_select(exclude = c("gender", "edu_raw")) |>
+    dplyr::filter(cntry %in% eu27)
 }
 
-ind <- map(seq_len(nrow(waves)), \(i) read_wave(waves[i, ])) |> bind_rows()
+ind <- purrr::map(seq_len(nrow(waves)), \(i) read_wave(waves[i, ])) |> dplyr::bind_rows()
 
 # n_* are counts of mentions; the scales divide each by the respondent's own
 # total, per Teney (2016: 623), scoring 0 for a respondent who mentions nothing
 ind <- ind |>
-  mutate(
-    n_cosmo = rowSums(across(all_of(paste0("it", dim_idx$cosmo)))),
-    n_util  = rowSums(across(all_of(paste0("it", dim_idx$util)))),
-    n_comm  = rowSums(across(all_of(paste0("it", dim_idx$comm)))),
-    n_lib   = rowSums(across(all_of(paste0("it", dim_idx$lib)))),
-    n_all   = rowSums(across(all_of(paste0("it", c(1:7, 9:14))))),
-    cosmo = ifelse(n_cosmo == 0, 0, n_cosmo / n_all),
-    util  = ifelse(n_util  == 0, 0, n_util  / n_all),
-    comm  = ifelse(n_comm  == 0, 0, n_comm  / n_all),
-    lib   = ifelse(n_lib   == 0, 0, n_lib   / n_all),
-    pos   = ifelse(n_cosmo + n_util == 0, 0, (n_cosmo + n_util) / n_all),
-    neg   = ifelse(n_comm  + n_lib  == 0, 0, (n_comm  + n_lib)  / n_all),
+  dplyr::mutate(
+    n_cosmo = datawizard::row_sums(dplyr::pick(dplyr::all_of(paste0("it", dim_idx$cosmo)))),
+    n_util  = datawizard::row_sums(dplyr::pick(dplyr::all_of(paste0("it", dim_idx$util)))),
+    n_comm  = datawizard::row_sums(dplyr::pick(dplyr::all_of(paste0("it", dim_idx$comm)))),
+    n_lib   = datawizard::row_sums(dplyr::pick(dplyr::all_of(paste0("it", dim_idx$lib)))),
+    n_all   = datawizard::row_sums(dplyr::pick(dplyr::all_of(paste0("it", c(1:7, 9:14))))),
+    cosmo = dplyr::if_else(n_cosmo == 0, 0, n_cosmo / n_all),
+    util  = dplyr::if_else(n_util  == 0, 0, n_util  / n_all),
+    comm  = dplyr::if_else(n_comm  == 0, 0, n_comm  / n_all),
+    lib   = dplyr::if_else(n_lib   == 0, 0, n_lib   / n_all),
+    pos   = dplyr::if_else(n_cosmo + n_util == 0, 0, (n_cosmo + n_util) / n_all),
+    neg   = dplyr::if_else(n_comm  + n_lib  == 0, 0, (n_comm  + n_lib)  / n_all),
     # who the respondents with no mention are; "other" takes precedence over
     # "dk" where both are ticked, since an "other" answer is an opinion
     oth = as.integer(oth == 1), dk = as.integer(dk == 1),
-    noop_type = case_when(n_all > 0 ~ "answered", oth == 1 ~ "other",
-                          dk == 1 ~ "dk", TRUE ~ "blank"),
+    noop_type = dplyr::case_when(n_all > 0 ~ "answered", oth == 1 ~ "other",
+                                 dk == 1 ~ "dk", TRUE ~ "blank"),
     # the *_un set: item 9 ("unemployment") leaves the communitarian cluster and
     # the denominator, so a respondent who mentioned only that item has no
     # mentions left and falls to 0 under the same convention
     n_all_un  = n_all  - it9,
     n_comm_un = n_comm - it9,
-    cosmo_un = ifelse(n_cosmo == 0, 0, n_cosmo / n_all_un),
-    util_un  = ifelse(n_util  == 0, 0, n_util  / n_all_un),
-    comm_un  = ifelse(n_comm_un == 0, 0, n_comm_un / n_all_un),
-    lib_un   = ifelse(n_lib   == 0, 0, n_lib   / n_all_un),
-    pos_un   = ifelse(n_cosmo + n_util == 0, 0, (n_cosmo + n_util) / n_all_un),
-    neg_un   = ifelse(n_comm_un + n_lib == 0, 0, (n_comm_un + n_lib) / n_all_un)
+    cosmo_un = dplyr::if_else(n_cosmo == 0, 0, n_cosmo / n_all_un),
+    util_un  = dplyr::if_else(n_util  == 0, 0, n_util  / n_all_un),
+    comm_un  = dplyr::if_else(n_comm_un == 0, 0, n_comm_un / n_all_un),
+    lib_un   = dplyr::if_else(n_lib   == 0, 0, n_lib   / n_all_un),
+    pos_un   = dplyr::if_else(n_cosmo + n_util == 0, 0, (n_cosmo + n_util) / n_all_un),
+    neg_un   = dplyr::if_else(n_comm_un + n_lib == 0, 0, (n_comm_un + n_lib) / n_all_un)
   ) |>
-  select(-starts_with("it"))
+  datawizard::data_select(exclude = "^it[0-9]", regex = TRUE)
 
 panel <- datawizard::data_read("cases/eu-frames/data/EUframes_cy.csv", verbose = FALSE)
 ind <- ind |>
-  left_join(panel |> select(cntry, year, unemp, growth, bailout),
-            by = c("cntry", "year"))
+  dplyr::left_join(datawizard::data_select(panel, select = c("cntry", "year", "unemp", "growth",
+                                                             "bailout")),
+                   by = c("cntry", "year"))
 
 dir.create(private_dir, showWarnings = FALSE)
 saveRDS(ind, person_file)
@@ -154,19 +155,19 @@ saveRDS(ind, person_file)
 ## ---- validation: aggregation must reproduce the course panel ---------------
 
 chk <- ind |>
-  summarise(mcosmo = mean(cosmo), mutil = mean(util), mcomm = mean(comm),
-            mlib = mean(lib), mpos = mean(pos), mneg = mean(neg),
-            n_cy = n(), .by = c(cntry, year)) |>
-  inner_join(panel, by = c("cntry", "year"), suffix = c("_new", "_pub"))
+  datawizard::data_summary(mcosmo = mean(cosmo), mutil = mean(util), mcomm = mean(comm),
+                           mlib = mean(lib), mpos = mean(pos), mneg = mean(neg),
+                           n_cy = length(cosmo), by = c("cntry", "year")) |>
+  dplyr::inner_join(panel, by = c("cntry", "year"), suffix = c("_new", "_pub"))
 
-max_diff <- map_dbl(c("mcosmo", "mutil", "mcomm", "mlib", "mpos", "mneg"),
+max_diff <- purrr::map_dbl(c("mcosmo", "mutil", "mcomm", "mlib", "mpos", "mneg"),
                     \(v) max(abs(chk[[paste0(v, "_new")]] - chk[[paste0(v, "_pub")]])))
 stopifnot("the respondent file does not reproduce the panel" =
             nrow(chk) == 270 && all(max_diff < 1e-12) && all(chk$n_cy_new == chk$n_cy_pub))
 
-tibble(respondents = nrow(ind),
-       no_mention = sum(ind$n_all == 0),
-       no_mention_without_item9 = sum(ind$n_all_un == 0),
-       complete_cases = sum(complete.cases(ind[, c("age", "female", "edu4", "w1")]))) |>
+tibble::tibble(respondents = nrow(ind),
+               no_mention = sum(ind$n_all == 0),
+               no_mention_without_item9 = sum(ind$n_all_un == 0),
+               complete_cases = sum(stats::complete.cases(ind[, c("age", "female", "edu4", "w1")]))) |>
   print()
-print(table(ind$noop_type))
+datawizard::data_tabulate(ind, select = "noop_type") |> print()

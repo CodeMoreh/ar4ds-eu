@@ -165,28 +165,28 @@ sb <- tibble::tribble(
   1,    "Replicable?",   "FAILED",   "new Eurobarometer data, \npositive, not significant", d_red
 )
 
-ggplot(sb, aes(x = 1, y = ord)) +
+ggplot2::ggplot(sb, ggplot2::aes(x = 1, y = ord)) +
   # role band
-  geom_tile(aes(fill = fill), width = 0.9, height = 0.92,
+  ggplot2::geom_tile(ggplot2::aes(fill = fill), width = 0.9, height = 0.92,
             alpha = 0.14) +
   # left rule in the verdict colour
-  geom_segment(aes(x = 0.553, xend = 0.553, y = ord - 0.46, yend = ord + 0.46,
+  ggplot2::geom_segment(ggplot2::aes(x = 0.553, xend = 0.553, y = ord - 0.46, yend = ord + 0.46,
                    colour = fill), linewidth = 6) +
-  scale_fill_identity() +
-  scale_colour_identity() +
+  ggplot2::scale_fill_identity() +
+  ggplot2::scale_colour_identity() +
   # the R name
-  geom_text(aes(label = R), x = 0.60, hjust = 0, vjust = 0.5,
+  ggplot2::geom_text(ggplot2::aes(label = R), x = 0.60, hjust = 0, vjust = 0.5,
             fontface = "bold", colour = ncl_blue, size = 8) +
   # the verdict
-  geom_text(aes(label = verdict, colour = fill), x = 0.60, y = sb$ord - 0.26,
+  ggplot2::geom_text(ggplot2::aes(label = verdict, colour = fill), x = 0.60, y = sb$ord - 0.26,
             hjust = 0, vjust = 0.5, fontface = "bold", size = 6.2) +
   # the supporting detail
-  geom_text(aes(label = detail), x = 1.02, hjust = 0, vjust = 0.5,
+  ggplot2::geom_text(ggplot2::aes(label = detail), x = 1.02, hjust = 0, vjust = 0.5,
             colour = grey_mid, size = 4.6) +
-  scale_x_continuous(limits = c(0.5, 1.9)) +
-  scale_y_continuous(limits = c(0.4, 3.6)) +
-  labs(x = NULL, y = NULL) +
-  theme_void()
+  ggplot2::scale_x_continuous(limits = c(0.5, 1.9)) +
+  ggplot2::scale_y_continuous(limits = c(0.4, 3.6)) +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_void()
 ```
 
 ::: {.src}

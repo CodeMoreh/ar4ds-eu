@@ -24,33 +24,31 @@ If you have never written a line of R, this slide is most of what you need to re
 
 ## Getting data in {.smaller .deepdive run="r"}
 
-```{.r code-line-numbers="|1|3|5"}
-library(readr)                                # load a package
+```{.r code-line-numbers="|1|3"}
+euframes <- readr::read_csv("data/EUframes_cy.csv")  # read it, name it
 
-euframes <- read_csv("data/EUframes_cy.csv")  # read it, name it
-
-euframes                                      # print it
+euframes                                             # print it
 ```
 
 ::: {.small}
 What comes back is a **data frame**: a rectangle, one row per observation, one column per variable, each column of a single type. Almost everything in R takes a data frame and gives you one back.
 
-`library()` makes the functions in a package available. It does **not** install it – that is `install.packages()`, and it happens once, not every time.
+`readr::read_csv()` names the package and the function together: `readr` is the package, `read_csv()` a function inside it. A package is installed once on each computer, which the setup script of the workspace does for you.
 :::
 
 ::: notes
-Getting data in. The library line makes the functions in a package available for this session – and note that it does not install anything; installing is a separate thing you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on euframes is our panel. Typing the name on its own prints it. What you get back is a data frame, which is the central object in R: a rectangle with one row per observation, one column per variable, and each column holding a single type. Nearly every function you will meet takes a data frame and hands you a data frame back, which is why the pipe works so well – the output of one step is the right shape to be the input of the next.
+Getting data in. Read underscore csv reads the file, and the arrow gives the result a name, so from here on euframes is our panel. Notice the two colons. The word before them is the package and the word after them is the function inside it, and throughout the course I write every function that way, so that you never have to wonder where one comes from. A package has to be installed on your computer once, and the setup script of the workspace has done that. Typing the name on its own prints it. What you get back is a data frame, which is the central object in R: a rectangle with one row per observation, one column per variable, and each column holding a single type. Nearly every function you will meet takes a data frame and hands you a data frame back, which is why the pipe works so well – the output of one step is the right shape to be the input of the next.
 :::
 
 ## Inspecting the data {#look-before-you-model .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|2|3|5-6"}
-glimpse(euframes)      # every column, its type, the first few values
-nrow(euframes)         # 270
-summary(euframes$unemp)  # min, quartiles, mean, max
+datawizard::data_peek(euframes)       # every column, its type, the first few values
+nrow(euframes)                        # 270
+summary(euframes$unemp)               # min, quartiles, mean, max
 
 euframes |>
-  count(cntry)         # how many rows per country?
+  datawizard::data_tabulate("cntry")  # how many rows per country?
 ```
 
 ::: {.fragment .small}
@@ -58,17 +56,17 @@ Every serious error I have made in twenty years of this was visible in the data 
 :::
 
 ::: notes
-With the panel loaded, the next step is to look at it before any model touches it. Glimpse shows every column with its type and first few values. nrow counts the rows. Summary on a single column gives the minimum, the quartiles, the mean and the maximum. And count, piped, tells you how many rows there are per country – which for a balanced panel should be the same number every time. Then the fragment. Every serious error I have made in twenty years of doing this was visible in the data before it ever reached a model: a year that appeared twice, a missing value coded as minus nine and quietly averaged in, a scale running one to ten when I had assumed nought to one. Ten minutes of looking pays back more than any other ten minutes in the workflow, and it is the part that people skip because it does not feel like analysis.
+With the panel loaded, the next step is to look at it before any model touches it. Data peek, from the datawizard package, shows every column with its type and first few values. nrow counts the rows. Summary on a single column gives the minimum, the quartiles, the mean and the maximum. And data tabulate, piped, tells you how many rows there are per country – which for a balanced panel should be the same number every time. Then the fragment. Every serious error I have made in twenty years of doing this was visible in the data before it ever reached a model: a year that appeared twice, a missing value coded as minus nine and quietly averaged in, a scale running one to ten when I had assumed nought to one. Ten minutes of looking pays back more than any other ten minutes in the workflow, and it is the part that people skip because it does not feel like analysis.
 :::
 
 ## Working with rows and columns {#five-verbs-do-most-of-the-work .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1|2|3|4|5"}
 euframes |>
-  filter(year >= 2008) |>                       # keep some rows
-  select(cntry, year, mcosmo, unemp) |>         # keep some columns
-  mutate(unemp_c = unemp - mean(unemp)) |>      # make a new column
-  arrange(desc(unemp))                          # sort
+  datawizard::data_filter(year >= 2008) |>                   # keep some rows
+  datawizard::data_select(c(cntry, year, mcosmo, unemp)) |>  # keep some columns
+  datawizard::data_modify(unemp_c = unemp - mean(unemp)) |>  # make a new column
+  datawizard::data_arrange("-unemp")                         # sort, highest first
 ```
 
 ::: {.small}
@@ -76,11 +74,11 @@ Read it downwards as a sentence: *take the panel, then keep 2008 onwards, then k
 :::
 
 ::: {.fragment .small}
-The sixth verb is `summarise()`, usually with `group_by()`: collapse many rows into one per group. That is how the panel you are working on was built from 390,000 respondents.
+The fifth verb is `datawizard::data_summary()`, with `by =` naming the groups: it collapses many rows into one per group. That is how the panel you are working on was built from 390,000 respondents.
 :::
 
 ::: notes
-Five verbs get you a very long way, and they all share one pattern: first argument a data frame, result a data frame. Filter keeps rows. Select keeps columns. Mutate makes a new column. Arrange sorts. And the pipe strings them together so you read the whole thing downwards as a sentence: take the panel, then keep 2008 onwards, then keep these four columns, then add a centred unemployment column, then sort by unemployment with the highest first. The sixth verb, on the fragment, is summarise, usually paired with group-by: collapse many rows into one row per group. I mention it because it is the operation that produced the panel you will be working on – three hundred and ninety thousand respondents collapsed into two hundred and seventy country-year means.
+A handful of verbs gets you a very long way. These come from the datawizard package, and they all share one pattern: first argument a data frame, result a data frame. Data filter keeps rows. Data select keeps columns. Data modify makes a new column. Data arrange sorts, and the minus sign in front of the column name puts the highest first. The pipe strings them together, so you read the whole thing downwards as a sentence: take the panel, then keep 2008 onwards, then keep these four columns, then add a centred unemployment column, then sort by unemployment with the highest first. The fifth verb, on the fragment, is data summary, with by naming the groups: it collapses many rows into one row per group. I mention it because it is the operation that produced the panel you will be working on – three hundred and ninety thousand respondents collapsed into two hundred and seventy country-year means.
 :::
 
 ## Model formulas {#a-model-is-a-formula-plus-data .smaller .deepdive run="r"}
@@ -107,14 +105,13 @@ A model in R is a formula plus data, and the tilde is the heart of the formula: 
 
 ## Fixed effects with fixest {#fixed-effects-the-fast-way .smaller .deepdive run="r"}
 
-```{.r code-line-numbers="|1|3|3"}
-library(fixest)
-
-m1 <- feols(mcosmo ~ unemp_c | cntry + year, data = euframes)
+```{.r code-line-numbers="|1|2"}
+m1 <- fixest::feols(mcosmo ~ unemp_c | cntry + year,
+                    data = euframes, vcov = "iid")
 ```
 
 ::: {.small}
-The bar `|` separates the regression from the **fixed effects**. Everything after it is absorbed: `cntry` gives every country its own intercept, `year` gives every year its own.
+The bar `|` separates the regression from the **fixed effects**. Everything after it is absorbed: `cntry` gives every country its own intercept, `year` gives every year its own. `vcov = "iid"` asks for conventional standard errors, the kind on record for this result.
 
 The equivalent with dummies would be `mcosmo ~ unemp_c + factor(cntry) + factor(year)` – same estimate, 36 extra rows of output you do not want to read.
 :::
@@ -124,64 +121,64 @@ This is the model that you reproduce in Hands-on 3, where it gives **`t = −3.8
 :::
 
 ::: notes
-This is the line that you will run yourself when you reproduce the result of my Multi100 reanalysis, so it is worth a slow look. Feols comes from the fixest package and fits linear models with fixed effects very fast. The bar is the key piece of syntax: everything to the left of it is the regression, everything to the right is absorbed as fixed effects. Country gives every country its own intercept, so we are comparing each country with itself over time rather than comparing countries with each other. Year gives every year its own intercept, so anything that hit all of Europe in a given year is soaked up. You could write the same model with dummy variables – the estimate would be identical – but you would get thirty-six extra rows of output that nobody wants to read. And in the third hands-on this same line gives a t of minus three point eight zero four.
+This is the line that you will run yourself when you reproduce the result of my Multi100 reanalysis, so it is worth a slow look. Feols comes from the fixest package and fits linear models with fixed effects very fast. The bar is the key piece of syntax: everything to the left of it is the regression, everything to the right is absorbed as fixed effects. Country gives every country its own intercept, so we are comparing each country with itself over time rather than comparing countries with each other. Year gives every year its own intercept, so anything that hit all of Europe in a given year is soaked up. You could write the same model with dummy variables – the estimate would be identical – but you would get thirty-six extra rows of output that nobody wants to read. The last argument, vcov equals iid, asks for conventional standard errors, the kind used for the recorded value. And in the third hands-on this same line gives a t of minus three point eight zero four.
 :::
 
 ## Reading what comes back {.smaller .deepdive run="r"}
 
 ```{.r}
-broom::tidy(m1)
-#> term      estimate    std.error   statistic   p.value
-#> unemp_c   -0.00347    0.00091     -3.80       0.00019
+parameters::model_parameters(m1)
+#> Parameter | Coefficient |       SE |         95% CI | t(233) |      p
+#> ---------------------------------------------------------------------
+#> unemp c   |   -3.47e-03 | 9.13e-04 | [-0.01,  0.00] |  -3.80 | < .001
 ```
 
 ::: {.small}
-- **estimate** – a one-point rise in unemployment goes with a fall of 0.00347 on a 0–1 framing scale
-- **std.error** – how much that estimate would wobble across repeated samples
-- **statistic** – the *t*: the estimate divided by its standard error. Roughly, how many standard errors from zero
-- **p.value** – how often you would get a *t* this large if the true value were zero, with errors that treat the 270 country-years as independent; Part 3 comes back to that assumption
+- **Coefficient** – a one-point rise in unemployment goes with a fall of 0.00347 on a 0–1 framing scale
+- **SE** – the standard error: how much that estimate would wobble across repeated samples
+- **t(233)** – the estimate divided by its standard error, on 233 degrees of freedom. Roughly, how many standard errors from zero
+- **p** – how often you would get a *t* this large if the true value were zero, with errors that treat the 270 country-years as independent; Part 3 comes back to that assumption
 :::
 
 ::: {.fragment .small}
-`broom::tidy()` returns the table as a **data frame**, so you can filter it, join it, plot it. That is how the 864 specifications of the curve become one chart when we reach the multiverse.
+`parameters::model_parameters()` returns the table as a **data frame**, so you can filter it, join it, plot it. Results kept as data frames are how the 864 specifications of the curve become one chart when we reach the multiverse.
 :::
 
 ::: notes
-And what comes back. The tidy function from broom turns the model into a small table. The estimate says a one-point rise in the unemployment rate goes with a fall of about three thousandths on a nought-to-one framing scale – small, but the scale is small too, which is why we will standardise later. The standard error says how much that estimate would move across repeated samples. The statistic is the t: the estimate divided by its standard error, which you can read as how many standard errors the estimate is from zero. And the p-value says how often you would get a t that large if the true value were zero. These are conventional errors, which treat every country-year as an independent observation, and in Part 3 we see what changes when the years of one country are allowed to resemble each other. Now the fragment. Tidy hands the table back as a data frame. That means you can filter it, join it, stack hundreds of them and plot the lot – and that is how eight hundred and sixty-four specifications become one chart when we reach the multiverse.
+And what comes back. Model parameters, from the parameters package, turns the model into a small table. The coefficient says a one-point rise in the unemployment rate goes with a fall of about three thousandths on a nought-to-one framing scale – small, but the scale is small too, which is why we will standardise later. The standard error says how much that estimate would move across repeated samples. The t is the estimate divided by its standard error, here on 233 degrees of freedom, which you can read as how many standard errors the estimate is from zero. And the p-value says how often you would get a t that large if the true value were zero. These are conventional errors, which treat every country-year as an independent observation, and in Part 3 we see what changes when the years of one country are allowed to resemble each other. Now the fragment. Model parameters hands the table back as a data frame. That means you can filter it, join it, stack hundreds of them and plot the lot – and that is how eight hundred and sixty-four specifications become one chart when we reach the multiverse.
 :::
 
-## Plotting with ggplot2 {#one-line-of-ggplot .smaller .deepdive run="r"}
+## Plotting with tinyplot {#one-line-of-ggplot .smaller .deepdive run="r"}
 
-```{.r code-line-numbers="|1|2|3|4"}
-ggplot(euframes, aes(x = year, y = mcosmo)) +   # data, and what maps to what
-  geom_line(colour = "grey55") +                # draw lines
-  geom_point(size = 0.7) +                      # and points
-  facet_wrap(~ cntry)                           # one small panel per country
+```{.r code-line-numbers="|1|2|3"}
+tinyplot::tinyplot(mcosmo ~ year, facet = ~cntry,              # a formula, one panel per country
+                   data = euframes, type = "l", col = "grey55")  # the data, drawn as lines
+tinyplot::tinyplot_add(type = "p", pch = 16, cex = 0.6)          # then points on top
 ```
 
 ::: {.small}
-Three parts, always: the **data**, the **mapping** (`aes`) from variables to visual properties, and one or more **geoms** that draw something. Layers stack with `+`.
+A plot takes a **formula**, as a model does: the vertical axis on the left of the tilde, the horizontal axis on the right. `type` says what to draw, and `tinyplot_add()` draws another layer on the plot just made. tinyplot builds on the graphics that come with R and needs no other package.
 :::
 
 ::: {.fragment .small}
-`facet_wrap` repeats the whole plot once per group. One line of code gives twenty-seven small country panels, and you can *see* which countries move.
+`facet` repeats the whole plot once per group. One argument gives twenty-seven small country panels, and you can *see* which countries move.
 :::
 
 ::: notes
-Plotting, briefly, because you will use it in the next task. Ggplot always has three parts. The data. The mapping – that is what aes does – saying which variable becomes which visual property, here year on the horizontal and cosmopolitan framing on the vertical. And then one or more geoms that actually draw something, stacked with plus signs: lines, then points on top. The one worth stealing is on the fragment: facet-wrap repeats the entire plot once per group, so that single line gives you twenty-seven small country panels side by side. That is the plot you will make in the next task, and I want you to actually look at it rather than skip past it, because you can see with your eyes which countries move sharply around 2009 – and that is the variation that the fixed-effects model is using.
+Plotting, briefly, because you will use it in the next task. Tinyplot takes a formula, the same convention that you just learned for models: the variable for the vertical axis to the left of the tilde, the variable along the bottom to the right, here cosmopolitan framing against year. Type says what to draw, lines here, and tinyplot add then draws a second layer on the same plot, points on top of the lines. The one worth stealing is on the fragment: facet repeats the entire plot once per group, so that single argument gives you twenty-seven small country panels side by side. That is the plot you will make in the next task, and I want you to actually look at it rather than skip past it, because you can see with your eyes which countries move sharply around 2009 – and that is the variation that the fixed-effects model is using.
 :::
 
 ## Causal graphs in R {#a-causal-graph-is-a-set-of-formulas .smaller .deepdive run="r"}
 
 ```{.r code-line-numbers="|1-4|2|3|6|7"}
-dag <- dagify(
+dag <- ggdag::dagify(
   framing ~ unemployment,          # unemployment -> framing
   framing ~ country + year,        # country and year -> framing
   unemployment ~ country + year,   # ... and -> unemployment
   exposure = "unemployment",
   outcome  = "framing")
 
-adjustmentSets(dag)                # what must I control for?
+dagitty::adjustmentSets(dag)                # what must I control for?
 ```
 
 ::: {.small}
@@ -201,9 +198,10 @@ The last piece of R is the one you use in the next task. A causal graph in R is 
 ::: {.small}
 | What you see | What it usually means |
 |---|---|
-| `could not find function "feols"` | The package is not loaded – add `library(fixest)` above |
+| `could not find function "feols"` | The function was written without its package – write `fixest::feols()` |
+| `there is no package called 'fixest'` | The package is not installed on this computer – `R/check_setup.R` lists what is missing and prints the line that installs it |
 | `object 'euframes' not found` | You ran this chunk before the one that creates it – go back up and run in order |
-| `object 'unemp_c' not found` | The column does not exist yet – you skipped the `mutate()` that makes it |
+| `object 'unemp_c' not found` | The column does not exist yet – you skipped the `data_modify()` that makes it |
 | `+` on the console, nothing happens | An unclosed bracket or quote. Press **Esc** and look for the missing `)` |
 :::
 
@@ -212,7 +210,7 @@ Read the error. R error messages are terse but almost always literally true, and
 :::
 
 ::: notes
-These four errors will be about ninety per cent of what you hit in the tasks. "Could not find function" means the package is not loaded – add the library line above it. "Object euframes not found" means you ran a chunk before the one that creates the object, so go back up and run them in order, and this is the notebook trap, where cells run out of order. "Object unemp underscore c not found" means you skipped the mutate line that makes the column. And if the console is showing you a plus sign and nothing is happening, R thinks you have not finished the command – there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. The general advice is on the fragment, and it is the habit I would most like you to keep: read the error. R error messages are terse and unfriendly, but they are almost always literally true, and most of them give you the exact name of the thing that R could not find.
+These five errors will be about ninety per cent of what you hit in the tasks. "Could not find function" means that the function was written without the name of its package in front, so write fixest, two colons, feols. "There is no package called fixest" means that the package is not installed on this computer, and the setup script lists what is missing and prints the line that installs it. "Object euframes not found" means you ran a chunk before the one that creates the object, so go back up and run them in order, and this is the notebook trap, where cells run out of order. "Object unemp underscore c not found" means you skipped the data modify line that makes the column. And if the console is showing you a plus sign and nothing is happening, R thinks you have not finished the command – there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. The general advice is on the fragment, and it is the habit I would most like you to keep: read the error. R error messages are terse and unfriendly, but they are almost always literally true, and most of them give you the exact name of the thing that R could not find.
 :::
 
 <!-- DEEP DIVE END -->

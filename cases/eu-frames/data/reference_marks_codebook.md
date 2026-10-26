@@ -32,21 +32,21 @@ A test statistic becomes a partial correlation through r = t / sqrt(t^2 + df). T
 | `r_233` | `statistic_placement` converted on 233 df |
 | `b_natural`, `se_natural`, `b_unit` | The slope in the units of its outcome, its standard error and the unit, where the record or the paper reports the slope. For OA they are those of the refit without the interactions, the slope averaged over the education bands; for C6HJR the slope and standard error are those of the reproduced specification, which reproduces the recorded t exactly |
 | `p_recorded` | The p-value as reported, as text, because two analysts reported "0.000" and the paper reports a threshold |
-| `p_cluster_check` | Where the design can be fitted on the country-year cells, the p-value of the course refit of that design under the rule of the curve (the wild cluster bootstrap by country); empty where it cannot |
+| `p_cluster_check` | Where the design can be fitted on the country-year cells, the p-value of the course refit of that design under the rule of the curve (CR2 errors clustered by country with Satterthwaite df); empty where it cannot |
 | `note` | What the record does not show: the value reported before cleaning, the refit behind a placement, and what the refit could not reproduce |
 
 ## The six marks
 
-| Mark | Statistic | df of the placement | Placed r | r on 233 df | Bootstrap check |
+| Mark | Statistic | df of the placement | Placed r | r on 233 df | CR2 check |
 |:--|--:|--:|--:|--:|--:|
 | OA | t = −8.39 (refit without the interactions; the paper prints t = −4.03) | 403.9 (refit) | −0.385 | −0.482 | – |
-| KQXUE | t = −7.169 | 242 | −0.419 | −0.425 | 0.015 |
-| C6HJR | t = −3.804 | 233 | −0.242 | −0.242 | 0.110 |
-| KEVF1 | t = −5.899 | 135.6 | −0.452 | −0.360 | 0.075 |
+| KQXUE | t = −7.169 | 242 | −0.419 | −0.425 | 0.005 |
+| C6HJR | t = −3.804 | 233 | −0.242 | −0.242 | 0.0504 |
+| KEVF1 | t = −5.899 | 135.6 | −0.452 | −0.360 | 0.038 |
 | PRL47 | z = −3.594 | 404.5 (refit) | −0.176 | −0.229 | – |
 | 018OL | t = −1.206 | 396.9 | −0.060 | −0.079 | – |
 
-The checks of the three cell-level designs read as follows. For C6HJR it is the reproduced specification itself. For KQXUE it is the point of the curve that matches the design most closely: country fixed effects on the series that KQXUE merged (Eurostat, the 20–64 population), with respondents who mention nothing left out, as the code of KQXUE leaves them out. For KEVF1 it is the country fixed-effects analogue of its random-intercept design, fitted on the 135 country-years in 26 countries that its series covers, with the count of the five cosmopolitan items as the outcome. Its slope (−0.0303) and partial correlation (−0.452) match the record; its bootstrap p is 0.075. The designs of OA, PRL47 and 018OL cannot be fitted on the country-year cells, because their units are respondents or country-waves.
+The checks of the three cell-level designs read as follows. For C6HJR it is the reproduced specification itself. For KQXUE it is the point of the curve that matches the design most closely: country fixed effects on the series that KQXUE merged (Eurostat, the 20–64 population), with respondents who mention nothing left out, as the code of KQXUE leaves them out. For KEVF1 it is the country fixed-effects analogue of its random-intercept design, fitted on the 135 country-years in 26 countries that its series covers, with the count of the five cosmopolitan items as the outcome. Its slope (−0.0303) and partial correlation (−0.452) match the record; its CR2 p is 0.038. The designs of OA, PRL47 and 018OL cannot be fitted on the country-year cells, because their units are respondents or country-waves.
 
 ## The two refits
 

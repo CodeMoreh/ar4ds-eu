@@ -8,10 +8,11 @@ format:
     include-after-body: ../../_includes/track-choice.html
     webr:
       packages:
-        - dplyr
-        - ggplot2
-        - broom
+        - datawizard
+        - purrr
+        - tinyplot
         - fixest
+        - parameters
         - htmltools
 resources:
   - data/EUframes_cy.csv
@@ -26,6 +27,15 @@ aliases:
 ---
 
 {{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{r}
+#| label: numbers
+#| include: false
+# The figures that the text quotes, read at render from the curve that the
+# helpers below load in the browser
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+ref <- datawizard::data_filter(curve, is_reference)
+```
 
 This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. It is the page that the facilitator drives on the shared screen, a place to try the analysis and the data before you have installed anything, and the fallback for a machine that will not cooperate on the day. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page. Nothing you do here is wasted, since both give the same numbers.
 
@@ -45,7 +55,7 @@ Keep this tab open. Your work stays in this page until you refresh – there is 
 # the EU-frames dataset into your browser session as `euframes`, the one
 # object that every cell below works from. The file arrives at data/... in
 # the browser via the `resources:` list at the top of this page.
-euframes <- read.csv("data/EUframes_cy.csv")
+euframes <- utils::read.csv("data/EUframes_cy.csv") # r-style: keep – readr would add 4 MB to the download
 ```
 
 ```{webr}
@@ -59,9 +69,10 @@ euframes <- read.csv("data/EUframes_cy.csv")
 # both files arrive with the page through its `resources:` list. These helpers
 # fit no model in the browser, so the only estimation package on the page is
 # fixest, which Task 3 uses for the reproduction. The workspace fits the same
-# specifications live, bootstrap included, and returns the same numbers.
-.curve   <- utils::read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
-.options <- utils::read.csv("data/menu_options.csv", stringsAsFactors = FALSE,
+# specifications live, with their CR2 test (clubSandwich), and returns the same
+# numbers.
+.curve   <- utils::read.csv("data/spec_curve.csv", stringsAsFactors = FALSE) # r-style: keep – readr would add 4 MB to the download
+.options <- utils::read.csv("data/menu_options.csv", stringsAsFactors = FALSE, # r-style: keep – as above
                             encoding = "UTF-8")
 .course_url <- "https://codemoreh.github.io/applied-replication"
 
@@ -92,22 +103,21 @@ euframes <- read.csv("data/EUframes_cy.csv")
   # Level 3 – Estimation
   my_pred_form    = c("raw", "log"),
   my_family       = "gaussian",
-  my_se           = "wcr"
+  my_se           = "cr2"
 )
 .measures_for <- list(unemp  = c("wb_nat", "es_1574_act", "es_2064_pop", "es_2564_lfs"),
                       growth = "wb_growth")
 
 if (nrow(.curve) != 864 ||
-    !all(vapply(.axis_codes, function(a) all(.curve[[a]] %in% .menu[[paste0("my_", a)]]),
-                logical(1))))
+    !all(purrr::map_lgl(.axis_codes, \(a) all(.curve[[a]] %in% .menu[[paste0("my_", a)]]))))
   stop("The curve of 864 specifications did not load as expected. Reload the page.",
        call. = FALSE)
-.curve_keys <- do.call(paste, c(unname(as.list(.curve[.axis_codes])), sep = "|"))
+.curve_keys <- purrr::exec(paste, !!!unname(as.list(.curve[.axis_codes])), sep = "|")
 
 .est_lab <- function(e) c(
   fe_twoway  = "two-way fixed effects (country + year)",
   fe_country = "country fixed effects")[[e]]
-.se_lab <- "wild cluster bootstrap by country"
+.se_lab <- "CR2 errors clustered by country, Satterthwaite df"
 
 # The term for the claim-carrying predictor as it appears in a formula:
 # log(unemp) when the log form is chosen, else the bare variable name.
@@ -163,7 +173,7 @@ if (nrow(.curve) != 864 ||
             shown(axis), v, row$label),
     paste0("  Why: ", row$reason),
     if (axis == "se")
-      "  Inference is fixed: every result on the curve is tested by the wild cluster bootstrap by country, and the printout gives the conventional t and the CR2 p beside it.",
+      "  Inference is fixed: every result on the curve is tested by CR2 errors clustered by country with Satterthwaite df, and the printout gives the conventional t beside it.",
     paste0("  Where it is taught: ", .page_ref(row$taught_on)),
     map,
     sprintf("  To stay on the curve, choose %s = %s.", shown(axis), .or_list(keep))
@@ -181,8 +191,9 @@ if (nrow(.curve) != 864 ||
 .validate <- function(ch, as_args = FALSE) {
   shown <- function(a) if (as_args) a else paste0("my_", a)
   # the co-predictor may also be named by its variable, growth or unemp
-  if (identical(ch$my_copredictor, .copred_term(ch))) ch$my_copredictor <- "other"
-  bad <- Filter(function(k) !.on_menu(k, ch[[k]]), names(.menu))
+  if (identical(ch$my_copredictor, .copred_term(ch)))
+    ch <- utils::modifyList(ch, list(my_copredictor = "other"))
+  bad <- purrr::discard(names(.menu), \(k) .on_menu(k, ch[[k]]))
   if (length(bad) > 0) .refuse(bad[1], ch[[bad[1]]], ch, as_args)
   if (ch$my_predictor == "growth" && ch$my_pred_form == "log")
     stop(sprintf("GDP growth enters raw only – it takes negative values, so its log is undefined. Use %s = \"raw\".",
@@ -197,7 +208,7 @@ if (nrow(.curve) != 864 ||
 
 .check_choices <- function() {
   need <- names(.menu)
-  missing <- need[!vapply(need, exists, logical(1))]
+  missing <- purrr::discard(need, \(k) exists(k))
   if (length(missing) > 0)
     stop("Not declared yet: ", paste(missing, collapse = ", "),
          ". Fill in every choice in the preregistration cell and run it first.",
@@ -205,9 +216,7 @@ if (nrow(.curve) != 864 ||
   if (!exists("claim_align"))
     stop("Also declare claim_align <- TRUE (the course convention) in the preregistration cell.",
          call. = FALSE)
-  ch <- lapply(need, function(k) get(k))
-  names(ch) <- need
-  .validate(ch)
+  .validate(purrr::set_names(purrr::map(need, \(k) get(k)), need))
 }
 
 # --- the curve -------------------------------------------------------------
@@ -222,12 +231,12 @@ if (nrow(.curve) != 864 ||
 }
 
 # One result in the form that the printout and the submission use: the
-# conventional fit (b, se, t, df, r), the claim-aligned r, the two clustered
-# tests, and the placement among the 864.
+# conventional fit (b, se, t, df, r), the claim-aligned r, the CR2 test with its
+# Satterthwaite df, and the placement among the 864.
 .result <- function(ch) {
   hit <- .lookup(ch)
   list(b = hit$b, se = hit$se, t = hit$t, df = hit$df, n = hit$n_cells, r = hit$r,
-       r_ca = hit$r_ca, p_cr2 = hit$p_cr2, p_wcr = hit$p_wcr,
+       r_ca = hit$r_ca, p_cr2 = hit$p_cr2, df_cr2 = hit$df_cr2,
        placement = mean(.curve$r_ca < hit$r_ca),
        source = "read from the curve of 864 specifications")
 }
@@ -252,15 +261,16 @@ if (nrow(.curve) != 864 ||
          ch$my_cell_weight, ", ", ch$my_measure, " | ", ch$my_family, ", se:", ch$my_se, "]")
 }
 
-.fmt_p <- function(p) if (p < 0.001) "< 0.001" else sprintf("= %.3f", p)
+# four decimals, so that a p just above 0.05 never prints as 0.050
+.fmt_p <- function(p) if (p < 0.001) "< 0.001" else sprintf("= %.4f", p)
 
 .class_line <- function(res) {
   below <- res$r_ca < 0
-  sig   <- res$p_wcr < 0.05
-  if (below && sig) "below zero and significant under the bootstrap (p < 0.05), in the direction of the claim"
-  else if (below) "below zero, but not significant under the bootstrap (p >= 0.05)"
-  else if (sig) "above zero and significant under the bootstrap, against the direction of the claim"
-  else "above zero and not significant under the bootstrap"
+  sig   <- res$p_cr2 < 0.05
+  if (below && sig) "below zero and significant under CR2 (p < 0.05), in the direction of the claim"
+  else if (below) "below zero, but not significant under CR2 (p >= 0.05)"
+  else if (sig) "above zero and significant under CR2, against the direction of the claim"
+  else "above zero and not significant under CR2"
 }
 
 .print_result <- function(ch, res, lead = NULL, aligned = TRUE) {
@@ -273,8 +283,8 @@ if (nrow(.curve) != 864 ||
     sprintf("  partial r = %.3f, %s", if (aligned) res$r_ca else res$r,
             if (aligned) "claim-aligned (below zero is the direction of the claim)"
             else "on the original scale of the outcome"),
-    sprintf("  p %s with CR2 errors clustered by country   p %s by the wild cluster bootstrap",
-            .fmt_p(res$p_cr2), .fmt_p(res$p_wcr)),
+    sprintf("  p %s with CR2 errors clustered by country, on %.1f Satterthwaite df",
+            .fmt_p(res$p_cr2), res$df_cr2),
     paste0(if (aligned) "  Class: " else "  Class, on the claim-aligned scale: ", .class_line(res)),
     sprintf("  Placement: %.0f%% of the 864 specifications on the curve have a more negative claim-aligned r",
             100 * res$placement),
@@ -288,14 +298,14 @@ if (nrow(.curve) != 864 ||
 
 # --- Task 4: the exploratory helpers ---------------------------------------
 .tried <- new.env(parent = emptyenv())
-.tried$log <- NULL
-.tried$last <- NULL
+assign("log", NULL, envir = .tried)
+assign("last", NULL, envir = .tried)
 
 try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "none",
                      estimator = "fe_twoway", sample = "all", weights = "none",
                      construction = "share", noop = "zero", item_set = "all",
                      cell_weight = "unweighted", measure = NULL,
-                     pred_form = "raw", family = "gaussian", se = "wcr") {
+                     pred_form = "raw", family = "gaussian", se = "cr2") {
   if (is.null(measure)) measure <- if (identical(predictor, "growth")) "wb_growth" else "wb_nat"
   ch <- .validate(list(my_outcome = outcome, my_predictor = predictor, my_copredictor = copredictor,
                        my_estimator = estimator, my_sample = sample, my_weights = weights,
@@ -305,11 +315,11 @@ try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "non
   res <- .result(ch)
   .print_result(ch, res, lead = "")
   fl  <- .flip(ch)
-  row <- data.frame(stats::setNames(ch, sub("^my_", "", names(ch))),
-                    b = fl * res$b, t = fl * res$t, r_aligned = res$r_ca, p_boot = res$p_wcr,
+  row <- data.frame(stats::setNames(ch, sub("^my_", "", names(ch))), # r-style: keep – prints as the plain table of my_experiments()
+                    b = fl * res$b, t = fl * res$t, r_aligned = res$r_ca, p_cr2 = res$p_cr2,
                     stringsAsFactors = FALSE)
-  .tried$log  <- dplyr::bind_rows(.tried$log, row)
-  .tried$last <- list(ch = ch, res = res)
+  assign("log", purrr::list_rbind(list(.tried$log, row)), envir = .tried)
+  assign("last", list(ch = ch, res = res), envir = .tried)
   invisible(row)
 }
 
@@ -322,16 +332,17 @@ my_experiments <- function() {
     writeLines("Nothing tried yet – call try_spec() at least once.")
     return(invisible(NULL))
   }
-  axes <- sub("^my_", "", names(.menu))
-  varied <- names(Filter(function(x) length(unique(x)) > 1, d[axes]))
-  show <- d[c(varied, "b", "t", "r_aligned", "p_boot")]
-  show$b <- signif(show$b, 3); show$t <- round(show$t, 2)
-  show$r_aligned <- round(show$r_aligned, 3); show$p_boot <- round(show$p_boot, 3)
+  axes   <- sub("^my_", "", names(.menu))
+  varied <- names(purrr::keep(d[axes], \(x) length(unique(x)) > 1))
+  show <- d |>
+    datawizard::data_select(select = c(varied, "b", "t", "r_aligned", "p_cr2")) |>
+    datawizard::data_modify(b = signif(b, 3), t = round(t, 2), r_aligned = round(r_aligned, 3),
+                            p_cr2 = round(p_cr2, 4))
   writeLines(sprintf("Specifications you have tried (%d):\n", nrow(d)))
   print(show, row.names = FALSE)
-  writeLines(sprintf("\nSpread of claim-aligned r: %.3f to %.3f  |  below zero and significant under the bootstrap: %d of %d",
+  writeLines(sprintf("\nSpread of claim-aligned r: %.3f to %.3f  |  below zero and significant under CR2: %d of %d",
                      min(d$r_aligned), max(d$r_aligned),
-                     sum(d$r_aligned < 0 & d$p_boot < 0.05), nrow(d)))
+                     sum(d$r_aligned < 0 & d$p_cr2 < 0.05), nrow(d)))
   invisible(show)
 }
 
@@ -429,7 +440,7 @@ run_spec <- function(spec) {
            "fox", "gecko", "koala", "lemur", "moose", "panda", "robin", "swan")
 )
 .tag_env <- new.env(parent = emptyenv())
-.tag_env$tag <- NULL
+assign("tag", NULL, envir = .tag_env)
 
 # A fresh tag, drawn without touching the random-number stream of the session.
 .new_tag <- function() {
@@ -461,7 +472,7 @@ run_spec <- function(spec) {
 .class_tag <- function(nickname = NULL) {
   stored <- .tag_env$tag
   tag <- if (!is.null(nickname)) .clean_tag(nickname) else if (!is.null(stored)) stored else .new_tag()
-  .tag_env$tag <- tag
+  assign("tag", tag, envir = .tag_env)
   list(tag = tag, replaced = if (!is.null(stored) && !identical(tag, stored)) stored)
 }
 
@@ -483,9 +494,9 @@ run_spec <- function(spec) {
              se = sprintf("%.5f", res$se), t = sprintf("%.3f", tv),
              df = as.character(round(res$df)), n = as.character(res$n),
              r = sprintf("%.3f", r))
-  query <- paste(vapply(names(field), function(k)
-    paste0(field[[k]], "=", utils::URLencode(value[[k]], reserved = TRUE)),
-    character(1)), collapse = "&")
+  query <- names(field) |>
+    purrr::map_chr(\(k) paste0(field[[k]], "=", utils::URLencode(value[[k]], reserved = TRUE))) |>
+    paste(collapse = "&")
   url <- sprintf("https://docs.google.com/forms/d/e/%s/viewform?usp=pp_url&%s", FORM_ID, query)
 
   writeLines(c(
@@ -531,17 +542,17 @@ The five tasks take you from a setup check to two dots on the live class chart, 
 
 ## Task 1 – Get yourself running {#task-1-setup}
 
-The aim of this task is only to reach the point where a line of R runs and the data are in front of you. Press **Run Code** on the cell below. If it prints the three lines it should, you are set up and everything else on this page will work.
+The aim of this task is only to reach the point where a line of R runs and the data are in front of you. Press **Run Code** on the cell below. If it prints the three results it should, you are set up and everything else on this page will work.
 
 ```{webr}
 #| autorun: false
 # The setup check. It uses only what the page preloads, so if this runs, the
-# rest of the lab runs.
-cat("R is running in your browser. R version:", R.version.string, "\n")
-cat("The panel is loaded:", nrow(euframes), "rows,",
-    dplyr::n_distinct(euframes$cntry), "countries,",
-    dplyr::n_distinct(euframes$year), "years\n")
-cat("fixest is available:", requireNamespace("fixest", quietly = TRUE), "\n")
+# rest of the lab runs: the version of R in the browser, the size of the
+# panel, and whether fixest is installed.
+R.version.string
+c(rows = nrow(euframes), countries = insight::n_unique(euframes$cntry),
+  years = insight::n_unique(euframes$year))
+print(requireNamespace("fixest", quietly = TRUE))  # print(): the value comes back invisibly
 ```
 
 You should see **270 rows**, **27 countries** and **10 years**, and `TRUE` on the last line. If any of that is missing, reload the page and wait for the engine to finish downloading before pressing Run Code again. If it still fails, say **STUCK** in the chat.
@@ -566,12 +577,12 @@ Fill in the gaps in the code cell below and run it to print your answers back.
 #| exercise: vocab
 #| code-overflow: wrap
 
-cat("
-Scenario 1: This is an example of ______.
-Scenario 2: Is this a case of ______ or ______?
-Scenario 3: The original analysis has failed to ______.
-Scenario 4: The authors' original findings are ______.
-")
+writeLines(c(
+  "Scenario 1: This is an example of ______.",
+  "Scenario 2: Is this a case of ______ or ______?",
+  "Scenario 3: The original analysis has failed to ______.",
+  "Scenario 4: The authors' original findings are ______."
+))
 
 ```
 
@@ -598,11 +609,10 @@ Run the cell below to inspect the panel. Edit it freely – this is your environ
 ```{webr}
 #| autorun: false
 # How many countries, how many years, how big is the panel?
-dplyr::glimpse(euframes)
+datawizard::data_peek(euframes)
 
-cat("\nCountries:", dplyr::n_distinct(euframes$cntry),
-    " Years:", dplyr::n_distinct(euframes$year),
-    " Rows:", nrow(euframes), "\n")
+c(countries = insight::n_unique(euframes$cntry), years = insight::n_unique(euframes$year),
+  rows = nrow(euframes))
 ```
 
 You should see **270 rows**, **27 countries**, **10 years** (2004–2013), and 13 columns. The outcome we care about first is `mcosmo`, the mean 'cosmopolitan' framing of the EU in each country-year, on a 0–1 scale. The predictor is `unemp`, the annual unemployment rate. `growth` is annual GDP growth, and `n_cy` is the number of survey respondents in each country-year. The [codebook](data/EUframes_cy_codebook.md) describes the other framings and every remaining column.
@@ -613,18 +623,16 @@ Now look at the outcome over time, one small panel per country:
 #| autorun: false
 #| fig-width: 9
 #| fig-height: 6
-library(ggplot2)
-
-ggplot(euframes, aes(x = year, y = mcosmo)) +
-  geom_line(colour = "grey55") +
-  geom_point(size = 0.7) +
-  facet_wrap(~ cntry, ncol = 6) +
-  scale_x_continuous(breaks = c(2004, 2008, 2013)) +
-  labs(
-    title = "Cosmopolitan EU framing by country, 2004–2013",
-    x = NULL, y = "Mean cosmopolitan framing"
-  ) +
-  theme_minimal(base_size = 9)
+# tinyplot draws on the graphics of base R (McDermott, Arel-Bundock and
+# Zeileis, tinyplot, CRAN, doi:10.32614/CRAN.package.tinyplot): the lines
+# first, one panel per country, then the points added on top
+tinyplot::tinyplot(
+  mcosmo ~ year, facet = ~cntry, data = euframes, type = "l", col = "grey55",
+  facet.args = list(ncol = 6), xaxb = c(2004, 2008, 2013), theme = "minimal",
+  main = "Cosmopolitan EU framing by country, 2004–2013",
+  xlab = "", ylab = "Mean cosmopolitan framing"
+)
+tinyplot::tinyplot_add(type = "p", col = "black", pch = 16, cex = 0.6)
 ```
 
 In most countries the framing changes little over the decade, while in a few it moves sharply around the 2009 crisis. This variation within a country over time is what the fixed-effects model in Task 3 uses.
@@ -646,14 +654,11 @@ That last clause is a causal claim, and a directed acyclic graph makes it checka
 #| fig-height: 4.4
 #| fig-align: center
 #| fig-cap: "The committed graph: unemployment to framing, with country and year each a common cause of both. The three pale nodes have no arrows yet."
-library(ggdag)
-library(ggplot2)
-library(dplyr)
-library(tibble)
+ncl_blue <- "#0e3b6a"
+orange   <- "#E69F00"
+grey_mid <- "#848c94"
 
-ncl_blue <- "#0e3b6a"; orange <- "#E69F00"; grey_mid <- "#848c94"
-
-dag_ref <- dagify(
+dag_ref <- ggdag::dagify(
   framing      ~ unemployment,
   framing      ~ country,
   unemployment ~ country,
@@ -667,13 +672,13 @@ dag_ref <- dagify(
 
 # dagify() holds edges, so a node with no arrows cannot live in the graph
 # object; the three undecided nodes join at the drawing layer instead.
-floaters <- tribble(
+floaters <- tibble::tribble(
   ~name,            ~x,   ~y,
   "growth",         0.9, -1.0,
   "bailout",        1.5, -1.2,
   "politicisation", 3.0, -0.95)
 
-roles <- tribble(
+roles <- tibble::tribble(
   ~name,            ~role,       ~disp,
   "unemployment",   "predictor", "unemp.",
   "framing",        "outcome",   "framing",
@@ -683,41 +688,41 @@ roles <- tribble(
   "bailout",        "candidate", "bailout",
   "politicisation", "candidate", "politic.")
 
-dag_tidy <- tidy_dagitty(dag_ref)
-update_dag_data(dag_tidy) <- pull_dag_data(dag_tidy) |>
-  bind_rows(floaters) |>
-  left_join(roles, by = "name") |>
-  mutate(role = factor(role, levels = c("predictor", "outcome",
-                                        "adjusted", "candidate")))
+dag_tidy <- ggdag::tidy_dagitty(dag_ref)
+ggdag::update_dag_data(dag_tidy) <- ggdag::pull_dag_data(dag_tidy) |>
+  dplyr::bind_rows(floaters) |>
+  dplyr::left_join(roles, by = "name") |>
+  dplyr::mutate(role = factor(role, levels = c("predictor", "outcome", "adjusted", "candidate")))
 
-ggplot(dag_tidy, aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges_arc(curvature = 0.18, edge_colour = grey_mid,
-                     edge_width = 1.1,
-                     arrow = grid::arrow(length = grid::unit(9, "pt"),
-                                         type = "closed")) +
-  geom_dag_point(aes(fill = role), shape = 21, size = 26, stroke = 0,
-                 colour = "white") +
-  geom_dag_text(aes(label = disp, colour = role), size = 3.6,
-                fontface = "bold") +
-  scale_fill_manual(values = c(predictor = orange, outcome = ncl_blue,
-                               adjusted = "#c7ccd2", candidate = "#dde2e7"),
-                    guide = "none") +
-  scale_colour_manual(values = c(predictor = "#FFFFFF", outcome = "#FFFFFF",
-                                 adjusted = ncl_blue, candidate = "#5d666e"),
-                      guide = "none") +
-  theme_dag() +
-  expand_limits(x = c(-0.5, 3.5), y = c(-1.7, 1.9))
+ggplot2::ggplot(dag_tidy, ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
+  ggdag::geom_dag_edges_arc(curvature = 0.18, edge_colour = grey_mid,
+                            edge_width = 1.1,
+                            arrow = grid::arrow(length = grid::unit(9, "pt"),
+                                                type = "closed")) +
+  ggdag::geom_dag_point(ggplot2::aes(fill = role), shape = 21, size = 26, stroke = 0,
+                        colour = "white") +
+  ggdag::geom_dag_text(ggplot2::aes(label = disp, colour = role), size = 3.6,
+                       fontface = "bold") +
+  ggplot2::scale_fill_manual(values = c(predictor = orange, outcome = ncl_blue,
+                                        adjusted = "#c7ccd2", candidate = "#dde2e7"),
+                             guide = "none") +
+  ggplot2::scale_colour_manual(values = c(predictor = "#FFFFFF", outcome = "#FFFFFF",
+                                          adjusted = ncl_blue, candidate = "#5d666e"),
+                               guide = "none") +
+  ggdag::theme_dag() +
+  ggplot2::expand_limits(x = c(-0.5, 3.5), y = c(-1.7, 1.9))
 ```
 
 Five arrows are drawn. `unemployment -> framing` is the path of interest. Above it, `country` is a common cause of both: stable national traits such as size, EU tenure and labour-market institutions move local unemployment and shape how people frame the EU. `year` does the same job for the EU-wide shocks that hit every country in the same calendar year. The three pale nodes below have no arrows yet, because whether they belong is your decision.
 
 You build the graph yourself in the cells below, in ordinary R. `dagify()` takes one formula per arrow, written the way you write a model, so `framing ~ unemployment` is the arrow that runs *into* `framing`. Read the tilde as 'is caused by' rather than 'is regressed on' and the direction comes out right every time. Because each arrow is its own line of R, an arrow you are unsure about can stay in the cell commented out, and adopting it means deleting a `#`.
 
-`dagify()` and `adjustmentSets()` are already available on this page, so you can go straight to the next cell. The optional cell below adds the *plot*. It installs `ggdag`, which brings `igraph`, `ggraph` and four further dependencies with it – roughly 23 MB of download, and a noticeable pause on a slow connection. Run it if you want the plot. Skip it and everything else in Task 2 still works, because the figure above is the same graph.
+`dagify()` and `adjustmentSets()` are already available on this page, so you can go straight to the next cell. The optional cell below adds the *plot*. It installs `ggdag`, which brings `ggplot2`, `igraph`, `ggraph` and some forty further packages with it – roughly 60 MB of download, and a long pause on a slow connection. Run it if you want the plot. Skip it and everything else in Task 2 still works, because the figure above is the same graph.
 
 ```{webr}
 #| include: false
 #| autorun: true
+# r-style: PENDING – adjustment sets by the backdoor criterion; no package found that runs in webR
 # Graph machinery for Task 2. The adjustment-set question is answered here in
 # base R rather than by dagitty, because dagitty reaches its graph algorithms
 # through a JavaScript engine that a browser only exposes to a page served with
@@ -778,12 +783,12 @@ You build the graph yourself in the cells below, in ordinary R. `dagify()` takes
 
 .dagify_builtin <- function(..., exposure = NULL, outcome = NULL,
                             coords = NULL) {
-  parts <- lapply(list(...), function(f) {
+  e <- purrr::map(list(...), \(f) {
     child <- all.vars(f[[2]])
     parent <- all.vars(f[[3]])
     data.frame(from = parent, to = rep(child, length(parent)))
-  })
-  e <- do.call(rbind, parts)
+  }) |>
+    purrr::list_rbind()
   structure(list(edges = e, exposure = exposure, outcome = outcome,
                  nodes = unique(c(e$from, e$to))),
             class = "simple_dag")
@@ -794,17 +799,16 @@ You build the graph yourself in the cells below, in ordinary R. `dagify()` takes
 # found, which leaves only the minimal ones.
 .adjustment_sets_builtin <- function(x, exposure = x$exposure,
                                      outcome = x$outcome, ...) {
-  backdoor <- Filter(function(p) .dag_has_edge(x, p[2L], exposure),
-                     .dag_paths(x, exposure, outcome))
+  backdoor <- .dag_paths(x, exposure, outcome) |>
+    purrr::keep(\(p) .dag_has_edge(x, p[2L], exposure))
   candidates <- setdiff(x$nodes, c(outcome, .dag_descendants(x, exposure)))
   found <- list()
   for (k in seq(0L, length(candidates))) {
     subsets <- if (k == 0L) list(character(0)) else
       utils::combn(candidates, k, simplify = FALSE)
     for (z in subsets) {
-      if (any(vapply(found, function(f) all(f %in% z), logical(1)))) next
-      if (all(vapply(backdoor, function(p) .dag_path_blocked(x, p, z),
-                     logical(1)))) {
+      if (any(purrr::map_lgl(found, \(f) all(f %in% z)))) next
+      if (all(purrr::map_lgl(backdoor, \(p) .dag_path_blocked(x, p, z)))) {
         found[[length(found) + 1L]] <- sort(z)
       }
     }
@@ -814,12 +818,10 @@ You build the graph yourself in the cells below, in ordinary R. `dagify()` takes
 
 print.simple_dag_sets <- function(x, ...) {
   if (!length(x)) {
-    cat("(no set of these variables closes every backdoor path)\n")
+    writeLines("(no set of these variables closes every backdoor path)")
   } else {
-    for (z in x) {
-      cat(if (length(z)) paste0("{ ", paste(z, collapse = ", "), " }") else "{}",
-          "\n", sep = "")
-    }
+    purrr::map_chr(x, \(z) if (length(z)) paste0("{ ", paste(z, collapse = ", "), " }") else "{}") |>
+      writeLines()
   }
   invisible(x)
 }
@@ -847,10 +849,12 @@ dag_engine <- "built-in"
 ```{webr}
 #| autorun: false
 # Optional: install ggdag so the graph can be drawn. The check comes first,
-# because ggdag draws through dagitty and there is no point downloading 23 MB
+# because ggdag draws through dagitty and there is no point downloading 60 MB
 # that this browser cannot use.
 if (!.dagitty_possible()) {
-  cat("This page is not served with the headers that the dagitty graph engine needs,\nso there is no plot here – the figure above is the same graph.\nEverything else in Task 2 works: the adjustment set uses graph code built into this page.\n")
+  writeLines(c("This page is not served with the headers that the dagitty graph engine needs,",
+               "so there is no plot here – the figure above is the same graph.",
+               "Everything else in Task 2 works: the adjustment set uses graph code built into this page."))
 } else {
   have_ggdag <- tryCatch({
     webr::install("ggdag", quiet = TRUE)
@@ -862,9 +866,10 @@ if (!.dagitty_possible()) {
     dagify <- ggdag::dagify
     adjustmentSets <- dagitty::adjustmentSets
     dag_engine <- "dagitty"
-    cat("ggdag is loaded: the graph, the adjustment set and the plot all work.\n")
+    writeLines("ggdag is loaded: the graph, the adjustment set and the plot all work.")
   } else {
-    cat("ggdag did not install. The adjustment set still works – it uses graph code built into this page.\nUse the figure above for the picture.\n")
+    writeLines(c("ggdag did not install. The adjustment set still works – it uses graph code built into this page.",
+                 "Use the figure above for the picture."))
   }
 }
 ```
@@ -873,7 +878,7 @@ Now specify the graph. The five committed arrows are live; the arguable ones are
 
 ```{webr}
 #| autorun: false
-my_dag <- dagify(
+my_dag <- dagify( # r-style: keep – the built-in dagify() or that of ggdag, whichever this page could load
   # The path of interest, and the two common causes (country and year)
   # that two-way fixed effects absorb.
   framing      ~ unemployment,
@@ -906,7 +911,7 @@ my_dag <- dagify(
     y = c(unemployment = 0, framing = 0, country = 1.4, year = 1.4,
           growth = -1.0, bailout = -1.2, politicisation = -0.95)))
 
-adjustmentSets(my_dag)
+adjustmentSets(my_dag) # r-style: keep – the built-in function or that of dagitty, as above
 ```
 
 With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the model that you will fit in Task 3 makes the same identification claim as the graph you have just written.
@@ -922,7 +927,7 @@ Now uncomment the growth pair and run the cell again. The set becomes `{ country
 if (identical(dag_engine, "dagitty")) {
   print(ggdag::ggdag_classic(my_dag, size = 4) + ggdag::theme_dag())
 } else {
-  cat("No plot here – scroll up to the reference figure, which is this same graph.\n")
+  writeLines("No plot here – scroll up to the reference figure, which is this same graph.")
 }
 ```
 
@@ -944,19 +949,19 @@ The cell below is an exercise. Replace the blanks (`______`) with the missing co
 ```{webr}
 #| setup: true
 #| exercise: reproduce
-euframes <- read.csv("data/EUframes_cy.csv")
+euframes <- utils::read.csv("data/EUframes_cy.csv") # r-style: keep – readr would add 4 MB to the download
 ```
 
 ```{webr}
 #| exercise: reproduce
 # 1. centre the unemployment rate on its grand mean
-euframes$unemp_c <- euframes$unemp - ______
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - ______)
 
 # 2. fit two-way fixed effects with fixest::feols
 #    the part after the | adds the fixed effects
-m1 <- feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
+m1 <- fixest::feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
 
-broom::tidy(m1)
+parameters::model_parameters(m1)
 ```
 
 :::: {.hint exercise="reproduce"}
@@ -966,7 +971,7 @@ broom::tidy(m1)
 To centre a variable on its grand mean, subtract the mean of the whole column:
 
 ``` r
-euframes$unemp_c <- euframes$unemp - mean(euframes$unemp)
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
 ```
 
 With fixed effects present this does not change the t-statistic, but the specification recorded for C6HJR includes it, so do it explicitly.
@@ -980,7 +985,7 @@ With fixed effects present this does not change the t-statistic, but the specifi
 In `fixest::feols`, the bar `|` separates the regression from the fixed effects. To add country and year fixed effects, list them after the bar separated by `+`:
 
 ``` r
-feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
+fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 ```
 :::
 ::::
@@ -990,12 +995,12 @@ feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 ## Fully worked solution
 
 ``` r
-euframes$unemp_c <- euframes$unemp - mean(euframes$unemp)
-m1 <- feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
-broom::tidy(m1)
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
+m1 <- fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
+parameters::model_parameters(m1)
 ```
 
-You should get `estimate ≈ −0.00347`, `std.error ≈ 0.00091`, `statistic ≈ −3.80` – the recorded value reproduces from the published data and the published model. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals. Conventional errors treat the 270 country-years as independent; the case study and Part 4 show what changes when they do not.
+You should get a coefficient of about −0.00347, a standard error of about 0.00091 and t(233) ≈ −3.80 – the recorded value reproduces from the published data and the published model. `parameters::model_parameters()` reports the estimate, its standard error, its confidence interval, the t with its degrees of freedom and the p-value of any model in one table. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals. Conventional errors treat the 270 country-years as independent; the case study and Part 4 show what changes when they do not.
 :::
 ::::
 
@@ -1021,7 +1026,7 @@ This task is **exploratory**. You try several specifications, look at what each 
 try_spec()
 ```
 
-The printout gives the slope `b` with its conventional standard error and *t*, the claim-aligned partial *r*, two p-values, the class of the result and its placement among the 864. The two p-values come from tests that allow the years of one country to be correlated with one another, which the conventional *t* does not. The first clusters the standard errors by country, with the CR2 correction that suits a small number of countries. The second is the wild cluster bootstrap by country: it imposes the null of no association, flips the signs of the residuals country by country 9,999 times, and counts how often a *t* at least as large as the observed one arises. The bootstrap is the test that classes every point on the curve. The reproduced specification lies below zero, but with a bootstrap p of 0.110 it is not significant, and 67% of the 864 specifications lie further in the direction of the claim.
+The printout gives the slope `b` with its conventional standard error and *t*, the claim-aligned partial *r*, the p-value of the test that classes every point on the curve, the class of the result and its placement among the 864. That test allows the years of one country to be correlated with one another, which the conventional *t* does not. It clusters the standard errors by country with the CR2 correction, which suits a small number of countries of unequal weight, and it judges the *t* against Satterthwaite degrees of freedom, which count how many countries effectively carry the information. For the reproduced specification that count is `r sprintf("%.1f", ref$df_cr2)` rather than the 27 countries of the panel. The specification lies below zero, but with a CR2 p of `r sprintf("%.4f", ref$p_cr2)` it is not significant at 5%, and `r round(100 * mean(curve$r_ca < ref$r_ca))`% of the 864 specifications lie further in the direction of the claim.
 
 Each of the six calls below changes a single decision. The first four change the question that is being asked of the data; the last two keep the question and change only how it is measured. Run them and compare the results.
 
@@ -1065,7 +1070,7 @@ try_spec(
   # Level 3 – Estimation
   pred_form    = "raw",          # raw | log   (growth: raw only)
   family       = "gaussian",     # gaussian  off the curve: beta
-  se           = "wcr"           # wcr, fixed: the wild cluster bootstrap by country tests every result
+  se           = "cr2"           # cr2, fixed: CR2 errors clustered by country test every result
 )
 ```
 
@@ -1076,7 +1081,7 @@ Everything you try is logged. Print the log to see the small multiverse that you
 my_experiments()
 ```
 
-When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same bootstrap test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
+When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same CR2 test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
 
 ```{webr}
 #| autorun: false
@@ -1133,12 +1138,12 @@ my_measure      <- "wb_nat"       # unemp:  wb_nat | es_1574_act | es_2064_pop |
 my_pred_form    <- "raw"          # raw | log   (growth: raw only; centring or z-scaling
                                   #              would leave t, r and p unchanged)
 my_family       <- "gaussian"     # gaussian   (a linear model of the cell means)
-my_se           <- "wcr"          # wcr   (fixed: the wild cluster bootstrap by country)
+my_se           <- "cr2"          # cr2   (fixed: CR2 errors clustered by country)
 
 claim_align     <- TRUE           # the course convention, applied automatically
 
 # 4. Why these controls, in one DAG-grounded sentence: .......................
-# 5. Supported if the claim-aligned coefficient is negative with bootstrap
+# 5. Supported if the claim-aligned coefficient is negative with CR2
 #    p < .05; undermined if it is not significant or positive. I will
 #    report what I get.
 
@@ -1164,14 +1169,14 @@ my_model <- build_model(______ ~ ______, estimator = "______")
 The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and Task 3 showed what it expands to. Apart from the log form, the Level 2 and Level 3 choices never appear in the formula. They select which version of the panel the result was computed on.
 :::
 
-When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration. These are the numbers that the downloadable workspace gives when it fits the model and runs the bootstrap on your own machine, and here you get them without downloading the estimation packages into your browser:
+When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration. These are the numbers that the downloadable workspace gives when it fits the model and computes its CR2 test on your own machine, and here you get them without downloading the estimation packages into your browser:
 
 ```{webr}
 #| autorun: false
 run_spec(my_model)
 ```
 
-The output has the same lines as in Task 4. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero is in the direction of the claim. Whether it is significant is decided by the bootstrap p, and the class line says which of the four cases your result falls in. The placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, 67% for the specification that you reproduced in Task 3.
+The output has the same lines as in Task 4. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero is in the direction of the claim. Whether it is significant is decided by the CR2 p, and the class line says which of the four cases your result falls in. The placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, `r round(100 * mean(curve$r_ca < ref$r_ca))`% for the specification that you reproduced in Task 3.
 
 Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
 

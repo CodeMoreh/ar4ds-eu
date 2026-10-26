@@ -20,10 +20,9 @@
 #               and in the rebuild folder
 # Writes:       nothing
 # Author:       Chris Moreh
-# Last updated: 2026-10-25
+# Last updated: 2026-10-26
 ##############################################################################
 
-suppressPackageStartupMessages({ library(dplyr); library(purrr); library(tidyr) })
 source("R/eu-frames/_paths.R")
 
 committed_dir <- "cases/eu-frames/data"
@@ -63,45 +62,51 @@ flag_names <- c("sig", "supports_claim", "supports", "baseline", "is_reference",
 compare_one <- function(file, keys) {
   committed <- datawizard::data_read(file.path(committed_dir, file), verbose = FALSE)
   rebuilt   <- datawizard::data_read(out_path(file), verbose = FALSE)
-  joined <- inner_join(committed, rebuilt, by = keys, suffix = c("_c", "_r"),
-                       relationship = "one-to-one")
+  joined <- dplyr::inner_join(committed, rebuilt, by = keys, suffix = c("_c", "_r"),
+                              relationship = "one-to-one")
   shared <- setdiff(intersect(names(committed), names(rebuilt)), keys)
-  num   <- shared[map_lgl(shared, \(v) is.numeric(committed[[v]]))]
+  num   <- shared[purrr::map_lgl(shared, \(v) is.numeric(committed[[v]]))]
   flags <- intersect(flag_names, shared)
   other <- setdiff(shared, c(num, flags))
   pair  <- \(v) list(joined[[paste0(v, "_c")]], joined[[paste0(v, "_r")]])
-  diffs <- map_dbl(num, \(v) {
+  diffs <- purrr::map_dbl(num, \(v) {
     p <- pair(v)
     d <- abs(p[[1]] - p[[2]])
     if (all(is.na(d))) 0 else max(d, na.rm = TRUE)
   })
-  na_mismatch <- map_int(num, \(v) { p <- pair(v); sum(is.na(p[[1]]) != is.na(p[[2]])) })
-  differs <- \(v) { p <- pair(v); sum(!(p[[1]] == p[[2]] | (is.na(p[[1]]) & is.na(p[[2]]))), na.rm = TRUE) }
+  na_mismatch <- purrr::map_int(num, \(v) {
+    p <- pair(v)
+    sum(is.na(p[[1]]) != is.na(p[[2]]))
+  })
+  differs <- \(v) {
+    p <- pair(v)
+    sum(!(p[[1]] == p[[2]] | (is.na(p[[1]]) & is.na(p[[2]]))), na.rm = TRUE)
+  }
   list(
-    rows = tibble(file, committed = nrow(committed), rebuilt = nrow(rebuilt),
-                  matched = nrow(joined),
-                  na_mismatches = sum(na_mismatch),
-                  text_differences = sum(map_int(other, differs)),
-                  flag_differences = sum(map_int(flags, differs))),
-    diffs = tibble(file, column = num, max_abs_diff = diffs)
+    rows = tibble::tibble(file, committed = nrow(committed), rebuilt = nrow(rebuilt),
+                          matched = nrow(joined),
+                          na_mismatches = sum(na_mismatch),
+                          text_differences = sum(purrr::map_int(other, differs)),
+                          flag_differences = sum(purrr::map_int(flags, differs))),
+    diffs = tibble::tibble(file, column = num, max_abs_diff = diffs)
   )
 }
 
 # a file is compared only when both builds hold it: a stage may be rebuilt on
 # its own, and a new file has no committed copy until it is first accepted
 both    <- \(x) file.exists(out_path(x$file)) && file.exists(file.path(committed_dir, x$file))
-present <- keep(checks, both)
-skipped <- map_chr(discard(checks, both), "file")
-if (length(skipped) > 0) print(tibble(not_compared = skipped), n = Inf)
+present <- purrr::keep(checks, both)
+skipped <- purrr::map_chr(purrr::discard(checks, both), "file")
+if (length(skipped) > 0) print(tibble::tibble(not_compared = skipped), n = Inf)
 
-res <- map(present, \(x) compare_one(x$file, x$keys))
-rows  <- map(res, "rows")  |> list_rbind()
-diffs <- map(res, "diffs") |> list_rbind()
+res <- purrr::map(present, \(x) compare_one(x$file, x$keys))
+rows  <- purrr::map(res, "rows")  |> purrr::list_rbind()
+diffs <- purrr::map(res, "diffs") |> purrr::list_rbind()
 
 print(as.data.frame(rows), row.names = FALSE)
 diffs |>
-  summarise(columns = n(), largest_abs_diff = signif(max(max_abs_diff), 3),
-            in_column = column[which.max(max_abs_diff)], .by = file) |>
+  dplyr::summarise(columns = dplyr::n(), largest_abs_diff = signif(max(max_abs_diff), 3),
+                   in_column = column[which.max(max_abs_diff)], .by = file) |>
   as.data.frame() |>
   print(row.names = FALSE)
 

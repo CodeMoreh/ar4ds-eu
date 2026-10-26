@@ -45,7 +45,7 @@ Every specification re-uses the **same 270 country-years**. The estimates are de
 :::
 
 ::: {.fragment .fadeInUp}
-'`r fmt_pct(share_sig(spec_curve))` below zero with bootstrap p < 0.05' **describes** the curve. It is not a p-value for the claim. The bootstrap allows for the years of one country resembling each other within each fit; it does not make the fits independent of one another.
+'`r fmt_pct(share_sig(spec_curve))` below zero with CR2 p < 0.05' **describes** the curve. It is not a p-value for the claim. Clustered errors allow for the years of one country resembling each other within each fit; they do not make the fits independent of one another.
 :::
 
 ::: {.fragment .fadeInUp}
@@ -54,7 +54,7 @@ Vote-counting across dependent specifications has no null distribution, so a tal
 ::::
 
 ::: notes
-Seventy-one per cent of our specifications lie below zero with a bootstrap p under point zero five, and it is very tempting to read that as evidence strength: "most tests pass, so the claim holds". The bootstrap already allows for the years of one country resembling each other inside each fit. But all eight hundred and sixty-four specifications use the same two hundred and seventy country-years. They share the data, so they share the noise: if sampling luck pushed a handful of country-years in the direction of the claim, it pushed hundreds of specifications the same way at once. The percentage significant is a description of the curve, not a test of the claim. To test the claim at curve level you need to know what the whole curve would look like if there were nothing to find, and that null has to be constructed.
+Seventy-seven per cent of our specifications lie below zero with a CR2 p under point zero five, and it is very tempting to read that as evidence strength: "most tests pass, so the claim holds". The clustered errors already allow for the years of one country resembling each other inside each fit. But all eight hundred and sixty-four specifications use the same two hundred and seventy country-years. They share the data, so they share the noise: if sampling luck pushed a handful of country-years in the direction of the claim, it pushed hundreds of specifications the same way at once. The percentage significant is a description of the curve, not a test of the claim. To test the claim at curve level you need to know what the whole curve would look like if there were nothing to find, and that null has to be constructed.
 :::
 
 ## The permutation design {#building-the-nothing-the-permutation-design}
@@ -82,11 +82,11 @@ The claim says that a country's unemployment moves its EU framing over time. To 
 :::
 
 ::: {.fragment}
-**Discussion (2 minutes, then chat):** the cosmopolitan scale on the curve has `r nrow(dplyr::filter(spec_curve, outcome == "mcosmo"))` specifications: **`r fmt_pct(share_below(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero, `r fmt_pct(share_sig(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero with bootstrap p < 0.05.** Strong evidence? *Against what null?*
+**Discussion (2 minutes, then chat):** the cosmopolitan scale on the curve has `r nrow(dplyr::filter(spec_curve, outcome == "mcosmo"))` specifications: **`r fmt_pct(share_below(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero, `r fmt_pct(share_sig(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero with CR2 p < 0.05.** Strong evidence? *Against what null?*
 :::
 
 ::: notes
-Two literacy points and then you argue. First: with five hundred draws, the smallest p-value that the test can report is two over five hundred and one – about point zero zero four. That is a floor set by the number of draws, not a zero, and more draws lower it at a real cost in computing time. Second: near the point-oh-five boundary the Monte-Carlo error is around plus or minus point zero one, so a permutation p of point zero four and one of point zero six count as the same finding. The badge says that this test is designed and has not been run, so what you are reading today is a plan whose result nobody yet knows, which is the position that a preregistration puts you in. Now the discussion beat. Take the cosmopolitan scale alone, the outcome that Multi100 instructed: two hundred and eighty-eight specifications on the curve, ninety-four per cent below zero, fifty-six per cent below zero with a bootstrap p under point zero five. Two minutes: is that strong evidence? Against what null? Type your answer. [harvest: the sharp ones will say – we don't know until we know what chance produces on these dependent data; that is the point.]
+Two literacy points and then you argue. First: with five hundred draws, the smallest p-value that the test can report is two over five hundred and one – about point zero zero four. That is a floor set by the number of draws, not a zero, and more draws lower it at a real cost in computing time. Second: near the point-oh-five boundary the Monte-Carlo error is around plus or minus point zero one, so a permutation p of point zero four and one of point zero six count as the same finding. The badge says that this test is designed and has not been run, so what you are reading today is a plan whose result nobody yet knows, which is the position that a preregistration puts you in. Now the discussion beat. Take the cosmopolitan scale alone, the outcome that Multi100 instructed: two hundred and eighty-eight specifications on the curve, ninety-four per cent below zero, sixty-six per cent below zero with a CR2 p under point zero five. Two minutes: is that strong evidence? Against what null? Type your answer. [harvest: the sharp ones will say – we don't know until we know what chance produces on these dependent data; that is the point.]
 :::
 
 ## What stands without the test

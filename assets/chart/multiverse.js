@@ -17,7 +17,7 @@
     yLabel    the label of the vertical axis
     yDec      decimals of the tick labels (1)
     vfmt      {pre, suf, d}: how a value is printed in a pop-up ("r = " and 3 decimals)
-    sl        one line of statistics per specification (t, df and bootstrap p)
+    sl        one line of statistics per specification (t, df and the CR2 p)
     det       per specification, the [label, value, class] lines of its pop-up
               (the lines of the EU-frames decisions)
     tagGap    the height of a reference tag above its mark, in units of D.r (0.12)
@@ -342,7 +342,7 @@
         return;
       }
       line("", val(D.r[i]), "v");
-      line("", D.sl ? D.sl[i] : "t = " + fmt(D.st[i], 2) + " on " + D.df[i] + " df · bootstrap " + fmtP(D.p[i]), "s");
+      line("", D.sl ? D.sl[i] : "t = " + fmt(D.st[i], 2) + " on " + D.df[i] + " df · CR2 " + fmtP(D.p[i]), "s");
       if (i === D.ref) line("", D.refText, "t");
       if (D.det) {
         D.det[i].forEach(function (p) { line(p[0], p[1], p[2]); });
@@ -508,7 +508,7 @@
         return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
       };
       var keys = D.csvAxes.map(function (c) { return c[0]; });
-      var head = D.csvHead || ["rank", "r_ca", "t_ca", "df", "p_wcr", "significant_5pc"];
+      var head = D.csvHead || ["rank", "r_ca", "t_ca", "df", "p_cr2", "significant_5pc"];
       var rows = [head.concat(D.csvAxes.map(function (c) { return c[1]; })).join(",")];
       for (var i = 0; i < N; i++) {
         rows.push([i + 1, D.r[i], D.st[i], D.df[i], D.p[i], D.sg[i] ? "yes" : "no"]

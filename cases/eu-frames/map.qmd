@@ -15,56 +15,51 @@ aliases:
 # option and test (twin on the curve, r of the alternative, p < 0.05 or not),
 # which keeps the page small. The inference rules need no pairs, because the
 # curve file carries every p-value.
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(readr)
-  library(purrr)
-})
 
 axes <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
           "construction", "noop", "item_set", "cell_weight", "measure", "pred_form", "family")
 vary <- c("outcome", "predictor", "copredictor", "estimator", "noop", "item_set",
           "cell_weight", "measure", "pred_form")
 
-menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE) |>
-  arrange(r_ca) |>
-  mutate(idx = row_number() - 1L)
-curve_neg <- read_csv("data/spec_curve_negative.csv", show_col_types = FALSE)
-deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
-twin_index <- curve |> select(all_of(axes), idx)
-pair_rows <- read_csv("data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
-  filter(curve == "positive", axis != "se") |>
-  left_join(twin_index, by = axes)
+menu <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE) |>
+  datawizard::data_arrange("r_ca") |>
+  datawizard::data_modify(idx = seq_along(r_ca) - 1L)
+curve_neg <- readr::read_csv("data/spec_curve_negative.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+twin_index <- datawizard::data_select(curve, select = c(axes, "idx"))
+pair_rows <- readr::read_csv("data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive" & axis != "se") |>
+  dplyr::left_join(twin_index, by = axes)
 stopifnot(!anyNA(pair_rows$idx), nrow(curve) == 864)
 
 pairs <- pair_rows |>
-  mutate(key = paste(axis, option, rule, sep = "|")) |>
-  split(~key) |>
-  map(\(d) list(i = d$idx, r = round(d$r_ca_dev, 4), s = as.integer(d$p_dev < 0.05)))
+  datawizard::data_modify(key = paste(axis, option, rule, sep = "|")) |>
+  split(~key) |> # r-style: keep – a list named by key is what the map reads
+  purrr::map(\(d) list(i = d$idx, r = round(d$r_ca_dev, 4), s = as.integer(d$p_dev < 0.05)))
 
 # the cells and countries left by the two series that do not cover the panel
 coverage <- pair_rows |>
-  filter(option %in% c("es_1574_tips", "es_growth")) |>
-  distinct(option, n_cells_dev, n_countries_dev) |>
-  split(~option) |>
-  map(\(d) list(cells = d$n_cells_dev[1], countries = d$n_countries_dev[1]))
+  datawizard::data_filter(option %in% c("es_1574_tips", "es_growth")) |>
+  dplyr::distinct(option, n_cells_dev, n_countries_dev) |>
+  split(~option) |> # r-style: keep – as above
+  purrr::map(\(d) list(cells = d$n_cells_dev[1], countries = d$n_countries_dev[1]))
 
 curve_js <- curve |>
-  transmute(
-    across(all_of(vary)), idx,
+  dplyr::transmute(
+    dplyr::across(dplyr::all_of(vary)), idx,
     r_ca = round(r_ca, 4),
     p_conv = signif(p_conv, 3), p_cr1 = signif(p_cr1, 3), p_cr2 = signif(p_cr2, 3),
-    p_wcr = signif(p_wcr, 3), p_wcr_webb = signif(p_wcr_webb, 3),
     ref = is_reference
   )
 neg_js <- curve_neg |>
-  transmute(across(all_of(vary)), r_ca = round(r_ca, 4), p_wcr = signif(p_wcr, 3))
+  dplyr::transmute(dplyr::across(dplyr::all_of(vary)), r_ca = round(r_ca, 4),
+                   p_cr2 = signif(p_cr2, 3))
 
 # page titles without their Markdown emphasis, for the links to the teaching pages
 pages <- unique(menu$taught_on) |>
-  set_names() |>
-  map(\(f) gsub("*", "", rmarkdown::yaml_front_matter(file.path("../..", f))$title, fixed = TRUE))
+  purrr::set_names() |>
+  purrr::map(\(f) gsub("*", "", rmarkdown::yaml_front_matter(file.path("../..", f))$title, fixed = TRUE))
 
 ojs_define(menu_raw = menu, curve_raw = curve_js, neg_raw = neg_js, dev_raw = deviations,
            pairs_raw = pairs, coverage_raw = coverage, pages_raw = pages)
@@ -161,14 +156,14 @@ DM = {
     levelName: {estimand: "Level 1 – Estimands", measurement: "Level 2 – Measurement", estimation: "Level 3 – Estimation"},
     levelShort: {estimand: "Level 1", measurement: "Level 2", estimation: "Level 3"},
     judgement: {kept: "On the curve", other_question: "Another question", weaker_answer: "A weaker answer", check: "A check"},
-    ruleLabel: {wcr_rademacher: "the wild cluster bootstrap", re_conventional: "model-based errors", re_cr1_g1: "errors clustered by country (CR1, 26 df)",
+    ruleLabel: {cr2: "CR2 errors with Satterthwaite df", re_conventional: "model-based errors", re_cr1_g1: "errors clustered by country (CR1, 26 df)",
                 rewb_satterthwaite: "Satterthwaite df", rewb_cr2: "CR2 errors with Satterthwaite df", beta_cr1_g1: "errors clustered by country (CR1, 26 df)",
                 mi_rubin_cr1_g1: "a clustered test pooled over ten imputations (26 df)", conventional: "conventional errors", cr1_g1: "errors clustered by country (CR1, 26 df)",
-                cr2: "CR2 errors with Satterthwaite df", wcr_webb: "the bootstrap with Webb signs", identical_to_count: "the test of the count"},
+                identical_to_count: "the test of the count"},
     preferredRule: {re: "re_cr1_g1", rewb: "rewb_cr2", beta: "beta_cr1_g1", mi_mice: "mi_rubin_cr1_g1", mi_amelia: "mi_rubin_cr1_g1"},
-    sePcol: {wcr: "p_wcr", cr2: "p_cr2", cr1: "p_cr1", conventional: "p_conv", wcr_webb: "p_wcr_webb"},
-    seDev: {cr2: "cr2", cr1: "cr1_g1", conventional: "conventional", wcr_webb: "wcr_webb"},
-    seName: {wcr: "the bootstrap", cr2: "CR2 errors", cr1: "CR1 errors", conventional: "conventional errors", wcr_webb: "the bootstrap with Webb signs"},
+    sePcol: {cr2: "p_cr2", cr1: "p_cr1", conventional: "p_conv"},
+    seDev: {cr1: "cr1_g1", conventional: "conventional"},
+    seName: {cr2: "CR2 errors", cr1: "CR1 errors", conventional: "conventional errors"},
     kItems: {all: {mcosmo: 5, mutil: 2, mcomm: 4, mlib: 2, mpos: 7, mneg: 6}, un: {mcosmo: 5, mutil: 2, mcomm: 3, mlib: 2, mpos: 7, mneg: 5}},
     numWord: {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"},
     negativeOutcomes: ["mcomm", "mlib", "mneg"],
@@ -178,8 +173,10 @@ DM = {
 
 // numbers as the site prints them: fixed decimals and a true minus sign
 fmtR = x => (x < 0 ? "−" : "") + Math.abs(x).toFixed(3)
-fmtP = p => p < 0.0001 ? "< 0.0001" : p < 0.001 ? p.toFixed(4) : p.toFixed(3)
-// "p = 0.110" or "p < 0.0001", so that a bound never follows an equals sign
+// four decimals below 0.001 and within 0.005 of the threshold, so that a p
+// just above 0.05 never prints as 0.050
+fmtP = p => p < 0.0001 ? "< 0.0001" : p < 0.001 || Math.abs(p - 0.05) < 0.005 ? p.toFixed(4) : p.toFixed(3)
+// "p = 0.029" or "p < 0.0001", so that a bound never follows an equals sign
 pEq = p => p < 0.0001 ? "p < 0.0001" : `p = ${fmtP(p)}`
 fmtPct = x => x.toFixed(1) + "%"
 ```
@@ -205,7 +202,7 @@ decisionMap = {
 
   // ---- state: one option per decision, starting from the reproduced specification
   const refRow = curve.find(d => d.ref === true);
-  const REF = {sample: "all", weights: "none", construction: "share", family: "gaussian", se: "wcr"};
+  const REF = {sample: "all", weights: "none", construction: "share", family: "gaussian", se: "cr2"};
   for (const a of VARY) REF[a] = refRow[a];
   let sel = Object.assign({}, REF);
   let lastOn = Object.assign({}, REF);
@@ -293,7 +290,7 @@ decisionMap = {
   // ---- what the selection gives
   function pairKey(axis, code) {
     const c = axis === "construction" && code === "rate" ? "count" : code;
-    const rule = DM.preferredRule[c] || "wcr_rademacher";
+    const rule = DM.preferredRule[c] || "cr2";
     const key = `${axis}|${c}|${rule}`;
     return pairs_raw[key] ? {key, rule} : null;
   }
@@ -416,8 +413,8 @@ decisionMap = {
     const base = curve.filter(d => !matchSet.has(d.idx) && !latestSet.has(d.idx));
     const x = d => d.idx + 1;
     const dots = (data, stroke, opSig, opNs, r, sw) => [
-      Plot.dot(data.filter(d => d.p_wcr < 0.05), {x, y: "r_ca", r, symbol: "circle", fill: "none", stroke, strokeOpacity: opSig, strokeWidth: sw, title: d => `${recipe(d)}\nr = ${fmtR(d.r_ca)}, bootstrap ${pEq(d.p_wcr)}`}),
-      Plot.dot(data.filter(d => d.p_wcr >= 0.05), {x, y: "r_ca", r, symbol: "times", fill: "none", stroke, strokeOpacity: opNs, strokeWidth: sw, title: d => `${recipe(d)}\nr = ${fmtR(d.r_ca)}, bootstrap ${pEq(d.p_wcr)}`})
+      Plot.dot(data.filter(d => d.p_cr2 < 0.05), {x, y: "r_ca", r, symbol: "circle", fill: "none", stroke, strokeOpacity: opSig, strokeWidth: sw, title: d => `${recipe(d)}\nr = ${fmtR(d.r_ca)}, CR2 ${pEq(d.p_cr2)}`}),
+      Plot.dot(data.filter(d => d.p_cr2 >= 0.05), {x, y: "r_ca", r, symbol: "times", fill: "none", stroke, strokeOpacity: opNs, strokeWidth: sw, title: d => `${recipe(d)}\nr = ${fmtR(d.r_ca)}, CR2 ${pEq(d.p_cr2)}`})
     ];
     const ref = curve.filter(d => d.ref === true);
     const marks = [
@@ -442,8 +439,8 @@ decisionMap = {
   }
   function pairData(axis, code) {
     if (axis === "se") {
-      const yCol = code === "wcr" ? "p_wcr" : DM.sePcol[code];
-      const xCol = code === "wcr" ? "p_conv" : "p_wcr";
+      const yCol = DM.sePcol[code];
+      const xCol = code === "cr2" ? "p_conv" : "p_cr2";
       return curve.map(d => {
         const xv = Math.max(d[xCol], 1e-4), yv = Math.max(d[yCol], 1e-4);
         const cx = d.r_ca < 0 && d[xCol] < 0.05, cy = d.r_ca < 0 && d[yCol] < 0.05;
@@ -455,7 +452,7 @@ decisionMap = {
     const P = pairs_raw[pk.key];
     return P.i.map((ti, k) => {
       const t = curve[ti];
-      const twinClass = t.r_ca < 0 && t.p_wcr < 0.05, devClass = P.r[k] < 0 && P.s[k] === 1;
+      const twinClass = t.r_ca < 0 && t.p_cr2 < 0.05, devClass = P.r[k] < 0 && P.s[k] === 1;
       return {x: t.r_ca, y: P.r[k], s: P.s[k] === 1, changed: twinClass !== devClass, twin: t, label: recipe(t)};
     });
   }
@@ -469,7 +466,7 @@ decisionMap = {
       Plot.dot(rows.filter(d => !d.s), {x: "x", y: "y", r, symbol: "times", fill: "none", stroke, strokeOpacity: op * 0.8, strokeWidth: sw, title: d => `${d.label}\n${fmtR(d.x)} → ${fmtR(d.y)}`})
     ];
     const lo = isSe ? 1e-4 : DM.domainR[0], hi = isSe ? 1 : DM.domainR[1];
-    const xName = isSe ? (code === "wcr" ? "p under conventional errors" : "p under the bootstrap of the curve") : "claim-aligned r on the curve";
+    const xName = isSe ? (code === "cr2" ? "p under conventional errors" : "p under CR2, the rule of the curve") : "claim-aligned r on the curve";
     const yName = isSe ? `p under ${DM.seName[code]}` : "claim-aligned r with this option";
     return Plot.plot({
       width, height: Math.max(240, Math.min(360, Math.round(width * 0.62))), marginLeft: 50, marginRight: 12, marginBottom: 40,
@@ -491,7 +488,7 @@ decisionMap = {
   // ---- the selected option, in words and numbers
   const curveShares = {
     below: 100 * d3.mean(curve, d => d.r_ca < 0 ? 1 : 0),
-    sig: 100 * d3.mean(curve, d => d.r_ca < 0 && d.p_wcr < 0.05 ? 1 : 0)
+    sig: 100 * d3.mean(curve, d => d.r_ca < 0 && d.p_cr2 < 0.05 ? 1 : 0)
   };
   function summaryText(axis, code, o) {
     const negative = axis === "outcome" && DM.negativeOutcomes.includes(code);
@@ -500,19 +497,19 @@ decisionMap = {
     const out = [];
     if (negative) {
       const r = rows[0];
-      out.push(el("p", {class: "dm-text"}, `The curve of this claim holds no specification of this scale. On the curve of the negative scales, aligned so that below zero is the direction of the other half of the hypothesis, its 288 specifications lie below zero in ${fmtPct(r.below_zero)} of cases and below zero with bootstrap p < 0.05 in ${fmtPct(r.below_zero_sig)}, with a median claim-aligned r of ${fmtR(r.median_r_ca)}.`));
+      out.push(el("p", {class: "dm-text"}, `The curve of this claim holds no specification of this scale. On the curve of the negative scales, aligned so that below zero is the direction of the other half of the hypothesis, its 288 specifications lie below zero in ${fmtPct(r.below_zero)} of cases and below zero with CR2 p < 0.05 in ${fmtPct(r.below_zero_sig)}, with a median claim-aligned r of ${fmtR(r.median_r_ca)}.`));
       return out;
     }
-    if (axis === "se" && code === "wcr") {
+    if (axis === "se" && code === "cr2") {
       const conv = 100 * d3.mean(curve, d => d.r_ca < 0 && d.p_conv < 0.05 ? 1 : 0);
-      out.push(el("p", {class: "dm-text"}, `Every point of the curve is classed by this rule: ${fmtPct(curveShares.sig)} of the 864 specifications lie below zero with bootstrap p < 0.05, against ${fmtPct(conv)} under conventional errors. The partial correlation is the same under every rule, so only the class moves.`));
+      out.push(el("p", {class: "dm-text"}, `Every point of the curve is classed by this rule: ${fmtPct(curveShares.sig)} of the 864 specifications lie below zero with CR2 p < 0.05, against ${fmtPct(conv)} under conventional errors. The partial correlation is the same under every rule, so only the class moves.`));
       return out;
     }
     const withPairs = rows.filter(r => r.n_pairs > 0);
     if (withPairs.length === 0) {
       out.push(el("p", {class: "dm-text"}, code === "wb_growth"
         ? "This is the only growth series on the curve, so there is no other series on the curve to set it against; the Eurostat growth series is compared with it."
-        : `Every specification on the curve uses this option, so there is nothing on the curve to set it against; the alternatives on the map are compared with it. On the curve itself ${fmtPct(curveShares.below)} of the 864 specifications lie below zero and ${fmtPct(curveShares.sig)} below zero with bootstrap p < 0.05.`));
+        : `Every specification on the curve uses this option, so there is nothing on the curve to set it against; the alternatives on the map are compared with it. On the curve itself ${fmtPct(curveShares.below)} of the 864 specifications lie below zero and ${fmtPct(curveShares.sig)} below zero with CR2 p < 0.05.`));
       return out;
     }
     for (const r of withPairs) {
@@ -525,8 +522,8 @@ decisionMap = {
         : ` Their median claim-aligned r is ${fmtR(r.median_r_ca)}, a median shift of ${fmtR(r.median_shift)} from their twins; ${fmtPct(r.sign_changes)} of the pairs change sign and ${fmtPct(r.class_changes)} change class.`;
       out.push(el("p", {class: "dm-text"}, lead + rest));
     }
-    if (withPairs.some(r => r.rule !== "wcr_rademacher" && axis !== "se"))
-      out.push(el("p", {class: "dm-small"}, "Part of the change of class comes from the test, because this option is tested by a different rule from the bootstrap of the curve."));
+    if (withPairs.some(r => r.rule !== "cr2" && axis !== "se"))
+      out.push(el("p", {class: "dm-small"}, "Part of the change of class comes from the test, because this option is tested by a different rule from the CR2 rule of the curve."));
     return out;
   }
 
@@ -558,7 +555,7 @@ decisionMap = {
       pairBox.append(box);
       const label = o.label;
       const caption = axis === "se"
-        ? `Each mark is one of the 864 specifications on the curve, placed by its p-value under ${code === "wcr" ? "conventional errors" : "the bootstrap of the curve"} (horizontal) and under ${DM.seName[code]} (vertical), on logarithmic scales; values below 0.0001 are drawn at 0.0001. The dashed lines mark p = 0.05 and the diagonal marks equal p-values. Circles are significant at 5% on the vertical rule, crosses are not; coloured marks change class (below zero with p < 0.05, or not) between the two rules. The burgundy mark is the specification of the current selection.`
+        ? `Each mark is one of the 864 specifications on the curve, placed by its p-value under ${code === "cr2" ? "conventional errors" : "CR2, the rule of the curve"} (horizontal) and under ${DM.seName[code]} (vertical), on logarithmic scales; values below 0.0001 are drawn at 0.0001. The dashed lines mark p = 0.05 and the diagonal marks equal p-values. Circles are significant at 5% on the vertical rule, crosses are not; coloured marks change class (below zero with p < 0.05, or not) between the two rules. The burgundy mark is the specification of the current selection.`
         : `Each mark is one pair: a specification on the curve, placed horizontally by its claim-aligned partial r, and the same specification with ${label}, placed vertically. Marks on the dashed diagonal are unchanged, and marks below it lie further in the direction of the claim. Circles are significant at 5% under the test of the option, crosses are not; coloured marks change class (below zero with p < 0.05, or not) between the two members of the pair. The burgundy mark is the pair of the current selection, where there is one.`;
       pairBox.append(el("p", {class: "dm-caption"}, caption));
     }
@@ -569,10 +566,10 @@ decisionMap = {
     const sym = sig => sig ? "an open circle, significant at 5%" : "a cross, not significant at 5%";
     if (v.kind === "curve") {
       const d = v.d, k = d.idx;
-      const ruleTxt = v.rule === "wcr" ? "bootstrap" : DM.seName[v.rule];
+      const ruleTxt = v.rule === "cr2" ? "CR2" : DM.seName[v.rule];
       parts.push(`The selection is one of the 864 specifications on the curve: claim-aligned r = ${fmtR(d.r_ca)}, ${ruleTxt} ${pEq(v.p)}.`);
-      if (v.rule !== "wcr") parts.push(` The curve classes it by the bootstrap, ${pEq(d.p_wcr)}, which draws it as ${sym(d.p_wcr < 0.05)}.`);
-      else parts.push(` On the curve it is ${sym(d.p_wcr < 0.05)}.`);
+      if (v.rule !== "cr2") parts.push(` The curve classes it by CR2, ${pEq(d.p_cr2)}, which draws it as ${sym(d.p_cr2 < 0.05)}.`);
+      else parts.push(` On the curve it is ${sym(d.p_cr2 < 0.05)}.`);
       parts.push(` On the curve, ${fmtPct(100 * k / 864)} of the specifications lie further in the direction of the claim.`);
       if (sel.predictor === "growth") parts.push(" The sign of growth is reversed on the curve, because the claim expects framing to rise with growth.");
       return parts.join("");
@@ -581,7 +578,7 @@ decisionMap = {
     const why = off.map(a => `${opt(a, sel[a]).decision.toLowerCase()} – ${opt(a, sel[a]).label} (${DM.judgement[opt(a, sel[a]).judgement].toLowerCase()})`).join("; ");
     if (v.kind === "inadmissible") return "A count is a number of items, not a proportion, so the beta family cannot model it, and the menu holds no such analysis.";
     let txt = `The curve holds no analysis with this selection, because of ${off.length === 1 ? "one choice" : "these choices"}: ${why}. The burgundy marks are the specifications on the curve that share every other choice.`;
-    if (v.kind === "negative" && v.d) txt += ` On the curve of the negative scales this specification has claim-aligned r = ${fmtR(v.d.r_ca)} and bootstrap ${pEq(v.d.p_wcr)}, aligned so that below zero is the direction of the other half of the hypothesis.`;
+    if (v.kind === "negative" && v.d) txt += ` On the curve of the negative scales this specification has claim-aligned r = ${fmtR(v.d.r_ca)} and CR2 ${pEq(v.d.p_cr2)}, aligned so that below zero is the direction of the other half of the hypothesis.`;
     if (v.kind === "refit") txt += ` Refitted with this option, the closest specification on the curve moves from r = ${fmtR(v.twin.r_ca)} to r = ${fmtR(v.r)}, ${v.sig ? "with p < 0.05" : "with p ≥ 0.05"} under ${DM.ruleLabel[v.rule]}; the dashed line marks where that refit would sit.`;
     if (v.kind === "outside") txt += " This option was fitted only at the standard measurement settings (raw unemployment in the World Bank series, all items, cells as interviewed), and the selection differs from them, so no refit of it exists.";
     if (v.kind === "unfitted" && off.length > 1) txt += " Each option off the curve was fitted one at a time against the curve, so this combination of options was never fitted.";
@@ -599,7 +596,7 @@ decisionMap = {
     const box = el("div", {class: "dm-chart"});
     box.append(curveChart(width, v));
     curveBox.append(el("p", {class: "dm-text"}, renderVerdict(v)), box,
-      el("p", {class: "dm-caption"}, `Each mark is one of the 864 specifications on the curve of the claim, ranked by its claim-aligned partial r, where below zero is the direction of the claim. Open circles are significant at 5% under the wild cluster bootstrap, crosses are not. Burgundy marks are the specifications that match every on-curve choice of the selection${latest !== null && VARY.includes(latest) && isOn(sel, latest) ? `, and the coloured marks are the other specifications that share the option selected last (${opt(latest, sel[latest]).label})` : ""}. The ink label marks the reproduced specification.`));
+      el("p", {class: "dm-caption"}, `Each mark is one of the 864 specifications on the curve of the claim, ranked by its claim-aligned partial r, where below zero is the direction of the claim. Open circles are significant at 5% under CR2 errors clustered by country, crosses are not. Burgundy marks are the specifications that match every on-curve choice of the selection${latest !== null && VARY.includes(latest) && isOn(sel, latest) ? `, and the coloured marks are the other specifications that share the option selected last (${opt(latest, sel[latest]).label})` : ""}. The ink label marks the reproduced specification.`));
   }
 
   function update(stageId) {
@@ -623,7 +620,7 @@ decisionMap = {
     prevText = nowText;
     const v = verdictOf(sel);
     verdictBox.textContent = v.kind === "curve"
-      ? `On the curve: r = ${fmtR(v.d.r_ca)}, ${v.rule === "wcr" ? "bootstrap" : DM.seName[v.rule]} ${pEq(v.p)}${v.rule === "wcr" ? "" : ` (bootstrap ${pEq(v.d.p_wcr)})`}.`
+      ? `On the curve: r = ${fmtR(v.d.r_ca)}, ${v.rule === "cr2" ? "CR2" : DM.seName[v.rule]} ${pEq(v.p)}${v.rule === "cr2" ? "" : ` (CR2 ${pEq(v.d.p_cr2)})`}.`
       : v.kind === "refit" ? `Off the curve. Refitted with this option: r = ${fmtR(v.r)}, ${v.sig ? "p < 0.05" : "p ≥ 0.05"} under ${DM.ruleLabel[v.rule]}.`
       : "Off the curve: the course holds no fitted analysis for this combination.";
     place(stageId);

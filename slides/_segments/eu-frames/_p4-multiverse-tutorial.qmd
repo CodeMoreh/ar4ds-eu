@@ -45,19 +45,19 @@ route <- tibble::tibble(x = 0:3, xend = 1:4,
                         y = c(0.5, 0.75, 0.875, 0.9375),
                         yend = c(0.75, 0.875, 0.9375, 0.96875))
 
-ggplot() +
-  geom_segment(data = seg, aes(x, y, xend = xend, yend = yend),
+ggplot2::ggplot() +
+  ggplot2::geom_segment(data = seg, ggplot2::aes(x, y, xend = xend, yend = yend),
                colour = "#c7ccd2", linewidth = 0.5) +
-  geom_segment(data = route, aes(x, y, xend = xend, yend = yend),
+  ggplot2::geom_segment(data = route, ggplot2::aes(x, y, xend = xend, yend = yend),
                colour = d_red, linewidth = 1.1) +
-  annotate("text", x = 0:3 + 0.5, y = -0.06,
+  ggplot2::annotate("text", x = 0:3 + 0.5, y = -0.06,
            label = c("outcome", "estimator", "sample", "weights"),
            colour = ncl_blue, fontface = "bold", size = 4.2) +
-  annotate("text", x = 4.05, y = 0.96875, hjust = 0,
+  ggplot2::annotate("text", x = 4.05, y = 0.96875, hjust = 0,
            label = "the one you published",
            colour = d_red, fontface = "bold", size = 4.2) +
-  coord_cartesian(xlim = c(0, 5.6), ylim = c(-0.1, 1.05), clip = "off") +
-  theme_void()
+  ggplot2::coord_cartesian(xlim = c(0, 5.6), ylim = c(-0.1, 1.05), clip = "off") +
+  ggplot2::theme_void()
 ```
 
 ::: {.small}

@@ -5,17 +5,8 @@
 # case (../cases/eu-frames/data/*.csv), from the shared ../data/silberzahn29.csv,
 # or from small inline tribbles of published summary values –
 # no images of figures from the Nature papers are used (copyright + everything must
-# stay editable). Palette mirrors style/cgm-slides.scss.
-suppressPackageStartupMessages({
-  library(readr)
-  library(dplyr)
-  library(tidyr)
-  library(purrr)
-  library(ggplot2)
-  library(dagitty)
-  library(ggdag)
-  library(patchwork)
-})
+# stay editable). Palette mirrors style/cgm-slides.scss. Every function is
+# called with its namespace, so no package is attached.
 
 ncl_blue <- "#0e3b6a"
 orange   <- "#E69F00"
@@ -25,12 +16,12 @@ grey_mid <- "#848c94"
 
 # A light slide-friendly ggplot theme: big type, no chart-junk.
 theme_slide <- function(base_size = 17) {
-  theme_minimal(base_size = base_size) +
-    theme(
-      panel.grid.minor = element_blank(),
-      panel.grid.major.y = element_line(colour = "grey90"),
-      plot.title = element_text(face = "bold", colour = ncl_blue),
-      axis.title = element_text(colour = ncl_blue),
+  ggplot2::theme_minimal(base_size = base_size) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_line(colour = "grey90"),
+      plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue),
+      axis.title = ggplot2::element_text(colour = ncl_blue),
       legend.position = "none"
     )
 }
@@ -63,23 +54,23 @@ repeatability_matrix <- function(highlight = NULL) {
       fill = if (is.null(highlight)) fill
              else dplyr::if_else(term == highlight, fill, grey_box)
     )
-  ggplot(cells, aes(data, analysis)) +
-    geom_tile(aes(fill = fill), colour = "white", linewidth = 4,
+  ggplot2::ggplot(cells, ggplot2::aes(data, analysis)) +
+    ggplot2::geom_tile(ggplot2::aes(fill = fill), colour = "white", linewidth = 4,
               width = 1, height = 1) +
-    geom_text(aes(label = term), colour = "white",
+    ggplot2::geom_text(ggplot2::aes(label = term), colour = "white",
               fontface = "bold", size = 9, nudge_y = 0.25) +
-    geom_text(aes(label = def), colour = "white",
+    ggplot2::geom_text(ggplot2::aes(label = def), colour = "white",
               size = 5, nudge_y = -0.1, lineheight = 0.95) +
-    scale_fill_identity() +
-    scale_x_discrete(position = "top") +
-    labs(x = NULL, y = NULL) +
-    theme_void(20) +
+    ggplot2::scale_fill_identity() +
+    ggplot2::scale_x_discrete(position = "top") +
+    ggplot2::labs(x = NULL, y = NULL) +
+    ggplot2::theme_void(20) +
     # Row labels flipped to read vertically (bottom-to-top), matching the
     # rotated row-heads on the HTML image-grid version of this matrix.
-    theme(panel.grid = element_blank(),
-          axis.text = element_text(face = "bold", colour = ncl_blue),
-          axis.text.x.top = element_text(size = 17),
-          axis.text.y = element_text(size = 15, angle = 90, hjust = 0.5),
+    ggplot2::theme(panel.grid = ggplot2::element_blank(),
+          axis.text = ggplot2::element_text(face = "bold", colour = ncl_blue),
+          axis.text.x.top = ggplot2::element_text(size = 17),
+          axis.text.y = ggplot2::element_text(size = 15, angle = 90, hjust = 0.5),
           plot.margin = ggplot2::margin(2, 8, 2, 2))
 }
 
@@ -90,12 +81,13 @@ repeatability_matrix <- function(highlight = NULL) {
 # r_ca is the claim-aligned partial r of the
 # conventional fit, with growth already sign-flipped, so that below zero is the
 # direction of the claim for every specification; the class of a point is
-# p_wcr < 0.05, the wild cluster bootstrap by country, never the conventional p.
+# p_cr2 < 0.05, CR2 errors clustered by country with Satterthwaite df, never
+# the conventional p.
 # The class chart and the placement line that try_spec() prints use the same
 # scale and the same rule.
 spec_curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE) |>
   dplyr::arrange(r_ca) |>
-  dplyr::mutate(rank = dplyr::row_number(), sig = p_wcr < 0.05)
+  dplyr::mutate(rank = dplyr::row_number(), sig = p_cr2 < 0.05)
 curve_ref <- dplyr::filter(spec_curve, is_reference)
 curve_forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
   dplyr::filter(curve == "positive")
@@ -115,7 +107,7 @@ fmt_num <- \(x, d = 3) sub("^-", "−", formatC(x, format = "f", digits = d))
 fmt_pct <- \(x, d = 1) paste0(formatC(100 * x, format = "f", digits = d), "%")
 fmt_n <- \(x) format(x, big.mark = ",")
 share_below <- \(d) mean(d$r_ca < 0)
-share_sig <- \(d, p = d$p_wcr) mean(d$r_ca < 0 & p < 0.05)
+share_sig <- \(d, p = d$p_cr2) mean(d$r_ca < 0 & p < 0.05)
 
 # One value of the fork table, of the option table, or of a display file at
 # the reproduced specification (the cosmopolitan scale on raw unemployment).
@@ -145,7 +137,7 @@ inference_of <- \(rule, col = "p") {
 # The six reference results, each placed on the degrees of freedom of its own
 # inference (r_placement); r_233 converts every statistic on the 233 df of the
 # two-way design, the teaching device of the conversion lesson, and r_recorded
-# is the value in the Multi100 record. The shape follows the bootstrap check
+# is the value in the Multi100 record. The shape follows the CR2 check
 # where the design fits on the country-year cells and the p-value as reported
 # where it does not, as on the results page; rank counts the specifications of
 # the curve that lie further below zero.
@@ -189,7 +181,7 @@ tidy_approach <- function(x) {
 
 # The curve as the results page draws it, so that the class meets one visual
 # grammar in the deck and on the Multiverse page: one mark per specification,
-# ranked by r_ca, an open circle for bootstrap p < 0.05 and a cross for
+# ranked by r_ca, an open circle for CR2 p < 0.05 and a cross for
 # p >= 0.05 at the same footprint, plain blue at outline opacities 0.25 and
 # 0.12, and the reference results in ink at full strength; the shaded band
 # above zero runs against the claim. Built once, so that the two consecutive
@@ -198,21 +190,21 @@ tidy_approach <- function(x) {
 plain <- "#1f5fa8"
 ink   <- "#1d2733"
 spec_base <- function() {
-  ggplot(spec_curve, aes(rank, r_ca)) +
-    annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf,
+  ggplot2::ggplot(spec_curve, ggplot2::aes(rank, r_ca)) +
+    ggplot2::annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf,
              fill = d_red, alpha = 0.045) +
-    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
-    geom_point(aes(shape = sig, alpha = sig), colour = plain, size = 2.2, stroke = 0.6) +
-    scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
+    ggplot2::geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
+    ggplot2::geom_point(ggplot2::aes(shape = sig, alpha = sig), colour = plain, size = 2.2, stroke = 0.6) +
+    ggplot2::scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
                        labels = c("p < 0.05", "p ≥ 0.05"), name = NULL) +
-    scale_alpha_manual(values = c(`TRUE` = 0.25, `FALSE` = 0.12), guide = "none") +
-    guides(shape = guide_legend(override.aes = list(alpha = 1, colour = "#4f5b67",
+    ggplot2::scale_alpha_manual(values = c(`TRUE` = 0.25, `FALSE` = 0.12), guide = "none") +
+    ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(alpha = 1, colour = "#4f5b67",
                                                     size = 2.8, stroke = 0.8))) +
-    labs(x = sprintf("specification, ranked by claim-aligned partial r (%s)", fmt_n(nrow(spec_curve))),
+    ggplot2::labs(x = sprintf("specification, ranked by claim-aligned partial r (%s)", fmt_n(nrow(spec_curve))),
          y = "claim-aligned partial r") +
-    coord_cartesian(ylim = c(-0.65, 0.32)) +
+    ggplot2::coord_cartesian(ylim = c(-0.65, 0.32)) +
     theme_slide(15) +
-    theme(legend.position = "top", legend.justification = "right",
+    ggplot2::theme(legend.position = "top", legend.justification = "right",
           legend.margin = ggplot2::margin(0, 0, -6, 0))
 }
 
@@ -224,11 +216,11 @@ mark_layer <- function(marks) {
     dplyr::arrange(rank) |>
     dplyr::mutate(lab_y = r + rep(c(0.13, 0.25), length.out = dplyr::n()))
   list(
-    geom_segment(data = m, aes(x = rank, xend = rank, y = r, yend = lab_y),
+    ggplot2::geom_segment(data = m, ggplot2::aes(x = rank, xend = rank, y = r, yend = lab_y),
                  colour = "#9aa3ab", linewidth = 0.35, inherit.aes = FALSE),
-    geom_point(data = m, aes(x = rank, y = r, shape = sig), colour = ink,
+    ggplot2::geom_point(data = m, ggplot2::aes(x = rank, y = r, shape = sig), colour = ink,
                size = 3, stroke = 1, inherit.aes = FALSE),
-    geom_label(data = m, aes(x = rank, y = lab_y, label = label), colour = ink,
+    ggplot2::geom_label(data = m, ggplot2::aes(x = rank, y = lab_y, label = label), colour = ink,
                fill = "#FFFFFFE6", size = 3.7, linewidth = 0.2, inherit.aes = FALSE)
   )
 }

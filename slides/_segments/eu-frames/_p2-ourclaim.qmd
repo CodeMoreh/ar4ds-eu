@@ -148,14 +148,14 @@ The same graph in R. Every arrow is a formula, read outcome-first – so a `#` t
 :::
 
 ```r
-dagify(
+ggdag::dagify(
   framing ~ unemployment,
   framing ~ country + year,
   unemployment ~ country + year,
   # framing ~ growth,        # uncomment the
   # unemployment ~ growth,   # arrows you believe
   exposure = "unemployment", outcome = "framing"
-) |> adjustmentSets()
+) |> dagitty::adjustmentSets()
 ```
 :::
 

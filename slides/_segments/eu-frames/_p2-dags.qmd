@@ -23,7 +23,7 @@ coll <- ggdag::dagify(C ~ X + Y, Y ~ X,
 # learns 'green = the effect I want, coloured = the path I must reason about'.
 gg <- function(d, ttl, cap, accent = d_red) {
   td <- ggdag::tidy_dagitty(d)
-  td$data <- dplyr::mutate(td$data,
+  ggdag::update_dag_data(td) <- dplyr::mutate(ggdag::pull_dag_data(td),
     edge_kind = dplyr::if_else(name == "X" & to == "Y", "causal", "other"))
   ggplot2::ggplot(td,
       ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
@@ -41,12 +41,12 @@ gg <- function(d, ttl, cap, accent = d_red) {
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.32)) +
     ggplot2::labs(title = ttl, caption = cap) +
     ggplot2::theme(
-      plot.title = element_text(face = "bold", colour = ncl_blue,
+      plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
                                 hjust = 0.5, size = 16,
-                                margin = margin(b = 10)),
-      plot.caption = element_text(hjust = 0.5, size = 11,
+                                margin = ggplot2::margin(b = 10)),
+      plot.caption = ggplot2::element_text(hjust = 0.5, size = 11,
                                   colour = grey_mid, lineheight = 1.05,
-                                  margin = margin(t = 10)))
+                                  margin = ggplot2::margin(t = 10)))
 }
   patchwork::wrap_plots(
     gg(conf, "Confounder Z",
@@ -81,13 +81,13 @@ The causal graph is the second of those three steps, and these three small graph
 set.seed(11)
 n <- 130; x <- rnorm(n); y <- 0.6 * x + rnorm(n, 0, 0.85)
 df <- tibble::tibble(x, y)
-ggplot(df, aes(x, y)) +
-  geom_point(colour = ncl_blue, alpha = 0.5, size = 2.3) +
-  geom_smooth(method = "lm", se = FALSE, colour = d_red, linewidth = 1.2) +
-  annotate("text", x = min(x), y = max(y), hjust = 0, vjust = 1,
+ggplot2::ggplot(df, ggplot2::aes(x, y)) +
+  ggplot2::geom_point(colour = ncl_blue, alpha = 0.5, size = 2.3) +
+  ggplot2::geom_smooth(method = "lm", se = FALSE, colour = d_red, linewidth = 1.2) +
+  ggplot2::annotate("text", x = min(x), y = max(y), hjust = 0, vjust = 1,
            label = paste0("r = ", format(round(cor(x, y), 2), nsmall = 2)),
            colour = d_red, fontface = "bold", size = 6.5) +
-  labs(x = "X", y = "Y") + theme_slide(16)
+  ggplot2::labs(x = "X", y = "Y") + theme_slide(16)
 ```
 
 :::
@@ -134,7 +134,7 @@ The scatter here has a strong correlation, an r of about nought point six. Befor
 # `conf` from the mini-dags chunk.
 path_panel <- function(adjust_z = FALSE) {
   td <- ggdag::tidy_dagitty(conf)
-  td$data <- dplyr::mutate(td$data,
+  ggdag::update_dag_data(td) <- dplyr::mutate(ggdag::pull_dag_data(td),
     edge_kind = dplyr::if_else(name == "X" & to == "Y", "causal",
                        if (adjust_z) "blocked" else "backdoor"))
   p <- ggplot2::ggplot(td,
@@ -152,10 +152,10 @@ path_panel <- function(adjust_z = FALSE) {
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.40)) +
     ggplot2::labs(title = if (adjust_z) "Adjust for Z → back-door closed"
                           else "Back-door path X ← Z → Y is open") +
-    ggplot2::theme(plot.title = element_text(face = "bold", colour = ncl_blue,
-                                hjust = 0.5, size = 15, margin = margin(b = 8)))
+    ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
+                                hjust = 0.5, size = 15, margin = ggplot2::margin(b = 8)))
   if (adjust_z) {
-    zc <- subset(td$data, name == "Z")[1, ]
+    zc <- datawizard::data_filter(ggdag::pull_dag_data(td), name == "Z")[1, ]
     p <- p + ggplot2::annotate("point", x = zc$x, y = zc$y, shape = 0,
                                size = 14, stroke = 1.6, colour = ncl_blue)
   }
@@ -192,7 +192,7 @@ A DAG is read through its paths. Association flows along every open path between
 # and the INDIRECT route X -> M -> Y (amber). Together they make the total
 # effect; adjusting for M leaves only the direct one. Reuses `med`.
 td <- ggdag::tidy_dagitty(med)
-td$data <- dplyr::mutate(td$data,
+ggdag::update_dag_data(td) <- dplyr::mutate(ggdag::pull_dag_data(td),
   edge_kind = dplyr::if_else(name == "X" & to == "Y", "direct", "indirect"))
 ggplot2::ggplot(td,
     ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
@@ -244,7 +244,7 @@ Suppose M lies between your predictor and your outcome. The total effect is the 
 sel <- ggdag::dagify(S ~ A + B,
   coords = list(x = c(A = 0, S = 1, B = 2), y = c(A = 0, S = 1, B = 0)))
 tds <- ggdag::tidy_dagitty(sel)
-tds$data <- dplyr::mutate(tds$data, edge_kind = "structural")
+ggdag::update_dag_data(tds) <- dplyr::mutate(ggdag::pull_dag_data(tds), edge_kind = "structural")
 p_sel <- ggplot2::ggplot(tds,
     ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
   ggdag::geom_dag_edges(ggplot2::aes(edge_colour = edge_kind),
@@ -261,14 +261,14 @@ p_sel <- ggplot2::ggplot(tds,
   ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.22)) +
   ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.45)) +
   ggplot2::labs(title = "Condition on collider S → spurious A–B link") +
-  ggplot2::theme(plot.title = element_text(face = "bold", colour = ncl_blue,
-                              hjust = 0.5, size = 14, margin = margin(b = 8)))
+  ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
+                              hjust = 0.5, size = 14, margin = ggplot2::margin(b = 8)))
 
 clp <- ggdag::dagify(U2 ~ U1 + F1, F2 ~ F1 + U1,
   coords = list(x = c(U1 = 0, F1 = 0, U2 = 2, F2 = 2),
                 y = c(U1 = 1, F1 = 0, U2 = 1, F2 = 0)))
 tdc <- ggdag::tidy_dagitty(clp)
-tdc$data <- dplyr::mutate(tdc$data, edge_kind = dplyr::case_when(
+ggdag::update_dag_data(tdc) <- dplyr::mutate(ggdag::pull_dag_data(tdc), edge_kind = dplyr::case_when(
   name == "U1" & to == "F2" ~ "claim",
   name == "F1" & to == "U2" ~ "reverse",
   TRUE ~ "auto"))
@@ -284,8 +284,8 @@ p_clp <- ggplot2::ggplot(tdc,
   ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.18)) +
   ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.30)) +
   ggplot2::labs(title = "Panel feedback: U now → F later, but also F → U") +
-  ggplot2::theme(plot.title = element_text(face = "bold", colour = ncl_blue,
-                              hjust = 0.5, size = 14, margin = margin(b = 8)))
+  ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", colour = ncl_blue,
+                              hjust = 0.5, size = 14, margin = ggplot2::margin(b = 8)))
 patchwork::wrap_plots(p_sel, p_clp, nrow = 1)
 ```
 

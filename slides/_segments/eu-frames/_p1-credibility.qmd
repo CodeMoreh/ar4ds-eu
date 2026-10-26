@@ -104,40 +104,40 @@ Silberzahn and colleagues ran something very close to that experiment, in a stud
 # so does this.
 CLIP <- 3.2
 szf <- silberzahn29 |>
-  mutate(hi_draw = pmin(or_hi, CLIP),
+  dplyr::mutate(hi_draw = pmin(or_hi, CLIP),
          lab = paste0(team, ". ", tidy_approach(approach))) |>
-  arrange(distribution, or) |>
-  mutate(lab = factor(lab, levels = rev(lab)))
+  dplyr::arrange(distribution, or) |>
+  dplyr::mutate(lab = factor(lab, levels = rev(lab)))
 
-ggplot(szf, aes(or, lab, colour = significant)) +
-  geom_vline(xintercept = 1, linetype = "longdash", colour = grey_mid) +
-  geom_errorbarh(aes(xmin = or_lo, xmax = hi_draw), height = 0, linewidth = 0.55) +
-  geom_point(size = 2.4) +
-  geom_text(data = filter(szf, or_hi > CLIP), aes(x = CLIP + 0.04, label = "*"),
+ggplot2::ggplot(szf, ggplot2::aes(or, lab, colour = significant)) +
+  ggplot2::geom_vline(xintercept = 1, linetype = "longdash", colour = grey_mid) +
+  ggplot2::geom_errorbarh(ggplot2::aes(xmin = or_lo, xmax = hi_draw), height = 0, linewidth = 0.55) +
+  ggplot2::geom_point(size = 2.4) +
+  ggplot2::geom_text(data = dplyr::filter(szf, or_hi > CLIP), ggplot2::aes(x = CLIP + 0.04, label = "*"),
             size = 5, vjust = 0.75, show.legend = FALSE) +
-  scale_colour_manual(values = c(`TRUE` = ncl_blue, `FALSE` = d_red),
+  ggplot2::scale_colour_manual(values = c(`TRUE` = ncl_blue, `FALSE` = d_red),
                       breaks = c("TRUE", "FALSE"), name = NULL,
                       labels = c("interval excludes 1", "interval includes 1")) +
-  scale_x_continuous(breaks = c(0.5, 1, 1.5, 2, 2.5, 3),
-                     expand = expansion(mult = c(0.01, 0.03))) +
-  coord_cartesian(xlim = c(0.42, CLIP + 0.1)) +
-  facet_grid(distribution ~ ., scales = "free_y", space = "free_y", switch = "y") +
-  labs(x = "odds ratio", y = NULL,
+  ggplot2::scale_x_continuous(breaks = c(0.5, 1, 1.5, 2, 2.5, 3),
+                     expand = ggplot2::expansion(mult = c(0.01, 0.03))) +
+  ggplot2::coord_cartesian(xlim = c(0.42, CLIP + 0.1)) +
+  ggplot2::facet_grid(distribution ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  ggplot2::labs(x = "odds ratio", y = NULL,
        caption = paste("Above 1: dark-skinned players red-carded more often.",
                        "* interval runs past the edge (teams 21 and 27).")) +
   theme_slide(11) +
-  theme(plot.caption = element_text(hjust = 1, colour = "grey45", size = 9,
-                                    margin = margin(t = 4)),
+  ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 1, colour = "grey45", size = 9,
+                                    margin = ggplot2::margin(t = 4)),
         legend.position = "top", legend.justification = "right",
-        legend.margin = margin(0, 0, -6, 0),
-        legend.text = element_text(size = 10, colour = "grey25"),
-        panel.grid.major.y = element_blank(),
-        panel.grid.major.x = element_line(colour = "grey92"),
+        legend.margin = ggplot2::margin(0, 0, -6, 0),
+        legend.text = ggplot2::element_text(size = 10, colour = "grey25"),
+        panel.grid.major.y = ggplot2::element_blank(),
+        panel.grid.major.x = ggplot2::element_line(colour = "grey92"),
         strip.placement = "outside",
-        strip.text.y.left = element_text(angle = 0, face = "bold",
+        strip.text.y.left = ggplot2::element_text(angle = 0, face = "bold",
                                          colour = ncl_blue, hjust = 1),
-        axis.text.y = element_text(colour = "grey25", hjust = 0, size = 8.5),
-        panel.spacing.y = unit(0.45, "lines"))
+        axis.text.y = ggplot2::element_text(colour = "grey25", hjust = 0, size = 8.5),
+        panel.spacing.y = grid::unit(0.45, "lines"))
 ```
 
 ::: {.src}
