@@ -1,0 +1,22 @@
+# The pipeline of the immigration-and-trust case
+
+The scripts write every data file of the case into `cases/trust/data/` from four kinds of input: the ESS files of rounds 1–4 in the data hub (read by one stage only), small committed tables in `data-raw/trust/` (party codes, cabinets, the appendix of the paper, the country series and the five-row Multi100 extract), public tables that two stages fetch once into the gitignored `data-raw/trust/cache/`, and the analysis file that Multi100 gave the analysts, which stage 04 fetches from the OSF into the same cache. They run from the project root, in this order; `menu_options.csv` is written by hand and read by the helpers and the decision map.
+
+| Stage | Reads | Writes |
+|---|---|---|
+| `00_party_codes.R` | the Party Facts crosswalk of ESS party codes (GitHub, pinned commit), the Party Facts table of external keys and the ParlGov cabinet table, cached in `data-raw/trust/cache/` | `data-raw/trust/party_codes.csv` (every party code of the vote questions of rounds 1–4 in the 16 countries, its ParlGov keys and the far-right flag of the appendix of the paper), `data-raw/trust/cabinets.csv` (the cabinets in office 2001–2010 and their parties) |
+| `01_extract.R` | the cumulative ESS file of rounds 1–10 and the Italy file of round 2 (`ESS2IT`) in the data hub; the two tables of stage 00 | `trust_ess.csv` (120,080 respondents, 32 variables), and a gitignored copy with respondent numbers in `data-raw/trust/cache/trust_ess_ids.rds` |
+| `02_macro.R` | `data-raw/trust/mclaren_appendix.csv`; World Bank (WGI and WDI) and Eurostat series, fetched once into committed snapshots in `data-raw/trust/` | `trust_macro.csv` (60 country-rounds) |
+| `03_spec_curve.R` | `trust_ess.csv` | `spec_curve.csv` (the 192 specifications; about two minutes) |
+| `04_reference_marks.R` | `trust_ess.csv`, `trust_macro.csv`, `data-raw/trust/multi100/multi100_mclaren_extract.csv`, the Multi100 analysis file (osf.io/e48gd), cached | `analysts5.csv`, `reference_marks.csv`, `display_reproduction.csv` |
+| `05_menu_deviations.R` | `spec_curve.csv` | `menu_deviations.csv` |
+| `06_displays.R` | `trust_ess.csv` | `display_options.csv`, `display_inference.csv`, `display_loo.csv`, `display_reliability.csv`, `display_country_means.csv` |
+| `check_parity.R` | `trust_ess.csv`, `spec_curve.csv` | nothing; stops if the estimator disagrees with fixest or sandwich, or the committed curve with a fresh fit |
+
+`01_extract.R` is the only stage that reads licensed survey files. Its raw paths sit in one block at the top: `ESS_DIR` names the ESS folder of the data hub, and `ESS_FILE` and `ESS_IT2_FILE` name the cumulative file and the Italian file inside it; each can be set as an environment variable. Every later stage runs from the committed files alone, apart from stage 04, which needs the cached Multi100 file (fetched again if it is missing, and checked against its MD5 sum).
+
+`_tools.R` holds the estimator that every later stage sources: the menu of the curve (`SPEC_AXES`, `OFF_CURVE`, `OUTCOME_ITEMS`, `CONCERN_ITEMS`, `CONTROL_TERMS`, `REFERENCE`) and `fit_spec()` with its parts (`check_spec()`, `scale_mean()`, `spec_frame()`, `demean()`, `r_multi100()`, `spec_line()`). It uses base R, dplyr and purrr only, because the downloadable workspace and the browser lab carry the same functions verbatim; a change there must be copied into the workspace helpers and the helper chunk of `cases/trust/lab.qmd`, and checked again with `check_parity.R`. A change of the menu is made in `_tools.R` and `menu_options.csv` together, and is followed by stages 03, 05 and 06 and the parity check.
+
+The curve file holds a column of the single value `t` (`stat_type`), which readr reads as logical unless the column type is given (`col_types = cols(stat_type = col_character())`).
+
+Dependencies: tidyverse, haven and jsonlite for the stages; lme4 and lmerTest for stages 04 and 06; fwildclusterboot (with dqrng) for stage 06; fixest and sandwich for the parity check only.
