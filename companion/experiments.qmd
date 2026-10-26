@@ -1,0 +1,266 @@
+---
+title: "Audit experiments"
+subtitle: "Field experiments on discrimination"
+bibliography: [../references.bib, ../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(readr)
+library(purrr)
+library(ggplot2)
+library(tinytable)
+source("../R/housing/_tools.R")
+
+read_data <- \(f) read_csv(file.path("../cases/housing/data", f), show_col_types = FALSE)
+audit     <- read_data("housing_audit.csv")
+names_tab <- read_data("display_names.csv")
+outcomes  <- read_data("display_outcomes.csv")
+subgroups <- read_data("display_subgroups.csv")
+power     <- read_data("display_power.csv")
+curve     <- read_data("spec_curve.csv")
+
+# Fixed decimals and a true minus sign, for every number on the page
+fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+pct <- \(x, d = 1) paste0(fmt(x, d), "%")
+big <- \(x) format(x, big.mark = ",")
+pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+                     .default = paste("p =", fmt(p, 3)))
+
+grp <- \(g, col) names_tab[[col]][names_tab$level == "group" & names_tab$group == g]
+nm <- \(n, col) names_tab[[col]][names_tab$level == "name" & names_tab$name == n]
+out <- \(o, cn, col) outcomes[[col]][outcomes$outcome == o & outcomes$contrast == cn]
+sub_ <- \(start, col) subgroups[[col]][startsWith(subgroups$subgroup, start)]
+pw <- \(design, gap) power$power[startsWith(power$design, design) & power$gap_pp == gap]
+ref <- curve |> filter(is_reference)
+sent_range <- range(names_tab$sent[names_tab$level == "name"])
+```
+
+This module of the companion curriculum sets the housing-audit case among the field experiments that sociologists and political scientists use to measure discrimination. The case comes from a study by the original authors (OAs), who emailed public housing authorities across the United States from six names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect], and the [case study](../cases/housing/index.qmd) tells it in full. Here the design itself is the subject: what random assignment buys, what a name conveys, why comparing the content of replies needs care, how a randomisation test works, what power has to do with the failed replication, and what such studies ask of the people whom they study. Every number on the page is computed when it is built, from the files of the course in `cases/housing/data/`, and the code that computes the less familiar ones is shown.
+
+## 1. Audit and correspondence studies {#sec-audits}
+
+An audit study measures discrimination by sending requests that are identical except for one characteristic of the person who makes them, and by comparing how the requests are answered. In the older form, trained testers who differ in the characteristic apply in person, as in the study of hiring by @Pager2003MarkCriminalRecord, which used matched pairs of testers to measure what a criminal record costs an applicant. In the form that is now more common, the correspondence study, the requests are written, and the characteristic is carried by the name on a résumé, a letter or an email. @BertrandMullainathan2004AreEmilyGreg sent résumés that differed only in a name meant to indicate race, and a meta-analysis of field experiments on hiring found no change since 1989 in discrimination against African Americans, and some sign of a decline against Latinos [@QuillianEtAl2017MetaanalysisFieldExperiments].
+
+Political science adapted the correspondence design to the people who hold public office or administer it, by sending emails that ask a simple question. @ButlerBroockman2011PoliticiansRaciallyDiscriminate wrote to state legislators and @WhiteEtAl2015WhatNeedVote to local election officials, studies that the OAs summarise as finding that "blacks and Hispanics making queries about voting procedures are less likely to receive responses from state legislators and local election officials than whites" (p. 4 of the accepted manuscript, to which the page numbers on this page refer). The housing-audit case carries the question to officials who decide access to a scarce public good, the street-level bureaucrats whose discretion @Lipsky1980StreetLevelBureaucracy described. Such studies usually measure several outcomes of one request: whether a reply came at all, how fast it came, and what it contained. The claim of this course concerns the last, the tone of a reply, measured by whether it opened with the name of the sender, and section 4 shows why an outcome of that kind needs more care than the first.
+
+## 2. Random assignment {#sec-randomisation}
+
+"Each housing authority was randomly assigned (via random number generator) to receive an email from one of six different accounts with putatively white, Hispanic, and black names" (p. 8). Random assignment is what turns a comparison between groups of emails into an estimate of the effect of the name. The authorities that received Santiago Martinez and those that received Brett Smith were chosen by chance, so they differ only by chance in everything else: their size, their communities, their staffing, how busy their offices were that week. A difference in how the two groups of emails were answered can therefore be read as the effect of the name, with chance as the only rival explanation, and chance is what a test quantifies.
+
+The claim can be checked on anything recorded before the emails went out. @tbl-balance sets the three groups side by side on the characteristics that the public file holds, with a $\chi^2$ test of whether each characteristic is distributed alike across the groups.
+
+```{r}
+#| label: tbl-balance
+#| tbl-cap: "The emails sent to each group of names, by characteristics recorded before the emails went out: the share of each group with a hard-to-find address, and the share in the top third of each community characteristic, with the p-value of a $\\chi^2$ test that the full distribution of the characteristic is the same in the three groups. Source: `cases/housing/data/housing_audit.csv`."
+balance_vars <- c(hard_email = "Hard-to-find address", hispanic_third = "Percent Hispanic, top third",
+                  black_third = "Percent Black, top third", pop_third = "Population, top third",
+                  poverty_third = "Poverty rate, top third", assessment_third = "HUD assessment, top third")
+balance <- imap(balance_vars, \(label, v) {
+  shares <- audit |>
+    mutate(top = if (v == "hard_email") .data[[v]] == 1 else .data[[v]] == "top") |>
+    summarise(share = 100 * mean(top, na.rm = TRUE), .by = group)
+  share_of <- \(g) pct(shares$share[shares$group == g])
+  tibble(Characteristic = label,
+         White = share_of("white"), Black = share_of("black"), Hispanic = share_of("hispanic"),
+         `χ<sup>2</sup> test` = pe(chisq.test(table(audit$group, audit[[v]]))$p.value))
+}) |>
+  list_rbind()
+balance |>
+  tt() |>
+  style_tt(j = 2:5, align = "r")
+```
+
+No characteristic comes near a significant difference, as random assignment leads one to expect. The paper reports the same check on the continuous census values, which the public file replaces with thirds (Table SI1, p. 43). Two features of the design are worth noticing. The groups are not of equal size, because each authority drew its name independently of the others, so that the six names were sent between `r sent_range[1]` and `r sent_range[2]` times, which costs a little precision and nothing else. And because the names were assigned at random, no covariate is needed to remove bias. Adjusting for characteristics that predict the outcome can still narrow the standard error, which is why the curve of the claim keeps three adjustment sets beside the raw difference and why they move the estimate by about a point on average (the [multiverse page](../cases/housing/multiverse.qmd#shifts) gives the shifts). The SCORE replication went one step further and randomised within each state, so that every state received equal numbers of each group of names.
+
+## 3. Names as treatments {#sec-names}
+
+The treatment in a correspondence study is a name, and a name tells its reader more than one thing about its bearer. The OAs chose names that are distinctive of each group and relied above all on the surname Martinez for the Hispanic names. They also tried to match the ages that the names suggest, and they explain why with an earlier study: "Butler and Broockman's (2011) comparison of responses to emails from Deshawn and Jake ... may actually be estimating the causal effect of being a young black male relative to being a white male of unclear age" (p. 10). They could match the white and the Black names, but not the Hispanic ones, Santiago and Gabriela among them, since "virtually all distinctively Hispanic names ... peak in the 1990s and 2000s in Social Security Administration data" (p. 10). Santiago and Gabriela may therefore have suggested a younger sender as well as a Hispanic one. @Gaddis2017HowBlackAre showed the wider problem for names meant to indicate Black applicants, which vary in how often readers perceive them as Black, so that the findings of an audit may depend on which names stand for a group.
+
+The design answers part of the problem by using two names in each group, one male and one female. @fig-names gives the share of replies that opened with the name of the sender for each of the six.
+
+```{r}
+#| label: fig-names
+#| fig-cap: "The share of replies with a greeting code that opened with the name of the sender, by name, with 95% Wilson intervals. Source: `cases/housing/data/display_names.csv`."
+#| fig-alt: "Dot plot of six names with intervals. Brett, Emily and Tyrone lie near 60%, Shanice near 52%, Gabriela near 46% and Santiago near 37%; the two Hispanic names are drawn in burgundy."
+#| fig-width: 7
+#| fig-height: 3
+#| code-fold: true
+names_tab |>
+  filter(level == "name") |>
+  mutate(hispanic = group == "hispanic", name = reorder(name, named_pct)) |>
+  ggplot(aes(x = named_pct, y = name, colour = hispanic)) +
+  geom_pointrange(aes(xmin = named_lo, xmax = named_hi), size = 0.4, linewidth = 0.7) +
+  scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
+  scale_x_continuous(labels = \(x) paste0(x, "%")) +
+  coord_cartesian(xlim = c(20, 80)) +
+  labs(x = "replies that open with the name of the sender", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+Both Hispanic names drew fewer named greetings than any other name, `r pct(nm("Santiago", "named_pct"))` of the replies to Santiago and `r pct(nm("Gabriela", "named_pct"))` of those to Gabriela, against `r pct(nm("Brett", "named_pct"))` to Brett and `r pct(nm("Emily", "named_pct"))` to Emily. The gap between the male names is `r fmt(sub_("male", "b_pp"))` points (`r pe(sub_("male", "p"))`) and the gap between the female names `r fmt(sub_("female", "b_pp"))` points (`r pe(sub_("female", "p"))`). The direction agrees, the size differs, and a study with a single name in each group could not tell whether a difference belonged to the group or to the name. The SCORE replication chose differently. Its preregistration explains: "Rather than using both male and female names we will pick only male names, because the original study did not find a difference based on the gender of the name and by eliminating it as a variable we more narrowly focus on race." It also chose its four new names, two meant to indicate a Hispanic and two a white sender, from names that had been tested for how readers perceive them.
+
+Because the sex of the name was crossed with the group by design, every group has a male and a female name in similar numbers, and adjusting for the sex of the name changes the gap very little.
+
+```{r}
+#| label: sex-check
+frame <- spec_frame(audit, comparison = "white", population = "replies", uncoded = "drop")
+with_sex <- lm(y ~ hisp + name_sex, data = frame)
+round(100 * coef(with_sex)[["hisp"]], 2)
+```
+
+The gap moves from `r fmt(ref$b_pp, 2)` to `r fmt(100 * coef(with_sex)[["hisp"]], 2)` points, which is why the specification menu treats this adjustment as a check rather than as an answer of its own. What the experiment estimates, strictly, is the effect of receiving an email signed Santiago or Gabriela Martinez rather than Brett or Emily Smith, whatever those names conveyed to the officials who read them. The claim speaks of "Hispanic housing applicants", and the step from the names to ethnicity rests on what the names convey, which is a question about measurement that the design alone cannot settle.
+
+## 4. Comparing among replies {#sec-posttreatment}
+
+A greeting exists only where a reply exists, and that makes the tone of a reply a more delicate outcome than the reply itself. The names were assigned at random to the authorities, so the authorities that received each name are alike in expectation. The replies were not assigned at all. If the name changes whether an official replies, the officials who answered Santiago need not resemble those who answered Brett, and a comparison of greetings among the replies mixes the effect of the name on how officials write with a difference in which officials wrote. Conditioning an analysis on a variable that the treatment can change is called post-treatment conditioning, and it can produce a difference between the groups even where the treatment has no effect on the outcome [@MontgomeryEtAl2018HowConditioningPosttreatment]. @Coppock2019AvoidingPosttreatmentBias set out the problem for audit experiments, in which the content of replies is a common outcome.
+
+The OAs knew the problem. Their footnote to the result on tone reads: "As above, we also did this analysis coding all non-responses as unfriendly responses to address the truncation problem. This does not affect the results." (p. 18, note 11). The supporting information calls it the "truncation by death (non response)" problem (p. 44), a term borrowed from medical statistics, where an outcome such as the quality of life of a patient exists only for the patients who survive to be asked. Here the greeting exists only for the emails that drew a reply. The two comparisons that the footnote describes give different numbers, as @tbl-two-comparisons shows.
+
+```{r}
+#| label: tbl-two-comparisons
+#| tbl-cap: "The gap in named greetings between Hispanic and white names, counted among the coded replies and among all delivered emails, an email without a reply counting as one without a named greeting. Differences in proportions with HC2 tests. Source: `cases/housing/data/display_outcomes.csv`."
+#| code-fold: true
+outcomes |>
+  filter(contrast == "hispanic", outcome %in% c("reply", "named", "named_any")) |>
+  mutate(Outcome = c(reply = "Any reply, among delivered emails",
+                     named = "Greeted by name, among coded replies",
+                     named_any = "Greeted by name, among delivered emails")[outcome]) |>
+  transmute(Outcome, `Gap (points)` = fmt(b_pp), SE = fmt(se_pp, 2), p = pe(p), Emails = big(n)) |>
+  tt() |>
+  style_tt(j = 2:5, align = "r")
+```
+
+Among the replies the gap is `r fmt(out("named", "hispanic", "b_pp"))` points, and among all delivered emails `r fmt(out("named_any", "hispanic", "b_pp"))` points. Both are significant, and the footnote is right that the conclusion stands. The two numbers answer two questions. Counting every delivered email keeps the groups exactly as randomisation made them, so the gap is an effect of the name on receiving a reply that opens with the name, an outcome that combines whether a reply came with how it began. The comparison among replies asks the question of the claim, about the tone of the replies that came, and it is a pure effect of the name only if the name did not change who replied.
+
+A bound shows how far a change in who replied could go towards explaining the gap among replies. Emails with Hispanic names drew a reply `r fmt(abs(out("reply", "hispanic", "b_pp")))` points less often than emails with white names. Suppose that no official would reply to Santiago but ignore Brett's identical email, so that the name can only discourage a reply. Then the replies to white names include a small share from officials who would not have answered a Hispanic name, and the comparison of interest, among the officials who would have replied to either, can be bounded by removing that share from the white replies in the two most extreme ways: once taking out only replies that greeted by name, and once only replies that did not.
+
+```{r}
+#| label: trim-bound
+reply_rate <- audit |>
+  filter(!is.na(reply), group %in% c("white", "hispanic")) |>
+  summarise(rate = mean(reply), .by = group) |>
+  tibble::deframe()
+extra_share <- (reply_rate[["white"]] - reply_rate[["hispanic"]]) / reply_rate[["white"]]
+
+coded <- frame |> summarise(n = n(), named = sum(y), .by = hisp)
+white <- coded |> filter(hisp == 0)
+hisp_share <- coded |> filter(hisp == 1) |> with(named / n)
+trimmed <- extra_share * white$n
+bound <- 100 * c(
+  near_zero = hisp_share - (white$named - trimmed) / (white$n - trimmed),
+  far_from_zero = hisp_share - white$named / (white$n - trimmed)
+)
+round(c(extra_share = 100 * extra_share, bound), 1)
+```
+
+About `r fmt(100 * extra_share)`% of the replies to white names would be removed, and the gap among the officials who would have replied to either name lies between `r fmt(bound[["far_from_zero"]])` and `r fmt(bound[["near_zero"]])` points, before any allowance for chance. Even the end nearest zero is a large gap, so a change in who replied cannot by itself account for the finding, provided that the assumption holds. The assumption cannot be checked in the data, which is why the curve of the claim keeps both comparisons, and why the [causal-graphs module](dags.qmd#sec-case) works through the same problem as a graph.
+
+The paper meets the same problem a second time, in its test of whether officials with Hispanic names treat Hispanic applicants differently. An official is known only by replying, so the subgroup of replies from such officials is selected after the treatment. The OAs note that "Since the treatments were randomly assigned, in expectation, our emails should have reached Hispanic officials at equal rates in each condition allowing us to compare those that were returned" (p. 14), and the shares agree with that expectation: officials with Hispanic names wrote `r audit |> filter(reply == 1, group == "white") |> with(pct(100 * mean(hispanic_official, na.rm = TRUE)))`, `r audit |> filter(reply == 1, group == "black") |> with(pct(100 * mean(hispanic_official, na.rm = TRUE)))` and `r audit |> filter(reply == 1, group == "hispanic") |> with(pct(100 * mean(hispanic_official, na.rm = TRUE)))` of the replies to white, Black and Hispanic names. Among their `r sub_("replies from officials", "n")` replies to Hispanic and white names the gap in greetings is `r fmt(sub_("replies from officials", "b_pp"))` points (`r pe(sub_("replies from officials", "p"))`), which answers a different question from the claim on very few replies, and the curve leaves the subgroup out.
+
+## 5. Randomisation inference {#sec-ri}
+
+Random assignment also supplies a test that needs no model of the errors. The idea goes back to @Fisher1935DesignExperiments. Suppose that the name made no difference at all to any official, so that every authority would have answered exactly as it did whichever name it received. Under that hypothesis, called the sharp null, the outcomes stay fixed and only the labels could have fallen differently, so reshuffling the names among the emails, again and again, shows the gaps that chance alone produces [@Ernst2004PermutationMethods]. The p-value is the share of reshuffles that give a gap at least as large as the observed one, counting the observed assignment as one of them so that the p-value can never be zero [@PhipsonSmyth2010PermutationPValues].
+
+```{r}
+#| label: reshuffle
+reshuffle_p <- function(y, treated, reps = 1999, seed = 20261025) {
+  gap <- \(t) mean(y[t == 1]) - mean(y[t == 0])
+  observed <- gap(treated)
+  set.seed(seed)
+  null <- map_dbl(seq_len(reps), \(i) gap(sample(treated)))
+  list(observed = 100 * observed, null = 100 * null,
+       p = (1 + sum(abs(null) >= abs(observed) - 1e-12)) / (reps + 1))
+}
+
+among_replies <- reshuffle_p(frame$y, frame$hisp)
+all_emails <- spec_frame(audit, comparison = "white", population = "all", uncoded = "drop")
+among_delivered <- reshuffle_p(all_emails$y, all_emails$hisp)
+c(replies = among_replies$p, delivered = among_delivered$p)
+```
+
+```{r}
+#| label: fig-reshuffle
+#| fig-cap: "The gap in named greetings between Hispanic and white names after each of 1,999 random reshuffles of the names, among the coded replies (left) and among all delivered emails (right). The burgundy line marks the observed gap."
+#| fig-alt: "Two histograms centred on zero. Among the replies the reshuffled gaps spread from about −15 to +15 points and the observed gap of −20 lies beyond them; among all delivered emails they spread more narrowly and the observed gap of −13 lies beyond them."
+#| fig-width: 7.5
+#| fig-height: 2.8
+#| code-fold: true
+bind_rows(
+  tibble(comparison = "among coded replies", gap = among_replies$null, observed = among_replies$observed),
+  tibble(comparison = "among delivered emails", gap = among_delivered$null, observed = among_delivered$observed)
+) |>
+  ggplot(aes(x = gap)) +
+  geom_histogram(binwidth = 1, fill = "#c9d1d9", colour = "white", boundary = 0) +
+  geom_vline(aes(xintercept = observed), colour = "#8b1538", linewidth = 0.9) +
+  facet_wrap(vars(comparison)) +
+  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  coord_cartesian(xlim = c(-25, 25)) +
+  labs(x = "gap after reshuffling the names (points)", y = "reshuffles") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+Among the replies, `r round(among_replies$p * 2000) - 1` of the 1,999 reshuffles give a gap as large as the observed one, so that p = `r fmt(among_replies$p, 4)`, and among all delivered emails `r round(among_delivered$p * 2000) - 1` do, so that p = `r fmt(among_delivered$p, 4)`, the smallest value that 1,999 reshuffles can give. The two tests differ in one respect that connects with section 4. Reshuffling the names among all delivered emails repeats the random assignment of the design exactly. Reshuffling them among the replies treats the set of replies as fixed, which is right under the sharp null, since a name that changes nothing changes no reply either, but the replies are not a set that the design fixed. The curve of the claim stores a randomisation p-value of this kind for each of its `r nrow(curve)` specifications as a check, and the largest is `r fmt(max(curve$p_ri), 4)`.
+
+## 6. Power and the replication {#sec-power}
+
+The power of a study is the probability that it detects an effect of a given size at the chosen threshold. It depends on the size of the effect, on the number of observations and on how variable the outcome is, and for a 0/1 outcome the variability follows from the share itself. @fig-power-curves sets the comparison of the paper, about 181 coded replies in each group, against the 738 replies that the SCORE replication analysed, split equally.
+
+```{r}
+#| label: fig-power-curves
+#| fig-cap: "The power of a two-sided test at the 5% level to detect a gap in named greetings, below a share of 61% for the white names, for the comparison among the replies of the original study and for the 738 replies of the replication. Source: `cases/housing/data/display_power.csv`."
+#| fig-alt: "Two rising power curves; the replication curve lies above the original at every gap, and both approach 1 by a gap of 20 points."
+#| fig-width: 7
+#| fig-height: 3
+#| code-fold: true
+power |>
+  mutate(design = if_else(startsWith(design, "original"), "original study", "replication")) |>
+  ggplot(aes(x = gap_pp, y = power, colour = design)) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_manual(values = c(`original study` = "#1d2733", replication = "#1f5fa8"), name = NULL) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "gap in named greetings (percentage points)", y = "power") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top")
+```
+
+The original comparison has a power of `r fmt(pw("original", 20), 2)` for a gap of 20 points, but only `r fmt(pw("original", 10), 2)` for a gap of 10 points, the near end of the published confidence interval, against `r fmt(pw("replication", 10), 2)` for the replication. The preregistration of the replication states that its first round "achieves 90% power to detect 75% of the original effect size", following the guidelines of the Social Sciences Replication Project.
+
+Modest power has a second consequence, which bears on the size of a published effect. In the original comparison the standard error of the gap is `r fmt(ref$se_pp, 2)` points, so an estimate has to exceed about `r fmt(qt(0.975, ref$df) * ref$se_pp)` points before it is significant at 5%. If the true gap were 10 points, a study of this size would reach significance about half the time, and the significant estimates would be larger than the truth on average.
+
+```{r}
+#| label: exaggeration
+set.seed(20261025)
+threshold <- qt(0.975, ref$df) * ref$se_pp
+draws <- rnorm(1e5, mean = -10, sd = ref$se_pp)
+significant <- abs(draws) > threshold
+round(c(power = mean(significant), mean_significant = mean(draws[significant & draws < 0])), 2)
+```
+
+Under a true gap of 10 points, the significant estimates average about `r fmt(mean(draws[significant & draws < 0]))` points. A literature that publishes significant results from studies of this size therefore tends to report effects larger than the ones that a replication will find, even when every study is carried out correctly. This is one reason why the replication, with larger samples and new names, can find a much smaller gap without either study being wrong, although it cannot show which of the many differences between them is responsible. Its logistic coefficient of 0.098 corresponds to a gap of at most `r fmt(100 * 0.098 / 4, 2)` points in favour of the Hispanic names, since a logistic coefficient moves a probability by at most a quarter of its value. The [multiverse page](../cases/housing/multiverse.qmd#replication) sets the replication beside the curve of the claim.
+
+## 7. The ethics of deception {#sec-ethics}
+
+An audit study deceives the people whom it studies. The officials who answered Santiago Martinez spent their working time on a request from someone who did not exist, and they never learned that their reply was data. The OAs devote a section of the paper to these costs (pp. 11–12). They contacted "government employees in their professional capacity", and the emails were "not designed to alter their behavior but rather to measure it". The authors were "attentive to minimizing the amount of time workers devoted to requests for information from fictitious constituents" and wrote the question so that a link or a pasted paragraph would answer it. They also report that "we did not engage with housing officials at all after the first email, even if our putative request for assistance was met with a followup question". On the deception itself they write: "This deception is necessary to experimentally test whether bureaucrats exhibit racial biases in their responses to constituents. Without the random assignment of race and gender, we would be unable to measure this important quantity of interest." They add that "all of our analyses reflect comparisons across groups of housing officials".
+
+The publication of the data raises a second question, about the people who were studied without their consent. The ReadMe of the replication package explains that "Whether or not a housing official responded, particularly to an ostensible minority applicant, is very sensitive and potentially harmful information", and the public file therefore gives the size, the composition and the poverty of each community only as thirds, so that no authority can be identified. The SCORE replication followed the same rule: "Due to Institutional Review Board restrictions, the publicly available dataset will include only the tercile version of the demographic covariates to minimize likelihood of identifying subjects." The course works only with the blinded file and never tries to recover the identity of an authority. Replication has a cost of its own in this kind of research, since the replication sent `r big(3050)` further fictitious requests to offices of the same kind, and a decision to replicate an audit study weighs that burden against what a second answer is worth.
+
+::: {.callout-tip}
+## Try it
+
+Take the trimming argument of section 4 and reverse its assumption: suppose that some officials would reply to a Hispanic name but ignore an identical email from a white name, and none the other way round. Which group of replies would you trim, and in which direction would the bounds move? Then write two sentences on which of the two assumptions you find more plausible for housing officials, and what evidence in the paper bears on it.
+:::
+
+## Sources and further reading {#sec-sources}
+
+The design of the case is set out in the paper of the OAs [@EinsteinGlick2017DoesRaceAffect], whose accepted manuscript is open at [OpenBU](https://hdl.handle.net/2144/37826), and the data in its replication package on the Harvard Dataverse ([doi:10.7910/DVN/1HOVTU](https://doi.org/10.7910/DVN/1HOVTU)). The audit and correspondence literature cited above runs from @Pager2003MarkCriminalRecord and @BertrandMullainathan2004AreEmilyGreg to the meta-analysis of @QuillianEtAl2017MetaanalysisFieldExperiments, and in political science from @ButlerBroockman2011PoliticiansRaciallyDiscriminate to @WhiteEtAl2015WhatNeedVote. @Gaddis2017HowBlackAre examines names as treatments. Post-treatment conditioning in experiments is treated by @MontgomeryEtAl2018HowConditioningPosttreatment and, for audit studies, by @Coppock2019AvoidingPosttreatmentBias. Randomisation inference goes back to @Fisher1935DesignExperiments, with @Ernst2004PermutationMethods as an introduction and @PhipsonSmyth2010PermutationPValues on the p-value. The SCORE replication, its preregistration and its final report are on the OSF at [osf.io/2ug8x](https://osf.io/2ug8x/). The files of the course behind the numbers are `housing_audit.csv`, `display_names.csv`, `display_outcomes.csv`, `display_subgroups.csv`, `display_power.csv` and `spec_curve.csv` in `cases/housing/data/`, each with a codebook.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

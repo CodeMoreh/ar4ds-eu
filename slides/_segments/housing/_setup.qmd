@@ -1,0 +1,222 @@
+```{r}
+#| label: setup-housing
+#| include: false
+# The data of the housing-audit case and the figures drawn from them, read
+# once for every segment of the case. Comes after the shared setup chunk and
+# uses its palette, theme and number formats. The files and their codebooks
+# are in cases/housing/data/, written by R/housing/ (menu_options.csv by
+# hand); every number on the slides is computed from them or taken from
+# _planning/housing/housing-facts.md. Estimates are in percentage points, and a
+# negative estimate means that Hispanic names were greeted by name less often,
+# the direction of the claim.
+hd <- \(f) file.path("../cases/housing/data", f)
+rd <- \(f) read_csv(hd(f), show_col_types = FALSE)
+
+# The addresses of the case, which the shared segments print
+case_vars <- yaml::read_yaml("../_variables.yml")$cases$housing
+
+curve <- rd("spec_curve.csv") |>
+  arrange(b_pp) |>
+  mutate(rank = row_number())
+curve_ref <- filter(curve, is_reference)
+# The twin of the reference specification that counts every delivered email
+curve_ref_all <- filter(curve, comparison == "white", population == "all", uncoded == "drop",
+                        model == "lpm", adjust == "none")
+
+analysts <- rd("analysts5.csv")
+names_disp <- rd("display_names.csv")
+outcomes <- rd("display_outcomes.csv")
+subgroups <- rd("display_subgroups.csv")
+ri <- rd("display_ri.csv")
+power <- rd("display_power.csv")
+deviations <- rd("menu_deviations.csv")
+menu_opts <- rd("menu_options.csv")
+audit <- rd("housing_audit.csv")
+original <- rd("audit_original.csv")
+
+# The published result and the five reanalyses, each placed by its gap in
+# points. Marks within 0.05 points of one another share one tag, because the
+# published result, UYV3F and P9W8Y all sit at the raw gap of the paper.
+marks_all <- rd("reference_marks.csv") |>
+  mutate(
+    tag = if_else(id == "OA", "OAs 2017", id),
+    p = case_when(
+      statistic_type %in% c("z", "t") ~ 2 * pnorm(-abs(statistic)),
+      statistic_type == "chi2" ~ pchisq(statistic, 1, lower.tail = FALSE),
+      .default = pchisq(statistic, 2, lower.tail = FALSE)
+    ),
+    sig = p < 0.05,
+    rank = map_int(b_pp, \(x) sum(curve$b_pp < x - 1e-9)) + 0.5
+  )
+# the marks of the original data; the replication (SCORE) comes from new data
+marks <- filter(marks_all, on_chart, id != "SCORE")
+mark_score <- filter(marks_all, id == "SCORE")
+
+# One value of a record or display file, for inline use
+an <- \(id_code, col) analysts[[col]][analysts$id == id_code]
+mark_of <- \(id_code, col) marks_all[[col]][marks_all$id == id_code]
+grp <- \(group_code, col) names_disp[[col]][names_disp$level == "group" & names_disp$group == group_code]
+out_of <- \(outcome_code, contrast_code, col) {
+  outcomes[[col]][outcomes$outcome == outcome_code & outcomes$contrast == contrast_code]
+}
+sub_of <- \(pattern, col) subgroups[[col]][startsWith(subgroups$subgroup, pattern)][1]
+pw <- \(design_code, gap) power$power[startsWith(power$design, design_code) & power$gap_pp == gap]
+dev_of <- \(option_code, col) deviations[[col]][deviations$option == option_code & deviations$option != deviations$baseline]
+fmt_p <- \(p) if (p < 0.001) "p < 0.001" else paste("p =", fmt_num(p, 3))
+
+# Task 3: the value recorded for 8PTRZ, from the public file of the original
+# authors – Hispanic against all other names, among the replies with a
+# greeting code. chisq.test() applies the continuity correction to a 2 x 2
+# table unless told otherwise.
+coded_original <- original |>
+  filter(Response_Dichotomous == 1, !is.na(ProperName)) |>
+  mutate(hispanic_name = startsWith(TreatmentGroup, "Hispanic"))
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_original)
+chi_yates <- unname(chisq.test(tab_8ptrz)$statistic)
+chi_plain <- unname(chisq.test(tab_8ptrz, correct = FALSE)$statistic)
+
+# The reference comparison refitted with conventional errors, beside the HC2
+# errors of the curve, for the slide on standard errors
+ref_rows <- audit |>
+  filter(group %in% c("white", "hispanic"), reply == 1, !is.na(named)) |>
+  mutate(hispanic = as.integer(group == "hispanic"))
+se_conventional <- 100 * summary(lm(named ~ hispanic, data = ref_rows))$coefficients["hispanic", "Std. Error"]
+logit_ref <- coef(summary(glm(named ~ hispanic, family = binomial(), data = ref_rows)))["hispanic", ]
+tab_ref <- xtabs(~ hispanic + named, data = ref_rows)
+chi_ref_plain <- unname(chisq.test(tab_ref, correct = FALSE)$statistic)
+
+# A specification of the curve that differs from the reference only in the
+# model and the adjustment
+twin <- \(model_code, adjust_code) {
+  filter(curve, comparison == "white", population == "replies", uncoded == "drop",
+         model == model_code, adjust == adjust_code)
+}
+
+# The randomisation distribution of the reference gap. A reshuffle can
+# reproduce the observed gap exactly, so the comparison allows for the last
+# bits of floating-point error.
+ri_band <- quantile(ri$b_pp, c(0.025, 0.975))
+ri_extreme <- sum(abs(ri$b_pp) >= abs(curve_ref$b_pp) - 1e-9)
+
+# The names of the six senders in the order of the paper, the Hispanic names
+# last; the curve, the marks and the class chart share one visual grammar
+name_order <- c("Brett", "Emily", "Tyrone", "Shanice", "Santiago", "Gabriela")
+group_cols <- c(white = ncl_blue, black = "#4a78ab", hispanic = burgundy)
+plain <- "#1f5fa8"
+pop_cols <- c(replies = "#0e3b6a", all = "#2b8585")
+pop_labels <- c(replies = "replies only", all = "all delivered emails")
+
+# The curve of 64: one mark per specification, ranked by the estimate, an
+# open circle for p < 0.05 under the test of its own model and a cross
+# otherwise. `colour_by` = "population" colours the marks by the emails
+# counted. coord_cartesian() fixes the range, so that an overlay never
+# rescales the axis between consecutive slides.
+curve_base <- function(colour_by = NULL) {
+  p <- ggplot(curve, aes(rank, b_pp)) +
+    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4)
+  p <- if (is.null(colour_by)) {
+    p + geom_point(aes(shape = sig), colour = plain, alpha = 0.45, size = 2.6, stroke = 0.8)
+  } else {
+    p + geom_point(aes(shape = sig, colour = .data[[colour_by]]), alpha = 0.75, size = 2.6, stroke = 0.9) +
+      scale_colour_manual(values = pop_cols, labels = pop_labels, breaks = names(pop_cols), name = NULL)
+  }
+  p +
+    scale_shape_manual(values = c(`TRUE` = 1, `FALSE` = 4), breaks = c(TRUE, FALSE),
+                       labels = c("p < 0.05", "p ≥ 0.05"), name = NULL, drop = FALSE) +
+    scale_y_continuous(labels = \(x) fmt_num(x, 0)) +
+    labs(x = sprintf("specification, ranked by the estimate (%d)", nrow(curve)),
+         y = "Hispanic minus comparison\nnames (points)") +
+    coord_cartesian(ylim = c(-24, 3), xlim = c(0, nrow(curve) + 1)) +
+    theme_slide(15) +
+    theme(legend.position = "top", legend.justification = "right",
+          legend.margin = margin(0, 0, -6, 0))
+}
+
+# Reference results as ink marks at the end of a thin line to a tag. Marks at
+# the same height share a tag, and tags alternate between two heights from
+# left to right, so that neighbours on the curve do not crowd one another.
+mark_layer <- function(m) {
+  tags <- m |>
+    mutate(spot = round(b_pp, 1)) |>
+    summarise(rank = mean(rank), b_pp = mean(b_pp), sig = all(sig),
+              label = paste(tag, collapse = " · "), .by = spot) |>
+    arrange(rank) |>
+    mutate(lab_y = b_pp + rep(c(5.5, 9), length.out = n()))
+  list(
+    geom_segment(data = tags, aes(x = rank, xend = rank, y = b_pp, yend = lab_y),
+                 colour = "#9aa3ab", linewidth = 0.35, inherit.aes = FALSE),
+    geom_point(data = m, aes(x = rank, y = b_pp), shape = 1, colour = ink,
+               size = 3.4, stroke = 1.1, inherit.aes = FALSE),
+    geom_label(data = tags, aes(x = rank, y = lab_y, label = label), colour = ink,
+               fill = "#FFFFFFE6", size = 3.7, linewidth = 0.2, hjust = 0,
+               inherit.aes = FALSE)
+  )
+}
+
+# The causal graph of the experiment. The name, the reply and the greeting sit
+# on one line; the official (unobserved) forks above it and the community
+# below; the arrow that the claim is about arcs over the top. With `among =
+# "replies"`, the reply is boxed: the two paths that the box opens, through
+# the official and through the community, are drawn in red, and the path
+# through the reply, which the box closes, in pale grey.
+case_dag <- function(among = c("all", "replies")) {
+  among <- match.arg(among)
+  nodes <- tribble(
+    ~name,       ~x,   ~y,    ~role,
+    "name",      0,    0,     "exposure",
+    "reply",     1.6,  0,     "observed",
+    "greeting",  3.2,  0,     "outcome",
+    "official",  2.4,  1.15,  "unobserved",
+    "community", 2.4,  -1.15, "observed"
+  ) |>
+    mutate(half_w = 0.12 + 0.052 * nchar(name), half_h = 0.2)
+  edges <- tribble(
+    ~from,       ~to,
+    "name",      "reply",
+    "reply",     "greeting",
+    "official",  "reply",
+    "official",  "greeting",
+    "community", "reply",
+    "community", "greeting"
+  ) |>
+    mutate(state = case_when(among == "all" ~ "plain",
+                             from == "reply" ~ "blocked",
+                             .default = "opened"))
+  # how far along a unit vector (ux, uy) the edge of a box lies
+  to_edge <- \(ux, uy, w, h) pmin(w / pmax(abs(ux), 1e-9), h / pmax(abs(uy), 1e-9))
+  tails <- select(nodes, from = name, x0 = x, y0 = y, w0 = half_w, h0 = half_h)
+  heads <- select(nodes, to = name, x1 = x, y1 = y, w1 = half_w, h1 = half_h)
+  segs <- edges |>
+    left_join(tails, by = "from") |>
+    left_join(heads, by = "to") |>
+    mutate(len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
+           ux = (x1 - x0) / len, uy = (y1 - y0) / len,
+           s0 = to_edge(ux, uy, w0, h0) + 0.02,
+           s1 = to_edge(ux, uy, w1, h1) + 0.06,
+           x = x0 + s0 * ux, y = y0 + s0 * uy,
+           xend = x1 - s1 * ux, yend = y1 - s1 * uy)
+  edge_cols <- c(plain = "grey40", blocked = "grey82", opened = d_red)
+  node_fill <- c(exposure = ncl_blue, outcome = burgundy, observed = "grey45", unobserved = "grey88")
+  node_text <- c(exposure = "white", outcome = "white", observed = "white", unobserved = "grey25")
+  p <- ggplot() +
+    annotate("curve", x = 0.25, y = 0.24, xend = 2.78, yend = 0.26, curvature = -0.42,
+             colour = green, linewidth = 1, linetype = "22",
+             arrow = grid::arrow(length = grid::unit(8, "pt"), type = "closed")) +
+    annotate("text", x = 1.6, y = 1.48, label = "the claim: does the name change the greeting?",
+             colour = green, fontface = "bold", size = 4.6) +
+    geom_segment(data = segs, aes(x = x, y = y, xend = xend, yend = yend, colour = state),
+                 linewidth = 0.9, arrow = grid::arrow(length = grid::unit(8, "pt"), type = "closed")) +
+    scale_colour_manual(values = edge_cols, guide = "none")
+  if (among == "replies") {
+    p <- p + annotate("rect", xmin = 1.6 - 0.62, xmax = 1.6 + 0.62, ymin = -0.36, ymax = 0.36,
+                      fill = NA, colour = d_red, linewidth = 1.3)
+  }
+  p +
+    geom_label(data = nodes, aes(x = x, y = y, label = name, fill = role),
+               colour = node_text[nodes$role], fontface = "bold", size = 6, linewidth = 0,
+               label.r = grid::unit(5, "pt"), label.padding = grid::unit(7, "pt")) +
+    scale_fill_manual(values = node_fill, guide = "none") +
+    coord_fixed(xlim = c(-0.6, 3.8), ylim = c(-1.5, 1.75)) +
+    theme_void()
+}
+```

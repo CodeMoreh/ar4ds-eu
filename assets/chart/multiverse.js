@@ -1,13 +1,32 @@
 /*
-  Interactive specification curve for the results page of the course.
+  Interactive specification curve for the multiverse page of a case.
 
   mvChart(id, D) draws one curve into the element with that id, which carries
   the markup of assets/chart/multiverse.template.html. D is the payload built
-  by mv_payload() in R/eu-frames/_chart_multiverse.R: one entry per specification,
-  sorted by the claim-aligned partial correlation, with the option of every
+  by mv_payload() in the chart script of the case (R/<slug>/_chart_multiverse.R,
+  for example R/housing/_chart_multiverse.R): one entry per specification,
+  sorted by its value on the vertical axis, with the option of every
   decision coded as an index into its list of labels, and the reference marks
   with the lines of their pop-ups. Several charts can share a page; each keeps
   its own state.
+
+  The vertical value is D.r, whatever its scale. Optional fields of the payload
+  adapt the chart to a curve on another scale or of another size, and each
+  falls back to the behaviour of the EU-frames curve (a partial correlation,
+  hundreds of specifications) when it is absent:
+    yLabel    the label of the vertical axis
+    yDec      decimals of the tick labels (1)
+    vfmt      {pre, suf, d}: how a value is printed in a pop-up ("r = " and 3 decimals)
+    sl        one line of statistics per specification (t, df and bootstrap p)
+    det       per specification, the [label, value, class] lines of its pop-up
+              (the lines of the EU-frames decisions)
+    tagGap    the height of a reference tag above its mark, in units of D.r (0.12)
+    xStep     the spacing of the rank ticks (200; doubled on a narrow screen)
+    xPad      an inset in pixels between the axes and the first and last marks (0)
+    size      [narrow, wide] size of a mark ([4, 5])
+    sw        stroke width of a mark ("0.7")
+    op        outline opacities {sig, ns, ghostSig, ghostNs} (OP below)
+    csvHead   the first six column names of the downloaded CSV
 
   Conventions set by the author of the course: one ranking for all
   specifications; two significance classes at the 5% level (an open circle for
@@ -36,7 +55,6 @@
     return e;
   }
   function fmt(x, d) { return (x < 0 ? MINUS : "") + Math.abs(x).toFixed(d); }
-  function fmtTick(x) { return Math.abs(x) < 1e-9 ? "0" : fmt(x, 1); }
   function fmtP(p) { return p < 0.001 ? "p < 0.001" : "p = " + p.toFixed(3); }
   function pct(x) { return Math.round(100 * x) + "%"; }
   function num(x) { return x.toLocaleString("en-GB"); }
@@ -71,6 +89,13 @@
     var N = D.r.length;
     // what a value below zero supports: the claim, or the hypothesis on the negative scales
     var target = D.target || "claim";
+    var op = D.op || OP;
+    var size = D.size || [4.0, 5.0];
+    var yDec = D.yDec == null ? 1 : D.yDec;
+    function tick(v) { return Math.abs(v) < 1e-9 ? "0" : fmt(v, yDec); }
+    function val(x) {
+      return D.vfmt ? (D.vfmt.pre || "") + fmt(x, D.vfmt.d) + (D.vfmt.suf || "") : "r = " + fmt(x, 3);
+    }
     var marks = D.an || [];
     var plot = root.querySelector(".mv-plot");
     var tip = root.querySelector(".mv-tip");
@@ -119,7 +144,8 @@
       state.W = W; state.H = H;
       var m = { l: narrow ? 46 : 54, r: 10, t: 12, b: H - stripTop + 28 };
       var Y_MIN = D.y.min, Y_MAX = D.y.max;
-      var xs = function (i) { return m.l + (N > 1 ? i / (N - 1) : 0.5) * (W - m.l - m.r); };
+      var pad = D.xPad || 0;
+      var xs = function (i) { return m.l + pad + (N > 1 ? i / (N - 1) : 0.5) * (W - m.l - m.r - 2 * pad); };
       var ys = function (v) { return m.t + (Y_MAX - v) / (Y_MAX - Y_MIN) * (H - m.t - m.b); };
 
       while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -133,9 +159,10 @@
         var zero = Math.abs(v) < 1e-9;
         el("line", { x1: m.l, x2: W - m.r, y1: ys(v), y2: ys(v), stroke: zero ? "#8a929a" : "#e6e9ed", "stroke-width": zero ? "1.2" : "1" }, g);
         var t = el("text", { x: m.l - 6, y: ys(v) + 3.5, "text-anchor": "end" }, g);
-        t.textContent = fmtTick(v);
+        t.textContent = tick(v);
       });
-      var step = narrow ? 400 : 200, xt = [1];
+      var xStep = D.xStep || 200;
+      var step = narrow ? 2 * xStep : xStep, xt = [1];
       for (var v = step; v <= N - step / 3; v += step) xt.push(v);
       xt.push(N);
       xt.forEach(function (v) {
@@ -145,7 +172,7 @@
       var xl = el("text", { x: m.l + (W - m.l - m.r) / 2, y: H - 6, "text-anchor": "middle", "font-size": "12", fill: "#4f5b67" }, svg);
       xl.textContent = narrow ? "Specifications, ranked by result" : "Specifications, ranked from the strongest support for the " + target + " (left) to the weakest (right)";
       var yl = el("text", { transform: "translate(13," + (m.t + (H - m.t - m.b) / 2) + ") rotate(-90)", "text-anchor": "middle", "font-size": "12", fill: "#4f5b67" }, svg);
-      yl.textContent = "Partial correlation, claim-aligned";
+      yl.textContent = D.yLabel || "Partial correlation, claim-aligned";
 
       var ann = el("g", { "font-size": "11.5", fill: "#4f5b67" }, svg);
       var a1 = el("text", { x: m.l + 8, y: ys(Y_MAX) + 14 }, ann);
@@ -153,8 +180,8 @@
       var a2 = el("text", { x: W - m.r - 8, y: ys(Y_MIN) - 6, "text-anchor": "end" }, ann);
       a2.textContent = "below zero: in the direction of the " + target;
 
-      var pts = el("g", { "stroke-width": "0.7" }, svg);
-      var s = narrow ? 4.0 : 5.0;
+      var pts = el("g", { "stroke-width": D.sw || "0.7" }, svg);
+      var s = narrow ? size[0] : size[1];
       state.s = s;
       state.xs = xs; state.ys = ys;
       state.px = new Array(N); state.py = new Array(N); state.marks = new Array(N);
@@ -203,7 +230,7 @@
         var bw = (tx.getComputedTextLength ? tx.getComputedTextLength() : 0) || a.label.length * 6.4;
         var left = Math.max(m.l + 2, Math.min(x - bw / 2 - 5, W - m.r - bw - 12));
         var right = left + bw + 10;
-        var ty = ys(a.r + 0.12), moved = true, guard = 0;
+        var ty = ys(a.r + (D.tagGap || 0.12)), moved = true, guard = 0;
         while (moved && guard++ < 10) {
           moved = false;
           placed.forEach(function (p) {
@@ -238,12 +265,12 @@
       var i, nShown = 0, below = 0, belowSig = 0;
       for (i = 0; i < N; i++) {
         if (shown(i)) {
-          paint(state.marks[i], colourOf(i), D.sg[i] ? OP.sig : OP.ns);
+          paint(state.marks[i], colourOf(i), D.sg[i] ? op.sig : op.ns);
           nShown++;
           if (D.r[i] < 0) { below++; if (D.sg[i]) belowSig++; }
         } else {
           // faint enough that the hidden specifications only trace the curve
-          paint(state.marks[i], GHOST, D.sg[i] ? OP.ghostSig : OP.ghostNs);
+          paint(state.marks[i], GHOST, D.sg[i] ? op.ghostSig : op.ghostNs);
         }
       }
       var f = D.axes[state.faxis];
@@ -293,7 +320,7 @@
       while (tip.firstChild) tip.removeChild(tip.firstChild);
       if (kind === "an") {
         var a = marks[i];
-        line("", "r = " + fmt(a.r, 3), "v");
+        line("", val(a.r), "v");
         line("", a.stat, "s");
         line("", a.title, "t");
         a.lines.forEach(function (p) { line(p[0], p[1]); });
@@ -301,9 +328,14 @@
         line("", state.pinned === i ? "Click the tag again, or press Escape, to release." : "Click the tag to hold this open.", "h");
         return;
       }
-      line("", "r = " + fmt(D.r[i], 3), "v");
-      line("", "t = " + fmt(D.st[i], 2) + " on " + D.df[i] + " df · bootstrap " + fmtP(D.p[i]), "s");
+      line("", val(D.r[i]), "v");
+      line("", D.sl ? D.sl[i] : "t = " + fmt(D.st[i], 2) + " on " + D.df[i] + " df · bootstrap " + fmtP(D.p[i]), "s");
       if (i === D.ref) line("", D.refText, "t");
+      if (D.det) {
+        D.det[i].forEach(function (p) { line(p[0], p[1], p[2]); });
+        line("Rank", num(i + 1) + " of " + num(N));
+        return;
+      }
       line("Outcome", lab("o", i) + (D.reversed ? " (reverse-coded)" : ""));
       var pred = lab("x", i);
       if (D.code.x[i] === 0) pred += ", " + lab("pf", i).toLowerCase();
@@ -457,9 +489,14 @@
     // the data behind the chart, with the option codes that the exercise
     // helpers take as arguments
     dl.addEventListener("click", function () {
-      var q = function (v) { v = String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      // a missing value (a logit has no residual df) is written as an empty cell
+      var q = function (v) {
+        v = v === null || v === undefined ? "" : String(v);
+        return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+      };
       var keys = D.csvAxes.map(function (c) { return c[0]; });
-      var rows = [["rank", "r_ca", "t_ca", "df", "p_wcr", "significant_5pc"].concat(D.csvAxes.map(function (c) { return c[1]; })).join(",")];
+      var head = D.csvHead || ["rank", "r_ca", "t_ca", "df", "p_wcr", "significant_5pc"];
+      var rows = [head.concat(D.csvAxes.map(function (c) { return c[1]; })).join(",")];
       for (var i = 0; i < N; i++) {
         rows.push([i + 1, D.r[i], D.st[i], D.df[i], D.p[i], D.sg[i] ? "yes" : "no"]
           .concat(keys.map(function (k) { return D.cd[k][D.code[k][i]]; })).map(q).join(","));

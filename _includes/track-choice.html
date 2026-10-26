@@ -5,23 +5,29 @@
      pages at any depth. Inline rather than a separate file for that reason. -->
 <script>
 (function () {
-  // Slugs carry the case, as the folders under tracks/ do. A choice stored
-  // under one of the slugs that the tracks had before they carried the case is
-  // read as the slug that replaced it, and written back once.
+  // Slugs carry the case, as the folders under tracks/ do: <slug>-<format>.
+  // The cross-case semester track will be "semester" (tracks/semester/); add
+  // it here, in _includes/home-script.html and in _includes/next-delivery.qmd
+  // when its folder exists. Until then a stored "semester" shows nothing.
   var TRACKS = {
-    "eu-frames-one-day-replication": "One day – open science and replication",
-    "eu-frames-one-day-tools": "One day – social data science tools",
-    "eu-frames-one-day-methods": "One day – the statistical methods",
-    "eu-frames-three-days": "Three days",
-    "eu-frames-semester": "Semester",
-    "eu-frames-self-study": "Self-study"
+    "housing-short": "Short session – housing audit",
+    "housing-one-day": "One day – housing audit",
+    "eu-frames-one-day-replication": "One day – open science and replication – EU frames",
+    "eu-frames-one-day-tools": "One day – social data science tools – EU frames",
+    "eu-frames-one-day-methods": "One day – the statistical methods – EU frames",
+    "eu-frames-three-days": "Three days – EU frames",
+    "eu-frames-semester": "Semester – EU frames",
+    "eu-frames-self-study": "Self-study – EU frames"
   };
+  // A choice stored under one of the slugs that the EU-frames tracks had
+  // before they carried the case is read as the slug that replaced it, and
+  // written back once. "semester" is not among them: it names the coming
+  // cross-case track, not the semester track of the EU-frames case.
   var FORMER = {
     "one-day-replication": "eu-frames-one-day-replication",
     "one-day-tools": "eu-frames-one-day-tools",
     "one-day-methods": "eu-frames-one-day-methods",
     "three-days": "eu-frames-three-days",
-    "semester": "eu-frames-semester",
     "self-study": "eu-frames-self-study"
   };
   var slug = null;

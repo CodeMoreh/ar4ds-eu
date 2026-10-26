@@ -1,0 +1,66 @@
+## Repeatability and credibility {#credibility-is-not-truth}
+
+::: {.scaled style="--fs: 0.9; --lh: 1.15"}
+"**Repeatability** is used when referring to reproducibility, robustness, and replicability as a constellation of concepts intended to assess whether answers to scientific questions are unchanged when different steps of the research process are repeated."
+
+**Credibility** and **trustworthiness** refer to the confidence one can have in research findings. Because scientific knowledge claims are tentative, they are *not* synonymous with truth.
+
+"For example, credibility is advanced by addressing potential competing interests in the conducting and reporting of research, by taking existing knowledge into account, by using methods that have been validated, by controlling for biases in the research context, by pursuing precise and reliable evidence, and by calibrating the strength of the claims to the uncertainty of the evidence."
+:::
+
+::: {.src}
+@NosekEtAl2025BriefGlossaryTerms [p. 2]
+:::
+
+::: notes
+The glossary on this slide is worth reading slowly, because it separates two things we routinely run together. Repeatability is the umbrella: reproducibility, robustness and replicability as a family, all asking whether the answer survives repeating some step of the process. Credibility and trustworthiness are about how much confidence a finding deserves – and note the sentence in the middle. Because scientific claims are tentative, credibility is not the same as truth. A credible finding can be wrong. What credibility is built from is the list at the bottom: declared interests, validated methods, precise evidence, and claims calibrated to the uncertainty behind them. That last one is the one we will keep coming back to.
+:::
+
+## Quick check – the matrix in peer review {#quick-check-credibility-in-the-wild .questionslide transition="fade-in none-out"}
+
+::: {.none}
+You submit your paper and replication package. It goes out to reviewers.
+
+- 'Reviewer 1' wants to ensure that your results are [reproducible]{.fragment .bounceIn}, so she sources your R script to run the entire analysis. You're in luck – she hasn't yet updated her `dplyr`, so the code runs.
+- 'Reviewer 2' is very eager. He's unconvinced by your modelling choices, so he fits your data to another function to check if your findings are truly [robust]{.fragment .bounceIn}. You're in luck again – he recovers your point estimate to a reasonable precision, although the confidence intervals have widened.
+- 'Reviewer 3' takes a special interest because he's just working on a similar paper on data they published recently. Do your results [replicate]{.fragment .bounceIn} when your methods are applied to that state-of-the-art dataset?
+:::
+
+::: notes
+Here is the matrix at work on one paper. You submit a paper with its replication package, and three reviewers each check something different. For each one, call out or type in the chat which cell of the matrix that reviewer is in, before the answer appears. Reviewer 1 reruns your own script on your own data. [pause] [advance] Reproduction. Reviewer 2 fits your data with a different function. [pause] [advance] Robustness. Reviewer 3 applies your methods to a dataset that somebody else published. [pause] [advance] Replication.
+:::
+
+## Quick check – the matrix in peer review {#quick-check-credibility-in-the-wild-1 .questionslide transition="none-in fade-out"}
+
+::: {.none}
+You submit your paper and replication package. It goes out to reviewers.
+
+'Reviewer 2' just doesn't want to let go...
+
+- He tried a few alternative analyses of your data, including a fancy new regression method that he just released as an R package. His method gives results that are generally aligned to yours, but for the method to work, it would require a larger dataset; would your results really [generalise]{.fragment .bounceIn} to this new dataset published by 'Reviewer 3' that he just read about, if applying his new fancy method to it?
+:::
+
+::: notes
+Reviewer 2 has not finished. His new method agrees with your results, but it needs more data than you had, so he wants to run it on the dataset that Reviewer 3 published. Which cell is that? [pause] [advance] New data and a new analysis at once put him in the fourth cell, generalisation. Each of these checks asks a different question of the same paper, and passing one of them does not settle the others.
+:::
+
+## Open research: the practices {.smaller}
+
+::: {.small}
+| Practice | What it makes possible |
+|---|---|
+| **Open data** | Someone else can re-analyse your evidence |
+| **Open code** | Someone else can rerun your exact analysis |
+| **Open materials** | Someone else can run your study again |
+| **Open access** | Someone else can read the claim in the first place |
+| **Preregistration** | A dated record of the analysis plan, filed in a registry before the results exist |
+| **Registered reports** | Peer review of the plan, with publication decided before results |
+:::
+
+::: {.fragment .small}
+Each one removes a specific obstacle, and none of them guards against every problem. The programme, set out at length: [@MunafoEtAl2017ManifestoReproducibleScience]
+:::
+
+::: notes
+Each of those reviewers needed something from you before they could start – your code, your data, your materials. Open research is a list of practices that supply those things and more, each of which removes a specific, identifiable obstacle. Open data means someone else can re-analyse your evidence rather than taking your word for it. Open code means they can rerun your exact analysis. Open materials means they can run the study again in a new sample. Open access means they can read the thing at all, which sounds trivial until you try to get a paper from outside a wealthy university. Preregistration produces a dated record of the analysis plan, filed in a registry before the results exist. And registered reports go further: the plan is peer-reviewed and the publication decision is made before anyone sees a result, which removes the incentive to find something. Each removes one obstacle, and none of them guards against every problem. Whether published findings hold up when somebody does check them has now been measured on a large scale.
+:::

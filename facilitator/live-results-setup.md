@@ -1,8 +1,10 @@
 # Live class-results system – setup and run guide
 
-This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page (`cases/eu-frames/multiverse.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
+This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page of every case (`cases/<slug>/multiverse.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. The pipeline was built for the EU-frames case, and the walkthrough in sections 1 to 10 uses its files; section 11 sets out how the other cases share the same Form, Sheet and Worker, and how to give a case a Form of its own. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
 
 You do all of this; participants do nothing except open the pre-filled link that each of their two submissions prints, and press Send.
+
+**The EU-frames pipeline is frozen.** The Form and its entry codes, the Worker (`https://class-results.chris-moreh.workers.dev/`), the Sheet schema, the label format `explore: [tag] <spec>` / `declared: [tag] <spec>`, and the way in which `refresh_multiverse()` in `cases/eu-frames/multiverse.qmd` reads the submissions do not change. Every other case fits around them.
 
 ------------------------------------------------------------------------
 
@@ -175,7 +177,7 @@ There are four edits. All four places already hold the live values – the Worke
                r = "entry.777777")
     ```
 
-3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, which sits in this project as the nested folder `_template/`.)
+3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, which sits in this project as the nested folder `_workspaces/eu-frames/`.)
 
     [**ACTUAL: I CAN'T LOCATE THAT !!!**]{.underline}
 
@@ -221,7 +223,7 @@ Google has changed its anonymous-form and sharing behaviour before, so verify on
 - [ ] **Worker serves it:** open the Worker URL → the test row is in the CSV.
 - [ ] **Chart shows it:** open the live Multiverse page, press **Run Code** on the Class-results chart → a test dot appears. Do this in incognito too (CORS can differ by login state).
 - [ ] **Clear test rows** from the Sheet so the class starts with an empty chart (delete the test data rows; keep the header row).
-- [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklist in `guide.qmd`).
+- [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklists of the run sheets, `eu-frames-guide.qmd` and `housing-guide.qmd`).
 
 If the morning test fails, you still have two fallbacks (section 8) and the static "The class multiverse" slide in the deck always works.
 
@@ -265,3 +267,40 @@ If the live fetch ever stalls during the session, fall back to the static spec c
 | Pre-filled link 404s or is blank | Wrong `FORM_ID` or `entry.NNN` codes | Re-derive from "Get pre-filled link" (2.4); update both copies of `.submit()` (4) |
 | New rows slow to show | Using Publish-to-web CSV (cached) | Switch to the Worker (gviz, uncached) |
 | Everything dead on the day | wifi / Google outage | Facilitator local render (section 8) |
+| Diamonds on the EU-frames chart that nobody in the class sent | Rows of another case in the shared Sheet | Clear the Sheet between deliveries of different cases, or give the other case a Form of its own (11) |
+
+------------------------------------------------------------------------
+
+## 11. The other cases
+
+### 11.1 One Form for every case
+
+Every case submits through the Form, Sheet and Worker of sections 2 to 4 until CM creates a Form per case, so that nothing has to be built for a delivery. The cases tell their rows apart by a word after the tag:
+
+| Case | Label | Chart that reads it |
+|---|---|---|
+| EU frames | `explore: [amber-otter-42] <spec>`, the frozen format, with no case word | `cases/eu-frames/multiverse.qmd`, which reads every row |
+| housing audit | `explore: [amber-otter-42] housing comparison=white population=replies uncoded=drop model=lpm adjust=none` | `cases/housing/multiverse.qmd`, which reads only the rows with `housing` after the tag |
+| immigration and trust, cohabitation | `explore: [tag] trust <spec>`, `explore: [tag] cohabitation <spec>` | the multiverse page of each case, once it exists |
+
+The word of each case is `cases.<slug>.results-word` in `_variables.yml`, and the submission helpers of the case (its browser lab and `R/spec_tools.R` in its workspace) write it into every label. A `declared:` label has the same shape.
+
+The cost falls on the EU-frames chart, which reads every row of the Sheet, because its reading of the submissions is frozen, and which would draw the rows of another case as diamonds that match no specification. Before a delivery of any case, clear the Sheet of the rows of earlier deliveries (select the data rows below the header of the tab "Form Responses 1" and delete them; the Form keeps working). The archived snapshot of a delivery (section 9) goes into the `data/class_results.csv` of the case that ran it.
+
+### 11.2 A Form of its own for a case
+
+About twenty minutes, once per case. It keeps the classes of different cases apart for good. The steps use the housing-audit case; for another case, replace `housing` by its slug.
+
+1. **Copy the Form.** Open the results Form of section 2 in the Forms editor → ⋮ → **Make a copy**, and title it "Class results – housing audit". The copy keeps the seven questions (`spec`, `b`, `se`, `t`, `df`, `n`, `r`) with their exact titles, which the chart reads as column names.
+2. **Settings.** Responses → Collect email addresses → Do not collect; Limit to 1 response → off (otherwise Google asks participants to sign in).
+3. **Link a new Sheet.** Responses → Link to Sheets → create a new spreadsheet. Open it → Share → General access → Anyone with the link → Viewer. Copy the Sheet ID from its URL (between `/d/` and `/edit`).
+4. **Read the codes.** In the Form editor → ⋮ → **Get pre-filled link**, type `spec`, `b`, `se`, `t`, `df`, `n`, `r` into the seven boxes, Get link, Copy. From the link read the Form ID (between `/d/e/` and `/viewform`) and the seven `entry.NNN` codes, each followed by its recognisable value.
+5. **Deploy a second Worker.** Cloudflare dashboard → Workers & Pages → Create Worker, name it `class-results-housing`, Edit code, paste the whole of `facilitator/cloudflare-worker.js`, set `SHEET_ID` to the new Sheet ID, Deploy. Open the Worker URL: it should return the header row as CSV.
+6. **Wire the codes in, in four places**, each a single marked block:
+   - `_workspaces/housing/R/spec_tools.R` – the configuration block at the top: the Form ID and the seven entry codes (then commit and push the workspace repository, so that new downloads carry them);
+   - `cases/housing/lab.qmd` – the same block in the helper chunk of the browser lab;
+   - `cases/housing/multiverse.qmd` – the `worker_url` line of the live cell;
+   - the public short link of the new Form (Send → link → Shorten URL), in place of `{{< var results-form-url >}}` on the cheatsheet of the case, `cases/housing/cheatsheet.qmd`, which is the only page of the case that prints it. Leave `results-form-url` in `_variables.yml` as it is: it belongs to the frozen EU-frames pipeline.
+7. **Render and check.** Render the lab and the multiverse page (`quarto render cases/housing/lab.qmd`, `quarto render cases/housing/multiverse.qmd`), submit one test result from the lab, and press Run Code on the live chart: the test circle should appear. Delete the test row from the Sheet afterwards.
+
+The case word stays in the labels after the switch: it costs nothing, and it keeps the rows identifiable if two Sheets are ever merged.

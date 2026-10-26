@@ -1,0 +1,34 @@
+## The class multiverse {#the-class-multiverse}
+
+::: {.urlbox}
+[Multiverse page – the class chart](../cases/housing/multiverse.html)
+:::
+
+::: {.small}
+- **Open circles**: the explorations of Task 4 · **filled circles**: the declared results of Task 5
+- Every class result is drawn over the curve of `r nrow(curve)`, by its estimate in percentage points
+:::
+
+::: {.fragment .small}
+Where did the class results fall? Did anyone land in the right-hand cluster, and which choice put them there? Which decision moved your own estimate most?
+:::
+
+::: notes
+Now the class chart. Open the Multiverse page, or follow it on my screen, and refresh the class chart. Every result that the class submitted is there, drawn over the same curve of sixty-four, by its estimate in percentage points: open circles for the explorations of Task 4, and later, filled circles for the declared results of Task 5. [advance] So, a few questions to the class. Where did the results fall? Did anybody land in the right-hand cluster, and if so, which choice put them there? Who changed the model and found that nothing happened? Which decision moved your own estimate most? Take a minute, find your own tag on the chart, and tell me in chat what moved it.
+:::
+
+## Your own placement {#find-your-own-percentile .smaller}
+
+::: {.small}
+- Rerun `try_spec()` with the choices that you submitted, in the workspace or in the browser lab: its last line places your estimate on the curve
+- The placement counts the specifications of the curve whose estimate lies further below zero than yours. For the reference specification it is `r sum(curve$b_pp < curve_ref$b_pp - 1e-9)`: nothing on the curve lies further below zero, and the logit without covariates ties with it
+- The same count places the published result and the five analysts
+:::
+
+::: {.fragment}
+Paste your placement in chat – hold – send on "go".
+:::
+
+::: notes
+Your turn to be placed. Rerun try underscore spec with the choices that you submitted. The last line of its output is your placement: how many of the sixty-four specifications of the curve have a gap further below zero than yours. For the reference specification it is zero: nothing on the curve lies further below zero, and the logit without covariates ties with it. Two or three minutes, then paste your placement in chat, hold it, and send on go. [go] Look at the range in the chat. Every one of you can now say where your estimate stands among sixty-four justifiable alternatives, and that sentence – my estimate sits here among the specifications of the curve, built in this way – is a publishable way to report a robustness check.
+:::

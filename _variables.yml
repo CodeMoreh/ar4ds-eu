@@ -1,26 +1,29 @@
 # Applied Replication for Data Skills – site variables.
 #
 # This is the ONE file to edit for site-wide facts and for scheduling a
-# delivery. Three parts:
-#   1. Evergreen variables – stable across deliveries; used in prose via the
+# delivery. Four parts:
+#   1. Course-wide variables – stable across deliveries; used in prose via the
 #      Quarto shortcode {{< var name.subname >}}.
-#   2. The delivery block – set delivery.active to 'true' to switch the
-#      next-delivery callout on the landing page on; set it back to 'false'
+#   2. The cases – the addresses of each case under cases.<slug>, read as
+#      {{< var cases.housing.template-repo >}} and so on, by the case-label
+#      filter (style/case-label.lua) and by the setup chunks of the decks.
+#   3. The delivery block – set delivery.active to 'true' to switch the
+#      next-delivery callout on the opening page on; set it back to 'false'
 #      for the evergreen (no-date) site. Nothing else needs touching.
-#   3. The last-delivery block – a record of the most recent delivery, kept
+#   4. The last-delivery block – a record of the most recent delivery, kept
 #      for the organiser and for the README. No page renders it.
 
-# --- Evergreen variables --------------------------------------------------
-# `workshop` is the historical key for the course-wide variables; every page
-# reads it through {{< var workshop.name >}} and {{< var workshop.format >}},
-# so the key stays even though the site is a course (CM, 2026-09-06).
+# --- Course-wide variables ------------------------------------------------
+# `workshop` is the historical key for the course-wide variables; pages read
+# it through {{< var workshop.name >}} and {{< var workshop.format >}}, so the
+# key stays even though the site is a course (CM, 2026-09-06).
 workshop:
   name: "Applied Replication for Data Skills"
   # The scale at which the course is deliverable, rather than the length of any
   # one delivery: the track folders under tracks/ are what this string refers
-  # to. It is rendered inside the landing page subtitle, so keep any replacement
-  # short.
-  format: "one day | three days | semester | self-study"
+  # to. It is rendered inside the eyebrow of the opening page, so keep any
+  # replacement short.
+  format: "short session | one day | three days | semester | self-study"
   organiser: "Chris Moreh"
   # Add a public contact address here if you want one shown on the site.
   contact: ""
@@ -28,26 +31,96 @@ workshop:
 site-url: "https://codemoreh.github.io/applied-replication/"
 org: "https://github.com/CodeMoreh"
 
-# --- Frozen live-results pipeline (see facilitator/live-results-setup.md).
-# Do not rename or reformat these three keys: template-repo, live-results-url
-# and results-form-url wire a working results pipeline end to end.
+# --- Frozen live-results pipeline of the EU-frames case ---------------------
+# (see facilitator/live-results-setup.md). Do not rename or reformat these
+# three keys: template-repo, live-results-url and results-form-url wire a
+# working results pipeline end to end, and the pages, decks and workspace of
+# the EU-frames case read them under these names. The same addresses are
+# repeated under cases.eu-frames for pages that loop over the cases.
 template-repo: "https://github.com/CodeMoreh/replication-lab"
-# The Multiverse page where submissions appear live:
+# The Multiverse page where submissions of the EU-frames case appear live:
 live-results-url: "https://codemoreh.github.io/applied-replication/cases/eu-frames/multiverse.html"
-# The Google Form participants submit results to. PLACEHOLDER – replace with the
-# real form URL once created (facilitator/live-results-setup.md, step 1):
+# The Google Form that every case submits to until CM creates a Form per case
+# (facilitator/live-results-setup.md):
 results-form-url: "https://forms.gle/MWhimagFDmGtprAPA"
+
+# --- The cases ----------------------------------------------------------------
+# One entry per case, in the order of the ladder. For each:
+#   label             the line "Case: ..." printed at the top of every page of
+#                     the case (style/case-label.lua)
+#   name              the case in running prose
+#   template-repo     the GitHub repository of the downloadable workspace
+#   workspace-zip     the zip of that repository that participants download
+#   live-results-url  the multiverse page that draws the class submissions
+#   results-word      the word that follows the tag in every class-results
+#                     label of the case, so that the chart of the case reads
+#                     only its own rows of the shared Form. The EU-frames labels
+#                     carry no case word (the frozen format), hence none here.
+# The workspaces of the trust and cohabitation cases do not exist yet; their
+# addresses are the names that the brief reserves for them.
+cases:
+  housing:
+    label: "housing audit"
+    name: "the housing-audit case"
+    # PLACEHOLDER until CM creates the repository on GitHub
+    template-repo: "https://github.com/CodeMoreh/replication-lab-housing"
+    workspace-zip: "https://github.com/CodeMoreh/replication-lab-housing/archive/refs/heads/main.zip"
+    live-results-url: "https://codemoreh.github.io/applied-replication/cases/housing/multiverse.html"
+    results-word: "housing"
+  trust:
+    label: "immigration and trust"
+    name: "the immigration-and-trust case"
+    template-repo: "https://github.com/CodeMoreh/replication-lab-trust"
+    workspace-zip: "https://github.com/CodeMoreh/replication-lab-trust/archive/refs/heads/main.zip"
+    live-results-url: "https://codemoreh.github.io/applied-replication/cases/trust/multiverse.html"
+    results-word: "trust"
+  cohabitation:
+    label: "cohabitation"
+    name: "the cohabitation case"
+    template-repo: "https://github.com/CodeMoreh/replication-lab-cohabitation"
+    workspace-zip: "https://github.com/CodeMoreh/replication-lab-cohabitation/archive/refs/heads/main.zip"
+    live-results-url: "https://codemoreh.github.io/applied-replication/cases/cohabitation/multiverse.html"
+    results-word: "cohabitation"
+  eu-frames:
+    label: "EU frames"
+    name: "the EU-frames case"
+    template-repo: "https://github.com/CodeMoreh/replication-lab"
+    workspace-zip: "https://github.com/CodeMoreh/replication-lab/archive/refs/heads/main.zip"
+    live-results-url: "https://codemoreh.github.io/applied-replication/cases/eu-frames/multiverse.html"
+    results-word: ""
+
+# The cases on which each companion module works, by the name of its file,
+# printed at the top of the module by style/case-label.lua as "Case: ..." or
+# "Cases: ...", each linked to its case study. A module that is not listed
+# (the IDE and Quarto modules, the overview) gets no line.
+companion-cases:
+  intro-r: [housing, eu-frames]
+  data-sources: [eu-frames]
+  data-management: [eu-frames]
+  repositories: [housing, eu-frames]
+  git-github: [housing, eu-frames]
+  experiments: [housing]
+  binary-outcomes: [housing, eu-frames]
+  dags: [housing, eu-frames]
+  measurement: [eu-frames]
+  weighting: [eu-frames]
+  missingness: [eu-frames]
+  stats-methods: [eu-frames]
+  individual-level: [eu-frames]
+  simulation: [eu-frames]
+  multiverse: [housing, eu-frames]
 
 # --- Next-delivery block --------------------------------------------------
 # Set active to 'true' to schedule a delivery; fill in the fields below.
 # Set active back to 'false' to return the site to its evergreen state.
 delivery:
   active: 'false'
-  # Which track this delivery follows, named by its folder under tracks/.
-  # Valid values: eu-frames-one-day-replication, eu-frames-one-day-tools,
-  # eu-frames-one-day-methods, eu-frames-three-days, eu-frames-semester,
-  # eu-frames-self-study – i.e. tracks/eu-frames-one-day-replication/ and so on;
-  # the same names without the eu-frames- prefix are read as these. An empty
+  # Which track this delivery follows, named by its folder under tracks/:
+  # housing-short, housing-one-day, eu-frames-one-day-replication,
+  # eu-frames-one-day-tools, eu-frames-one-day-methods, eu-frames-three-days,
+  # eu-frames-semester or eu-frames-self-study, and semester (the cross-case
+  # track) once tracks/semester/ exists. The names of the EU-frames tracks
+  # without the eu-frames- prefix are read as these, except semester. An empty
   # value prints no track line in the callout, and so does a value that matches
   # no track.
   track: ""

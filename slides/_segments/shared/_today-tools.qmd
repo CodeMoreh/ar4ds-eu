@@ -1,0 +1,52 @@
+## The workspace and the browser lab {#what-we-use-today .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**Your IDE and the workspace**
+
+- The workspace folder you downloaded, opened in your IDE (Positron, RStudio, VS Code, etc.)
+- Quarto renders your report; R fits every model live, in a moment
+- No git, no cloning, no configuration – it is just files
+- This is what I drive on the shared screen
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**The browser lab**
+
+- One web page. R is compiled to run **inside the browser**
+- Nothing installed, nothing to break, data already in place
+- The same tasks, data and helpers, on the shared screen and in your own tab
+- The fallback if your installation misbehaves at any point
+:::
+:::
+::::
+
+::: {.urlbox .fragment}
+[`r case_vars[["template-repo"]]`](`r case_vars[["template-repo"]]`)<br>[download the zip → unzip → open in your IDE]{.fs-60}
+:::
+
+::: notes
+This is what you will actually be working in. The workspace is the folder you downloaded, open in your IDE, which is Positron on my screen and may be RStudio or VS Code on yours. Quarto renders your report, R fits every model live, and there is no git and no cloning because it is just a folder of files. That is what I will be driving on the shared screen, so you can follow keystroke for keystroke. The browser lab is one web page with R compiled to run inside the browser itself. Nothing installed, nothing to break, and the data are already there. Every task exists in both, with the same data and the same helper functions, so if your machine misbehaves you can carry on in the browser lab and come back to the workspace later. The address for the workspace zip is at the bottom, and it is on the setup page in the chat.
+:::
+
+## What the tools cannot do {.smaller}
+
+:::: {.none}
+::: {.fragment}
+A perfectly reproducible pipeline can be a perfectly reproducible answer to **a question you never stated**.
+:::
+
+::: {.fragment}
+None of this software will tell you what your estimand is, whether your controls belong in the model, or whether the association you found means what you think it means.
+:::
+
+::: {.fragment}
+Tooling is the **cheap** half of the problem, because it can be learned. **The expensive half is the question that the analysis is meant to answer.**
+:::
+::::
+
+::: notes
+All of this software is worth having, but a perfectly reproducible pipeline can be a perfectly reproducible answer to a question you never stated. None of this software will tell you what your estimand is, whether the variables you put in the model belong there, or whether the association you found means what you think it means. Tooling is the cheap half of the problem, in the sense that it can be solved by learning things. The expensive half starts from a question that every quantitative study has to answer, namely what exactly you are trying to estimate, and a good deal of what follows is about that question. First, though, you need a setup that works.
+:::

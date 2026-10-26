@@ -1,6 +1,6 @@
 ---
 title: "Running the tracks"
-subtitle: "Facilitator notes on the six delivery formats, their decks, and what each one may drop"
+subtitle: "Facilitator notes on the delivery formats of each case, their decks, and what each one may drop"
 format:
   html:
     toc: true
@@ -9,10 +9,10 @@ format:
 ---
 
 ::: {.callout-note}
-**This page is for the facilitator.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. The track pages under `tracks/` are participant-facing and contain no instructor guidance, which is collected here together with the notes on the variant decks. The [facilitator guide](eu-frames-guide.qmd) is the run sheet for the one-day replication format.
+**This page is for the facilitator.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. The track pages under `tracks/` are participant-facing and contain no instructor guidance, which is collected here together with the notes on the variant decks. The [facilitator guide of the EU-frames case](eu-frames-guide.qmd) is the run sheet for its one-day replication format, and the [facilitator guide of the housing-audit case](housing-guide.qmd) the run sheet for both formats of that case.
 :::
 
-## The six formats and their decks
+## The six formats of the EU-frames case
 
 Every format is an ordered route through pages that already exist on the site, with a docked sidebar of its own (`_sidebar.yml`) and a slides page embedding the deck it runs on. The decks are assembled from one pool of slides: `slides/eu-frames-full.qmd` is the full deck, and the variants under `slides/` include the same segment files (`slides/_segments/eu-frames/`) in a different order, with their own agenda, aims and part-divider slides.
 
@@ -82,3 +82,14 @@ A group whose data are individual respondents can put [The individual level](../
 ## Self-study
 
 The self-study pages contain their own compression notes, written to the participant, because no facilitator is there to apply them. What the facilitator can still do for a self-study cohort is keep the live results pipeline running between deliveries, so that a dot submitted alone appears on the Multiverse page and the archived cohorts stay visible beside it (`facilitator/live-results-setup.md`).
+
+## The two formats of the housing-audit case
+
+The housing-audit case has two tracks, because its statistics are simple enough that the tools, methods and open-research days of the EU-frames case collapse into one day. The decks include the case-neutral segments of `slides/_segments/shared/` and the segments of the case in `slides/_segments/housing/`; the setup chunk of the case comes after the shared one and gives the shared segments the addresses of the case.
+
+| Format | Pages | Deck | Optional runs in the main flow |
+|---|---|---|---|
+| Short session, two to three hours | `tracks/housing-short/` | `slides/housing-short.qmd` | none; the multiverse background of the second half is on the `d` key |
+| One day | `tracks/housing-one-day/` | `slides/housing-one-day.qmd` | none; the tour of the toolchain and of R in the morning and the closer look at the statistics in the afternoon are on the `d` key, so that a facilitator can lean the day towards tools or towards methods |
+
+The [run sheet of the case](housing-guide.qmd) has the timings of both formats, the expected numbers, the checks before the day and the order of what to cut. The short session leaves the preregistration of Task 5 for afterwards; the one-day track keeps it in Part 4, beside the replication with new data.

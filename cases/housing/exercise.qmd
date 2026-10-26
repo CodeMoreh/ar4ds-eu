@@ -1,0 +1,127 @@
+---
+title: "Exercise overview"
+subtitle: "Analyst no. 6"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(tinytable)
+
+analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
+curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE)
+original <- read_csv("data/audit_original.csv", show_col_types = FALSE)
+audit <- read_csv("data/housing_audit.csv", show_col_types = FALSE)
+
+fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+big <- \(x) format(x, big.mark = ",")
+an <- \(id, col) analysts[[col]][analysts$id == id]
+
+# The Task 3 target, on the public file of the OAs: Hispanic against all other
+# names among the coded replies, with and without the continuity correction
+chi_tab <- original |>
+  filter(Response_Dichotomous == 1, !is.na(ProperName)) |>
+  with(table(startsWith(TreatmentGroup, "Hispanic"), ProperName))
+chi_yates <- unname(chisq.test(chi_tab)$statistic)
+chi_plain <- unname(chisq.test(chi_tab, correct = FALSE)$statistic)
+```
+
+This page sets out the whole exercise of the course on the housing-audit case. The [case study](index.qmd) presents the original study, the SCORE replication and the five Multi100 reanalyses, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation and as a fallback, and it gives the same numbers. The page of your track gives the timing of each task.
+
+---
+
+## The claim
+
+Five independent analysts reanalysed one claim of the original authors (OAs) in the Multi100 project [@EinsteinGlick2017DoesRaceAffect]. The claim, as the analysts received it, was:
+
+> "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts" (p. 100 of the published article)
+
+The published result behind it is the coefficient of the Hispanic names in a logistic regression of a named greeting on the three groups of names, with community controls and the Hard Email indicator: **−0.82 (standard error 0.22) on 549 replies**, which the OAs translate into a gap of **−20.0 percentage points** in the probability of a named greeting, with a 95% confidence interval from −30.5 to −10.0. The data come from an experiment: `r big(nrow(audit))` emails to housing authorities, each of which was signed with one of six names that were assigned at random.
+
+Your first job is to reproduce the value that Multi100 recorded for one of the analysts, from the public file of the OAs. Your second is to depart from it deliberately, with a written reason, and to find out what that does to the estimate.
+
+## The five Multi100 analysts
+
+```{r}
+#| label: tbl-five
+#| tbl-cap: "The five reanalyses, with the statistic that Multi100 recorded and the gap in percentage points by the course refit. Source: `data/analysts5.csv`."
+#| echo: false
+analysts |>
+  transmute(
+    Analyst = id,
+    Comparison = sub(" vs ", " against ", comparison),
+    `Emails counted` = population,
+    `Recorded statistic` = case_when(
+      is.na(statistic_recorded) ~ "none recorded",
+      statistic_type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(statistic_recorded, 3)),
+      .default = paste(statistic_type, "=", fmt(statistic_recorded, 3))
+    ),
+    `Gap (points)` = fmt(b_pp_refit),
+    `Conclusion in Multi100 Task 1` = task1
+  ) |>
+  tt() |>
+  style_tt(j = 5, align = "r")
+```
+
+All five found Hispanic names greeted by name less often than the comparison names, and all four recorded statistics reproduce exactly on the public file. Two of the five nevertheless concluded in Task 1 of Multi100 that the data showed no evidence either way. The analysts compared different groups, counted different emails and used four kinds of test, and the [case study](index.qmd#sec-reanalysts) sets out what question each of them answered.
+
+---
+
+## The tasks
+
+The exercise runs as five numbered tasks. Each says what to do in the workspace and, where it differs, in the browser lab.
+
+### Task 1 – The setup check
+
+The only aim is to reach the point where a line of R runs and the data are in front of you. *Workspace:* open the workspace folder in your IDE and run `source("R/check_setup.R")`, which prints OK when everything is in place and otherwise says what is missing. *Browser lab:* wait for the engine to finish downloading, then run the setup cell. If your installation will not cooperate, carry on in the browser lab, which runs every later task.
+
+### Task 2 – The data, the estimand and the graph
+
+First, meet the `r big(nrow(audit))` emails of `housing_audit.csv` ([codebook](data/housing_audit_codebook.md)): who was emailed, which names they received, and what came back. Count the emails that bounced, the replies, and the replies that opened with the name of the sender, for each name.
+
+Second, write the **estimand statement** behind the claim. It says which comparison is made (Hispanic names against which names), which emails are counted (the replies, or every delivered email), and which outcome is compared. The [specification menu](menu.qmd) gives the template.
+
+Third, finish the **causal graph**. The name affects whether an official replies, and the reply comes before any greeting. Characteristics of the official that the data do not record, such as workload or habits of writing, affect both whether the official replies and whether a reply opens with a name, and so do characteristics of the community. The graph shows why comparing greetings among the replies conditions on a consequence of the name: it compares only the emails that an official chose to answer, and the name may itself have changed that choice, which the [case study](index.qmd#sec-posttreatment) calls post-treatment conditioning. It also shows why counting every delivered email keeps the comparison as randomisation made it. The workspace draws the graph with dagitty, and ggdag draws it more neatly where it is installed. The browser lab gives the same answers with graph code of its own when the browser cannot run dagitty.
+
+### Task 3 – The reproduction
+
+Reproduce the value that Multi100 recorded for analyst 8PTRZ, **$\chi^2$ = `r fmt(an("8PTRZ", "statistic_recorded"), 3)` on `r an("8PTRZ", "n_recorded")` replies**, from the public file of the OAs, `audit_original.csv` ([codebook](data/audit_original_codebook.md)). Keep the replies that carry a greeting code, build a two-by-two table of Hispanic against all other names by `ProperName`, and pass it to `chisq.test()`. When the facilitator says so, the whole class types its $\chi^2$ and sends it at the same moment.
+
+Then find out why your number is what it is. `chisq.test()` applies a continuity correction to a two-by-two table unless it is told otherwise, and `correct = FALSE` gives `r fmt(chi_plain, 2)` instead of `r fmt(chi_yates, 3)`. A reproduction depends on defaults of the software as well as on the data and the model. *Optional extension:* reproduce the logistic regression of UYV3F, z = `r fmt(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` replies, which compares Hispanic with white names only.
+
+### Task 4 – The menu
+
+This task is **exploratory**. `try_spec()` takes the five arguments of the curve, `comparison`, `population`, `uncoded`, `model` and `adjust`, each of which defaults to the reference specification, so changing one thing means changing one argument. Try several specifications from the [specification menu](menu.qmd), one decision at a time, and note which choices move the estimate and which barely touch it. An option that is not on the curve, such as `model = "three_group"`, is refused with the reason given in `menu_options.csv`. `my_experiments()` prints everything you have tried side by side. Then choose the one that you would defend, and `submit_exploration()` sends it to the class chart on the [multiverse page](multiverse.qmd), where it appears as an open circle.
+
+Nothing in this task is preregistered. You may look, change your mind and try again, and the chart marks the result as exploratory for that reason.
+
+### Task 5 – Declaration and report
+
+Choose **one** specification, one option for each decision, and complete the preregistration block **before you run it**: the claim, your option for each decision, and a sentence, grounded in your causal graph, on why the specification answers the claim. `prereg()` prints the block. `run_spec()` fits the specification that you declared, and `report_result()` sends the declared result to the class chart, where it appears as a filled circle. Then find where your result sits on the curve of `r nrow(curve)` specifications.
+
+Task 4 and Task 5 run the same code. An exploratory specification can have been chosen because of its result and a declared one cannot, and you submit both so that the two sets of class results can be compared.
+
+---
+
+## What counts as a result
+
+A result counts for the class chart if it is one of the `r nrow(curve)` specifications on the curve, if it reaches the chart through `submit_exploration()` or `report_result()`, which fill in the class-results form for you, and if it comes with a written reason for each choice; two sentences are enough. The reasons are what make a set of different results more than a spread of numbers, because they show which differences between results come from different questions and which from different ways of answering the same one.
+
+---
+
+## Links
+
+- [Browser lab](lab.qmd) – the whole exercise and its data in a browser tab.
+- [Setup](../../setup.qmd) – installing R and an IDE, and downloading the workspace.
+- [Specification menu](menu.qmd) – the decisions of the analysis, grouped by level, with the options that the curve keeps and the reasons for the ones that it does not.
+- [Decision map](map.qmd) – every decision in the order in which an analyst meets it; selecting an option rewrites the estimand statement and shows the result.
+- [Multiverse](multiverse.qmd) – the curve of `r nrow(curve)` specifications and the live class chart.
+- [Case study](index.qmd) – the original study, Multi100, the five reanalyses and the replication.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

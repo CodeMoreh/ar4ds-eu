@@ -1,0 +1,72 @@
+## The five analysts {#the-five-analysts}
+
+```{r}
+#| label: five-analysts
+#| fig-width: 10
+#| fig-height: 4.2
+# The published result and the five reanalyses (data/reference_marks.csv,
+# with the choices from data/analysts5.csv), each placed by its gap in points;
+# the shaded band is the range of the curve of the claim.
+choices <- select(analysts, id, comparison, population)
+five <- marks |>
+  left_join(choices, by = "id") |>
+  mutate(
+    comparison = coalesce(comparison, "Hispanic vs white names"),
+    population = coalesce(population, "replies"),
+    lab = paste0(tag, "   ", sub("^Hispanic vs ", "against ", comparison), " · ", population),
+    oa = id == "OA"
+  ) |>
+  arrange(desc(b_pp)) |>
+  mutate(lab = factor(lab, levels = lab))
+
+ggplot(five, aes(b_pp, lab)) +
+  annotate("rect", xmin = min(curve$b_pp), xmax = max(curve$b_pp), ymin = -Inf, ymax = Inf,
+           fill = "#d6dde5", alpha = 0.6) +
+  geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
+  geom_point(aes(colour = oa), size = 5.5) +
+  geom_text(aes(label = fmt_num(b_pp, 1)), hjust = -0.6, size = 5, colour = ink) +
+  scale_colour_manual(values = c(`FALSE` = ncl_blue, `TRUE` = burgundy), guide = "none") +
+  scale_x_continuous(limits = c(-24, 2), labels = \(x) fmt_num(x, 0)) +
+  labs(x = "Hispanic minus comparison names (points); shaded: the range of the curve",
+       y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.small}
+Every gap points the way of the claim, from `r fmt_num(min(five$b_pp), 1)` to `r fmt_num(max(five$b_pp), 1)` points, and every test is significant. Multi100 Task 1 verdicts: `r sum(analysts$task1 == "evidence for the claim")` × evidence for the claim, `r sum(analysts$task1 == "no evidence either way")` × no evidence either way.
+:::
+
+::: notes
+And here are the five, with the published result of the OAs in burgundy for reference, each placed by its gap in percentage points, the scale of the claim. On direction, everybody agrees: every gap is negative, Hispanic names greeted by name less often, and every test is significant. On size, the spread runs from twenty points down to thirteen. Read the labels. UYV3F, P9W8Y and the published result compare Hispanic with white names among replies, and land on twenty. EWFMI does the same with covariates and lands close by. 8PTRZ, whose number you will reproduce later, compares with all other names, and lands at seventeen, because the Black names were greeted by name less often than the white ones. And 25N5D counts every delivered email, a choice whose reason the causal graph will make clear, and lands at thirteen. The shaded band is the range of every specification that the course fits, which we come back to at the end.
+:::
+
+## What the five analysts did {#five-questions-two-verdicts .smaller}
+
+```{r}
+#| label: five-table
+#| output: asis
+# The five reanalyses as a Markdown table, from data/analysts5.csv.
+stat_txt <- \(type, x) case_when(
+  is.na(x) ~ "none recorded",
+  type == "chi2" ~ paste0("$\\chi^2$ = ", fmt_num(x, 3)),
+  .default = paste0("*", type, "* = ", fmt_num(x, 3))
+)
+rows <- analysts |>
+  mutate(line = paste0("| ", id, " | ", sub("^Hispanic vs ", "", comparison), " | ", population,
+                       " | ", method, " | ", stat_txt(statistic_type, statistic_recorded),
+                       " | ", task1, " |")) |>
+  pull(line)
+cat(c("::: {.fs-60}", # r-style: keep – writes the Markdown of the table
+      "| Analyst | Compared with | Emails counted | Method | Recorded | Verdict |",
+      "|:--|:--|:--|:--|--:|:--|",
+      rows, ":::"), sep = "\n")
+```
+
+::: {.fragment .small}
+Both verdicts of no evidence come from analysts whose own work shows a significant gap. 25N5D concluded that the effect was real but "substantially smaller than that reported in the original results"; the first Multi100 model of P9W8Y tested ethnicity among the female names only.
+:::
+
+::: notes
+The same five as a table, so that you can read what each one did. Two compare with white names only, as the claim was selected; one with white and Black names together, as the abstract has it; and two fit all three groups at once, EWFMI to read off the contrast with white names and P9W8Y to test whether the three differ at all. Four count the replies, as the paper does, and one counts every delivered email. And four different tests. [advance] Now the last column. Three analysts concluded that the data were evidence for the claim, and two ticked no evidence either way, although the work of both shows a significant gap. 25N5D wrote that Hispanic applicants were less likely to be greeted by name, "though the magnitude of the effect is substantially smaller than that reported in the original results", so the verdict seems to judge the claim by the twenty points that the selected claim had dropped. And the first model of P9W8Y, with an interaction, tested ethnicity among the female names alone, a narrower test than intended.
+:::

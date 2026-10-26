@@ -1,0 +1,194 @@
+<!-- DEEP DIVE START: R tutorial (9 slides). Optional depth – press d during
+     the talk, or load the deck with ?depth=0, and slides/nav-tools.html lifts
+     the whole run out of the DOM. The switch acts on the .deepdive class that
+     every slide in the run carries, so that class is the load-bearing part;
+     these markers are here for the reader. -->
+
+## R, in one slide {.smaller .deepdive run="tools"}
+
+::: {.skiplink}
+[R tutorial · 9 slides · skip to Hands-on 2 →](#hands-on-2-meet-the-emails-draw-the-graph)
+:::
+
+```{.r code-line-numbers="|1|3|5|7"}
+n_emails <- 1014                  # <- assigns. "n_emails gets 1014"
+
+mean(c(1, 0, 1, 1))               # a function: name, then arguments in ()
+
+audit$reply                       # $ picks one column out of a data frame
+
+audit |> nrow()                   # |> the pipe: send the left into the right
+```
+
+::: {.small}
+With four pieces of syntax you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
+:::
+
+::: notes
+If you have never written a line of R, this slide is most of what you need to read the rest. Four things. First, the arrow assigns: n emails gets one thousand and fourteen. You will see the equals sign used the same way and both work, but the arrow is the convention. Second, a function is a name followed by round brackets holding its arguments: the mean of one, nought, one and one, which is three quarters, and which is also how you get a share out of a column of zeros and ones. Third, the dollar sign reaches inside a data frame to pull out one column. And fourth, the pipe takes whatever is on its left and feeds it in as the first argument of whatever is on its right. Read it as the word "then", and long chains become sentences.
+:::
+
+## Getting data in {.smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|3|5"}
+library(readr)                                   # load a package
+
+audit <- read_csv("data/housing_audit.csv")      # read it, name it
+
+audit                                            # print it
+```
+
+::: {.small}
+What comes back is a **data frame**: a rectangle with one row per observation, here one email, and one column per variable, each column of a single type.
+
+`library()` makes the functions of a package available. It does **not** install the package; that happens once, and the setup page says how.
+:::
+
+::: notes
+Getting data in. The library line makes the functions of a package available for this session, and it does not install anything; installing is a separate step that you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on audit is our data. Typing the name on its own prints it. What you get back is a data frame, the central object of R: a rectangle with one row for each email and one column for each variable, every column holding a single type. Nearly every function that you will meet takes a data frame and hands one back, which is why the pipe works so well: the output of one step is the right shape to be the input of the next.
+:::
+
+## Inspecting the data {#look-before-you-model .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|2|3|4"}
+glimpse(audit)          # every column, its type, the first few values
+nrow(audit)             # 1014
+count(audit, name)      # how many emails went out under each name?
+count(audit, reply)     # 1, 0 – and NA for the emails that bounced
+```
+
+::: {.fragment .small}
+`NA` is how R marks a missing value. Here it means that an email bounced and never reached anyone, which is a different thing from an email that drew no reply. Most serious errors are visible in the data before they reach a model.
+:::
+
+::: notes
+With the data loaded, look at them before any model touches them. Glimpse shows every column with its type and its first few values. nrow counts the rows, one per email. Count tells you how many emails went out under each name, which should be roughly equal, because the names were assigned at random. And count on the reply column gives you ones, zeros, and a handful of NA. [advance] NA is how R marks a missing value, and in this file it means something specific: the email bounced and never reached an official. That is not the same as an email that drew no reply, and a model that treated the two alike would be measuring a failure of delivery. Every serious error I have made was visible in the data before it reached a model.
+:::
+
+## Working with rows and columns {#five-verbs-do-most-of-the-work .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2|3|4|5"}
+audit |>
+  filter(reply == 1, !is.na(named)) |>            # keep the coded replies
+  select(name, group, named) |>                   # keep three columns
+  mutate(hispanic = group == "hispanic") |>       # make a new column
+  arrange(name)                                   # sort
+```
+
+::: {.fragment .small}
+The sixth verb is `summarise()`, here with `.by`: collapse many rows into one per group.
+
+```{.r}
+audit |>
+  filter(reply == 1, !is.na(named)) |>
+  summarise(replies = n(), greeted = mean(named), .by = group)
+```
+:::
+
+::: notes
+Five verbs get you a very long way, and they share one pattern: a data frame goes in and a data frame comes out. Filter keeps rows, here the replies that carry a greeting code. Select keeps columns. Mutate makes a new column, here a true or false for the Hispanic names. Arrange sorts. Read it downwards as a sentence: take the emails, then keep the coded replies, then keep three columns, then add a column, then sort by name. [advance] The sixth verb is summarise, which collapses many rows into one per group. These three lines give you, for each group of names, the number of coded replies and the share that greeted the sender by name: the right-hand panel of the figure that you met earlier, as a table.
+:::
+
+## Tables and tests {.smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1-3|5|6"}
+coded_replies <- original |>
+  filter(!is.na(ProperName)) |>
+  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
+chisq.test(tab_8ptrz)
+```
+
+::: {.small}
+`xtabs()` counts the rows in each combination of two variables, a **cross-tabulation**. `chisq.test()` asks whether the two variables are independent in the table. This is the whole of Task 3, on the public file of the OAs, whose column names are kept as they were published.
+:::
+
+::: notes
+Two functions that you will use in Task 3. The first block reads the public file of the original authors, keeps the replies that carry a greeting code, and makes a true or false column for the Hispanic names, using grepl, which asks whether a piece of text matches a pattern; the little hat means "starts with". Then xtabs counts the replies in each combination of two variables, Hispanic name or not and greeted by name or not, which gives a two-by-two table. And chisq dot test asks whether the two variables are independent in that table. That is the whole of the reproduction, and it is the test that one of the five analysts ran. When you get there, look at the first line of what it prints, because it names something that matters.
+:::
+
+## Model formulas {#a-model-is-a-formula-plus-data .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|3|5"}
+named ~ hispanic                                    # "named explained by hispanic"
+
+m <- lm(named ~ hispanic, data = replies)           # a linear model
+
+g <- glm(named ~ hispanic, family = binomial(), data = replies)   # a logit
+```
+
+::: {.small}
+The tilde `~` reads **outcome on the left, predictors on the right**; add predictors with `+`. Almost every modelling function in R has this shape: `something(formula, data = ...)`.
+:::
+
+::: {.fragment .small}
+With a 0/1 outcome and a 0/1 predictor, the coefficient of `lm()` **is** the difference between the two shares. Part 3 comes back to both models.
+:::
+
+::: notes
+A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, more predictors added with a plus. Then lm fits a linear model, and glm with the binomial family fits a logistic regression, a logit. Almost every modelling function in R has this same shape, a formula and then data, so once you know it, lm, glm and everything after them become variations on one pattern. [advance] And one fact that makes this case easy to learn on: when the outcome is zero or one and the predictor is zero or one, the coefficient of the linear model is exactly the difference between the two shares. A greeting rate of forty-one per cent against sixty-one gives a coefficient of minus point two. We come back to both models in Part 3.
+:::
+
+## Plotting with ggplot2 {#one-line-of-ggplot .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1-3|4|5"}
+audit |>
+  filter(reply == 1, !is.na(named)) |>
+  summarise(greeted = mean(named), .by = c(name, group)) |>
+  ggplot(aes(x = greeted, y = name, colour = group)) +   # data, and what maps to what
+  geom_point(size = 3)                                     # draw points
+```
+
+::: {.small}
+Three parts, always: the **data**, the **mapping** (`aes`) from variables to what you see, and one or more **geoms** that draw something. Layers stack with `+`.
+:::
+
+::: notes
+Plotting, briefly. A ggplot always has three parts. The data, here the share of coded replies that greeted the sender by name, for each of the six names. The mapping, which is what aes does: it says which variable becomes which visual property, here the share on the horizontal axis, the name on the vertical one, and the group as the colour. And one or more geoms that actually draw something, stacked with plus signs. This one draws points. Notice that the pipe carries the summarised data straight into ggplot, so the whole thing reads as one sentence from the raw emails to the picture. The plot it makes is a rough version of the right-hand panel from earlier.
+:::
+
+## Causal graphs in R {#a-causal-graph-is-a-set-of-arrows .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2|3|4-5|6|10|11"}
+dag <- make_dag(
+  "name -> reply",
+  "reply -> greeting",
+  "official -> reply", "official -> greeting",
+  "community -> reply", "community -> greeting",
+  # "name -> greeting",          # the arrow that the claim is about
+  exposure = "name", outcome = "greeting", latent = "official"
+)
+
+adjustmentSets(dag)               # what must be adjusted for?
+paths(dag, Z = "reply")           # which paths open among the replies?
+```
+
+::: {.small}
+One arrow per line, written **cause -> effect**, so a `#` takes an arrow out and the code still runs. `make_dag()` is a helper of the workspace, built on **dagitty**.
+:::
+
+::: notes
+The last piece of R is the one you use in the next task. A causal graph in the workspace is a list of arrows, one per line, written cause, then an arrow, then effect. The name points at the reply, the reply at the greeting, and the official and the community each point at both. The arrow that the claim is about is commented out with a hash, so that you decide whether to switch it on. You also declare which node is the exposure, which the outcome, and that the official is latent, unobserved. Then two questions for dagitty. adjustmentSets asks what you must adjust for to estimate the effect of the name, and paths, with Z set to the reply, asks which paths between the name and the greeting are open once the comparison is made among the replies.
+:::
+
+## Common error messages {#when-it-breaks .smaller .deepdive run="tools"}
+
+::: {.small}
+| What you see | What it usually means |
+|---|---|
+| `could not find function "try_spec"` | The helpers are not loaded – run `source("R/spec_tools.R")` |
+| `object 'audit' not found` | You ran this chunk before the one that creates it – go back up and run in order |
+| `object 'hispanic_name' not found` | The column does not exist yet – you skipped the `mutate()` that makes it |
+| `+` on the console, nothing happens | An unclosed bracket or quote. Press **Esc** and look for the missing `)` |
+:::
+
+::: {.fragment .small}
+Read the error. R error messages are terse but almost always literally true, and most of them name the thing that R could not find.
+:::
+
+::: notes
+These four errors will be most of what you meet in the tasks. "Could not find function" means that the helpers or the package are not loaded, so source the helper file or add the library line above. "Object audit not found" means that you ran a chunk before the one that creates the object; go back up and run them in order. "Object hispanic underscore name not found" means that you skipped the mutate line that makes the column. And if the console shows a plus sign and nothing happens, R thinks that you have not finished the command: there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. The general advice is the habit I would most like you to keep: read the error, because it usually names exactly what R could not find.
+:::
+
+<!-- DEEP DIVE END -->

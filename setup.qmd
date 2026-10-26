@@ -5,7 +5,9 @@ subtitle: "What to install before the course, and how to check it"
 
 Everyone taking the course works in R, inside an IDE, with a ready-made workspace that you download once. An IDE (an integrated development environment, such as Positron, RStudio or VS Code) is the program in which you open files, write and run code and read results. R is the language that does the calculation, and the two are installed separately. The default IDE for the course is Positron, because Positron is one of the data-science tools that the course teaches, and it is the IDE that the facilitator uses on the shared screen. If you already work in RStudio or in VS Code you can stay there: every task runs in all three, and the [IDE module](companion/ide.qmd) of the companion curriculum sets the three side by side.
 
-The [Browser lab](cases/eu-frames/lab.qmd) runs the same exercise on the same data inside a browser tab. It is there for following a demonstration on a shared screen, for trying things before you have installed anything, and as a fallback if your machine fails on the day. The course itself takes place in the downloaded workspace.
+Steps 1 to 3 and step 5 are the same for every case. Steps 4 and 6, the workspace and the data, depend on the case that your track works on, and each has a tab per case. The track page tells you which case that is.
+
+Each case has a browser lab, [housing audit](cases/housing/lab.qmd) and [EU frames](cases/eu-frames/lab.qmd), which runs the same exercise on the same data inside a browser tab. It is there for following a demonstration on a shared screen, for trying things before you have installed anything, and as a fallback if your machine fails on the day. The course itself takes place in the downloaded workspace.
 
 Windows and Linux installations are supported in class. macOS installations are not, because the facilitator does not use a Mac and cannot test one. The Mac steps below follow the official documentation and link to it, and a Mac user who gets stuck should work from those links or from the [help page](help.qmd), since no in-class assistance is available for a Mac.
 
@@ -13,7 +15,7 @@ Windows and Linux installations are supported in class. macOS installations are 
 
 ## 1. R
 
-R is the language in which the analysis is written. Positron requires R 4.2 or later, and the check script for the course expects a current release. Download R from [cran.r-project.org](https://cran.r-project.org/) and use the installer for your system.
+R is the language in which the analysis is written. Positron requires R 4.2 or later, and the check script of every workspace expects R 4.4 or later. Download R from [cran.r-project.org](https://cran.r-project.org/) and use the installer for your system.
 
 ::: {.panel-tabset}
 
@@ -37,10 +39,10 @@ Whichever system you are on, open a terminal afterwards and type `R --version`. 
 
 ## 2. Quarto
 
-Quarto is the tool that turns your report, a `.qmd` file holding code and prose, into a finished document, and rendering the report is how your preregistration block gets its timestamp on the day. Whether you need to install it depends on the IDE:
+Quarto is the tool that turns your report, a `.qmd` file holding code and prose, into a finished document, and rendering the report is how your preregistration block gets its date. Whether you need to install it depends on the IDE:
 
 - **RStudio** comes with a copy of Quarto inside it, so nothing more is needed to render; installing Quarto separately from [quarto.org](https://quarto.org/docs/get-started/) gets you a newer version than the bundled one, which is worth doing but not required.
-- **Positron** ships with the Quarto extension, which gives it the render and preview commands. Whether the Quarto command-line tool itself comes with a given Positron build has changed between versions, so the check script for the course (step 5 below) tells you whether it is present. If it is not, install it from [quarto.org](https://quarto.org/docs/get-started/).
+- **Positron** ships with the Quarto extension, which gives it the render and preview commands. Whether the Quarto command-line tool itself comes with a given Positron build has changed between versions, so the check script of the workspace (step 5 below) tells you whether it is present. If it is not, install it from [quarto.org](https://quarto.org/docs/get-started/).
 - **VS Code** needs both the Quarto extension and the Quarto command-line tool, which you install from [quarto.org](https://quarto.org/docs/get-started/).
 
 To confirm an installation, open a fresh terminal and type `quarto --version`.
@@ -69,39 +71,90 @@ RStudio is the IDE that most R users learned on, and if it is already on your ma
 
 ### VS Code
 
-VS Code is the general-purpose editor on which Positron is built, and it works for R once two extensions and one R package are in place. Download it from [code.visualstudio.com](https://code.visualstudio.com/download). Then, inside VS Code, install the **R** extension (`REditorSupport.r`) and the **Quarto** extension (`quarto.quarto`) from the Extensions view. In R, install the package that gives the editor its code completion and diagnostics: `install.packages("languageserver")`. On Windows the R extension finds R through the registry entry from step 1, and on any system you can point it at an R executable in the settings of the extension (`r.rpath.windows`, `r.rpath.mac`, `r.rpath.linux`). Two optional extras, the `radian` console and the `httpgd` package for the plot viewer, are described in the [VS Code R documentation](https://code.visualstudio.com/docs/languages/r). The Quarto command-line tool is installed separately (step 2).
+VS Code is the general-purpose editor on which Positron is built, and it works for R once two extensions and one R package are in place. Download it from [code.visualstudio.com](https://code.visualstudio.com/download). Then, inside VS Code, install the **R** extension (`REditorSupport.r`) and the **Quarto** extension (`quarto.quarto`) from the Extensions view. In R, install the package that gives the editor its code completion and diagnostics: `install.packages("pak")` once, if `pak` is not installed yet, then `pak::pak("languageserver")`. On Windows the R extension finds R through the registry entry from step 1, and on any system you can point it at an R executable in the settings of the extension (`r.rpath.windows`, `r.rpath.mac`, `r.rpath.linux`). Two optional extras, the `radian` console and the `httpgd` package for the plot viewer, are described in the [VS Code R documentation](https://code.visualstudio.com/docs/languages/r). The Quarto command-line tool is installed separately (step 2).
 
 :::
 
 ---
 
-## 4. The workspace
+## 4. The workspace {#the-workspace}
 
-Download the workspace as a single zip file:
+Each case has a workspace of its own, a single zip file that holds the analysis code, the data and a report to fill in. Download the one for the case of your track, save it somewhere you will find again, such as your Desktop or Documents folder, and unzip it; on Windows, choose "Extract All" rather than working inside the compressed preview. There is no account to create and nothing to sign into.
 
-[Download the workspace (zip)]({{< var template-repo >}}/archive/refs/heads/main.zip)
+::: {.panel-tabset}
 
-Save it somewhere you will find again, such as your Desktop or Documents folder, then unzip it. You now have a folder containing the analysis code, the data and a report to fill in. There is no account to create and nothing to sign into.
+### Housing audit
 
-Open the folder in your IDE. In **Positron** and in **VS Code**, choose **File → Open Folder** and pick the unzipped folder; the files appear in a panel on the left. In **RStudio**, open the file `replication-lab.Rproj` inside the folder, which opens it as a project with the working directory set. Everything you need for the day is in this one folder, and it is yours to keep afterwards.
+[Download the workspace of the housing-audit case (zip)]({{< var cases.housing.workspace-zip >}})
+
+The zip unzips into a folder called `replication-lab-housing-main`. In RStudio, open the file `replication-lab-housing.Rproj` inside it. The folder holds four things that you will use:
+
+- `index.qmd` – the report, with Tasks 1 to 5 and the preregistration block, which renders from the first preview;
+- `working_script.R` – the same steps as a plain script, for working in the console;
+- `R/` – the check script, the starter file for the causal graph of Task 2 and the helpers of Tasks 4 and 5;
+- `data/` – the housing-audit data, the public file of the original authors, the curve of the 64 specifications and their codebooks.
+
+### Immigration and trust
+
+The workspace of the immigration-and-trust case is in preparation. Its address will be [{{< var cases.trust.template-repo >}}]({{< var cases.trust.template-repo >}}).
+
+### Cohabitation
+
+The workspace of the cohabitation case is in preparation. Its address will be [{{< var cases.cohabitation.template-repo >}}]({{< var cases.cohabitation.template-repo >}}).
+
+### EU frames
+
+[Download the workspace of the EU-frames case (zip)]({{< var template-repo >}}/archive/refs/heads/main.zip)
+
+The zip unzips into a folder called `replication-lab-main`. In RStudio, open the file `replication-lab.Rproj` inside it. The folder holds the report with Tasks 1 to 5 and the preregistration block (`index.qmd`), the same steps as a plain script (`working_script.R`), the check script and the helpers in `R/`, the country-year panel, the curve of the claim and their codebooks in `data/`, and in `prep/` the scripts that rebuild the panel from the Eurobarometer files (step 7), beside two that are kept as exhibits to read.
+
+:::
+
+Open the folder in your IDE. In **Positron** and in **VS Code**, choose **File → Open Folder** and pick the unzipped folder; the files appear in a panel on the left. In **RStudio**, open the `.Rproj` file named above, which opens the folder as a project with the working directory set. Everything you need for the course is in this one folder, and it is yours to keep afterwards.
 
 ---
 
-## 5. Check that it works
+## 5. Check that it works {#check-that-it-works}
 
-In the folder, open `R/check_setup.R` and run it: click **Run** or **Source** in your IDE, or type `source("R/check_setup.R")` in the R console. The script prints a short OK or FAIL report covering your R version, Quarto, the packages that the course uses and access to the data. If any package is missing, the report prints a line of R that installs all the missing packages at once, so run that line and then run the script again. Quarto cannot be installed from R in this way. If the report says that Quarto is not found, install it (step 2) and run the script again in a fresh session. Fix any FAIL before the day.
+In the folder, open `R/check_setup.R` and run it: click **Run** or **Source** in your IDE, or type `source("R/check_setup.R")` in the R console. The script prints an OK or FAIL line for each check: your R version, Quarto, the packages that the workspace uses and each data file. In the housing-audit workspace the last check fits the reference specification of the course, which must come out at −19.97 percentage points. The script changes nothing on your system. If any package is missing, it prints a line of R that installs all the missing packages at once, through the `pak` package, so run that line and then run the script again. Quarto cannot be installed from R in this way. If the script says that Quarto is not found, install it (step 2) and run the script again in a fresh session. Fix any FAIL before the day.
 
 ::: {.callout-note}
-The course uses a set of standard R packages, for tidying data, fitting models, drawing causal graphs and making tables. You do not need to look them up one by one, because the check script prints the line that installs whichever are missing. All are free and come from CRAN, the official package archive for R.
+The course uses a set of standard R packages, for tidying data, fitting models, drawing causal graphs and making tables. The housing-audit workspace, for instance, needs six: `dplyr` and `purrr` for working with the data, `readr` for reading it, `ggplot2` for the figures, `dagitty` for the causal graph, and `rmarkdown`, through which Quarto runs the R code of the report. You do not need to look them up one by one, because the check script prints the line that installs whichever are missing. All are free and come from CRAN, the official package archive for R.
 :::
 
-If something fails and the report does not say why, the [help page](help.qmd) lists the problems that other participants have met, with their fixes and with prompts you can give an AI assistant. If you get stuck, come along anyway and use the browser lab.
+If something fails and the script does not say why, the [help page](help.qmd) lists the problems that other participants have met, with their fixes and with prompts you can give an AI assistant. If you get stuck, come along anyway and use the browser lab of your case.
 
 ---
 
-## 6. The Eurobarometer files, for the individual-level work
+## 6. The data {#the-data}
 
-Everything on the day runs on the country-year panel that comes with the workspace, so this step is needed only if your track includes the individual-level extension, or if you want to rebuild the panel yourself. The respondent-level data behind the course are sixteen Eurobarometer surveys distributed by the GESIS archive under terms that do not allow the course to pass them on, so each participant downloads them under their own free account. Do it in the week before the course, because registration is a web form with a captcha and the sixteen files come to about half a gigabyte.
+Every workspace holds the data that its exercise uses, so nothing in this step needs doing before the day, except for the individual-level work of the EU-frames case. It is here so that you know where the data of each case come from and what you may do with them.
+
+::: {.panel-tabset}
+
+### Housing audit
+
+The original authors (OAs) of the study published their data and code on the Harvard Dataverse ([doi:10.7910/DVN/1HOVTU](https://doi.org/10.7910/DVN/1HOVTU)) under a CC0 licence, which places them in the public domain. The course may therefore pass the file on, and the workspace carries it as `data/audit_original.csv`, with the column names of the OAs, beside the course file `data/housing_audit.csv`, which holds the same emails with plainer names and a few derived columns. The public file is blinded: the size, poverty and ethnic composition of each community are given only as thirds of their distributions, because the exact census values would identify the housing authorities. Nothing in the course tries to recover them. The [case study](cases/housing/index.qmd#sec-data) says more about the file, and the codebooks in `data/` describe every column.
+
+### Immigration and trust
+
+The case will use rounds 1 to 4 of the European Social Survey, which ESS ERIC releases under CC BY-NC-SA 4.0. That licence allows a derived file to be shared for non-commercial use with attribution, so the workspace will ship an extract built from the four rounds, and no download will be needed.
+
+### Cohabitation
+
+The case will use the public-use files of the National Survey of Family Growth for 1995 and 2006–2010, released by the CDC and in the public domain, from which the workspace will build the histories of the unions.
+
+### EU frames
+
+Everything on the day runs on the country-year panel that comes with the workspace. The Eurobarometer files behind it are needed only if your track includes the individual-level work, or if you want to rebuild the panel yourself; the next section has the steps.
+
+:::
+
+---
+
+## 7. The Eurobarometer files, for the individual-level work {#the-eurobarometer-files-for-the-individual-level-work}
+
+This step belongs to the EU-frames case only. Everything on the day runs on the country-year panel that comes with the workspace, so the step is needed only if your track includes the individual-level extension, or if you want to rebuild the panel yourself. The respondent-level data behind the course are sixteen Eurobarometer surveys distributed by the GESIS archive under terms that do not allow the course to pass them on, so each participant downloads them under their own free account. Do it in the week before the course, because registration is a web form with a captcha and the sixteen files come to about half a gigabyte.
 
 1. **Register** with GESIS at [search.gesis.org](https://search.gesis.org/). Registration is free, open to all and immediate.
 2. **Download the Stata file of each of the sixteen studies** listed in the [data sources module](companion/data-sources.qmd#sec-gesis), which has the study numbers, the versions current at the time of writing, and a screenshot of every step. Search by study number, take the `.dta` file only, and state your purpose of use in the download dialog as "in the course of my studies" or "for further education and qualification".
@@ -114,45 +167,46 @@ The GESIS terms of use forbid passing the files to anyone else, publishing anyth
 
 ## The browser lab
 
-The [Browser lab](cases/eu-frames/lab.qmd) page holds the whole exercise on a copy of R that runs inside the browser.
+Each case has a browser lab, [housing audit](cases/housing/lab.qmd) and [EU frames](cases/eu-frames/lab.qmd), which holds the whole exercise on a copy of R that runs inside the browser.
 
 - **Nothing to install.** A recent version of **Chrome, Edge or Firefox** is all you need. (Safari works too, but the others are more reliable for this.)
 - **The one link.** Open the page and a full copy of R starts up inside the tab – it takes ten to thirty seconds the first time – with the data already in place, the same helpers as the workspace, and the same numbers at the end.
 - **What it is for.** Following a demonstration on the shared screen, trying the exercise before you have installed anything, and carrying on if your own installation fails on the day. Work done in it stays in the tab only until you refresh, so anything you want to keep should go into your workspace.
 
-Open it once in advance to confirm that it loads on the machine you will use.
+Open the lab of your case once in advance to confirm that it loads on the machine you will use.
 
 ---
 
 ## What you do not need
 
-The day needs no accounts or sign-ups. In particular, you do **not** need:
+The course needs no accounts or sign-ups. In particular, you do **not** need:
 
-- **git or a GitHub account** – nothing in the day depends on version control. If you want to learn it, the optional [Git and GitHub companion module](companion/git-github.qmd) is there for afterwards.
-- **an OSF account** – you will see how preregistration works on the Open Science Framework and complete one yourself, in the preregistration block of your own report.
+- **git or a GitHub account** – nothing in the course depends on version control. If you want to learn it, the optional [Git and GitHub companion module](companion/git-github.qmd) is there for afterwards.
+- **an OSF account** – you will read the public records of your case on the Open Science Framework as any reader can, and complete a preregistration yourself, in the preregistration block of your own report.
+- **a data archive account** – the data of every case ship with its workspace. The one exception is the optional individual-level work of the EU-frames case, which needs the free GESIS account of step 7.
 - **an AI assistant account** – Posit Assistant in Positron and the assistants in VS Code need a provider account or an API key of your own, and nothing in the course depends on either. The [help page](help.qmd) says how to use one for setup problems if you have one.
 - **paid software** – everything used is free and open.
-- **any sign-up at all** – you can arrive, take part in full and leave without creating a single account.
+
+You can arrive, take part in full and leave without creating a single account.
 
 ---
 
-## Two screens
+## On the day
 
-When the workshop runs online, you will get the most out of it with a little room to work:
-
-- **A second window or device.** Join the video call on one screen (or one device), and keep a second window or a second device free for your own work – your IDE, or the browser lab if your machine fails on the day. That way you can follow the shared screen and do the hands-on tasks side by side, without one covering the other.
-- **Joining links.** The call link, and any session-specific links, come to you with the joining details. You do not need to hunt for anything in advance beyond the setup on this page.
+- **In person.** Bring a laptop with the workspace already working on it, and its charger. A tablet or a phone is enough to follow the browser lab, but not to work in the workspace.
+- **Online.** You will get the most out of it with a little room to work. Join the video call on one screen or device, and keep a second window or device free for your IDE, or for the browser lab if your machine fails, so that you can follow the shared screen and do the hands-on tasks side by side. The call link, and any session-specific links, come to you with the joining details.
 
 ---
 
 ## Optional reading
 
-None of these is required, and everything is taught on the day. If you would like to arrive with some context, these are worth the time, with one line each on why.
+None of these is required, and everything is taught in the course. If you would like to arrive with some context, these are worth the time, with one line each on why.
 
 | Reading | Why it is worth the time |
 |---|---|
+| The case study of your case, [housing audit](cases/housing/index.qmd) or [EU frames](cases/eu-frames/index.qmd) | The original study, the five reanalyses of its claim and the replication with new data, which every track of the case starts from. |
 | [Nosek et al. (2018) – The preregistration revolution](https://doi.org/10.1073/pnas.1708274114) | A short, readable primer on the one idea on which preregistration depends: the difference between predicting a result and explaining one after the fact. It deals directly with the case where the data already exist, which is ours. |
-| The [AsPredicted](https://aspredicted.org) eight-question form | The template you will fill in during the session. Skim the eight questions once so that the form is familiar when you meet it on the day. |
-| [van den Akker et al. (2021) – Preregistration of secondary data analysis](https://doi.org/10.15626/MP.2020.2625) | The fuller preregistration template, built for our situation of reanalysing data that already exist. It is optional, but it is the more thorough tool for the job you do on the day. |
-| [Reading a specification curve](cases/eu-frames/reading-inference.qmd) | The course reading for the final part of the day: what a large set of results together can and cannot establish, and why thousands of estimates do not amount to thousands of independent tests. |
+| The [AsPredicted](https://aspredicted.org) eight-question form | The template on which the preregistration block of your report is modelled. Skim the eight questions once so that the form is familiar when you meet it. |
+| [van den Akker et al. (2021) – Preregistration of secondary data analysis](https://doi.org/10.15626/MP.2020.2625) | The fuller preregistration template, built for our situation of reanalysing data that already exist. It is optional, but it is the more thorough tool for the job you do in the course. |
+| [Reading a specification curve](cases/eu-frames/reading-inference.qmd) | The reading for the final part of the EU-frames day: what a large set of results together can and cannot establish, and why thousands of estimates do not amount to thousands of independent tests. |
 | [The IDE module](companion/ide.qmd) | Positron, RStudio and VS Code set side by side: what each pane does, what changes between them, and what is new in the current releases. |

@@ -5,13 +5,13 @@ subtitle: "Foundation – the working environment around R"
 
 This module of the [companion curriculum](index.qmd) is about the program you sit in while R does the computing: the IDE, an integrated development environment. The default IDE for the course is Positron, and most of the page is a tour of it, pane by pane, written for someone who has never opened it and for someone who has used RStudio for years and wants to know what has moved. The two shorter sections that follow give RStudio and VS Code in broad strokes, with a table for each that shows what changes when you move from it to Positron. The page describes the releases that were current on 8 September 2026, which were Positron 2026.09, RStudio 2026.08 and VS Code 1.136, and the sources listed at the end give the origin of each fact.
 
-R itself is taught in [getting started with R](intro-r.qmd), which works the same way in any of the three IDEs. The download and install steps for each IDE on Windows, macOS and Linux are on the [setup page](../setup.qmd), and the problems that come up are on the [help page](../help.qmd).
+R itself is taught in [getting started with R](intro-r.qmd), which works the same way in any of the three IDEs and uses the housing-audit data in its first thirteen sections. The download and install steps for each IDE on Windows, macOS and Linux are on the [setup page](../setup.qmd), and the problems that come up are on the [help page](../help.qmd).
 
 ## 1. What an IDE does {#sec-what}
 
 R on its own is a program that reads instructions and returns answers. An IDE wraps four things around it: an **editor**, where you write code into files that you keep; a **console**, where a line runs the moment you press Enter; a **view of what exists**, meaning the objects in the session, the data frames behind them and the plots they produce; and **tools**, a terminal, a source-control pane, a way of rendering a document. The three IDEs on this page arrange those four things differently and name them differently, but every one of them has all four, which is why the course runs in all three.
 
-The course asks little of an IDE. It has to open the workspace folder, so that the paths in the code point at the data. It has to run a script line by line and as a whole, provide an R console, and show a data frame and a plot. It also has to render a Quarto document, because the report you fill in on the day is one, and rendering it is what gives your preregistration block its timestamp. Each of the three does all of this; the difference is in how much is there before you install anything, and in what the data viewer and the assistant can do.
+The course asks little of an IDE. It has to open the workspace folder, so that the paths in the code point at the data. It has to run a script line by line and as a whole, provide an R console, and show a data frame and a plot. It also has to render a Quarto document, because the report that you fill in during the course is one, and rendering it records your preregistration block in the finished report. Each of the three does all of this; the difference is in how much is there before you install anything, and in what the data viewer and the assistant can do.
 
 ## 2. Positron {#sec-positron}
 
@@ -31,7 +31,7 @@ The console works as you would expect: type, press Enter, read the answer. The 2
 
 ### 2.3 Running code {#sec-run}
 
-With an `.R` file open, **Ctrl+Enter** (Cmd+Enter on a Mac) sends the statement under the cursor to the console and moves down to the next, or sends the selection if there is one. The play button at the top of the editor runs the whole file. In a `.qmd` file each code chunk has its own **Run Cell** link, and there are commands to run all the chunks above the cursor, which is how the report on the day is worked through. The full list of shortcuts is on the [keyboard shortcuts page](https://positron.posit.co/keyboard-shortcuts.html), and RStudio users can switch the whole set to what they know: open the settings, search for **RStudio keybindings**, tick the box and restart Positron, which the [migration page](https://positron.posit.co/migrate-rstudio-keybindings.html) describes.
+With an `.R` file open, **Ctrl+Enter** (Cmd+Enter on a Mac) sends the statement under the cursor to the console and moves down to the next, or sends the selection if there is one. The play button at the top of the editor runs the whole file. In a `.qmd` file each code chunk has its own **Run Cell** link, and there are commands to run all the chunks above the cursor, which is how the report of the exercise is worked through. The full list of shortcuts is on the [keyboard shortcuts page](https://positron.posit.co/keyboard-shortcuts.html), and RStudio users can switch the whole set to what they know: open the settings, search for **RStudio keybindings**, tick the box and restart Positron, which the [migration page](https://positron.posit.co/migrate-rstudio-keybindings.html) describes.
 
 ### 2.4 The Variables pane {#sec-variables}
 
@@ -41,7 +41,7 @@ Beside each data frame is an icon that opens it in the Data Explorer, which the 
 
 ### 2.5 The Data Explorer {#sec-explorer}
 
-The **Data Explorer** is the part of Positron that most changes how it feels to work with data, and it is the pane to try first. It opens in four ways: from the icon beside a data frame in the Variables pane; from the command **View Data Frame at Cursor** in the Command Palette or the right-click menu of an `.R` or `.qmd` file; from `View(euframes)` in the console, which is the same call that RStudio users know; and directly from a file in the Explorer, since a `.csv`, `.tsv`, `.parquet` or `.xlsx` file, compressed or not, opens without being read into R at all.
+The **Data Explorer** is the part of Positron that most changes how it feels to work with data, and it is the pane to try first. It opens in four ways: from the icon beside a data frame in the Variables pane; from the command **View Data Frame at Cursor** in the Command Palette or the right-click menu of an `.R` or `.qmd` file; from `View(audit)` in the console, which is the same call that RStudio users know; and directly from a file in the Explorer, since a `.csv`, `.tsv`, `.parquet` or `.xlsx` file, compressed or not, opens without being read into R at all.
 
 Three parts make it up. The **data grid** is the spreadsheet-like view of the cells, with a click on a column header to sort. The **summary panel**, down the left, gives summary statistics for every column: type, count of missing values, and the distribution, so that the shape of a dataset is visible before any code is written. And the **filter bar** holds filters on specific columns, which reduce the rows on display. Filters and sorts are ephemeral. They change what you are looking at and leave the object in the session as it was, so narrowing the view changes nothing in your analysis.
 
@@ -49,7 +49,7 @@ The 2026.09 release added **Import Data**, a dialog that reads a CSV, TSV, Excel
 
 ### 2.6 Plots, Help and Viewer {#sec-plots}
 
-The **Plots pane** shows the figure that the last plotting call produced, keeps a history of earlier ones as thumbnails, and has controls to zoom, copy and save. The **Help pane** opens whenever you ask for help, with `?feols` in the console or with the cursor on a function name and F1, and the help appears as a rendered page with working links. The **Viewer** shows HTML output: an interactive table, an htmlwidget, and the preview of a Quarto document when you render one.
+The **Plots pane** shows the figure that the last plotting call produced, keeps a history of earlier ones as thumbnails, and has controls to zoom, copy and save. The **Help pane** opens whenever you ask for help, with `?glm` in the console or with the cursor on a function name and F1, and the help appears as a rendered page with working links. The **Viewer** shows HTML output: an interactive table, an htmlwidget, and the preview of a Quarto document when you render one.
 
 ### 2.7 Quarto {#sec-quarto}
 
@@ -57,7 +57,7 @@ The Quarto extension ships inside Positron, so a `.qmd` file opens with syntax h
 
 ### 2.8 Packages and connections {#sec-packages}
 
-The **Packages pane**, in the right-hand side bar, lists the packages installed for the current session, and since 2026.09 it also shows known security vulnerabilities for installed R and Python packages, scored on the Common Vulnerabilities and Exposures system. The **Connections pane** browses databases: the 2026.09 release added support for any database with an ODBC driver installed, alongside the earlier Databricks and Snowflake connections, with a Disconnect action that also closes the Data Explorers opened from that connection. Neither pane is needed on the day, though both become valuable in a project that lasts longer than a day.
+The **Packages pane**, in the right-hand side bar, lists the packages installed for the current session, and since 2026.09 it also shows known security vulnerabilities for installed R and Python packages, scored on the Common Vulnerabilities and Exposures system. The **Connections pane** browses databases: the 2026.09 release added support for any database with an ODBC driver installed, alongside the earlier Databricks and Snowflake connections, with a Disconnect action that also closes the Data Explorers opened from that connection. Neither pane is needed for the exercise, though both become valuable in a project that lasts longer than a course.
 
 ### 2.9 Folders and the welcome page {#sec-folders}
 
@@ -75,7 +75,7 @@ Positron takes extensions from **Open VSX**, the open registry, through a mirror
 
 **Posit Assistant** is the AI coding assistant built into Positron, the default assistant there since the 2026.07 release. It works on a bring-your-own-key basis: you connect it to a provider of your own, Anthropic, Amazon Bedrock, GitHub Copilot or OpenAI, with your key or account, and Posit does not collect the prompts or conversations that pass through an external provider. It differs from a chat tool in a browser tab in what it can read, which includes your loaded data, your plots and your console history, and it knows the version of R and the names and types of your variables, so a question about "this data frame" means the one in your session. It has slash commands, a Plan Mode for working out an approach before writing code, and file attachments by drag and drop. Posit states in its documentation that it provides no support for code that the assistant generates.
 
-The course does not use it. It is described here because it is part of the tool, and because the [help page](../help.qmd) suggests prompts for setup problems that it can answer. The questions about reproducibility that the course raises apply to generated code as much as to any other, and a suggestion that you accept from an assistant is a specification decision of your own, to be stated and justified in your report like every other one.
+The course does not use it. It is described here because it is part of the tool, and because many participants will meet it in Positron whether or not they look for it. The questions about reproducibility that the course raises apply to generated code as much as to any other, and a suggestion that you accept from an assistant is a specification decision of your own, to be stated and justified in your report like every other one.
 
 ### 2.13 The current release {#sec-release}
 
@@ -104,7 +104,7 @@ The table below, drawn from the [comparison](https://positron.posit.co/migrate-r
 | R only, Python through reticulate | R and Python as equals, each with its own console |
 | Local only, or a Posit Workbench server | Local, plus remote work over SSH |
 
-Nothing in that table forces a move, and someone who is productive in RStudio and needs it only for the five tasks of the course loses nothing by staying.
+Nothing in that table forces a move, and someone who is productive in RStudio and needs it only for the five tasks of the exercise loses nothing by staying.
 
 ## 4. VS Code {#sec-vscode}
 
@@ -128,21 +128,23 @@ Someone who already works in VS Code and has R running there can do the whole co
 | If | Then |
 |---|---|
 | You have never used any of the three | Positron. It is the default for the course and the IDE on the shared screen, and its data pane shows more about the data in front of you than either of the other two can. |
-| You have used RStudio for years and want to stay there | Stay. Every task on the day runs in it, and the `.Rproj` file in the workspace opens it as a project. |
+| You have used RStudio for years and want to stay there | Stay. Every task of the exercise runs in it, and the `.Rproj` file in the workspace opens it as a project. |
 | You are an RStudio user curious about what has changed | Positron with the RStudio keybindings on. The shortcuts stay the same, and the differences are the ones in the table above. |
 | You write in several languages and already work in VS Code | Stay, with the R and Quarto extensions in place, or open the same folder in Positron to compare. |
-| Your machine is a managed laptop that blocks installations | Whichever of the three your IT department will install, or the [browser lab](../cases/eu-frames/lab.qmd) if none of them. |
+| Your machine is a managed laptop that blocks installations | Whichever of the three your IT department will install, or the [browser lab](../cases/housing/lab.qmd) if none of them. |
 
 ## 6. Try it {#sec-try}
 
-Work through these six steps in the workspace, in whichever IDE you chose. Together they use every pane that you will need on the day.
+Work through these six steps in the workspace of the housing-audit case, in whichever IDE you chose. Together they use every pane that the exercise needs.
 
-1. Open the workspace folder (File → Open Folder in Positron and VS Code; `replication-lab.Rproj` in RStudio). The files appear in the side bar.
-2. Open `R/check_setup.R` and run it as a whole. Read the OK and FAIL lines in the console.
-3. Run `euframes <- readr::read_csv("data/EUframes_cy.csv")` in the console, then open the data frame in the data viewer: from the Variables pane or with `View(euframes)`. In Positron, read the summary panel: how many rows, which columns have missing values, and what the distribution of the unemployment rate looks like.
-4. Filter the view to a single country and sort by year, and confirm that the object in the session is unchanged by running `nrow(euframes)` in the console.
-5. Draw one figure, `plot(euframes$unemp, euframes$mcosmo)`, and find it in the plots pane; export it once, so you know where the button is.
-6. Open `index.qmd` and render it. Find the finished document in the viewer, and the file it wrote in the folder.
+1. Open the workspace folder (File → Open Folder in Positron and VS Code; `replication-lab-housing.Rproj` in RStudio). The files appear in the side bar.
+2. Open `R/check_setup.R` and run it as a whole. Read the OK and FAIL lines in the console; the last check fits the reference specification of the course and must report −19.97 percentage points.
+3. Run `audit <- readr::read_csv("data/housing_audit.csv")` in the console, then open the data frame in the data viewer: from the Variables pane or with `View(audit)`. In Positron, read the summary panel: how many rows, which columns have missing values and how many, and how the emails are spread across the six names.
+4. Filter the view to a single name, Santiago, and sort by `reply`, then confirm that the object in the session is unchanged by running `nrow(audit)` in the console.
+5. Draw one figure, `barplot(table(audit$name))`, and find it in the plots pane; export it once, so that you know where the button is.
+6. Open `index.qmd`, the report of the exercise, and render it. Find the finished document in the viewer, and the file that it wrote in the `_site` folder.
+
+In the workspace of the EU-frames case the same six steps work on its panel: open `replication-lab.Rproj` in RStudio, read `data/EUframes_cy.csv` in step 3, filter the view to one country and sort by year in step 4, and draw `plot(euframes$unemp, euframes$mcosmo)` in step 5. The check script of that workspace has no reference fit to report.
 
 If any of the six fails, the [help page](../help.qmd) has the likely causes, and the [setup page](../setup.qmd) the steps to repeat.
 

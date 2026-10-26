@@ -1,0 +1,549 @@
+---
+title: "Decision map"
+page-layout: full
+toc: false
+resources:
+  - data/menu_options.csv
+  - data/spec_curve.csv
+  - data/menu_deviations.csv
+---
+
+```{r}
+#| include: false
+# Data for the decision map, read once at render: every option of the menu,
+# the curve of the claim, every option of the curve against its twins, and the
+# displays that hold the options off the curve at the reference settings. All
+# of it is aggregate, and the twins are paired in the browser from the curve.
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
+  library(purrr)
+})
+
+menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE) |>
+  arrange(b_pp, spec_id) |>
+  mutate(rank = row_number())
+deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+outcomes <- read_csv("data/display_outcomes.csv", show_col_types = FALSE)
+subgroups <- read_csv("data/display_subgroups.csv", show_col_types = FALSE)
+stopifnot(nrow(curve) == 64, sum(curve$is_reference) == 1)
+
+fallback_titles <- c(
+  "cases/housing/index.qmd" = "The housing-audit case",
+  "cases/housing/menu.qmd" = "Specification menu",
+  "cases/housing/multiverse.qmd" = "Multiverse",
+  "companion/experiments.qmd" = "Audit experiments",
+  "companion/binary-outcomes.qmd" = "Binary outcomes"
+)
+# page titles without their Markdown emphasis; a page not yet written takes
+# the title of its navbar entry
+page_title <- \(f) {
+  path <- file.path("../..", f)
+  title <- if (file.exists(path)) rmarkdown::yaml_front_matter(path)$title
+  title <- title %||% unname(fallback_titles[f])
+  if (is.na(title)) f else gsub("*", "", title, fixed = TRUE)
+}
+
+# taught_on is a path from the project root, and the page links up two levels
+menu_js <- menu |>
+  mutate(page = taught_on) |>
+  select(axis, level, option, label, on_curve, page, reason, decision, stage, judgement,
+         phrase, estimates, explanation)
+pages <- unique(menu_js$page) |>
+  set_names() |>
+  map(page_title)
+
+curve_js <- curve |>
+  transmute(
+    spec_id, comparison, population, uncoded, model, adjust,
+    b_pp = round(b_pp, 3), se_pp = round(se_pp, 3), coef = round(coef, 4),
+    stat_type, stat = round(stat, 3), df, p = signif(p, 3), p_ri = signif(p_ri, 3),
+    r = round(r, 4), n, rate_hisp = round(rate_hisp, 2), rate_comp = round(rate_comp, 2),
+    rank, ref = is_reference
+  )
+
+# the options off the curve that a display beside the curve holds, each fitted
+# as a difference in proportions with HC2 errors at the reference settings
+display <- bind_rows(
+  outcomes |>
+    filter(contrast == "hispanic", outcome %in% c("reply", "reply24")) |>
+    transmute(axis = "outcome", option = outcome, b_pp, p, n,
+              note = if_else(outcome == "reply",
+                             "Hispanic against white names, the share of delivered emails that drew any reply",
+                             "Hispanic against white names, the share of replies that came within 24 hours")),
+  outcomes |>
+    filter(outcome == "named", contrast == "black") |>
+    transmute(axis = "comparison", option = "black", b_pp, p, n,
+              note = "Black against white names, the share of coded replies that opened with the name"),
+  subgroups |>
+    filter(startsWith(subgroup, "male") | startsWith(subgroup, "female") |
+             startsWith(subgroup, "replies from officials")) |>
+    transmute(axis = if_else(startsWith(subgroup, "replies"), "officials", "names"),
+              option = case_when(startsWith(subgroup, "male") ~ "male",
+                                 startsWith(subgroup, "female") ~ "female",
+                                 .default = "hispanic"),
+              b_pp, p, n,
+              note = case_when(
+                option == "male" ~ "Santiago against Brett, the share of coded replies that opened with the name",
+                option == "female" ~ "Gabriela against Emily, the share of coded replies that opened with the name",
+                .default = "Hispanic against white names, among the coded replies from officials with Hispanic names"
+              ))
+) |>
+  mutate(b_pp = round(b_pp, 2), p = signif(p, 3))
+
+ojs_define(menu_raw = menu_js, curve_raw = curve_js, dev_raw = deviations,
+           display_raw = display, pages_raw = pages)
+```
+
+<style>
+.dm { --ink:#1d2731; --muted:#5b6b78; --line:#d6dde5; --soft:#f5f7f9; --burgundy:#8b1538; max-width:1500px; margin:0 auto; }
+.dm-legend { display:flex; flex-wrap:wrap; gap:0.4rem 1.2rem; align-items:center; font-size:0.8rem; color:var(--ink); margin:0.4rem 0 1rem; }
+.dm-legend .sw { display:inline-block; width:0.8rem; height:0.8rem; border-radius:2px; vertical-align:-0.1rem; margin-right:0.3rem; }
+.dm-legend .chip-sample { display:inline-block; padding:0 0.5rem; border-radius:99px; border:1.5px solid #5b6b78; font-size:0.75rem; margin-right:0.3rem; }
+.dm-legend .chip-sample.off { border-style:dashed; }
+.dm-layout { display:grid; grid-template-columns:minmax(0, 1fr); gap:1.25rem; }
+@media (min-width: 1100px) {
+  .dm-layout { grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); align-items:start; }
+  .dm-side { position:sticky; top:4.5rem; max-height:calc(100vh - 5.5rem); overflow-y:auto; }
+}
+.dm-stages { display:flex; flex-direction:column; gap:1.1rem; }
+.dm-stage { border:1px solid var(--line); border-radius:8px; padding:0.7rem 0.9rem 0.8rem; background:#fff; position:relative; }
+.dm-stage + .dm-stage::before { content:"↓"; position:absolute; top:-1.15rem; left:1.1rem; color:var(--muted); font-size:0.9rem; line-height:1; }
+.dm-stage-head { display:flex; gap:0.55rem; align-items:baseline; }
+.dm-stage-num { flex:none; width:1.45rem; height:1.45rem; border-radius:50%; background:var(--ink); color:#fff; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; justify-content:center; }
+.dm-stage h3 { font-size:1rem; margin:0; font-weight:600; }
+.dm-stage-note { font-size:0.8rem; color:var(--muted); margin:0.15rem 0 0.2rem 2rem; line-height:1.35; }
+.dm-decision { margin:0.55rem 0 0 2rem; }
+.dm-decision-name { font-size:0.82rem; font-weight:600; color:var(--ink); }
+.dm-decision-name .lv { font-weight:600; font-size:0.66rem; letter-spacing:0.04em; text-transform:uppercase; margin-left:0.45rem; }
+.dm-chips { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.3rem; }
+.dm-chip { font:inherit; font-size:0.8rem; line-height:1.3; padding:0.2rem 0.62rem; border-radius:99px; cursor:pointer;
+           border:1.5px solid var(--c); color:var(--c); background:#f4f6f8; background:color-mix(in srgb, var(--c) 9%, white); }
+.dm-chip.off { border-style:dashed; background:#fff; }
+.dm-chip[aria-pressed="true"] { background:var(--c); color:#fff; font-weight:600; }
+.dm-chip.off[aria-pressed="true"] { outline:1.5px solid var(--c); outline-offset:1px; border-color:#fff; }
+.dm-chip:focus-visible { outline:3px solid #e0a800; outline-offset:2px; }
+.dm-verdict { font-size:0.88rem; margin:0.4rem 0 0 2rem; line-height:1.45; }
+.dm-reset { font:inherit; font-size:0.8rem; margin:0.6rem 0 0 2rem; padding:0.2rem 0.7rem; border:1px solid var(--muted); border-radius:4px; background:#fff; color:var(--ink); cursor:pointer; }
+.dm-reset:focus-visible { outline:3px solid #e0a800; outline-offset:2px; }
+.dm-panel { border:1px solid var(--line); border-radius:8px; padding:0.8rem 1rem 1rem; background:#fff; }
+.dm-panel h3 { font-size:0.78rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted); margin:1.1rem 0 0.35rem; font-weight:600; }
+.dm-panel h3:first-child { margin-top:0; }
+.dm-statement { font-family:Georgia, "Source Serif 4", serif; font-size:1.02rem; line-height:1.55; margin:0; }
+.dm-method { font-family:Georgia, "Source Serif 4", serif; font-size:0.95rem; line-height:1.5; margin:0.45rem 0 0; color:var(--ink); }
+.dm-seg.l1 { font-weight:600; color:var(--c); }
+.dm-seg.l2 { color:#4a7a3f; }
+.dm-seg.l3 { color:var(--c); }
+mark.dm-changed { background:#ffeeb0; padding:0 0.12em; border-radius:2px; color:inherit; }
+.dm-small { font-size:0.82rem; color:#3c4a56; line-height:1.45; margin:0.4rem 0 0; }
+.dm-option-title { font-size:1.05rem; font-weight:600; margin:0 0 0.25rem; }
+.dm-badge { display:inline-block; font-size:0.72rem; font-weight:600; padding:0.05rem 0.5rem; border-radius:99px; border:1.5px solid var(--c); color:var(--c); margin:0 0.35rem 0.3rem 0; }
+.dm-badge.off { border-style:dashed; }
+.dm-text { font-size:0.9rem; line-height:1.5; margin:0.35rem 0 0; }
+.dm-chart { margin-top:0.5rem; }
+.dm-chart svg { display:block; max-width:100%; height:auto; }
+.dm-caption { font-size:0.78rem; color:#3c4a56; line-height:1.4; margin:0.3rem 0 0; }
+</style>
+
+The map lays out every decision that an analysis of the claim of the original authors (OAs) has to make, in the order in which an analyst meets them on the way from the data to a verdict: which emails enter the comparison, what is compared, against which names, with which model, and how the answer is tested and reported. Each decision shows all its options, those on the curve of 64 specifications and those that the course teaches off the curve because they answer another question, answer this one less well, check an answer that the curve already holds, or cannot be fitted on the public file. The map opens on the reference specification, the raw gap of the paper between Hispanic and white names among the replies.
+
+Selecting an option rewrites the estimand statement, with the phrases that the choice changed marked, and opens a description of the option: what it estimates, whether it answers the claim, what it does to the estimate against its twins on the curve, and where in the course it is taught. For a selection on the curve, the verdict gives its estimate, the two shares, its test and its rank among the 64; for a selection off the curve, the reason. The [specification menu](menu.qmd) gives the full reasoning. Nothing is fitted in the browser, and every number is read from the files under `data/` that the course pipeline writes.
+
+```{ojs}
+//| echo: false
+//| output: false
+// Data and constants of the map. This chunk displays nothing: a named cell
+// whose value is not a DOM node would otherwise print as an inspector line.
+menu = transpose(menu_raw)
+curve = transpose(curve_raw)
+devRows = transpose(dev_raw)
+displays = transpose(display_raw)
+VARY = ["comparison", "population", "uncoded", "model", "adjust"]
+CHECK_AXES = ["inference", "scale"]
+curveKey = d => VARY.map(a => d[a]).join("|")
+curveIndex = new Map(curve.map((d, k) => [curveKey(d), k]))
+
+DM = {
+  return {
+    stages: [
+      {id: "data", title: "The emails", note: "Which emails enter the comparison, with which names and from which officials, and what happens to the emails that bounced."},
+      {id: "outcome", title: "The outcome", note: "What is compared between the groups of emails, and how the replies without a greeting code count."},
+      {id: "comparison", title: "The comparison", note: "Which names the Hispanic names are set against."},
+      {id: "model", title: "The model", note: "How the difference is estimated, and which covariates the model holds."},
+      {id: "inference", title: "The test and the scale", note: "How uncertain the estimate is said to be, and on which scale it is reported."}
+    ],
+    colour: {outcome: "#0e3b6a", comparison: "#2a5d8f", names: "#4a78ab", population: "#0f6b6b", officials: "#2b8585",
+             uncoded: "#4a7a3f", bounced: "#4a7a3f", model: "#8c5a10", adjust: "#7b6a8f", inference: "#7b6a8f", scale: "#7b6a8f"},
+    levelName: {estimand: "Level 1 – Estimands", measurement: "Level 2 – Measurement", estimation: "Level 3 – Estimation"},
+    levelShort: {estimand: "Level 1", measurement: "Level 2", estimation: "Level 3"},
+    judgement: {kept: "On the curve", other_question: "Another question", weaker_answer: "A weaker answer", check: "A check", unavailable: "Not in the public file"},
+    domainB: [-32, 2]
+  };
+}
+
+// numbers as the site prints them: fixed decimals and a true minus sign
+fmtB = x => (x < 0 ? "−" : "") + Math.abs(x).toFixed(1)
+fmtShift = x => (x < 0 ? "−" : x > 0 ? "+" : "") + Math.abs(x).toFixed(2)
+fmtR = x => (x < 0 ? "−" : "") + Math.abs(x).toFixed(3)
+fmtStat = x => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2)
+fmtP = p => p < 0.0001 ? "< 0.0001" : p < 0.001 ? p.toFixed(4) : p.toFixed(3)
+// "p = 0.021" or "p < 0.0001", so that a bound never follows an equals sign
+pEq = p => p < 0.0001 ? "p < 0.0001" : `p = ${fmtP(p)}`
+fmtPct = x => x.toFixed(1) + "%"
+```
+
+```{ojs}
+//| echo: false
+decisionMap = {
+  const opt = (axis, code) => menu.find(d => d.axis === axis && d.option === code);
+  const optionsOf = axis => menu.filter(d => d.axis === axis);
+  const axesOfStage = id => [...new Set(menu.filter(d => d.stage === id).map(d => d.axis))];
+  const ALL_AXES = DM.stages.flatMap(st => axesOfStage(st.id));
+  const col = axis => DM.colour[axis];
+  const el = (tag, attrs, ...kids) => {
+    const n = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") n.className = v;
+      else if (k === "text") n.textContent = v;
+      else if (k === "style") n.setAttribute("style", v);
+      else n.setAttribute(k, v);
+    }
+    for (const kid of kids) if (kid !== null && kid !== undefined) n.append(kid);
+    return n;
+  };
+  const pageLink = file => el("a", {href: "../../" + file.replace(/\.qmd$/, ".html")}, pages_raw[file] || file);
+  const baselineOf = axis => (devRows.find(d => d.axis === axis) || {}).baseline;
+
+  // ---- state: one option per decision, starting from the reference specification
+  const refRow = curve.find(d => d.ref === true);
+  const REF = {};
+  for (const a of ALL_AXES) REF[a] = (optionsOf(a).find(o => o.on_curve === true) || optionsOf(a)[0]).option;
+  for (const a of VARY) REF[a] = refRow[a];
+  let sel = Object.assign({}, REF);
+  let latest = null;
+  let prevText = null;
+
+  const isOn = (s, a) => opt(a, s[a]).on_curve === true;
+  const offAxes = s => ALL_AXES.filter(a => !isOn(s, a));
+  const curveRowOf = s => { const k = curveIndex.get(curveKey(s)); return k === undefined ? null : curve[k]; };
+  const recipe = d => VARY.map(a => opt(a, d[a]).label).join(" · ");
+
+  // ---- the estimand statement, as segments that can be compared with the last one
+  function statement(s) {
+    const o = a => opt(a, s[a]);
+    const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+    const seg = (key, text, lv) => ({key, text, lv});
+    const pair = s.comparison === "black" ? "Black names and white names" : `Hispanic names and ${o("comparison").phrase}`;
+    return {
+      question: [
+        seg("population", cap(o("population").phrase), "l1"), ", ", seg("names", o("names").phrase, "l1"), ", ",
+        seg("officials", o("officials").phrase, "l1"), ", the difference in the share that drew ", seg("outcome", o("outcome").phrase, "l1"),
+        " between ", seg("comparison", pair, "l1"), " (", seg("uncoded", o("uncoded").phrase, "l2"), ", ",
+        seg("bounced", o("bounced").phrase, "l2"), ")."
+      ],
+      method: [
+        "Estimated with ", seg("model", o("model").phrase, "l3"), ", ", seg("adjust", o("adjust").phrase, "l3"),
+        ", tested by ", seg("inference", o("inference").phrase, "l3"), " and reported ", seg("scale", o("scale").phrase, "l3"), "."
+      ]
+    };
+  }
+  function renderSegments(target, parts) {
+    target.replaceChildren();
+    for (const p of parts) {
+      if (typeof p === "string") { target.append(p); continue; }
+      const span = el("span", {class: `dm-seg ${p.lv}`, style: `--c:${col(p.key)}`, text: p.text});
+      const changed = prevText !== null && prevText[p.key] !== undefined && prevText[p.key] !== p.text;
+      target.append(changed ? el("mark", {class: "dm-changed"}, span) : span);
+    }
+  }
+
+  // ---- what the selection gives
+  function verdictOf(s) {
+    const off = offAxes(s);
+    const blocking = off.filter(a => !(CHECK_AXES.includes(a) && opt(a, s[a]).judgement === "check"));
+    if (blocking.length > 0) return {kind: "off", axes: blocking};
+    return {kind: "curve", d: curveRowOf(s), checks: off};
+  }
+  const statText = d => d.stat_type === "t" ? `t = ${fmtStat(d.stat)} on ${d.df} df` : `z = ${fmtStat(d.stat)}`;
+  function checkText(a, code, d) {
+    if (a === "inference" && code === "randomisation") return `The randomisation test of this specification, 1,999 reshuffles of the names, gives ${pEq(d.p_ri)}.`;
+    if (a === "inference" && code === "chisq") return "The curve stores no chi-square test. Without covariates it tests the same difference as the model, a little more conservatively when R applies its continuity correction.";
+    if (a === "scale" && code === "odds_ratio") return d.model === "logit"
+      ? `As an odds ratio, the logit coefficient is ${Math.exp(d.coef).toFixed(2)}.`
+      : "A linear probability model has no odds ratio; select the logistic regression to read one.";
+    if (a === "scale" && code === "r") return `By the Multi100 rule, the test converts to a partial correlation of ${fmtR(d.r)}.`;
+    return "";
+  }
+  function shortVerdict(v) {
+    if (v.kind === "curve") {
+      const d = v.d;
+      const checks = v.checks.map(a => checkText(a, sel[a], d)).join(" ");
+      return `On the curve: ${fmtB(d.b_pp)} points (${fmtPct(d.rate_hisp)} against ${fmtPct(d.rate_comp)}), ${statText(d)}, ${pEq(d.p)}; ranked ${d.rank} of 64 from the largest gap.${checks ? " " + checks : ""}`;
+    }
+    return `Off the curve: ${v.axes.map(a => `${opt(a, sel[a]).decision.toLowerCase()} – ${opt(a, sel[a]).label} (${DM.judgement[opt(a, sel[a]).judgement].toLowerCase()})`).join("; ")}.`;
+  }
+  function longVerdict(v) {
+    if (v.kind === "curve") {
+      const d = v.d;
+      const parts = [`The selection is one of the 64 specifications on the curve. Its estimate is ${fmtB(d.b_pp)} points, ${fmtPct(d.rate_hisp)} of the Hispanic names against ${fmtPct(d.rate_comp)} of the comparison names, on ${d.n} emails, with ${statText(d)} and ${pEq(d.p)}. Ranked from the largest gap, it is number ${d.rank} of the 64.`];
+      for (const a of v.checks) parts.push(checkText(a, sel[a], d));
+      return parts.join(" ");
+    }
+    const reasons = v.axes.map(a => {
+      const o = opt(a, sel[a]);
+      return `${o.decision} – ${o.label}: ${o.reason}`;
+    }).join(" ");
+    let txt = `The curve holds no analysis with this selection. ${reasons}`;
+    if (v.axes.length === 1) {
+      const a = v.axes[0];
+      const disp = displays.find(d => d.axis === a && d.option === sel[a]);
+      if (disp) txt += ` A display beside the curve holds this option at the reference settings (${disp.note}): ${fmtB(disp.b_pp)} points, ${pEq(disp.p)}, on ${disp.n} emails.`;
+    } else {
+      txt += " Each option off the curve is taught on its own, so this combination was never fitted.";
+    }
+    return txt + " The burgundy marks are the specifications on the curve that share every other choice.";
+  }
+
+  // ---- the map
+  const stageEls = {};
+  const chipEls = [];
+  const verdictBox = el("p", {class: "dm-verdict", "aria-live": "polite"});
+  const resetBtn = el("button", {type: "button", class: "dm-reset"}, "Back to the reference specification");
+  const stagesBox = el("div", {class: "dm-stages"});
+  DM.stages.forEach((st, si) => {
+    const box = el("section", {class: "dm-stage", "aria-labelledby": `dm-stage-${st.id}`},
+      el("div", {class: "dm-stage-head"}, el("span", {class: "dm-stage-num", "aria-hidden": "true"}, String(si + 1)),
+        el("h3", {id: `dm-stage-${st.id}`}, st.title)),
+      el("p", {class: "dm-stage-note"}, st.note));
+    for (const axis of axesOfStage(st.id)) {
+      const opts = optionsOf(axis);
+      const first = opts[0];
+      const nameId = `dm-dec-${axis}`;
+      const group = el("div", {class: "dm-chips", role: "group", "aria-labelledby": nameId});
+      for (const o of opts) {
+        const tip = o.on_curve ? `${o.label}: on the curve` : `${o.label}: off the curve, ${DM.judgement[o.judgement].toLowerCase()}`;
+        const b = el("button", {type: "button", class: "dm-chip" + (o.on_curve ? "" : " off"), style: `--c:${col(axis)}`,
+                                "aria-pressed": "false", title: tip, "aria-label": tip, "data-axis": axis, "data-option": o.option}, o.label);
+        b.addEventListener("click", () => {
+          const before = b.getBoundingClientRect().top;
+          sel[axis] = o.option;
+          latest = axis;
+          update(st.id);
+          const after = b.getBoundingClientRect().top;
+          if (Math.abs(after - before) > 1) window.scrollBy(0, after - before);
+        });
+        chipEls.push({b, axis, code: o.option});
+        group.append(b);
+      }
+      box.append(el("div", {class: "dm-decision"},
+        el("div", {class: "dm-decision-name", id: nameId}, first.decision,
+          el("span", {class: "lv", style: `color:${col(axis)}`}, DM.levelShort[first.level])),
+        group));
+    }
+    stageEls[st.id] = box;
+    stagesBox.append(box);
+  });
+  const verdictStage = el("section", {class: "dm-stage", "aria-labelledby": "dm-stage-verdict"},
+    el("div", {class: "dm-stage-head"}, el("span", {class: "dm-stage-num", "aria-hidden": "true"}, String(DM.stages.length + 1)),
+      el("h3", {id: "dm-stage-verdict"}, "The verdict")),
+    verdictBox, resetBtn);
+  stagesBox.append(verdictStage);
+  resetBtn.addEventListener("click", () => {
+    const before = resetBtn.getBoundingClientRect().top;
+    sel = Object.assign({}, REF);
+    latest = null;
+    update(null);
+    const after = resetBtn.getBoundingClientRect().top;
+    if (Math.abs(after - before) > 1) window.scrollBy(0, after - before);
+  });
+
+  // ---- the panel: statement, the selected option, its twins, the curve
+  const statementP = el("p", {class: "dm-statement estimand", "aria-live": "polite"});
+  const methodP = el("p", {class: "dm-method"});
+  const changedNote = el("p", {class: "dm-small"});
+  const optionBox = el("div");
+  const pairBox = el("div");
+  const curveBox = el("div");
+  const panel = el("div", {class: "dm-panel", role: "region", "aria-label": "The selection and its results"},
+    el("h3", {}, "The estimand statement"), statementP, methodP, changedNote,
+    el("h3", {}, "The selected option"), optionBox,
+    el("h3", {}, "Against its twins on the curve"), pairBox,
+    el("h3", {}, "The curve of 64"), curveBox);
+  const side = el("div", {class: "dm-side"});
+  const topSlot = el("div");
+  const layout = el("div", {class: "dm-layout"}, el("div", {}, topSlot, stagesBox), side);
+
+  const legend = el("div", {class: "dm-legend"},
+    el("span", {}, el("span", {class: "sw", style: "background:#0e3b6a"}), el("span", {class: "sw", style: "background:#0f6b6b"}), DM.levelName.estimand),
+    el("span", {}, el("span", {class: "sw", style: "background:#4a7a3f"}), DM.levelName.measurement),
+    el("span", {}, el("span", {class: "sw", style: "background:#8c5a10"}), el("span", {class: "sw", style: "background:#7b6a8f"}), DM.levelName.estimation),
+    el("span", {}, el("span", {class: "chip-sample"}, "solid"), "on the curve"),
+    el("span", {}, el("span", {class: "chip-sample off"}, "dashed"), "in the course, off the curve"));
+
+  const wide = window.matchMedia("(min-width: 1100px)");
+  function place(stageId) {
+    if (wide.matches) { if (panel.parentNode !== side) side.append(panel); return; }
+    if (stageId === null || stageId === undefined) { if (panel.parentNode !== topSlot) topSlot.append(panel); return; }
+    const anchor = stageId === "verdict" ? verdictStage : stageEls[stageId];
+    if (anchor.nextSibling !== panel) anchor.after(panel);
+  }
+
+  // ---- charts
+  function curveChart(width) {
+    const onVary = VARY.filter(a => isOn(sel, a));
+    const match = curve.filter(d => onVary.every(a => d[a] === sel[a]));
+    const matchSet = new Set(match.map(d => d.spec_id));
+    const showLatest = latest !== null && VARY.includes(latest) && isOn(sel, latest);
+    const latestRows = showLatest ? curve.filter(d => d[latest] === sel[latest] && !matchSet.has(d.spec_id)) : [];
+    const latestSet = new Set(latestRows.map(d => d.spec_id));
+    const base = curve.filter(d => !matchSet.has(d.spec_id) && !latestSet.has(d.spec_id));
+    const tip = d => `${recipe(d)}\n${fmtB(d.b_pp)} points, ${statText(d)}, ${pEq(d.p)}`;
+    const dots = (data, stroke, op, r, sw) => [
+      Plot.ruleX(data, {x: "rank", y1: d => d.b_pp - 1.96 * d.se_pp, y2: d => d.b_pp + 1.96 * d.se_pp, stroke, strokeOpacity: op * 0.35, strokeWidth: sw}),
+      Plot.dot(data.filter(d => d.p < 0.05), {x: "rank", y: "b_pp", r, symbol: "circle", fill: "none", stroke, strokeOpacity: op, strokeWidth: sw, title: tip}),
+      Plot.dot(data.filter(d => d.p >= 0.05), {x: "rank", y: "b_pp", r, symbol: "times", fill: "none", stroke, strokeOpacity: op, strokeWidth: sw, title: tip})
+    ];
+    const ref = curve.filter(d => d.ref === true);
+    return Plot.plot({
+      width, height: Math.max(230, Math.min(320, Math.round(width * 0.5))), marginLeft: 46, marginRight: 10, marginBottom: 38,
+      style: {fontSize: "11px", background: "transparent"},
+      ariaLabel: "The curve of 64 specifications, with the current selection marked",
+      x: {domain: [0, 65], label: "64 specifications, ranked from the largest gap →", ticks: 4},
+      y: {domain: DM.domainB, label: "↑ Gap in points (Hispanic minus comparison)", grid: true, ticks: 5},
+      marks: [
+        Plot.ruleY([0], {stroke: "#9aa8b3", strokeWidth: 0.8}),
+        ...dots(base, "#1d2731", 0.35, 3.4, 0.8),
+        ...dots(latestRows, col(latest || "comparison"), 0.75, 3.6, 1),
+        ...dots(match, "#8b1538", 1, 5.2, 1.6),
+        Plot.text(ref, {x: "rank", y: "b_pp", text: () => "reference", dy: -14, fontSize: 10, fill: "#1d2731"})
+      ]
+    });
+  }
+  function pairData(axis, code) {
+    const base = baselineOf(axis);
+    const others = VARY.filter(a => a !== axis);
+    const key = d => others.map(a => d[a]).join("|");
+    const baseMap = new Map(curve.filter(d => d[axis] === base).map(d => [key(d), d]));
+    const rows = code === base ? curve.filter(d => d[axis] !== base) : curve.filter(d => d[axis] === code);
+    return rows.map(d => ({x: baseMap.get(key(d)).b_pp, y: d.b_pp, s: d.p < 0.05, row: d, twin: baseMap.get(key(d))}));
+  }
+  function pairChart(width, axis, code, data) {
+    const c = col(axis);
+    const others = VARY.filter(a => a !== axis);
+    const isSel = d => others.every(a => d.row[a] === sel[a]) && (code === baselineOf(axis) || d.row[axis] === code);
+    const selPair = isOn(sel, axis) ? data.filter(isSel) : [];
+    const tip = d => `${recipe(d.row)}\n${fmtB(d.x)} → ${fmtB(d.y)} points`;
+    const lo = -22, hi = -10;
+    return Plot.plot({
+      width, height: Math.max(240, Math.min(340, Math.round(width * 0.6))), marginLeft: 50, marginRight: 12, marginBottom: 40,
+      style: {fontSize: "11px", background: "transparent"},
+      ariaLabel: `Each specification on the curve set against its twin with ${opt(axis, baselineOf(axis)).label}`,
+      x: {domain: [lo, hi], label: `with ${opt(axis, baselineOf(axis)).label.toLowerCase()} (points) →`, ticks: 5},
+      y: {domain: [lo, hi], label: "↑ with the other option (points)", ticks: 5},
+      marks: [
+        Plot.line([[lo, lo], [hi, hi]], {stroke: "#5b6b78", strokeDasharray: "4,3", strokeWidth: 0.8}),
+        Plot.dot(data, {x: "x", y: "y", r: 3.6, symbol: "circle", fill: "none", stroke: c, strokeOpacity: 0.75, strokeWidth: 1, title: tip}),
+        Plot.dot(selPair, {x: "x", y: "y", r: 6, symbol: "circle", fill: "none", stroke: "#8b1538", strokeWidth: 1.8, title: tip})
+      ]
+    });
+  }
+
+  // ---- the selected option, in words and numbers
+  const curveRange = [d3.min(curve, d => d.b_pp), d3.max(curve, d => d.b_pp)];
+  function summaryText(axis, code, o) {
+    const out = [];
+    if (!o.on_curve) {
+      out.push(el("p", {class: "dm-text"}, "The course does not cross this option with the curve, so there are no twins to set it against. The verdict below gives the reason and, where a display beside the curve holds the option, its estimate at the reference settings."));
+      return out;
+    }
+    if (!VARY.includes(axis)) {
+      out.push(el("p", {class: "dm-text"}, `Every specification on the curve uses this option, so there is nothing on the curve to set it against. On the curve the 64 estimates run from ${fmtB(curveRange[0])} to ${fmtB(curveRange[1])} points, and all are significant at 5% under the test of their own model.`));
+      return out;
+    }
+    const base = baselineOf(axis);
+    const baseLabel = opt(axis, base).label;
+    if (code !== base) {
+      const r = devRows.find(d => d.axis === axis && d.option === code);
+      out.push(el("p", {class: "dm-text"}, `Against their twins with ${baseLabel.toLowerCase()}, the ${r.n_pairs} specifications with this option move the estimate by ${fmtShift(r.shift_mean)} points on average, from ${fmtShift(r.shift_min)} to ${fmtShift(r.shift_max)}, and ${Math.round(100 * r.sig_share)}% of them stay significant at 5%. A positive shift moves the estimate towards zero.`));
+    } else {
+      const alts = devRows.filter(d => d.axis === axis && d.option !== base)
+        .map(d => `${opt(axis, d.option).label.toLowerCase()} by ${fmtShift(d.shift_mean)} points on average`).join(", ");
+      out.push(el("p", {class: "dm-text"}, `This is the option against which the others of the decision are compared. Swapped in on twin specifications, the alternatives move the estimate as follows: ${alts}.`));
+    }
+    return out;
+  }
+
+  function renderOption(width) {
+    optionBox.replaceChildren();
+    pairBox.replaceChildren();
+    if (latest === null) {
+      optionBox.append(el("p", {class: "dm-text"}, "The map opens on the reference specification: Hispanic against white names among the emails that drew a reply, the five replies without a greeting code left out, a difference in proportions without covariates. Select any option on the map to read what it estimates and whether it answers the claim."));
+      pairBox.append(el("p", {class: "dm-text"}, "Once an option of a decision that varies on the curve is selected, a chart here sets each specification against its twin that differs only in that decision."));
+      return;
+    }
+    const axis = latest, code = sel[axis], o = opt(axis, code), c = col(axis);
+    optionBox.append(
+      el("p", {class: "dm-option-title"}, `${o.decision}: ${o.label}`),
+      el("span", {class: "dm-badge", style: `--c:${c}`}, DM.levelName[o.level]),
+      el("span", {class: "dm-badge" + (o.on_curve ? "" : " off"), style: `--c:${o.on_curve ? "#1d2731" : "#8b1538"}`}, DM.judgement[o.judgement]),
+      el("p", {class: "dm-text"}, el("b", {}, "What it estimates. "), o.estimates),
+      el("p", {class: "dm-text"}, el("b", {}, o.on_curve ? "Why it is on the curve. " : "Why it is off the curve. "), o.explanation),
+      el("p", {class: "dm-small"}, "Taught on ", pageLink(o.page), "."));
+    for (const p of summaryText(axis, code, o)) pairBox.append(p);
+    if (o.on_curve && VARY.includes(axis)) {
+      const data = pairData(axis, code);
+      const box = el("div", {class: "dm-chart"});
+      box.append(pairChart(width, axis, code, data));
+      pairBox.append(box);
+      const baseLabel = opt(axis, baselineOf(axis)).label.toLowerCase();
+      pairBox.append(el("p", {class: "dm-caption"}, code === baselineOf(axis)
+        ? `Each mark is one pair: a specification with ${baseLabel}, placed horizontally by its gap, and its twin with another option of the decision, placed vertically. Marks on the dashed diagonal are unchanged, and marks above it lie closer to zero. The burgundy marks are the pairs of the current selection.`
+        : `Each mark is one pair: a specification with ${baseLabel}, placed horizontally by its gap, and its twin with ${o.label.toLowerCase()}, placed vertically. Marks on the dashed diagonal are unchanged, and marks above it lie closer to zero. The burgundy mark is the pair of the current selection.`));
+    }
+  }
+
+  let lastWidth = 0;
+  function drawPanel() {
+    const width = Math.max(280, Math.floor(panel.clientWidth - 34));
+    lastWidth = width;
+    const v = verdictOf(sel);
+    renderOption(width);
+    curveBox.replaceChildren();
+    const box = el("div", {class: "dm-chart"});
+    box.append(curveChart(width));
+    curveBox.append(el("p", {class: "dm-text"}, longVerdict(v)), box,
+      el("p", {class: "dm-caption"}, `Each mark is one of the 64 specifications on the curve of the claim, ranked from the largest gap, with its 95% confidence interval; below zero, Hispanic names were greeted by name less often. Open circles are significant at 5% under the test of their own model. Burgundy marks are the specifications that match every on-curve choice of the selection${latest !== null && VARY.includes(latest) && isOn(sel, latest) ? `, and the coloured marks are the other specifications that share the option selected last (${opt(latest, sel[latest]).label})` : ""}. The ink label marks the reference specification.`));
+  }
+
+  function update(stageId) {
+    for (const {b, axis, code} of chipEls) b.setAttribute("aria-pressed", sel[axis] === code ? "true" : "false");
+    const st = statement(sel);
+    renderSegments(statementP, st.question);
+    renderSegments(methodP, st.method);
+    const nowText = {};
+    for (const p of [...st.question, ...st.method]) if (typeof p !== "string") nowText[p.key] = p.text;
+    const anyChanged = prevText !== null && Object.keys(nowText).some(k => prevText[k] !== nowText[k]);
+    changedNote.textContent = (anyChanged ? "The marked phrases are the ones that the latest choice changed. " : "")
+      + "Bold phrases state the question (Level 1), green phrases say how its outcome is counted (Level 2), and the second sentence says how the answer is reached (Level 3).";
+    prevText = nowText;
+    verdictBox.textContent = shortVerdict(verdictOf(sel));
+    place(stageId);
+    drawPanel();
+  }
+
+  const root = el("div", {class: "dm"}, legend, layout);
+  update(null);
+  const ro = new ResizeObserver(() => {
+    const w = Math.floor(panel.clientWidth - 34);
+    if (w > 0 && Math.abs(w - lastWidth) > 24) { place(latest === null ? null : (DM.stages.find(s => axesOfStage(s.id).includes(latest)) || {}).id); drawPanel(); }
+  });
+  ro.observe(root);
+  const onMedia = () => { place(latest === null ? null : (DM.stages.find(s => axesOfStage(s.id).includes(latest)) || {}).id); drawPanel(); };
+  wide.addEventListener("change", onMedia);
+  invalidation.then(() => { ro.disconnect(); wide.removeEventListener("change", onMedia); });
+  return root;
+}
+```
+
+The three levels of the map are those of the [specification menu](menu.qmd#level-estimand): a Level 1 choice changes the question, a Level 2 choice changes how its outcome is counted, and a Level 3 choice changes how the answer is reached. The emails counted are chosen first on the map, among the data, but the choice is a Level 1 decision, because counting only the replies and counting every delivered email answer two related questions, the tone of the replies that came and the effect of the name on receiving a named greeting at all. The [case study](index.qmd#sec-posttreatment) sets out why the two differ.

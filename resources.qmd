@@ -1,94 +1,57 @@
 ---
 title: "Resources"
-subtitle: "Readings, links, and tools"
-bibliography: references.bib
+subtitle: "Readings, records and tools"
+bibliography: [references.bib, references-new.bib]
 ---
 
 ## Glossary {#glossary}
 
-The four terms below follow the definitions in @NosekEtAl2025BriefGlossaryTerms. They are not interchangeable, and the day depends on the difference: a finding can survive every robustness check and still be one that nobody can recompute from the original data, or reproduce cleanly and still fail on new data. The 'In this course' column notes where each concept appears in the session.
+The four terms below follow the definitions in @NosekEtAl2025BriefGlossaryTerms. They are not interchangeable, and the course depends on the difference: a finding can survive every robustness check on its own data and still fail on new data, or survive the checks and still be one that nobody can recompute from the original materials. The column 'In this course' notes where each idea appears in the two cases that are taught now.
 
 | Term | Definition | In this course |
 |------------------------|------------------------|------------------------|
-| **Reproducibility** | Same question · same data · same analysis → same result | Tested by the SCORE programme [@AlipourfardEtAl2021SystematizingConfidenceOpen]; the result reported by the original author (OA) was not reproducible [@MiskeEtAl2026InvestigatingReproducibilitySocial] |
-| **Robustness** | Same question · same data · justifiable alternative analysis → stable result | The Multi100 design [@AczelEtAl2026InvestigatingAnalyticalRobustness]; the five-analyst table; the specification work in Part 3 |
-| **Replicability** | Same question · independent new data → same result | Tyner et al. [@TynerEtAl2026InvestigatingReplicabilitySocial]; discussed in Part 1 |
-| **Repeatability** | Umbrella term covering all three above | Used in the Nosek et al. glossary as the overarching category |
+| **Reproducibility** | Same question · same data · same analysis → same result | Tested across the SCORE sample by @MiskeEtAl2026InvestigatingReproducibilitySocial. In the EU-frames case, the result reported by the original author (OA) was not reproducible from the original materials; in the housing-audit case, SCORE never attempted a reproduction, but the four statistics that Multi100 recorded for the analysts reproduce exactly from the public file. In both, the class reproduces a recorded value in Task 3 |
+| **Robustness** | Same question · same data · justifiable alternative analysis → stable result | The Multi100 design [@AczelEtAl2026InvestigatingAnalyticalRobustness]; the five analysts of each claim; the specification menu and the curve of the claim in Tasks 4 and 5, with 64 specifications in the housing-audit case and 864 in the EU-frames case |
+| **Replicability** | Same question · independent new data → same result | Tested across the SCORE sample by @TynerEtAl2026InvestigatingReplicabilitySocial. For the housing-audit claim, a preregistered audit of 3,050 housing authorities found no significant gap; for the EU-frames claim, a replication on later Eurobarometer waves was judged not successful |
+| **Repeatability** | Umbrella term covering all three above | Used in the glossary of Nosek and colleagues as the overarching category |
 
 ------------------------------------------------------------------------
 
-## Core readings
+## The cases
 
-### The three *Nature* 2026 papers (SCORE)
+Each case has a case study that tells its story in full, and the records below are the public deposits on which those pages are built. The immigration-and-trust case and the cohabitation case are in preparation, and their records will join this section with their pages.
 
-- **Reproducibility:** @MiskeEtAl2026InvestigatingReproducibilitySocial – Miske et al. (2026). Investigating the reproducibility of the social and behavioural sciences. *Nature*, 652, 126–134. <https://doi.org/10.1038/s41586-026-10203-5>
+### The housing-audit case
 
-- **Robustness / Multi100:** @AczelEtAl2026InvestigatingAnalyticalRobustness – Aczel et al. (2026). Investigating the analytical robustness of the social and behavioural sciences. *Nature*, 652, 135–142. <https://doi.org/10.1038/s41586-025-09844-9>
+**The paper.** The paper of the original authors (OAs) [@EinsteinGlick2017DoesRaceAffect], published in the *American Journal of Political Science*: <https://doi.org/10.1111/ajps.12252>. The accepted manuscript is open at OpenBU, <https://hdl.handle.net/2144/37826>, and the page numbers quoted on the course site refer to it.
 
-- **Replicability:** @TynerEtAl2026InvestigatingReplicabilitySocial – Tyner et al. (2026). Investigating the replicability of the social and behavioural sciences. *Nature*, 652, 143–150. <https://doi.org/10.1038/s41586-025-10078-y>
+**The data.** The replication package of the OAs on the Harvard Dataverse, released under CC0: <https://doi.org/10.7910/DVN/1HOVTU>. It holds the blinded data file, two Stata do-files (one that runs the analyses on the public file, and one written for the identifiable data, which are not public), two codebooks and a ReadMe that explains why the community variables are given in thirds. The course data in `cases/housing/data/` are built from it, and the codebooks beside them describe every column.
 
-### Vocabulary
+**SCORE and Multi100 on the OSF.** The SCORE project of the paper on the Open Science Framework holds every activity that SCORE carried out on it, and the Multi100 component holds one sub-component for each of the five analysts. Four of the five published their scripts there; the course links to them and does not copy them.
 
-- @NosekEtAl2025BriefGlossaryTerms – Nosek et al. (2025). A brief glossary of terms about repeatability: replicability, robustness, and reproducibility. *MetaArXiv*. 4 pages; read this one before the day. <https://doi.org/10.31222/osf.io/mqfp4_v1>
+| Component | What it holds | Address |
+|---|---|---|
+| SCORE project of the paper | The parent of the components below | <https://osf.io/3a8bg/> |
+| Original materials | The materials of the original study collected by SCORE | <https://osf.io/nrt4s/> |
+| Reproduction | A reproduction with the data and code of the OAs, which holds only an unfilled template | <https://osf.io/9wp8d/> |
+| Power analysis | The power analysis for the replication | <https://osf.io/kcsby/> |
+| Replication | The replication with new data, with its preregistration and final report | <https://osf.io/2ug8x/> |
+| Replication data | The de-identified data of the replication, its analysis do-file and a dictionary, in the folder "Public Data"; the licence is unstated, so the course links to them and does not copy them | <https://osf.io/xseqg/> |
+| Multi100 | The five reanalyses of the claim | <https://osf.io/38rsh/> |
+| 8PTRZ | Chi-square test of a two-by-two table, Hispanic against all other names | <https://osf.io/j8wvh/> |
+| UYV3F | Logit without covariates, Hispanic against white names (a review document only) | <https://osf.io/3672s/> |
+| EWFMI | Logit of three groups with covariates, in Stata | <https://osf.io/jhvca/> |
+| 25N5D | Two-proportion test on every delivered email to Hispanic and white names | <https://osf.io/v8zah/> |
+| P9W8Y | Three-group logit with an omnibus test | <https://osf.io/pzwbm/> |
+| The Multi100 project | The project as a whole, with the claims of all hundred studies | <https://osf.io/q5h2c/> |
 
-- @NosekErrington2020WhatReplication – Nosek & Errington (2020). What is replication? *PLOS Biology*, 18(3), e3000691. <https://doi.org/10.1371/journal.pbio.3000691>
+The three activities of SCORE ended in three different places on the same paper. The reproduction was never attempted. The five reanalyses agreed on the direction of the gap and split three to two on whether the data supported the claim, and the replication with new names and a wider set of authorities found no significant gap. The [case study](cases/housing/index.qmd) tells the story in full.
 
-### Estimands and analytical choices
+### The EU-frames case
 
-- @AuspurgBruderl2021HasCredibilitySocial – Auspurg & Brüderl (2021). Has the credibility of the social sciences been credibly destroyed? *Socius*, 7. <https://doi.org/10.1177/23780231211024421>
+**The paper.** @Teney2016DoesEUEconomic – Teney (2016). Does the EU economic crisis undermine subjective Europeanization? *European Sociological Review*, 32(5), 619–633. <https://doi.org/10.1093/esr/jcw008>
 
-- @LundbergEtAl2021WhatYourEstimand – Lundberg, Johnson & Stewart (2021). What is your estimand? *American Sociological Review*, 86(3), 532–565. <https://doi.org/10.1177/00031224211004187>
-
-- @SilberzahnEtAl2018ManyAnalystsOne – Silberzahn et al. (2018). Many analysts, one data set: making transparent how variations in analytic choices affect results. *Advances in Methods and Practices in Psychological Science*, 1(3), 337–356. <https://doi.org/10.1177/2515245917747646>
-
-### Preregistration
-
-These three are the pre-session reading list for the preregistration segment of the day, and all are open access. None is required, because everything is taught on the day, but they let you arrive with the ideas already in hand.
-
-- Nosek, Ebersole, DeHaven & Mellor (2018). The preregistration revolution. *PNAS*, 115(11), 2600–2606. <https://doi.org/10.1073/pnas.1708274114> – a short primer on the idea on which preregistration depends: predicting a result versus explaining one after the fact, and the case, like ours, where the data already exist.
-
-- The AsPredicted eight-question form – the short template you complete in the session, listed on OSF as the "Preregistration Template from AsPredicted.org". Live form: <https://aspredicted.org>; OSF listing: <https://help.osf.io/article/158-create-a-preregistration>.
-
-- van den Akker, Weston, Campbell, et al. (2021). Preregistration of secondary data analysis: A template and tutorial. *Meta-Psychology*, 5, 2625. <https://doi.org/10.15626/MP.2020.2625> – the fuller template, built for our situation of reanalysing data that already exist, and the tool that a full version of the exercise would use.
-
-### Reading the multiverse
-
-- [Reading a specification curve](cases/eu-frames/reading-inference.qmd) – the course reading for the final part of the day: why a large set of results is not a large set of independent tests, and what a single test across the whole curve can and cannot establish.
-
-### The case study paper
-
-- @Teney2016DoesEUEconomic – Teney (2016). Does the EU economic crisis undermine subjective Europeanization? *European Sociological Review*, 32(5), 619–633. <https://doi.org/10.1093/esr/jcw008>
-
-### The SCORE programme
-
-- @AlipourfardEtAl2021SystematizingConfidenceOpen – Alipourfard et al. (2021). Systematizing Confidence in Open Research and Evidence (SCORE). *SocArXiv*. <https://doi.org/10.31235/osf.io/46mnb>
-
-------------------------------------------------------------------------
-
-## Companion curriculum
-
-Sixteen modules hold most of the teaching in this course, from a first line of R through to a reanalysis you can version and archive. The workshop at the centre is compressed, so it works through the single hands-on case and leaves the skills around it to the modules, each of which stands on its own and can be taken without the others. The [curriculum overview](companion/index.qmd) sets out the three strands into which the modules are grouped, and a suggested reading order.
-
-- [Getting started with R](companion/intro-r.qmd) – for participants arriving with no R at all; best read before the day.
-- [Positron, RStudio and VS Code](companion/ide.qmd) – what an IDE does and what the course needs from one, with Positron pane by pane and RStudio and VS Code set beside it; best read before the day, once R is installed.
-- [Quarto and reproducible documents](companion/quarto.qmd) – the medium in which every page of this site is written: what a `.qmd` file is and what rendering does to it, the YAML header and the chunk options that matter, figures, tables and cross-references, citations drawn from a bibliography, and publishing the finished document, all of it worked through on files that you can open in this project.
-- [The items behind the scales](companion/measurement.qmd) – the EU-meaning battery taken apart: how the four framing scales and the two composites are built from its thirteen items, how often each item is named and how the items hang together, and how the published scales compare with the structure that the answers hold.
-- [Binary outcomes](companion/binary-outcomes.qmd) – one item of the battery as the outcome on the real respondents, fitted as a logit and as a probit side by side, read through odds ratios and average marginal effects, with errors clustered by country-year and a random intercept for the country-year.
-- [Weights](companion/weighting.qmd) – survey weights inside a country-year cell, precision weights across cells and population weights across countries, taken apart on the course panel, and why only the third changes the estimand.
-- [Missing answers](companion/missingness.qmd) – what a respondent who mentions no frame at all does to a share built from mentions, the rules that the specification menu offers for such respondents, and multiple imputation set against those rules.
-- [The statistical methods behind the course](companion/stats-methods.qmd) – every model fitted on the data from the EU-frames case, with real outputs read line by line, from a first `lm()` through fixed and random effects to multilevel, Bayesian and ordered-beta models, ending with meta-analysis and the common effect-size axis.
-- [Causal graphs](companion/dags.qmd) – causal graphs written as R formulas with `dagify()`: confounders, mediators and colliders fitted on data as well as described, the EU-frames graph whose adjustment set is what two-way fixed effects absorb, and what fixed effects cannot fix.
-- [The multiverse and its critics](companion/multiverse.qmd) – where specification-curve thinking came from, the three purposes that a multiverse can serve, and the 2025–26 critical debate read against the curve of the claim.
-- [Simulation as a method](companion/simulation.qmd) – a simulated person-level twin, generated from known parameters so that the original analysis can be fitted on it: parameter recovery, composition against context, recovering individual effects, weights that matter, the degrees-of-freedom argument run live, a null multiverse, a lineup, and design precision by simulation.
-- [The individual level](companion/individual-level.qmd) – the published specification fitted at the individual level on a validated simulated twin, with the real-data values beside it: individual circumstance against national context, and what declaring a level of analysis does to the evidence.
-- [Social science data sources](companion/data-sources.qmd) – a map of the survey programmes, archives, household panels, official statistics, international indicators and political datasets, with the access rule for each, and then the sources used by the course, step by step, including a screen-by-screen walk through the GESIS download.
-- [Building the analysis file](companion/data-management.qmd) – the two workspace scripts that turn your own sixteen GESIS downloads into the respondent file and then into the panel, reproducing the committed panel to machine precision.
-- [Reproducibility repositories](companion/repositories.qmd) – research-data archives, the OSF nodes behind this case, and preregistration templates in more depth.
-- [Git and GitHub for reproducible research](companion/git-github.qmd) – version control and publishing your own report, the hands-on practice that is kept out of the core day so that it can be learned separately.
-
-------------------------------------------------------------------------
-
-## Data and project links
+**Data and project links.**
 
 | Resource | URL |
 |------------------------------------|------------------------------------|
@@ -99,11 +62,9 @@ Sixteen modules hold most of the teaching in this course, from a first line of R
 | Full SCORE dossier on the EU-frames case | <https://osf.io/h7432/> |
 | Multi100 navigation sheet (claims list) | Available from the Multi100 OSF project above |
 
-------------------------------------------------------------------------
+#### The SCORE dossier on the EU-frames case {#the-eu-frames-case-score-dossier-one-paper-all-three-rs}
 
-## The SCORE dossier on the case {#the-eu-frames-case-score-dossier-one-paper-all-three-rs}
-
-The target article [@Teney2016DoesEUEconomic] was put through all three SCORE activities: reproduction, robustness reanalysis, and replication. Few papers have been, which is why this one case can serve for the whole day. The parent node for the full dossier is [**https://osf.io/h7432/**](https://osf.io/h7432/){.uri}, and the table below summarises each component.
+The target article [@Teney2016DoesEUEconomic] was put through all three SCORE activities: reproduction, robustness reanalysis, and replication. Few papers have been, which is why this one case can serve for a whole day. The parent node for the full dossier is [**https://osf.io/h7432/**](https://osf.io/h7432/){.uri}, and the table below summarises each component.
 
 | Component | What | Outcome |
 |------------------------|------------------------|------------------------|
@@ -117,7 +78,89 @@ The target article [@Teney2016DoesEUEconomic] was put through all three SCORE ac
 | `6zqct` | Analyst's maintained fork (course fetch target) – holds the working materials and the data used in the course | <https://osf.io/6zqct/> |
 | `8rtwe` | Official Multi100 archival record for analyst C6HJR | <https://osf.io/8rtwe/> |
 
-The three activities reached three different verdicts on the same paper. Reproduction failed twice, in different ways. The robustness reanalysis held in sign, while its recorded effect sizes spanned two orders of magnitude, largely because of the way in which the test statistics were converted, and the replication on later waves was judged not successful. The glossary states that the three indicators are near-uncorrelated, and this case, documented entirely in public artefacts, shows what that means for a single paper.
+The three activities reached three different verdicts on the same paper. Reproduction failed twice, in different ways. The robustness reanalysis held in sign, while its recorded effect sizes spanned two orders of magnitude, largely because of the way in which the test statistics were converted, and the replication on later waves was judged not successful. The glossary states that the three indicators are near-uncorrelated, and this case, documented entirely in public artefacts, shows what that means for a single paper. The [case study](cases/eu-frames/index.qmd) tells the story in full.
+
+------------------------------------------------------------------------
+
+## Core readings
+
+### The three *Nature* 2026 papers (SCORE)
+
+- **Reproducibility:** @MiskeEtAl2026InvestigatingReproducibilitySocial – how often the central result of a paper can be recomputed from its own data. <https://doi.org/10.1038/s41586-026-10203-5>
+- **Robustness:** @AczelEtAl2026InvestigatingAnalyticalRobustness – Multi100, in which at least five analysts reanalysed each of a hundred claims. <https://doi.org/10.1038/s41586-025-09844-9>
+- **Replicability:** @TynerEtAl2026InvestigatingReplicabilitySocial – how often claims hold on new data, under preregistered protocols. <https://doi.org/10.1038/s41586-025-10078-y>
+- @AlipourfardEtAl2021SystematizingConfidenceOpen – the SCORE programme, of which all three studies are part. <https://doi.org/10.31235/osf.io/46mnb>
+
+### Vocabulary
+
+- @NosekEtAl2025BriefGlossaryTerms – a four-page glossary of the terms of repeatability; read it before the day. <https://doi.org/10.31222/osf.io/mqfp4_v1>
+- @NosekErrington2020WhatReplication – what counts as a replication. <https://doi.org/10.1371/journal.pbio.3000691>
+
+### Estimands and analytical choices
+
+- @LundbergEtAl2021WhatYourEstimand – the steps from a theoretical estimand to an empirical one, and why a result means little until the estimand is stated. <https://doi.org/10.1177/00031224211004187>
+- @SilberzahnEtAl2018ManyAnalystsOne – the red-card study, in which twenty-nine teams analysed one dataset. <https://doi.org/10.1177/2515245917747646>
+- @AuspurgBruderl2021HasCredibilitySocial – the reanalysis of the red-card study that traced the spread of its results to teams answering different questions. <https://doi.org/10.1177/23780231211024421>
+
+### Audit studies and the housing-audit case
+
+- @Lipsky1980StreetLevelBureaucracy – the discretion of the officials who deliver public services in direct contact with citizens.
+- @Pager2003MarkCriminalRecord and @BertrandMullainathan2004AreEmilyGreg – two field experiments on hiring that made the audit design familiar, the first with matched pairs of testers and the second with résumés that differed only in a name.
+- @QuillianEtAl2017MetaanalysisFieldExperiments – a meta-analysis of field experiments on racial discrimination in hiring.
+- @ButlerBroockman2011PoliticiansRaciallyDiscriminate and @WhiteEtAl2015WhatNeedVote – the audits of state legislators and local election officials on which the design of the OAs builds.
+- @Gaddis2017HowBlackAre – how often the names used in audits are read as indicating the group that they are meant to indicate.
+- @MontgomeryEtAl2018HowConditioningPosttreatment – what conditioning on a variable that the treatment can change does to an experiment.
+- @Coppock2019AvoidingPosttreatmentBias – the same problem in audit experiments that compare the content of replies, and the remedies, one of which analyst 25N5D chose.
+
+### The multiverse and its critics
+
+- @SimmonsEtAl2011FalsePositivePsychology and @GelmanLoken2014StatisticalCrisisScience – how undisclosed flexibility in analysis produces false positives, and the garden of forking paths.
+- @SteegenEtAl2016IncreasingTransparencyMultiverse and @SimonsohnEtAl2020SpecificationCurveAnalysis – the multiverse analysis and the specification curve, the two proposals on which the curve of the claim draws.
+- @DelGiudiceGangestad2021TravelersGuideMultiverse – a systematic framework for judging which analytic decisions are equivalent, and so which analyses belong in one multiverse.
+- @BreznauEtAl2022ObservingManyResearchers – a many-analysts study in which teams tested one hypothesis about immigration and social policy on the same data.
+- @Auspurg2025RobustnessBetterAssessed – the case for a few thoughtful models over billions of regressions.
+- @RohrerEtAl2026WhatsMultiverseGood and @LakensEtAl2026ThereOnlyOne – what a multiverse is good for, and the argument that a fully specified question has only one correct analysis.
+- @HeymanVanpaemel2022MultiverseAnalysesClassroom – the multiverse as a teaching device.
+- [Reading a specification curve](cases/eu-frames/reading-inference.qmd) – the course reading for the final part of the EU-frames day: why a large set of results is not a large set of independent tests, and what a single test across the whole curve can and cannot establish.
+
+The [companion module on the multiverse](companion/multiverse.qmd) reads these against the curves of the claims.
+
+### Preregistration
+
+None of these is required, because everything is taught in the course, but they let you arrive with the ideas already in hand. All three are open access.
+
+- Nosek, Ebersole, DeHaven & Mellor (2018). The preregistration revolution. *PNAS*, 115(11), 2600–2606. <https://doi.org/10.1073/pnas.1708274114> – a short primer on the idea on which preregistration depends: predicting a result against explaining one after the fact, and the case, like ours, where the data already exist.
+- The AsPredicted eight-question form – the short template on which the preregistration block of your report is modelled, listed on the OSF as the "Preregistration Template from AsPredicted.org". Live form: <https://aspredicted.org>; OSF listing: <https://help.osf.io/article/158-create-a-preregistration>.
+- van den Akker, Weston, Campbell, et al. (2021). Preregistration of secondary data analysis: A template and tutorial. *Meta-Psychology*, 5, 2625. <https://doi.org/10.15626/MP.2020.2625> – the fuller template, built for our situation of reanalysing data that already exist, and the tool that a full version of the exercise would use.
+
+------------------------------------------------------------------------
+
+## Companion curriculum
+
+The modules of the [companion curriculum](companion/index.qmd) hold the teaching that a single day can only mention, each on a page of its own that stands without the others. The overview sets out the three strands into which they are grouped, which cases each module works on, and which tracks use it.
+
+**Computational tools**
+
+- [Getting started with R](companion/intro-r.qmd) – for participants arriving with no R at all, on the housing-audit data, with further sections on reading other formats, the grammar of graphics and the estimand habit; best read before the day.
+- [Positron, RStudio and VS Code](companion/ide.qmd) – what an IDE does and what the course needs from one, with Positron pane by pane and RStudio and VS Code set beside it.
+- [Quarto and reproducible documents](companion/quarto.qmd) – the format in which your report and every page of this site are written.
+
+**Data management and sharing**
+
+- [Social science data sources](companion/data-sources.qmd) – a map of the survey programmes, archives, panels and official statistics, with the access rule for each, and a screen-by-screen walk through the GESIS download of the EU-frames case.
+- [Building the analysis file](companion/data-management.qmd) – the two workspace scripts of the EU-frames case that turn your own sixteen GESIS downloads into the respondent file and then into the panel.
+- [Reproducibility repositories](companion/repositories.qmd) – research-data archives, the public records behind both cases, and preregistration templates in more depth.
+- [Git and GitHub](companion/git-github.qmd) – version control and publishing your own report, kept out of the core day so that it can be learned separately.
+
+**Statistical methods**
+
+- [Audit experiments](companion/experiments.qmd) – field experiments on discrimination, on the housing-audit case: random assignment, names as treatments, comparisons among replies, randomisation inference, power and the ethics of deception.
+- [Binary outcomes](companion/binary-outcomes.qmd) – proportions, linear probability models and logistic regression on the housing-audit case, and a yes-or-no survey item in clustered data on the EU-frames case.
+- [Causal graphs & adjustment sets](companion/dags.qmd) – confounders, mediators and colliders, conditioning on a reply in the housing-audit case, and confounding by country in the EU-frames panel.
+- [The items behind the scales](companion/measurement.qmd), [Weights](companion/weighting.qmd) and [Missing answers](companion/missingness.qmd) – how the scales of the EU-frames case are built from the items of the survey, the three kinds of weight, and the respondents who mention nothing.
+- [The statistical methods behind the course](companion/stats-methods.qmd) – every model fitted on the data of the EU-frames case, from a first `lm()` through fixed and random effects to multilevel, Bayesian and ordered-beta models.
+- [The individual level](companion/individual-level.qmd) and [Simulation as a method](companion/simulation.qmd) – the published specification of the EU-frames case at the level of respondents, on a validated simulated twin, and simulation as a way of checking a method.
+- [The multiverse and its critics](companion/multiverse.qmd) – where specification curves came from, the purposes that they serve, the current debate about them, and the curves of both cases.
 
 ------------------------------------------------------------------------
 
@@ -137,14 +180,17 @@ The course is open to anyone, and support of the kind listed below exists wherev
 
 ## Tool documentation
 
-| Tool                         | URL                                     |
+| Tool | URL |
 |------------------------------|-----------------------------------------|
-| Positron (IDE)               | <https://positron.posit.co>             |
-| Quarto                       | <https://quarto.org>                    |
-| quarto-live (webR extension) | <https://r-wasm.github.io/quarto-live/> |
-| osfr package                 | <https://docs.ropensci.org/osfr/>       |
-| fixest package               | <https://lrberge.github.io/fixest/>     |
-| ggdag package                | <https://r-causal.github.io/ggdag/>     |
+| R | <https://www.r-project.org> |
+| Positron (IDE) | <https://positron.posit.co> |
+| Quarto | <https://quarto.org> |
+| webR (R in the browser) | <https://docs.r-wasm.org/webr/latest/> |
+| quarto-live (webR in Quarto pages) | <https://r-wasm.github.io/quarto-live/> |
+| osfr package | <https://docs.ropensci.org/osfr/> |
+| fixest package | <https://lrberge.github.io/fixest/> |
+| dagitty (causal graphs) | <https://www.dagitty.net> |
+| ggdag (drawing causal graphs) | <https://r-causal.github.io/ggdag/> |
 
 ------------------------------------------------------------------------
 

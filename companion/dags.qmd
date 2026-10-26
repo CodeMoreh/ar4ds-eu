@@ -1,11 +1,247 @@
 ---
-title: "Causal graphs"
-subtitle: "Confounders, mediators and colliders, and the adjustment set for the case"
-bibliography: ../references.bib
+title: "Causal graphs and adjustment sets"
+subtitle: "Confounders, mediators and colliders in the housing-audit and EU-frames cases"
+bibliography: [../references.bib, ../references-new.bib]
 ---
 
 ```{r}
 #| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(purrr)
+library(ggplot2)
+library(dagitty)
+
+read_data <- \(f) read_csv(file.path("../cases/housing/data", f), show_col_types = FALSE)
+outcomes <- read_data("display_outcomes.csv")
+curve <- read_data("spec_curve.csv")
+no_thirds <- read_data("housing_audit.csv") |>
+  filter(if_any(c(pop_third, poverty_third, black_third, hispanic_third), is.na)) |>
+  nrow()
+
+fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+out <- \(o, cn, col) outcomes[[col]][outcomes$outcome == o & outcomes$contrast == cn]
+
+# A causal graph drawn from the coordinates stored in a dagitty object, with
+# ggplot2 alone, so that the same code runs where ggdag is not installed (the
+# browser lab). Observed nodes are filled boxes, latent ones outlined; arrows
+# are shortened at both ends so that they stop at the boxes.
+dag_plot <- function(g, gap = 0.3) {
+  xy <- coordinates(g)
+  nodes <- tibble(name = names(xy$x), x = unname(xy$x), y = unname(xy$y)) |>
+    mutate(latent = name %in% latents(g))
+  arrows <- as_tibble(edges(g)[, c("v", "w")]) |>
+    left_join(nodes |> select(v = "name", x0 = "x", y0 = "y"), by = "v") |>
+    left_join(nodes |> select(w = "name", x1 = "x", y1 = "y"), by = "w") |>
+    mutate(len = sqrt((x1 - x0)^2 + (y1 - y0)^2),
+           xs = x0 + (x1 - x0) * gap / len, ys = y0 + (y1 - y0) * gap / len,
+           xe = x1 - (x1 - x0) * gap / len, ye = y1 - (y1 - y0) * gap / len)
+  ggplot() +
+    geom_segment(data = arrows, aes(x = xs, y = ys, xend = xe, yend = ye), colour = "#6c757d",
+                 linewidth = 0.6, arrow = grid::arrow(length = grid::unit(7, "pt"), type = "closed")) +
+    geom_label(data = filter(nodes, !latent), aes(x, y, label = name), fill = "#00205b",
+               colour = "white", size = 3.6, fontface = "bold", linewidth = 0,
+               label.padding = grid::unit(5, "pt")) +
+    geom_label(data = filter(nodes, latent), aes(x, y, label = name), fill = "white",
+               colour = "#00205b", size = 3.6, fontface = "bold.italic", linewidth = 0.5,
+               linetype = "dashed", label.padding = grid::unit(5, "pt")) +
+    scale_x_continuous(expand = expansion(add = 0.5)) +
+    scale_y_continuous(expand = expansion(add = 0.35)) +
+    theme_void()
+}
+```
+
+This module of the [companion curriculum](index.qmd) works on two cases. Sections 1 to 6 use the housing-audit case, section 7 the EU-frames case, and sections 8 and 9 draw on both.
+
+Sections 1 to 6 draw the causal graphs of the housing-audit case and read off them what an analysis has to hold constant, and what it must not. The case comes from a field experiment by the original authors (OAs), who emailed public housing authorities from six names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect], and the [case study](../cases/housing/index.qmd) describes it. Task 2 of the exercise asks you to finish a graph of the case, and this module builds it step by step, with the R package dagitty, whose questions the browser lab also answers, with graph code of its own where the browser cannot run the package. The code is shown, and every number about the case is computed from the files of the course in `cases/housing/data/` when the page is built.
+
+## 1. Arrows as claims {#sec-arrows}
+
+A directed acyclic graph, or DAG, is a picture of what you believe causes what. *Directed* means that every edge is an arrow, whose head is the effect. *Acyclic* means that you cannot follow the arrows out of a variable and come back to it. The graph comes before the model: it states the assumptions about the world, and the regression follows from them, so that an analyst who has named the quantity that the analysis is for, the estimand, can derive from the graph which variables to hold constant [@LundbergEtAl2021WhatYourEstimand; @HernanRobins2020CausalInferenceWhat].
+
+The housing-audit case begins with the smallest graph there is. The name on an email may affect the greeting of the reply, and nothing else in the graph causes the name, because the name was assigned by a random number generator. In the language of dagitty the graph is a short text, with one line per arrow, and the exposure and the outcome are marked so that the package knows which effect is asked about.
+
+```{r}
+#| label: first-dag
+first <- dagitty('dag {
+  name [exposure, pos="0,0"]
+  greeting [outcome, pos="2,0"]
+  name -> greeting
+}')
+adjustmentSets(first)
+```
+
+`adjustmentSets()` returns the sets of variables that have to be held constant for the effect of the exposure on the outcome to be estimated, and here it returns the empty set, written `{}`: nothing needs adjusting. That is what random assignment buys. No arrow can point into the name, so no other cause of the greeting can also have shaped which name an authority received.
+
+## 2. Confounder, mediator, collider {#sec-shapes}
+
+Most decisions about adjustment come down to recognising one of three arrangements of three variables, which @fig-shapes draws.
+
+```{r}
+#| label: fig-shapes
+#| fig-cap: "Three arrangements of three variables. Left, z is a common cause of x and y (a confounder); centre, m lies on the path from x to y (a mediator); right, c is a common effect of x and y (a collider)."
+#| fig-alt: "Three small graphs side by side. In the first, z points to both x and y and x points to y. In the second, x points to m and m points to y. In the third, x and y both point to c."
+#| fig-width: 8
+#| fig-height: 2.2
+shapes <- list(
+  confounder = dagitty('dag { x [pos="0,0"] y [pos="2,0"] z [pos="1,1"] z -> x z -> y x -> y }'),
+  mediator = dagitty('dag { x [pos="0,0"] y [pos="2,0"] m [pos="1,1"] x -> m m -> y }'),
+  collider = dagitty('dag { x [pos="0,0"] y [pos="2,0"] c [pos="1,-1"] x -> c y -> c }')
+)
+imap(shapes, \(g, nm) dag_plot(g, gap = 0.22) + labs(title = nm)) |>
+  patchwork::wrap_plots(nrow = 1)
+```
+
+A **confounder** is a common cause of the exposure and the outcome. It opens a path between them that has nothing to do with the effect, so the plain association mixes the effect with the confounding, and adjusting for the confounder closes that path. Had the OAs compared emails that applicants happened to send, rather than names that they assigned, the composition of a community could have shaped both who wrote and how officials answered, and it would have been a confounder; random assignment removes every such path at once.
+
+A **mediator** lies on the path from the exposure to the outcome and carries part of the effect. Whether to adjust for one depends on which quantity is wanted: leave it alone for the total effect, and hold it constant only if the target is the part of the effect that does not run through it.
+
+A **collider** is a common effect of two variables. Left alone, it blocks the path between its two causes, so they stay unrelated. Holding it constant opens the path and creates an association between causes that had none. Restricting a sample to the cases in which the collider took one value does the same as putting it in the model, so that selecting on a variable is conditioning on it, a mechanism that has produced spurious findings in several literatures [@ColeEtAl2010IllustratingBiasDue; @GriffithEtAl2020ColliderBiasUndermines].
+
+## 3. Conditioning on a reply {#sec-collider}
+
+In the housing-audit case the reply is the variable that needs care. Whether an official replies may depend on the name, and it surely depends on the official: on workload, habits, the way the office handles email, none of which the data record. A reply is therefore a common effect of the name and of the traits of the official, a collider, and a comparison of greetings among the replies is a comparison that has been restricted to one value of it.
+
+The quickest way to find out what that does is to build data in which the answer is known. The simulation below writes a world in which the name lowers the chance of a reply but has *no* effect at all on how a reply begins. Each official has one unrecorded trait, and the three worlds differ in what it does. In the first it makes both a reply and a named greeting more likely, in the second it makes a reply more likely and a named greeting less likely, and in the third it affects only the greeting.
+
+```{r}
+#| label: collider-sim
+simulate_audit <- function(trait_on_reply, trait_on_greeting, n = 1e5, seed = 20261025) {
+  set.seed(seed)
+  tibble(hisp = rbinom(n, 1, 0.5), trait = rnorm(n)) |>
+    mutate(
+      reply = rbinom(n, 1, plogis(0.3 + trait_on_reply * trait - 0.8 * hisp)),
+      # the name does not appear here: it has no effect on the greeting
+      greeting = rbinom(n, 1, plogis(0.4 + trait_on_greeting * trait)),
+      named_reply = reply * greeting
+    )
+}
+gap <- \(y, hisp) 100 * (mean(y[hisp == 1]) - mean(y[hisp == 0]))
+
+settings <- tibble(
+  setting = c("the trait raises replies and greetings", "the trait raises replies, lowers greetings",
+              "the trait affects greetings only"),
+  trait_on_reply = c(1.5, 1.5, 0),
+  trait_on_greeting = c(1.5, -1.5, 1.5)
+)
+sim_results <- settings |>
+  mutate(sim = map2(trait_on_reply, trait_on_greeting, simulate_audit),
+         gap_replies = map_dbl(sim, \(d) with(filter(d, reply == 1), gap(greeting, hisp))),
+         gap_all_emails = map_dbl(sim, \(d) gap(d$named_reply, d$hisp))) |>
+  select(setting, gap_replies, gap_all_emails)
+sim_results |> mutate(across(where(is.numeric), \(x) round(x, 1)))
+```
+
+In none of the three worlds does the name change how a reply begins, yet the comparison among the replies finds a gap of `r fmt(sim_results$gap_replies[1])` points in the first, `r fmt(sim_results$gap_replies[2])` in the second and `r fmt(sim_results$gap_replies[3])` in the third. When the trait raises replies, the officials who still reply to a discouraging name are, on average, further along the trait than those who reply to the other name, and whatever the trait does to the greeting shows up as a gap between the names. The direction of the spurious gap depends on how the trait acts on the greeting, which the graph does not say. The third world shows the other side: if the trait does not affect the reply, the replies to the two names are alike and the comparison among them is clean. The comparison among all emails, where an email without a reply counts as one without a named greeting, finds gaps of `r fmt(sim_results$gap_all_emails[1])`, `r fmt(sim_results$gap_all_emails[2])` and `r fmt(sim_results$gap_all_emails[3])` points, and correctly so, because in these worlds the name does change the chance of receiving a named reply, by discouraging the reply itself, and by how much depends on how many replies each world produces.
+
+The simulation makes the name cut replies far more sharply than in the real data, so that the effect is easy to detect. In the experiment, emails with Hispanic names drew a reply `r fmt(abs(out("reply", "hispanic", "b_pp")))` points less often than emails with white names, and the [audit-experiments module](experiments.qmd#sec-posttreatment) shows how far a selection of that size could move the comparison among replies.
+
+::: {.callout-tip}
+## Try it
+
+In the `collider-sim` chunk, set the effect of the name on the reply from −0.8 to 0, so that the name no longer discourages replies, and rerun it. What happens to the gap among the replies in the first two worlds, and why? Then add an arrow `name -> greeting` to the simulation, with a coefficient of −0.5 on the logit of the greeting, and see how the gap among the replies now mixes the true effect with the selection.
+:::
+
+## 4. The graph of the case {#sec-case}
+
+@fig-case draws the case as Task 2 asks for it. The name may affect the reply and the greeting. The reply comes before any greeting, so it points into it. The traits of the official, which the data do not record, affect both whether the official replies and whether a reply opens with the name, and so do the characteristics of the community, which the public file records as thirds. The graph marks the official as latent, meaning unobserved.
+
+```{r}
+#| label: case-dag
+case_graph <- dagitty('dag {
+  name [exposure, pos="2,2.8"]
+  greeting [outcome, pos="4,1"]
+  reply [pos="0,1"]
+  community [pos="2,1.75"]
+  official [latent, pos="2,0.15"]
+  name -> reply
+  name -> greeting
+  reply -> greeting
+  community -> reply
+  community -> greeting
+  official -> reply
+  official -> greeting
+}')
+```
+
+```{r}
+#| label: fig-case
+#| fig-cap: "The housing-audit case as a graph. The name and the community each point into the reply and the greeting, and so do the traits of the official who reads the email, which the data do not record (dashed)."
+#| fig-alt: "A graph with name at the top, reply on the left, greeting on the right and community in the middle, each of name and community pointing to reply and greeting; reply points to greeting; official, drawn dashed at the bottom, points to reply and greeting."
+#| fig-width: 7
+#| fig-height: 3.6
+dag_plot(case_graph)
+```
+
+`paths()` lists every route between the exposure and the outcome, whatever the direction of its arrows, and says whether it is open. Asked again with `Z = "reply"`, it says which routes are open once the reply is held constant, which is what a comparison among replies does.
+
+```{r}
+#| label: case-paths
+paths(case_graph)
+paths(case_graph, Z = "reply")
+```
+
+Left alone, two routes are open, the direct arrow from the name to the greeting and the route through the reply, and both are part of the effect of the name. The routes through the community and through the official pass the reply as a collider, so they are closed. Conditioning on the reply reverses all of that. The route through the reply closes, which is the point of comparing among replies, but the two routes that pass the reply as a collider open, and they carry an association between the name and the greeting that is no part of the effect of the name.
+
+The comparison among replies aims at the direct effect of the name, the part of its effect on the greeting that does not run through the reply. dagitty can be asked for an adjustment set for that quantity.
+
+```{r}
+#| label: case-direct
+direct_sets <- adjustmentSets(case_graph, effect = "direct")
+length(direct_sets)   # the number of sets that identify the direct effect
+observed <- case_graph
+latents(observed) <- character(0)
+adjustmentSets(observed, effect = "direct")
+```
+
+With the traits of the official unobserved, dagitty returns no set at all: no adjustment that the data allow identifies the direct effect. If the traits could be measured, the set would be the reply, the community and the official together. The community thirds close one of the two routes that conditioning opens, which is a reason to prefer an adjusted comparison among replies to a raw one, but the route through the official stays open whatever is adjusted for.
+
+## 5. Counting all delivered emails {#sec-all-emails}
+
+The other comparison changes the outcome rather than the rows. For every delivered email, the outcome is whether a reply came that opened with the name of the sender, an email without a reply counting as 0. The analyst 25N5D chose it, following @Coppock2019AvoidingPosttreatmentBias, and the OAs mention it in a footnote. On the graph the new outcome is one node into which both the reply and the greeting point.
+
+```{r}
+#| label: all-dag
+all_emails <- dagitty('dag {
+  name [exposure]
+  named_reply [outcome]
+  official [latent]
+  name -> reply -> named_reply
+  name -> greeting -> named_reply
+  community -> reply
+  community -> greeting
+  official -> reply
+  official -> greeting
+}')
+adjustmentSets(all_emails)
+isAdjustmentSet(all_emails, "community")
+```
+
+The minimal adjustment set is empty again, and `isAdjustmentSet()` confirms that adding the community keeps the estimate valid, so it may be added for precision. Every route from the name to the named reply runs forward through the reply or the greeting, and nothing is conditioned on, so the comparison of all delivered emails estimates the total effect of the name on receiving a named reply exactly as randomisation set it up. The price is the outcome. It combines whether a reply came with how it began, so it answers a related question rather than the question of tone that the claim asks. On the data the two comparisons give `r fmt(out("named", "hispanic", "b_pp"))` points among the replies and `r fmt(out("named_any", "hispanic", "b_pp"))` among all delivered emails, and the curve of the claim keeps both as two estimands.
+
+## 6. The adjustment sets of the curve {#sec-adjustment}
+
+The graph also explains the adjustment decision of the curve. The covariates of the curve, the hard-to-find address and the community thirds, were all fixed before the emails went out, so none of them can be a mediator or a descendant of the name, and none of them is a confounder, since nothing points into the name. For the comparison of all delivered emails they buy precision and nothing else, and adding them changes little. Among the replies they do one more thing, because the community thirds close one of the routes that the conditioning opened.
+
+```{r}
+#| label: adjust-shift
+curve |>
+  filter(model == "lpm", uncoded == "drop", comparison == "white") |>
+  select(population, adjust, b_pp, n) |>
+  mutate(b_pp = round(b_pp, 2))
+```
+
+Among the replies, the adjustment for the community moves the gap from `r curve |> filter(model == "lpm", uncoded == "drop", comparison == "white", population == "replies", adjust == "none") |> pull(b_pp) |> fmt()` to `r curve |> filter(model == "lpm", uncoded == "drop", comparison == "white", population == "replies", adjust == "place_ethnic") |> pull(b_pp) |> fmt()` points, and among all delivered emails from `r curve |> filter(model == "lpm", uncoded == "drop", comparison == "white", population == "all", adjust == "none") |> pull(b_pp) |> fmt()` to `r curve |> filter(model == "lpm", uncoded == "drop", comparison == "white", population == "all", adjust == "place_ethnic") |> pull(b_pp) |> fmt()`. Part of each shift comes from the `r no_thirds` emails without community thirds, which the adjusted specifications leave out, and part from chance differences between the groups, so the numbers cannot show how much selection the adjustment removes. The graph says only that it removes some, and that it cannot remove the part that runs through the official.
+
+The sex of the name and the ethnicity of the official who replied, two further decisions of the menu, sit at different places on the graph. The sex of the name is part of the treatment and was crossed with the group by design, so it confounds nothing and adjusting for it is a check. Whether the official who replied had a Hispanic name is known only for replies, so it is a descendant of the collider, and a comparison within the replies from such officials conditions on the reply and on what came after it, which is why the menu treats that subgroup as another question.
+
+## 7. The EU-frames case: a panel of country-years {#sec-eu-frames}
+
+The housing-audit data come from an experiment, in which random assignment closes every back door at once. The EU-frames case is observational: a panel of 270 country-years, in which countries and years differ in ways that may move both the unemployment rate and how people frame the EU. This section draws the graph of that case, derives the adjustment set from it, fits the models that the graph prescribes and the ones that it does not, and shows what country and year fixed effects can and cannot absorb. Its graphs are written with the ggdag package, as formulas, rather than as the dagitty text of sections 1 to 6; both produce the same dagitty object, and the same questions can be put to either. Every chunk runs when the page is built, from the shipped `cases/eu-frames/data/EUframes_cy.csv`, and the setup chunk below loads the packages and data of the section.
+
+```{r}
+#| label: setup-eu-frames
 #| message: false
 #| warning: false
 library(dplyr)
@@ -25,8 +261,8 @@ options(width = 88, pillar.sigfig = 4)
 
 euframes <- read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 
-# the adjustment decision on the curve of the claim, for section 6
-curve <- read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+# the adjustment decision on the curve of the claim, for section 7.5
+eu_curve <- read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 forks <- read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
   filter(curve == "positive")
 pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
@@ -43,21 +279,13 @@ node_box <- function() {
 }
 ```
 
-This is the causal-graphs module of the [companion curriculum](index.qmd), and it is optional. On the workshop day the topic gets about thirty minutes: Part 2 introduces the estimand and sketches a directed acyclic graph for the claim under test, and Task 2 asks you to finish that graph and read a control set off it. That is long enough to learn what a graph is for, but too short to practise drawing and querying one. This module builds every graph from scratch, fits the models that the graphs imply on the course data, and shows two ways in which a graph can go wrong that no model output would reveal.
-
-It follows on from [getting started with R](intro-r.qmd) and assumes what that module covers – reading a CSV, a short dplyr chain, a model formula, and the `aes()`-and-geoms grammar of a ggplot. Everything else is introduced here. Every chunk runs when the page is built, so the numbers below are what the code returns, and you can reproduce all of them from the shipped `EUframes_cy.csv`.
-
-## 1. Arrows as claims {#sec-arrows}
-
-A **directed acyclic graph**, or DAG, is a picture of what you believe causes what. *Directed* means every edge is an arrow with a head and a tail, and the head is the effect. *Acyclic* means you cannot follow arrows out of a variable and come back to it, which is a substantive restriction: it says that the graph describes causation at a level of time resolution where nothing causes itself.
-
-A DAG describes the world that you are prepared to assume, and the regression follows from it once those assumptions are stated as arrows, so drawing one is not a way of illustrating a model that you have already chosen. That order of work – from a stated target quantity to the assumptions, and only then to a specification – is the discipline drilled in Part 2 of the workshop, and it is stated at length in the estimand literature that this course draws on [@LundbergEtAl2021WhatYourEstimand; @HernanRobins2020CausalInferenceWhat].
+### 7.1 Graphs written as formulas {#sec-dagify}
 
 In R the graph is built with `dagify()` from the **ggdag** package, and each edge is written as an ordinary formula. The outcome goes on the left of the tilde and its causes on the right, as in `lm()`, so `framing ~ unemployment` reads 'unemployment causes framing'.
 
 ```{r}
-#| label: first-dag
-first <- dagify(
+#| label: first-dag-eu-frames
+first_formulas <- dagify(
   framing      ~ unemployment,   # the effect we want to estimate
   framing      ~ country,        # stable national traits shape framing
   unemployment ~ country,        # and shape the labour market too
@@ -67,19 +295,19 @@ first <- dagify(
                 y = c(unemployment = 0, framing = 0, country = 1))
 )
 
-adjustmentSets(first)
+adjustmentSets(first_formulas)
 ```
 
 There is an older way of writing the same graph, as a quoted string in the mini-language of dagitty itself, and this module does not use it, for two reasons. The first is that a formula is an R expression, so a `#` in front of one comments the arrow out and the call still parses, which makes 'uncomment the arrow you believe' a one-character edit. The second is that adding an arrow becomes a code change like any other. Nothing is lost by writing the edges as formulas, because `dagify()` returns a dagitty object and the query functions used throughout this page all come from the **dagitty** package.
 
-The picture itself is an ordinary ggplot. `tidy_dagitty()` turns the object into a data frame of nodes and edge endpoints, and from there the layers are geoms and themes of the kind that the [ggplot2 section of the R module](intro-r.qmd#sec-ggplot) builds up. `geom_dag_edges()` draws the arrows and `theme_dag()` strips away the axes that a graph has no use for. The nodes come from `node_box()`, the small helper defined in the setup chunk, which is a labelled rectangle roomy enough for a word like `unemployment`; the stock pairing of `geom_dag_point()` and `geom_dag_text()` gives the circled nodes that section 2 uses instead. This is the point at which that module stops being optional background, because everything below assumes you can read a layered plot.
+The picture itself is an ordinary ggplot. `tidy_dagitty()` turns the object into a data frame of nodes and edge endpoints, and from there the layers are geoms and themes of the kind that the [ggplot2 section of the R module](intro-r.qmd#sec-ggplot) builds up. `geom_dag_edges()` draws the arrows and `theme_dag()` strips away the axes that a graph has no use for. The nodes come from `node_box()`, the small helper defined in the setup chunk, which is a labelled rectangle roomy enough for a word like `unemployment`; the stock pairing of `geom_dag_point()` and `geom_dag_text()` gives circled nodes instead. This is the point at which that module stops being optional background, because everything below assumes you can read a layered plot.
 
 ```{r}
-#| label: fig-first
+#| label: fig-first-eu-frames
 #| fig-width: 6
 #| fig-height: 3
 #| fig-cap: "The smallest useful graph: one effect of interest and one common cause."
-first |>
+first_formulas |>
   tidy_dagitty() |>
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_dag_edges(edge_colour = "#6c757d",
@@ -90,55 +318,12 @@ first |>
   expand_limits(x = c(-0.35, 2.35), y = c(-0.25, 1.25))
 ```
 
-## 2. Confounder, mediator, collider {#sec-shapes}
+### 7.2 A collider in a regression {#sec-collider-regression}
 
-Most adjustment decisions come down to recognising one of three arrangements of three variables. The useful mental picture, taken from the ggdag documentation, is that association flows along a path the way that water flows down a pipe, and each shape either lets it through or blocks it.
-
-```{r}
-#| label: fig-shapes
-#| fig-width: 8
-#| fig-height: 2.8
-#| fig-cap: "The three arrangements. Left, z is a common cause of x and y; centre, m lies on the path from x to y; right, c is a common effect of both."
-shapes <- list(
-  "confounder z" = dagify(y ~ x + z, x ~ z,
-    coords = list(x = c(x = 0, y = 2, z = 1), y = c(x = 0, y = 0, z = 1))),
-  "mediator m"   = dagify(m ~ x, y ~ m,
-    coords = list(x = c(x = 0, y = 2, m = 1), y = c(x = 0, y = 0, m = 1))),
-  "collider c"   = dagify(c ~ x + y,
-    coords = list(x = c(x = 0, y = 2, c = 1), y = c(x = 0, y = 0, c = -1)))
-)
-
-draw_shape <- function(d, title) {
-  d |>
-    tidy_dagitty() |>
-    ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-    geom_dag_edges(arrow_directed = grid::arrow(length = grid::unit(7, "pt"),
-                                                type = "closed")) +
-    geom_dag_point(size = 14, colour = "#00205b") +
-    geom_dag_text(colour = "white", size = 4.2) +
-    theme_dag() +
-    labs(title = title) +
-    scale_x_continuous(expand = expansion(mult = 0.2)) +
-    scale_y_continuous(expand = expansion(mult = 0.3))
-}
-
-imap(shapes, draw_shape) |> wrap_plots(nrow = 1)
-```
-
-A **confounder** is a common cause of both the exposure and the outcome. It opens a path between them that has nothing to do with the effect you want, so the plain association mixes the effect with the confounding. Adjusting for a confounder blocks that path, and it is the adjustment that most analysts already know how to make.
-
-A **mediator** lies on the path from exposure to outcome and transmits part of the effect. Whether to adjust for one depends entirely on which quantity you are after. If you want the total effect of the exposure, leave the mediator out, because adjusting for it removes the portion of the effect that travels through it. If you want the direct effect, the part that does not travel through the mediator, then you adjust. Whether an adjustment is correct therefore depends on the estimand that you have named.
-
-A **collider** is a common effect of two variables, and it is the shape that most people have never been taught. A collider blocks the path between its two causes when you leave it alone, which is why the plain association between them is undisturbed. Conditioning on it opens the path. The reason is simple arithmetic. Suppose that the level of EU politicisation in a country-year is roughly the sum of its unemployment and its framing. Knowing only that unemployment is high tells you nothing about framing. But once you also fix politicisation at some value, the two become linked by subtraction, because whatever unemployment does not supply, framing must. Conditioning on a common effect creates a relationship between causes that were unrelated to begin with.
-
-Three practical rules follow. Adjust for confounders, leave mediators alone when the target is the total effect, and do not adjust for a collider unless you know what you are doing and can say what the resulting estimate means.
-
-## 3. Conditioning on a collider {#sec-collider}
-
-A rule you have only read is easy to forget, so the fastest way to learn the third one is to build data whose answer you already know and then break the rule. The recipe below writes a real effect into the data – a one-unit rise in unemployment moves framing by exactly 0.5 – and then creates a variable caused by both. In the terms of the course case, that third variable is politicisation. A slump raises unemployment, sour public framing pushes in the same direction, and parties and media respond to both by making the EU a live political issue.
+The rule against conditioning on a collider has a second lesson when the outcome is continuous and the collider enters a regression as a control. The recipe below writes a real effect into the data – a one-unit rise in unemployment moves framing by exactly 0.5 – and then creates a variable caused by both. In the terms of the EU-frames case, that third variable is politicisation. A slump raises unemployment, sour public framing pushes in the same direction, and parties and media respond to both by making the EU a live political issue.
 
 ```{r}
-#| label: collider-sim
+#| label: collider-sim-regression
 # Seeded here rather than only at the top, so the chunk stands alone if you
 # copy it out and so an edit upstream cannot shift these numbers.
 set.seed(20260730)
@@ -173,21 +358,21 @@ Stated generally, **selecting on a variable is conditioning on it**. Restricting
 Change the recipe so that politicisation is caused only by unemployment and not by framing, making it a descendant of the exposure rather than a collider. Refit both models. Then make it a cause of both instead, so it is a confounder, and refit again. Across the three graphs, each generating its own dataset, the same second model is wrong, harmless and required in turn.
 :::
 
-## 4. The graph for the case {#sec-case}
+### 7.3 The graph of the EU-frames case {#sec-case-eu-frames}
 
-The claim at the centre of the course comes from a 2016 study of how Europeans frame the European Union, whose author this site refers to as the original author, or OA [@Teney2016DoesEUEconomic]. OA's argument is that economic hardship shifts the terms in which people talk about the EU away from cosmopolitan ones, and the reanalysis you work on tests one version of it: whether the unemployment rate in a country-year is associated with the mean cosmopolitan framing of its respondents.
+The claim of the EU-frames case comes from a 2016 study of how Europeans frame the European Union, whose author this site refers to as the original author, or OA [@Teney2016DoesEUEconomic]. OA's argument is that economic hardship shifts the terms in which people talk about the EU away from cosmopolitan ones, and the reanalysis you work on tests one version of it: whether the unemployment rate in a country-year is associated with the mean cosmopolitan framing of its respondents.
 
 Here is that claim as a graph. The node names describe concepts. `unemployment` is the idea and `unemp` is the measurement of it in the EU-frames dataset, and keeping the two names apart stops the graph from becoming a picture of the regression.
 
 ```{r}
-#| label: case-dag
+#| label: case-dag-eu-frames
 case <- dagify(
   framing      ~ unemployment,   # the effect of interest
   framing      ~ country,        # national traits: size, EU tenure, history
   framing      ~ year,           # EU-wide shocks common to a given year
   unemployment ~ country,        # those same traits shape the labour market
   unemployment ~ year,           # and so do the common shocks
-  # framing      ~ growth,       # section 6 turns these two on
+  # framing      ~ growth,       # section 7.5 turns these two on
   # unemployment ~ growth,
   exposure = "unemployment",
   outcome  = "framing",
@@ -202,7 +387,7 @@ paths(case)
 Four of the five arrows in the graph are the two confounder pairs. Countries differ in ways that persist across the whole period and that plausibly move both their labour markets and how their populations talk about Europe, and years differ in ways common to the whole continent, of which 2008 and 2009 are the obvious instances. `paths()` lists every route between exposure and outcome regardless of direction, and reports that all three are open: the causal arrow you want, and one back door through each confounder, meaning a non-causal path that begins with an arrow pointing into unemployment and reaches framing through the common cause.
 
 ```{r}
-#| label: fig-case
+#| label: fig-case-eu-frames
 #| fig-width: 7
 #| fig-height: 3.6
 #| fig-cap: "The EU-frames claim as a graph. The two confounders are drawn above the causal arrow, each with arrows into both ends of it."
@@ -217,9 +402,9 @@ case |>
   expand_limits(x = c(-0.4, 3.4), y = c(-0.4, 1.8))
 ```
 
-Note the two commented lines inside the `dagify()` call. They are the arrows that section 6 discusses, written out in the file as beliefs but switched off. Because a commented formula takes its trailing comma with it, the call parses as it stands, and `growth` does not exist in the graph at all until you delete the two hash marks.
+Note the two commented lines inside the `dagify()` call. They are the arrows that section 7.5 discusses, written out in the file as beliefs but switched off. Because a commented formula takes its trailing comma with it, the call parses as it stands, and `growth` does not exist in the graph at all until you delete the two hash marks.
 
-## 5. The adjustment set {#sec-formula}
+### 7.4 The adjustment set {#sec-formula}
 
 The adjustment set comes from `adjustmentSets()`, which returns the variables that, once held constant, close every back door and leave the causal path open.
 
@@ -251,17 +436,17 @@ list(
   mutate(across(where(is.numeric), \(x) signif(x, 4)))
 ```
 
-Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Part 3 of the workshop day and the value recorded for analyst C6HJR in the Multi100 project.
+Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 7.6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Task 3 in the EU-frames case and the value recorded for analyst C6HJR in the Multi100 project.
 
 Of the four models, one is correct because it adjusts for the set that the graph requires, and one of the other three points the opposite way. Nothing in the data picks out the correct one. The choice comes from the graph, and so from five arrows that were drawn before any model was fitted.
 
 The name `adjustmentSets()` is plural because the function returns *minimally sufficient* sets – sets that close every back door and have no smaller subset that also does so – and a more complicated graph will often return several, any one of which will do. The graph narrows the choice, sometimes to a single set, but often the analyst still has to choose among several.
 
-## 6. The limits of fixed effects {#sec-growth}
+### 7.5 The limits of fixed effects {#sec-growth}
 
 Country and year fixed effects are frequently described as though they adjust for everything, and the graph shows why they do not. A country fixed effect absorbs whatever is constant within a country across the whole period, and a year fixed effect absorbs whatever is common to all countries in a given year. A variable that moves *within* a country *over* time is untouched by both, and if that variable causes unemployment and framing alike, it is a back door that the reproduced specification does not close. This is the substance of the methodological warnings about reading fixed-effects coefficients as causal quantities [@KeeleEtAl2020CausalInterpretationEstimated; @BellJones2015ExplainingFixedEffects].
 
-GDP growth is such a variable, and on the [specification menu](../cases/eu-frames/menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 4 and run `adjustmentSets()` again.
+GDP growth is such a variable, and on the [specification menu](../cases/eu-frames/menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 7.3 and run `adjustmentSets()` again.
 
 ```{r}
 #| label: growth-confounder
@@ -341,11 +526,11 @@ list(total = "total", direct = "direct") |>
 
 Depending on which of the two defensible beliefs about growth you hold, and which quantity you want, the graphs give three different formulas. The menu axis that offers growth as a copredictor is therefore a choice between two claims about what the unemployment coefficient means, and running the model both ways as a robustness check does not make that choice. Nor will a coefficient on growth that looks 'supported by the data' settle it, because the two graphs make identical predictions about the data.
 
-### The adjustment on the curve {#sec-adjustment}
+### 7.6 The adjustment on the curve {#sec-adjustment-eu-frames}
 
-The curve of the claim keeps both options of the adjustment decision, the slope with the other economic measure left out and the slope with it held fixed, and the reasoning is the one that the two graphs above set out. Unemployment and growth are two expressions of the same downturn rather than a cause and its confounder, so leaving growth out and holding it fixed give two estimands rather than a right and a wrong set of controls. The unadjusted slope is the association of framing with unemployment whatever happened to output, which is what the reproduced specification estimates, and the adjusted slope is the association at a given rate of growth, which is what the model of the original study estimates, since it carries both measures. The roles swap when growth is the predictor and unemployment is held fixed, and growth then has less to work with, because 59% of its variation within countries is common to all of them in the same year, above all the recession of 2009, which the year effects remove. On the curve the adjustment carries `r pp(fk("copredictor"))` of the variance of the claim-aligned partial correlations, and moving it alone changes the class of `r pp(fk("copredictor", "crossing_rate"))` of the pairs of specifications that differ in nothing else; `r pp(below_sig(filter(curve, copredictor == "none")))` of the unadjusted specifications and `r pp(below_sig(filter(curve, copredictor == "other")))` of the adjusted ones lie below zero with bootstrap p < 0.05.
+The curve of the claim keeps both options of the adjustment decision, the slope with the other economic measure left out and the slope with it held fixed, and the reasoning is the one that the two graphs above set out. Unemployment and growth are two expressions of the same downturn rather than a cause and its confounder, so leaving growth out and holding it fixed give two estimands rather than a right and a wrong set of controls. The unadjusted slope is the association of framing with unemployment whatever happened to output, which is what the reproduced specification estimates, and the adjusted slope is the association at a given rate of growth, which is what the model of the original study estimates, since it carries both measures. The roles swap when growth is the predictor and unemployment is held fixed, and growth then has less to work with, because 59% of its variation within countries is common to all of them in the same year, above all the recession of 2009, which the year effects remove. On the curve the adjustment carries `r pp(fk("copredictor"))` of the variance of the claim-aligned partial correlations, and moving it alone changes the class of `r pp(fk("copredictor", "crossing_rate"))` of the pairs of specifications that differ in nothing else; `r pp(below_sig(filter(eu_curve, copredictor == "none")))` of the unadjusted specifications and `r pp(below_sig(filter(eu_curve, copredictor == "other")))` of the adjusted ones lie below zero with bootstrap p < 0.05.
 
-The year effects of the graph are a decision on the curve as well, made with the estimator. The two-way design, which adjusts for country and year as the graph of section 4 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly. Without year effects the comparison within each country keeps the changes that every member state went through in the same year, which on this panel make up 29% of the variation in unemployment within countries, so that the slope describes all change within a country, the shared recession included, and is open to confounding by any shift in framing across Europe that coincided with the crisis. An analyst who draws the year arrows of section 4 wants the two-way slope, while one who counts the shared recession as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../cases/eu-frames/map.qmd) shows both decisions, with every option and what each does to the curve.
+The year effects of the graph are a decision on the curve as well, made with the estimator. The two-way design, which adjusts for country and year as the graph of section 7.3 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly. Without year effects the comparison within each country keeps the changes that every member state went through in the same year, which on this panel make up 29% of the variation in unemployment within countries, so that the slope describes all change within a country, the shared recession included, and is open to confounding by any shift in framing across Europe that coincided with the crisis. An analyst who draws the year arrows of section 7.3 wants the two-way slope, while one who counts the shared recession as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../cases/eu-frames/map.qmd) shows both decisions, with every option and what each does to the curve.
 
 ::: {.callout-tip}
 ## Try it
@@ -353,7 +538,7 @@ The year effects of the graph are a decision on the curve as well, made with the
 In the `fe-sim` recipe, change the coefficient of the slump on framing from −0.4 to 0 and refit. The fixed-effects estimate comes out at the planted value, because a variable that causes only the exposure is not a confounder at all. Then set it to −0.4 again and change the coefficient of the slump on unemployment to 0. The same thing happens for the mirror-image reason. A confounder has to reach both ends of the arrow you are estimating, and the recipe lets you break each half in turn.
 :::
 
-## 7. The bailout on the graph {#sec-bailout}
+### 7.7 The bailout on the graph {#sec-bailout}
 
 The EU-frames dataset contains a `bailout` column, a 0/1 indicator marking the `r sum(euframes$bailout)` country-years in which the country was under a financial-assistance programme. It is a small variable that can cause a good deal of trouble, because two reasonable analysts can put it in two different places on the graph.
 
@@ -388,21 +573,21 @@ parameters::model_parameters(m_dropped) |>
 
 On `r nobs(m_dropped)` country-years instead of 270, the effect is gone. The coefficient is about an eighth of the size of C6HJR's published Multi100 coefficient, on a *t* of roughly −0.34, and no referee would accept it as evidence of an effect.
 
-The rule in section 3 says that selecting on a variable is conditioning on it, so if the bailout is a common effect of unemployment and of framing, dropping bailout country-years is conditioning on a collider and the vanished effect is an artefact of the restriction. If instead the bailout is a mediator, the restriction removes the very country-years in which the mechanism operated, and the vanished effect indicates that the association was concentrated there. If it is neither, and bailout countries simply happen to account for most of the real relationship, then the restriction has thrown away the informative half of the sample. No statistic computed from these 270 rows can tell the three explanations apart. The choice between them has to be made before the restricted model is fitted, in a graph that states which one you are assuming.
+The rule of section 2 says that selecting on a variable is conditioning on it, so if the bailout is a common effect of unemployment and of framing, dropping bailout country-years is conditioning on a collider and the vanished effect is an artefact of the restriction. If instead the bailout is a mediator, the restriction removes the very country-years in which the mechanism operated, and the vanished effect indicates that the association was concentrated there. If it is neither, and bailout countries simply happen to account for most of the real relationship, then the restriction has thrown away the informative half of the sample. No statistic computed from these 270 rows can tell the three explanations apart. The choice between them has to be made before the restricted model is fitted, in a graph that states which one you are assuming.
 
 ## 8. Graphs and data {#sec-quartet}
 
-A last temptation is to treat the graph as provisional, in the expectation that the data will eventually adjudicate it. @DAgostinoMcGowanEtAl2024CausalInferenceNot demonstrate why the data cannot do this. The authors construct four datasets with identical exposure–outcome coefficients, identical correlations, and near-identical scatterplots, generated by four different causal structures. Adjusting for the covariate is correct in one of them and wrong in the other three, and the adjustment moves the estimate in a different direction in each. Nothing computed from the observed variables tells the four apart, because what differs between them is not in the observed variables.
+No statistic computed from the housing-audit data can say whether the route through the official is open, or in which direction it bends. @DAgostinoMcGowanEtAl2024CausalInferenceNot construct four datasets with identical summary statistics that come from four different causal structures, and in which adjusting for the same covariate is right in one and wrong in the others, because what differs between the structures is not in the observed variables. The same holds here. The graph, the reasons behind its arrows and the assumption on which the bound of the [audit-experiments module](experiments.qmd#sec-posttreatment) rests are claims about the world. An analyst states them so that a reader can dispute an arrow, and no output of a model can take their place.
 
-It follows that fit criteria can actively mislead in choosing a control set. Katrin Auspurg makes the point about a large multiverse of political-science models, where the AIC comparison reported in the study itself systematically favours the specifications she classes as unjustified [@Auspurg2025RobustnessBetterAssessed, p. 1]. A model that adjusts for a collider will often fit better than the one that does not, because the collider genuinely predicts the outcome. Predictive performance is a poor guide to a control set, even though it is often the one that analysts follow without saying so.
+Two working rules follow, and both are cheap. The first is time order: nothing that happens after the treatment can be a confounder of it, so a variable recorded after the email arrived, such as the reply or the ethnicity of the official who wrote it, needs a reason before it enters an analysis of the effect of the name. The second is to put the graph in the report, which is what the preregistration of Task 5 asks for when it wants a sentence, grounded in the graph, on why the chosen specification answers the claim.
 
-Two working rules can be drawn from the sections above, and both are cheap to apply. The first is time ordering: nothing that happens after the exposure can be a confounder of it, so do not adjust for the future. That single habit forecloses most mediator errors without any theory at all, and `ggdag::time_ordered_coords()` will lay a graph out in temporal layers so that a violation is visible on the page. The second is that the graph belongs in the published paper. Once it is in print, a reader who disagrees can point at the arrow they would remove and say what it would change, which is a far more productive argument than one about whether a control set is sensible.
+Fit criteria can actively mislead in choosing a control set, as the regression of section 7.2 showed. Katrin Auspurg makes the point about a large multiverse of political-science models, where the AIC comparison reported in the study itself systematically favours the specifications she classes as unjustified [@Auspurg2025RobustnessBetterAssessed, p. 1]. A model that adjusts for a collider will often fit better than the one that does not, because the collider genuinely predicts the outcome. Predictive performance is a poor guide to a control set, even though it is often the one that analysts follow without saying so. For the first of the two rules, `ggdag::time_ordered_coords()` lays a graph out in temporal layers, so that an arrow which runs backwards in time is visible on the page.
 
 A four-step procedure covers most first graphs. State the estimand in words – the quantity, for which units, contrasting what with what. List every variable that you believe is causally involved as a node of the graph, including the ones you cannot measure. Draw the arrows you would defend and comment out the ones you would not. Then read the adjustment set, and write the model formula from it. The [multiverse module](multiverse.qmd#sec-auspurg) picks the argument up from there, since a graph is what the critics of large specification universes ask analysts to supply.
 
 ## 9. Your own graph {#sec-yours}
 
-The exercise for this section uses a question from your own research in place of the EU-frames case, and it has two halves.
+The exercise for this section uses a question from your own research in place of the two cases, and it has two halves.
 
 First, state an estimand for a question you actually care about, in one or two sentences and in the vocabulary of @LundbergEtAl2021WhatYourEstimand. Name the unit of analysis, the outcome, the contrast that defines the effect, and the population over which you want it. 'The effect of unemployment on framing' is not yet an estimand. 'The average change in a country's mean cosmopolitan framing associated with a one-point rise in its own unemployment rate, across EU member states between 2004 and 2013, holding fixed everything that persists within a country and everything common to a year' is one, and notice that the second half of it is already an adjustment set.
 
@@ -414,8 +599,11 @@ Second, draw it. Open a script, load ggdag, and write a `dagify()` call with one
 Do the exercise above on the last analysis you ran, not on a hypothetical one. Then find the control variable in that model that would be hardest to defend in a seminar, put it on the graph, and work out which of the three shapes it is. If it turns out to be a collider, or a mediator in a model you reported as a total effect, you have learned something that could not be read from the model output.
 :::
 
-## Sources and further reading
+## Sources and further reading {#sec-sources}
 
-The estimand-first framing of the whole module is @LundbergEtAl2021WhatYourEstimand, and the standard book-length treatment of causal graphs for social scientists is @HernanRobins2020CausalInferenceWhat, freely available online. @Huntington-Klein2021EffectIntroductionResearch is the gentlest full-length introduction and covers all three shapes with worked examples. On fixed effects specifically, @KeeleEtAl2020CausalInterpretationEstimated is the careful statement of what a fixed-effects coefficient does and does not identify, and @BellJones2015ExplainingFixedEffects makes the same argument from the multilevel side. On colliders, @ColeEtAl2010IllustratingBiasDue is the general treatment and @GriffithEtAl2020ColliderBiasUndermines the most widely read applied demonstration. The four-dataset demonstration that no statistic chooses an adjustment set is @DAgostinoMcGowanEtAl2024CausalInferenceNot. For the debate about what all this implies for large specification universes, see @Auspurg2025RobustnessBetterAssessed and the [multiverse module](multiverse.qmd).
+The estimand-first framing is @LundbergEtAl2021WhatYourEstimand, and the standard treatment of causal graphs for social scientists is @HernanRobins2020CausalInferenceWhat, which is freely available online; @Huntington-Klein2021EffectIntroductionResearch is a gentler introduction to the three shapes. On colliders, @ColeEtAl2010IllustratingBiasDue give the general treatment and @GriffithEtAl2020ColliderBiasUndermines a widely read applied example, and on conditioning after the treatment in experiments, @MontgomeryEtAl2018HowConditioningPosttreatment, with @Coppock2019AvoidingPosttreatmentBias for audit studies. The demonstration that no statistic chooses an adjustment set is @DAgostinoMcGowanEtAl2024CausalInferenceNot. On fixed effects in section 7, @KeeleEtAl2020CausalInterpretationEstimated is the careful statement of what a fixed-effects coefficient does and does not identify, and @BellJones2015ExplainingFixedEffects makes the same argument from the multilevel side. The software documentation is worth reading directly: the ggdag package site at <https://r-causal.github.io/ggdag/>, whose introductory vignette pictures association flowing along a path as water flows down a pipe, and the dagitty documentation at <https://dagitty.net/>, which also hosts a browser tool for sketching a graph by hand before writing it down. The numbers of the housing-audit case come from `display_outcomes.csv` and `spec_curve.csv` in `cases/housing/data/`, and those of the EU-frames case from `EUframes_cy.csv`, `spec_curve.csv` and `spec_curve_forks.csv` in `cases/eu-frames/data/`.
 
-The software documentation is unusually good and worth reading directly: the ggdag package site at <https://r-causal.github.io/ggdag/>, whose introductory vignette is the source of the water-in-a-pipe picture used in section 2, and the dagitty documentation at <https://dagitty.net/>, which also hosts a browser tool for sketching a graph by hand before writing it down as formulas.
+## References {.unnumbered}
+
+::: {#refs}
+:::

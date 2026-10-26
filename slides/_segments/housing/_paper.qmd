@@ -1,0 +1,177 @@
+## The question of the paper {#the-question-of-the-paper .smaller}
+
+::: {.small}
+- **The question.** Do the officials who control access to a public programme answer people differently by race or ethnicity? Officials who deal with the public directly, and decide how much help to give, are **street-level bureaucrats** [@Lipsky1980StreetLevelBureaucracy]
+- **The method.** An **audit study** sends matched requests, or matched applicants, that differ in one characteristic, and compares what comes back [@BertrandMullainathan2004AreEmilyGreg; @Pager2003MarkCriminalRecord]. Here the characteristic is a name
+- **What it added.** Audits of politicians and local election officials had found discrimination [@ButlerBroockman2011PoliticiansRaciallyDiscriminate; @WhiteEtAl2015WhatNeedVote]. This one asks about a bureaucracy that hands out a valuable benefit and is less tied to politics
+:::
+
+::: {.fragment .small}
+The paper is an experiment published in 2017 [@EinsteinGlick2017DoesRaceAffect]. From here on I call its two authors **the original authors (OAs)**.
+:::
+
+::: notes
+The case of the day is a paper in the American Journal of Political Science, and I will call its two authors the original authors, or OAs, from here on, because the course is about the claim and its analyses rather than about the people who made it. The question is old and important: do the officials who stand between citizens and a public programme answer people differently by race or ethnicity? Sociologists call those officials street-level bureaucrats, after Lipsky, because they deal with the public directly and have discretion over how much help to give. The method is the audit study, which sends matched requests that differ in one characteristic and compares the responses. Earlier audits had found discrimination by politicians and election officials. The OAs asked whether the same holds in a bureaucracy that hands out something valuable, access to public housing, and is further from politics.
+:::
+
+## The design {#the-design .smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+::: {.small}
+- Every public housing authority that could be matched with a core city of a metropolitan or micropolitan area: **1,017** in the paper, **`r fmt_n(nrow(audit))`** in the public file
+- **One email each**, sent on one of two days in the same week of 2014
+- Each authority assigned **at random**, "via random number generator", to one of six senders
+:::
+:::
+::: {.column width="48%"}
+::: {.small}
+| Names meant to indicate | Male | Female |
+|:--|:--|:--|
+| a white sender | Brett Smith | Emily Smith |
+| a Black sender | Tyrone Johnson | Shanice Johnson |
+| a Hispanic sender | Santiago Martinez | Gabriela Martinez |
+:::
+:::
+::::
+
+::: {.fragment .small}
+One male and one female name per group, because about three-quarters of the families in public housing are headed by women. The Hispanic names rely on the surname Martinez, nearly 92% of whose bearers are Hispanic; their first names peaked in the 1990s and 2000s, so the ages of the six senders could not be matched.
+:::
+
+::: {.src}
+@EinsteinGlick2017DoesRaceAffect, accepted manuscript, pp. 8–11.
+:::
+
+::: notes
+The design is simple, and that is its strength. The OAs took every public housing authority in the United States that could be matched with a core city, a little over a thousand of them, and sent each one a single email in one week of 2014. Each authority was assigned at random to one of six senders, and the six names were meant to indicate a white, a Black or a Hispanic sender, one man and one woman in each group, because about three-quarters of the families in public housing are headed by women. [advance] Names are an imperfect manipulation. The Hispanic names lean on the surname Martinez, most of whose bearers are Hispanic, and the Hispanic first names peaked in popularity later than the others, so the senders may also have read as younger. Keep that in mind; it returns at the end.
+:::
+
+## The email {#the-email}
+
+::: {.claimcard .fs-80}
+Hello,
+
+My name is X and I'm trying to figure out how to apply for public housing. I believe I may be eligible.
+
+Can you direct me to information about applying for public housing here? I also heard there might be a wait list for this program. How long is it?
+
+Thanks, X
+:::
+
+::: {.fragment .small}
+Four outcomes were coded from what came back: any reply, a reply within 24 hours, information about the wait list, and the tone – "whether the emailer is addressed by proper name. We were lenient in coding 'yes.' A named salutation could be as causal [sic] as 'Hi Brett' or as formal as 'Dear Ms. Martinez.'"
+:::
+
+::: {.src}
+@EinsteinGlick2017DoesRaceAffect, accepted manuscript, pp. 10 and 12–14.
+:::
+
+::: notes
+This is the whole email, word for word, with X standing for the name of the sender. It is short, polite and plausible: someone who thinks they may be eligible asks how to apply and how long the wait list is. Every authority received exactly this text, and the only thing that differed was the name at the top and at the bottom. [advance] From what came back the OAs coded four outcomes. Did the authority reply at all, did it reply within a day, did it give information about the wait list, and what was the tone. Tone was measured in one way: whether the reply addressed the sender by name. The coding was lenient, so "Hi Brett" counts and so does "Dear Ms. Martinez". The claim that we work on today is about that last outcome.
+:::
+
+## What came back {#what-came-back}
+
+```{r}
+#| label: names-chart
+#| fig-width: 10
+#| fig-height: 4.2
+# The six names (data/display_names.csv): the share of delivered emails that
+# drew a reply, and the share of replies with a greeting code that opened
+# with the name of the sender, each with its 95% Wilson interval.
+name_rows <- filter(names_disp, level == "name")
+names_long <- bind_rows(
+  transmute(name_rows, name, group, measure = "Replied: share of delivered emails",
+            pct = reply_pct, lo = reply_lo, hi = reply_hi),
+  transmute(name_rows, name, group, measure = "Greeted by name: share of coded replies",
+            pct = named_pct, lo = named_lo, hi = named_hi)
+) |>
+  mutate(name = factor(name, levels = rev(name_order)),
+         measure = factor(measure, levels = unique(measure)))
+
+ggplot(names_long, aes(pct, name, colour = group)) +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.1) +
+  geom_point(size = 3.8) +
+  facet_wrap(~ measure) +
+  scale_colour_manual(values = group_cols) +
+  scale_x_continuous(limits = c(25, 75), labels = \(x) paste0(x, "%")) +
+  labs(x = "per cent, with 95% intervals", y = NULL) +
+  theme_slide(16) +
+  theme(strip.text = element_text(face = "bold", colour = ncl_blue, size = 15),
+        panel.spacing.x = unit(2, "lines"),
+        axis.text.y = element_text(face = "bold"))
+```
+
+::: {.small}
+Each name drew replies to between `r fmt_num(min(name_rows$reply_pct), 1)`% and `r fmt_num(max(name_rows$reply_pct), 1)`% of its delivered emails. Greetings by name ranged from `r fmt_num(min(name_rows$named_pct), 1)`% of the coded replies to Santiago to `r fmt_num(max(name_rows$named_pct), 1)`% of those to Emily.
+:::
+
+::: {.src}
+cases/housing/data/display_names.csv, from the public file of the OAs: `r fmt_n(sum(name_rows$delivered))` delivered emails, `r fmt_n(sum(name_rows$replies))` replies, `r fmt_n(sum(name_rows$coded))` with a greeting code.
+:::
+
+::: notes
+Here is what came back, name by name, from the public file. On the left, the share of delivered emails that drew any reply. The six names sit close together, between about half and about two thirds, and the intervals overlap heavily. On the right, the share of replies that opened with the name of the sender, and here the picture changes. The white and Black names cluster around sixty per cent, with Shanice a little lower. The two Hispanic names, in burgundy, sit well to the left: Gabriela at forty-six per cent and Santiago at thirty-seven. So the replies came at similar rates, and what differed was how they began. Notice the denominators too: the left panel counts delivered emails, the right panel counts only the replies. We will come back to that difference.
+:::
+
+## Four outcomes {#four-outcomes}
+
+```{r}
+#| label: outcomes-chart
+#| fig-width: 10
+#| fig-height: 3.9
+# Four outcomes (data/display_outcomes.csv), each compared for the Hispanic
+# and for the Black names with the white names: the difference in points,
+# with its 95% interval from the HC2 standard error.
+outcome_labels <- c(reply = "Any reply\n(delivered emails)",
+                    reply24 = "Reply within 24 hours\n(replies)",
+                    named = "Greeted by name\n(coded replies)",
+                    named_any = "Greeted by name\n(delivered emails)")
+outcomes |>
+  mutate(outcome = factor(outcome_labels[outcome], levels = rev(outcome_labels)),
+         contrast = factor(contrast, levels = c("black", "hispanic"))) |>
+  ggplot(aes(b_pp, outcome, colour = contrast)) +
+  geom_vline(xintercept = 0, colour = grey_mid) +
+  geom_linerange(aes(xmin = b_pp - 1.96 * se_pp, xmax = b_pp + 1.96 * se_pp),
+                 linewidth = 1.1, position = position_dodge(width = 0.55)) +
+  geom_point(size = 3.6, position = position_dodge(width = 0.55)) +
+  scale_colour_manual(values = c(hispanic = burgundy, black = "#4a78ab"),
+                      labels = c(hispanic = "Hispanic names", black = "Black names"),
+                      breaks = c("hispanic", "black"), name = NULL) +
+  scale_x_continuous(labels = \(x) fmt_num(x, 0)) +
+  labs(x = "difference from the white names (percentage points), with 95% intervals", y = NULL) +
+  theme_slide(15) +
+  theme(legend.position = "top", legend.justification = "right",
+        legend.margin = margin(0, 0, -6, 0), axis.text.y = element_text(face = "bold"))
+```
+
+::: {.small}
+Black names drew replies about as often as white names (`r fmt_signed(out_of("reply", "black", "b_pp"), 1)` points), Hispanic names `r fmt_num(abs(out_of("reply", "hispanic", "b_pp")), 1)` points less often (`r fmt_p(out_of("reply", "hispanic", "p"))`, two-sided; the paper reports p = .11, one-tailed). The large gap is in the greeting: `r fmt_num(out_of("named", "hispanic", "b_pp"), 1)` points among the coded replies.
+:::
+
+::: notes
+The same data as differences from the white names, for four outcomes, with the Black names in blue and the Hispanic names in burgundy. Any reply: the Black names did slightly better than the white names, the Hispanic names slightly worse, and neither difference is distinguishable from zero. The paper reports the Hispanic gap with a p of point one one, which is the one-tailed value of this test; two-tailed it is point two one. A reply within a day: no clear gap either. Then the greeting by name. Among the replies with a greeting code the Hispanic names were greeted by name twenty points less often, and the interval is far from zero. The bottom row counts every delivered email, with no reply counted as no greeting, and the gap there is smaller, about thirteen points. Hold on to that bottom row.
+:::
+
+## The claim {#the-claim .smaller}
+
+::: {.claimcard}
+"Hispanic housing applicants were twenty percentage points less likely to be greeted by name than were their black and white counterparts." <span class="src">the abstract</span>
+:::
+
+::: {.fragment .claimcard}
+"Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts" <span class="src">the claim as SCORE selected it for Multi100</span>
+:::
+
+::: {.fragment .small}
+The published result behind it: Table 1, model 3, a logistic regression on the three groups with community controls and the Hard Email indicator – Hispanic name **−0.82** (SE 0.22), p < 0.01, on **549** replies; as a change in the predicted probability of a named greeting, **−20.0 percentage points**, 95% CI −30.5 to −10.0.
+:::
+
+::: {.src}
+@EinsteinGlick2017DoesRaceAffect, abstract and Table 1; the Multi100 record of the claim.
+:::
+
+::: notes
+This is the sentence of the abstract from which the claim was taken: Hispanic applicants were twenty percentage points less likely to be greeted by name than their Black and white counterparts. [advance] And this is the claim as SCORE selected it and handed it to the Multi100 analysts. Look at the two ellipses. The first removes "twenty percentage points", so the claim states a direction without a size. The second removes "their black and", so the claim compares Hispanic names with white names only, where the abstract compares them with Black and white names together. [advance] The published number is a logistic regression on the replies, with controls for the community: a coefficient of minus point eight two, which the OAs translate into twenty points. Two versions of one claim, then, and the five analysts tested both.
+:::

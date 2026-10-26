@@ -1,0 +1,54 @@
+## What moved the estimate {#what-moved-the-estimate}
+
+```{r}
+#| label: shifts-chart
+#| fig-width: 10
+#| fig-height: 4
+# Each option on the curve against its twins that take the first option of
+# the same decision (data/menu_deviations.csv): the mean shift of the
+# estimate, with the smallest and largest shift as a bar. A positive shift
+# moves the estimate towards zero.
+option_labels <- select(menu_opts, axis, option, decision, label)
+shift_rows <- deviations |>
+  filter(option != baseline) |>
+  left_join(option_labels, by = c("axis", "option")) |>
+  mutate(lab = reorder(paste0(decision, ": ", label), shift_mean),
+         big = axis == "population")
+other_max <- max(shift_rows$shift_max[!shift_rows$big])
+
+ggplot(shift_rows, aes(shift_mean, lab, colour = big)) +
+  geom_vline(xintercept = 0, colour = grey_mid) +
+  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 3, alpha = 0.35) +
+  geom_point(size = 4.2) +
+  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  scale_x_continuous(labels = \(x) paste0(if_else(x > 0, "+", ""), fmt_num(x, 0))) +
+  labs(x = "shift against the twin (points); positive is towards zero", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.fs-80}
+Counting every delivered email moves the estimate by **+`r fmt_num(dev_of("all", "shift_mean"), 2)`** points on average (from +`r fmt_num(dev_of("all", "shift_min"), 2)` to +`r fmt_num(dev_of("all", "shift_max"), 2)`). No other option moves any specification by more than `r fmt_num(other_max, 2)` points, and none changes a test result.
+:::
+
+::: notes
+Which decisions did the work? This chart sets every option on the curve beside its twins, the specifications that are identical except for that one decision, and shows how far the estimate moves: the dot is the average shift, the bar runs from the smallest to the largest. A positive shift moves the estimate towards zero. One decision stands far apart from the rest, in burgundy: counting every delivered email rather than the replies only moves the estimate by five points on average. Everything else is small. Pooling the Black names with the white ones moves it by a point or so, the covariates of the community by about one, and the model and the uncoded replies by almost nothing. And not one option changes whether a specification is significant. So on this claim, the argument has to happen about the emails counted.
+:::
+
+## The denominator {#the-denominator}
+
+```{r}
+#| label: curve-population
+#| fig-width: 9.5
+#| fig-height: 4
+# The curve of 64 coloured by the emails counted.
+curve_base("population")
+```
+
+::: {.fs-80}
+Among the replies: `r fmt_num(min(curve$b_pp[curve$population == "replies"]), 1)` to `r fmt_num(max(curve$b_pp[curve$population == "replies"]), 1)` points. Among all delivered emails: `r fmt_num(min(curve$b_pp[curve$population == "all"]), 1)` to `r fmt_num(max(curve$b_pp[curve$population == "all"]), 1)`. The step in the curve is a change of **estimand**, from the tone of the replies that came to the chance of a reply that greets the sender by name.
+:::
+
+::: notes
+Colour the curve by the emails counted and the step in the middle explains itself. The thirty-two specifications that count the replies sit on the left, between twenty and sixteen points. The thirty-two that count every delivered email sit on the right, between thirteen and twelve. The step is not an artefact of a better or worse estimator. When every delivered email is counted, fewer than six in ten drew any reply, so the share that drew a greeting by name is smaller for every name, and the gap between the names shrinks with it, almost by construction. That is a change of estimand: from the tone of the replies that came, to the chance that an email received a reply greeting the sender by name. It is the decision that the causal graph raised earlier, and it is the one that 25N5D took.
+:::

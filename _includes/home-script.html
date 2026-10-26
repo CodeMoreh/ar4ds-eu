@@ -2,7 +2,9 @@
      track cards, the dialog that lists the units of a track, the primary
      button of the hero once a track is chosen, and the reveal on scroll. The
      cards themselves, their text and their unit lists are Markdown in
-     index.qmd. -->
+     index.qmd. Only a track card with a data-slug gets the controls, so a card
+     for a track in preparation, and the case cards, are left as they are. The
+     slugs are those of _includes/track-choice.html. -->
 <dialog class="home-dialog" id="home-units" aria-labelledby="home-units-title">
   <div class="home-dlg-head"><h3 id="home-units-title"></h3></div>
   <div class="home-dlg-body" id="home-units-body"></div>
@@ -14,14 +16,16 @@
 <script>
 (function () {
   var KEY = "ar-track";
-  // The slugs that the tracks had before they carried the case, read as the
-  // slugs that replaced them, so that an earlier choice is still recognised.
+  // The slugs that the EU-frames tracks had before they carried the case,
+  // read as the slugs that replaced them, so that an earlier choice is still
+  // recognised. "semester" is left out on purpose: it names the coming
+  // cross-case track (tracks/semester/), not the semester track of the
+  // EU-frames case.
   var FORMER = {
     "one-day-replication": "eu-frames-one-day-replication",
     "one-day-tools": "eu-frames-one-day-tools",
     "one-day-methods": "eu-frames-one-day-methods",
     "three-days": "eu-frames-three-days",
-    "semester": "eu-frames-semester",
     "self-study": "eu-frames-self-study"
   };
   var store = {
@@ -34,7 +38,7 @@
     },
     set: function (v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} }
   };
-  var cards = Array.prototype.slice.call(document.querySelectorAll(".home-track"));
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".home-track[data-slug]"));
   var dlg = document.getElementById("home-units");
   var shown = null;
 
@@ -82,7 +86,8 @@
     });
     if (!hero) return;
     if (chosen) {
-      hero.textContent = "Continue: " + title(chosen);
+      var kase = chosen.getAttribute("data-case");
+      hero.textContent = "Continue: " + title(chosen) + (kase ? " – " + kase : "");
       hero.setAttribute("href", "tracks/" + slug + "/index.html");
     } else {
       hero.textContent = heroText;

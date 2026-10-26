@@ -1,0 +1,92 @@
+## Your own small multiverse {#you-just-built-a-small-multiverse .smaller}
+
+:::: {.none}
+::: {.fragment}
+You ran several specifications, all defensible, and watched the estimate move.
+:::
+
+::: {.fragment}
+Nothing about that is unusual. **Every published analysis came from a space like that**, and it reports one point from it.
+:::
+
+::: {.fragment}
+The multiverse idea is the proposal that the **space** is itself a finding, and that showing one point without it is a form of incomplete reporting.
+:::
+::::
+
+::: notes
+In Task 4 you ran several specifications, every one of them defensible, and you watched the estimate move. Nothing about that is unusual or improper, and I want to say so clearly, because there is a slightly accusatory tone in some of this literature that I do not think is deserved. Every analysis that any of us has ever published came from a space like the one you were moving around in. The difference is that we reported one point from it and did not mention the rest, mostly because it did not occur to us that the rest was reportable. So the multiverse idea is a proposal about reporting, and not an accusation. The space itself is a finding, and showing one point from it without the space around it is a form of incomplete reporting.
+:::
+
+<!-- DEEP DIVE START: multiverse background (2 slides). Optional depth – press
+     d during the talk, or load the deck with ?depth=0, and
+     slides/nav-tools.html lifts the run out of the DOM. The .deepdive class is
+     the load-bearing part; these markers are here for the reader. -->
+
+## Where the idea comes from {.smaller .deepdive run="methods"}
+
+::: {.skiplink}
+[Multiverse background · 2 slides · skip to the curve →](#the-curve-of-the-claim)
+:::
+
+::: {.small}
+- **Multiverse analysis** [@SteegenEtAl2016IncreasingTransparencyMultiverse] – developed for *data-processing* choices: how you code, exclude and combine. Report the whole set of datasets that your choices could have produced
+- **Specification curve analysis** [@SimonsohnEtAl2020SpecificationCurveAnalysis] – the same move for *model* choices, plus a visual grammar: estimates on top, the choices that produced each one underneath
+- **The vibration of effects** – the same idea, arrived at independently in epidemiology
+- **The book-length treatment** [@YoungCumberworth2025MultiverseAnalysisComputational] – computational recipes at scale
+:::
+
+::: {.fragment .small}
+Under all these names the proposal is the same: **stop treating your analytical choices as invisible, and enumerate them.**
+:::
+
+::: notes
+A brief history, because the vocabulary is a mess and knowing which word came from where helps. Multiverse analysis is Steegen and colleagues in 2016, and it grew out of data-processing choices specifically – how you code a variable, which cases you exclude, how you combine items – with the proposal that you report the whole set of datasets that your choices could have produced. Specification curve analysis is Simonsohn, Simmons and Nelson, making the same move for model choices and adding a visual grammar: estimates plotted on top, and underneath them a panel showing which choices produced each one. The vibration of effects is the same idea arrived at independently in epidemiology, which suggests that it is a natural response to the problem. And there is now a book-length treatment with computational recipes. Under different names, they all make the same proposal: stop treating your analytical choices as invisible, and enumerate them.
+:::
+
+## The garden of forking paths {#the-garden-drawn .smaller .deepdive run="methods"}
+
+```{r}
+#| label: forking-paths
+#| fig-width: 9
+#| fig-height: 3.6
+# A binary decision tree over four choices: 16 end points, one path
+# highlighted. Drawn from coordinates rather than data – an illustration of
+# the structure of a sequence of decisions, not a result.
+seg <- map(1:4, \(k) {
+  n_parent <- 2^(k - 1)
+  map(seq_len(n_parent), \(j) {
+    y0 <- (j - 0.5) / n_parent
+    tibble(x = k - 1, xend = k, y = y0, yend = c(y0 - 0.5 / 2^k, y0 + 0.5 / 2^k))
+  }) |>
+    bind_rows()
+}) |>
+  bind_rows()
+route <- tibble(x = 0:3, xend = 1:4,
+                y = c(0.5, 0.75, 0.875, 0.9375),
+                yend = c(0.75, 0.875, 0.9375, 0.96875))
+
+ggplot() +
+  geom_segment(data = seg, aes(x, y, xend = xend, yend = yend),
+               colour = "#c7ccd2", linewidth = 0.5) +
+  geom_segment(data = route, aes(x, y, xend = xend, yend = yend),
+               colour = d_red, linewidth = 1.1) +
+  annotate("text", x = 0:3 + 0.5, y = -0.06,
+           label = c("outcome", "sample", "model", "covariates"),
+           colour = ncl_blue, fontface = "bold", size = 4.2) +
+  annotate("text", x = 4.05, y = 0.96875, hjust = 0,
+           label = "the one you published",
+           colour = d_red, fontface = "bold", size = 4.2) +
+  coord_cartesian(xlim = c(0, 5.6), ylim = c(-0.1, 1.05), clip = "off") +
+  theme_void()
+```
+
+::: {.small}
+Four binary choices give sixteen analyses, and ten give more than a thousand. **The published paper reports one red line and no tree.**
+:::
+
+::: notes
+Here is the structure of the problem, drawn. Four choices, two options each, and you already have sixteen distinct analyses; ten such choices give more than a thousand. The red line is what a published paper reports, one route through the tree with no indication that the tree exists. The reader sees a coefficient and a standard error, and the standard error describes the uncertainty that comes from sampling. It contains no information about the fifteen other branches. Gelman and Loken call this the garden of forking paths, and their sharp observation is that you do not have to walk every path for this to be a problem. Walking one path that you chose after looking at the data is enough.
+:::
+
+<!-- DEEP DIVE END -->

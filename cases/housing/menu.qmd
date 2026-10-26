@@ -1,0 +1,245 @@
+---
+title: "Specification menu"
+subtitle: "The decisions of the analysis, by level"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(readr)
+library(tinytable)
+source("../../R/housing/_tools.R")
+
+menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE)
+deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+outcomes <- read_csv("data/display_outcomes.csv", show_col_types = FALSE)
+subgroups <- read_csv("data/display_subgroups.csv", show_col_types = FALSE)
+names_tab <- read_csv("data/display_names.csv", show_col_types = FALSE)
+marks <- read_csv("data/reference_marks.csv", show_col_types = FALSE)
+audit <- read_csv("data/housing_audit.csv", show_col_types = FALSE)
+original <- read_csv("data/audit_original.csv", show_col_types = FALSE)
+
+# Fixed decimals and a true minus sign; signed shifts carry a plus sign
+fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
+sgn <- \(x, d = 1) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+pct <- \(x, d = 1) paste0(fmt(x, d), "%")
+pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+                     .default = paste("p =", fmt(p, 3)))
+num_word <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                   "ten", "eleven", "twelve", "thirteen", "fourteen")[n]
+
+ref <- curve |> filter(is_reference)
+row_of <- \(comparison, population, uncoded, model, adjust) {
+  curve[curve$comparison == comparison & curve$population == population & curve$uncoded == uncoded &
+          curve$model == model & curve$adjust == adjust, ]
+}
+dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
+out <- \(o, cn, col) outcomes[[col]][outcomes$outcome == o & outcomes$contrast == cn]
+sub_ <- \(start, col) subgroups[[col]][startsWith(subgroups$subgroup, start)]
+grp <- \(g, col) names_tab[[col]][names_tab$level == "group" & names_tab$group == g]
+mark <- \(id, col) marks[[col]][marks$id == id]
+
+n_dec <- n_distinct(menu$axis)
+varying <- names(SPEC_AXES)
+fixed_axes <- setdiff(unique(menu$axis), varying)
+
+# Bounced emails counted as unanswered: every email sent, against its twin on
+# the curve, which counts only the delivered emails
+bounced_twin <- row_of("white", "all", "not_named", "lpm", "none")
+bounced_sent <- audit |>
+  filter(group %in% c("white", "hispanic")) |>
+  mutate(hisp = as.integer(group == "hispanic"), y = as.integer(reply %in% 1 & named %in% 1))
+bounced_fit <- lm(y ~ hisp, data = bounced_sent)
+bounced_b <- 100 * unname(coef(bounced_fit)["hisp"])
+bounced_n <- audit |> filter(is.na(reply)) |> count(group)
+bounced_by <- \(g) bounced_n$n[bounced_n$group == g]
+no_thirds <- audit |>
+  filter(if_any(c(pop_third, poverty_third, black_third, hispanic_third), is.na)) |>
+  nrow()
+
+# The sex of the name added to the reference specification, with HC2 errors
+sex_frame <- spec_frame(audit, "white", "replies", "drop")
+sex_fit <- lm(y ~ hisp + name_sex, data = sex_frame)
+sex_b <- 100 * unname(coef(sex_fit)["hisp"])
+sex_p <- 2 * pt(-abs(coef(sex_fit)["hisp"] / sqrt(vcov_hc2(sex_fit)["hisp", "hisp"])), sex_fit$df.residual)
+
+# The chi-square test of 8PTRZ on the public file of the OAs, with and without
+# the continuity correction that chisq.test() applies to a 2 x 2 table
+chi_tab <- original |>
+  filter(Response_Dichotomous == 1, !is.na(ProperName)) |>
+  with(table(startsWith(TreatmentGroup, "Hispanic"), ProperName))
+chi_yates <- chisq.test(chi_tab)
+chi_plain <- chisq.test(chi_tab, correct = FALSE)
+
+logit_or <- curve |> filter(model == "logit") |> mutate(or = exp(coef))
+three_twin <- row_of("white", "replies", "drop", "logit", "place_ethnic")
+```
+
+This page sets out every decision that an analysis of the claim has to make, the options that each decision offers, and whether each option answers the claim. The claim, in the wording that SCORE took from the paper of the original authors (OAs) [@EinsteinGlick2017DoesRaceAffect], is that "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts". The [case study](index.qmd) sets out the experiment, the five reanalyses and the data. The [decision map](map.qmd) draws the same menu as a path from the data to a verdict, with every option selectable.
+
+`r stringr::str_to_sentence(num_word(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be fitted on the public file, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
+
+## The estimand statement
+
+Write the statement that your analysis will complete:
+
+> Among **which emails**, with **which names**, from **which officials**, the difference in the share that drew **which outcome** between Hispanic names and **which comparison group** (*how uncoded replies and bounced emails are treated*).
+>
+> Estimated with *which model*, *which adjustment*, tested by *which test* and reported *on which scale*.
+
+Move one decision and reread the statement. If a bold slot changes, you have made an estimand decision, and you are answering a different question. If only a slot in the brackets changes, you have made a measurement decision, which leaves the question in place and changes how its outcome is counted. If only the second sentence changes, you have made an estimation decision, which changes how the answer is reached. The completed statement is your estimand [@LundbergEtAl2021WhatYourEstimand], the quantity that your number estimates, and a reader needs it before the number means anything.
+
+## The curve of `r nrow(curve)` {#the-curve}
+
+Five decisions vary on the curve: the comparison group (white names, or white and Black names together), the emails counted (replies, or all delivered emails), the replies without a greeting code (left out, or counted as no greeting), the model (a difference in proportions, or a logistic regression) and the adjustment (none, the hard-to-find address, the size and poverty of the community, or those with its ethnic composition). That gives 2 × 2 × 2 × 2 × 4 = `r nrow(curve)` specifications. The other `r num_word(length(fixed_axes))` decisions take a single option on the curve.
+
+Every estimate is in percentage points, and a negative estimate means that Hispanic names were greeted by name less often, the direction of the claim. All `r nrow(curve)` specifications are negative and significant at the 5% level under the test of their own model, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points, with p-values between `r fmt(min(curve$p), 5)` and `r fmt(max(curve$p), 4)`. The randomisation test, which reshuffles the names among the analysed emails 1,999 times, gives at most p = `r fmt(max(curve$p_ri), 4)`. The reference specification, Hispanic against white names among the replies with a difference in proportions and no covariates, is the raw gap of the paper: `r fmt(ref$b_pp)` points (`r pct(ref$rate_hisp)` against `r pct(ref$rate_comp)`), t = `r fmt(ref$stat, 2)` on `r ref$df` df, n = `r ref$n`.
+
+Within the curve, what varies is the size of the gap, and @tbl-shifts shows which decisions move it. Each row compares the specifications with an option against their twins that differ only in that decision.
+
+```{r}
+#| label: tbl-shifts
+#| tbl-cap: "What each option on the curve does to the estimate, against the first option of its decision on twin specifications that agree on every other decision. A positive shift moves the estimate towards zero. Source: `data/menu_deviations.csv`."
+#| echo: false
+lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
+dec <- \(axis) menu$decision[menu$axis == axis][1]
+deviations |>
+  filter(option != baseline) |>
+  mutate(
+    Decision = purrr::map_chr(axis, dec),
+    Option = purrr::map2_chr(axis, option, lab),
+    Against = purrr::map2_chr(axis, baseline, lab)
+  ) |>
+  transmute(
+    Decision, Option, Against,
+    Pairs = n_pairs,
+    `Mean shift` = sgn(shift_mean, 2),
+    Smallest = sgn(shift_min, 2),
+    Largest = sgn(shift_max, 2),
+    `Still significant` = pct(100 * sig_share, 0)
+  ) |>
+  tt() |>
+  style_tt(j = 4:8, align = "r")
+```
+
+Counting all delivered emails moves the estimate by `r sgn(dv("population", "all", "shift_mean"))` points on average, towards zero, and every other option by at most `r fmt(max(abs(deviations$shift_max[deviations$axis != "population"])))` points. Within the original data, the claim holds under every defensible choice, and only its size moves.
+
+## Level 1 – Estimands {#level-estimand}
+
+Each decision at this level rewrites a bold slot of the statement, so two analysts who decide differently are answering different questions, and their results are not rival estimates of one quantity.
+
+```{r}
+#| label: tbl-level1
+#| tbl-cap: "The estimand decisions. Options off the curve carry the judgement of the course in brackets. Source: `data/menu_options.csv`."
+#| echo: false
+judgement_txt <- c(kept = "on the curve", other_question = "another question",
+                   weaker_answer = "a weaker answer", check = "a check",
+                   unavailable = "not in the public file")
+level_table <- \(lv) {
+  menu |>
+    filter(level == lv) |>
+    mutate(item = paste0(label, " <code>", option, "</code>")) |>
+    summarise(
+      on = paste(item[on_curve], collapse = " · "),
+      off = if (any(!on_curve)) {
+        paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = " · ")
+      } else {
+        "–"
+      },
+      .by = c(axis, decision)
+    ) |>
+    transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
+    tt()
+}
+level_table("estimand")
+```
+
+### Outcome
+
+The claim is about tone, and the OAs measure tone by whether a reply opens with the name of the sender, coded leniently so that "Hi Brett" and "Dear Ms. Martinez" both count. The greeting is the outcome of every specification on the curve. The paper also asks whether officials reply at all and whether they reply within 24 hours, which are questions about access rather than tone. On the public file, emails with Hispanic names drew a reply `r fmt(abs(out("reply", "hispanic", "b_pp")))` points less often than emails with white names (`r pe(out("reply", "hispanic", "p"))`, two-sided), and replies to them came within 24 hours `r fmt(out("reply24", "hispanic", "b_pp"))` points more often (`r pe(out("reply24", "hispanic", "p"))`). Both are other claims of the same paper, and both stay off the curve.
+
+### Comparison group
+
+The claim as SCORE selected it compares Hispanic names with white names, and the abstract compares them with "their black and white counterparts". Both readings are defensible, and both are on the curve. Among the coded replies, `r pct(grp("white", "named_pct"))` of replies to white names, `r pct(grp("black", "named_pct"))` of replies to Black names and `r pct(grp("hispanic", "named_pct"))` of replies to Hispanic names opened with the name, so pooling the Black names with the white ones narrows the gap, by `r sgn(dv("comparison", "nonhispanic", "shift_mean"))` points on average across the curve. The comparison of Black with white names, a gap of `r fmt(out("named", "black", "b_pp"))` points among replies (`r pe(out("named", "black", "p"))`), is a separate finding of the paper about another group and stays off the curve.
+
+### Emails counted
+
+This is the decision that moves the estimate most. Counting only the emails that drew a reply is the comparison of the paper, and it answers the question about tone directly, how often the replies that came opened with the name. Counting every delivered email, with a missing reply as no greeting, keeps the groups exactly as randomisation made them, so the difference is an effect of the name on receiving a named greeting, but that outcome mixes whether a reply came with how it began. The first comparison is a pure effect of the name only if the name did not change which officials replied, the post-treatment problem that analyst 25N5D raised and that the [case study](index.qmd#sec-posttreatment) sets out. Both stay on the curve. Counting all emails moves the estimate by `r sgn(dv("population", "all", "shift_mean"))` points on average (from `r sgn(dv("population", "all", "shift_min"))` to `r sgn(dv("population", "all", "shift_max"))`), mostly because fewer than six in ten emails drew any reply: at the reference settings the shares become `r pct(row_of("white", "all", "drop", "lpm", "none")$rate_hisp)` against `r pct(row_of("white", "all", "drop", "lpm", "none")$rate_comp)`.
+
+### Names
+
+The paper pools the male and the female name of each group, and the claim speaks of Hispanic applicants in general, so the curve pools them too. The two halves differ. Among replies, the gap between Santiago and Brett is `r fmt(sub_("male", "b_pp"))` points (`r pe(sub_("male", "p"))`, n = `r sub_("male", "n")`) and the gap between Gabriela and Emily `r fmt(sub_("female", "b_pp"))` points (`r pe(sub_("female", "p"))`, n = `r sub_("female", "n")`). Either half answers a narrower question, about men or about women, and the SCORE replication used male names only.
+
+### Who replied
+
+The OAs coded whether the official who replied had a distinctively Hispanic name, to test whether Hispanic officials treat Hispanic applicants better. That is a separate hypothesis, and the subgroup is selected after the email arrived, which is the post-treatment problem again. It is also small: among the `r sub_("replies from officials", "n")` replies to Hispanic and white names that came from officials with Hispanic names, the gap is `r fmt(sub_("replies from officials", "b_pp"))` points (`r pe(sub_("replies from officials", "p"))`), against `r fmt(sub_("replies from other", "b_pp"))` points among the `r sub_("replies from other", "n")` replies from other officials. The curve keeps every reply.
+
+## Level 2 – Measurement {#level-measurement}
+
+The question stays the same, and these decisions change how the outcome is counted.
+
+```{r}
+#| label: tbl-level2
+#| tbl-cap: "The measurement decisions. Source: `data/menu_options.csv`."
+#| echo: false
+level_table("measurement")
+```
+
+### Replies without a greeting code
+
+The file holds `r sum(audit$reply %in% 1 & is.na(audit$named))` replies without a greeting code. Leaving them out is what a model does by default and what four of the five analysts did. Counting them as replies without a greeting is a defensible reading, since a reply in which the coders found no greeting probably did not open with a name, and analyst 25N5D made that choice without stating it, by keeping the three of them that went to white and Hispanic names in the counts of emails. Both stay on the curve, and the choice moves the estimate by `r sgn(dv("uncoded", "not_named", "shift_mean"), 2)` points on average.
+
+### Bounced emails
+
+Of the emails sent, `r sum(is.na(audit$reply))` bounced, `r bounced_by("white")` with white names, `r bounced_by("black")` with Black names and `r bounced_by("hispanic")` with Hispanic names, and they carry no reply status. They never reached an official, so the name on them cannot have changed anything, and every specification on the curve leaves them out. Counting them as unanswered adds rows whose outcome was settled by a broken address. It matters only when all emails are counted, since a bounced email is never a reply: there it moves the gap from `r fmt(bounced_twin$b_pp)` to `r fmt(bounced_b)` points, a small change, but one that was produced by broken addresses rather than by officials.
+
+## Level 3 – Estimation {#level-estimation}
+
+With the question and the outcome fixed, these decisions change the model that is fitted, the test and the scale on which the answer is reported.
+
+```{r}
+#| label: tbl-level3
+#| tbl-cap: "The estimation decisions. Source: `data/menu_options.csv`."
+#| echo: false
+level_table("estimation")
+```
+
+### Model
+
+A linear probability model, a linear regression of the 0/1 outcome, gives the difference in proportions as its coefficient, and without covariates it is exactly the difference between the two observed shares. Its standard errors are taken with the HC2 correction, which allows the variance of a 0/1 outcome to differ between the groups. A logistic regression models the log odds of a greeting, and the course reports it as an average marginal effect, the difference in the predicted probability of a greeting between Hispanic and white names, averaged over the analysed emails. Without covariates the two give the same estimate, and with covariates they differ by at most `r fmt(max(abs(c(dv("model", "logit", "shift_min"), dv("model", "logit", "shift_max")))), 2)` points across the curve.
+
+The OAs, EWFMI and P9W8Y fitted all three groups of names in one model and read off the Hispanic–white contrast. Without covariates this gives exactly the two-group difference, as the refit of P9W8Y shows (`r fmt(mark("P9W8Y", "b_pp"))` points). With the covariates of the paper in thirds, the three-group logit gives `r fmt(mark("OA_blinded", "b_pp"))` points against `r fmt(three_twin$b_pp)` for the two-group logit, because the emails with Black names then help to estimate the covariates. The three-group model is a check rather than a separate answer.
+
+### Adjustment
+
+Because the names were assigned at random, the groups of authorities differ only by chance, and the raw difference answers the claim without covariates. Covariates in an experiment buy precision rather than freedom from bias, so every adjustment that uses information recorded before the emails went out is defensible, and all four sets stay on the curve: none; the hard-to-find address; that with the thirds of population and poverty, the set that the Multi100 instruction leaves; and that with the thirds of percent Black and percent Hispanic as well, the covariates of Table 1 in the form that the public file allows. The adjustments move the estimate by `r sgn(dv("adjust", "email", "shift_mean"), 2)`, `r sgn(dv("adjust", "place", "shift_mean"), 2)` and `r sgn(dv("adjust", "place_ethnic", "shift_mean"), 2)` points on average. Part of the shift under the two community sets comes from the emails that they lose, since `r no_thirds` authorities have no community thirds.
+
+The sex of the name is balanced by design, one male and one female name in each group, and adjusting for it changes almost nothing: at the reference settings the gap becomes `r fmt(sex_b)` points (`r pe(sex_p)`). It is a check. The continuous census values of the paper cannot be used at all, because the public file replaces them with thirds to protect the authorities, which is why no one outside the original team can fit the published model exactly.
+
+### Test
+
+Each specification is tested by its own model, HC2 errors for the linear model and the usual z test for the logit, which is what a single analyst would report. Three other tests are checks. The randomisation test needs no model of the errors, only the fact that the names were assigned at random, and it agrees with the model tests on every specification. The $\chi^2$ test of a two-by-two table tests the same difference without a model, and `chisq.test()` in R applies the continuity correction to such a table unless it is told otherwise: on the comparison of 8PTRZ it gives $\chi^2$ = `r fmt(chi_yates$statistic, 3)` with the correction and `r fmt(chi_plain$statistic, 2)` without it. A one-tailed test halves the p-value by deciding the direction in advance, and the paper uses one for the gap in replies, whose two-sided p of `r fmt(out("reply", "hispanic", "p"), 3)` becomes the `r fmt(out("reply", "hispanic", "p") / 2, 2)` of the paper. It is defensible only when the direction was fixed before anyone looked at the data, so the curve keeps two-sided tests.
+
+### Effect scale
+
+The claim, in the abstract, states the gap in percentage points, which a reader can picture without a formula, and every point of the curve is placed on that scale. The odds ratio is the scale of the logistic regression itself, and across the `r nrow(logit_or)` logit specifications it runs from `r fmt(min(logit_or$or), 2)` to `r fmt(max(logit_or$or), 2)`. Odds ratios change when covariates are added even in a randomised experiment, because they compare odds within groups of similar emails rather than averaging over all of them, so the course reports the logit in points instead. The partial correlation is the scale of Multi100, which runs from `r fmt(min(curve$r), 3)` to `r fmt(max(curve$r), 3)` on the curve, and which depends on the number of emails and the shares in each group as well as on the gap, as the [case study](index.qmd#sec-scale) shows.
+
+## Worked example
+
+**Choice:** comparison `white`, emails counted `all`, replies without a code `not_named`, model `lpm`, adjustment `none`; male and female names, any official, bounced emails left out, the test of the model, percentage points.
+
+**Justification, by level.** The claim as selected compares Hispanic with white names, so the white names are the comparison. Counting every delivered email keeps the groups as randomisation made them, so the difference is an effect of the name and does not depend on which officials chose to reply, at the cost of an outcome that combines replying with greeting. A reply without a greeting code most probably did not open with a name. The names were randomised, so the raw difference in proportions needs no covariates, and its HC2 test is the test that a single analyst would report.
+
+The specification gives `r fmt(bounced_twin$b_pp)` points (`r pct(bounced_twin$rate_hisp)` against `r pct(bounced_twin$rate_comp)`), t = `r fmt(bounced_twin$stat, 2)` on `r bounced_twin$df` df. A justification of this kind connects each choice to the wording of the claim or to the design, at the level to which the choice belongs, and it is what the preregistration of Task 5 asks you to write before you run the model.
+
+## Declaring and reporting
+
+In Task 4 you explore the menu with `try_spec()`, changing one argument at a time, and an option off the curve is refused with its reason from `menu_options.csv`. In Task 5 you fix one specification in the preregistration block before you fit it: `prereg()` prints the declaration, `run_spec()` fits it and `report_result()` sends it to the class chart on the [multiverse page](multiverse.qmd). The [exercise overview](exercise.qmd) sets out both tasks.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

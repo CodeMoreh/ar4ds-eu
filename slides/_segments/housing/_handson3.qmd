@@ -1,0 +1,59 @@
+## Hands-on 3 – Reproducing the recorded result {#hands-on-3-reproduce-the-recorded-result .smaller}
+
+::: {.small}
+**Task 3**, in your workspace or in the browser lab: the public file `audit_original.csv`, the replies with a greeting code, Hispanic against all other names, by `ProperName`.
+:::
+
+```{.r}
+original <- read_csv("data/audit_original.csv")
+
+coded_replies <- original |>
+  filter(!is.na(ProperName)) |>
+  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
+chisq.test(tab_8ptrz)
+```
+
+::: {.fragment}
+Target: **$\chi^2$ = `r fmt_num(an("8PTRZ", "statistic_recorded"), 3)`**, the value that Multi100 recorded for 8PTRZ. When you have it, type your `X-squared` in chat and hold it until I say "go".
+:::
+
+::: notes
+Now you work. Open the working script in your workspace and go to Task 3, or the Task 3 cell of the browser lab. The code is written out for you, so read it line by line as you run it: read the public file, keep the replies that carry a greeting code, mark the Hispanic names, build the two-by-two table, and test it. This task is about the number at the end rather than the typing, so copying the code is not cheating. You should land on a chi-square of fourteen point two six five, the value recorded for 8PTRZ in the Multi100 dataset. When you have it, type the X-squared into chat, but do not send it: when I say go, everyone sends at once. Ten minutes. [wait for the numbers in chat]
+:::
+
+## The continuity correction {#the-continuity-correction .smaller}
+
+:::: {.columns}
+::: {.column width="45%"}
+::: {.small}
+| Replies with a code | Not greeted by name | Greeted by name |
+|:--|--:|--:|
+| Hispanic names | `r tab_8ptrz["TRUE", "0"]` | `r tab_8ptrz["TRUE", "1"]` |
+| All other names | `r tab_8ptrz["FALSE", "0"]` | `r tab_8ptrz["FALSE", "1"]` |
+:::
+:::
+::: {.column width="55%"}
+```{.r}
+chisq.test(tab_8ptrz)
+chisq.test(tab_8ptrz, correct = FALSE)
+```
+
+::: {.small}
+With the correction, $\chi^2$ = **`r fmt_num(chi_yates, 3)`**; without it, $\chi^2$ = **`r fmt_num(chi_plain, 3)`**.
+:::
+:::
+::::
+
+::: {.fragment .small}
+For a two-by-two table, `chisq.test()` applies the **continuity correction** unless told otherwise: it shrinks each gap between an observed and an expected count by half a count before squaring, which makes the test a little more conservative. 8PTRZ kept the default, and so did you.
+:::
+
+::: {.fragment .small}
+A reproduction depends on the **defaults of the software** as well as on the data and the model. Optional extension: the logit of UYV3F, *z* = `r fmt_num(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` replies, Hispanic against white names only.
+:::
+
+::: notes
+Here is the table that everyone just tested: replies to Hispanic names and to all other names, greeted by name or not. The printout of chisq dot test has a first line that most people skip: Pearson's chi-square test with Yates' continuity correction. [advance] For a two-by-two table, R applies that correction by default. It shrinks each gap between an observed and an expected count by half a count before squaring, which makes the test a little more cautious. Tell it correct equals false and you get fourteen point nine five instead. 8PTRZ kept the default, you kept the default, and that is why the class agrees to the third decimal. [advance] So a reproduction depends on the defaults of the software as well as on the data and the model, and a script that relies on a default is reproducible only for as long as that default stays put. If you finish early, try the logit of UYV3F.
+:::

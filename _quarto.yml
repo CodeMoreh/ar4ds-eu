@@ -19,10 +19,13 @@ project:
     - "!_planning/**"
     - "!_planning_data/**"
     - "!_workspaces/**"
-    - "facilitator/eu-frames-guide.qmd"   # rendered but not linked in the navbar
-    - "facilitator/tracks.qmd"            # likewise: notes on the formats and their decks
+    # Rendered but left out of the navbar: the run sheets of the cases and the
+    # notes on the formats and their decks
+    - "facilitator/eu-frames-guide.qmd"
+    - "facilitator/housing-guide.qmd"
+    - "facilitator/tracks.qmd"
 
-# The docked sidebars of the six delivery tracks live in their own file.
+# The docked sidebars of the delivery tracks live in their own file.
 metadata-files:
   - _sidebar.yml
 
@@ -55,11 +58,61 @@ website:
             text: "Install and check"
           - href: help.qmd
             text: "Setup help"
-      # The six delivery tracks. Each is a folder of participant-facing pages
-      # with a docked sidebar (_sidebar.yml) and a slides page embedding the
-      # deck that format runs on; the decks themselves are not in the navbar.
+      # The cases in the order of the ladder, each a header followed by its
+      # pages. An entry with text and no href is drawn as a header of the menu,
+      # and "---" as a divider. The trust and cohabitation cases are headers
+      # without links until their pages exist.
+      - text: Cases
+        menu:
+          - text: "The housing-audit case"
+          - href: cases/housing/index.qmd
+            text: "Case study"
+          - href: cases/housing/exercise.qmd
+            text: "Exercise"
+          - href: cases/housing/lab.qmd
+            text: "Browser lab"
+          - href: cases/housing/menu.qmd
+            text: "Specification menu"
+          - href: cases/housing/map.qmd
+            text: "Decision map"
+          - href: cases/housing/multiverse.qmd
+            text: "Multiverse"
+          - href: cases/housing/cheatsheet.qmd
+            text: "Cheatsheet"
+          - text: "---"
+          - text: "The immigration-and-trust case – in preparation"
+          - text: "---"
+          - text: "The cohabitation case – in preparation"
+          - text: "---"
+          - text: "The EU-frames case"
+          - href: cases/eu-frames/index.qmd
+            text: "Case study"
+          - href: cases/eu-frames/exercise.qmd
+            text: "Exercise"
+          - href: cases/eu-frames/lab.qmd
+            text: "Browser lab"
+          - href: cases/eu-frames/menu.qmd
+            text: "Specification menu"
+          - href: cases/eu-frames/map.qmd
+            text: "Decision map"
+          - href: cases/eu-frames/multiverse.qmd
+            text: "Multiverse"
+          - href: cases/eu-frames/cheatsheet.qmd
+            text: "Cheatsheet"
+      # The delivery tracks, grouped by case. Each is a folder of
+      # participant-facing pages with a docked sidebar (_sidebar.yml) and a
+      # slides page embedding the deck that it runs on; the decks themselves
+      # are not in the navbar. The cross-case semester track (tracks/semester/)
+      # joins the end of the menu when it exists.
       - text: Tracks
         menu:
+          - text: "The housing-audit case"
+          - href: tracks/housing-short/index.qmd
+            text: "Short session – two to three hours"
+          - href: tracks/housing-one-day/index.qmd
+            text: "One day"
+          - text: "---"
+          - text: "The EU-frames case"
           - href: tracks/eu-frames-one-day-replication/index.qmd
             text: "One day – open science and replication"
           - href: tracks/eu-frames-one-day-tools/index.qmd
@@ -72,23 +125,8 @@ website:
             text: "Semester"
           - href: tracks/eu-frames-self-study/index.qmd
             text: "Self-study"
-      # The presentation of the case that every track starts from
-      - href: cases/eu-frames/index.qmd
-        text: "Case study"
-      - text: Exercise
-        menu:
-          - href: cases/eu-frames/exercise.qmd
-            text: Overview
-          - href: cases/eu-frames/lab.qmd
-            text: "Browser lab"
-          - href: cases/eu-frames/menu.qmd
-            text: Specification menu
-          - href: cases/eu-frames/map.qmd
-            text: Decision map
-          - href: cases/eu-frames/cheatsheet.qmd
-            text: Cheatsheet
-      - href: cases/eu-frames/multiverse.qmd
-        text: Multiverse
+          - text: "---"
+          - text: "Semester across the four cases – in preparation"
       # Grouped by the three strands of the curriculum – computational tools,
       # data management and sharing, statistical methods – with the
       # "---" entries drawing the dividers between them.
@@ -116,18 +154,20 @@ website:
             text: "Git & GitHub"
           - text: "---"
           - text: "Statistical methods"
-          - href: companion/measurement.qmd
-            text: "The items behind the scales"
+          - href: companion/experiments.qmd
+            text: "Audit experiments"
           - href: companion/binary-outcomes.qmd
             text: "Binary outcomes"
+          - href: companion/dags.qmd
+            text: "Causal graphs & adjustment sets"
+          - href: companion/measurement.qmd
+            text: "The items behind the scales"
           - href: companion/weighting.qmd
             text: "Weights"
           - href: companion/missingness.qmd
             text: "Missing answers"
           - href: companion/stats-methods.qmd
             text: "The statistical methods behind the course"
-          - href: companion/dags.qmd
-            text: "Causal graphs & adjustment sets"
           - href: companion/individual-level.qmd
             text: "The individual level"
           - href: companion/simulation.qmd
@@ -137,9 +177,15 @@ website:
       - href: resources.qmd
         text: Resources
 
+  # The licence of the pages, then the terms of the data of each case.
   page-footer:
     left: |
       Content licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) ·
+      Data: housing audit, [CC0](https://doi.org/10.7910/DVN/1HOVTU) ·
+      immigration and trust, derived from the European Social Survey,
+      [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) ·
+      EU frames, aggregates only, the Eurobarometer files under the
+      [GESIS terms of use](https://www.gesis.org/en/institute/data-usage-terms) ·
       [GitHub repo](https://github.com/CodeMoreh/applied-replication)
     right: |
       Built with [Quarto](https://quarto.org/)
@@ -147,6 +193,8 @@ website:
 filters:
   - highlight-text
   - more-fragments
+  # The line "Case: ..." at the top of every page under cases/<slug>/
+  - style/case-label.lua
 
 format:
   html:

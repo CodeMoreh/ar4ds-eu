@@ -1,0 +1,99 @@
+## The estimand statement {#the-estimand-statement .smaller}
+
+::: {.claimcard}
+"Among [emails counted], [names], [who replied], the difference in the share that drew [outcome] between Hispanic names and [comparison group] ([replies without a greeting code], [bounced emails])."
+:::
+
+::: {.small}
+- **Comparison group** – white names, as the claim was selected, or white and Black names together, as the abstract has it?
+- **Emails counted** – the replies only, as the paper counts them, or every email that was delivered?
+:::
+
+::: {.fragment}
+**In chat, now:** your statement for the claim, every bracket filled. Type it, hold it, send on "go".
+:::
+
+::: {.src}
+The template of the decision map on the course site, after @LundbergEtAl2021WhatYourEstimand.
+:::
+
+::: notes
+An estimand is the quantity that your number is meant to estimate, stated in words before any model is fitted. This is the template that the decision map on the course site uses for our claim, with a bracket for each decision that changes the question. Most brackets have an obvious filling: the outcome is a greeting by name, the names are both sexes pooled, every reply counts whoever wrote it. Two brackets are open. Is the comparison with white names, as the claim was selected, or with white and Black names together, as the abstract says? And which emails are counted – only those that drew a reply, as the paper counts them, or every email that arrived? Fill in the brackets, type the statement in chat, hold it, and send on go. [go; read three or four aloud] If the chat splits on those two brackets, that is the same split as among the five analysts.
+:::
+
+## The causal graph of the experiment {#the-causal-graph-of-the-experiment .smaller}
+
+:::: {.columns}
+::: {.column width="62%"}
+```{r}
+#| label: case-dag
+#| fig-width: 7.4
+#| fig-height: 5.4
+# The graph of Task 2 (the workspace file R/dag_starter.R), with the arrow
+# that the claim is about drawn as a dashed arc.
+case_dag("all")
+```
+:::
+::: {.column width="38%"}
+::: {.small}
+- The name was assigned **at random**, so no arrow points into it
+- Only a reply can greet the sender by name: **name → reply → greeting**
+- The **official**, whom nobody observed, and the **community** both affect whether a reply comes and how it opens
+- The dashed arc is the claim, the arrow that Task 2 leaves for you to switch on
+:::
+:::
+::::
+
+::: notes
+Here is the experiment as a causal graph, the same graph that you finish in Task 2. On the left, the name, which was assigned by a random number generator, so nothing points into it, and that is what makes this an experiment. The name can change whether the official replies at all, and only a reply can greet the sender by name, so there is a chain from the name through the reply to the greeting. Above, the official, drawn pale because nobody observed them: workload, habits of courtesy, attitudes, anything about the person who reads the email, which affects both whether they reply and how they open. Below, the community, its size, poverty and ethnic composition, which can do the same. And the dashed arc is the claim itself: does the name change the greeting, beyond whether a reply comes at all?
+:::
+
+## Comparing among replies {#comparing-among-replies .smaller}
+
+:::: {.columns}
+::: {.column width="62%"}
+```{r}
+#| label: case-dag-replies
+#| fig-width: 7.4
+#| fig-height: 5.4
+case_dag("replies")
+```
+:::
+::: {.column width="38%"}
+::: {.small}
+- The reply is a **consequence of the name**, and a common effect of the name and the official: a **collider**
+- Comparing greetings among replies conditions on it, and opens the paths in red
+- If the name changes **who** replies, the officials who answered Santiago need not resemble those who answered Brett
+:::
+:::
+::::
+
+::: {.fragment .small}
+Conditioning on a variable that the treatment can change is **post-treatment conditioning**: the gap among replies mixes an effect on **how** officials write with a difference in **which** officials wrote [@MontgomeryEtAl2018HowConditioningPosttreatment; @Coppock2019AvoidingPosttreatmentBias].
+:::
+
+::: notes
+Now draw a box around the reply, because that is what the paper does when it compares greetings among replies only. The reply is caused by the name, and also by the official, so it is a common effect of the two, a collider. Conditioning on a collider opens a path between its causes: among the replies, the name and the official are no longer independent. If a Hispanic name discourages some officials from replying, the officials who answered Santiago are a different mix from those who answered Brett, perhaps the more conscientious ones, perhaps the busier ones. Their habits of greeting then travel along the red path into the comparison. [advance] The general name for this is post-treatment conditioning, conditioning on something that the treatment can change, and it can produce a gap even where the name has no effect on tone at all. Coppock wrote about it for exactly this kind of audit experiment.
+:::
+
+## Counting every delivered email {#counting-every-delivered-email .smaller}
+
+::: {.small}
+- Count **every delivered email**, with no reply counted as no greeting: no box, nothing opened, and the groups stay as randomisation made them
+- The outcome changes with it: a **reply that greets the sender by name**, which combines whether a reply came with how it began
+:::
+
+::: {.small}
+| Emails counted | Hispanic names | White names | Difference |
+|:--|--:|--:|--:|
+| Coded replies (n = `r curve_ref$n`) | `r fmt_num(curve_ref$rate_hisp, 1)`% | `r fmt_num(curve_ref$rate_comp, 1)`% | `r fmt_num(curve_ref$b_pp, 2)` points |
+| Delivered emails (n = `r curve_ref_all$n`) | `r fmt_num(curve_ref_all$rate_hisp, 1)`% | `r fmt_num(curve_ref_all$rate_comp, 1)`% | `r fmt_num(curve_ref_all$b_pp, 2)` points |
+:::
+
+::: {.fragment .small}
+Two defensible questions. Among the replies: the question of the claim, about tone, but an effect of the name alone only if the name did not change who replied. Among all emails: an effect of the name that randomisation protects, on a different outcome. The reply gap of `r fmt_num(out_of("reply", "hispanic", "b_pp"), 1)` points (`r fmt_p(out_of("reply", "hispanic", "p"))`) makes a large selection unlikely, without ruling it out.
+:::
+
+::: notes
+The remedy is to remove the box. Count every email that arrived, and treat an email that drew no reply as one that drew no greeting. Now nothing is conditioned on, and the groups are exactly as the random number generator made them. But the outcome has changed with the denominator: it is now a reply that greets the sender by name, which combines whether a reply came with how it began. Among replies, forty-one per cent against sixty-one, a gap of twenty points. Among all delivered emails, twenty-two against thirty-five, a gap of thirteen. [advance] Neither is wrong. The comparison among replies answers the question of the claim, about tone, and is clean only if the name did not change who replied. The comparison among all emails is clean by design, and answers a related but different question. One of the five analysts made exactly this move.
+:::

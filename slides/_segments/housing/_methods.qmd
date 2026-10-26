@@ -1,0 +1,53 @@
+## A difference in proportions {#a-difference-in-proportions .smaller}
+
+::: {.small}
+- Among the replies with a greeting code, **`r fmt_num(curve_ref$rate_hisp, 1)`%** of the `r curve_ref$n_hisp` replies to Hispanic names opened with the name of the sender, against **`r fmt_num(curve_ref$rate_comp, 1)`%** of the `r curve_ref$n_comp` replies to white names
+- The difference: **`r fmt_num(curve_ref$b_pp, 2)` percentage points**
+:::
+
+::: {.fragment .small}
+A linear model of a 0/1 outcome on a 0/1 indicator of the group gives exactly that difference as its coefficient. This is the **linear probability model**, and its coefficient reads directly in the units of the claim.
+
+```{.r}
+lm(named ~ hispanic, data = replies)    # the coefficient is the difference, as a proportion
+```
+:::
+
+::: {.fragment .small}
+Its test, with HC2 standard errors: *t* = `r fmt_num(curve_ref$stat, 2)` on `r curve_ref$df` df, p = `r fmt_num(curve_ref$p, 4)`.
+:::
+
+::: notes
+The statistics of this case are about as simple as statistics gets, which is why it is a good case to learn on. Among the coded replies, forty-one per cent of those to Hispanic names opened with the name of the sender, against sixty-one per cent of those to white names. The difference is twenty percentage points, and that difference is the estimate. [advance] You can get the same number from a regression. Fit a linear model of the greeting, coded zero or one, on an indicator that is one for the Hispanic names, and its coefficient is exactly the difference between the two shares. That model is called the linear probability model, and its great virtue is that its coefficient is already in the units of the claim. [advance] Its test, with the standard errors that the course uses throughout, gives a t of minus three point eight seven.
+:::
+
+## Linear probability model and logit {#linear-probability-model-and-logit .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**Linear probability model**
+
+- The coefficient is the difference in proportions
+- Simple, and in the units of the claim
+- With covariates it can predict shares below 0 or above 1
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**Logistic regression (logit)**
+
+- Models the log odds of a greeting; the coefficient of the Hispanic names is `r fmt_num(logit_ref[["Estimate"]], 3)`, with *z* = `r fmt_num(logit_ref[["z value"]], 3)` (UYV3F)
+- Its **average marginal effect**, the change in the predicted share averaged over the emails, is on the course scale
+- Predicted shares always stay between 0 and 1
+:::
+:::
+::::
+
+::: {.fragment .small}
+Without covariates a logit reproduces the two observed shares exactly, so its average marginal effect is the same `r fmt_num(twin("logit", "none")$b_pp, 2)` points. Across the curve, the logit moves the estimate by `r fmt_num(dev_of("logit", "shift_mean"), 2)` points on average against its linear twin.
+:::
+
+::: notes
+The paper itself used a different model, the logistic regression or logit, which models the log odds of a greeting rather than its share. Its coefficient, minus point eight one here, is on the scale of log odds, and the z that goes with it is exactly the value that Multi100 recorded for UYV3F. To put a logit on the scale of the claim, you take its average marginal effect: predict the share of greetings for every email as if it carried a Hispanic name and as if it carried a white one, and average the difference. [advance] With no covariates the logit reproduces the two observed shares exactly, so its average marginal effect is the same twenty points. With covariates the two models part a little, and across the whole curve the choice between them moves the estimate by a hundredth of a point on average. The model is a decision on the menu that barely matters here.
+:::

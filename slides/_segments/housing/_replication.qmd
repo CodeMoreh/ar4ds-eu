@@ -1,0 +1,161 @@
+## The SCORE replication {#the-score-replication .smaller}
+
+::: {.small}
+- A **preregistered direct replication**, single-blind, run for SCORE
+- **3,050** public housing authorities listed by HUD, block-randomised within US states
+- **Four new male names**, chosen from pre-tested names that vary perceived ethnicity while holding perceived class and migrant status similar: Joe Garcia and Michael Hernandez against John Ryan and Nicholas Smith. No female names and no Black names
+- Replies awaited for one week, and coded as friendly for **any use** of the first or the last name
+:::
+
+::: {.fragment .small}
+**1,811** replies. To match Table 1 of the paper, the analysis kept the authorities in localities matched with the 2018 American Community Survey: **2,337** emails and **1,243** replies.
+:::
+
+::: {.src}
+osf.io/2ug8x – the preregistration and the final report of the replication.
+:::
+
+::: notes
+Now we leave the original data behind. SCORE did not only ask analysts to rework the original file; it also commissioned a replication with new data, preregistered, so that the plan was fixed before any email went out. The team emailed more than three thousand public housing authorities, listed by the federal housing department, randomised within each state. The names were new: two meant to indicate a Hispanic sender, Joe Garcia and Michael Hernandez, and two meant to indicate a white one, John Ryan and Nicholas Smith, chosen from names that had been pre-tested so that they differ in perceived ethnicity but not in perceived class or migrant status. All four are male, and none is meant to indicate a Black sender. [advance] Eighteen hundred replies came back, and, to match the model of the paper, the team kept the authorities that could be matched with census data.
+:::
+
+## What the replication found {#what-the-replication-found .smaller}
+
+::: {.fs-75}
+| Analysis | Replies | Statistic | p |
+|:--|--:|:--|--:|
+| Logit with 2018 census covariates, on a random draw | 738 | b = 0.098 (SE 0.149), *z* = 0.66 | 0.511 |
+| The same, on all matched replies | 1,243 | *z* = 0.44 | 0.657 |
+| Covariates in thirds, on the draw / on all | 738 / 1,243 | *z* = 0.70 / 0.45 | 0.483 / 0.654 |
+| Preregistered: linear model, no covariates, 1,000 draws from 1,484 replies | 738 | – | not significant "approximately 93 percent of the time" |
+:::
+
+::: {.fragment .small}
+A logit coefficient of 0.098 corresponds to a gap of at most **+2.45 percentage points**, in favour of the Hispanic names. The verdict of SCORE: **not replicated**.
+:::
+
+::: {.src}
+osf.io/2ug8x, final report. The draw of 738 replies is the size set by the power analysis (osf.io/kcsby).
+:::
+
+::: notes
+And here is what came back. The main analysis matched the model of the paper as closely as the new data allowed: a logistic regression of a friendly reply on the Hispanic names, with census covariates, on a random draw of seven hundred and thirty-eight replies, the number that the power analysis called for. The coefficient is small and positive, nought point one, with a z of nought point six six. On all the matched replies, smaller still. With the covariates in thirds, as in the public file of the original study, the same. And the preregistered analysis, a plain difference in proportions repeated on a thousand random draws, was not significant in about ninety-three per cent of them. [advance] Translated into the units of the claim, the coefficient is a gap of just under two and a half points at most, the other way round. SCORE judged the claim not replicated.
+:::
+
+## Original and replication compared {#what-the-replication-changed .smaller}
+
+::: {.small}
+| | The original audit | The replication |
+|:--|:--|:--|
+| Authorities | those matched with a core city: 1,017 | the authorities on the HUD list: 3,050 |
+| Assignment | at random, by random number generator | at random, within each state |
+| Names | six: white, Black and Hispanic, male and female | four: white and Hispanic, male, pre-tested |
+| A friendly reply | a named salutation, coded leniently | any use of the first or the last name |
+| The model of the claim | logit with 2012 census covariates, 549 replies | logit with 2018 census covariates, 738 replies |
+| The result | **−20.0 points**, *z* = −3.73 | **at most +2.45 points**, *z* = 0.66 |
+:::
+
+::: notes
+Set the two studies side by side and the differences are worth reading row by row, because each is a candidate explanation. The replication emailed the authorities on the HUD list, not only those near a core city, so its population of officials is larger and more varied. It randomised within states. Its names were different, all male, and pre-tested to vary ethnicity without varying class. It coded a friendly reply as any use of a name, which is close to the lenient coding of the original but not identical. Its census covariates come from a later year. And it is later in time. None of these differences is a flaw: a replication is supposed to take the question to new data. But the list is also the list of reasons why the two results might differ without either study being wrong.
+:::
+
+## Power of the two designs {#power-of-the-two-designs}
+
+```{r}
+#| label: power-chart
+#| fig-width: 9.5
+#| fig-height: 4
+# The power of a two-sided test at 5% to detect a gap below a white share of
+# 61% (data/display_power.csv), for the original comparison and for the
+# replication, with the values at 10, 13 and 20 points labelled.
+power_plot <- power |>
+  mutate(design = if_else(startsWith(design, "original"),
+                          "original: about 181 replies a group",
+                          "replication: 369 replies a group"))
+power_marks <- filter(power_plot, gap_pp %in% c(10, 13, 20))
+ggplot(power_plot, aes(gap_pp, power, colour = design)) +
+  geom_line(linewidth = 1.3) +
+  geom_point(data = power_marks, size = 3.6) +
+  geom_text(data = power_marks, aes(label = fmt_num(power, 2),
+                                    vjust = if_else(startsWith(design, "original"), 1.9, -1)),
+            size = 4.6, show.legend = FALSE) +
+  scale_colour_manual(values = c(ncl_blue, green), name = NULL) +
+  scale_y_continuous(limits = c(0, 1.1), breaks = seq(0, 1, 0.25)) +
+  labs(x = "gap in greetings by name (percentage points)", y = "power") +
+  theme_slide(15) +
+  theme(legend.position = "top", legend.justification = "left")
+```
+
+::: {.small}
+The original comparison detects a gap of 20 points almost always (`r fmt_num(pw("original", 20), 2)`), but one of 10 points less than half the time (`r fmt_num(pw("original", 10), 2)`). The replication has `r fmt_num(pw("replication", 10), 2)` for 10 points.
+:::
+
+::: notes
+One more lens: power, the probability that a study of a given size detects a gap of a given size. At a white share of sixty-one per cent, the original comparison, with about a hundred and eighty replies a group, detects a twenty-point gap almost every time. But its power for a ten-point gap is under one half, and for thirteen points about seven in ten. The replication, with three hundred and sixty-nine replies a group, has nearly eight in ten for ten points. Two consequences. A replication of this size would have found a gap of ten points about four times in five, and a larger one more often still, had there been one. And when a study with modest power for realistic effects does reach significance, its estimate tends to overstate the true effect, because only the lucky draws clear the bar. The published interval runs from minus thirty to minus ten.
+:::
+
+## The three Rs on this paper {#one-paper-all-three-rs}
+
+```{r}
+#| label: scoreboard
+#| fig-width: 10.5
+#| fig-height: 4.6
+# The SCORE dossier on the housing-audit case as a three-row scoreboard,
+# one row per R; the details come from _planning/housing/housing-facts.md and from
+# the curve and record files.
+sb <- tribble(
+  ~ord, ~R,              ~verdict,                ~detail,                                                                                                   ~fill,
+  3,    "Reproducible?", "NOT TESTED BY SCORE",   "data and code public; the reproduction component\nholds an empty template – and the class reproduced 8PTRZ", grey_mid,
+  2,    "Robust?",       "ANALYSTS SPLIT 3–2",    sprintf("%d specifications, all negative and significant,\n%s to %s points; but two of the five analysts\nfound no evidence, and Multi100 asks all five", nrow(curve), fmt_num(min(curve$b_pp), 0), fmt_num(max(curve$b_pp), 0)), orange,
+  1,    "Replicable?",   "NOT REPLICATED",        "new audit, 3,050 authorities, four new names:\nz = 0.66, p = 0.511",                         d_red
+)
+
+ggplot(sb, aes(x = 1, y = ord)) +
+  geom_tile(aes(x = 1.2, fill = fill), width = 1.34, height = 0.92, alpha = 0.14) +
+  geom_segment(aes(x = 0.538, xend = 0.538, y = ord - 0.46, yend = ord + 0.46, colour = fill),
+               linewidth = 6) +
+  scale_fill_identity() +
+  scale_colour_identity() +
+  geom_text(aes(label = R), x = 0.60, hjust = 0, vjust = 0.5, fontface = "bold",
+            colour = ncl_blue, size = 8) +
+  geom_text(aes(label = verdict, colour = fill, y = ord - 0.26), x = 0.60, hjust = 0, vjust = 0.5,
+            fontface = "bold", size = 5.6) +
+  geom_text(aes(label = detail), x = 1.02, hjust = 0, vjust = 0.5, colour = "grey35", size = 4.4,
+            lineheight = 0.95) +
+  scale_x_continuous(limits = c(0.5, 1.9)) +
+  scale_y_continuous(limits = c(0.4, 3.6)) +
+  labs(x = NULL, y = NULL) +
+  theme_void()
+```
+
+::: {.src}
+The SCORE project of the paper: [osf.io/3a8bg](https://osf.io/3a8bg/)
+:::
+
+::: notes
+Put the whole dossier together. Reproducibility was never tested by SCORE: the data and code are public on the Dataverse, but the reproduction component on the OSF holds only an empty template. You have done part of that job yourselves today, since the class reproduced the number of 8PTRZ exactly, and the course refits reproduce all four recorded statistics. Robustness, on the original data, holds in the strongest sense that a curve can offer: every analysis that the course judged justifiable, and every one of the five analysts, finds the gap in the same direction and significant, and only its size moves. By the rule of Multi100, though, which counts a claim as robust only when every reanalyst finds evidence for it, this claim would not count, because two of the five did not. Replication with new data found nothing. So the one paper has a different answer for each R, and they do not line up.
+:::
+
+## Robustness and replicability {#robustness-and-replicability}
+
+:::: {.none .fs-85}
+::: {.fragment}
+On the original data, every justifiable analysis finds the gap. Only its size moves.
+:::
+
+::: {.fragment}
+Every one of those analyses uses the same `r fmt_n(nrow(audit))` emails, the same six names, the same officials in the same year. **The curve varies the analysis and never the sample.**
+:::
+
+::: {.fragment}
+So robustness to analytic choices on one sample is not replicability.
+:::
+
+::: {.fragment}
+Candidates for the difference: the **names** [@Gaddis2017HowBlackAre], **chance**, and **time and place**.
+:::
+::::
+
+::: notes
+This is the lesson of the case, and of the course. On the original data the claim is hard to dislodge: every justifiable analysis finds the gap, and only its size moves. [advance] But every one of those analyses works on the same thousand emails, the same six names, the same officials in the same week of 2014. A specification curve varies the analysis and holds the sample fixed, so it cannot tell you what a new sample would show. [advance] Robustness to analytic choices on one sample is a different property from replicability. [advance] Why might the two studies differ? The names are one candidate: names that are meant to indicate one group are not all read the same way, and Santiago and Gabriela may also have read as younger. Chance is another, given the power of the original design. And time and place are a third. The replication does not tell us which.
+:::

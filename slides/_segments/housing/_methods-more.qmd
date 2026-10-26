@@ -1,0 +1,145 @@
+<!-- DEEP DIVE START: methods tutorial (6 slides). Optional depth, on the
+     .deepdive class – see the note at the start of _rtutorial.qmd. -->
+
+## Odds ratios and percentage points {#odds-ratios-and-percentage-points .smaller .deepdive run="methods"}
+
+::: {.skiplink}
+[Methods tutorial · 6 slides · skip to Hands-on 4 →](#hands-on-4-work-the-menu)
+:::
+
+::: {.small}
+- The published logit coefficient, −0.82, is an **odds ratio** of exp(−0.82) = `r fmt_num(exp(-0.82), 2)`: the odds of a greeting by name for a Hispanic name were `r fmt_num(exp(-0.82), 2)` times those for a white name
+- The OAs translated it into the units of the claim: **−20.0 percentage points**
+:::
+
+::: {.fragment .small}
+An odds ratio changes when a covariate that predicts the outcome is added, **even in an experiment**, where the covariate is unrelated to the name. Adding the hard-to-find address moves the logit coefficient from `r fmt_num(twin("logit", "none")$coef, 3)` to `r fmt_num(twin("logit", "email")$coef, 3)`, while the gap in points stays at `r fmt_num(twin("logit", "email")$b_pp, 2)`.
+:::
+
+::: {.fragment .small}
+The claim speaks of "twenty percentage points", so the course reports every estimate on that scale, and keeps the odds ratio as a check.
+:::
+
+::: notes
+A logit coefficient is a difference in log odds, and its exponent is an odds ratio. The published coefficient of minus point eight two means that the odds of being greeted by name were a little under half as large for a Hispanic name as for a white one. Odds are not shares, though, and most readers misread an odds ratio as a ratio of shares. [advance] Odds ratios have a less familiar property as well. Add a covariate that predicts the outcome, and the odds ratio moves, even in an experiment, where the covariate has nothing to do with which name was sent. Statisticians call this non-collapsibility. On our data, adding the hard-to-find address nudges the logit coefficient while the gap in points barely moves. [advance] The claim is stated in percentage points, so the course reports everything on that scale.
+:::
+
+## Standard errors for a 0/1 outcome {#standard-errors-for-a-binary-outcome .smaller .deepdive run="methods"}
+
+::: {.small}
+- The variance of a 0/1 outcome is *p*(1 − *p*), so it differs between groups whose shares differ
+- **Conventional** standard errors assume one common variance; **HC2** errors, one of the 'heteroskedasticity-consistent' or 'robust' errors, let each group keep its own
+- For a comparison of two groups, the HC2 error is, to within a hair, the standard error of a difference between two independent proportions
+:::
+
+::: {.fragment .small}
+On the reference comparison the two agree: HC2 **`r fmt_num(curve_ref$se_pp, 2)`** points, conventional **`r fmt_num(se_conventional, 2)`**. With covariates or very unequal groups they part, which is why the curve uses HC2 throughout.
+:::
+
+::: notes
+A word on the standard errors, because the menu lists them. When the outcome is zero or one, its variance is the share times one minus the share, so two groups with different shares have different variances. Conventional regression errors assume one common variance for everybody, which a linear probability model breaks by construction. HC2 errors, one member of the family that people call robust errors, let each group keep its own variance, and for a simple comparison of two groups they come out, to within a hair, as the textbook standard error of a difference between two proportions. [advance] On our reference comparison the two kinds agree to within two hundredths of a point, because the groups are similar in size and in share. With covariates, or with groups of very different sizes, they can part, so the curve uses HC2 everywhere.
+:::
+
+## The choice of test {#four-tests-of-one-gap .smaller .deepdive run="methods"}
+
+::: {.small}
+Hispanic against white names, among the `r curve_ref$n` replies with a greeting code:
+
+| Test | Statistic | p |
+|:--|--:|--:|
+| Difference in proportions, HC2 | *t* = `r fmt_num(curve_ref$stat, 2)` on `r curve_ref$df` df | `r fmt_num(curve_ref$p, 4)` |
+| Logit, the test of the model | *z* = `r fmt_num(logit_ref[["z value"]], 2)` | `r fmt_num(logit_ref[["Pr(>|z|)"]], 4)` |
+| $\chi^2$ of the two-by-two table, uncorrected | $\chi^2$ = `r fmt_num(chi_ref_plain, 2)` | `r fmt_num(pchisq(chi_ref_plain, 1, lower.tail = FALSE), 4)` |
+| Randomisation test, 1,999 reshuffles | – | `r fmt_num(curve_ref$p_ri, 4)` |
+:::
+
+::: {.fragment .small}
+On one randomised comparison the tests agree: the choice moves the p-value in its fourth decimal place, and leaves the conclusion where it was. The last p is the smallest that 1,999 reshuffles can give.
+:::
+
+::: notes
+The menu lists the test as a decision, so here are four tests of the same gap on the same rows. The t of the linear model with HC2 errors, the z of the logit, the chi-square of the two-by-two table, here without the correction, and a randomisation test that reshuffles the names among the replies and asks how often chance alone produces a gap as large. [advance] They agree, as they should: on one randomised comparison, the choice of test moves the p-value in its fourth decimal place and leaves the conclusion untouched. The randomisation p is as small as nineteen hundred and ninety-nine reshuffles can make it. So on this claim the test is a decision that barely matters, which is worth knowing, because analysts often argue hardest about exactly this kind of decision.
+:::
+
+## The randomisation test {#the-randomisation-test .smaller .deepdive run="methods"}
+
+```{r}
+#| label: ri-hist
+#| fig-width: 9.5
+#| fig-height: 3.6
+# The gap among the 362 coded replies after each of 4,999 reshuffles of the
+# names (data/display_ri.csv), with the central 95% shaded and the observed
+# gap in burgundy. A reshuffle keeps the number of greetings fixed, so the gap
+# can only take values one step apart; one bar per step, centred on the
+# observed gap, avoids the empty bins of an arbitrary bin width.
+ri_step <- 100 * (1 / curve_ref$n_hisp + 1 / curve_ref$n_comp)
+ggplot(ri, aes(b_pp)) +
+  annotate("rect", xmin = ri_band[[1]], xmax = ri_band[[2]], ymin = -Inf, ymax = Inf,
+           fill = "#d6dde5", alpha = 0.6) +
+  geom_histogram(binwidth = ri_step, center = curve_ref$b_pp, fill = plain, colour = "white",
+                 alpha = 0.85) +
+  geom_vline(xintercept = curve_ref$b_pp, colour = burgundy, linewidth = 1.3) +
+  annotate("label", x = curve_ref$b_pp, y = Inf, vjust = 1.3, label = "observed",
+           colour = burgundy, fill = "white", linewidth = 0, fontface = "bold", size = 5) +
+  scale_x_continuous(limits = c(-25, 25), labels = \(x) fmt_num(x, 0)) +
+  labs(x = "Hispanic minus white names after a reshuffle (points)", y = "reshuffles") +
+  theme_slide(15)
+```
+
+::: {.small}
+The central 95% of `r fmt_n(nrow(ri))` reshuffles lies between `r fmt_num(ri_band[[1]], 1)` and +`r fmt_num(ri_band[[2]], 1)` points; `r ri_extreme` give a gap as large as the observed `r fmt_num(curve_ref$b_pp, 2)`. The test uses nothing but the random assignment of the names [@Fisher1935DesignExperiments].
+:::
+
+::: notes
+The randomisation test deserves a picture, because it is the test that the design itself supplies. Take the three hundred and sixty-two coded replies, shuffle the names among them at random, as if the name made no difference, and compute the gap again. Do that four thousand nine hundred and ninety-nine times and you get this histogram: what chance alone produces with these replies. Ninety-five per cent of the reshuffled gaps fall between minus ten and plus eleven points, the shaded band. The observed gap, in burgundy, is out at minus twenty, and only three reshuffles in nearly five thousand reach it. The argument goes back to Fisher, and it needs no model at all, only the fact that a random number generator decided which name each authority received. It is a check on the tests of the models, and here it agrees with them.
+:::
+
+## Covariates in an experiment {#covariates-in-an-experiment .smaller .deepdive run="methods"}
+
+::: {.small}
+- Randomisation balances the communities across the names in expectation, so covariates are **not needed to remove bias**
+- They can make an estimate more **precise**, if they predict the outcome
+- On the curve, against no covariates: the hard-to-find address moves the estimate by `r fmt_num(dev_of("email", "shift_mean"), 2)` points on average, the size and poverty of the community by `r fmt_num(dev_of("place", "shift_mean"), 2)`, and with its ethnic composition by `r fmt_num(dev_of("place_ethnic", "shift_mean"), 2)` – partly because 14 emails lack the community thirds
+- The continuous census values of the paper are **not in the public file**, because they would identify the authorities
+:::
+
+::: {.fragment .small}
+The Multi100 instruction to leave out ethnic composition therefore changes very little on these data.
+:::
+
+::: notes
+In an observational study, covariates are how you try to remove confounding. In an experiment they have a different job. Randomisation already balances the communities across the six names, in expectation, so covariates are not needed to remove bias; at most they make an estimate more precise, if they predict the outcome. On the curve, adding the hard-to-find address moves the estimate by less than a tenth of a point, and adding the size, poverty and ethnic composition of the community moves it by about one point, partly because fourteen emails have no community data and drop out. The continuous census values of the paper are not available at all: the public file gives only thirds, because the exact values would identify the authorities. [advance] So the one instruction of Multi100 changes very little here.
+:::
+
+## Subgroups beside the curve {#subgroups-beside-the-curve .smaller .deepdive run="methods"}
+
+```{r}
+#| label: subgroups-chart
+#| fig-width: 10
+#| fig-height: 4
+# The gap among the coded replies in subgroups that the curve leaves out
+# (data/display_subgroups.csv), each with its 95% interval and its replies.
+subgroups |>
+  mutate(subgroup = factor(subgroup, levels = rev(subgroup)),
+         n_lab = paste0("n = ", n)) |>
+  ggplot(aes(b_pp, subgroup)) +
+  geom_vline(xintercept = 0, colour = grey_mid) +
+  geom_linerange(aes(xmin = b_pp - 1.96 * se_pp, xmax = b_pp + 1.96 * se_pp),
+                 colour = plain, linewidth = 1) +
+  geom_point(colour = plain, size = 3.4) +
+  geom_text(aes(x = 22, label = n_lab), hjust = 1, size = 4, colour = grey_mid) +
+  scale_x_continuous(limits = c(-65, 22), labels = \(x) fmt_num(x, 0)) +
+  labs(x = "Hispanic minus white names (points), with 95% intervals", y = NULL) +
+  theme_slide(14) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.small}
+The male names: `r fmt_num(sub_of("male", "b_pp"), 1)` points (p = `r fmt_num(sub_of("male", "p"), 4)`); the female names: `r fmt_num(sub_of("female", "b_pp"), 1)` (p = `r fmt_num(sub_of("female", "p"), 3)`). Officials with Hispanic names: `r fmt_num(sub_of("replies from officials with Hispanic", "b_pp"), 1)` on `r sub_of("replies from officials with Hispanic", "n")` replies, a group selected after the email arrived.
+:::
+
+::: notes
+Two decisions at Level 1 narrow the claim to a subgroup: only the male or only the female names, and only the replies from officials with Hispanic names. The curve leaves them out because each answers a narrower question, but they are worth a look. The gap is larger between Santiago and Brett, twenty-three points, than between Gabriela and Emily, sixteen, and the second interval is much wider. Among the twenty-eight replies from officials with Hispanic names the gap is twenty-six points with an interval that crosses zero, which is what twenty-eight replies can tell you. Note too that the officials who replied are a group selected after the email arrived, which brings back the problem of the causal graph. The three thirds of the Hispanic share of the community show no clear pattern.
+:::
+
+<!-- DEEP DIVE END -->

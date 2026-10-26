@@ -63,3 +63,31 @@ iframe.slide-deck {
   border-radius: 4px;
   background: #16202C;
 }
+
+/* On a narrow screen a long word, code name or address breaks where it must,
+   inside a table cell or a link, so that the page itself never scrolls
+   sideways (the help and resources tables, and the DOIs of the reference
+   lists, on a phone). */
+@media (max-width: 767.98px) {
+  main td, main th, main a {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The line that names the case at the top of every page of a case, placed
+   in the title block above the title by style/case-label.lua. */
+.case-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b6673;
+  margin: 0 0 0.35rem;
+}
+.case-label a {
+  color: #2a5d8f;
+  text-decoration: none;
+}
+.case-label a:hover {
+  text-decoration: underline;
+}
