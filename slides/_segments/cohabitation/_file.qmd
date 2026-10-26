@@ -11,32 +11,33 @@
 survey_labels <- c(`1995` = "1995", `2002` = "2002", `2006-10` = "2006–2010", `2011-13` = "2011–2013",
                    `2013-15` = "2013–2015")
 file_long <- score_file |>
-  mutate(source = if_else(source == "SCORE file", "file", "rebuild"),
-         survey = factor(survey_labels[cycle], levels = survey_labels)) |>
+  datawizard::data_modify(source = dplyr::if_else(source == "SCORE file", "file", "rebuild"),
+                          survey = factor(survey_labels[cycle], levels = survey_labels)) |>
   tidyr::pivot_longer(c(marriages, separations, intact), names_to = "outcome", values_to = "n") |>
-  mutate(outcome = factor(c(marriages = "marriage", separations = "separation", intact = "intact")[outcome],
-                          levels = c("intact", "separation", "marriage")))
+  datawizard::data_modify(outcome = factor(c(marriages = "marriage", separations = "separation",
+                                             intact = "intact")[outcome],
+                                           levels = c("intact", "separation", "marriage")))
 # the count of marriages inside its segment, or just above a segment too thin
 # to hold it
-file_marriages <- filter(file_long, outcome == "marriage") |>
-  mutate(thin = n < 60, y = if_else(thin, n + 30, n / 2))
-ggplot(file_long, aes(source, n, fill = outcome)) +
-  geom_col(width = 0.72) +
-  geom_text(data = file_marriages, aes(y = y, label = fmt_n(n), colour = thin), size = 4.6,
+file_marriages <- datawizard::data_filter(file_long, outcome == "marriage") |>
+  datawizard::data_modify(thin = n < 60, y = dplyr::if_else(thin, n + 30, n / 2))
+ggplot2::ggplot(file_long, ggplot2::aes(source, n, fill = outcome)) +
+  ggplot2::geom_col(width = 0.72) +
+  ggplot2::geom_text(data = file_marriages, ggplot2::aes(y = y, label = fmt_n(n), colour = thin), size = 4.6,
             fontface = "bold", show.legend = FALSE) +
-  scale_colour_manual(values = c(`TRUE` = ink, `FALSE` = "white"), guide = "none") +
-  geom_text(data = distinct(file_long, survey, source, unions),
-            aes(source, unions, label = fmt_n(unions)), inherit.aes = FALSE, vjust = -0.4, size = 4.4,
+  ggplot2::scale_colour_manual(values = c(`TRUE` = ink, `FALSE` = "white"), guide = "none") +
+  ggplot2::geom_text(data = dplyr::distinct(file_long, survey, source, unions),
+            ggplot2::aes(source, unions, label = fmt_n(unions)), inherit.aes = FALSE, vjust = -0.4, size = 4.4,
             colour = ink) +
-  facet_wrap(~survey, nrow = 1) +
-  scale_fill_manual(values = outcome_cols, breaks = c("marriage", "separation", "intact"),
+  ggplot2::facet_wrap(~survey, nrow = 1) +
+  ggplot2::scale_fill_manual(values = outcome_cols, breaks = c("marriage", "separation", "intact"),
                     labels = c("became a marriage", "separated", "intact at the interview"), name = NULL) +
-  scale_y_continuous(labels = fmt_n, expand = expansion(mult = c(0, 0.1))) +
-  labs(x = NULL, y = "unions") +
+  ggplot2::scale_y_continuous(labels = fmt_n, expand = ggplot2::expansion(mult = c(0, 0.1))) +
+  ggplot2::labs(x = NULL, y = "unions") +
   theme_slide(15) +
-  theme(legend.position = "top", legend.justification = "left",
-        strip.text = element_text(face = "bold", colour = ncl_blue, size = 15),
-        panel.grid.major.x = element_blank())
+  ggplot2::theme(legend.position = "top", legend.justification = "left",
+        strip.text = ggplot2::element_text(face = "bold", colour = ncl_blue, size = 15),
+        panel.grid.major.x = ggplot2::element_blank())
 ```
 
 ::: {.small}
@@ -74,11 +75,11 @@ How did it happen? From 2002 the survey releases a ready-made measure of how lon
 # rebuild, in the conventions of the file (data/analysts5.csv); the estimate
 # of each refit in brackets, negative in the direction of the claim.
 repaired_rows <- analysts |>
-  mutate(line = paste0("| ", id, " | ", recorded_txt(statistic_type, statistic_recorded),
-                       " | ", stat_txt(stat_type_refit, stat_refit), " (", fmt_signed(estimate_refit, 3), ")",
-                       " | ", stat_txt(stat_type_refit, stat_repaired), " (", fmt_signed(estimate_repaired, 3), ")",
-                       " | ", task1, " |")) |>
-  pull(line)
+  dplyr::mutate(line = paste0("| ", id, " | ", recorded_txt(statistic_type, statistic_recorded),
+                              " | ", stat_txt(stat_type_refit, stat_refit), " (", fmt_signed(estimate_refit, 3), ")",
+                              " | ", stat_txt(stat_type_refit, stat_repaired), " (",
+                              fmt_signed(estimate_repaired, 3), ")", " | ", task1, " |")) |>
+  dplyr::pull(line)
 cat(c("::: {.fs-65}", # r-style: keep – writes the Markdown of the table
       "| Analyst | Recorded | The file of the analysts | The 1995 rows rebuilt | Task 1 |",
       "|:--|--:|--:|--:|:--|",

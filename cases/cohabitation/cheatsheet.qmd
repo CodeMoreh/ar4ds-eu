@@ -32,7 +32,7 @@ format:
 
 ## The helpers {#helpers}
 
-The downloadable workspace and the browser lab have the same helpers, with the same names and arguments, and both fit every specification of the menu live. The workspace fits one in under a second, the browser lab in about a second.
+The downloadable workspace and the browser lab have the same helpers, with the same names and arguments, and both fit every specification of the menu live. Each fit takes a few seconds, the multinomial logit longest.
 
 | Helper | Task | What it does |
 |---|---|---|
@@ -122,10 +122,13 @@ If any of that stalls, work down the list under [A stalled browser lab](#a-stall
 
 - `x <- value` stores a value under a name.
 - `source("R/spec_tools.R")` runs a script file; here it loads the helpers.
-- `unions |> filter(cycle == "1995")` passes the data on to the next step. Read `|>` as 'and then'.
-- `filter()`, `mutate()` and `summarise(..., .by = cycle)` keep some rows, add a column, and summarise by group; `count(unions, cycle, outcome)` counts the rows of each combination.
+- `readr::read_csv()`: the part before `::` names the package that the function comes from.
+- `unions |> datawizard::data_filter(cycle == "1995")` passes the data on to the next step. Read `|>` as 'and then'.
+- `datawizard::data_filter()`, `datawizard::data_modify()` and `datawizard::data_summary(..., by = "cycle")` keep some rows, add a column, and summarise by group; `datawizard::data_summary(unions, n = n(), by = c("cycle", "outcome"))` counts the rows of each combination.
 - `weighted.mean(race == "hispanic", weight)` is a weighted share: the mean of a true-or-false column, each row counting by its weight.
-- `slice_max(MONTHNUM, n = 1, by = CASEID)` keeps the last row of each union, the row that carries its outcome.
+- `dplyr::slice_max(MONTHNUM, n = 1, by = CASEID)` keeps the last row of each union, the row that carries its outcome.
+- `survival::survfit(survival::Surv(months, ended) ~ cohort, data = d, weights = weight)` is the life table of the unions, with marriage and separation as competing outcomes; `survival::survSplit()` turns unions into person-months.
+- `tinyplot::tinyplot(y ~ x | group, data = d)` draws a figure, the marks coloured by `group`.
 - `d[d$P95 == 1, ]` keeps the rows in which `P95` is 1, the base-R way in which the analyst of Task 3 wrote it.
 - `prop.test(x = c(4, 195), n = c(5414, 18535))` compares two shares, here 4 of 5,414 against 195 of 18,535.
 - `"composition"`: options are text, so they go in quotes.

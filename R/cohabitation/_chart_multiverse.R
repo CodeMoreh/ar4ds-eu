@@ -16,8 +16,6 @@
 # Sourced by:   cases/cohabitation/multiverse.qmd
 ################################################################################
 
-library(dplyr)
-
 # The decisions that vary on the curve, in the order of the "Colour by" and
 # "Show only" menus. The keys are the short names that the payload and
 # assets/chart/multiverse.js use.
@@ -48,13 +46,13 @@ mv_menu_relation <- tibble::tribble(
 # A typographic minus for negative numbers, and an en-dash in ranges, in text
 # that the data files write with hyphens.
 mv_minus <- \(x, d = 3) sub("^-", "−", formatC(x, format = "f", digits = d))
-mv_p_label <- \(p) if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
+mv_p_label <- \(p) dplyr::if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
 mv_big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
 mv_clean <- \(x) x |>
   stringr::str_replace_all("(?<=\\d)-(?=\\d)", "–") |>
   stringr::str_replace_all("(?<![\\w.])-(?=[0-9.])", "−")
 mv_upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
-mv_placement <- \(rank, n) case_when(
+mv_placement <- \(rank, n) dplyr::case_when(
   rank == 0 ~ sprintf("None of the %d specifications lies further below zero", n),
   rank == 1 ~ sprintf("1 of the %d specifications lies further below zero", n),
   .default = sprintf("%d of the %d specifications lie further below zero", rank, n)
@@ -65,8 +63,8 @@ mv_placement <- \(rank, n) case_when(
 # menu_options.csv, with their labels.
 mv_levels <- function(curve, options, axis_code) {
   lev <- options |>
-    filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
-    select("option", "label")
+    dplyr::filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
+    dplyr::select("option", "label")
   stopifnot(all(curve[[axis_code]] %in% lev$option))
   lev
 }
@@ -78,18 +76,18 @@ mv_levels <- function(curve, options, axis_code) {
 # standard error, and the z of the multinomial model of 456AP, refitted on the
 # file of the analysts, which reproduces the value that Multi100 recorded.
 mv_marks <- function(marks, analysts, curve) {
-  # not n: a lambda built inside mutate() would find the column n of the marks first
+  # not n: a lambda built inside dplyr::mutate() would find the column n of the marks first
   n_spec <- nrow(curve)
   out <- marks |>
-    filter(.data$on_chart) |>
-    left_join(mv_menu_relation, by = "mark") |>
-    left_join(analysts |> select("mark" = "id", "comparison_txt" = "comparison", "unit", "outcome_model",
+    dplyr::filter(.data$on_chart) |>
+    dplyr::left_join(mv_menu_relation, by = "mark") |>
+    dplyr::left_join(analysts |> dplyr::select("mark" = "id", "comparison_txt" = "comparison", "unit", "outcome_model",
                                  "controls", "task1"),
               by = "mark") |>
-    mutate(
+    dplyr::mutate(
       rank = purrr::map_int(.data$b, \(x) sum(curve$b < x - 1e-9)),
       sg = as.integer(.data$p < 0.05),
-      stat = case_when(
+      stat = dplyr::case_when(
         .data$mark == "OA" ~ sprintf("b = −0.683 with SE 0.14, as published; z = %s, as Multi100 recorded it; %s",
                                      mv_minus(.data$stat, 2), mv_p_label(.data$p)),
         .default = sprintf("z = %s, as recorded by Multi100 and reproduced on the file of the analysts; %s",
@@ -135,7 +133,7 @@ mv_payload <- function(curve, options, marks, analysts, file = "spec-curve-cohab
                        size = c(4, 5), sw = "0.9",
                        op = list(sig = "0.45", ns = "0.3", ghostSig = "0.1", ghostNs = "0.05"),
                        y = list(min = -1, max = 0.2, step = 0.2)) {
-  curve <- curve |> arrange(.data$b, .data$spec_id)
+  curve <- curve |> dplyr::arrange(.data$b, .data$spec_id)
   levels <- purrr::map(mv_axes$axis, \(a) mv_levels(curve, options, a)) |>
     rlang::set_names(mv_axes$key)
   code <- purrr::map2(mv_axes$axis, levels, \(a, lev) match(curve[[a]], lev$option) - 1L) |>

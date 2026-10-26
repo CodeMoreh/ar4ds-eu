@@ -15,11 +15,14 @@
 # One union of 1995 that became a marriage in its third month, as
 # person_months() of the workspace turns it into rows
 one_union <- paper_unions |>
-  filter(cycle == "1995", outcome == "marriage", duration == 2) |>
-  slice(1)
-one_rows <- tibble(month = seq_len(one_union$duration + 1)) |>
-  mutate(y = if_else(month == max(month), "marriage", "intact"),
-         line = paste0("| ", month, " | ", y, " |"))
+  datawizard::data_filter(cycle == "1995", outcome == "marriage", duration == 2) |>
+  utils::head(1) |>
+  datawizard::data_modify(month = duration + 1,
+                          ended = factor(outcome, levels = c("intact", "marriage", "separation")))
+one_rows <- one_union |>
+  survival::survSplit(cut = seq_len(one_union$duration), end = "month", event = "ended") |>
+  datawizard::data_modify(y = c("intact", "marriage", "separation")[as.integer(ended)],
+                          line = paste0("| ", month, " | ", y, " |"))
 cat(c("::: {.fs-75}", # r-style: keep – writes the Markdown of the table
       "| Month | Outcome in the month |",
       "|--:|:--|",
@@ -53,20 +56,20 @@ The methods tutorial starts with the data structure that makes event-history ana
 # weighted number at risk).
 span_labels <- c("first year", "second year", "third to fifth year")
 hazard_span <- lifetable |>
-  filter(group_type == "all") |>
-  mutate(span = factor(span_labels[pmin(ceiling(month / 12), 3)], levels = span_labels)) |>
-  summarise(h = sum(h_marriage * w_at_risk) / sum(w_at_risk), marriages = sum(marriages),
-            .by = c(cohort, span))
-ggplot(hazard_span, aes(span, h, fill = cohort)) +
-  geom_col(position = position_dodge(width = 0.8), width = 0.75) +
-  geom_text(aes(label = paste0(fmt_pct(h, 1), " (", marriages, ")")),
-            position = position_dodge(width = 0.8), vjust = -0.4, size = 4.4, colour = ink) +
-  scale_fill_manual(values = cohort_cols, labels = cohort_labels, name = NULL) +
-  scale_y_continuous(labels = \(x) fmt_pct(x, 0), expand = expansion(mult = c(0, 0.15))) +
-  labs(x = "time since the couple moved in", y = "monthly chance\nof marrying") +
+  datawizard::data_filter(group_type == "all") |>
+  datawizard::data_modify(span = factor(span_labels[pmin(ceiling(month / 12), 3)], levels = span_labels)) |>
+  dplyr::summarise(h = stats::weighted.mean(h_marriage, w_at_risk), marriages = sum(marriages),
+                   .by = c(cohort, span))
+ggplot2::ggplot(hazard_span, ggplot2::aes(span, h, fill = cohort)) +
+  ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.75) +
+  ggplot2::geom_text(ggplot2::aes(label = paste0(fmt_pct(h, 1), " (", marriages, ")")),
+            position = ggplot2::position_dodge(width = 0.8), vjust = -0.4, size = 4.4, colour = ink) +
+  ggplot2::scale_fill_manual(values = cohort_cols, labels = cohort_labels, name = NULL) +
+  ggplot2::scale_y_continuous(labels = \(x) fmt_pct(x, 0), expand = ggplot2::expansion(mult = c(0, 0.15))) +
+  ggplot2::labs(x = "time since the couple moved in", y = "monthly chance\nof marrying") +
   theme_slide(15) +
-  theme(legend.position = "top", legend.justification = "left",
-        panel.grid.major.x = element_blank())
+  ggplot2::theme(legend.position = "top", legend.justification = "left",
+        panel.grid.major.x = ggplot2::element_blank())
 ```
 
 ::: {.small}

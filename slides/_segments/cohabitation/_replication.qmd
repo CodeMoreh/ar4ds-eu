@@ -33,26 +33,26 @@ SCORE commissioned a replication of this paper on later waves of the same survey
 pair_labels <- c(`1995_2006` = "1995 and 2006–2010 (the paper)", `2002_2006` = "2002 and 2006–2010",
                  `2006_2011` = "2006–2010 and 2011–2015", `2002_2011` = "2002 and 2011–2015",
                  `1995_2011` = "1995 and 2011–2015")
-pairs <- bind_rows(
-  mutate(curve_ref, option = "1995_2006"),
-  filter(options_d, changed == "comparison")
+pairs <- dplyr::bind_rows(
+  datawizard::data_modify(curve_ref, option = "1995_2006"),
+  datawizard::data_filter(options_d, changed == "comparison")
 ) |>
-  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
-         lab = factor(pair_labels[option], levels = rev(pair_labels)),
-         paper = option == "1995_2006",
-         note = if_else(p < 0.001, "p < 0.001", paste("p =", fmt_num(p, 3))))
-ggplot(pairs, aes(b, lab, colour = paper)) +
-  geom_vline(xintercept = 0, colour = grey_mid) +
-  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.6) +
-  geom_point(size = 4.2) +
-  geom_text(aes(x = 0.06, label = paste0(fmt_num(b, 3), ", ", note)), hjust = 0, size = 4.8,
+  datawizard::data_modify(lo = b - stats::qt(0.975, df) * se, hi = b + stats::qt(0.975, df) * se,
+                          lab = factor(pair_labels[option], levels = rev(pair_labels)),
+                          paper = option == "1995_2006",
+                          note = dplyr::if_else(p < 0.001, "p < 0.001", paste("p =", fmt_num(p, 3))))
+ggplot2::ggplot(pairs, ggplot2::aes(b, lab, colour = paper)) +
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = lo, xmax = hi), linewidth = 1.6) +
+  ggplot2::geom_point(size = 4.2) +
+  ggplot2::geom_text(ggplot2::aes(x = 0.06, label = paste0(fmt_num(b, 3), ", ", note)), hjust = 0, size = 4.8,
             colour = "grey30") +
-  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
-  scale_x_continuous(labels = log_lab, breaks = seq(-1.2, 0, 0.2)) +
-  coord_cartesian(xlim = c(-1.25, 0.55)) +
-  labs(x = "coefficient of the later cohort (log scale), with 95% intervals", y = NULL) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  ggplot2::scale_x_continuous(labels = log_lab, breaks = seq(-1.2, 0, 0.2)) +
+  ggplot2::coord_cartesian(xlim = c(-1.25, 0.55)) +
+  ggplot2::labs(x = "coefficient of the later cohort (log scale), with 95% intervals", y = NULL) +
   theme_slide(15) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20", face = "bold"))
 ```
 
 ::: {.small}
@@ -72,30 +72,30 @@ The claim that Multi100 gave the analysts is about a different number, the chang
 # The record of the cohabitation case as a three-row scoreboard, one row per R;
 # the details come from _planning/cohabitation/cohabitation-facts.md and from
 # the curve and record files.
-sb <- tribble(
+sb <- tibble::tribble(
   ~ord, ~R,              ~verdict,                    ~detail,                                                                                                                                                                                                                                 ~fill,
   3,    "Reproducible?", "NONE RECORDED BY SCORE",    sprintf("no data or code from the OAs; the course rebuilt the\nunions and refits Model 2 at %s against −0.683;\nthe class reproduced 5X3KG exactly, from a faulty file", fmt_num(mark_of("OA_refit", "b"), 3)),                                       orange,
   2,    "Robust?",       "ALL %d SPECIFICATIONS AGREE", sprintf("all negative and significant, %s to %s;\nthe five analysts split two, one and two,\nbecause of one cohort of one file", fmt_num(min(curve$b), 3), fmt_num(max(curve$b), 3)),                                                     green,
   1,    "Replicable?",   "DEPENDS ON THE COEFFICIENT", sprintf("SCORE, some college × period: %s (p = %s), not replicated;\nthe course, the period: %s on 2002 and 2011–2015", fmt_num(mark_of("SCORE_replication", "b"), 3), fmt_num(mark_of("SCORE_replication", "p"), 2), fmt_num(mark_of("course_2002_2011", "b"), 3)), orange
 ) |>
-  mutate(verdict = if_else(R == "Robust?", sprintf(verdict, nrow(curve)), verdict))
+  dplyr::mutate(verdict = dplyr::if_else(R == "Robust?", sprintf(verdict, nrow(curve)), verdict))
 
-ggplot(sb, aes(x = 1, y = ord)) +
-  geom_tile(aes(x = 1.2, fill = fill), width = 1.34, height = 0.92, alpha = 0.14) +
-  geom_segment(aes(x = 0.538, xend = 0.538, y = ord - 0.46, yend = ord + 0.46, colour = fill),
+ggplot2::ggplot(sb, ggplot2::aes(x = 1, y = ord)) +
+  ggplot2::geom_tile(ggplot2::aes(x = 1.2, fill = fill), width = 1.34, height = 0.92, alpha = 0.14) +
+  ggplot2::geom_segment(ggplot2::aes(x = 0.538, xend = 0.538, y = ord - 0.46, yend = ord + 0.46, colour = fill),
                linewidth = 6) +
-  scale_fill_identity() +
-  scale_colour_identity() +
-  geom_text(aes(label = R), x = 0.60, hjust = 0, vjust = 0.5, fontface = "bold",
+  ggplot2::scale_fill_identity() +
+  ggplot2::scale_colour_identity() +
+  ggplot2::geom_text(ggplot2::aes(label = R), x = 0.60, hjust = 0, vjust = 0.5, fontface = "bold",
             colour = ncl_blue, size = 8) +
-  geom_text(aes(label = verdict, colour = fill, y = ord - 0.26), x = 0.60, hjust = 0, vjust = 0.5,
+  ggplot2::geom_text(ggplot2::aes(label = verdict, colour = fill, y = ord - 0.26), x = 0.60, hjust = 0, vjust = 0.5,
             fontface = "bold", size = 4.4) +
-  geom_text(aes(label = detail), x = 1.08, hjust = 0, vjust = 0.5, colour = "grey35", size = 4.3,
+  ggplot2::geom_text(ggplot2::aes(label = detail), x = 1.08, hjust = 0, vjust = 0.5, colour = "grey35", size = 4.3,
             lineheight = 0.95) +
-  scale_x_continuous(limits = c(0.5, 1.9)) +
-  scale_y_continuous(limits = c(0.4, 3.6)) +
-  labs(x = NULL, y = NULL) +
-  theme_void()
+  ggplot2::scale_x_continuous(limits = c(0.5, 1.9)) +
+  ggplot2::scale_y_continuous(limits = c(0.4, 3.6)) +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_void()
 ```
 
 ::: {.src}

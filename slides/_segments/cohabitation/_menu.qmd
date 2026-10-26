@@ -9,22 +9,25 @@ judgement_txt <- c(other_question = "another question", weaker_answer = "a weake
                    check = "a check", unavailable = "not in the data")
 level_txt <- c(estimand = "1 – Estimands", measurement = "2 – Measurement",
                estimation = "3 – Estimation")
+# dplyr::summarise() rather than datawizard::data_summary(), which would
+# order the decisions by name rather than as the menu lists them
 off_txt <- menu_opts |>
-  filter(!on_curve) |>
-  summarise(txt = paste0(paste(label, collapse = " · "), " *(", judgement_txt[first(judgement)], ")*"),
-            .by = c(axis, judgement)) |>
-  summarise(off = paste(txt, collapse = "; "), .by = axis) |>
+  datawizard::data_filter(!on_curve) |>
+  dplyr::summarise(txt = paste0(paste(label, collapse = " · "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
+                   .by = c(axis, judgement)) |>
+  dplyr::summarise(off = paste(txt, collapse = "; "), .by = axis) |>
   # the four other pairs of surveys in one phrase, so that the row fits the slide
-  mutate(off = if_else(axis == "comparison",
-                       "Four other pairs of NSFG surveys · Trend over five surveys *(another question)*", off))
+  dplyr::mutate(off = dplyr::if_else(axis == "comparison",
+                                     "Four other pairs of NSFG surveys · Trend over five surveys *(another question)*",
+                                     off))
 menu_rows <- menu_opts |>
-  filter(on_curve) |>
-  summarise(level = first(level), decision = first(decision),
-            on = paste(label, collapse = " · "), .by = axis) |>
-  left_join(off_txt, by = "axis") |>
-  mutate(off = coalesce(off, "–"),
-         level = if_else(level == lag(level, default = ""), "", level_txt[level]),
-         line = paste0("| ", level, " | **", decision, "** | ", on, " | ", off, " |"))
+  datawizard::data_filter(on_curve) |>
+  dplyr::summarise(level = dplyr::first(level), decision = dplyr::first(decision),
+                   on = paste(label, collapse = " · "), .by = axis) |>
+  dplyr::left_join(off_txt, by = "axis") |>
+  dplyr::mutate(off = dplyr::coalesce(off, "–"),
+                level = dplyr::if_else(level == dplyr::lag(level, default = ""), "", level_txt[level]),
+                line = paste0("| ", level, " | **", decision, "** | ", on, " | ", off, " |"))
 cat(c('::: {.scaled style="--fs: 0.5; --lh: 1.05"}', # r-style: keep – writes the Markdown of the table
       "| Level | Decision | On the curve | Off the curve |",
       "|:--|:--|:--|:--|",

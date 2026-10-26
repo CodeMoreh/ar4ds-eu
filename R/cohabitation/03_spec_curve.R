@@ -10,34 +10,42 @@
 # Last updated: 2026-10-26
 ################################################################################
 
-library(tidyverse)
 source("R/cohabitation/_tools.R")
 
-unions <- read_csv("cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
-                   col_types = cols(caseid = col_character(), stratum = col_character(), psu = col_character()))
+# readr rather than datawizard::data_read(), which reads empty cells as "" and
+# the codes of the cases, strata and clusters as numbers
+unions <- readr::read_csv("cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
+                          col_types = readr::cols(caseid = readr::col_character(),
+                                                  stratum = readr::col_character(),
+                                                  psu = readr::col_character()))
 
-grid <- expand_grid(!!!SPEC_AXES)
+grid <- tidyr::expand_grid(!!!SPEC_AXES)
 
+# Both fits of one specification. dplyr rather than datawizard in the body,
+# because datawizard evaluates its expressions in a fresh environment and so
+# cannot see `by_woman`.
 fit_both <- function(cohorts, horizon, adjust, weights, time, model) {
   by_design <- fit_spec(unions, cohorts, horizon, adjust, weights, time, model)
   by_woman <- fit_spec(unions, cohorts, horizon, adjust, weights, time, model, errors = "woman")
   by_design |>
-    select(-comparison, -education, -short, -errors) |>
-    mutate(se_woman = by_woman$se, t_woman = by_woman$stat, df_woman = by_woman$df, p_woman = by_woman$p)
+    dplyr::select(-comparison, -education, -short, -errors) |>
+    dplyr::mutate(se_woman = by_woman$se, t_woman = by_woman$stat, df_woman = by_woman$df, p_woman = by_woman$p)
 }
 
 curve <- grid |>
-  pmap(fit_both) |>
-  bind_rows() |>
-  mutate(spec_id = row_number(), .before = 1) |>
-  mutate(
+  purrr::pmap(fit_both) |>
+  dplyr::bind_rows() |>
+  datawizard::data_modify(
+    spec_id = 1:n(),
     supports = b < 0,
     sig = p < 0.05,
     is_reference = cohorts == REFERENCE$cohorts & horizon == REFERENCE$horizon &
       adjust == REFERENCE$adjust & weights == REFERENCE$weights & time == REFERENCE$time &
       model == REFERENCE$model
-  )
+  ) |>
+  datawizard::data_relocate("spec_id")
 
 stopifnot(nrow(curve) == 144, sum(curve$is_reference) == 1)
 
-write_csv(curve, "cases/cohabitation/data/spec_curve.csv")
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(curve, "cases/cohabitation/data/spec_curve.csv")

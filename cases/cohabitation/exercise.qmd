@@ -7,33 +7,32 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(tinytable)
-
-analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character()))
-unions <- read_csv("data/cohab_unions.csv", show_col_types = FALSE,
-                   col_types = cols(caseid = col_character(), stratum = col_character(),
-                                    psu = col_character()))
-score <- read_csv("data/score_person_months.csv", show_col_types = FALSE)
-repro <- read_csv("data/display_reproduction.csv", show_col_types = FALSE)
-menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" and
+# the codes of the cases, strata and clusters as numbers
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                  col_types = readr::cols(stat_type = readr::col_character()))
+unions <- readr::read_csv("data/cohab_unions.csv", show_col_types = FALSE,
+                   col_types = readr::cols(caseid = readr::col_character(), stratum = readr::col_character(),
+                                    psu = readr::col_character()))
+score <- readr::read_csv("data/score_person_months.csv", show_col_types = FALSE)
+repro <- readr::read_csv("data/display_reproduction.csv", show_col_types = FALSE)
+menu <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
 
 fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
 an <- \(id, col) analysts[[col]][analysts$id == id]
 
-ref <- curve |> filter(is_reference)
-paper <- unions |> filter(cycle %in% c("1995", "2006-10"), in_window, cycle == "1995" | from_2005)
-model_2 <- repro |> filter(model == 2, equation == "marriage", term == "later")
+ref <- datawizard::data_filter(curve, is_reference)
+paper <- datawizard::data_filter(unions, cycle %in% c("1995", "2006-10"), in_window, cycle == "1995" | from_2005)
+model_2 <- datawizard::data_filter(repro, model == 2, equation == "marriage", term == "later")
+# the outcome of each union of 1995 in the SCORE file is that of its last row
 score_1995 <- score |>
-  filter(P95 == 1) |>
-  slice_max(MONTHNUM, n = 1, by = CASEID) |>
-  count(OUTCOME)
+  datawizard::data_filter(P95 == 1) |>
+  dplyr::slice_max(MONTHNUM, n = 1, by = CASEID) |>
+  datawizard::data_summary(n = n(), by = "OUTCOME")
 s95 <- \(code) score_1995$n[score_1995$OUTCOME == code]
-n_decisions <- n_distinct(menu$axis)
+n_decisions <- dplyr::n_distinct(menu$axis)
 ```
 
 This page sets out the whole exercise of the course on the cohabitation case. The [case study](index.qmd) presents the original study, the five Multi100 reanalyses, the file that the analysts received and the replications, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation and as a fallback, and it gives the same numbers, the reproduction of Task 3 included. The page of your track gives the timing of each task.
@@ -56,14 +55,14 @@ Your first job is to reproduce the value that Multi100 recorded for one of the a
 #| label: tbl-five
 #| tbl-cap: "The five reanalyses, with the statistic that Multi100 recorded and the conclusion of Task 1. Source: `data/analysts5.csv`."
 #| echo: false
-recorded_txt <- \(type, x) case_when(
+recorded_txt <- \(type, x) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("χ<sup>2</sup> = ", gsub("-", "−", formatC(x, format = "fg", digits = 5))),
   .default = paste(type, "=", gsub("-", "−", formatC(x, format = "fg", digits = 5)))
 )
 upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
 analysts |>
-  transmute(
+  dplyr::transmute(
     Analyst = id,
     Surveys = upper_first(gsub("-", "–", comparison)),
     Unit = upper_first(unit),
@@ -71,8 +70,8 @@ analysts |>
     `Recorded statistic` = recorded_txt(statistic_type, statistic_recorded),
     `Task 1` = task1
   ) |>
-  tt() |>
-  style_tt(j = 5, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 5, align = "r")
 ```
 
 Two analysts concluded that the data showed evidence for the claim, one that they showed evidence neither way and two that they showed evidence for the opposite. All five worked from the same file, which the SCORE replication of the paper had built from five surveys of the NSFG, and the analyses that compared the 1995 survey with a later one met a 1995 cohort that holds `r s95(2)` marriages where the paper reports 340. The [case study](index.qmd#sec-file) traces how that happened, and Task 3 asks you to find it for yourself.
@@ -105,7 +104,7 @@ The second part of the task reproduces the result that the claim quotes. Refit M
 
 ### Task 4 – The menu
 
-This task is **exploratory**. `try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and each defaults to the reference specification: the cohorts of the paper, every observed month, age, race-ethnicity and education held constant, weighted, the months since the start as a straight line, and a multinomial logit. Six decisions vary on the curve, `cohorts`, `horizon`, `adjust`, `weights`, `time` and `model`, so changing one thing means changing one argument. Every call is a live fit, in under a second in the workspace and in about a second in the browser lab. Try several specifications, one decision at a time, and note which choices move the estimate and which barely touch it. An option that is not on the curve, such as `adjust = "race_period"`, `unit = "unions"` or `comparison = "2002_2011"`, is refused with the reason given in `menu_options.csv` and the page that teaches it. `my_experiments()` prints everything that you have tried side by side. Then choose the specification that you would defend, and `submit_exploration()` sends it to the class chart on the [multiverse page](multiverse.qmd), where it appears as an open circle.
+This task is **exploratory**. `try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and each defaults to the reference specification: the cohorts of the paper, every observed month, age, race-ethnicity and education held constant, weighted, the months since the start as a straight line, and a multinomial logit. Six decisions vary on the curve, `cohorts`, `horizon`, `adjust`, `weights`, `time` and `model`, so changing one thing means changing one argument. Every call is a live fit, which takes a few seconds in the workspace and in the browser lab, the multinomial logit longest. Try several specifications, one decision at a time, and note which choices move the estimate and which barely touch it. An option that is not on the curve, such as `adjust = "race_period"`, `unit = "unions"` or `comparison = "2002_2011"`, is refused with the reason given in `menu_options.csv` and the page that teaches it. `my_experiments()` prints everything that you have tried side by side. Then choose the specification that you would defend, and `submit_exploration()` sends it to the class chart on the [multiverse page](multiverse.qmd), where it appears as an open circle.
 
 Nothing in this task is preregistered. You may look, change your mind and try again, and the chart marks the result as exploratory for that reason.
 

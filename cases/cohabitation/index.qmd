@@ -7,34 +7,32 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(tinytable)
 source("../../R/cohabitation/_tools.R")
 
-read_data <- \(f) read_csv(file.path("data", f), show_col_types = FALSE)
-unions <- read_csv("data/cohab_unions.csv", show_col_types = FALSE,
-                   col_types = cols(caseid = col_character(), stratum = col_character(),
-                                    psu = col_character()))
-score <- read_data("score_person_months.csv")
-analysts <- read_data("analysts5.csv")
-marks <- read_data("reference_marks.csv")
-repro <- read_data("display_reproduction.csv")
-score_file <- read_data("display_score_file.csv")
-shares <- read_data("display_shares.csv")
+# readr rather than datawizard::data_read(), which reads empty cells as "" and
+# the codes of the cases, strata and clusters as numbers
+unions <- readr::read_csv("data/cohab_unions.csv", show_col_types = FALSE,
+                          col_types = readr::cols(caseid = readr::col_character(),
+                                                  stratum = readr::col_character(),
+                                                  psu = readr::col_character()))
+score <- readr::read_csv("data/score_person_months.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+marks <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+repro <- readr::read_csv("data/display_reproduction.csv", show_col_types = FALSE)
+score_file <- readr::read_csv("data/display_score_file.csv", show_col_types = FALSE)
+shares <- readr::read_csv("data/display_shares.csv", show_col_types = FALSE)
 # columns that hold only "t" would be read as logical without their type
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character()))
-options_d <- read_csv("data/display_options.csv", show_col_types = FALSE,
-                      col_types = cols(stat_type = col_character()))
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character()))
+options_d <- readr::read_csv("data/display_options.csv", show_col_types = FALSE,
+                             col_types = readr::cols(stat_type = readr::col_character()))
 
 # Fixed decimals and a true minus sign, for every number on the page
 fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), fmt(x, d))
 pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
-pe <- \(p) case_when(p < 0.001 ~ "p < 0.001", .default = paste("p =", fmt(p, 3)))
+pe <- \(p) dplyr::case_when(p < 0.001 ~ "p < 0.001", .default = paste("p =", fmt(p, 3)))
 
 # one value from a record or display file, for inline use
 an <- \(id, col) analysts[[col]][analysts$id == id]
@@ -44,42 +42,43 @@ rp <- \(model, term, col, eq = "marriage") {
 }
 sf <- \(source, cycle, col) score_file[[col]][score_file$source == source & score_file$cycle == cycle]
 opt <- \(changed, option, col) options_d[[col]][options_d$changed == changed & options_d$option == option]
-ref <- curve |> filter(is_reference)
+ref <- datawizard::data_filter(curve, is_reference)
 
 # The unions of the paper, rebuilt from the NSFG, and their composition
 paper <- spec_unions(unions)
-outcomes <- count(paper, cycle, outcome)
+outcomes <- datawizard::data_summary(paper, n = n(), by = c("cycle", "outcome"))
 oc <- \(cycle, outcome) outcomes$n[outcomes$cycle == cycle & outcomes$outcome == outcome]
 composition <- paper |>
-  summarise(
+  datawizard::data_summary(
     unions = n(),
-    less_hs = weighted.mean(educ == "less_hs", weight),
-    hs = weighted.mean(educ == "hs", weight),
-    some_college = weighted.mean(educ == "some_college", weight),
-    college = weighted.mean(educ == "college", weight),
-    white = weighted.mean(race == "white", weight),
-    black = weighted.mean(race == "black", weight),
-    hispanic = weighted.mean(race == "hispanic", weight),
-    other = weighted.mean(race == "other", weight),
-    median_age = median(age_interview),
-    .by = cycle
+    less_hs = stats::weighted.mean(educ == "less_hs", weight),
+    hs = stats::weighted.mean(educ == "hs", weight),
+    some_college = stats::weighted.mean(educ == "some_college", weight),
+    college = stats::weighted.mean(educ == "college", weight),
+    white = stats::weighted.mean(race == "white", weight),
+    black = stats::weighted.mean(race == "black", weight),
+    hispanic = stats::weighted.mean(race == "hispanic", weight),
+    other = stats::weighted.mean(race == "other", weight),
+    median_age = stats::median(age_interview),
+    by = "cycle"
   )
 short_unions <- unions |>
-  filter(cycle %in% c("1995", "2006-10"), since_start <= 60, duration < 1,
-         cycle == "1995" | from_2005)
+  datawizard::data_filter(cycle %in% c("1995", "2006-10"), since_start <= 60, duration < 1,
+                          cycle == "1995" | from_2005)
 
 # The 1995 unions of the paper that the SCORE file holds, by outcome, and
-# the rows of each survey that record a marriage in the file
+# the rows of each survey that record a marriage in the file; the outcome of
+# a union in the file is that of its last row
 score_last <- score |>
-  slice_max(MONTHNUM, n = 1, by = CASEID)
+  dplyr::slice_max(MONTHNUM, n = 1, by = CASEID)
 in_file <- paper |>
-  filter(cycle == "1995") |>
-  mutate(in_score = caseid %in% as.character(score_last$CASEID)) |>
-  count(outcome, in_score)
+  datawizard::data_filter(cycle == "1995") |>
+  datawizard::data_modify(in_score = caseid %in% as.character(score_last$CASEID)) |>
+  datawizard::data_summary(n = n(), by = c("outcome", "in_score"))
 kept <- \(o) sum(in_file$n[in_file$outcome == o & in_file$in_score])
 rows_married <- score |>
-  filter(P95 == 1 | P10 == 1) |>
-  summarise(rows = n(), married = sum(OUTCOME == 2), .by = P95)
+  datawizard::data_filter(P95 == 1 | P10 == 1) |>
+  datawizard::data_summary(rows = n(), married = sum(OUTCOME == 2), by = "P95")
 rm_ <- \(p95, col) rows_married[[col]][rows_married$P95 == p95]
 
 # Table 1 of the paper, as published
@@ -122,7 +121,7 @@ The paper keeps the first premarital cohabitations that "were initiated no more 
 #| tbl-cap: "The two cohorts of unions in the course rebuild and in Table 1 of the paper: the unions and their outcomes by the interview, the weighted shares by education and race-ethnicity (%) and the median age at the interview. Sources: `data/cohab_unions.csv` and the paper."
 #| echo: false
 course <- composition |>
-  transmute(
+  dplyr::transmute(
     cycle,
     vals = purrr::pmap(list(unions, less_hs, hs, some_college, college, white, black, hispanic, other,
                             median_age, cycle),
@@ -132,23 +131,23 @@ course <- composition |>
 course_of <- \(cy) course$vals[[which(course$cycle == cy)]]
 show <- \(x, i) if (i <= 4 || i == 13) big(x) else fmt(x, 2)
 table1 |>
-  mutate(
-    i = row_number(),
+  dplyr::mutate(
+    i = dplyr::row_number(),
     c1995 = course_of("1995"),
     c2006 = course_of("2006-10")
   ) |>
-  transmute(
+  dplyr::transmute(
     ` ` = row,
     `1990–1995, rebuild` = purrr::map2_chr(c1995, i, show),
     `1990–1995, paper` = purrr::map2_chr(p1995, i, show),
     `2005–2010, rebuild` = purrr::map2_chr(c2006, i, show),
     `2005–2010, paper` = purrr::map2_chr(p2006, i, show)
   ) |>
-  tt() |>
-  style_tt(j = 2:5, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:5, align = "r")
 ```
 
-The rebuild reproduces Table 1 of the paper exactly, once an associate degree counts as some college and the GED holders of the later survey are coded as NCHS corrected them in a published note. The 30 short unions of the paper are `r nrow(filter(short_unions, cycle == "1995"))` and `r nrow(filter(short_unions, cycle == "2006-10"))` in the rebuild. The composition of cohabitors changed between the cohorts: the share of Hispanic women almost doubled, from `r pct(composition$hispanic[composition$cycle == "1995"])` to `r pct(composition$hispanic[composition$cycle == "2006-10"])`, while the share of graduates stayed near a fifth.
+The rebuild reproduces Table 1 of the paper exactly, once an associate degree counts as some college and the GED holders of the later survey are coded as NCHS corrected them in a published note. The 30 short unions of the paper are `r sum(short_unions$cycle == "1995")` and `r sum(short_unions$cycle == "2006-10")` in the rebuild. The composition of cohabitors changed between the cohorts: the share of Hispanic women almost doubled, from `r pct(composition$hispanic[composition$cycle == "1995"])` to `r pct(composition$hispanic[composition$cycle == "2006-10"])`, while the share of graduates stayed near a fifth.
 
 ### 1.3 The model and the result {#sec-result}
 
@@ -201,14 +200,14 @@ All five analysts worked from one file, the person-month file that the SCORE rep
 #| label: tbl-analysts
 #| tbl-cap: "The five reanalyses in Task 2, with the statistic that Multi100 recorded and the conclusion of Task 1 as Multi100 plotted it. Source: `data/analysts5.csv`."
 #| echo: false
-recorded_txt <- \(type, x) case_when(
+recorded_txt <- \(type, x) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("χ<sup>2</sup> = ", gsub("-", "−", formatC(x, format = "fg", digits = 5))),
   .default = paste(type, "=", gsub("-", "−", formatC(x, format = "fg", digits = 5)))
 )
 upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
 analysts |>
-  transmute(
+  dplyr::transmute(
     Analyst = id,
     Discipline = tolower(discipline),
     Hours = as.character(hours),
@@ -219,8 +218,8 @@ analysts |>
     Recorded = recorded_txt(statistic_type, statistic_recorded),
     `Task 1` = task1
   ) |>
-  tt() |>
-  style_tt(j = c(3, 8), align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = c(3, 8), align = "r")
 ```
 :::
 
@@ -234,7 +233,7 @@ Two analysts concluded in Task 1 that the data showed evidence for the claim (73
 
 ### 4.1 The person-month file {#sec-score-file}
 
-The SCORE replication built its own analysis file from five surveys of the NSFG, 1995, 2002, 2006–2010, 2011–2013 and 2013–2015, and posted it on the OSF in December 2021: `r big(nrow(score))` person-months of `r big(n_distinct(score$CASEID))` women. Each woman contributes one row for every month of her first premarital cohabitation, with the outcome of the union in the last row (1 intact, 2 a marriage, 3 a separation) and the earlier rows reading intact. The file carries dummies for the survey, education and race-ethnicity, the age at the start of the union and the total length of the union in months, but no weights, strata or clusters. Multi100 linked the replication as the original materials of the claim, so this file was the data of every analyst.
+The SCORE replication built its own analysis file from five surveys of the NSFG, 1995, 2002, 2006–2010, 2011–2013 and 2013–2015, and posted it on the OSF in December 2021: `r big(nrow(score))` person-months of `r big(dplyr::n_distinct(score$CASEID))` women. Each woman contributes one row for every month of her first premarital cohabitation, with the outcome of the union in the last row (1 intact, 2 a marriage, 3 a separation) and the earlier rows reading intact. The file carries dummies for the survey, education and race-ethnicity, the age at the start of the union and the total length of the union in months, but no weights, strata or clusters. Multi100 linked the replication as the original materials of the claim, so this file was the data of every analyst.
 
 ### 4.2 The 1995 rows {#sec-1995}
 
@@ -247,10 +246,10 @@ The SCORE replication built its own analysis file from five surveys of the NSFG,
 cycle_lab <- c(`1995` = "1995", `2002` = "2002", `2006-10` = "2006–2010", `2011-13` = "2011–2013",
                `2013-15` = "2013–2015")
 score_file |>
-  mutate(cycle = cycle_lab[cycle]) |>
-  select(source, cycle, unions, marriages, separations, intact) |>
-  tidyr::pivot_wider(names_from = source, values_from = c(unions, marriages, separations, intact)) |>
-  transmute(
+  datawizard::data_modify(cycle = cycle_lab[cycle]) |>
+  datawizard::data_select(c("source", "cycle", "unions", "marriages", "separations", "intact")) |>
+  datawizard::data_to_wide(names_from = "source", values_from = c("unions", "marriages", "separations", "intact")) |>
+  dplyr::transmute(
     Survey = cycle,
     `Unions, SCORE file` = big(`unions_SCORE file`),
     `Unions, rebuild` = big(unions_rebuilt),
@@ -261,8 +260,8 @@ score_file |>
     `Intact, SCORE file` = big(`intact_SCORE file`),
     `Intact, rebuild` = big(intact_rebuilt)
   ) |>
-  tt() |>
-  style_tt(j = 2:9, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:9, align = "r")
 ```
 
 The 1995 cohort of the file holds `r sf("SCORE file", "1995", "unions")` unions, of which `r sf("SCORE file", "1995", "intact")` were intact at the interview, `r sf("SCORE file", "1995", "marriages")` had become a marriage and `r sf("SCORE file", "1995", "separations")` had dissolved, where the paper and the rebuild hold 929: 242, 340 and 347. In the other surveys the windows of years differ a little (1,094 unions of 2002 in the file against 966 in the rebuild), but every union of the file is a union of the rebuild with the same outcome and length, and the cohort of 2006–2010 holds the 1,142 unions of the paper and 8 more.
@@ -282,23 +281,23 @@ term_lab <- c(later = "2005–2010", black = "Black", hispanic = "Hispanic", oth
               later_less_hs = "Less than high school × period", later_hs = "High school × period",
               later_some_college = "Some college × period", later_black = "Black × period",
               later_hispanic = "Hispanic × period", later_other = "Other × period")
-cell <- \(b, se) if_else(is.na(b), "", paste0(fmt(b), " (", fmt(se, 2), ")"))
+cell <- \(b, se) dplyr::if_else(is.na(b), "", paste0(fmt(b), " (", fmt(se, 2), ")"))
 repro |>
-  filter(equation == "marriage", term %in% names(term_lab)) |>
-  mutate(published = cell(b_published, se_published), refit = cell(b, se)) |>
-  select(model, term, published, refit) |>
-  tidyr::pivot_wider(names_from = model, values_from = c(published, refit)) |>
-  mutate(term = factor(term, levels = names(term_lab))) |>
-  arrange(term) |>
-  transmute(
+  datawizard::data_filter(equation == "marriage", term %in% names(term_lab)) |>
+  datawizard::data_modify(published = cell(b_published, se_published), refit = cell(b, se)) |>
+  datawizard::data_select(c("model", "term", "published", "refit")) |>
+  datawizard::data_to_wide(names_from = "model", values_from = c("published", "refit")) |>
+  dplyr::mutate(term = factor(term, levels = names(term_lab))) |>
+  dplyr::arrange(term) |>
+  dplyr::transmute(
     Term = term_lab[as.character(term)],
-    `Model 1, published` = coalesce(published_1, ""),
-    `Model 1, refit` = coalesce(refit_1, ""),
-    `Model 2, published` = coalesce(published_2, ""),
-    `Model 2, refit` = coalesce(refit_2, "")
+    `Model 1, published` = dplyr::coalesce(published_1, ""),
+    `Model 1, refit` = dplyr::coalesce(refit_1, ""),
+    `Model 2, published` = dplyr::coalesce(published_2, ""),
+    `Model 2, refit` = dplyr::coalesce(refit_2, "")
   ) |>
-  tt() |>
-  style_tt(j = 2:5, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:5, align = "r")
 ```
 
 The period coefficient of Model 2 comes out at `r fmt(rp(2, "later", "b"))` (SE `r fmt(rp(2, "later", "se"))`) against the published −0.683 (0.14), and the interaction of some college and period in Model 1 at `r fmt(rp(1, "later_some_college", "b"))` (`r fmt(rp(1, "later_some_college", "se"))`) against −0.725 (0.27). Apart from the constants, every published standard error is matched to within about 0.01, and the published standard errors match those that follow the design of the surveys rather than conventional ones, so the OAs computed their standard errors from the design. Two figures of the paper do not come out. The paper reports 54,291 person-months for its 2,071 unions, and the construction that it describes gives `r big(ref$n)`; no construction that the course tried gives 54,291. The life table of the rebuild has `r pct(shares$married_3y[shares$cohort == "1990-1995" & shares$group == "all"])` and `r pct(shares$married_3y[shares$cohort == "2005-2010" & shares$group == "all"])` married within three years where the paper quotes 41% and 24%, although the fall between the cohorts is close to that of the paper.
@@ -311,20 +310,20 @@ The period coefficient of Model 2 comes out at `r fmt(rp(2, "later", "b"))` (SE 
 #| label: tbl-repaired
 #| tbl-cap: "The five reanalyses: the statistic as Multi100 recorded it, the course refit on the person-month file of SCORE, and the same analysis on that file with its 1995 rows rebuilt. Source: `data/analysts5.csv`."
 #| echo: false
-stat_txt <- \(type, x) case_when(
+stat_txt <- \(type, x) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(x)),
   .default = paste(type, "=", fmt(x))
 )
 analysts |>
-  transmute(
+  dplyr::transmute(
     Analyst = id,
     Recorded = recorded_txt(statistic_type, statistic_recorded),
     `SCORE file` = stat_txt(stat_type_refit, stat_refit),
     `1995 rows rebuilt` = stat_txt(stat_type_refit, stat_repaired)
   ) |>
-  tt() |>
-  style_tt(j = 2:4, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:4, align = "r")
 ```
 
 Every statistic that Multi100 recorded for this claim reproduces from the file, and so does the odds ratio in the report of N8ZYW. With the 1995 rows rebuilt, every analysis that uses them points the way of the claim, the test of 5X3KG among them ($\chi^2$ = `r fmt(an("5X3KG", "stat_repaired"), 2)` for less marriage in the later rows). The disagreement that Multi100 recorded on this claim, two analysts for the opposite and one for neither, goes back to one cohort of one file.
@@ -347,21 +346,21 @@ Multi100 chose to "transform the reported point estimates into a standard effect
 #| label: tbl-scale
 #| tbl-cap: "The published result and the five reanalyses, with the statistic as published or recorded, the sample size that Multi100 recorded and the partial correlation that Multi100 computed. Sources: `data/reference_marks.csv`, `data/analysts5.csv`."
 #| echo: false
-bind_rows(
-  tibble(Result = "OAs 2016", stat = paste("z =", fmt(mark("OA", "stat"), 2)), n = mark("OA", "n"),
-         r = mark("OA", "r")),
+dplyr::bind_rows(
+  tibble::tibble(Result = "OAs 2016", stat = paste("z =", fmt(mark("OA", "stat"), 2)), n = mark("OA", "n"),
+                 r = mark("OA", "r")),
   analysts |>
-    transmute(Result = id, stat = recorded_txt(statistic_type, statistic_recorded),
-              n = if_else(is.na(n_recorded), NA_real_, n_recorded), r = r_recorded)
+    dplyr::transmute(Result = id, stat = recorded_txt(statistic_type, statistic_recorded),
+                     n = dplyr::if_else(is.na(n_recorded), NA_real_, n_recorded), r = r_recorded)
 ) |>
-  transmute(
+  dplyr::transmute(
     Result,
     Statistic = stat,
-    `Sample size recorded` = if_else(is.na(n), "–", big(n)),
-    `r recorded` = if_else(is.na(r), "–", fmt(r))
+    `Sample size recorded` = dplyr::if_else(is.na(n), "–", big(n)),
+    `r recorded` = dplyr::if_else(is.na(r), "–", fmt(r))
   ) |>
-  tt() |>
-  style_tt(j = 3:4, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:4, align = "r")
 ```
 
 The recorded correlations run from `r fmt(min(analysts$r_recorded, na.rm = TRUE))` to `r fmt(max(analysts$r_recorded, na.rm = TRUE))`, and they do not order the analyses by the evidence that each found. The 0.900 of 73FDT converts an F on 3 degrees of freedom from a regression on five points. The `r fmt(an("5X3KG", "r_recorded"))` of 5X3KG carries no sign, because a $\chi^2$ has none: it would be positive whichever way the shares had moved, as the 0.900 of 73FDT, which comes from an F, is positive although that analysis found evidence for the claim. And the correlation of any analysis of person-months is close to zero, `r fmt(mark("OA", "r"))` for the published result, because the number of person-months stands in for the sample size and almost every month records no event. Across the curve of the course it runs from `r fmt(min(curve$r))` to `r fmt(max(curve$r))`.
@@ -379,25 +378,25 @@ mark_lab <- c(OA = "OAs 2016 (white women)", OA_refit = "Model 2 refitted", refe
               `456AP` = "456AP (2002 and 2013–2015)", course_2002_2011 = "Course, 2002 and 2011–2015",
               course_1995_2011 = "Course, 1995 and 2011–2015")
 marks |>
-  filter(mark %in% names(mark_lab)) |>
-  mutate(
-    label = reorder(mark_lab[mark], -b),
-    kind = case_when(mark == "OA" ~ "published", mark %in% c("OA_refit", "reference") ~ "surveys of the paper",
-                     .default = "other surveys")
+  datawizard::data_filter(mark %in% names(mark_lab)) |>
+  dplyr::mutate(
+    label = stats::reorder(mark_lab[mark], -b),
+    kind = dplyr::case_when(mark == "OA" ~ "published", mark %in% c("OA_refit", "reference") ~ "surveys of the paper",
+                            .default = "other surveys")
   ) |>
-  ggplot(aes(x = b, y = label, colour = kind, shape = kind)) +
-  annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
-           fill = "#d6dde5", alpha = 0.6) +
-  geom_vline(xintercept = 0, colour = "#9aa8b3") +
-  geom_point(size = 2.6) +
-  scale_colour_manual(values = c(published = "#8b1538", `surveys of the paper` = "#1d2731",
-                                 `other surveys` = "#1f5fa8"), name = NULL) +
-  scale_shape_manual(values = c(published = 16, `surveys of the paper` = 16, `other surveys` = 17), name = NULL) +
-  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
-  coord_cartesian(xlim = c(-1.1, 0.05)) +
-  labs(x = "coefficient of the later cohort (log scale)", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+  ggplot2::ggplot(ggplot2::aes(x = b, y = label, colour = kind, shape = kind)) +
+  ggplot2::annotate("rect", xmin = min(curve$b), xmax = max(curve$b), ymin = -Inf, ymax = Inf,
+                    fill = "#d6dde5", alpha = 0.6) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_point(size = 2.6) +
+  ggplot2::scale_colour_manual(values = c(published = "#8b1538", `surveys of the paper` = "#1d2731",
+                                          `other surveys` = "#1f5fa8"), name = NULL) +
+  ggplot2::scale_shape_manual(values = c(published = 16, `surveys of the paper` = 16, `other surveys` = 17), name = NULL) +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::coord_cartesian(xlim = c(-1.1, 0.05)) +
+  ggplot2::labs(x = "coefficient of the later cohort (log scale)", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank(), legend.position = "bottom")
 ```
 
 The published result and its refit lie among the specifications with the smallest declines, because they are the change for white women. 456AP and the replication from 2002 lie above the curve, on later cohorts, and the replication from 1995 lies below it, on cohorts further apart.

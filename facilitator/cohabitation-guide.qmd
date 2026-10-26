@@ -14,83 +14,87 @@ execute:
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-
 # Every number of the expected-numbers section is read from the committed data
-# files of the case, so that the guide and the pages cannot drift apart.
-case_data <- \(file) read_csv(file.path("../cases/cohabitation/data", file), show_col_types = FALSE)
+# files of the case, so that the guide and the pages cannot drift apart: with
+# readr rather than datawizard::data_read(), which reads empty cells as "" and
+# the codes of the cases, strata and clusters as numbers.
+data_dir <- "../cases/cohabitation/data"
 fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
-sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), fmt(x, d))
 pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
 pe <- \(p) if (p < 0.001) "p < 0.001" else paste("p =", fmt(p, 3))
 
-unions <- read_csv("../cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
-                   col_types = cols(caseid = col_character(), stratum = col_character(),
-                                    psu = col_character()))
-score <- case_data("score_person_months.csv")
-curve <- read_csv("../cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character()))
-analysts <- case_data("analysts5.csv")
-marks <- case_data("reference_marks.csv")
-deviations <- case_data("menu_deviations.csv")
-inference <- read_csv("../cases/cohabitation/data/display_inference.csv", show_col_types = FALSE,
-                      col_types = cols(stat_type = col_character()))
-options_d <- read_csv("../cases/cohabitation/data/display_options.csv", show_col_types = FALSE,
-                      col_types = cols(stat_type = col_character()))
-repro <- case_data("display_reproduction.csv")
-subgroups <- case_data("display_subgroups.csv")
-lifetable <- case_data("display_lifetable.csv")
+unions <- readr::read_csv(file.path(data_dir, "cohab_unions.csv"), show_col_types = FALSE,
+                          col_types = readr::cols(caseid = readr::col_character(),
+                                                  stratum = readr::col_character(),
+                                                  psu = readr::col_character()))
+score <- readr::read_csv(file.path(data_dir, "score_person_months.csv"), show_col_types = FALSE)
+curve <- readr::read_csv(file.path(data_dir, "spec_curve.csv"), show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character()))
+analysts <- readr::read_csv(file.path(data_dir, "analysts5.csv"), show_col_types = FALSE)
+marks <- readr::read_csv(file.path(data_dir, "reference_marks.csv"), show_col_types = FALSE)
+deviations <- readr::read_csv(file.path(data_dir, "menu_deviations.csv"), show_col_types = FALSE)
+inference <- readr::read_csv(file.path(data_dir, "display_inference.csv"), show_col_types = FALSE,
+                             col_types = readr::cols(stat_type = readr::col_character()))
+options_d <- readr::read_csv(file.path(data_dir, "display_options.csv"), show_col_types = FALSE,
+                             col_types = readr::cols(stat_type = readr::col_character()))
+repro <- readr::read_csv(file.path(data_dir, "display_reproduction.csv"), show_col_types = FALSE)
+subgroups <- readr::read_csv(file.path(data_dir, "display_subgroups.csv"), show_col_types = FALSE)
+lifetable <- readr::read_csv(file.path(data_dir, "display_lifetable.csv"), show_col_types = FALSE)
 
-ref <- filter(curve, is_reference)
+ref <- datawizard::data_filter(curve, is_reference)
 an <- \(id, col) analysts[[col]][analysts$id == id]
 mark <- \(id, col = "b") marks[[col]][marks$mark == id]
 shift <- \(axis, option, col = "shift_mean") deviations[[col]][deviations$axis == axis & deviations$option == option]
 inf <- \(rule, col) inference[[col]][inference$errors == rule]
 opt <- \(changed, option, col = "b") options_d[[col]][options_d$changed == changed & options_d$option == option]
 sg <- \(model, group) subgroups$b[subgroups$model == model & subgroups$group == group]
-by_set <- curve |> summarise(mean = mean(b), .by = adjust)
+by_set <- curve |> datawizard::data_summary(mean = mean(b), by = "adjust")
 bs <- \(set) by_set$mean[by_set$adjust == set]
 
 # The unions of the paper, as spec_unions() of the workspace keeps them, and
 # their weighted composition
 paper <- unions |>
-  filter(cycle %in% c("1995", "2006-10"), since_start <= 60, !is.na(duration), duration >= 1,
-         cycle != "2006-10" | from_2005)
+  datawizard::data_filter(cycle %in% c("1995", "2006-10"), since_start <= 60, !is.na(duration), duration >= 1,
+                          cycle != "2006-10" | from_2005)
 oc <- \(cycle, outcome) sum(paper$cycle == cycle & paper$outcome == outcome)
 share <- \(cycle, test) {
   rows <- paper[paper$cycle == cycle, ]
-  weighted.mean(test(rows), rows$weight)
+  stats::weighted.mean(test(rows), rows$weight)
 }
-lt36 <- filter(lifetable, group_type == "all", month == 36)
+lt36 <- datawizard::data_filter(lifetable, group_type == "all", month == 36)
 
 # The rows and the unions of the file that Multi100 gave the analysts
 score_rows <- score |>
-  filter(P95 == 1 | P10 == 1) |>
-  summarise(rows = n(), married = sum(OUTCOME == 2), .by = P95)
+  datawizard::data_filter(P95 == 1 | P10 == 1) |>
+  datawizard::data_summary(rows = n(), married = sum(OUTCOME == 2), by = "P95")
 sr <- \(p95, col) score_rows[[col]][score_rows$P95 == p95]
 score_unions <- score |>
-  filter(P95 == 1 | P10 == 1) |>
-  slice_max(MONTHNUM, n = 1, by = CASEID) |>
-  mutate(survey = if_else(P95 == 1, "1995", "2006-10"),
-         outcome = c("intact", "marriage", "separation")[OUTCOME])
+  datawizard::data_filter(P95 == 1 | P10 == 1) |>
+  dplyr::slice_max(MONTHNUM, n = 1, by = CASEID) |>
+  datawizard::data_modify(survey = dplyr::if_else(P95 == 1, "1995", "2006-10"),
+                          outcome = c("intact", "marriage", "separation")[OUTCOME])
 su <- \(survey, outcome) sum(score_unions$survey == survey & score_unions$outcome == outcome)
 in_file <- paper |>
-  filter(cycle == "1995") |>
-  mutate(in_score = caseid %in% as.character(score_unions$CASEID))
+  datawizard::data_filter(cycle == "1995") |>
+  datawizard::data_modify(in_score = caseid %in% as.character(score_unions$CASEID))
 kept <- \(outcome) sum(in_file$outcome == outcome & in_file$in_score)
 # The same test without the continuity correction, a usual departure
-chi_uncorrected <- unname(prop.test(x = c(sr(1, "married"), sr(0, "married")),
-                                    n = c(sr(1, "rows"), sr(0, "rows")), correct = FALSE)$statistic)
+chi_uncorrected <- unname(stats::prop.test(x = c(sr(1, "married"), sr(0, "married")),
+                                           n = c(sr(1, "rows"), sr(0, "rows")), correct = FALSE)$statistic)
 
 # Placement as try_spec() prints it: the specifications further below zero
 placement <- \(b) sum(curve$b < b - 1e-9)
 five_years_ref <- curve |>
-  filter(cohorts == "five_years", horizon == "five_years", adjust == "composition",
-         weights == "weighted", time == "linear", model == "mlogit")
-var_ss <- anova(lm(b ~ cohorts + horizon + adjust + weights + time + model, data = curve))
-var_part <- \(term) var_ss[term, "Sum Sq"] / sum(var_ss$`Sum Sq`)
+  datawizard::data_filter(cohorts == "five_years", horizon == "five_years", adjust == "composition",
+                          weights == "weighted", time == "linear", model == "mlogit")
+# The share of the variance of the 144 estimates carried by each decision: its
+# eta squared in a main-effects model (effectsize), the sum of squares of the
+# decision over the total
+var_eta <- stats::lm(b ~ cohorts + horizon + adjust + weights + time + model, data = curve) |>
+  effectsize::eta_squared(partial = FALSE, ci = NULL)
+var_part <- \(term) var_eta$Eta2[var_eta$Parameter == term]
 ```
 
 ::: {.callout-note}

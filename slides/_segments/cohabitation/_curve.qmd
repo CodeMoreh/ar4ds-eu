@@ -8,7 +8,7 @@
 # draws, with the reference specification tagged in ink. Built on
 # curve_base(), so that the next slide reuses this exact panel.
 curve_base() +
-  mark_layer(tibble(tag = "the reference specification", b = curve_ref$b))
+  mark_layer(dplyr::tibble(tag = "the reference specification", b = curve_ref$b))
 ```
 
 ::: {.fs-75}
@@ -33,7 +33,7 @@ This is the curve of the claim, the same curve over which the Multiverse page dr
 # estimate is on the scale of the curve (data/reference_marks.csv), as the
 # Multiverse page draws them
 curve_base() +
-  mark_layer(tibble(tag = c("OAs 2016 (white women)", "456AP (2002 and 2013–2015)"),
+  mark_layer(dplyr::tibble(tag = c("OAs 2016 (white women)", "456AP (2002 and 2013–2015)"),
                     b = c(mark_of("OA", "b"), mark_of("456AP", "b"))))
 ```
 

@@ -18,7 +18,7 @@ The refit comes close throughout. The period coefficient of Model 2, the coeffic
 
 ## `display_lifetable.csv`
 
-The multi-decrement life table of the two cohorts of the paper, overall, by education and by race-ethnicity: for every month of the union, the weighted share of the unions still intact at its start that married or separated in it, and the cumulative shares that had married, separated or were still cohabiting by its end. Separation competes with marriage, so the three cumulative shares sum to one. 1,018 rows (2 cohorts × 9 groups × up to 61 months). The table equals the Aalen–Johansen estimator of `survival::survfit()` with the same weights, which `check_parity.R` checks.
+The multi-decrement life table of the two cohorts of the paper, overall, by education and by race-ethnicity: for every month of the union, the weighted share of the unions still intact at its start that married or separated in it, and the cumulative shares that had married, separated or were still cohabiting by its end. Separation competes with marriage, so the three cumulative shares sum to one. 1,018 rows (2 cohorts × 9 groups × up to 61 months). The table is the Aalen–Johansen estimator of `survival::survfit()` with the survey weights, and the counts come from the same fit without weights; `check_parity.R` checks the table without weights against the cumulative incidence of cmprsk.
 
 | Column | Meaning |
 |:--|:--|
@@ -48,7 +48,7 @@ Within three years, marriage fell among cohabitors without a bachelor's degree (
 
 ## `display_subgroups.csv`
 
-The change for each group in the interaction models of the paper: in Model 1, the coefficient of the later cohort plus its interaction with each group of education; in Model 2, plus its interaction with each group of race-ethnicity. Design-based errors of the sums, t on the df of the model. 8 rows; columns `model` (`educ_period` or `race_period`), `group`, `b`, `se`, `t`, `df`, `p`.
+The change for each group in the interaction models of the paper: in Model 1, the coefficient of the later cohort plus its interaction with each group of education; in Model 2, plus its interaction with each group of race-ethnicity. Design-based errors of the sums from `survey::svycontrast()`, t on the df of the model, and the 95% interval on the same df. 8 rows; columns `model` (`educ_period` or `race_period`), `group`, `b`, `se`, `t`, `df`, `p`, `ci_low`, `ci_high`.
 
 The change is −0.13 (not significant) for graduates, −0.86 for some college, −1.24 for a high school diploma and −0.92 for less than high school; −0.69 for non-Hispanic white women, −0.40 (not significant) for Black women, −1.14 for Hispanic women and −1.61 for the other group. The period coefficient of Model 1 is therefore the change for graduates only, and that of Model 2, which the claim quotes, the change for white women only.
 

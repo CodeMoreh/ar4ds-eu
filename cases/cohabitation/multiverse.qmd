@@ -8,8 +8,9 @@ format:
     include-after-body: ../../_includes/track-choice.html
     webr:
       packages:
-        - ggplot2
-        - ggiraph
+        - tinyplot
+        - datawizard
+        - purrr
 resources:
   - data/spec_curve.csv
   - data/class_results.csv
@@ -30,35 +31,33 @@ bibliography: [../../references.bib, ../../references-new.bib]
 # down runs in the browser through webR. Every number in the prose is read
 # from the data files here.
 source("../../R/cohabitation/_chart_multiverse.R")
-library(ggplot2)
-library(tinytable)
 
-read_data <- \(f) readr::read_csv(file.path("data", f), show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
 curve      <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
                               col_types = readr::cols(stat_type = readr::col_character()))
-menu       <- read_data("menu_options.csv")
-marks      <- read_data("reference_marks.csv")
-analysts   <- read_data("analysts5.csv")
-deviations <- read_data("menu_deviations.csv")
+menu       <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+marks      <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+analysts   <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
 # a column that holds only "t" would be read as logical without its type
 options_d  <- readr::read_csv("data/display_options.csv", show_col_types = FALSE,
                               col_types = readr::cols(stat_type = readr::col_character()))
-inference  <- read_data("display_inference.csv")
-lifetable  <- read_data("display_lifetable.csv")
-shares     <- read_data("display_shares.csv")
-subgroups  <- read_data("display_subgroups.csv")
+inference  <- readr::read_csv("data/display_inference.csv", show_col_types = FALSE)
+lifetable  <- readr::read_csv("data/display_lifetable.csv", show_col_types = FALSE)
+shares     <- readr::read_csv("data/display_shares.csv", show_col_types = FALSE)
+subgroups  <- readr::read_csv("data/display_subgroups.csv", show_col_types = FALSE)
 
 # Fixed decimals and a true minus sign; signed shifts carry a plus sign
 fmt <- \(x, d = 3) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-sgn <- \(x, d = 3) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), fmt(x, d))
 pct <- \(x, d = 1) paste0(fmt(100 * x, d), "%")
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
-pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
-                     .default = paste("p =", fmt(p, 3)))
+pe <- \(p) dplyr::case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+                            .default = paste("p =", fmt(p, 3)))
 
 n_spec <- nrow(curve)
-ref <- curve |> filter(is_reference)
-n_options <- purrr::map_int(mv_axes$axis, \(a) n_distinct(curve[[a]]))
+ref <- datawizard::data_filter(curve, is_reference)
+n_options <- purrr::map_int(mv_axes$axis, \(a) dplyr::n_distinct(curve[[a]]))
 dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
 mark <- \(id, col) marks[[col]][marks$mark == id]
 an <- \(id, col) analysts[[col]][analysts$id == id]
@@ -68,13 +67,16 @@ sh <- \(cohort, type, group, col) shares[[col]][shares$cohort == cohort & shares
 sg <- \(model, group, col) subgroups[[col]][subgroups$model == model & subgroups$group == group]
 oa_rank <- sum(curve$b < mark("OA", "b") - 1e-9)
 
-# Share of the variance of the 144 estimates carried by each decision, from the
-# sums of squares of a main-effects model; the residual holds the interactions
-variance <- anova(lm(b ~ cohorts + horizon + adjust + weights + time + model, data = curve))
-var_share <- setNames(100 * variance$`Sum Sq` / sum(variance$`Sum Sq`), rownames(variance))
-by_window <- curve |> summarise(lo = min(b), hi = max(b), mean = mean(b), .by = cohorts)
+# Share of the variance of the 144 estimates carried by each decision: the eta
+# squared of each decision in a main-effects model (effectsize), the sum of
+# squares of the decision over the total; the residual holds the interactions
+variance <- stats::lm(b ~ cohorts + horizon + adjust + weights + time + model, data = curve) |>
+  effectsize::eta_squared(partial = FALSE, ci = NULL)
+var_share <- 100 * c(stats::setNames(variance$Eta2, variance$Parameter),
+                     Residuals = 1 - sum(variance$Eta2))
+by_window <- curve |> datawizard::data_summary(lo = min(b), hi = max(b), mean = mean(b), by = "cohorts")
 bw <- \(w, col) by_window[[col]][by_window$cohorts == w]
-lt36 <- lifetable |> filter(group_type == "all", month == 36)
+lt36 <- datawizard::data_filter(lifetable, group_type == "all", month == 36)
 lt <- \(cohort, col) lt36[[col]][lt36$cohort == cohort]
 ```
 
@@ -125,20 +127,20 @@ The second mark, 456AP, is the one Multi100 analysis whose estimate is a coeffic
 ```{r}
 #| label: tbl-analysts
 #| tbl-cap: "The five Multi100 analyses: the statistic that Multi100 recorded, the course refit on the file that SCORE built and Multi100 gave the analysts, and the same analysis on that file with its 1995 rows rebuilt from the 929 unions of the paper. The estimate is the slope per year of five survey coefficients for 73FDT, the difference in the share of rows that record a marriage for 5X3KG and a log-odds coefficient otherwise; negative values point the way of the claim. Source: `data/analysts5.csv`."
-stat_txt <- \(type, x, d = 3) case_when(
+stat_txt <- \(type, x, d = 3) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(x, d)),
   .default = paste(type, "=", fmt(x, d))
 )
 # the recorded statistic with the digits that Multi100 recorded
-recorded_txt <- \(type, x) case_when(
+recorded_txt <- \(type, x) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("χ<sup>2</sup> = ", gsub("-", "−", formatC(x, format = "fg", digits = 5))),
   .default = paste(type, "=", gsub("-", "−", formatC(x, format = "fg", digits = 5)))
 )
 upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
 analysts |>
-  transmute(
+  dplyr::transmute(
     Analyst = id,
     Surveys = upper_first(gsub("-", "–", comparison)),
     `Unit and model` = upper_first(paste0(unit, "; ", outcome_model)),
@@ -147,8 +149,8 @@ analysts |>
     `1995 rebuilt` = paste0(stat_txt(stat_type_refit, stat_repaired), " (", sgn(estimate_repaired), ")"),
     `Task 1` = task1
   ) |>
-  tt() |>
-  style_tt(j = 4:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 4:6, align = "r")
 ```
 :::
 
@@ -167,22 +169,22 @@ Every option on the curve can be set beside the first option of its decision on 
 lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
 dec <- \(axis) menu$decision[menu$axis == axis][1]
 deviations |>
-  filter(option != baseline) |>
-  mutate(
+  datawizard::data_filter(option != baseline) |>
+  dplyr::mutate(
     option_lab = paste0(purrr::map_chr(axis, dec), ": ", purrr::map2_chr(axis, option, lab)),
-    option_lab = reorder(option_lab, shift_mean),
+    option_lab = stats::reorder(option_lab, shift_mean),
     window = axis == "cohorts"
   ) |>
-  ggplot(aes(x = shift_mean, y = option_lab, colour = window)) +
-  geom_vline(xintercept = 0, colour = "#9aa8b3") +
-  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 0.8) +
-  geom_point(size = 2.6) +
-  scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
-  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
-  coord_cartesian(xlim = c(-0.1, 0.12)) +
-  labs(x = "shift in the estimate (log scale)", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank())
+  ggplot2::ggplot(ggplot2::aes(x = shift_mean, y = option_lab, colour = window)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = shift_min, xmax = shift_max), linewidth = 0.8) +
+  ggplot2::geom_point(size = 2.6) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::coord_cartesian(xlim = c(-0.1, 0.12)) +
+  ggplot2::labs(x = "shift in the estimate (log scale)", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
 ```
 
 Split by decision, the variance of the `r n_spec` estimates falls mostly on the cohorts compared, which carry `r pct(var_share[["cohorts"]] / 100)` of it, and on the weights, with `r pct(var_share[["weights"]] / 100)`, against `r pct(var_share[["adjust"]] / 100)` for the adjustment, less than 1% for each of the other decisions, and `r pct(var_share[["Residuals"]] / 100)` for the interactions between decisions. With the window of the paper the estimates run from `r fmt(bw("paper", "lo"))` to `r fmt(bw("paper", "hi"))`, and with the same window in both surveys from `r fmt(bw("five_years", "lo"))` to `r fmt(bw("five_years", "hi"))`. Both windows answer the claim about the cohorts of the paper. The window of the paper makes the later cohort as recent as the survey allows, and the symmetric window selects the two cohorts by the same rule, at the price of a later cohort that reaches back to 2001 and so stands closer in time to the earlier one. The weights matter because the NSFG sampled Black and Hispanic women, and from 2002 women aged 15–24, at higher rates than others, and the decline was steeper among Hispanic women than among white women, as [the groups behind the claim](#sec-subgroups) show.
@@ -195,16 +197,16 @@ Split by decision, the variance of the `r n_spec` estimates falls mostly on the 
 #| label: tbl-inference
 #| tbl-cap: "The reference specification (the cohorts of the paper, every observed month, age, race-ethnicity and education held constant, weighted, months since the start as a straight line, a multinomial logit) under three rules of inference. Source: `data/display_inference.csv`."
 inference |>
-  transmute(
+  dplyr::transmute(
     Rule = c(design = "Design-based (the curve)", woman = "Clustered by woman", model = "Conventional")[errors],
     Coefficient = fmt(b),
     SE = fmt(se),
     Statistic = paste(stat_type, "=", fmt(stat, 2)),
-    df = if_else(is.finite(df), big(df), "–"),
-    p = if_else(p < 1e-4, "< 0.0001", fmt(p, 4))
+    df = dplyr::if_else(is.finite(df), big(df), "–"),
+    p = dplyr::if_else(p < 1e-4, "< 0.0001", fmt(p, 4))
   ) |>
-  tt() |>
-  style_tt(j = 2:6, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:6, align = "r")
 ```
 
 Conventional errors treat each of the `r big(ref$n)` person-months as an independent piece of evidence, and they are a quarter smaller than the design-based errors. Clustering by woman allows the months of one union to be related, which brings the error close to the design-based one, `r fmt(inf("woman", "se"))` against `r fmt(inf("design", "se"))`, and the strata and clusters of the two surveys add a little more. The paper reports SE 0.14 for the coefficient of Model 2, and the design-based refit gives `r fmt(mark("OA_refit", "se"))`, while conventional errors would give `r fmt(opt("adjust", "race_period", "se_model"))`, which suggests that the OAs computed their standard errors from the design of the surveys. Under any of the three rules, every specification of the curve is significant by a wide margin, and the choice of errors matters here only for the width of the intervals.
@@ -224,16 +226,16 @@ A life table follows each cohort of unions month by month: of the unions still i
 #| fig-width: 7
 #| fig-height: 3.8
 lifetable |>
-  filter(group_type == "all") |>
-  ggplot(aes(x = month, y = married, colour = cohort)) +
-  geom_vline(xintercept = 36, linetype = "dashed", colour = "#9aa8b3") +
-  geom_step(linewidth = 0.9) +
-  scale_colour_manual(values = c(`1990-1995` = "#0e3b6a", `2005-2010` = "#8b1538"),
+  datawizard::data_filter(group_type == "all") |>
+  ggplot2::ggplot(ggplot2::aes(x = month, y = married, colour = cohort)) +
+  ggplot2::geom_vline(xintercept = 36, linetype = "dashed", colour = "#9aa8b3") +
+  ggplot2::geom_step(linewidth = 0.9) +
+  ggplot2::scale_colour_manual(values = c(`1990-1995` = "#0e3b6a", `2005-2010` = "#8b1538"),
                       labels = c("begun 1990–1995", "begun 2005–2010"), name = NULL) +
-  scale_y_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
-  labs(x = "months since the couple moved in", y = "share married") +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank(), legend.position = "top")
+  ggplot2::scale_y_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
+  ggplot2::labs(x = "months since the couple moved in", y = "share married") +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank(), legend.position = "top")
 ```
 
 By the end of the third year `r pct(lt("1990-1995", "married"))` of the unions of 1990–1995 had become a marriage and `r pct(lt("1990-1995", "separated"))` had dissolved, against `r pct(lt("2005-2010", "married"))` and `r pct(lt("2005-2010", "separated"))` of the unions of 2005–2010. The paper quotes 41% and 35%, and 24% and 41%, from a life table that it did not publish. The course table is a few points higher in every cell, and its fall in marriage between the cohorts, `r fmt(100 * (lt("2005-2010", "married") - lt("1990-1995", "married")), 1)` points, is close to the 17 points of the paper. The life table answers the claim in shares that anyone can read, but it cannot hold age, race-ethnicity and education constant in the way that the model does, which is why the menu keeps it as a check beside the curve.
@@ -252,26 +254,26 @@ group_lab <- c(college = "College degree", some_college = "Some college", hs = "
                less_hs = "Less than high school", white = "Non-Hispanic white", black = "Black",
                hispanic = "Hispanic", other = "Other")
 shares |>
-  filter(group_type != "all") |>
-  mutate(
+  datawizard::data_filter(group_type != "all") |>
+  dplyr::mutate(
     n_lab = paste(unions[cohort == "1990-1995"], unions[cohort == "2005-2010"], sep = " / "),
     .by = c(group_type, group)
   ) |>
-  mutate(
+  dplyr::mutate(
     label = factor(paste0(group_lab[group], " (", n_lab, ")"),
                    levels = rev(unique(paste0(group_lab[group], " (", n_lab, ")")))),
-    panel = if_else(group_type == "education", "By education", "By race-ethnicity")
+    panel = dplyr::if_else(group_type == "education", "By education", "By race-ethnicity")
   ) |>
-  ggplot(aes(x = married_3y, y = label)) +
-  geom_line(aes(group = label), colour = "#9aa8b3", linewidth = 0.8) +
-  geom_point(aes(shape = cohort), size = 2.8, colour = "#1d2733", stroke = 1) +
-  scale_shape_manual(values = c(`1990-1995` = 1, `2005-2010` = 16),
+  ggplot2::ggplot(ggplot2::aes(x = married_3y, y = label)) +
+  ggplot2::geom_line(ggplot2::aes(group = label), colour = "#9aa8b3", linewidth = 0.8) +
+  ggplot2::geom_point(ggplot2::aes(shape = cohort), size = 2.8, colour = "#1d2733", stroke = 1) +
+  ggplot2::scale_shape_manual(values = c(`1990-1995` = 1, `2005-2010` = 16),
                      labels = c("begun 1990–1995", "begun 2005–2010"), name = NULL) +
-  scale_x_continuous(labels = scales::label_percent(), limits = c(0, 0.6)) +
-  facet_wrap(~panel, ncol = 1, scales = "free_y") +
-  labs(x = "share married within three years", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank(), legend.position = "top")
+  ggplot2::scale_x_continuous(labels = scales::label_percent(), limits = c(0, 0.6)) +
+  ggplot2::facet_wrap(~panel, ncol = 1, scales = "free_y") +
+  ggplot2::labs(x = "share married within three years", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank(), legend.position = "top")
 ```
 
 Within three years, marriage fell among cohabitors without a bachelor's degree, from `r pct(sh("1990-1995", "education", "some_college", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "some_college", "married_3y"), 0)` with some college, from `r pct(sh("1990-1995", "education", "hs", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "hs", "married_3y"), 0)` with a high school diploma and from `r pct(sh("1990-1995", "education", "less_hs", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "less_hs", "married_3y"), 0)` without one, and not among graduates, whose share went from `r pct(sh("1990-1995", "education", "college", "married_3y"), 0)` to `r pct(sh("2005-2010", "education", "college", "married_3y"), 0)`. This is the divergence that the paper puts at the centre of its argument. By race-ethnicity the share fell in every group. The group of other non-Hispanic women holds `r sh("1990-1995", "race", "other", "unions")` and `r sh("2005-2010", "race", "other", "unions")` unions, too few for its shares to mean much.
@@ -287,26 +289,24 @@ The two models of the paper estimate the change separately for each group, by ad
 #| fig-width: 7.5
 #| fig-height: 3.8
 subgroups |>
-  mutate(
-    lo = b - qt(0.975, df) * se,
-    hi = b + qt(0.975, df) * se,
+  dplyr::mutate(
     label = factor(group_lab[group], levels = rev(group_lab)),
-    panel = if_else(model == "educ_period", "Model 1: by education", "Model 2: by race-ethnicity"),
+    panel = dplyr::if_else(model == "educ_period", "Model 1: by education", "Model 2: by race-ethnicity"),
     claim = model == "race_period" & group == "white",
-    shape = if_else(p < 0.05, "p < 0.05", "p ≥ 0.05")
+    shape = dplyr::if_else(p < 0.05, "p < 0.05", "p ≥ 0.05")
   ) |>
-  ggplot(aes(x = b, y = label, colour = claim)) +
-  geom_vline(xintercept = 0, colour = "#9aa8b3") +
-  geom_vline(xintercept = ref$b, colour = "#1d2733", linetype = "dashed") +
-  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 0.7) +
-  geom_point(aes(shape = shape), size = 2.6, stroke = 1.1) +
-  scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
-  scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
-  scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
-  facet_wrap(~panel, ncol = 1, scales = "free_y") +
-  labs(x = "change between the cohorts (log scale)", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank(), legend.position = "top")
+  ggplot2::ggplot(ggplot2::aes(x = b, y = label, colour = claim)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_vline(xintercept = ref$b, colour = "#1d2733", linetype = "dashed") +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = ci_low, xmax = ci_high), linewidth = 0.7) +
+  ggplot2::geom_point(ggplot2::aes(shape = shape), size = 2.6, stroke = 1.1) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = "#1d2733", `TRUE` = "#8b1538"), guide = "none") +
+  ggplot2::scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::facet_wrap(~panel, ncol = 1, scales = "free_y") +
+  ggplot2::labs(x = "change between the cohorts (log scale)", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank(), legend.position = "top")
 ```
 
 The change is `r fmt(sg("educ_period", "college", "b"), 2)` for graduates (`r pe(sg("educ_period", "college", "p"))`), `r fmt(sg("educ_period", "some_college", "b"), 2)` with some college, `r fmt(sg("educ_period", "hs", "b"), 2)` with a high school diploma and `r fmt(sg("educ_period", "less_hs", "b"), 2)` without one. By race-ethnicity it is `r fmt(sg("race_period", "white", "b"), 2)` for non-Hispanic white women, the coefficient of the claim, `r fmt(sg("race_period", "black", "b"), 2)` for Black women (`r pe(sg("race_period", "black", "p"))`), `r fmt(sg("race_period", "hispanic", "b"), 2)` for Hispanic women and `r fmt(sg("race_period", "other", "b"), 2)` for the other group. The coefficient of the period in each model of the paper is the change for its reference group: in Model 1 the graduates, among whom nothing changed, and in Model 2 the white women, whose decline lies close to the average. The reference specification of the curve pools the groups, and its `r fmt(ref$b)` sits between them.
@@ -321,25 +321,25 @@ The course rebuilt in the same way the unions of the three later surveys that th
 pair_lab <- c(`1995_2006` = "NSFG 1995 and 2006–2010 (the paper)", `2002_2006` = "NSFG 2002 and 2006–2010",
               `2006_2011` = "NSFG 2006–2010 and 2011–2015", `2002_2011` = "NSFG 2002 and 2011–2015",
               `1995_2011` = "NSFG 1995 and 2011–2015")
-bind_rows(
-  ref |> mutate(option = "1995_2006"),
-  options_d |> filter(changed == "comparison")
+dplyr::bind_rows(
+  datawizard::data_modify(ref, option = "1995_2006"),
+  datawizard::data_filter(options_d, changed == "comparison")
 ) |>
-  mutate(option = factor(option, levels = names(pair_lab))) |>
-  arrange(option) |>
-  transmute(
+  datawizard::data_modify(option = factor(option, levels = names(pair_lab))) |>
+  datawizard::data_arrange("option") |>
+  dplyr::transmute(
     Surveys = pair_lab[as.character(option)],
     Coefficient = fmt(b),
     Ratio = fmt(ratio, 2),
     SE = fmt(se),
     t = fmt(stat, 2),
     df = as.character(df),
-    p = if_else(p < 1e-4, "< 0.0001", fmt(p, 3)),
+    p = dplyr::if_else(p < 1e-4, "< 0.0001", fmt(p, 3)),
     `Person-months` = big(n),
     Unions = big(n_unions)
   ) |>
-  tt() |>
-  style_tt(j = 2:9, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:9, align = "r")
 ```
 
 Across the fifteen to twenty years between the cohorts of 1990–1995 and those of the surveys of 2011–2015 the decline is larger than that of the paper, `r fmt(opt("comparison", "1995_2011", "b"))`, and between the cohorts of the 2002 survey (begun in 1997–2002) and those of 2011–2015 it is `r fmt(opt("comparison", "2002_2011", "b"))` (`r pe(opt("comparison", "2002_2011", "p"))`). Between surveys closer in time the decline is smaller and not significant at 5%: `r fmt(opt("comparison", "2002_2006", "b"))` between 2002 and 2006–2010 (`r pe(opt("comparison", "2002_2006", "p"))`) and `r fmt(opt("comparison", "2006_2011", "b"))` between 2006–2010 and 2011–2015 (`r pe(opt("comparison", "2006_2011", "p"))`). The claim says that cohabitors "have increasingly become less likely" to marry, which reads as a change that continued, and these pairs suggest a decline spread over two decades rather than one that happened in a few years. They are other questions, about other cohorts, so the menu keeps them off the curve.
@@ -354,7 +354,7 @@ The SCORE replication of the paper ([osf.io/u8x9s](https://osf.io/u8x9s/)) teste
 
 The live chart below shows the results that the class submits, over the curve of `r n_spec` specifications. Pressing *Run Code* runs the `refresh_multiverse()` function, which downloads the latest submissions and draws them over the curve. The marks of the curve stay faint, so that the class results lead, and the reference marks are left to the chart at the top of the page.
 
-Each submission sits at the rank of its specification on the curve and at the coefficient that it reports, on the log scale, and it is classed by looking its specification up in the curve file: a circle if the matching specification has p < 0.05, as all `r n_spec` do, and a cross if it has not. An open green circle is an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result. A filled black circle is a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. A submission whose label names no specification of the curve is not drawn, and a line under the chart counts such submissions. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two submissions share it. Hovering over a mark shows its tag, its specification and its statistics. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your marks in orange, joined in the order in which you submitted them.
+Each submission sits at the rank of its specification on the curve and at the coefficient that it reports, on the log scale, and it is classed by looking its specification up in the curve file: a circle if the matching specification has p < 0.05, as all `r n_spec` do, and a cross if it has not. An open green circle is an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result. A filled black circle is a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. A submission whose label names no specification of the curve is not drawn, and a line under the chart counts such submissions. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two submissions share it. The lines printed under the chart give each mark by its number, with its tag, its specification and its statistics. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your marks in orange, joined in the order in which you submitted them.
 
 ```{webr}
 #| label: live-multiverse-setup
@@ -364,27 +364,25 @@ Each submission sits at the rank of its specification on the curve and at the co
 # Google Sheet of the results Form; when the Worker cannot be reached the
 # chart falls back to the committed data/class_results.csv. The Sheet is shared
 # by the cases of the course, so only the rows whose label carries the word
-# "cohabitation" after the tag are read. Base R throughout, apart from ggplot2
-# and ggiraph, so that participants download nothing else.
+# "cohabitation" after the tag are read. The chart is drawn with tinyplot
+# (McDermott, Arel-Bundock and Zeileis; CRAN, doi:10.32614/CRAN.package.tinyplot),
+# the rows are handled with datawizard and purrr, and the labels are parsed
+# with the regular expressions of base R, so that participants download little.
 
 # ---- The Worker of the class results: replace this one line for a Form of its own
 worker_url <- "https://class-results.chris-moreh.workers.dev/"
 
-library(ggplot2)
-# ggiraph gives the submissions their hover boxes; when its download is
-# unavailable the chart falls back to a static ggplot
-have_ggiraph <- tryCatch({ library(ggiraph); TRUE }, error = function(e) FALSE)
-plain <- "#1f5fa8"; ink <- "#1d2733"; green <- "#009E73"; orange <- "#E69F00"
-grey_mid <- "#8a929a"; hilite <- "#8b1538"
-tooltip_css <- "background-color:#ffffff;color:#1d2733;border:1px solid #cdd3d9;padding:7px 9px;border-radius:6px;font-size:12px;line-height:1.45;box-shadow:0 2px 10px rgba(20,30,40,0.14);"
+ink <- "#1d2733"; orange <- "#E69F00"; grey_mid <- "#8a929a"
+phase_levels <- c("explored (Task 4)", "declared (Task 5)")
 
 # The backdrop is the curve of 144, ranked from the largest decline, as on the
 # chart at the top of the page.
-curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
-curve <- curve[order(curve$b, curve$spec_id), ]   # r-style: keep – base R in webR, dplyr would be a download
-curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p < 0.05)
+curve <- utils::read.csv("data/spec_curve.csv", stringsAsFactors = FALSE) |>  # r-style: keep – base reader, nothing to download
+  datawizard::data_arrange(c("b", "spec_id")) |>
+  datawizard::data_modify(rank = 1:n(), sig = p < 0.05,
+                          sig_f = factor(sig, levels = c(FALSE, TRUE)))
 axis_codes <- c("cohorts", "horizon", "adjust", "weights", "time", "model")
-curve_key <- do.call(paste, c(unname(as.list(curve[axis_codes])), sep = "|"))
+curve_key <- purrr::pmap_chr(curve[axis_codes], \(...) paste(..., sep = "|"))
 
 # A cohabitation label, as the submission helpers write it:
 #   explore: [amber-otter-42] cohabitation cohorts=paper horizon=five_years adjust=composition weights=weighted time=linear model=mlogit
@@ -405,7 +403,7 @@ parse_axes <- function(rest) {
 }
 
 read_clean <- function(path) {
-  d <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE, colClasses = "character")
+  d <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE, colClasses = "character")  # r-style: keep – base reader, nothing to download
   names(d) <- tolower(trimws(names(d)))   # tolerate "B", " spec ", etc.
   d
 }
@@ -423,142 +421,138 @@ clean_my_tag <- function(x) {
   gsub("-+$", "", substr(x, 1, 24))
 }
 
-html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
 fmt_num <- function(x, d) sub("^-", "−", formatC(x, format = "f", digits = d))
-fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.3f", p))
+fmt_p <- function(p) ifelse(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))  # r-style: keep – base, nothing to download
 as_num <- function(x) suppressWarnings(as.numeric(x))
 
 # The cohabitation rows of the class CSV, parsed and looked up on the curve.
-# Returns the rows to draw, the number of cohabitation rows, and the number
-# that name no specification of the curve (or carry no coefficient) and are
-# therefore not drawn.
+# Returns the rows to draw, each with a line that describes it, the number of
+# cohabitation rows, and the number that name no specification of the curve
+# (or carry no coefficient) and are therefore not drawn.
 prepare_class <- function(cls, my_tag = "") {
   empty <- list(points = NULL, n_case = 0L, n_off = 0L)
   if (is.null(cls) || nrow(cls) == 0 || !("spec" %in% names(cls))) return(empty)
-  spec_raw <- trimws(ifelse(is.na(cls$spec), "", cls$spec))
+  spec_raw <- trimws(ifelse(is.na(cls$spec), "", cls$spec))  # r-style: keep – base, nothing to download
   m <- regmatches(spec_raw, regexec(cohabitation_pattern, spec_raw))
   is_case <- lengths(m) > 0
   if (!any(is_case)) return(empty)
   cls <- cls[is_case, , drop = FALSE]
   m <- m[is_case]
   n <- nrow(cls)
-  part <- function(k) vapply(m, function(g) g[k], character(1))   # r-style: keep – base R in webR
-  ph <- ifelse(part(3) == "explore", "explored", "declared")
-  tg <- ifelse(nzchar(part(5)), part(5), NA_character_)
+  part <- function(k) purrr::map_chr(m, \(g) g[k])
+  ph <- ifelse(part(3) == "explore", "explored", "declared")  # r-style: keep – base, nothing to download
+  tg <- ifelse(nzchar(part(5)), part(5), NA_character_)  # r-style: keep – base, nothing to download
   rest <- part(7)
-  axes <- t(vapply(rest, parse_axes, character(length(axis_codes)), USE.NAMES = FALSE))   # r-style: keep – base R in webR
-  hit <- match(do.call(paste, c(lapply(seq_along(axis_codes), function(j) axes[, j]), sep = "|")),   # r-style: keep – base R in webR
-               curve_key)
+  hit <- rest |>
+    purrr::map(parse_axes) |>
+    purrr::map_chr(\(a) paste(a, collapse = "|")) |>
+    match(curve_key)
   b <- as_num(cls$b)
   drawn <- !is.na(hit) & !is.na(b)
   stat_txt <- function(i) {
     st <- as_num(cls$t[i])
     if (is.na(st)) return("")
     d_f <- if ("df" %in% names(cls)) as_num(cls$df[i]) else NA
-    if (is.na(d_f)) paste0("<br/>t = ", fmt_num(st, 2)) else
-      paste0("<br/>t = ", fmt_num(st, 2), " on ", d_f, " df")
+    if (is.na(d_f)) paste0(", t = ", fmt_num(st, 2)) else
+      paste0(", t = ", fmt_num(st, 2), " on ", d_f, " df")
   }
-  tip <- vapply(seq_len(n), function(i) paste0(   # r-style: keep – base R in webR
-    "<b>submission #", i, " (", ph[i], ")</b>",
-    if (is.na(tg[i])) "" else paste0("<br/>tag: ", tg[i]),
-    "<br/><b>b = ", fmt_num(b[i], 3), " on the log scale</b>", stat_txt(i),
-    if (is.na(hit[i])) "" else paste0("<br/>on the curve: ", fmt_p(curve$p[hit[i]]),
+  info <- purrr::map_chr(seq_len(n), \(i) paste0(
+    "#", i, " (", ph[i], ")",
+    if (is.na(tg[i])) "" else paste0(", tag ", tg[i]),
+    ": b = ", fmt_num(b[i], 3), " on the log scale", stat_txt(i),
+    if (is.na(hit[i])) "" else paste0(", on the curve ", fmt_p(curve$p[hit[i]]),
                                       if (curve$sig[hit[i]]) " (circle)" else " (cross)"),
-    "<br/>", html_text(rest[i])
-  ), character(1))
-  points <- data.frame(n_lab = paste0("#", seq_len(n)), phase = ph, tag = tg, b = b,
-                       rank = curve$rank[hit], sig = curve$sig[hit], tip = tip,
+    "; ", rest[i]
+  ))
+  points <- data.frame(n_lab = paste0("#", seq_len(n)),  # r-style: keep – base, nothing to download
+                       phase = factor(ifelse(ph == "explored", phase_levels[1], phase_levels[2]),  # r-style: keep – base, nothing to download
+                                      levels = phase_levels),
+                       tag = tg, b = b, rank = curve$rank[hit], sig = curve$sig[hit], info = info,
                        mine = nzchar(my_tag) & !is.na(tg) & tg == my_tag,
                        stringsAsFactors = FALSE)[drawn, , drop = FALSE]
   list(points = points, n_case = n, n_off = sum(!drawn))
 }
 
+# The chart: the curve faint behind, a submission at the rank of its
+# specification and at the coefficient that it reports, a circle where that
+# specification has p < 0.05 and a cross otherwise, open green for explored
+# and filled black for declared, numbered in the order of submission. The
+# marks of the tag typed into the live cell are ringed in orange and joined in
+# the order of submission. The lines printed under the chart describe each mark.
 draw_class_chart <- function(cls, my_tag = "") {
-  ylim_lo <- -1; ylim_hi <- 0.1
   pts <- cls$points
-  p <- ggplot() +
-    annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf, fill = "#a10000", alpha = 0.045) +
-    geom_hline(yintercept = 0, colour = grey_mid, linewidth = 0.4) +
-    geom_point(data = curve, aes(x = rank, y = b), colour = plain,
-               shape = ifelse(curve$sig, 1, 4), alpha = 0.3, size = 2.2, stroke = 0.5) +
-    scale_y_continuous(labels = function(x) sub("^-", "−", format(x, trim = TRUE))) +
-    labs(x = "Specifications of the curve, ranked from the largest decline",
-         y = "Coefficient of the later cohort (log scale)", title = "Class submissions") +
-    theme_minimal(base_size = 13) +
-    theme(plot.title = element_text(face = "bold", colour = ink),
-          axis.title = element_text(colour = "#4f5b67"),
-          plot.caption = element_text(hjust = 0, size = 9, colour = "#4f5b67"),
-          legend.position = "bottom", panel.grid.minor = element_blank())
+  has_pts <- !is.null(pts) && nrow(pts) > 0
+  ylim_lo <- if (has_pts) min(-1, min(pts$b) - 0.05) else -1
+  ylim_hi <- if (has_pts) max(0.1, max(pts$b) + 0.05) else 0.1
   off_txt <- paste0(cls$n_off, " of ", cls$n_case,
                     " submission(s) name no specification of the curve of 144 and are not drawn.")
-  if (is.null(pts) || nrow(pts) == 0) {
-    p <- p + labs(subtitle = if (cls$n_case == 0) "No submissions yet – press Run Code to refresh"
-                             else "No submission can be placed yet – press Run Code to refresh",
-                  caption = paste0("The curve: circles for p < 0.05 with design-based errors.",
-                                   if (cls$n_case > 0) paste0("\n", off_txt) else ""))
+  sub_txt <- if (!has_pts && cls$n_case == 0) {
+    "No submissions yet – press Run Code to refresh"
+  } else if (!has_pts) {
+    "No submission can be placed yet – press Run Code to refresh"
+  } else if (any(pts$mine)) {
+    paste0(nrow(pts), " class result(s) on the chart · tag ", my_tag, ": ",
+           paste(pts$n_lab[pts$mine], collapse = ", "))
+  } else if (nzchar(my_tag)) {
+    paste0(nrow(pts), " class result(s) on the chart · no mark carries the tag ", my_tag, " yet")
   } else {
-    sub_txt <- paste(nrow(pts), "class result(s) on the chart")
-    # The marks of the participant whose tag is typed into the live cell, as
-    # larger orange marks joined in the order of submission. They are drawn
-    # first, so that the marks on top keep their hover boxes.
-    if (any(pts$mine)) {
-      # a joining line needs two marks; one alone would print a ggplot notice
-      if (sum(pts$mine) > 1)
-        p <- p + geom_path(data = pts[pts$mine, , drop = FALSE], aes(x = rank, y = b),
-                           colour = orange, linewidth = 0.7, inherit.aes = FALSE)
-      p <- p + geom_point(data = pts[pts$mine, , drop = FALSE], aes(x = rank, y = b),
-                          shape = 1, size = 5.2, colour = orange, stroke = 1.6, inherit.aes = FALSE)
-      sub_txt <- paste0(sub_txt, " · tag ", my_tag, ": ", paste(pts$n_lab[pts$mine], collapse = ", "))
-    } else if (nzchar(my_tag)) {
-      sub_txt <- paste0(sub_txt, " · no mark carries the tag ", my_tag, " yet")
-    }
-    sig_pts <- pts[pts$sig, , drop = FALSE]
-    ns_pts <- pts[!pts$sig, , drop = FALSE]
-    point_layer <- if (have_ggiraph) geom_point_interactive else geom_point
-    point_aes <- if (have_ggiraph) {
-      aes(x = rank, y = b, colour = phase, shape = phase, tooltip = tip, data_id = n_lab)
-    } else {
-      aes(x = rank, y = b, colour = phase, shape = phase)
-    }
-    # submissions landing on the same specification stack their number tags
-    # vertically instead of overprinting
-    vj <- -1.1 - 1.15 * (ave(seq_len(nrow(pts)), pts$rank, FUN = seq_along) - 1)
-    p <- p +
-      point_layer(data = sig_pts, mapping = point_aes, size = 3.2, stroke = 1.2,
-                  show.legend = TRUE, inherit.aes = FALSE) +
-      geom_text(data = pts, aes(x = rank, y = b, label = n_lab), colour = ink, size = 2.6,
-                vjust = vj, inherit.aes = FALSE) +
-      scale_colour_manual(values = c(explored = green, declared = ink),
-                          limits = c("explored", "declared"),
-                          labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
-                          drop = FALSE) +
-      scale_shape_manual(values = c(explored = 1, declared = 16),
-                         limits = c("explored", "declared"),
-                         labels = c("explored (Task 4)", "declared (Task 5)"), name = NULL,
-                         drop = FALSE) +
-      labs(subtitle = sub_txt,
-           caption = paste0("Each submission sits at the rank of its specification and at the coefficient that it ",
-                            "reports. Open circles: explored; filled circles: declared.\n", off_txt))
+    paste(nrow(pts), "class result(s) on the chart")
+  }
+
+  tinyplot::tinytheme("minimal")
+  on.exit(tinyplot::tinytheme())
+  # an empty frame that sets the axes and carries the legend of the two phases;
+  # tinyplot reads palette and legend as written, so they take values, not names
+  tinyplot::tinyplot(b ~ rank | phase,
+                     data = data.frame(rank = 1, b = 0, phase = factor(phase_levels, levels = phase_levels)),  # r-style: keep – base, nothing to download
+                     empty = TRUE, legend = list("bottom!", title = NULL),
+                     palette = c("#009E73", "#1d2733"), pch = c(1, 16),
+                     xlim = c(1, nrow(curve)), ylim = c(ylim_lo, ylim_hi),
+                     main = "Class submissions", sub = sub_txt,
+                     xlab = "Specifications of the curve, ranked from the largest decline",
+                     ylab = "Coefficient of the later cohort (log scale)",
+                     yaxl = \(x) sub("^-", "−", format(x, trim = TRUE)))
+  # the faint band above zero, against the direction of the claim, and zero
+  tinyplot::tinyplot(x = 0, y = 0, xmin = -1e6, xmax = 1e6, ymin = 0, ymax = 1e6, type = "rect",
+                     col = NA, fill = "#a100000c", add = TRUE)
+  tinyplot::tinyplot(x = 0, y = 0, type = tinyplot::type_hline(h = 0), col = grey_mid, add = TRUE)
+  # the curve: circles for p < 0.05, crosses otherwise
+  tinyplot::tinyplot(b ~ rank | sig_f, data = curve, pch = c(4, 1), palette = c("#1f5fa8", "#1f5fa8"),
+                     alpha = 0.3, drop.unused.levels = FALSE, add = TRUE)
+
+  if (has_pts) {
+    mine <- datawizard::data_filter(pts, mine)
+    # a joining line needs two marks
+    if (nrow(mine) > 1)
+      tinyplot::tinyplot(b ~ rank, data = mine, type = "l", col = orange, lwd = 2, add = TRUE)
+    # clim keeps a single mark at the size of cex
+    if (nrow(mine) > 0)
+      tinyplot::tinyplot(b ~ rank, data = mine, type = tinyplot::type_points(clim = c(2.6, 2.6)),
+                         pch = 1, cex = 2.6, lwd = 2, col = orange, add = TRUE)
     # a specification with p >= 0.05 is drawn as a cross, whatever the phase
+    sig_pts <- datawizard::data_filter(pts, sig)
+    ns_pts <- datawizard::data_filter(pts, !sig)
+    if (nrow(sig_pts) > 0)
+      tinyplot::tinyplot(b ~ rank | phase, data = sig_pts, type = tinyplot::type_points(clim = c(1.5, 1.5)),
+                         pch = c(1, 16), palette = c("#009E73", "#1d2733"),
+                         cex = 1.5, lwd = 1.6, drop.unused.levels = FALSE, add = TRUE)
     if (nrow(ns_pts) > 0)
-      p <- p + point_layer(data = ns_pts, mapping = point_aes, shape = 4, size = 3.2, stroke = 1.2,
-                           show.legend = FALSE, inherit.aes = FALSE)
-    ylim_hi <- max(ylim_hi, max(pts$b) + 0.05)
-    ylim_lo <- min(ylim_lo, min(pts$b) - 0.05)
+      tinyplot::tinyplot(b ~ rank | phase, data = ns_pts, type = tinyplot::type_points(clim = c(1.5, 1.5)),
+                         pch = 4, palette = c("#009E73", "#1d2733"),
+                         cex = 1.5, lwd = 1.6, drop.unused.levels = FALSE, add = TRUE)
+    # submissions on the same specification stack their numbers vertically
+    stack <- stats::ave(seq_along(pts$rank), pts$rank, FUN = seq_along) - 1
+    tinyplot::tinyplot(x = pts$rank, y = pts$b + (ylim_hi - ylim_lo) * (0.035 + 0.04 * stack),
+                       type = tinyplot::type_text(labels = pts$n_lab), col = ink, cex = 0.8, add = TRUE)
   }
-  p <- p + coord_cartesian(xlim = c(1, nrow(curve)), ylim = c(ylim_lo, ylim_hi))
-  if (have_ggiraph) {
-    girafe(ggobj = p, width_svg = 9, height_svg = 5.6,
-           options = list(
-             opts_tooltip(css = tooltip_css, opacity = 1),
-             opts_hover(css = girafe_css(css = paste0("stroke:", hilite, ";stroke-width:2px;"))),
-             opts_hover_inv(css = "opacity:0.35;"),
-             opts_sizing(rescale = TRUE, width = 1),
-             opts_toolbar(saveaspng = FALSE)
-           ))
-  } else {
-    p
-  }
+
+  writeLines(c(
+    if (has_pts) "Each submission sits at the rank of its specification and at the coefficient that it reports. Open circles: explored; filled circles: declared."
+    else "The curve: circles for p < 0.05 with design-based errors.",
+    if (cls$n_case > 0) off_txt,
+    if (has_pts) c("", pts$info)
+  ))
+  invisible(cls)
 }
 
 refresh_multiverse <- function(my_tag = "") {
@@ -566,7 +560,7 @@ refresh_multiverse <- function(my_tag = "") {
   cls <- NULL
   if (nzchar(worker_url)) {
     cls <- tryCatch({
-      download.file(paste0(worker_url, "?_=", as.numeric(Sys.time())), "class.csv", quiet = TRUE)
+      utils::download.file(paste0(worker_url, "?_=", as.numeric(Sys.time())), "class.csv", quiet = TRUE)
       read_clean("class.csv")
     }, error = function(e) NULL)
   }

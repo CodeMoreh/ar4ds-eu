@@ -59,15 +59,15 @@ Each union of the file is a run of months, one row each, with its outcome in the
 
 ```{.r}
 score_unions <- data |>
-  filter(P95 == 1 | P10 == 1) |>
-  slice_max(MONTHNUM, n = 1, by = CASEID) |>                  # the last month of each union
-  mutate(survey = if_else(P95 == 1, "1995", "2006-2010"),
-         outcome = c("intact", "marriage", "separation")[OUTCOME])
-count(score_unions, survey, outcome)
+  datawizard::data_filter(P95 == 1 | P10 == 1) |>
+  dplyr::slice_max(MONTHNUM, n = 1, by = CASEID) |>                  # the last month of each union
+  datawizard::data_modify(survey = dplyr::if_else(P95 == 1, "1995", "2006-2010"),
+                          outcome = c("intact", "marriage", "separation")[OUTCOME])
+datawizard::data_summary(score_unions, unions = n(), by = c("survey", "outcome"))
 ```
 
 ::: {.fragment .small}
-**In chat:** the number of unions of 1995 in the file, and how many of them became a marriage. Hold – send on "go". Then set them beside the unions of the paper: `count(spec_unions(unions), cycle, outcome)`.
+**In chat:** the number of unions of 1995 in the file, and how many of them became a marriage. Hold – send on "go". Then set them beside the unions of the paper: `datawizard::data_summary(spec_unions(unions), unions = n(), by = c("cycle", "outcome"))`.
 :::
 
 ::: {.fragment .small}

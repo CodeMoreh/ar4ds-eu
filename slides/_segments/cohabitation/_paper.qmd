@@ -54,22 +54,22 @@ The data come from the National Survey of Family Growth, a federal survey of peo
 # The weighted share of the unions of each cohort that had become a marriage by
 # each month since the couple moved in, with separation as a competing outcome
 # (data/display_lifetable.csv), and the end of the third year dashed.
-life_all <- filter(lifetable, group_type == "all")
+life_all <- datawizard::data_filter(lifetable, group_type == "all")
 # each cohort named above its line in the fifth year
 life_tag <- life_all |>
-  filter(month == 50)
-ggplot(life_all, aes(month, married, colour = cohort)) +
-  geom_vline(xintercept = 36, colour = grey_mid, linetype = "22") +
-  geom_step(linewidth = 1.2) +
-  geom_point(data = lt36, size = 3.2) +
-  geom_text(data = lt36, aes(label = fmt_pct(married)), hjust = 1.25, vjust = -0.6, size = 5,
+  datawizard::data_filter(month == 50)
+ggplot2::ggplot(life_all, ggplot2::aes(month, married, colour = cohort)) +
+  ggplot2::geom_vline(xintercept = 36, colour = grey_mid, linetype = "22") +
+  ggplot2::geom_step(linewidth = 1.2) +
+  ggplot2::geom_point(data = lt36, size = 3.2) +
+  ggplot2::geom_text(data = lt36, ggplot2::aes(label = fmt_pct(married)), hjust = 1.25, vjust = -0.6, size = 5,
             show.legend = FALSE) +
-  geom_text(data = life_tag, aes(label = cohort_labels[cohort]), vjust = -0.8, size = 4.8,
+  ggplot2::geom_text(data = life_tag, ggplot2::aes(label = cohort_labels[cohort]), vjust = -0.8, size = 4.8,
             fontface = "bold", show.legend = FALSE) +
-  scale_colour_manual(values = cohort_cols, guide = "none") +
-  scale_x_continuous(breaks = seq(0, 60, 12), expand = expansion(mult = c(0.01, 0.02))) +
-  scale_y_continuous(labels = \(x) fmt_pct(x, 0), limits = c(0, 0.6)) +
-  labs(x = "months since the couple moved in", y = "share married") +
+  ggplot2::scale_colour_manual(values = cohort_cols, guide = "none") +
+  ggplot2::scale_x_continuous(breaks = seq(0, 60, 12), expand = ggplot2::expansion(mult = c(0.01, 0.02))) +
+  ggplot2::scale_y_continuous(labels = \(x) fmt_pct(x, 0), limits = c(0, 0.6)) +
+  ggplot2::labs(x = "months since the couple moved in", y = "share married") +
   theme_slide(15)
 ```
 
@@ -114,22 +114,22 @@ The paper does not compare the share married at one moment. It asks a question t
 educ_labels <- c(college = "College degree", some_college = "Some college", hs = "High school diploma",
                  less_hs = "Less than high school")
 shares_educ <- shares |>
-  filter(group_type == "education") |>
-  mutate(n_lab = paste(unions[cohort == "1990-1995"], unions[cohort == "2005-2010"], sep = " / "),
-         .by = group) |>
-  mutate(label = factor(paste0(educ_labels[group], " (", n_lab, ")"),
-                        levels = rev(paste0(educ_labels, " (", n_lab[match(names(educ_labels), group)], ")"))))
-ggplot(shares_educ, aes(married_3y, label)) +
-  geom_line(aes(group = label), colour = "#c7ccd2", linewidth = 2) +
-  geom_point(aes(colour = cohort), size = 5) +
-  geom_text(aes(label = fmt_pct(married_3y, 0), colour = cohort), vjust = -1.1, size = 4.6,
+  datawizard::data_filter(group_type == "education") |>
+  dplyr::mutate(n_lab = paste(unions[cohort == "1990-1995"], unions[cohort == "2005-2010"], sep = " / "),
+                .by = group) |>
+  dplyr::mutate(label = factor(paste0(educ_labels[group], " (", n_lab, ")"),
+                               levels = rev(paste0(educ_labels, " (", n_lab[match(names(educ_labels), group)], ")"))))
+ggplot2::ggplot(shares_educ, ggplot2::aes(married_3y, label)) +
+  ggplot2::geom_line(ggplot2::aes(group = label), colour = "#c7ccd2", linewidth = 2) +
+  ggplot2::geom_point(ggplot2::aes(colour = cohort), size = 5) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_pct(married_3y, 0), colour = cohort), vjust = -1.1, size = 4.6,
             show.legend = FALSE) +
-  scale_colour_manual(values = cohort_cols, labels = cohort_labels, name = NULL) +
-  scale_x_continuous(labels = \(x) fmt_pct(x, 0), limits = c(0.1, 0.62)) +
-  labs(x = "share married within three years", y = NULL) +
+  ggplot2::scale_colour_manual(values = cohort_cols, labels = cohort_labels, name = NULL) +
+  ggplot2::scale_x_continuous(labels = \(x) fmt_pct(x, 0), limits = c(0.1, 0.62)) +
+  ggplot2::labs(x = "share married within three years", y = NULL) +
   theme_slide(15) +
-  theme(legend.position = "top", legend.justification = "left",
-        axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+  ggplot2::theme(legend.position = "top", legend.justification = "left",
+        axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20", face = "bold"))
 ```
 
 ::: {.small}

@@ -14,25 +14,21 @@ resources:
 # the curve of the claim, every option of the curve against its twins, and the
 # displays that hold the options off the curve at the reference settings. All
 # of it is aggregate, and the twins are paired in the browser from the curve.
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(readr)
-  library(purrr)
-})
+# readr rather than datawizard::data_read(), which reads empty cells as "".
 
-menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
+menu <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
 # a column that holds only "t" would be read as logical without its type
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE,
-                  col_types = cols(stat_type = col_character())) |>
-  arrange(b, spec_id) |>
-  mutate(rank = row_number())
-deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
-displays <- read_csv("data/display_options.csv", show_col_types = FALSE,
-                     col_types = cols(stat_type = col_character()))
-shares <- read_csv("data/display_shares.csv", show_col_types = FALSE)
-analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
-score_file <- read_csv("data/display_score_file.csv", show_col_types = FALSE)
-repro <- read_csv("data/display_reproduction.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE,
+                         col_types = readr::cols(stat_type = readr::col_character())) |>
+  datawizard::data_arrange(c("b", "spec_id")) |>
+  datawizard::data_modify(rank = 1:n())
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+displays <- readr::read_csv("data/display_options.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+shares <- readr::read_csv("data/display_shares.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+score_file <- readr::read_csv("data/display_score_file.csv", show_col_types = FALSE)
+repro <- readr::read_csv("data/display_reproduction.csv", show_col_types = FALSE)
 stopifnot(nrow(curve) == 144, sum(curve$is_reference) == 1)
 
 fallback_titles <- c(
@@ -55,18 +51,18 @@ page_title <- \(f) {
 
 # taught_on is a path from the project root, and the page links up two levels
 menu_js <- menu |>
-  mutate(page = taught_on) |>
-  select(axis, level, option, label, on_curve, page, reason, decision, stage, judgement,
-         phrase, estimates, explanation)
+  datawizard::data_modify(page = taught_on) |>
+  datawizard::data_select(c("axis", "level", "option", "label", "on_curve", "page", "reason", "decision",
+                            "stage", "judgement", "phrase", "estimates", "explanation"))
 pages <- unique(menu_js$page) |>
-  set_names() |>
-  map(page_title)
+  purrr::set_names() |>
+  purrr::map(page_title)
 
 # the 95% interval of each specification on the t of its own df
 curve_js <- curve |>
-  transmute(
+  dplyr::transmute(
     spec_id, cohorts, horizon, adjust, weights, time, model,
-    b = round(b, 5), lo = round(b - qt(0.975, df) * se, 4), hi = round(b + qt(0.975, df) * se, 4),
+    b = round(b, 5), lo = round(b - stats::qt(0.975, df) * se, 4), hi = round(b + stats::qt(0.975, df) * se, 4),
     stat = round(stat, 3), df, p = signif(p, 3), z_model = round(z_model, 2),
     t_woman = round(t_woman, 2), df_woman, p_woman = signif(p_woman, 3),
     r = round(r, 4), ratio = round(ratio, 3), n, n_unions, n_marriages,
@@ -78,16 +74,16 @@ curve_js <- curve |>
 # of the life table, and the analyses of the Multi100 analysts on the file
 # that SCORE built and on the same file with its 1995 rows rebuilt
 f3 <- \(x, d = 3) sub("^-", "−", formatC(x, format = "f", digits = d))
-p_txt <- \(p) if_else(p < 0.0001, "p < 0.0001", paste("p =", formatC(p, format = "f", digits = 3)))
+p_txt <- \(p) dplyr::if_else(p < 0.0001, "p < 0.0001", paste("p =", formatC(p, format = "f", digits = 3)))
 big <- \(x) format(round(x), big.mark = ",", trim = TRUE)
 ref_b <- f3(curve$b[curve$is_reference])
 sh <- \(cohort, col) 100 * shares[[col]][shares$cohort == cohort & shares$group_type == "all"]
 an <- \(id, col) analysts[[col]][analysts$id == id]
 sf <- \(cycle, col) score_file[[col]][score_file$source == "SCORE file" & score_file$cycle == cycle]
 display_fit <- displays |>
-  transmute(
+  dplyr::transmute(
     axis = changed, option,
-    text = case_when(
+    text = dplyr::case_when(
       option == "lpm" ~ sprintf(
         "A display beside the curve fits this option alone at the reference settings: %s, a monthly chance of marrying lower by %.1f percentage points, t = %s on %d df, %s, on %s person-months.",
         f3(b, 4), 100 * abs(b), f3(stat, 2), as.integer(df), p_txt(p), big(n)),
@@ -121,7 +117,7 @@ display_other <- tibble::tribble(
   sprintf("JDA15 fitted a trend over the five surveys on the SCORE file: z = %s for the yearly trend; with the 1995 rows rebuilt, z = %s. 73FDT regressed five survey coefficients on the year: F = %s.",
           f3(an("JDA15", "stat_refit"), 2), f3(an("JDA15", "stat_repaired"), 2), f3(an("73FDT", "stat_refit"), 2))
 )
-display <- bind_rows(display_fit, display_other)
+display <- dplyr::bind_rows(display_fit, display_other)
 
 ojs_define(menu_raw = menu_js, curve_raw = curve_js, dev_raw = deviations,
            display_raw = display, pages_raw = pages)

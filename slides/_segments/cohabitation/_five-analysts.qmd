@@ -7,10 +7,10 @@
 # compared, the statistic that Multi100 recorded and the conclusion of Task 1.
 upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
 five_rows <- analysts |>
-  mutate(line = paste0("| ", id, " | ", upper_first(gsub("-", "–", comparison)), " | ", upper_first(unit),
-                       " | ", upper_first(outcome_model), " | ", recorded_txt(statistic_type, statistic_recorded),
-                       " | ", task1, " |")) |>
-  pull(line)
+  dplyr::mutate(line = paste0("| ", id, " | ", upper_first(gsub("-", "–", comparison)), " | ", upper_first(unit),
+                              " | ", upper_first(outcome_model), " | ",
+                              recorded_txt(statistic_type, statistic_recorded), " | ", task1, " |")) |>
+  dplyr::pull(line)
 cat(c("::: {.fs-55}", # r-style: keep – writes the Markdown of the table
       "| Analyst | Surveys | Unit | Model | Recorded | Task 1 |",
       "|:--|:--|:--|:--|--:|:--|",

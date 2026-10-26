@@ -1,6 +1,6 @@
 # Codebook: `spec_curve.csv`
 
-The curve of the claim of the cohabitation case, "cohabitors have increasingly become less likely to progress to marriage", in the wording that Multi100 took from the paper of the original authors (OAs, p. 932): every specification that the specification menu of the course keeps, 144 rows, fitted once on the union file `cohab_unions.csv` ([codebook](cohab_unions_codebook.md)). The file is written by `R/cohabitation/03_spec_curve.R` with the estimator of `R/cohabitation/_tools.R` (`fit_spec()`), which uses base R, dplyr, tidyr and purrr only, so that the workspace and the browser lab run the identical code; `R/cohabitation/check_parity.R` checks it against survey, svyVGAM and nnet.
+The curve of the claim of the cohabitation case, "cohabitors have increasingly become less likely to progress to marriage", in the wording that Multi100 took from the paper of the original authors (OAs, p. 932): every specification that the specification menu of the course keeps, 144 rows, fitted once on the union file `cohab_unions.csv` ([codebook](cohab_unions_codebook.md)). The file is written by `R/cohabitation/03_spec_curve.R` with the estimator of `R/cohabitation/_tools.R` (`fit_spec()`), which the workspace and the browser lab run as identical code: survival cuts each union into its months, survey fits the binary models with design-based errors, nnet fits the multinomial logit and svyVGAM gives it the same errors. `R/cohabitation/check_parity.R` checks it against nnet, VGAM, estimatr and jackknife replicate weights.
 
 ## The specifications
 
@@ -26,12 +26,12 @@ The reference specification (`is_reference`) is `paper`, `five_years`, `composit
 | `spec_id` | The row number, 1 to 144, in the order of `expand_grid()` over the six decisions |
 | `cohorts`, `horizon`, `adjust`, `weights`, `time`, `model` | The options of the specification, as above. These are the arguments of `fit_spec()` and of `try_spec()` in the exercise |
 | `b` | The coefficient of the later cohort in the marriage equation: the log of the ratio of the monthly chances of marrying (the odds for `logit`; the chance of marrying rather than staying together for `mlogit`; the rate for `cloglog`) of cohabitors who began their unions in the later period to that of those who began them in the earlier one, with the other terms held constant. Negative values mean that the later cohort married less, the direction of the claim |
-| `se` | The design-based standard error of `b`: the linearisation (sandwich) estimator with the strata and clusters of both surveys, the clusters that hold no analysed union counting with zero scores, as the survey package treats a subset of a design |
-| `stat_type` | `t` on every row. readr reads a column that holds only `t` as logical, so give its type when reading the file (`col_types = cols(stat_type = col_character())`) |
+| `se` | The design-based standard error of `b`: the linearisation (sandwich) estimator of the survey package with the strata and clusters of both surveys (`survey::svyglm()`, and `svyVGAM::svy_vglm()` for `mlogit`), the analysed months taken as a domain of the full design, so that the clusters that hold no analysed union still count in their strata |
+| `stat_type` | `t` on every row. readr reads a column that holds only `t` as logical, so give its type when reading the file (`col_types = readr::cols(stat_type = readr::col_character())`) |
 | `stat` | `b` divided by `se` |
-| `df` | The degrees of freedom of the design-based test, as svyglm counts them: the clusters that hold analysed unions, minus their strata, minus the coefficients of the model, plus one (235 to 264) |
+| `df` | The degrees of freedom of the design-based test, as `survey::svyglm()` counts them: the clusters that hold analysed unions, minus their strata, minus the coefficients of the model, plus one (235 to 264) |
 | `p` | The two-sided p-value of `stat` on `df`. This is the test that classes every row |
-| `se_model`, `z_model`, `p_model` | The conventional error (the inverse of the information matrix, with the weights scaled to a mean of one), its z and p-value, which treat every person-month as independent |
+| `se_model`, `z_model`, `p_model` | The conventional error (the inverse of the information matrix, with the weights scaled to a mean of one: `stats::glm()` for the binary models, the naive variance of `svyVGAM::svy_vglm()` for `mlogit`), its z and p-value, which treat every person-month as independent |
 | `r` | The partial correlation by the rule of Multi100 for a z statistic, tanh(\|z\| × sqrt(1 / (n − 3))) × sign(z), from `z_model` and the number of person-months, as Multi100 converted the result of the paper (z = −4.8786 on 54,291 person-months gives −0.0209) |
 | `ratio` | exp(`b`): the ratio of the monthly chances of marrying, later to earlier cohort |
 | `n` | The person-months analysed |

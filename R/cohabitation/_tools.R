@@ -14,11 +14,16 @@
 #               R/cohabitation/06_displays.R, R/cohabitation/check_parity.R
 ################################################################################
 
-# The fits use base R (stats) and dplyr only, on purpose: the same code runs in
-# the downloadable workspace and in webR on the browser lab. The multinomial
-# model is fitted by Newton-Raphson below rather than by nnet, and the
-# design-based errors are written out rather than taken from the survey
-# package; R/cohabitation/check_parity.R checks both against nnet and survey.
+# The same code runs in the downloadable workspace and in webR on the browser
+# lab, so all three give the same numbers. The statistics come from packages:
+# survival splits each union into its months at risk; survey fits the binary
+# models with errors that follow the design of the surveys; nnet fits the
+# multinomial model and svyVGAM gives it the same design-based errors; insight
+# reads the coefficients and their variances from each fit; effectsize holds
+# two of the conversion rules of Multi100. R/cohabitation/check_parity.R checks
+# the fits against routes that share none of this code. The rows are chosen
+# with dplyr, because datawizard evaluates its conditions in a fresh
+# environment and so cannot see the arguments of a function.
 
 # The menu of the curve, in menu order: every combination is one specification
 # (2 x 2 x 3 x 2 x 2 x 3 = 144). Anything else is refused by check_spec() unless
@@ -113,17 +118,24 @@ spec_unions <- function(unions, cohorts = "paper", short = "drop", comparison = 
 
 # One row per union and month at risk, from the month in which the couple
 # moved in (month 1) to the month of the marriage, the separation or the
-# interview; the outcome is recorded in the last month. Under a three-year
-# horizon months after the 36th are dropped and a union still intact at 36
-# months counts as intact.
+# interview; the outcome is recorded in the last month. A union is at risk for
+# `duration + 1` months and ends in an event or, if it is intact, is censored
+# in the last of them. Under a three-year horizon a union still intact at 36
+# months is censored there. survival::survSplit() (Therneau and Grambsch 2000)
+# cuts each union at every month and keeps its event in the last row only.
 person_months <- function(unions, horizon = "five_years") {
   last <- if (horizon == "three_years") 36 else Inf
-  unions |>
-    dplyr::mutate(n_months = pmin(duration + 1, last),
-                  event = dplyr::if_else(duration + 1 <= last, outcome, "intact")) |>
-    tidyr::uncount(n_months, .id = "month") |>
-    dplyr::mutate(y = dplyr::if_else(month == duration + 1, event, "intact")) |>
-    dplyr::select(-event)
+  # The status is a factor whose first level is the censoring, the form that
+  # survival takes for competing events; survSplit() renames that level
+  # "censor", so the outcome is read back from the position of the level.
+  at_risk <- unions |>
+    dplyr::mutate(month = pmin(duration + 1, last),
+                  status = factor(dplyr::if_else(duration + 1 <= last, outcome, "intact"),
+                                  levels = c("intact", "marriage", "separation")))
+  survival::survSplit(at_risk, cut = seq_len(max(at_risk$month) - 1), end = "month", event = "status",
+                      start = "month_start") |>
+    dplyr::mutate(y = c("intact", "marriage", "separation")[as.integer(status)]) |>
+    dplyr::select(-"month_start", -"status")
 }
 
 # The analysed person-months of one specification with every column that a
@@ -148,143 +160,99 @@ spec_frame <- function(unions, cohorts = "paper", horizon = "five_years", weight
                   year_of_union = pmin(ceiling(month / 12), 5))
 }
 
-# The design matrix: an intercept, the later cohort, the adjustment terms and
-# the duration terms (months since the start, or one baseline per year of the
-# union with the first year as reference)
-spec_matrix <- function(frame, adjust = "composition", time = "linear") {
-  x <- cbind(`(Intercept)` = 1, later = frame$later, as.matrix(frame[, ADJUST_TERMS[[adjust]]]))
-  if (time == "linear") x <- cbind(x, month = frame$month)
-  if (time == "yearly") {
-    years <- sort(unique(frame$year_of_union))[-1]
-    yr <- outer(frame$year_of_union, years, `==`) * 1
-    colnames(yr) <- paste0("year", years)
-    x <- cbind(x, yr)
-  }
-  x
-}
-
-# Multinomial logit by Newton-Raphson, with intact as the reference category:
-# one column of coefficients for marriage and one for separation. Returns the
-# coefficients, the information matrix and the score contribution of every row.
-fit_mlogit <- function(x, y, w, tol = 1e-10, max_iter = 50) {
-  yy <- cbind(marriage = as.numeric(y == "marriage"), separation = as.numeric(y == "separation"))
-  k <- ncol(x)
-  # Start from the shares of the three outcomes, with the intercept in column 1
-  beta <- matrix(0, k, 2)
-  beta[1, ] <- log(colSums(w * yy) / sum(w * (1 - rowSums(yy))))  # r-style: keep – a coefficient matrix
-  probs <- function(beta) {
-    e <- exp(x %*% beta)
-    e / (1 + rowSums(e))
-  }
-  info_of <- function(p) {
-    block <- \(a, b) crossprod(x, x * (w * (p[, a] * (a == b) - p[, a] * p[, b])))
-    rbind(cbind(block(1, 1), block(1, 2)), cbind(block(2, 1), block(2, 2)))  # r-style: keep – matrix blocks
-  }
-  loglik <- function(beta) {
-    eta <- x %*% beta
-    sum(w * (rowSums(yy * eta) - log(1 + rowSums(exp(eta)))))
-  }
-  ll <- loglik(beta)
-  for (iter in seq_len(max_iter)) {  # r-style: keep – Newton-Raphson, each step needs the last
-    p <- probs(beta)
-    grad <- c(crossprod(x, w * (yy[, 1] - p[, 1])), crossprod(x, w * (yy[, 2] - p[, 2])))
-    step <- matrix(solve(info_of(p), grad), k, 2)
-    # Halve the step until the log-likelihood does not fall
-    halvings <- purrr::detect_index(0:20, \(h) loglik(beta + step / 2^h) >= ll)
-    beta_new <- beta + step / 2^(max(halvings, 1) - 1)
-    ll_new <- loglik(beta_new)
-    beta <- beta_new
-    if (abs(ll_new - ll) < tol * (abs(ll) + tol)) break
-    ll <- ll_new
-  }
-  p <- probs(beta)
-  dimnames(beta) <- list(colnames(x), colnames(yy))
-  scores <- cbind(x * (w * (yy[, 1] - p[, 1])), x * (w * (yy[, 2] - p[, 2])))
-  list(coef = beta, info = info_of(p), scores = scores, p_marriage = p[, 1], iter = iter)
-}
-
-# A binary model of marriage in the month (a separation month counts as a month
-# without marriage, after which the union leaves the risk set): logit or
-# complementary log-log by glm, or the linear probability model by lm. Returns
-# what fit_mlogit() returns, for the marriage column only.
-fit_binary <- function(x, y, w, model) {
-  ym <- as.numeric(y == "marriage")
-  if (model == "lpm") {
-    fit <- stats::lm.wfit(x, ym, w)
-    e <- ym - drop(x %*% fit$coefficients)
-    info <- crossprod(x, x * w)
-    return(list(coef = cbind(marriage = fit$coefficients), info = info, scores = x * (w * e),
-                residual_var = sum(w * e^2) / (length(ym) - ncol(x))))
-  }
-  fam <- stats::quasibinomial(link = if (model == "logit") "logit" else "cloglog")
-  fit <- stats::glm.fit(x, ym, weights = w, family = fam)
-  eta <- drop(x %*% fit$coefficients)
-  mu <- fam$linkinv(eta)
-  d <- fam$mu.eta(eta)
-  info <- crossprod(x, x * (w * d^2 / fam$variance(mu)))
-  list(coef = cbind(marriage = fit$coefficients), info = info,
-       scores = x * (w * d * (ym - mu) / fam$variance(mu)), p_marriage = mu)
-}
-
-# Between-cluster variance of summed score contributions, clusters within
-# strata: the Taylor linearisation of the survey package with its default
-# with-replacement design. `design` lists every cluster of the surveys with
-# its stratum; clusters that hold no analysed row enter with zero totals, as
-# they do for a subset of a survey design. Clustering by woman passes the women
-# as clusters of a single stratum.
-meat_clustered <- function(scores, cluster, design) {
-  totals <- rowsum(scores, cluster, reorder = FALSE)
-  empty <- setdiff(design$psu, rownames(totals))
-  totals <- rbind(totals, matrix(0, length(empty), ncol(scores), dimnames = list(empty, NULL)))  # r-style: keep – matrices
-  str_of <- design$stratum[match(rownames(totals), design$psu)]
-  n_h <- as.vector(table(str_of)[str_of])
-  means <- rowsum(totals, str_of, reorder = FALSE)[str_of, , drop = FALSE] / n_h
-  crossprod((totals - means) * sqrt(n_h / (n_h - 1)))
-}
-
 # Any model of the menu with every coefficient: the coefficients (one column per
 # equation: marriage, and separation for the multinomial model), their
-# variance under the chosen errors and under the model, and the degrees of
-# freedom and counts of the fit. Design-based errors take the strata and
-# clusters of the two surveys, with t on clusters minus strata minus
-# coefficients plus one df, as svyglm counts them.
+# variance under the chosen errors and under the model, the degrees of
+# freedom and counts of the fit, and the fit itself.
+#
+# Design-based errors take the strata and clusters of the two surveys, by the
+# linearisation of survey (Binder 1983; Lumley 2004, Journal of Statistical
+# Software): survey::svyglm() for the binary models and svyVGAM::svy_vglm()
+# for the multinomial logit of VGAM (Yee and Wild 1996, JRSS B), with t on
+# clusters minus strata minus coefficients plus one df, the residual df of
+# survey::svyglm(). The analysed months are a domain of the surveys: the design
+# is declared on every cluster of the surveys compared and then subset, so that
+# a cluster without analysed months still counts in its stratum. Errors
+# clustered by woman take each woman as a cluster of a single stratum, with
+# t on the number of women minus one df. The conventional errors treat every
+# person-month as independent: the inverse information of the same fit
+# (stats::glm(), or the naive variance of svyVGAM::svy_vglm()).
 fit_model <- function(unions, cohorts = "paper", horizon = "five_years", adjust = "composition",
                       weights = "weighted", time = "linear", model = "mlogit", comparison = "1995_2006",
                       education = "paper", short = "drop", errors = "design") {
   check_spec(cohorts, horizon, adjust, weights, time, model, comparison, education, short, errors)
-  frame <- spec_frame(unions, cohorts, horizon, weights, comparison, education, short)
-  x <- spec_matrix(frame, adjust, time)
-  # Columns are divided by their largest value for the fit (age squared runs to
-  # about 1,800), which keeps the information matrix well conditioned; the
-  # results are scaled back below.
-  col_scale <- apply(abs(x), 2, max)  # r-style: keep – a model matrix, not a data frame
-  xs <- sweep(x, 2, col_scale, `/`)
-  fit <- if (model == "mlogit") fit_mlogit(xs, frame$y, frame$w) else fit_binary(xs, frame$y, frame$w, model)
-  bread <- solve(fit$info)
+  frame <- spec_frame(unions, cohorts, horizon, weights, comparison, education, short) |>
+    dplyr::mutate(marry = as.numeric(y == "marriage"),
+                  y = factor(y, levels = c("intact", "marriage", "separation")),
+                  woman = paste(cycle, caseid), keep = TRUE)
+  rhs <- c("later", ADJUST_TERMS[[adjust]],
+           switch(time, linear = "month", yearly = "factor(year_of_union)", none = NULL))
 
-  design <- unions |>
-    dplyr::filter(cycle %in% frame$cycle) |>
-    dplyr::distinct(stratum, psu)
-  women <- unique(paste(frame$cycle, frame$caseid))
-  meat <- switch(errors,
-                 design = meat_clustered(fit$scores, frame$psu, design),
-                 woman = meat_clustered(fit$scores, paste(frame$cycle, frame$caseid),
-                                        data.frame(stratum = "all", psu = women)),
-                 model = NULL)
-  v <- if (is.null(meat)) bread else bread %*% meat %*% bread
-  bread_model <- if (model == "lpm") bread * fit$residual_var else bread
-  scale_all <- rep(col_scale, ncol(fit$coef))
-  terms <- paste(rep(colnames(fit$coef), each = ncol(x)), colnames(x), sep = ":")
-  unscale <- \(m) structure(m / outer(scale_all, scale_all), dimnames = list(terms, terms))
+  design <- if (errors == "woman") {
+    survey::svydesign(ids = ~woman, weights = ~w, data = frame)
+  } else {
+    clusters <- unions |>
+      dplyr::filter(cycle %in% frame$cycle) |>
+      dplyr::distinct(stratum, psu) |>
+      dplyr::mutate(w = 1, keep = FALSE)
+    survey::svydesign(ids = ~psu, strata = ~stratum, weights = ~w, nest = TRUE,
+                      data = dplyr::bind_rows(frame, clusters)) |>
+      subset(keep)  # r-style: keep – the subset method of a survey design keeps the strata of the full design
+  }
 
+  if (model == "mlogit") {
+    # The multinomial logit by maximum likelihood with nnet::multinom()
+    # (Venables and Ripley 2002), the software of the SCORE replication; then
+    # svyVGAM::svy_vglm() started at that estimate, which iterates until no
+    # coefficient moves by more than 1e-10 and gives the design-based errors.
+    # The start matters where the months since the start and the length of the
+    # whole union (`total_duration`) together all but fix the month of the
+    # event: there the iterations of VGAM, left to themselves, stop far from
+    # the maximum.
+    form <- stats::reformulate(rhs, response = "y")
+    start <- nnet::multinom(form, data = frame, weights = w, trace = FALSE)
+    fit <- svyVGAM::svy_vglm(form, design = design, family = VGAM::multinomial(refLevel = "intact"),
+                             coefstart = c(stats::coef(start)), criterion = "coefficients", epsilon = 1e-10)
+    v_model <- fit$naive.var
+    # VGAM names the coefficients of the marriage equation `:1` and those of the
+    # separation equation `:2`
+    equation <- c("marriage", "separation")[as.integer(sub(".*:", "", names(stats::coef(fit))))]
+    term <- sub(":[12]$", "", names(stats::coef(fit)))
+  } else {
+    # glm() computes the variance from the weights of its last iteration, one
+    # step before the estimate; stopping when the deviance changes by less
+    # than 1e-13 of itself, rather than 1e-8, makes that step negligible
+    fam <- switch(model, logit = stats::quasibinomial(link = "logit"),
+                  cloglog = stats::quasibinomial(link = "cloglog"), lpm = stats::gaussian())
+    fit <- survey::svyglm(stats::reformulate(rhs, response = "marry"), design = design, family = fam,
+                          control = stats::glm.control(epsilon = 1e-13))
+    conventional <- stats::glm(stats::reformulate(rhs, response = "marry"), data = frame, weights = w,
+                               family = fam, control = stats::glm.control(epsilon = 1e-13))
+    # the binomial variance of the logit and the complementary log-log, which
+    # fixes the dispersion at one; the residual variance of the linear model
+    v_model <- stats::vcov(conventional, dispersion = if (model == "lpm") NULL else 1)
+    equation <- rep("marriage", length(stats::coef(fit)))
+    term <- names(stats::coef(fit))
+  }
+
+  # Coefficients and variances in the order of the equations, every term of
+  # the marriage equation first
+  ord <- order(match(equation, c("marriage", "separation")))
+  labels <- paste(equation, term, sep = ":")[ord]
+  coefs <- insight::get_parameters(fit)$Estimate[ord]
+  v <- if (errors == "model") v_model else insight::get_varcov(fit)
   list(
-    coef = fit$coef / col_scale, vcov = unscale(v), vcov_model = unscale(bread_model),
+    coef = matrix(coefs, ncol = length(unique(equation)),
+                  dimnames = list(unique(term[ord]), unique(equation[ord]))),
+    vcov = structure(v[ord, ord], dimnames = list(labels, labels)),
+    vcov_model = structure(v_model[ord, ord], dimnames = list(labels, labels)),
     df = switch(errors,
-                design = length(unique(frame$psu)) - length(unique(frame$stratum)) - length(fit$coef) + 1,
-                woman = length(women) - 1,
+                design = survey::degf(design) + 1 - length(coefs),
+                woman = survey::degf(design),
                 model = Inf),
-    n = nrow(frame), n_unions = length(women), n_marriages = sum(frame$y == "marriage"),
-    n_psu = length(unique(frame$psu)), n_strata = length(unique(frame$stratum))
+    n = nrow(frame), n_unions = dplyr::n_distinct(frame$woman), n_marriages = sum(frame$marry),
+    n_psu = dplyr::n_distinct(frame$psu), n_strata = dplyr::n_distinct(frame$stratum),
+    fit = fit
   )
 }
 
@@ -305,7 +273,7 @@ fit_spec <- function(unions, cohorts = "paper", horizon = "five_years", adjust =
   stat <- b / se
   se_model <- sqrt(m$vcov_model["marriage:later", "marriage:later"])
   z_model <- b / se_model
-  data.frame(
+  data.frame(  # r-style: keep – a data frame prints every digit that the tasks quote
     cohorts = cohorts, horizon = horizon, adjust = adjust, weights = weights, time = time, model = model,
     comparison = comparison, education = education, short = short, errors = errors,
     b = b, se = se, stat_type = if (is.finite(m$df)) "t" else "z", stat = stat, df = m$df,
@@ -317,16 +285,18 @@ fit_spec <- function(unions, cohorts = "paper", horizon = "five_years", adjust =
   )
 }
 
-# The conversion rules of Multi100 (standard_correlation_coefficient.R): t with
-# its df; z with the sample size standing in for the missing df; F with one
-# numerator df read as the square of a t; a chi-square read as the square of a
-# z, so it carries no sign.
+# The conversion rules of Multi100 (standard_correlation_coefficient.R in
+# github.com/marton-balazs-kovacs/multi100): t with its df, which is the rule of
+# effectsize::t_to_r(); z with the sample size standing in for the missing df;
+# F with one numerator df read as the square of a t, the rule of
+# effectsize::F_to_r(); a chi-square read as the square of a z, so it carries
+# no sign.
 r_multi100 <- function(stat, stat_type, df, n) {
   stat_type <- rep_len(stat_type, length(stat))
   dplyr::case_when(
-    stat_type == "t" ~ stat / sqrt(stat^2 + df),
+    stat_type == "t" ~ effectsize::t_to_r(stat, df, ci = NULL)$r,
     stat_type == "z" ~ tanh(abs(stat) * sqrt(1 / (n - 3))) * sign(stat),
-    stat_type == "F" ~ sqrt(abs(stat) / (abs(stat) + df)),
+    stat_type == "F" ~ effectsize::F_to_r(abs(stat), 1, df, ci = NULL)$r,
     stat_type == "chi2" ~ tanh(sqrt(abs(stat)) * sqrt(1 / (n - 3)))
   )
 }
