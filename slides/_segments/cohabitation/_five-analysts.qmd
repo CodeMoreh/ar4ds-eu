@@ -1,0 +1,46 @@
+## The five analysts {#the-five-analysts .smaller}
+
+```{r}
+#| label: cohab-five-table
+#| output: asis
+# The five reanalyses as a Markdown table, from data/analysts5.csv: what each
+# compared, the statistic that Multi100 recorded and the conclusion of Task 1.
+upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
+five_rows <- analysts |>
+  mutate(line = paste0("| ", id, " | ", upper_first(gsub("-", "–", comparison)), " | ", upper_first(unit),
+                       " | ", upper_first(outcome_model), " | ", recorded_txt(statistic_type, statistic_recorded),
+                       " | ", task1, " |")) |>
+  pull(line)
+cat(c("::: {.fs-55}", # r-style: keep – writes the Markdown of the table
+      "| Analyst | Surveys | Unit | Model | Recorded | Task 1 |",
+      "|:--|:--|:--|:--|--:|:--|",
+      five_rows, ":::"), sep = "\n")
+```
+
+::: {.fragment .small}
+Three ways of comparing the surveys, three units of analysis, four kinds of model and three kinds of recorded statistic. Only one analysis, 456AP, has a coefficient on the scale of the claim: `r fmt_num(an("456AP", "estimate_refit"), 3)`, on other surveys than the paper.
+:::
+
+::: notes
+Here are the five Multi100 analysts of this claim, by the codes that Multi100 gave them. Read across the rows. They compared different surveys: two took all five waves of the survey and asked for a trend, two compared 1995 with 2006 to 2010 as the paper did, and one compared 2002 with the latest wave. They used different units: one row per woman, or one row per month. They fitted different models and reported different statistics: an F, two z statistics, a chi-square, and one analyst whose report gave an odds ratio that Multi100 did not record. [advance] So only one of the five, 456AP, produced a coefficient on the scale of the published minus nought point six eight three, and it compares other surveys. Five analysts, five rather different analyses. But there is something stranger in the last column.
+:::
+
+## Three conclusions from one file {#three-conclusions-from-one-file .smaller}
+
+:::: {.none}
+::: {.fragment}
+All five received **the same file**, which SCORE had built from five surveys of the NSFG for its replication of the paper, and which Multi100 linked as the original materials.
+:::
+
+::: {.fragment}
+Task 1 of Multi100: **two** found evidence for the claim (73FDT, 456AP), **one** evidence neither way (JDA15), **two** evidence for the opposite (N8ZYW, 5X3KG).
+:::
+
+::: {.fragment .claimcard}
+"Cohabitors have increasingly become more likely to progress to marriage." <span class="src">N8ZYW, Task 1 of Multi100</span>
+:::
+::::
+
+::: notes
+Now the last column. [advance] All five analysts worked from the same file. SCORE had built it from five waves of the survey for its own replication of the paper, and Multi100 handed it to every analyst as the original materials. [advance] On that one file, two analysts found evidence for the claim, one found evidence neither way, and two found evidence for the opposite. [advance] And this is how one of them put it, in the conclusion of Task 1: cohabitors have increasingly become more likely to progress to marriage. The exact opposite of the claim, from the same data. Different questions can produce different numbers, and the next hour is about that. But a reversal of direction on one file is unusual. Hold the question of why. You will answer it yourselves, in Task 3.
+:::

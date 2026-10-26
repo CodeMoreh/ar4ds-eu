@@ -1,0 +1,94 @@
+## The file and the rebuild {#the-file-and-the-rebuild}
+
+```{r}
+#| label: cohab-score-file
+#| fig-width: 10.5
+#| fig-height: 4.3
+# The unions of each survey in the file that Multi100 gave the analysts and in
+# the course rebuild, stacked by their outcome at the interview
+# (data/display_score_file.csv); each rebuilt survey takes the unions begun
+# in the five years before the interview, and 2006-2010 those from 2005.
+survey_labels <- c(`1995` = "1995", `2002` = "2002", `2006-10` = "2006–2010", `2011-13` = "2011–2013",
+                   `2013-15` = "2013–2015")
+file_long <- score_file |>
+  mutate(source = if_else(source == "SCORE file", "file", "rebuild"),
+         survey = factor(survey_labels[cycle], levels = survey_labels)) |>
+  tidyr::pivot_longer(c(marriages, separations, intact), names_to = "outcome", values_to = "n") |>
+  mutate(outcome = factor(c(marriages = "marriage", separations = "separation", intact = "intact")[outcome],
+                          levels = c("intact", "separation", "marriage")))
+# the count of marriages inside its segment, or just above a segment too thin
+# to hold it
+file_marriages <- filter(file_long, outcome == "marriage") |>
+  mutate(thin = n < 60, y = if_else(thin, n + 30, n / 2))
+ggplot(file_long, aes(source, n, fill = outcome)) +
+  geom_col(width = 0.72) +
+  geom_text(data = file_marriages, aes(y = y, label = fmt_n(n), colour = thin), size = 4.6,
+            fontface = "bold", show.legend = FALSE) +
+  scale_colour_manual(values = c(`TRUE` = ink, `FALSE` = "white"), guide = "none") +
+  geom_text(data = distinct(file_long, survey, source, unions),
+            aes(source, unions, label = fmt_n(unions)), inherit.aes = FALSE, vjust = -0.4, size = 4.4,
+            colour = ink) +
+  facet_wrap(~survey, nrow = 1) +
+  scale_fill_manual(values = outcome_cols, breaks = c("marriage", "separation", "intact"),
+                    labels = c("became a marriage", "separated", "intact at the interview"), name = NULL) +
+  scale_y_continuous(labels = fmt_n, expand = expansion(mult = c(0, 0.1))) +
+  labs(x = NULL, y = "unions") +
+  theme_slide(15) +
+  theme(legend.position = "top", legend.justification = "left",
+        strip.text = element_text(face = "bold", colour = ncl_blue, size = 15),
+        panel.grid.major.x = element_blank())
+```
+
+::: {.small}
+In 1995 the file holds **`r sf("SCORE file", "1995", "unions")` unions: `r sf("SCORE file", "1995", "intact")` intact, `r sf("SCORE file", "1995", "marriages")` marriages and `r sf("SCORE file", "1995", "separations")` separations**, where the paper and the rebuild hold 929: 242, 340 and 347. In every other survey the file and the rebuild are close.
+:::
+
+::: notes
+Go. [read out the counts in chat] Three hundred and seventy-six unions of 1995, and four marriages. Here is the whole file beside the rebuild of the course, survey by survey: on the left of each pair the file that the analysts received, on the right the unions rebuilt from the survey, with marriages in blue. In 2002, in 2006 to 2010 and in the two later surveys, the two agree closely, and in 2006 to 2010 the file holds the eleven hundred and forty-two unions of the paper and eight more. In 1995 they do not. The file holds fewer than half of the unions, and almost every one of them ended in a separation. Three hundred and forty marriages of the paper are four in the file. That is why every comparison of 1995 with a later survey, on this file, finds that marriage became more common.
+:::
+
+## The 1995 rows of the file {#the-1995-rows-of-the-file .smaller}
+
+::: {.small}
+- From 2002 the NSFG releases a recode, COH1DUR, with the length of the first cohabitation. The 1995 file has none, so the length has to be built from the dates of the history of each woman
+- The data dictionary of the SCORE replication builds it as **"STOPOTH0 - STRTOTH0"**: the month in which the woman stopped living with her first former partner, minus the month in which she began to
+- That date exists only for a partner with whom she **no longer lived**. The rule is right for every union that dissolved, and gives no length to a union that became a marriage or was still intact
+- Of the 929 unions of the paper, the file holds **`r kept("separation")` of the 347 separations, `r kept("marriage")` of the 340 marriages and `r kept("intact")` of the 242 intact unions**
+:::
+
+::: {.fragment .claimcard}
+"the data for 1995 in the OSF dataset seemed faulty, since there were only 4 marriages on record (in the paper 340 marriages were listed for 1995). I thus decided to exclude the 1995 data from the analysis." <span class="src">456AP, Task 1 of Multi100</span>
+:::
+
+::: notes
+How did it happen? From 2002 the survey releases a ready-made measure of how long the first cohabitation lasted. The 1995 file has none, so the length has to be built by hand from the dates in the history of each woman. The team that built the file used the month in which the woman stopped living with her first former partner, minus the month in which she began. That is a sensible rule, and it is exactly right for every union that dissolved. But a stop date exists only for a partner with whom she no longer lived, so a union that became a marriage, or was still going, gets no length and drops out. Three hundred and forty-six of the separations survive, two of the marriages, three of the intact unions. [advance] One analyst, 456AP, counted first, found the gap, and left 1995 out.
+:::
+
+## The five analyses on a repaired file {#the-five-analyses-on-a-repaired-file .smaller}
+
+```{r}
+#| label: cohab-repaired-table
+#| output: asis
+# Each Multi100 analysis as recorded, refitted on the file of the analysts and
+# refitted with the 1995 rows of the file replaced by the 929 unions of the
+# rebuild, in the conventions of the file (data/analysts5.csv); the estimate
+# of each refit in brackets, negative in the direction of the claim.
+repaired_rows <- analysts |>
+  mutate(line = paste0("| ", id, " | ", recorded_txt(statistic_type, statistic_recorded),
+                       " | ", stat_txt(stat_type_refit, stat_refit), " (", fmt_signed(estimate_refit, 3), ")",
+                       " | ", stat_txt(stat_type_refit, stat_repaired), " (", fmt_signed(estimate_repaired, 3), ")",
+                       " | ", task1, " |")) |>
+  pull(line)
+cat(c("::: {.fs-65}", # r-style: keep – writes the Markdown of the table
+      "| Analyst | Recorded | The file of the analysts | The 1995 rows rebuilt | Task 1 |",
+      "|:--|--:|--:|--:|:--|",
+      repaired_rows, ":::"), sep = "\n")
+```
+
+::: {.fragment .small}
+Every recorded statistic reproduces from the file. With the 1995 rows rebuilt, **every analysis that uses them points the way of the claim**: the logit of N8ZYW from *z* = `r fmt_signed(an("N8ZYW", "stat_refit"), 2)` to `r fmt_num(an("N8ZYW", "stat_repaired"), 2)`, the test of 5X3KG from more marriage in the later rows to less. 456AP, which leaves out 1995, is unchanged.
+:::
+
+::: notes
+Here is what that one cohort did to the five analyses. The first column is what Multi100 recorded. The second is the course refit of each analysis on the file that the analysts received, and every recorded statistic comes back. The third column is the same analysis with only one change: the 1995 rows of the file replaced by the nine hundred and twenty-nine unions of the rebuild, written in the conventions of the file. The estimate is in brackets, and negative is the direction of the claim. [advance] N8ZYW moves from a z of plus five point seven to minus nine point seven. The test that you reproduced moves from more marriage in the later rows to less. JDA15 moves from nothing to a strong decline. The split that Multi100 recorded on this claim, two for, one neither, two against, goes back to one cohort of one file.
+:::

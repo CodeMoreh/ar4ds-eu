@@ -1,0 +1,79 @@
+## Hands-on 3 – Reproducing the recorded result {#hands-on-3-reproducing-the-recorded-result .smaller}
+
+::: {.small}
+**Task 3**, in your workspace or the browser lab: the file that Multi100 gave the analysts, and the code of 5X3KG.
+:::
+
+<!-- The code of the analyst, as submitted, so its base readers stay. -->
+<!-- r-style: skip -->
+```{.r}
+check_score_file()                            # the file in data/ is the one on the OSF
+
+data <- read.csv("data/score_person_months.csv", header = T)
+d <- data[, c("OUTCOME", "P95", "P10")]       # P95, P10: the rows of 1995 and 2006-2010
+marry95 <- sum(d[d$P95 == 1 & d$OUTCOME == 2, ]$P95)
+marry2010 <- sum(d[d$P10 == 1 & d$OUTCOME == 2, ]$P10)
+total95 <- sum(d$P95)
+total2010 <- sum(d$P10)
+prop.test(x = c(marry95, marry2010), n = c(total95, total2010), correct = T)
+```
+
+::: {.fragment .small}
+Target: **$\chi^2(1)$ = `r fmt_num(an("5X3KG", "statistic_recorded"), 3)`**, the value that Multi100 recorded for 5X3KG, on `r fmt_n(an("5X3KG", "n_recorded"))` rows. Type your $\chi^2$ in chat and hold it until I say "go".
+:::
+
+::: {.fragment .small}
+**Browser lab:** the same file and the same code, with the code of a marriage left blank for you to fill in.
+:::
+
+::: notes
+Now you work. Open your report at Task 3, or the working script. The first line checks that the file in the data folder is byte for byte the file that the analysts received, by comparing a short code computed from its contents with that of the copy on the OSF. The rest is the code of the analyst, as submitted, with only the name of the file changed. P95 and P10 mark the rows of the two surveys, and OUTCOME is two in the month of a marriage. Count the marriage rows and all the rows of each survey, and compare the two shares. When you have the chi-square, type it into chat, but do not send it: when I say go, everyone sends at once. [advance] In the browser lab the code of a marriage is left blank for you to fill in. [wait for the numbers in chat]
+:::
+
+## The shares behind the test {#the-shares-behind-the-test .smaller}
+
+::: {.fs-80}
+| Rows of the file | Rows | Record a marriage | Share |
+|:--|--:|--:|--:|
+| NSFG 1995 | `r fmt_n(sr(1, "rows"))` | `r sr(1, "married")` | `r fmt_pct(sr(1, "married") / sr(1, "rows"), 2)` |
+| NSFG 2006–2010 | `r fmt_n(sr(0, "rows"))` | `r sr(0, "married")` | `r fmt_pct(sr(0, "married") / sr(0, "rows"), 2)` |
+:::
+
+::: {.fragment .small}
+The reproduction is exact, and it says that marriage became about **`r round((sr(0, "married") / sr(0, "rows")) / (sr(1, "married") / sr(1, "rows")))` times more common** among the months of the later survey: the opposite of the claim. 5X3KG concluded exactly that.
+:::
+
+::: {.fragment .small}
+The paper reports **340 marriages** among its 929 unions of 1990–1995. How many unions, and how many marriages, does the file hold for 1995?
+:::
+
+::: notes
+Go. [read out the wall of numbers] Forty-seven point four seven four, from everyone, to the third decimal. That is a reproduction. Now look at what the test compares. In the rows of 1995, four record a marriage, out of more than five thousand. In the rows of 2006 to 2010, a hundred and ninety-five. [advance] So the test is right, the code is right, and the file says that marriage became about fourteen times more common, the opposite of the claim. The analyst concluded exactly that, and on this file the conclusion follows. [advance] But the paper reports three hundred and forty marriages among its unions of 1990 to 1995. I am not going to tell you what is going on. The next task is to find out.
+:::
+
+## Hands-on 3 – The unions of the file {#hands-on-3-the-unions-of-the-file .smaller}
+
+::: {.small}
+Each union of the file is a run of months, one row each, with its outcome in the **last** row. Keep the last row of every woman, and count:
+:::
+
+```{.r}
+score_unions <- data |>
+  filter(P95 == 1 | P10 == 1) |>
+  slice_max(MONTHNUM, n = 1, by = CASEID) |>                  # the last month of each union
+  mutate(survey = if_else(P95 == 1, "1995", "2006-2010"),
+         outcome = c("intact", "marriage", "separation")[OUTCOME])
+count(score_unions, survey, outcome)
+```
+
+::: {.fragment .small}
+**In chat:** the number of unions of 1995 in the file, and how many of them became a marriage. Hold – send on "go". Then set them beside the unions of the paper: `count(spec_unions(unions), cycle, outcome)`.
+:::
+
+::: {.fragment .small}
+If you finish early: which of the 929 unions of the paper does the file hold? Your report has the code, and the codebook of the file says how its 1995 rows were built.
+:::
+
+::: notes
+Here is how to look. The file holds one row per month, and each union ends with its outcome in its last row. So keep the last row of every woman, label the survey and the outcome, and count. That turns seventy thousand rows back into unions, the unit in which the paper reports its sample. [advance] When you have the counts for 1995, type into chat how many unions there are and how many became a marriage, hold, and send on go. Then count the unions of the paper in the rebuilt data, with spec underscore unions, and set the two side by side. [advance] If you are quick, go one step further: which of the nine hundred and twenty-nine unions of the paper are in the file at all? The code is in your report, and the codebook of the file is worth reading. [wait; go]
+:::

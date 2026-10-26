@@ -1,0 +1,140 @@
+<!-- DEEP DIVE START: methods tutorial (5 slides). Optional depth, on the
+     .deepdive class – see the note at the start of _rtutorial.qmd. -->
+
+## Person-period data {#person-period-data .smaller .deepdive run="methods"}
+
+::: {.skiplink}
+[Methods tutorial · 5 slides · skip to Hands-on 4 →](#hands-on-4-exploring-the-menu)
+:::
+
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| label: cohab-person-months
+#| output: asis
+# One union of 1995 that became a marriage in its third month, as
+# person_months() of the workspace turns it into rows
+one_union <- paper_unions |>
+  filter(cycle == "1995", outcome == "marriage", duration == 2) |>
+  slice(1)
+one_rows <- tibble(month = seq_len(one_union$duration + 1)) |>
+  mutate(y = if_else(month == max(month), "marriage", "intact"),
+         line = paste0("| ", month, " | ", y, " |"))
+cat(c("::: {.fs-75}", # r-style: keep – writes the Markdown of the table
+      "| Month | Outcome in the month |",
+      "|--:|:--|",
+      one_rows$line, ":::"), sep = "\n")
+```
+:::
+::: {.column width="55%"}
+::: {.small}
+- Each union becomes **one row for every month in which it could end**, from the month in which the couple moved in to the marriage, the separation or the interview
+- A union still intact at the interview is **censored**: its rows all read intact, and it stops contributing when the observation stops
+- The `r fmt_n(nrow(paper_unions))` unions of the paper give **`r fmt_n(n_person_months)` person-months**, `r fmt_n(n_pm_marriages)` of them ending in a marriage
+- The paper reports 54,291 person-months, which no construction that the course tried reproduces
+:::
+:::
+::::
+
+::: notes
+The methods tutorial starts with the data structure that makes event-history analysis possible. Here is one union of 1995 that became a marriage in its third month, as three rows: intact, intact, marriage. A union that separated would end in a separation row, and a union still going at the interview would end in an intact row, because its outcome is not yet known. That last case is censoring, and person-month data handle it without throwing anything away: a censored union tells us that it did not end in each month in which it was observed, and no more. The two cohorts of the paper make about thirty-three thousand such rows. The paper reports fifty-four thousand for the same unions, and the course has not found the construction that gives that count, although the coefficients come back.
+:::
+
+## The monthly chance of marrying {#the-monthly-chance-of-marrying .deepdive run="methods"}
+
+```{r}
+#| label: cohab-hazard
+#| fig-width: 9.5
+#| fig-height: 3.7
+# The weighted monthly chance of marrying among the unions still intact at the
+# start of a month, averaged over the first year, the second year and the
+# third to fifth years of the union, which are pooled because they hold few
+# marriages (data/display_lifetable.csv: the monthly shares weighted by the
+# weighted number at risk).
+span_labels <- c("first year", "second year", "third to fifth year")
+hazard_span <- lifetable |>
+  filter(group_type == "all") |>
+  mutate(span = factor(span_labels[pmin(ceiling(month / 12), 3)], levels = span_labels)) |>
+  summarise(h = sum(h_marriage * w_at_risk) / sum(w_at_risk), marriages = sum(marriages),
+            .by = c(cohort, span))
+ggplot(hazard_span, aes(span, h, fill = cohort)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.75) +
+  geom_text(aes(label = paste0(fmt_pct(h, 1), " (", marriages, ")")),
+            position = position_dodge(width = 0.8), vjust = -0.4, size = 4.4, colour = ink) +
+  scale_fill_manual(values = cohort_cols, labels = cohort_labels, name = NULL) +
+  scale_y_continuous(labels = \(x) fmt_pct(x, 0), expand = expansion(mult = c(0, 0.15))) +
+  labs(x = "time since the couple moved in", y = "monthly chance\nof marrying") +
+  theme_slide(15) +
+  theme(legend.position = "top", legend.justification = "left",
+        panel.grid.major.x = element_blank())
+```
+
+::: {.small}
+The share of the unions still intact at the start of a month that married in it: the **hazard**, or transition rate, with the number of marriages in brackets. It changes with the time since the start, which is why every model of the menu holds that time constant, as a straight line in the months or as one step per year.
+:::
+
+::: notes
+Every model of the menu works with the monthly chance of marrying: of the unions still together and unmarried at the start of a month, the share that married in it. Demographers call it the hazard, or the transition rate. Here it is averaged over the first year, the second, and the third to fifth together, because few unions last that long; the brackets give the marriages. In each period the chance in the later cohort is lower, often by half, and in both cohorts it changes with the time that the couple have lived together. That is why every specification holds the time since the start constant, either as a straight line in the months, as the paper does, or as a separate step for each year of the union. On the curve the two make almost no difference, an average shift of less than a thousandth.
+:::
+
+## Three discrete-time models {#three-discrete-time-models .smaller .deepdive run="methods"}
+
+::: {.small}
+- **Logit** of marrying in the month: a separation ends the union, and its months count as months without a marriage
+- **Complementary log-log** of the same rows: the version of the proportional hazards model for time measured in whole months
+- **Multinomial logit** of marrying or separating, against staying together: the model of the paper, which treats separation as a **competing risk**
+:::
+
+::: {.fragment .fs-80}
+| Against the multinomial logit, on twin specifications | Mean shift | Range |
+|:--|--:|--:|
+| Logit | `r fmt_signed(dev_of("model", "logit", "shift_mean"), 4)` | `r fmt_signed(dev_of("model", "logit", "shift_min"), 4)` to `r fmt_signed(dev_of("model", "logit", "shift_max"), 4)` |
+| Complementary log-log | `r fmt_signed(dev_of("model", "cloglog", "shift_mean"), 4)` | `r fmt_signed(dev_of("model", "cloglog", "shift_min"), 4)` to `r fmt_signed(dev_of("model", "cloglog", "shift_max"), 4)` |
+
+With monthly chances of one or two per cent, the three nearly coincide [@Allison1982DiscreteTimeMethodsEvent].
+:::
+
+::: notes
+Three models of the same rows sit on the curve. A logit asks, in each month, did the couple marry or not; a separation ends the union and its months count as months without a marriage. A complementary log-log model asks the same question with a different link, and its coefficient is the discrete-time version of a proportional hazards model, the log of a ratio of monthly rates. The multinomial logit of the paper asks about three outcomes at once, marrying, separating or staying together, so that separation is treated as what demographers call a competing risk. [advance] On these data the three give almost the same coefficient. With events this rare, odds, rates and relative risks are nearly the same thing, which Allison set out for sociologists in 1982.
+:::
+
+## The time since the start {#the-time-since-the-start .smaller .deepdive run="methods"}
+
+::: {.small}
+- **Months as a straight line**, the "duration of union" that the paper holds constant
+- **One step per year** of the union, five baselines with the first year as reference
+- **No term at all**, which assumes that the chance of marrying is the same in every month: off the curve as a weaker answer
+:::
+
+::: {.fragment .fs-80}
+| At the reference settings | Coefficient |
+|:--|--:|
+| Months as a straight line (the reference) | `r fmt_num(curve_ref$b, 4)` |
+| No term for the time since the start | `r fmt_num(opt("time", "none", "b"), 4)` |
+
+One step per year against a straight line, on twin specifications: `r fmt_signed(dev_of("time", "yearly", "shift_mean"), 4)` on average.
+:::
+
+::: notes
+Every model needs some way of letting the monthly chance change as a union goes on, because, as the bars showed, it does. The paper holds constant the duration of the union, and the course reads that as the months since the start, entered as a straight line. The alternative on the curve gives each year of the union its own baseline, which makes no assumption about the shape. Leaving the time out altogether assumes that the chance is the same in the first month and the fiftieth, which is hard to defend, so it stays off the curve as a weaker answer. [advance] On these data none of it matters: the three agree to the third decimal. That is a finding too. A decision that a methods section would argue over at length can be one that moves nothing.
+:::
+
+## Effect sizes on one scale {#effect-sizes-on-one-scale .smaller .deepdive run="methods"}
+
+::: {.fs-80}
+| The reference specification as | Value |
+|:--|--:|
+| The coefficient of the later cohort (the curve) | `r fmt_num(curve_ref$b, 3)` |
+| A ratio of monthly chances, exp(*b*) | `r fmt_num(curve_ref$ratio, 2)` |
+| Partial *r* by the rule of Multi100, from the conventional *z* and `r fmt_n(curve_ref$n)` person-months | `r fmt_num(curve_ref$r, 3)` |
+:::
+
+::: {.fragment .small}
+The published result converts to *r* = `r fmt_num(mark_of("OA", "r"), 3)`. The recorded *r* of the five analysts run from `r fmt_num(min(analysts$r_recorded, na.rm = TRUE), 3)` to `r fmt_num(max(analysts$r_recorded, na.rm = TRUE), 3)`: the 0.900 of 73FDT comes from a regression on five points, and the `r fmt_num(an("5X3KG", "r_recorded"), 3)` of 5X3KG carries no sign, because a $\chi^2$ has none.
+:::
+
+::: notes
+The last slide of the tutorial is about the scale on which a result is reported. The course reports the coefficient of the later cohort on the log scale, the scale of the minus nought point six eight three of the paper. Its exponent is a ratio of monthly chances, nought point four eight: half the rate. And Multi100 converted every analysis into a partial correlation, using the number of rows in place of degrees of freedom. [advance] For any analysis of person-months that correlation is close to zero, because nearly every month records no event, and the published result becomes minus nought point nought two. The analysts range from minus nought point nought three to nought point nine. The nought point nine comes from a regression on five survey coefficients, and the chi-square of 5X3KG converts to a positive number, although it pointed against the claim.
+:::
+
+<!-- DEEP DIVE END -->

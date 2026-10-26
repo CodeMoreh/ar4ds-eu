@@ -1,0 +1,131 @@
+## The SCORE replication {#the-score-replication .smaller}
+
+::: {.fs-75}
+| Analysis of SCORE, on its own file, unweighted | Surveys | Some college × period | *z* | *p* |
+|:--|:--|--:|--:|--:|
+| The "reproduction dataset" | 2002 and 2006–2010 | `r fmt_num(mark_of("SCORE_reproduction", "b"), 3)` | `r fmt_num(mark_of("SCORE_reproduction", "stat"), 2)` | `r fmt_num(mark_of("SCORE_reproduction", "p"), 4)` |
+| The "replication dataset" | 2002 and 2011–2015 | `r fmt_num(mark_of("SCORE_replication", "b"), 3)` | `r fmt_num(mark_of("SCORE_replication", "stat"), 2)` | `r fmt_num(mark_of("SCORE_replication", "p"), 3)` |
+:::
+
+::: {.fragment .small}
+- The criterion: "The coefficient SOMECOLLEGE_PERIOD is negative", with "p value is less than 0.05, two tailed". The verdict: "The claim was not replicated in the 'replication dataset'."
+- SCORE tested the **interaction of some college and period** of Model 1, the coefficient that the Multi100 instruction excluded, with the total length of the union as a control
+- The report prints p = 0.02484 for the "reproduction dataset"; its own script gives `r fmt_num(mark_of("SCORE_reproduction", "p"), 4)`
+:::
+
+::: {.src}
+osf.io/u8x9s, the report and the script of the replication; cases/cohabitation/data/reference_marks.csv, the course refit of the script.
+:::
+
+::: notes
+SCORE commissioned a replication of this paper on later waves of the same survey, and its team built the person-month file that the analysts later received. Its script fits Model 1 of the paper, without weights, on its own file. What its report calls the reproduction dataset compares 2002 with 2006 to 2010, rather than 1995, and what it calls the replication dataset compares 2002 with the waves of 2011 to 2015. [advance] The coefficient it tested is the interaction of some college and period, the one that the Multi100 instruction told the analysts to leave out. On the new waves it came out at about half its published size, with a p of nought point one one: not replicated. The report also prints a p-value ten times larger than its own script gives, a slip of the kind that only a public script lets anyone find.
+:::
+
+## The claim on later surveys {#the-claim-on-later-surveys}
+
+```{r}
+#| label: cohab-later-surveys
+#| fig-width: 10
+#| fig-height: 3.8
+# The reference specification fitted to other pairs of NSFG surveys, rebuilt
+# like the cohorts of the paper, with 95% intervals from design-based errors
+# (t on the df of each fit; data/display_options.csv and data/spec_curve.csv).
+pair_labels <- c(`1995_2006` = "1995 and 2006–2010 (the paper)", `2002_2006` = "2002 and 2006–2010",
+                 `2006_2011` = "2006–2010 and 2011–2015", `2002_2011` = "2002 and 2011–2015",
+                 `1995_2011` = "1995 and 2011–2015")
+pairs <- bind_rows(
+  mutate(curve_ref, option = "1995_2006"),
+  filter(options_d, changed == "comparison")
+) |>
+  mutate(lo = b - qt(0.975, df) * se, hi = b + qt(0.975, df) * se,
+         lab = factor(pair_labels[option], levels = rev(pair_labels)),
+         paper = option == "1995_2006",
+         note = if_else(p < 0.001, "p < 0.001", paste("p =", fmt_num(p, 3))))
+ggplot(pairs, aes(b, lab, colour = paper)) +
+  geom_vline(xintercept = 0, colour = grey_mid) +
+  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.6) +
+  geom_point(size = 4.2) +
+  geom_text(aes(x = 0.06, label = paste0(fmt_num(b, 3), ", ", note)), hjust = 0, size = 4.8,
+            colour = "grey30") +
+  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  scale_x_continuous(labels = log_lab, breaks = seq(-1.2, 0, 0.2)) +
+  coord_cartesian(xlim = c(-1.25, 0.55)) +
+  labs(x = "coefficient of the later cohort (log scale), with 95% intervals", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+```
+
+::: {.small}
+The period coefficient of the claim, at the reference settings, on new cohorts rebuilt by the course: a decline wherever the surveys lie a decade or more apart, smaller and not significant at 5% between surveys closer in time.
+:::
+
+::: notes
+The claim that Multi100 gave the analysts is about a different number, the change between cohorts, and that number can be put to new data as well. The course rebuilt the unions of every later wave in the same way, and fitted the reference specification to other pairs of surveys. The burgundy row is the paper. Between the unions of the 2002 survey and those of 2011 to 2015, the decline is minus nought point four five, clearly below zero, on cohorts that the paper never used. Between 1995 and 2011 to 2015 it is close to minus one. Between surveys only a few years apart it is smaller and not significant. So the change of the claim replicates on new cohorts a decade or more apart, while the interaction that SCORE tested did not.
+:::
+
+## The three Rs on this paper {#the-three-rs-on-this-paper}
+
+```{r}
+#| label: cohab-scoreboard
+#| fig-width: 10.5
+#| fig-height: 4.6
+# The record of the cohabitation case as a three-row scoreboard, one row per R;
+# the details come from _planning/cohabitation/cohabitation-facts.md and from
+# the curve and record files.
+sb <- tribble(
+  ~ord, ~R,              ~verdict,                    ~detail,                                                                                                                                                                                                                                 ~fill,
+  3,    "Reproducible?", "NONE RECORDED BY SCORE",    sprintf("no data or code from the OAs; the course rebuilt the\nunions and refits Model 2 at %s against −0.683;\nthe class reproduced 5X3KG exactly, from a faulty file", fmt_num(mark_of("OA_refit", "b"), 3)),                                       orange,
+  2,    "Robust?",       "ALL %d SPECIFICATIONS AGREE", sprintf("all negative and significant, %s to %s;\nthe five analysts split two, one and two,\nbecause of one cohort of one file", fmt_num(min(curve$b), 3), fmt_num(max(curve$b), 3)),                                                     green,
+  1,    "Replicable?",   "DEPENDS ON THE COEFFICIENT", sprintf("SCORE, some college × period: %s (p = %s), not replicated;\nthe course, the period: %s on 2002 and 2011–2015", fmt_num(mark_of("SCORE_replication", "b"), 3), fmt_num(mark_of("SCORE_replication", "p"), 2), fmt_num(mark_of("course_2002_2011", "b"), 3)), orange
+) |>
+  mutate(verdict = if_else(R == "Robust?", sprintf(verdict, nrow(curve)), verdict))
+
+ggplot(sb, aes(x = 1, y = ord)) +
+  geom_tile(aes(x = 1.2, fill = fill), width = 1.34, height = 0.92, alpha = 0.14) +
+  geom_segment(aes(x = 0.538, xend = 0.538, y = ord - 0.46, yend = ord + 0.46, colour = fill),
+               linewidth = 6) +
+  scale_fill_identity() +
+  scale_colour_identity() +
+  geom_text(aes(label = R), x = 0.60, hjust = 0, vjust = 0.5, fontface = "bold",
+            colour = ncl_blue, size = 8) +
+  geom_text(aes(label = verdict, colour = fill, y = ord - 0.26), x = 0.60, hjust = 0, vjust = 0.5,
+            fontface = "bold", size = 4.4) +
+  geom_text(aes(label = detail), x = 1.08, hjust = 0, vjust = 0.5, colour = "grey35", size = 4.3,
+            lineheight = 0.95) +
+  scale_x_continuous(limits = c(0.5, 1.9)) +
+  scale_y_continuous(limits = c(0.4, 3.6)) +
+  labs(x = NULL, y = NULL) +
+  theme_void()
+```
+
+::: {.src}
+The SCORE project of the paper: [osf.io/kv38j](https://osf.io/kv38j/)
+:::
+
+::: notes
+Put the whole dossier together. Reproducibility: the OAs shared no data or code, and SCORE recorded no reproduction. The course rebuilt the unions from the survey and gets the published coefficient back to the third decimal, and this afternoon you reproduced an analyst exactly, from a file that was wrong about 1995. Robustness, on correctly built data, holds in the strongest sense that a curve can offer: every specification agrees on the direction, and every one is significant. The five analysts split, but the split came from the file, not from their choices. Replication depends on which number you mean. The interaction that SCORE tested came back at half its size and not significant; the change of the claim came back on later surveys. A single verdict of "not replicated" would hide both of those facts.
+:::
+
+## What the repetitions found {#what-the-repetitions-found .smaller}
+
+:::: {.none .fs-85}
+::: {.fragment}
+An exact reproduction returned a result **against** the claim, from a file whose 1995 cohort had lost almost every marriage.
+:::
+
+::: {.fragment}
+The robustness study recorded a split that came from **that file**, not from the choices of the analysts.
+:::
+
+::: {.fragment}
+The replication tested a **different coefficient** from the one that the analysts were given.
+:::
+
+::: {.fragment}
+Each of these could be found because the survey, the file, its data dictionary and every script were **public**, so that people outside the project could check what careful people had built.
+:::
+::::
+
+::: notes
+This is the lesson of the case. [advance] An exact reproduction gave a result against the claim, because the file behind it had lost almost every marriage of 1995. [advance] The many-analysts study recorded a disagreement that came from that one file, not from five different ways of thinking about the question. [advance] And the replication tested a different number from the one that the analysts were given, so its verdict and theirs are about different things. [advance] None of this is a story about carelessness. The file was built by careful people, with a rule that is right for most unions, and anyone can make the same slip. What made every one of these things findable, years later, by people who were not involved, is that the survey, the file, its dictionary and every script were public.
+:::

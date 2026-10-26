@@ -12,8 +12,12 @@
 td <- \(f) file.path("../cases/trust/data", f)
 rd <- \(f) read_csv(td(f), show_col_types = FALSE)
 
-# The addresses of the case, which the shared segments print
-case_vars <- yaml::read_yaml("../_variables.yml")$cases$trust
+# The addresses of the case, which the shared segments print. The record of
+# Multi100 lists a source-data reproduction for this paper, so it is not one
+# of the nine papers whose reproduction was never attempted, and the SCORE
+# slide of Part 1 must not say that it is.
+case_vars <- yaml::read_yaml("../_variables.yml")$cases$trust |>
+  c(list(`multi100-repro-never-attempted` = FALSE))
 
 # The extract, and the respondents of the paper: citizens who do not belong to
 # an ethnic minority. Concern is the mean of the three items, for respondents

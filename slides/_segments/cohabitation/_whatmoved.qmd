@@ -1,0 +1,69 @@
+## What moved the estimate {#what-moved-the-estimate}
+
+```{r}
+#| label: cohab-shifts-chart
+#| fig-width: 10
+#| fig-height: 4
+# Each option on the curve against its twins that take the first option of
+# the same decision (data/menu_deviations.csv): the mean shift of the
+# estimate, with the smallest and largest shift as a bar. The cohort window is
+# drawn in burgundy. A positive shift moves the estimate towards zero.
+option_labels <- select(menu_opts, axis, option, decision, label)
+shift_rows <- deviations |>
+  filter(option != baseline) |>
+  left_join(option_labels, by = c("axis", "option")) |>
+  mutate(lab = reorder(paste0(decision, ": ", label), shift_mean),
+         big = axis == "cohorts")
+ggplot(shift_rows, aes(shift_mean, lab, colour = big)) +
+  geom_vline(xintercept = 0, colour = grey_mid) +
+  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 3, alpha = 0.35) +
+  geom_point(size = 4.2) +
+  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  scale_x_continuous(labels = \(x) paste0(if_else(x > 0, "+", ""), fmt_num(x, 2))) +
+  labs(x = "shift against the twin (log scale; positive is towards zero)", y = NULL) +
+  theme_slide(15) +
+  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.fs-80}
+The same window in both surveys moves the estimate by **`r fmt_signed(dev_of("cohorts", "five_years", "shift_mean"), 3)`** on average, leaving out the weights by **`r fmt_signed(dev_of("weights", "unweighted", "shift_mean"), 3)`**, age, race-ethnicity and education by `r fmt_signed(dev_of("adjust", "composition", "shift_mean"), 3)`. `r if (all(deviations$flips == 0)) "No option changes a test result." else "Some options change a test result."`
+:::
+
+::: notes
+Which decisions did the work? This chart sets every option on the curve beside its twins, the specifications that are identical except for that one decision, and shows how far the estimate moves: the dot is the average shift, the bar runs from the smallest to the largest. Positive means towards zero. One decision stands apart, in burgundy: the cohort window. Taking the same five-year rule in both surveys brings in unions of 2001 to 2004, and the decline shrinks by about nought point one on the log scale. Leaving out the weights makes it about five hundredths larger, and holding age, race-ethnicity and education constant makes it three hundredths smaller, the change in who cohabits from Part 2. The time frame, the time term and the model move it by almost nothing. And not one option changes whether a specification is significant.
+:::
+
+## The cohort window on the curve {#the-cohort-window-on-the-curve}
+
+```{r}
+#| label: cohab-curve-window
+#| fig-width: 9.5
+#| fig-height: 4
+# The curve of 144 coloured by the cohort window.
+curve_base("cohorts")
+```
+
+::: {.fs-80}
+With the window of the paper the estimates run from **`r fmt_num(bw("paper", "lo"), 3)`** to **`r fmt_num(bw("paper", "hi"), 3)`**, with the same window in both surveys from **`r fmt_num(bw("five_years", "lo"), 3)`** to **`r fmt_num(bw("five_years", "hi"), 3)`**. The window carries `r fmt_pct(var_share[["cohorts"]], 0)` of the variance of the `r nrow(curve)` estimates, the weights `r fmt_pct(var_share[["weights"]], 0)`.
+:::
+
+::: notes
+Colour the curve by the cohort window and its structure explains itself. The specifications that take the windows of the paper fill the left of the curve, the larger declines, and the specifications that take the same five-year rule in both surveys fill the right. Split the variance of the hundred and forty-four estimates by decision, and the window carries more than seven tenths of it, the weights most of the rest. These two blocks are not two noisy estimates of one quantity. They compare different cohorts. The window of the paper makes the later cohort as recent as the survey allows; the symmetric rule selects both cohorts in the same way, at the price of a later cohort that reaches back to 2001 and so stands closer in time to the earlier one. Which you prefer depends on what you take the claim to compare.
+:::
+
+## What the curve leaves out {#what-the-curve-leaves-out .smaller}
+
+::: {.small}
+- **The dependence.** All `r nrow(curve)` specifications use the same unions, so they share their sampling noise: `r nrow(curve)` of `r nrow(curve)` significant **describes** the curve, and is not `r nrow(curve)` independent confirmations
+- **The data-building choices.** Every specification uses the unions rebuilt by the course. The decision that reversed the Multi100 results, the union histories, sits upstream of the curve, and a curve drawn on the file of the analysts would look just as tidy
+- **The options off the curve**, and the specifications that nobody ran
+- **The explanation.** The curve measures a change between two populations of unions; it cannot say whether ideas or resources produced it
+:::
+
+::: {.fragment .small}
+A curve is a **map of the menu you wrote**, and it cannot show whether that menu was the right one.
+:::
+
+::: notes
+Four things are missing from the curve, and a chart as tidy as ours makes them easy to forget. First, the dependence: all hundred and forty-four use the same unions, so if sampling luck favoured the claim, it favoured every specification at once. Second, everything upstream of the data. Every specification uses the rebuilt unions, and the one decision that reversed the results of Multi100 lies before any of them. A curve drawn on the file of the analysts would have looked just as tidy, and every one of its specifications that used 1995 would have been wrong. Third, the options left off on purpose, and analyses that nobody wrote down. And fourth, the explanation: the paper wanted to tell ideas from resources, and no specification of this claim can. [advance] A curve is a map of the menu you wrote, and it cannot show whether the menu was right.
+:::

@@ -1,0 +1,55 @@
+## Task 2 of Multi100 {#task-2-of-multi100 .smaller}
+
+::: {.claimcard}
+"cohabitors have increasingly become less likely to progress to marriage"
+:::
+
+::: {.claimcard}
+"You should not include interactions between education and period in your analysis."
+:::
+
+::: {.small}
+The instruction for this claim, beside the request for a single main result from the family of *z*, *t*, *F* or $\chi^2$ tests. It removes the interactions that carry the main finding of the paper, so that every analysis estimates one change between the periods.
+:::
+
+::: {.src}
+The Multi100 record of the claim; @AczelEtAl2026InvestigatingAnalyticalRobustness.
+:::
+
+::: notes
+Here, word for word, is what the five Multi100 analysts of this claim were given for the second task: the claim as SCORE selected it, and an instruction of one sentence. Do not include interactions between education and period. That removes Model 1 of the paper, the model of its main finding, so that every analysis estimates a single change between the periods rather than a change for each educational group. That is the whole brief, together with the request that every analyst report one main result as a test statistic. Notice what the instruction does not mention. It says nothing about the other interaction of the paper, race-ethnicity by period, which is in Model 2, the model from which the recorded coefficient comes. Everything else was left to the analysts.
+:::
+
+## What the instruction left open {#what-the-instruction-left-open .smaller}
+
+::: {.small}
+- **The surveys** – 1995 against 2006–2010, as the paper, or any of the five surveys in the file
+- **The unit** – one row per month in which a union could end, or one row per union with its final outcome
+- **The model and the time since the start** – a multinomial logit, a logit or a test of two shares; a term for the months since the start of the union, or none
+- **The controls** – age, education, race-ethnicity, and the total length of the union, which the file carries
+- **The weights** – the file has none
+:::
+
+::: {.fragment .small}
+The instruction pinned down one decision of the paper, and left open the decisions that decide which cohorts are compared and how a union is counted.
+:::
+
+::: notes
+So what did the instruction leave open? Nearly everything. The surveys: the file held five waves, and only two analysts compared the two waves of the paper. The unit: one row for every month in which a union could end, as the paper does, or one row per union with its final outcome. The model, and whether it allows for the time that a union has lasted. The controls, among them a column that holds the total length of each union, which the file supplies and which, as we will find later, is a trap. And the weights, which the file did not carry at all, so every analysis of it describes the sample rather than the population. [advance] The instruction pinned down one decision, and left open the decisions that say which unions are compared and how each one is counted.
+:::
+
+## Analyst no. 6 {#analyst-no.-6}
+
+::: {.big}
+- Aim 1: **reproduce** the constrained result of analyst **5X3KG**
+:::
+
+  - **What 5X3KG did:** the share of person-month rows that record a marriage, NSFG 1995 against 2006–2010, compared by `prop.test()` with its continuity correction, in R
+
+  - **What Multi100 recorded:** $\chi^2(1)$ = `r fmt_num(an("5X3KG", "statistic_recorded"), 3)` on `r fmt_n(an("5X3KG", "n_recorded"))` person-month rows (partial *r* = `r fmt_num(an("5X3KG", "r_recorded"), 3)`)
+
+  - **What you have:** the file that Multi100 gave the analysts (osf.io/b6p3j), unchanged in `data/`, and R
+
+::: notes
+So here is your first job as the sixth analyst. Analyst 5X3KG, who described their discipline as anthropology, compared the share of rows in the file that record a marriage in the 1995 survey with the same share in the 2006 to 2010 survey, with a test of two proportions in R. The aim, as the analyst described it, was to compare the proportion of respondents in the 1995 cohort who ended up marrying with that proportion in the 2010 cohort. Multi100 recorded a chi-square of forty-seven point four seven four, on almost twenty-four thousand rows. You have the same file that 5X3KG had, unchanged, and you have R. The whole of reproducibility is the question of whether that is enough for you to get the recorded number back, to the third decimal.
+:::

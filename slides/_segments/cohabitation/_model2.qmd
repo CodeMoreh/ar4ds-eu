@@ -1,0 +1,46 @@
+## Model 2 refitted {#model-2-refitted .smaller}
+
+::: {.small}
+**Task 3, second part:** the result that the claim quotes, refitted on the unions rebuilt from the NSFG.
+:::
+
+```{.r}
+model_2 <- fit_spec(unions, adjust = "race_period")    # Model 2 of Table 2
+model_2[, c("b", "se", "stat", "df", "n", "n_unions")]
+```
+
+::: {.fs-80}
+| Period coefficient | Published | Refit on the rebuilt unions |
+|:--|--:|--:|
+| Model 2, 2005–2010 | −0.683 (0.14) | `r fmt_num(rp(2, "later", "b"), 3)` (`r fmt_num(rp(2, "later", "se"), 3)`) |
+| Model 1, some college × period | −0.725 (0.27) | `r fmt_num(rp(1, "later_some_college", "b"), 3)` (`r fmt_num(rp(1, "later_some_college", "se"), 3)`) |
+| Person-months | 54,291 | `r fmt_n(curve_ref$n)` |
+:::
+
+::: {.fragment .small}
+A multinomial logit on person-months, weighted, with errors that follow the design of both surveys. The coefficients and their errors come back; the count of person-months does not, under any construction that the course tried.
+:::
+
+::: notes
+The second part of Task 3 reproduces the number that the claim quotes, and this time from the survey itself rather than from the file. Fit spec is the estimator that built the curve of the course, and with adjust set to race underscore period it fits Model 2 of the paper: a multinomial logit on the person-months, weighted, with errors that follow the strata and clusters of both surveys. It gives minus nought point six eight six with a standard error of nought point one three eight, against the published minus nought point six eight three and nought point one four. The interaction of Model 1 comes back just as closely. [advance] One figure does not: the paper reports fifty-four thousand person-months, and the construction that it describes gives thirty-three thousand. The course has not found a construction that gives the published count.
+:::
+
+## A coefficient beside an interaction {#a-coefficient-beside-an-interaction .smaller}
+
+::: {.fs-80}
+| The change between the cohorts, Model 2 refitted | Log scale | *p* |
+|:--|--:|--:|
+| Non-Hispanic white women: the period coefficient, the number of the claim | `r fmt_num(sg("race_period", "white", "b"), 2)` | `r p_cell(sg("race_period", "white", "p"))` |
+| Black women: the period coefficient plus its interaction | `r fmt_num(sg("race_period", "black", "b"), 2)` | `r p_cell(sg("race_period", "black", "p"))` |
+| Hispanic women | `r fmt_num(sg("race_period", "hispanic", "b"), 2)` | `r p_cell(sg("race_period", "hispanic", "p"))` |
+| Other women | `r fmt_num(sg("race_period", "other", "b"), 2)` | `r p_cell(sg("race_period", "other", "p"))` |
+| All cohabitors, the same model without the interaction | `r fmt_num(curve_ref$b, 2)` | `r p_cell(curve_ref$p)` |
+:::
+
+::: {.fragment .small}
+Beside an interaction of race-ethnicity and period, the period coefficient is the change for the **reference group** alone. The claim speaks of cohabitors, so the reference specification of the course leaves the interaction out and pools the four groups: **`r fmt_num(curve_ref$b, 3)`**.
+:::
+
+::: notes
+Now, what does that number mean? Model 2 includes an interaction of race-ethnicity and period. Beside such an interaction, the coefficient of the period is the change for the group that the interaction leaves out, the reference group, which here is non-Hispanic white women. The change for every other group adds its own interaction term. Add them up and you get this table: minus nought point six nine for white women, a smaller and uncertain decline for Black women, larger declines for Hispanic women and for the small other group. So the number of the claim is the change for white women. The paper never interprets it, and the instruction of Multi100 never mentions it. [advance] The claim speaks of cohabitors, all of them, so the reference specification of the course drops the interaction and pools the groups: minus nought point seven three.
+:::

@@ -1,0 +1,163 @@
+## The question of the paper {#the-question-of-the-paper .smaller}
+
+::: {.small}
+- **The change.** "approaching two-thirds of first marriages are preceded by cohabitation" in the United States, while "a declining proportion of cohabitations transition into marriage" (Introduction)
+- **Two perspectives.** The Second Demographic Transition (SDT) explains family change by ideas, a growing weight on individual autonomy. The diverging-destinies thesis "contends that economic and other institutional forces condition the influence of ideational change" (Background)
+- **Two expectations.** "as the SDT theory leads us to expect to see an overall decline in the odds of marriage among more recent cohabiting cohorts, the diverging-destinies perspective predicts that the decline is accompanied by growing differentials among cohabitors of different race-ethnic and educational backgrounds" (Background)
+:::
+
+::: {.fragment .small}
+The paper was published in 2016 in *Demography* [@KuoRaley2016DivergingPatternsUnion]. From here on I call its two authors **the original authors (OAs)**.
+:::
+
+::: {.src}
+Quotations from the author manuscript in PubMed Central (PMC5026877), which has no page numbers, located by its sections.
+:::
+
+::: notes
+The case of the day is a paper in Demography, and I will call its two authors the original authors, or OAs, from here on, because the course is about the claim and its analyses rather than about the people who made it. The starting point is a change in American family life. Most first marriages now begin as cohabitation, yet a smaller share of cohabiting couples go on to marry. The paper reads that change against two perspectives. The Second Demographic Transition explains it by ideas, a growing emphasis on individual choice. The diverging-destinies thesis says that ideas are filtered through resources: marriage has come to require a stable income, and the less educated have lost ground. So one perspective expects a general decline, and the other a decline that grows wider between groups.
+:::
+
+## The data and the unions {#the-data-and-the-unions .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+- The **National Survey of Family Growth** (NSFG), run by the National Center for Health Statistics: Cycle 5 interviewed 10,847 women in 1995; the survey of 2006–2010 interviewed 12,279 women and 10,403 men
+- The 1995 survey interviewed only women, so the paper uses **women** from both
+- Each woman reports her history of unions: the month in which she moved in with each partner, each marriage, and each end
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+- The **first premarital cohabitation**: the first time that a woman lived with a partner, if it came before any marriage
+- Begun no more than five years before the interview, and in the later survey only from 2005: **`r fmt_n(sum(paper_unions$cycle == "1995"))` unions of 1990–1995** (`r oc("1995", "marriage")` marriages, `r oc("1995", "separation")` separations, `r oc("1995", "intact")` intact) and **`r fmt_n(sum(paper_unions$cycle == "2006-10"))` of 2005–2010** (`r oc("2006-10", "marriage")`, `r oc("2006-10", "separation")`, `r oc("2006-10", "intact")`)
+- The course rebuilt the unions from the public files of both surveys, and the counts of the paper come out exactly
+:::
+:::
+::::
+
+::: {.src}
+[@KuoRaley2016DivergingPatternsUnion, Data and Methods, Table 1]; cases/cohabitation/data/cohab_unions.csv.
+:::
+
+::: notes
+The data come from the National Survey of Family Growth, a federal survey of people aged fifteen to forty-four. The paper uses two of its waves, 1995 and 2006 to 2010. The 1995 wave interviewed only women, so the paper uses women throughout. Every woman reports her history of unions, month by month: when she moved in with each partner, when she married, when a union ended. The paper takes the first time that each woman lived with a partner, if that came before any marriage, and keeps the unions begun in the five years before the interview, which gives two cohorts of unions fifteen years apart. Nine hundred and twenty-nine and eleven hundred and forty-two. The course rebuilt every one of them from the public files, and the counts of the paper come out to the last union.
+:::
+
+## The life table {#the-life-table}
+
+```{r}
+#| label: cohab-lifetable
+#| fig-width: 9.5
+#| fig-height: 3.9
+# The weighted share of the unions of each cohort that had become a marriage by
+# each month since the couple moved in, with separation as a competing outcome
+# (data/display_lifetable.csv), and the end of the third year dashed.
+life_all <- filter(lifetable, group_type == "all")
+# each cohort named above its line in the fifth year
+life_tag <- life_all |>
+  filter(month == 50)
+ggplot(life_all, aes(month, married, colour = cohort)) +
+  geom_vline(xintercept = 36, colour = grey_mid, linetype = "22") +
+  geom_step(linewidth = 1.2) +
+  geom_point(data = lt36, size = 3.2) +
+  geom_text(data = lt36, aes(label = fmt_pct(married)), hjust = 1.25, vjust = -0.6, size = 5,
+            show.legend = FALSE) +
+  geom_text(data = life_tag, aes(label = cohort_labels[cohort]), vjust = -0.8, size = 4.8,
+            fontface = "bold", show.legend = FALSE) +
+  scale_colour_manual(values = cohort_cols, guide = "none") +
+  scale_x_continuous(breaks = seq(0, 60, 12), expand = expansion(mult = c(0.01, 0.02))) +
+  scale_y_continuous(labels = \(x) fmt_pct(x, 0), limits = c(0, 0.6)) +
+  labs(x = "months since the couple moved in", y = "share married") +
+  theme_slide(15)
+```
+
+::: {.small}
+By the end of the third year, **`r fmt_pct(lt("1990-1995", "married"))`** of the unions of 1990–1995 had become a marriage, against **`r fmt_pct(lt("2005-2010", "married"))`** of those of 2005–2010 (the rebuild, weighted). The paper quotes 41% and 24% from a life table "available upon request".
+:::
+
+::: notes
+Here is the change in its plainest form. A life table follows each cohort of unions month by month since the couple moved in, and counts how many have become a marriage, with separation as the other way in which a union can end. The blue line is the unions begun in the early nineties, the burgundy line those begun in the late two-thousands. By the end of the third year, the dashed line, forty-five per cent of the earlier unions had become a marriage and only twenty-nine per cent of the later ones. The paper quotes forty-one and twenty-four from a life table that it did not publish. The course table is a few points higher in both cohorts, and the fall between them, about seventeen points, is close to that of the paper.
+:::
+
+## The model and the result {#the-model-and-the-result .smaller}
+
+::: {.small}
+- **Person-month data:** each union becomes one row for every month in which it could end, from the month in which the couple moved in to the marriage, the separation or the interview
+- **A discrete-time event-history model:** a multinomial logit of marrying or separating, against staying together, in each month, weighted
+- Controls: the months since the start, the age at the start and its square, education and race-ethnicity; **Model 1** adds education × period, **Model 2** race-ethnicity × period
+- Table 2, Model 2: the period 2005–2010, **−0.683 (SE 0.14), p < .001**, on 54,291 person-months
+:::
+
+::: {.fragment .small}
+On the log scale of the model: in any month, a couple of the later cohort married at about `r fmt_num(exp(-0.683), 2)` times the rate of a couple of the earlier cohort, rather than staying together.
+:::
+
+::: {.src}
+[@KuoRaley2016DivergingPatternsUnion, Empirical Strategy, Table 2; p. 928 of the published version].
+:::
+
+::: notes
+The paper does not compare the share married at one moment. It asks a question that every month of every union can answer: in this month, did the couple marry, separate, or stay as they were? So each union becomes one row per month, which demographers call person-month data, and a union still intact at the interview simply stops contributing rows. A multinomial logit then models the three outcomes of each month, a discrete-time event-history model with two competing events. Model 1 lets the change differ by education, Model 2 by race-ethnicity. The coefficient that matters today is the period in Model 2, minus nought point six eight three. [advance] On the scale of the model, that is a monthly rate of marrying about half as high in the later cohort. Keep the interactions in mind; they come back this afternoon.
+:::
+
+## Marriage within three years by education {#marriage-within-three-years-by-education}
+
+```{r}
+#| label: cohab-shares-education
+#| fig-width: 9.5
+#| fig-height: 3.9
+# The weighted share of unions married by the end of the third year, by
+# education, in the two cohorts (data/display_shares.csv), with the number of
+# unions of each group in each cohort.
+educ_labels <- c(college = "College degree", some_college = "Some college", hs = "High school diploma",
+                 less_hs = "Less than high school")
+shares_educ <- shares |>
+  filter(group_type == "education") |>
+  mutate(n_lab = paste(unions[cohort == "1990-1995"], unions[cohort == "2005-2010"], sep = " / "),
+         .by = group) |>
+  mutate(label = factor(paste0(educ_labels[group], " (", n_lab, ")"),
+                        levels = rev(paste0(educ_labels, " (", n_lab[match(names(educ_labels), group)], ")"))))
+ggplot(shares_educ, aes(married_3y, label)) +
+  geom_line(aes(group = label), colour = "#c7ccd2", linewidth = 2) +
+  geom_point(aes(colour = cohort), size = 5) +
+  geom_text(aes(label = fmt_pct(married_3y, 0), colour = cohort), vjust = -1.1, size = 4.6,
+            show.legend = FALSE) +
+  scale_colour_manual(values = cohort_cols, labels = cohort_labels, name = NULL) +
+  scale_x_continuous(labels = \(x) fmt_pct(x, 0), limits = c(0.1, 0.62)) +
+  labs(x = "share married within three years", y = NULL) +
+  theme_slide(15) +
+  theme(legend.position = "top", legend.justification = "left",
+        axis.text.y = element_text(hjust = 0, colour = "grey20", face = "bold"))
+```
+
+::: {.small}
+The finding of the paper: marriage fell among cohabitors without a degree, and "We observed no decline in the likelihood that college educated women's cohabiting union transitioned into marriage" (Conclusions).
+:::
+
+::: notes
+This is what the paper is really about. The same share married within three years, now by the education of the woman, in the two cohorts, with the number of unions in brackets. Among college graduates, the share did not fall at all; it rose a little, from about a half to fifty-five per cent. Among women with some college, with a high school diploma, or without one, it roughly halved. That is the divergence that the title of the paper announces, and Model 1, with its interactions of education and period, is the model that tests it. The interaction for some college is also the coefficient that SCORE later chose to replicate, which matters in Part 4. The claim of our day is a different sentence of the paper, and the next slide shows it.
+:::
+
+## The claim {#the-claim .smaller}
+
+::: {.claimcard}
+"In line with the SDT perspective and findings from previous studies (e.g., Kennedy and Bumpass 2008), the results of current analysis suggest that cohabitors have increasingly become less likely to progress to marriage." <span class="src">the conclusions, p. 932</span>
+:::
+
+::: {.fragment .claimcard}
+"cohabitors have increasingly become less likely to progress to marriage" <span class="src">the claim as SCORE selected it for Multi100</span>
+:::
+
+::: {.fragment .small}
+Multi100 tied the claim to the period coefficient of Model 2, recorded as "b = -0.683, SE = (0.14), p < .001". The cut removes the hedge, "suggest", and the theory that the sentence was said to support. It keeps a coefficient from a model that holds an interaction of race-ethnicity and period.
+:::
+
+::: {.src}
+[@KuoRaley2016DivergingPatternsUnion, p. 932]; the Multi100 record of the claim.
+:::
+
+::: notes
+This is the sentence of the conclusions from which the claim was taken. Read it slowly: in line with the Second Demographic Transition and earlier studies, the results suggest that cohabitors have increasingly become less likely to progress to marriage. [advance] And this is the claim as SCORE selected it and handed it to the five Multi100 analysts: the closing clause only. The cut removes the word suggest, and with it the hedge, and it removes the theory that the result was meant to support. [advance] Multi100 tied the claim to one number, the period coefficient of Model 2, minus nought point six eight three. Model 2 is the model with the interaction of race-ethnicity and period. Hold on to that detail. What a coefficient means beside an interaction is a question for this afternoon.
+:::

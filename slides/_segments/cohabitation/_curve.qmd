@@ -1,0 +1,50 @@
+## The curve of the claim {#the-curve-of-the-claim}
+
+```{r}
+#| label: cohab-spec-curve
+#| fig-width: 9.5
+#| fig-height: 4.1
+# The curve of 144 (data/spec_curve.csv), the chart that the Multiverse page
+# draws, with the reference specification tagged in ink. Built on
+# curve_base(), so that the next slide reuses this exact panel.
+curve_base() +
+  mark_layer(tibble(tag = "the reference specification", b = curve_ref$b))
+```
+
+::: {.fs-75}
+Every combination of the six decisions that keep more than one option: **`r sum(curve$b < 0)` of `r nrow(curve)`** below zero and **`r sum(curve$b < 0 & curve$sig)`** significant at 5% with errors that follow the design of both surveys, from **`r fmt_num(min(curve$b), 3)`** to **`r fmt_num(max(curve$b), 3)`** on the log scale, ratios from `r fmt_num(min(curve$ratio), 2)` to `r fmt_num(max(curve$ratio), 2)`.
+:::
+
+::: {.src}
+cases/cohabitation/data/spec_curve.csv: the height of a mark is the estimate, its shape the test with design-based errors (*t* on `r min(curve$df)` to `r max(curve$df)` df).
+:::
+
+::: notes
+This is the curve of the claim, the same curve over which the Multiverse page draws your results. A hundred and forty-four specifications, every combination of the six decisions that keep more than one option, each one a mark, ranked from the largest decline on the left to the smallest on the right. Every one is a justifiable answer to the claim on the rebuilt data. Below zero is the direction of the claim, and look: every single mark is below zero, and every one is a circle, which means significant at five per cent with errors that follow the design of the surveys. So on these data, direction and significance are not in dispute. What moves is the size, from a ratio of about nought point four four to about nought point five three, a later cohort marrying at roughly half the monthly rate of the earlier one.
+:::
+
+## The published results on the curve {#the-published-results-on-the-curve}
+
+```{r}
+#| label: cohab-spec-overlay
+#| fig-width: 9.5
+#| fig-height: 4.1
+# The same panel with the published result and the one Multi100 analysis whose
+# estimate is on the scale of the curve (data/reference_marks.csv), as the
+# Multiverse page draws them
+curve_base() +
+  mark_layer(tibble(tag = c("OAs 2016 (white women)", "456AP (2002 and 2013–2015)"),
+                    b = c(mark_of("OA", "b"), mark_of("456AP", "b"))))
+```
+
+::: {.resultline}
+Your own results are on the class chart of the [Multiverse](../cases/cohabitation/multiverse.html) page, drawn over this same curve
+:::
+
+::: {.src}
+cases/cohabitation/data/reference_marks.csv: the published coefficient of Model 2 for the OAs, and the course refit of 456AP on the file of the analysts.
+:::
+
+::: notes
+The same chart, nothing moved, with two results dropped onto it. The published result, tagged OAs 2016, sits among the smallest declines on the curve, and you now know why: it is the change for white women, from a model with an interaction, while the curve estimates the change for all cohabitors. A hundred and twenty specifications lie further below zero. The second mark is 456AP, the one Multi100 analysis with a coefficient on this scale. It sits above every specification of the curve, because it compares other cohorts, 2002 against 2013 to 2015, without weights and without the time since the start. The other four analyses have no estimate on this scale, and three of them used the faulty 1995 rows, so they are not on the chart; the table of this afternoon holds them. Your own results are on the Multiverse page.
+:::

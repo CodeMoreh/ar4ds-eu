@@ -1,0 +1,43 @@
+## Weights and the survey design {#weights-and-the-survey-design .smaller}
+
+::: {.small}
+- **With the weights** of each survey the estimate describes the women aged 15–44 whom the survey represents; **without them**, the sample, in which the groups that the NSFG sampled at higher rates count for more
+- The file of the analysts had **no weights**, so every Multi100 analysis and the SCORE replication are unweighted. Leaving the weights out moves the estimate by **`r fmt_signed(dev_of("weights", "unweighted", "shift_mean"), 3)`** on average
+:::
+
+::: {.fragment .fs-75}
+| The reference specification, under | SE | Statistic | df |
+|:--|--:|--:|--:|
+| Errors from the strata and clusters of both surveys (the curve) | `r fmt_num(inf("design", "se"), 3)` | *t* = `r fmt_num(inf("design", "stat"), 2)` | `r fmt_n(inf("design", "df"))` |
+| Errors clustered by woman | `r fmt_num(inf("woman", "se"), 3)` | *t* = `r fmt_num(inf("woman", "stat"), 2)` | `r fmt_n(inf("woman", "df"))` |
+| Conventional errors | `r fmt_num(inf("model", "se"), 3)` | *z* = `r fmt_num(inf("model", "stat"), 2)` | – |
+
+The paper gives SE 0.14 for Model 2; the refit with design-based errors gives `r fmt_num(mark_of("OA_refit", "se"), 3)`, with conventional errors `r fmt_num(opt("adjust", "race_period", "se_model"), 3)`.
+:::
+
+::: notes
+Two decisions about the survey itself. The weights decide whose unions count for how much, and so which population the estimate describes. The survey sampled Black and Hispanic women at higher rates than others, so without the weights they count for more than their share of the population. The paper weights; the file of the analysts had no weights, so every Multi100 analysis describes the sample. Leaving them out makes the decline about five hundredths larger. [advance] And the standard errors. The survey drew clusters of households within strata, and the months of one union are not independent either. Conventional errors come out about a quarter smaller than errors that follow the design. The published error of nought point one four matches the design-based refit, not the conventional one, which suggests that the OAs used the design.
+:::
+
+## The length of the whole union {#the-length-of-the-whole-union .smaller}
+
+::: {.small}
+- The file of the analysts carries **COH1DUR**, the total length of each union, in every one of its months
+- The SCORE replication, 73FDT, N8ZYW and JDA15 hold it constant
+- But the length of a union is known only **once it has ended**, and it depends on **how** it ended: holding it constant compares unions by their outcome
+:::
+
+::: {.fragment .fs-80}
+| Holding the length of the whole union constant | Without | With |
+|:--|--:|--:|
+| The reference specification | `r fmt_num(curve_ref$b, 3)` | `r fmt_num(opt("adjust", "total_duration", "b"), 3)` |
+| Model 2 of the paper, refitted | `r fmt_num(rp(2, "later", "b"), 3)` | −0.608 |
+:::
+
+::: {.fragment .small}
+On the menu it is a **weaker answer**: in the causal graph, the length of the union lies downstream of the outcome.
+:::
+
+::: notes
+The second decision is one that the file invites. Next to every month of a union, the file carries the total length of that union, and four of the analyses of this claim held it constant, among them the replication of SCORE. It looks like a harmless control for time. It is not, because the length of a union is known only once the union has ended, and how long it lasted depends on how it ended. A union that became a marriage after six months has a recorded length of six months because the marriage ended it. Holding the length constant therefore compares unions that already share part of their outcome. [advance] At the reference settings it pushes the coefficient from minus nought point seven three to minus one point one. [advance] On the menu it stays off the curve, as a weaker answer.
+:::

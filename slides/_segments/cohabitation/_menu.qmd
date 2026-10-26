@@ -1,0 +1,80 @@
+## The specification menu {#the-specification-menu .smaller}
+
+```{r}
+#| label: cohab-menu-table
+#| output: asis
+# The fifteen decisions of the menu (data/menu_options.csv), with the options
+# that the curve keeps and the others grouped by the judgement of the course.
+judgement_txt <- c(other_question = "another question", weaker_answer = "a weaker answer",
+                   check = "a check", unavailable = "not in the data")
+level_txt <- c(estimand = "1 – Estimands", measurement = "2 – Measurement",
+               estimation = "3 – Estimation")
+off_txt <- menu_opts |>
+  filter(!on_curve) |>
+  summarise(txt = paste0(paste(label, collapse = " · "), " *(", judgement_txt[first(judgement)], ")*"),
+            .by = c(axis, judgement)) |>
+  summarise(off = paste(txt, collapse = "; "), .by = axis) |>
+  # the four other pairs of surveys in one phrase, so that the row fits the slide
+  mutate(off = if_else(axis == "comparison",
+                       "Four other pairs of NSFG surveys · Trend over five surveys *(another question)*", off))
+menu_rows <- menu_opts |>
+  filter(on_curve) |>
+  summarise(level = first(level), decision = first(decision),
+            on = paste(label, collapse = " · "), .by = axis) |>
+  left_join(off_txt, by = "axis") |>
+  mutate(off = coalesce(off, "–"),
+         level = if_else(level == lag(level, default = ""), "", level_txt[level]),
+         line = paste0("| ", level, " | **", decision, "** | ", on, " | ", off, " |"))
+cat(c('::: {.scaled style="--fs: 0.5; --lh: 1.05"}', # r-style: keep – writes the Markdown of the table
+      "| Level | Decision | On the curve | Off the curve |",
+      "|:--|:--|:--|:--|",
+      menu_rows$line, ":::"), sep = "\n")
+```
+
+::: {.small}
+Six decisions keep more than one option, and they cross into the **`r nrow(curve)`** specifications of the curve. The [decision map](../cases/cohabitation/map.html) gives the reason for every option.
+:::
+
+::: notes
+Here is the menu. It is the full list of decisions that any analyst of this claim has to take, fifteen of them, at three levels. Level 1 decides which question is asked: the surveys and cohorts compared, the time frame, what counts as progress to marriage, what is held constant, the weights, and the women and unions. Level 2 decides how the variables are measured, and its first row is the one that you met this morning: the union histories, rebuilt from the survey or taken from the file of the analysts, which stays off the curve. Level 3 decides how the answer is reached: the unit of analysis, the time since the start, the model, the standard errors and the scale. Every option on the right was considered and left off the curve for a stated reason, which the decision map gives.
+:::
+
+## The curve of 144 {#the-curve-of-144 .smaller}
+
+::: {.small}
+- **Cohorts** – the window of the paper · the same five-year window in both surveys
+- **Time frame** – all observed months · the first three years
+- **Adjustment** – none · the age at the start · age, race-ethnicity and education
+- **Weights** – the weights of the surveys · none
+- **Time since the start** – the months as a straight line · one step per year of the union
+- **Model** – multinomial logit · logit · complementary log-log
+:::
+
+::: {.fragment .small}
+2 × 2 × 3 × 2 × 2 × 3 = **`r nrow(curve)`**. The reference specification is the model of the paper without its interaction: **`r fmt_num(curve_ref$b, 3)`** on the log scale (a ratio of `r fmt_num(curve_ref$ratio, 2)`), *t* = `r fmt_num(curve_ref$stat, 2)` on `r curve_ref$df` df with errors that follow the design of both surveys, on `r fmt_n(curve_ref$n)` person-months.
+
+```{.r}
+try_spec(cohorts = "paper", horizon = "five_years", adjust = "composition",
+         weights = "weighted", time = "linear", model = "mlogit")
+```
+:::
+
+::: notes
+Six of the fifteen decisions keep more than one option on the curve. The cohorts: the windows of the paper, or the same five-year rule in both surveys. The time frame: every month that the data hold, or the first three years. The adjustment, three nested sets, as the graph of this morning set out. The weights, with or without. The time since the start, as a straight line in the months or a step for each year. And the model, three ways. [advance] Two times two times three times two times two times three is a hundred and forty-four specifications, and the course has fitted every one. The reference is the model of the paper without its interaction, minus nought point seven three, a ratio of nought point four eight. Every argument of try underscore spec defaults to it, so changing one thing means changing one argument.
+:::
+
+## Ground rules for the menu {#ground-rules-for-the-menu .smaller}
+
+::: {.small}
+- **Change one decision at a time**, and hold the others at the reference specification. When a result moves, you can then say what moved it
+- **An option off the curve is refused** by `try_spec()`, with the reason from the menu and the page that teaches it. Asking for one, such as `histories = "score_file"` or `adjust = "race_period"`, is part of the exercise
+- **One sign convention:** every estimate is the coefficient of the later cohort on the log scale, so a value **below zero** is the direction of the claim
+:::
+
+::: {.fragment .small}
+The estimand statement on the [decision map](../cases/cohabitation/map.html) rewrites itself as you choose. A change in a bold phrase asks another question, a change in an italic phrase of the first sentence measures the same question differently, and a change in the second sentence reaches the answer another way.
+:::
+
+::: notes
+Three ground rules before you touch the menu. First, change one decision at a time and hold the others at the reference. That sounds restrictive, but it is what makes the class chart readable, because when a result sits somewhere surprising we can say what put it there. Second, if you ask for an option that is off the curve, try underscore spec refuses it, tells you why, and names the page that teaches it. Ask for the file of the analysts, or for Model 2, and read the refusal, because the refusal is where the reasoning lives. Third, one sign convention binds everybody: every estimate is the coefficient of the later cohort on the log scale, so below zero is the direction of the claim. [advance] And the decision map on the site rewrites the estimand statement as you choose.
+:::

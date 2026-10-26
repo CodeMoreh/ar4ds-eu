@@ -1,0 +1,21 @@
+## Hands-on 2 – The data, the estimand and the graph {#hands-on-2-the-data-the-estimand-and-the-graph .smaller}
+
+::: {.small}
+**Task 2** has three pieces:
+
+1. **Look at the data.** Count the unions of each survey and the `r fmt_n(sum(paper_unions$cycle == "1995"))` and `r fmt_n(sum(paper_unions$cycle == "2006-10"))` unions of the paper with their outcomes; compute the weighted shares of the women who cohabit in each cohort; turn the unions into person-months with `spec_frame(unions)`, and draw the life table
+2. **Write the estimand statement.** Fill every bracket of the template for *this* claim, above all which cohorts and what is held constant
+3. **Finish the graph.** Take the `#` off `"period -> marriage"` if you believe it, then run `adjustmentSets(dag)`, `paths(dag, Z = "cohabits")` and `paths(dag, Z = c("cohabits", "education", "race"))`; then add `"period -> age_start"`
+:::
+
+::: {.fragment .small}
+Two sentences for your notes: **what does keeping only cohabitors do to the comparison of the two periods, and which adjustment set answers which reading of "cohabitors"?**
+:::
+
+::: {.fragment .small}
+Whatever you decide here is your starting point on the menu in Task 4, and field 4 of the preregistration in Task 5.
+:::
+
+::: notes
+Your turn, with three pieces. First, the data: count what you have, then the unions of the paper and how each one ended, then the weighted shares of Hispanic, Black and white women among the cohabitors of each cohort. Then turn the unions into person-months with the helper and draw the life table; the code is in your report. Second, the estimand statement, every bracket filled for this claim, and in particular which cohorts and what you hold constant. Third, the graph. Switch on the arrow of the claim if you believe it, then ask dagitty what has to be held constant among all women, which paths are open once only cohabitors are kept, and which stay open once education and race-ethnicity are held constant too. Then the two sentences for your notes. [state the time] Shout if you get stuck.
+:::

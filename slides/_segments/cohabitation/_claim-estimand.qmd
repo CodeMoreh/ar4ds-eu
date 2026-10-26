@@ -1,0 +1,129 @@
+## The estimand statement {#the-estimand-statement .smaller}
+
+::: {.claimcard}
+"Among [which women and unions], comparing [which cohorts of unions] in [which surveys], the change in [what counts as progress to marriage] over [what time], counted with [which weights], holding [what] constant."
+:::
+
+::: {.small}
+- **Which cohorts** – the windows of the paper, 1990–1995 against 2005–2010, or the same five-year window in both surveys?
+- **Holding what constant** – nothing but the time since the start of the union; the age at the start; or age with race-ethnicity and education, as the paper does without its interactions?
+:::
+
+::: {.fragment}
+**In chat, now:** your statement for the claim, every bracket filled. Type it, hold it, send on "go".
+:::
+
+::: {.src}
+The template of the specification menu and the decision map on the course site, after @LundbergEtAl2021WhatYourEstimand.
+:::
+
+::: notes
+An estimand is the quantity that your number is meant to estimate, stated in words before any model is fitted. This is the template that the specification menu on the course site uses for our claim, with a bracket for each decision that changes the question. Some brackets have an obvious filling: the women and unions are those of the paper, and progress to marriage is the couple marrying each other. Two brackets are open. Which cohorts: the windows that the paper chose, or the same rule in both surveys? And the one that matters for the rest of this part, what is held constant: nothing, the age at which the couple moved in, or age with race-ethnicity and education? Fill in the brackets, type the statement in chat, hold it, and send on go. [go; read three or four aloud]
+:::
+
+## Who cohabits {#who-cohabits .smaller}
+
+::: {.fs-80}
+| Unions of the paper, weighted | 1990–1995 | 2005–2010 |
+|:--|--:|--:|
+| Non-Hispanic white | `r fmt_pct(cmp("1995", "white"))` | `r fmt_pct(cmp("2006-10", "white"))` |
+| Black | `r fmt_pct(cmp("1995", "black"))` | `r fmt_pct(cmp("2006-10", "black"))` |
+| Hispanic | `r fmt_pct(cmp("1995", "hispanic"))` | `r fmt_pct(cmp("2006-10", "hispanic"))` |
+| College degree | `r fmt_pct(cmp("1995", "college"))` | `r fmt_pct(cmp("2006-10", "college"))` |
+| Mean age at the start of the union | `r fmt_num(cmp("1995", "age_start"), 1)` | `r fmt_num(cmp("2006-10", "age_start"), 1)` |
+:::
+
+::: {.fragment .claimcard}
+"it may be that disadvantaged blacks are unable even to form cohabiting unions today due to mass imprisonment and other factors that reduce the number of available men" <span class="src">the OAs, Conclusions</span>
+:::
+
+::: {.src}
+cases/cohabitation/data/cohab_unions.csv, the unions of the paper with the final weights of each survey; Table 1 of the paper gives the same shares.
+:::
+
+::: notes
+Before the graph, one fact about the data. Every union in them is a cohabitation, and the women who cohabited were not the same kinds of women in the two periods, because cohabitation itself spread. Among the cohabitors of the paper, the share of Hispanic women almost doubled, from ten to nineteen per cent, and the share of non-Hispanic white women fell from nearly three quarters to under three fifths. The share of graduates and the average age at which the couple moved in barely changed. [advance] The OAs raised the same issue from the other side. In their conclusions they suggest that the most disadvantaged women may not form cohabiting unions at all, so that the data hold only the women who did. Who enters the data is itself shaped by the period and by the characteristics of the woman.
+:::
+
+## The causal graph of the claim {#the-causal-graph-of-the-claim .smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+#| label: cohab-dag
+#| fig-width: 7.2
+#| fig-height: 5.4
+# The graph of Task 2 (the workspace file R/dag_starter.R), with the arrow
+# that the claim is about drawn as a dashed line.
+cohab_dag("all")
+```
+:::
+::: {.column width="40%"}
+::: {.small}
+- **Above:** race-ethnicity and education shape whether a cohabiting couple marries; education shapes the age at the start, which shapes marriage too
+- **Below:** whether a woman cohabits at all, `cohabits`, depends on her race-ethnicity and education, and on the **period**, because cohabitation spread
+- The dashed line is the claim, the arrow that Task 2 leaves for you to switch on
+:::
+:::
+::::
+
+::: notes
+Here is the claim as a causal graph, the same graph that you finish in Task 2. The period in which a union began is on the left, marriage on the right, and the dashed line between them is the claim, which the starter file leaves switched off for you to decide. Above the line, the characteristics of the woman: race-ethnicity and education shape whether a cohabiting couple marries, and education shapes the age at which the couple moved in, which matters for marriage too. Below the line is the node that makes this case unusual. Whether a woman cohabits at all depends on her race-ethnicity and education, and on the period, because cohabitation became far more common. Notice that nothing causes the period. Among all women, the comparison of the two periods would need nothing held constant.
+:::
+
+## Selection into cohabitation {#selection-into-cohabitation .smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+#| label: cohab-dag-cohabitors
+#| fig-width: 7.2
+#| fig-height: 5.4
+cohab_dag("cohabitors")
+```
+:::
+::: {.column width="40%"}
+::: {.small}
+- `cohabits` is a common effect of the period, race-ethnicity and education: a **collider**
+- Every analysis of these data keeps only women who cohabited, so it **conditions on the collider**, in the red box
+- That **opens** three paths from the period to marriage, in red: among cohabitors, the later period goes with another mix of women
+- `paths(dag, Z = "cohabits")` lists them as open
+:::
+:::
+::::
+
+::: {.fragment .small}
+The selection of the morning, from the crash course, in a form that is easy to miss: nobody chose to condition on it, because the data hold nothing else [@ColeEtAl2010IllustratingBiasDue; @GriffithEtAl2020ColliderBiasUndermines].
+:::
+
+::: notes
+Now draw the box that every analysis of these data draws without choosing to. The data hold only women who cohabited, so every comparison holds cohabits fixed. Cohabits is a common effect of the period, of race-ethnicity and of education, which makes it a collider, and conditioning on a collider opens a path between its causes. Those are the red arrows: three paths from the period to marriage that run through the selection. In plain words, among cohabitors the later period goes with more Hispanic women and fewer white women, and those groups married at different rates, so the comparison of periods picks up a change in who cohabits as well as a change in what cohabitors do. [advance] This is the selection slide of the crash course, in a form that is easy to miss, because nobody decided to condition on it.
+:::
+
+## Two readings of the claim {#two-readings-of-the-claim .smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+#| label: cohab-dag-composition
+#| fig-width: 7.2
+#| fig-height: 5.4
+cohab_dag("composition")
+```
+:::
+::: {.column width="40%"}
+::: {.small}
+- Holding **race-ethnicity and education** constant as well, in the blue boxes, **closes** the three paths again
+- **Without adjustment:** the change for cohabitors as they were, the change in who cohabits included
+- **With adjustment:** the change within groups of women of the same age, race-ethnicity and education
+:::
+:::
+::::
+
+::: {.fragment .small}
+Both are readings of "cohabitors" that a careful analyst could hold. Across the curve the mean coefficient is **`r fmt_num(mean(curve$b[curve$adjust == "none"]), 3)`** without adjustment and **`r fmt_num(mean(curve$b[curve$adjust == "composition"]), 3)`** with age, race-ethnicity and education, so the curve keeps all three adjustment sets.
+:::
+
+::: notes
+Now box race-ethnicity and education as well, and the three paths through the selection close again: the arrows turn pale, and only the claim is left. So the graph gives you two readings of the same sentence. Without adjustment, the coefficient describes cohabitors as they were in each period, and the change in who cohabits is part of the answer. With race-ethnicity and education held constant, it describes the change within groups of similar women, the change in behaviour. Neither is a mistake. The claim says cohabitors, and both are readings of that word that a careful analyst could defend. [advance] On these data the two readings are close, a mean of minus nought point seven five against minus nought point seven two, which is why the curve keeps all three sets. Your preregistration asks you to say which reading you mean.
+:::

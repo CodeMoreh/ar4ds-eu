@@ -1,0 +1,198 @@
+<!-- DEEP DIVE START: R tutorial (9 slides). Optional depth – press d during
+     the talk, or load the deck with ?depth=0, and slides/nav-tools.html lifts
+     the whole run out of the DOM. The switch acts on the .deepdive class that
+     every slide in the run carries, so that class is the load-bearing part;
+     these markers are here for the reader. -->
+
+## R, in one slide {#r-in-one-slide .smaller .deepdive run="tools"}
+
+::: {.skiplink}
+[R tutorial · 9 slides · skip to Hands-on 2 →](#hands-on-2-the-data-the-estimand-and-the-graph)
+:::
+
+```{.r code-line-numbers="|1|3|5|7"}
+n_surveys <- 2                    # <- assigns. "n_surveys gets 2"
+
+mean(c(340, 194))                 # a function: name, then arguments in ()
+
+unions$outcome                    # $ picks one column out of a data frame
+
+unions |> nrow()                  # |> the pipe: send the left into the right
+```
+
+::: {.small}
+With four pieces of syntax you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
+:::
+
+::: notes
+If you have never written a line of R, this slide is most of what you need to read the rest. Four things. First, the arrow assigns: n surveys gets two. You will see the equals sign used the same way and both work, but the arrow is the convention. Second, a function is a name followed by round brackets holding its arguments: the mean of three hundred and forty and a hundred and ninety-four. Third, the dollar sign reaches inside a data frame to pull out one column, here the outcome of every union. And fourth, the pipe takes whatever is on its left and feeds it in as the first argument of whatever is on its right. Read it as the word "then", and long chains become sentences.
+:::
+
+## Getting data in {#getting-data-in .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|3-5|7"}
+library(readr)                                   # load a package
+
+unions <- read_csv("data/cohab_unions.csv",      # read it, name it
+                   col_types = cols(caseid = col_character(), stratum = col_character(),
+                                    psu = col_character()))
+
+unions                                           # print it
+```
+
+::: {.small}
+What comes back is a **data frame**: a rectangle with one row per observation, here one woman and her first cohabitation, and one column per variable, each column of a single type. This one has `r fmt_n(nrow(unions))` rows and `r ncol(unions)` columns. The case numbers, strata and clusters are codes, so they are read as text.
+
+`library()` makes the functions of a package available. It does **not** install the package; that happens once, and the setup page says how.
+:::
+
+::: notes
+Getting data in. The library line makes the functions of a package available for this session, and it does not install anything; installing is a separate step that you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on unions is our data. The column types line tells R that the case number, the stratum and the cluster are codes rather than quantities, so that a leading zero survives and nobody averages them by accident. Typing the name on its own prints it. What you get back is a data frame, the central object of R: a rectangle with one row for each woman and one column for each variable. Nearly every function that you will meet takes a data frame and hands one back.
+:::
+
+## Inspecting the data {#inspecting-the-data .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|2|3|4"}
+glimpse(unions)                   # every column, its type, the first few values
+count(unions, cycle)              # unions in each survey
+count(unions, cycle, outcome)     # and how each one ended by the interview
+count(unions, is.na(duration))    # TRUE: no length can be built from the dates
+```
+
+::: {.fragment .small}
+`NA` is how R marks a missing value. For `r sum(is.na(unions$duration))` unions, all of them of 1995, the dates of the survey give no length, and the rebuild reaches the 929 unions of the paper without them. A union still **intact** at the interview is not missing: its outcome is simply not yet known, which demographers call **censoring**.
+:::
+
+::: notes
+With the data loaded, look at them before any model touches them. Glimpse shows every column with its type and its first values. Count tells you how many unions each survey contributes, and with a second variable, how each union had ended by the interview: a marriage, a separation, or still intact. [advance] NA is how R marks a missing value, and here it is rare: a handful of unions of 1995 whose dates give no length, and the rebuild reaches the counts of the paper without them. Notice what is not missing. A union still intact at the interview has a perfectly good record; we only do not know how it will end. Demographers call that censoring, and the whole design of the paper exists to handle it. Every serious error I have made was visible in counts like these before it reached a model.
+:::
+
+## Working with rows and columns {#working-with-rows-and-columns .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2|3|4|5"}
+paper_unions <- unions |>
+  filter(cycle %in% c("1995", "2006-10"), since_start <= 60, duration >= 1) |>   # keep rows
+  filter(cycle == "1995" | from_2005) |>                                         # the later window
+  select(cycle, caseid, outcome, duration, race, educ, weight) |>                 # keep columns
+  mutate(married = outcome == "marriage")                                         # make a new column
+```
+
+::: {.fragment .small}
+The sixth verb is `summarise()`, here with `.by`: collapse many rows into one per group. With the weights of the survey, the shares describe the population of women rather than the sample.
+
+```{.r}
+paper_unions |>
+  summarise(unions = n(), hispanic = weighted.mean(race == "hispanic", weight), .by = cycle)
+```
+:::
+
+::: notes
+Five verbs get you a very long way, and they share one pattern: a data frame goes in and a data frame comes out. Filter keeps rows, here the two surveys of the paper, the unions begun in the five years before the interview that lasted at least a month, and in the later survey only those begun from 2005. That is the window of the paper, and the helper spec underscore unions does exactly this for you. Select keeps columns. Mutate makes a new column, here whether the union became a marriage. [advance] The sixth verb is summarise, which collapses many rows into one per group. These lines give the number of unions and the weighted share of Hispanic women in each cohort, the change in who cohabits that you met before the graph.
+:::
+
+## One row per month {#one-row-per-month .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2|3|4"}
+paper_unions |>
+  mutate(n_months = duration + 1) |>                          # months in which it could end
+  tidyr::uncount(n_months, .id = "month") |>                  # repeat each union once per month
+  mutate(y = if_else(month == duration + 1, outcome, "intact"))   # the outcome in the last month
+```
+
+::: {.small}
+`uncount()` turns `r fmt_n(nrow(paper_unions))` unions into **`r fmt_n(n_person_months)` person-months**, `r fmt_n(n_pm_marriages)` of them ending in a marriage. `person_months()` in the helpers does the same, and `spec_frame(unions)` adds the columns that the models use.
+:::
+
+::: notes
+The model of the paper does not use one row per union. It uses one row for every month in which a union could end, and three lines of R build them. The first counts the months of each union, its length plus the month in which it ended. Uncount, from tidyr, then repeats each union once for each of those months and numbers them. The last line records the outcome in the last month of the union, and intact in every month before it. A union still intact at the interview simply has no event in its last row. From the two cohorts of the paper that gives about thirty-three thousand person-months, and five hundred and thirty-four of them end in a marriage. The helpers of the workspace do exactly this, so you will not have to write it yourself.
+:::
+
+## Model formulas {#model-formulas .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1|3-4|6-7|9"}
+months <- spec_frame(unions)                       # the person-months, with every column
+
+glm(y == "marriage" ~ later + month + age + age2,  # "marrying explained by the cohort, ..."
+    family = binomial, data = months)              # a logit of marrying in the month
+
+glm(y == "marriage" ~ later + month + age + age2,
+    family = binomial(link = "cloglog"), data = months)   # complementary log-log
+
+nnet::multinom(factor(y) ~ later + month + age + age2, data = months)   # marry or separate
+```
+
+::: {.small}
+The tilde `~` reads **outcome on the left, predictors on the right**; add predictors with `+`. `later` marks the later cohort, `month` the months since the start, `age` and `age2` the age at the start and its square. The helpers fit all three models, weighted and with errors from the survey design.
+:::
+
+::: notes
+A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, more predictors added with a plus. The first line builds the person-months with every column that a model needs. Then three models of the same rows. A logit of whether the couple married in the month. The same with a complementary log-log link, which is the version of the proportional hazards model for time in whole months. And a multinomial logit of the three outcomes of each month, marrying, separating or staying together, which is the model of the paper. In every one, the coefficient of later is the change between the cohorts. These lines fit without weights and with conventional errors; the helpers of the workspace add the weights and the survey design.
+:::
+
+## Plotting with ggplot2 {#plotting-with-ggplot2 .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|1-6|7|8"}
+life <- months |>
+  summarise(h_marriage = weighted.mean(y == "marriage", w),
+            h_separation = weighted.mean(y == "separation", w), .by = c(later, month)) |>
+  arrange(later, month) |>
+  mutate(married = cumsum(lag(cumprod(1 - h_marriage - h_separation), default = 1) * h_marriage),
+         .by = later)
+ggplot(life, aes(x = month, y = married, colour = factor(later))) +   # data, and what maps to what
+  geom_step()                                                        # draw the steps
+```
+
+::: {.small}
+Three parts, always: the **data**, the **mapping** (`aes`) from variables to what you see, and one or more **geoms** that draw something. Layers stack with `+`.
+:::
+
+::: notes
+Plotting, with the life table of this morning as the example. The first block computes it. For each cohort and each month, the weighted share of the unions still intact that married in that month, and the share that separated. Then a running product gives the share still together at the start of each month, and a running sum the share that has married by its end. A ggplot always has three parts. The data, here that life table. The mapping, which is what aes does: months on the horizontal axis, the share married on the vertical one, and the cohort as the colour. And one or more geoms that draw something, stacked with plus signs; geom step draws the steps of a life table. The plot it makes is the first figure of Task 2 in your report.
+:::
+
+## Causal graphs in R {#causal-graphs-in-r .smaller .deepdive run="tools"}
+
+```{.r code-line-numbers="|2-4|5-7|8|9|12|13"}
+dag <- make_dag(
+  "period -> cohabits",
+  "education -> cohabits",
+  "race -> cohabits",
+  "education -> marriage",
+  "race -> marriage",
+  "education -> age_start", "age_start -> marriage",
+  # "period -> age_start",
+  # "period -> marriage",              # the arrow that the claim is about
+  exposure = "period", outcome = "marriage"
+)
+adjustmentSets(dag)                    # what must be held constant among all women?
+paths(dag, Z = "cohabits")             # which paths open among cohabitors?
+```
+
+::: {.small}
+Arrows are written **cause -> effect**, each in quotes, so a `#` takes an arrow out and the code still runs. `make_dag()` is a helper of the workspace, built on **dagitty**.
+:::
+
+::: notes
+The last piece of R is the one you use in the next task. A causal graph in the workspace is a list of arrows, written cause, then an arrow, then effect. The period, education and race-ethnicity each point at cohabits. Education and race-ethnicity point at marriage, and education reaches marriage through the age at the start as well. Two arrows are commented out with a hash: one from the period to the age at the start, which you may add if you think the later cohort moved in at another age, and the arrow that the claim is about, for you to switch on. Then two questions for dagitty. Adjustment sets asks what you must hold constant among all women, and paths, with Z set to cohabits, lists the paths between the period and marriage once the selection is held fixed.
+:::
+
+## Common error messages {#common-error-messages .smaller .deepdive run="tools"}
+
+::: {.small}
+| What you see | What it usually means |
+|---|---|
+| `could not find function "try_spec"` | The helpers are not loaded – run `source("R/spec_tools.R")` |
+| `object 'paper_unions' not found` | You ran this chunk before the one that creates it – go back up and run in order |
+| `cannot open file 'data/score_person_months.csv'` | The IDE opened a single file rather than the workspace folder – open the folder |
+| `+` on the console, nothing happens | An unclosed bracket or quote. Press **Esc** and look for the missing `)` |
+:::
+
+::: {.fragment .small}
+Read the error. R error messages are terse but almost always literally true, and most of them name the thing that R could not find.
+:::
+
+::: notes
+These four errors will be most of what you meet in the tasks. "Could not find function" means that the helpers or the package are not loaded, so source the helper file. "Object paper unions not found" means that you ran a chunk before the one that creates the object; go back up and run them in order. "Cannot open file" with the name of the file of the analysts almost always means that your IDE opened a single file rather than the whole workspace folder, so the relative path points nowhere: open the folder. And if the console shows a plus sign and nothing happens, R thinks that you have not finished the command: there is an unclosed bracket or quote somewhere. Press Escape and go looking for it. Read the error, because it usually names exactly what R could not find.
+:::
+
+<!-- DEEP DIVE END -->
