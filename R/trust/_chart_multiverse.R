@@ -38,7 +38,7 @@ mv_menu_relation <- tibble::tribble(
   ~id,               ~tag,             ~title,
   ~relation,
   "OA",              "OA 2012",        "The original author (2012), Table 3, parliament",
-  "Outside the menu: a three-level model with random intercepts for countries and country-rounds, the controls of the paper and its country-level variables, fitted in HLM on a sample that the paper does not describe.",
+  "Outside the menu: a three-level model with random intercepts for countries and country-rounds, the controls of the paper and its country-level variables, fitted in HLM on 110,732 respondents, without saying how it treated missing answers.",
   "SCORE_jp7tr",     "SCORE jp7tr",    "SCORE reproduction from the ESS files (osf.io/jp7tr)",
   "Outside the menu: the model of Table 3 refitted in lme4 on data rebuilt from the ESS. The reference specification of the curve, fitted to the same 69,522 respondents, comes within 0.001 of it.",
   "SCORE_65wm6",     "SCORE e48gd",    "SCORE reproduction from the ESS files (osf.io/e48gd)",

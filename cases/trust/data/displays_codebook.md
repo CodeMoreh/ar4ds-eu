@@ -6,7 +6,7 @@ Six small files that the pages of the case use beside the curve. Five are writte
 
 The reproduction target of the case: the focal model of the SCORE reproduction from source data (osf.io/jp7tr), a three-level model of Table 3 of the paper of the original author (OA) fitted with lme4, set beside the same model refitted on the course extract and beside the reference specification of the curve. Five rows: the published values (`SCORE_jp7tr`: 0.1780, SE 0.00428, t = 41.583, 69,522 respondents in 56 country-rounds); the refit without the Italian round 2, which the integrated round files that the reproduction used did not hold (`course_repro_59`: 0.1773, SE 0.00428, t = 41.40, the same 69,522 respondents); the refit on all 60 country-rounds (`course_repro_60`: 0.1753, t = 41.21, 70,326 respondents); the reference specification of the curve on the respondents of the reproduction (`course_reference_fe_59`: 0.1772, SE 0.0095, t = 18.67 on 15 df), which the browser lab can fit; and the reference specification on all respondents (`course_reference_fe`). Columns: `id`, `b`, `se`, `statistic_type`, `statistic`, `df` (Satterthwaite for the multilevel models; for the published row the value printed in the report), `n`, `country_rounds`, `countries`, `note`. The results of the multilevel models here and in the other display files are kept to six significant digits, the precision at which lme4 gives the same values from one run to the next.
 
-The course refit without the Italian round 2 analyses exactly the respondents of the reproduction and lands 0.0007 below its coefficient; the fixed-effects specification on the same respondents lands 0.0008 below it. A check against the analysis file of the reproduction, respondent by respondent, puts the whole gap down to the two vote controls: the reproduction counts voters of the Dutch liberal party (VVD, the "People's Party for Freedom and Democracy") in rounds 3 and 4 as far right, apparently taking it for the Party for Freedom, and it leaves three Belgian and Finnish party codes (PRL-FDF, the joint list of CD&V and N-VA, and the Left Alliance) unlinked to the cabinets in which those parties sat. The series of the country-level variables and the standardisation of income change the coefficient only in the fifth decimal.
+The course refit without the Italian round 2 analyses exactly the respondents of the reproduction and lands 0.0007 below its coefficient; the fixed-effects specification on the same respondents lands 0.0008 below it. A check against the analysis file of the reproduction, respondent by respondent, puts the whole gap down to the two vote controls: the reproduction counts voters of the Dutch liberal party (VVD, the "People's Party for Freedom and Democracy") in rounds 3 and 4 as far right, apparently taking it for the Party for Freedom, and it does not count as cabinet voters the voters of five Belgian and Finnish party codes whose parties sat in the cabinet (PRL-FDF in round 1 and the Left Alliance in the Finnish round 1; Open VLD + Vivant, the cdH and part of the joint list of CD&V and N-VA in the Belgian round 4). The series of the country-level variables and the standardisation of income change the coefficient only in the fifth decimal.
 
 ## `display_options.csv`
 
@@ -14,7 +14,7 @@ The options off the curve that a linear model can fit, each changed alone from t
 
 | Axis | Option | Coefficient | Shift | Respondents |
 |:--|:--|--:|--:|--:|
-| sample | all_respondents | 0.175 | −0.000 | 75,179 |
+| sample | all_respondents | 0.175 | −0.0005 | 75,179 |
 | concern | economy | 0.121 | −0.055 | 71,396 |
 | concern | culture | 0.119 | −0.056 | 71,692 |
 | concern | place | 0.129 | −0.046 | 71,687 |
@@ -24,7 +24,7 @@ The options off the curve that a linear model can fit, each changed alone from t
 | weights | post_population | 0.163 | −0.012 | 70,326 |
 | fe | pooled | 0.184 | +0.008 | 70,326 |
 | votes | nonvoters_missing | 0.173 | −0.002 | 58,038 |
-| fe | random_intercepts | 0.175 | +0.000 | 70,326 |
+| fe | random_intercepts | 0.175 | +0.0001 | 70,326 |
 
 ## `display_inference.csv`
 

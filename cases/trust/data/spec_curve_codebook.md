@@ -18,7 +18,7 @@ The other decisions of the menu take one option on every row: the respondents ar
 
 Each specification has its own analysed rows, the respondents who answered every variable that it uses. Household income is missing for every respondent in France and Ireland in round 1, and the feeling about household income for every respondent in France in rounds 1 and 2, so the specifications with controls keep 58 country-rounds (`demog`, `outlook`) or 57 (`paper`), and those without controls all 60.
 
-The reference specification (`is_reference`) is `parliament`, `paper`, `none`, `complete`, `country_round`: the outcome that SCORE chose, the controls of the paper, no weights and the complete-answer rule of the SCORE reproduction from source data, with fixed effects in place of the random intercepts of the paper. It gives 0.175 points of distrust per point of concern (SE 0.0097, t = 18.04 on 15 df, n = 70,326 in 57 country-rounds), against 0.17 in Table 3 of the paper.
+The reference specification (`is_reference`) is `parliament`, `paper`, `none`, `complete`, `country_round`: the outcome that SCORE chose, the controls of the paper, no weights and the complete-answer rule of the focal analysis of the SCORE reproduction osf.io/jp7tr, with fixed effects in place of the random intercepts of the paper. It gives 0.175 points of distrust per point of concern (SE 0.0097, t = 18.04 on 15 df, n = 70,326 in 57 country-rounds), against 0.17 in Table 3 of the paper.
 
 ## Columns
 

@@ -46,15 +46,15 @@ The methods tutorial starts with the scales themselves. A scale is only as good 
 - **No weights** – the coefficient is an average of the associations within the country-rounds in which large samples, and samples with varied concern, count for more
 - **Design weights** make each national sample stand for its adult population, correcting for unequal chances of selection
 - **Design and population weights** also make each country count by its adult population, so that the estimate describes the people of the 16 countries as one population
-- **Post-stratification weights** adjust the samples to census margins as well
+- **Post-stratification weights** adjust the samples to population margins from the Labour Force Survey as well
 :::
 
 ::: {.fragment .small}
-Against no weights on twin specifications: design weights `r fmt_signed(dev_of("weights", "design", "shift_mean"), 3)`, design and population weights `r fmt_signed(dev_of("weights", "population", "shift_mean"), 3)` on average. At the reference settings, post-stratification gives `r fmt_num(opt("post", "b"), 3)` and post-stratification with population weights `r fmt_num(opt("post_population", "b"), 3)`. The paper and both SCORE reproductions are unweighted.
+Against no weights on twin specifications: design weights `r fmt_signed(dev_of("weights", "design", "shift_mean"), 3)`, design and population weights `r fmt_signed(dev_of("weights", "population", "shift_mean"), 3)` on average. At the reference settings, post-stratification gives `r fmt_num(opt("post", "b"), 3)` and post-stratification with population weights `r fmt_num(opt("post_population", "b"), 3)`. The paper reports no weights, and both SCORE reproductions are unweighted.
 :::
 
 ::: notes
-Weights decide whose answers count for how much, and so which population the estimate describes. Without weights, the coefficient averages the associations within the country-rounds, and a large sample, or one in which concern varies a lot, counts for more. Design weights correct for the unequal chances of selection that a sampling design builds in, so that each national sample stands for its adult population. Multiply in the population weights, and Germany counts for more than Ireland, so that the estimate describes the people of the sixteen countries taken together. Post-stratification goes a step further and matches the samples to census figures. [advance] On this claim none of it matters much: the design weights change the estimate in the third decimal, the population weights by less than one hundredth. The claim does not say which population average it means, so the curve keeps three.
+Weights decide whose answers count for how much, and so which population the estimate describes. Without weights, the coefficient averages the associations within the country-rounds, and a large sample, or one in which concern varies a lot, counts for more. Design weights correct for the unequal chances of selection that a sampling design builds in, so that each national sample stands for its adult population. Multiply in the population weights, and Germany counts for more than Ireland, so that the estimate describes the people of the sixteen countries taken together. Post-stratification goes a step further and matches the samples to population figures from the Labour Force Survey. [advance] On this claim none of it matters much: the design weights change the estimate in the third decimal, the population weights by less than one hundredth. The claim does not say which population average it means, so the curve keeps three.
 :::
 
 ## Missing answers and the size of the sample {#missing-answers-and-the-size-of-the-sample .smaller .deepdive run="methods"}
