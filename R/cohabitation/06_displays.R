@@ -6,8 +6,9 @@
 #               for each group in the interaction models of the paper, the
 #               off-curve options at the reference settings, the rules of
 #               inference, and the cohorts of the SCORE file against the rebuild.
-# Reads:        cases/cohabitation/data/cohab_unions.csv, the SCORE file in
-#               data-raw/cohabitation/cache/ (fetched by stage 04)
+# Reads:        cases/cohabitation/data/cohab_unions.csv,
+#               cases/cohabitation/data/score_person_months.csv (the person-month
+#               file of SCORE, checked by stage 04)
 # Writes:       cases/cohabitation/data/display_lifetable.csv,
 #               cases/cohabitation/data/display_shares.csv,
 #               cases/cohabitation/data/display_subgroups.csv,
@@ -120,7 +121,7 @@ write_csv(inference, "cases/cohabitation/data/display_inference.csv")
 
 # The cohorts of the person-month file of SCORE against the rebuild: unions,
 # outcomes and person-months by cycle
-score <- read_csv("data-raw/cohabitation/cache/Estimation Data - Kuo (JWzJ).csv", show_col_types = FALSE) |>
+score <- read_csv("cases/cohabitation/data/score_person_months.csv", show_col_types = FALSE) |>
   mutate(cycle = case_when(P95 == 1 ~ "1995", P02 == 1 ~ "2002", P10 == 1 ~ "2006-10",
                            P13 == 1 ~ "2011-13", P15 == 1 ~ "2013-15"))
 score_cycles <- score |>

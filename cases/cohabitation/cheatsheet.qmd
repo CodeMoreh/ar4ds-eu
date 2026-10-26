@@ -1,0 +1,173 @@
+---
+title: "Cheatsheet"
+format:
+  html:
+    toc: false
+---
+
+::: {.callout-note}
+**Print this page** (Ctrl+P / Cmd+P) or keep it open on a second device. It has everything you need for the day.
+:::
+
+------------------------------------------------------------------------
+
+## Addresses for the session {#session-urls}
+
+| | Address |
+|---|---|
+| **Course site** | [{{< var site-url >}}]({{< var site-url >}}) |
+| **Browser lab** | [browser lab](lab.qmd) |
+| **Workspace download (zip)** | [{{< var cases.cohabitation.workspace-zip >}}]({{< var cases.cohabitation.workspace-zip >}}) |
+| **Submit your result** | [class-results form]({{< var results-form-url >}}) |
+| **Live multiverse** | [Multiverse page]({{< var cases.cohabitation.live-results-url >}}) |
+| **Specification menu** | [specification menu](menu.qmd) |
+| **Decision map** | [decision map](map.qmd) |
+| **The NSFG (National Center for Health Statistics)** | <https://www.cdc.gov/nchs/nsfg/> |
+| **The file of the analysts (Task 3)** | <https://osf.io/b6p3j/> |
+| **The five Multi100 analyses** | <https://osf.io/b69nv/> |
+| **The SCORE dossier on the paper** | <https://osf.io/kv38j/> |
+| **Multi100 project** | <https://osf.io/q5h2c/> |
+
+------------------------------------------------------------------------
+
+## The helpers {#helpers}
+
+The downloadable workspace and the browser lab have the same helpers, with the same names and arguments, and both fit every specification of the menu live. The workspace fits one in under a second, the browser lab in about a second.
+
+| Helper | Task | What it does |
+|---|---|---|
+| `make_dag(...)`, `plot_dag(dag)` | 2 | Build the causal graph from arrows written `"cause -> effect"`, one per string, and draw it. |
+| `adjustmentSets(dag)` | 2 | Lists what has to be held constant to compare the periods among all women. |
+| `paths(dag, Z = ...)` | 2 | Lists every path between the period and marriage, and whether each is open once the comparison holds the variables in `Z` constant; `Z = "cohabits"` is the selection that every analysis of cohabitors makes. |
+| `check_score_file()` | 3 | Checks that `data/score_person_months.csv` is, byte for byte, the file that Multi100 gave the analysts. |
+| `spec_unions(unions)`, `person_months()` | 2, 3 | Keep the unions of the paper (929 of 1995, 1,142 of 2006–2010), and turn unions into one row for every month in which they could end. |
+| `fit_spec(unions, ...)` | 3 | The estimator of the course, which fits any option of the menu, including those off the curve: `fit_spec(unions, adjust = "race_period")` is Model 2 of the paper. |
+| `try_spec(...)` | 4 | Fits one specification of the curve and prints the coefficient of the later cohort on the log scale with its 95% interval, the ratio of monthly chances, the *t* test with design-based errors, the conventional *z*, the person-months, unions and marriages analysed, the partial *r*, the class of the result and its place among the 144 specifications on the curve. |
+| `my_experiments()` | 4 | Prints everything that `try_spec()` has fitted so far, side by side, with only the decisions that varied. |
+| `submit_exploration()` | 4 | Sends the last `try_spec()` to the class chart as an exploratory result, an open circle, and prints the pre-filled form link and your tag. |
+| `my_spec <- prereg()` | 5 | Checks the fifteen `my_*` choices of the preregistration block against the menu, prints the block with its estimand statement, and keeps it as `my_spec`. |
+| `run_spec(my_spec)` | 5 | Fits the declared specification and prints the same lines as `try_spec()`. It refuses to run if the block has changed since `prereg()`. |
+| `report_result()` | 5 | Sends the declared result to the class chart, a filled circle, with the same tag as your exploratory result. |
+
+Both submission functions take `nickname = "..."`, which replaces the tag that they draw for you, such as `amber-otter-42`. Use a nickname rather than your name, because the chart is public.
+
+------------------------------------------------------------------------
+
+## The options of each argument {#options}
+
+Every argument of `try_spec()` is one decision of the menu, and the preregistration block of Task 5 names the same decision with `my_` in front (`adjust` becomes `my_adjust`). The first option of each row is the reference specification, which `try_spec()` fits when it is called with no arguments: −0.730 on the log scale. An option off the curve is refused with the reason why and the page of the course site that teaches it.
+
+| Level | Argument | On the curve | Off the curve |
+|---|---|---|---|
+| 1 – Estimands | `comparison` | `"1995_2006"` | `"2002_2006"`, `"1995_2011"`, `"2002_2011"`, `"2006_2011"`, `"trend"` |
+| | `cohorts` | `"paper"`, `"five_years"` | – |
+| | `horizon` | `"five_years"`, `"three_years"` | – |
+| | `outcome` | `"marriage"` | `"married_by_interview"`, `"cumulative_3y"`, `"separation"` |
+| | `adjust` | `"composition"`, `"none"`, `"age"` | `"race_period"`, `"educ_period"`, `"total_duration"`, `"intention"` |
+| | `weights` | `"weighted"`, `"unweighted"` | – |
+| | `sample` | `"paper"` | `"men"`, `"all_unions"` |
+| 2 – Measurement | `histories` | `"rebuilt"` | `"score_file"` |
+| | `education` | `"paper"` | `"score"` |
+| | `short` | `"drop"` | `"keep"` |
+| 3 – Estimation | `unit` | `"person_months"` | `"unions"`, `"rows_test"` |
+| | `time` | `"linear"`, `"yearly"` | `"none"` |
+| | `model` | `"mlogit"`, `"logit"`, `"cloglog"` | `"lpm"` |
+| | `errors` | `"design"` | `"woman"`, `"model"` |
+| | `scale` | `"log_ratio"` | `"ratio"`, `"r"` |
+
+The six decisions on which the curve keeps more than one option, and what their options mean:
+
+- `cohorts` – the unions of 1995 begun in 1990–1995 against those of 2006–2010 begun in 2005 or later, as the paper chose them (`"paper"`), or every union begun in the five years before the interview in both surveys, which reaches back to 2001 in the later one (`"five_years"`).
+- `horizon` – every observed month of the unions, at most five years (`"five_years"`), or the first three years only (`"three_years"`).
+- `adjust` – the age at the start and its square with race-ethnicity and education, the controls of the paper without its interactions (`"composition"`); nothing besides the time since the start (`"none"`); or the age at the start and its square (`"age"`).
+- `weights` – the final weights of the two surveys (`"weighted"`), or every union counted the same, as in the file of the analysts (`"unweighted"`).
+- `time` – the months since the start of the union as a straight line (`"linear"`), or a separate baseline for each year of the union (`"yearly"`).
+- `model` – a multinomial logit of marrying or separating against staying together, the model of the paper (`"mlogit"`); a logit of marrying in the month (`"logit"`); or a complementary log-log model of marrying in the month, the discrete-time version of a proportional hazards model (`"cloglog"`).
+
+The [specification menu](menu.qmd) explains every option, and the [decision map](map.qmd) lays the decisions out in the order in which an analysis meets them.
+
+------------------------------------------------------------------------
+
+## Task 3 – the reproduction {#reproduction}
+
+The target is the value that Multi100 recorded for analyst 5X3KG: **$\chi^2(1)$ = 47.474** on 23,949 person-month rows, from `prop.test()` with the continuity correction, comparing the share of rows that record a marriage in the 1995 survey with that share in the 2006–2010 survey, on the file that Multi100 gave the analysts. Both the workspace and the browser lab hold that file, so the task runs in either.
+
+- **The reproduction.** The code of the analyst gives 47.474 exactly: 4 marriages in 5,414 rows of 1995 against 195 in 18,535 rows of 2006–2010, so in this file marriage became more common, the opposite of the claim.
+- **The file.** One row per union (the last month of each) shows that the file holds 376 unions of 1995, with 3 intact, 4 marriages and 369 separations, where the paper has 929 unions: 242 intact, 340 marriages and 347 separations. SCORE took the length of each 1995 union from the date on which the woman stopped living with a former partner, which exists only for a union that dissolved. With the 1995 rows rebuilt, the same test gives $\chi^2$ = 87.68 in the direction of the claim.
+- **The result that the claim quotes.** `fit_spec(unions, adjust = "race_period")`, Model 2 of the paper on the rebuilt unions, gives −0.686 (SE 0.138) against the published −0.683 (SE 0.14). Model 2 includes the interaction of race-ethnicity and period, so its coefficient is the change for non-Hispanic white women; without the interaction, the reference specification gives −0.730.
+
+------------------------------------------------------------------------
+
+## Submitting to the chart {#submitting}
+
+You submit twice, and the two submissions are different in kind.
+
+**Task 4 – the exploratory mark (open circle).** Nothing in this task is preregistered.
+
+1. **`try_spec(...)`** – change one argument at a time, for example `try_spec(adjust = "none")`. An option off the curve, such as `histories = "score_file"`, stops with the reason and the page that teaches it.
+2. **`my_experiments()`** – prints everything that you have tried so far.
+3. **`submit_exploration()`** – sends the most recent try to the chart. Open the printed link and press **Send**. Note the tag that it prints: it marks your submissions on the class chart.
+
+**Task 5 – the declared mark (filled circle).** Here you preregister one specification before you run it.
+
+4. **Preregister.** Make one choice for every `my_` line of the preregistration block, complete the dotted lines, and run the block, which ends in `my_spec <- prereg()`. The completed block is your preregistration. In the workspace, keep it in the report as set out under [Rendering the report](#rendering-the-report); on the browser lab page, copy the whole cell into your notes.
+5. **`run_spec(my_spec)`** – fits your specification and prints its result and its place on the curve.
+6. **`report_result()`** – builds your submission from the preregistration and prints a pre-filled form link; open it and press **Send**. It reuses your tag from Task 4. In the browser lab, if you have reloaded the page since then, pass the tag back with `report_result(nickname = "your-tag")`.
+
+If any of that stalls, work down the list under [A stalled browser lab](#a-stalled-browser-lab) in the browser lab, or the [IDE quick fixes](#ide-quick-fixes) in the workspace.
+
+------------------------------------------------------------------------
+
+## R idioms for the day {#r-idioms}
+
+- `x <- value` stores a value under a name.
+- `source("R/spec_tools.R")` runs a script file; here it loads the helpers.
+- `unions |> filter(cycle == "1995")` passes the data on to the next step. Read `|>` as 'and then'.
+- `filter()`, `mutate()` and `summarise(..., .by = cycle)` keep some rows, add a column, and summarise by group; `count(unions, cycle, outcome)` counts the rows of each combination.
+- `weighted.mean(race == "hispanic", weight)` is a weighted share: the mean of a true-or-false column, each row counting by its weight.
+- `slice_max(MONTHNUM, n = 1, by = CASEID)` keeps the last row of each union, the row that carries its outcome.
+- `d[d$P95 == 1, ]` keeps the rows in which `P95` is 1, the base-R way in which the analyst of Task 3 wrote it.
+- `prop.test(x = c(4, 195), n = c(5414, 18535))` compares two shares, here 4 of 5,414 against 195 of 18,535.
+- `"composition"`: options are text, so they go in quotes.
+- `# ...`: everything after `#` on a line is a comment, which R ignores. A `#` in front of an arrow of the graph switches it off.
+- `?prop.test` opens the help page of a function.
+- Ctrl+Enter (Cmd+Enter on a Mac) runs the current line, or the selected lines, in the console.
+- `quarto preview`, typed in the terminal, renders the report and opens it in a browser.
+
+------------------------------------------------------------------------
+
+## A stalled browser lab
+
+The browser lab runs R inside your browser tab, and browsers occasionally baulk. Work down this list. Each step is more certain than the one before, and step 4 puts your mark on the chart whatever your machine does.
+
+1. **Hard reload, then rerun.** Reload the page clearing the cache (Ctrl+Shift+R / Cmd+Shift+R), wait for R and the data to load again, and **rerun the cells above** the one that failed – the R engine in the browser needs the earlier cells to have run in this session before a later one will work.
+2. **Switch browser.** If a cell still will not run, open the browser lab in a different browser (Chrome, Edge or Firefox). A fresh browser clears most stubborn problems.
+3. **Follow the shared screen.** If your machine simply will not cooperate, watch the facilitator run the same cell on the shared screen and read the printed results from there. You miss no step by doing this.
+4. **Read your printed result to the facilitator.** If `submit_exploration()` or `report_result()` printed your result but the form link will not open, read the printed `b`, `se`, `t`, `df`, `n` and `r` to the facilitator, who adds the mark to the chart for you. If a cell refuses to run at all, nothing is printed and there are no numbers to read, so give the facilitator your six choices instead, and the facilitator reads the result off the curve file by hand (the note below).
+
+::: {.callout-note}
+## The by-hand lookup
+
+Last resort, facilitator-side, if the cells of a participant will not run at all: every specification on the curve is one row of `data/spec_curve.csv`, picked by its six codes (`cohorts`, `horizon`, `adjust`, `weights`, `time`, `model`), and the reference specification is the row in which `is_reference` is TRUE. Read off `b` and `se` (the form fields `b` and `se`, on the log scale), `stat` (the field `t`, with design-based errors), `df` (235 to 264, from the row), `n` (person-months) and `r`, and write the label as `explore: [tag] cohabitation cohorts=… horizon=… adjust=… weights=… time=… model=…`, or `declared:` for Task 5. Enter those into the [form]({{< var results-form-url >}}), and the mark appears without anything being fitted.
+:::
+
+------------------------------------------------------------------------
+
+## IDE quick fixes
+
+| If ... | Then ... |
+|---|---|
+| A package will not load, or `try_spec` is "not found" | Run the checker again – `source("R/check_setup.R")` – and run the install line that it prints; or install by hand, for example `pak::pak("dagitty")`. |
+| The `pak` install that `R/check_setup.R` prints stalls or half-finishes | Restart R (Session menu), then run the install again; a second pass usually completes what the first left. |
+| "Permission denied" while installing a package | Let R use a personal library that it can write to – accept the offer from R to create a personal library, then reinstall. |
+| A data file is "not found" | Check that you opened the unzipped **folder** in your IDE (File → Open Folder in Positron and VS Code; the `.Rproj` file in RStudio), not a single file – the paths in the code are relative to that folder. |
+| `check_score_file()` says that the file is missing or not the one that the analysts received | The file in `data/` has been changed or lost. Unzip a fresh copy of the workspace and copy `data/score_person_months.csv` across. |
+| `try_spec()` warns that the live fit differs from the curve | A file in `data/` has been edited. Copy `data/` from a fresh download of the workspace. |
+| Something not listed here | The [setup help page](../../help.qmd) has the longer table, with prompts to give an AI assistant. |
+| Everything is stuck | Open the [browser lab](lab.qmd) and carry on there. You lose nothing required. |
+
+------------------------------------------------------------------------
+
+## Rendering the report {#rendering-the-report}
+
+Render your report once your preregistration block is complete. The rendered copy carries the date on which it was rendered and keeps the declaration above the cells that fit the specification. In Positron and in RStudio, press the **Render** button at the top of the open report. In VS Code, run the Render command of the Quarto extension. In any of the three you can also run `quarto render index.qmd` in a terminal. On the browser lab page the same block is a cell on the page, and it updates in the tab when you run it.

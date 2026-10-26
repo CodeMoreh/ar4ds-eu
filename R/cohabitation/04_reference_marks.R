@@ -8,9 +8,10 @@
 #               file with its 1995 cohort rebuilt; the SCORE replication refitted
 #               on that file; and the reference specification on later cycles.
 # Reads:        cases/cohabitation/data/cohab_unions.csv,
-#               data-raw/cohabitation/multi100/multi100_kuo_extract.csv, and the
+#               data-raw/cohabitation/multi100/multi100_kuo_extract.csv, and
+#               cases/cohabitation/data/score_person_months.csv, the
 #               person-month file of SCORE (Estimation Data - Kuo (JWzJ).csv,
-#               osf.io/b6p3j), fetched once into data-raw/cohabitation/cache/
+#               osf.io/b6p3j), fetched from the OSF only if it is absent
 # Writes:       cases/cohabitation/data/analysts5.csv,
 #               cases/cohabitation/data/reference_marks.csv,
 #               cases/cohabitation/data/display_reproduction.csv
@@ -27,13 +28,14 @@ unions <- read_csv("cases/cohabitation/data/cohab_unions.csv", show_col_types = 
 
 # The file that SCORE built for its replication (component jkzdq of osf.io/u8x9s)
 # and that Multi100 linked as the original materials of the five analysts. Its
-# report says that all materials of the project may be shared publicly; it is
-# kept in the gitignored cache all the same, like the Multi100 file of the
-# immigration-and-trust case, and the workspace fetches it from the OSF.
+# report says that all materials of the project may be shared publicly, and it
+# is committed under a course name with its provenance in its codebook, so that
+# the workspace and the browser lab run the five analyses offline. The OSF copy
+# is fetched only when the committed file is missing; either must match the MD5
+# sum of the copy that the analysts received.
 SCORE_URL <- "https://osf.io/download/b6p3j/"
 SCORE_MD5 <- "2b656d3814d273f4a93e29bc4f0139ef"
-score_path <- "data-raw/cohabitation/cache/Estimation Data - Kuo (JWzJ).csv"
-dir.create(dirname(score_path), showWarnings = FALSE, recursive = TRUE)
+score_path <- "cases/cohabitation/data/score_person_months.csv"
 if (!file.exists(score_path)) download.file(SCORE_URL, score_path, mode = "wb", quiet = TRUE)
 stopifnot(unname(tools::md5sum(score_path)) == SCORE_MD5)
 score <- read_csv(score_path, show_col_types = FALSE)
