@@ -5,7 +5,9 @@
 #               shares that married or separated within three years, the change
 #               for each group in the interaction models of the paper, the
 #               off-curve options at the reference settings, the rules of
-#               inference, and the cohorts of the SCORE file against the rebuild.
+#               inference, and the cohorts of the SCORE file against the rebuild;
+#               and the tables from which the browser lab reads Task 2 and the
+#               parts of Task 3 that need the union file.
 # Reads:        cases/cohabitation/data/cohab_unions.csv,
 #               cases/cohabitation/data/score_person_months.csv (the person-month
 #               file of SCORE, checked by stage 04)
@@ -14,7 +16,10 @@
 #               cases/cohabitation/data/display_subgroups.csv,
 #               cases/cohabitation/data/display_options.csv,
 #               cases/cohabitation/data/display_inference.csv,
-#               cases/cohabitation/data/display_score_file.csv
+#               cases/cohabitation/data/display_score_file.csv, and lab_cycles.csv,
+#               lab_outcomes.csv, lab_composition.csv, lab_example.csv,
+#               lab_months.csv, lab_married.csv, lab_score_check.csv and
+#               lab_repaired.csv in cases/cohabitation/data/
 # Author:       Claude for CM
 # Last updated: 2026-10-26
 ################################################################################
@@ -165,3 +170,108 @@ rebuilt_cycles <- unions |>
 
 # r-style: keep – datawizard::data_write() writes other bytes than readr
 readr::write_csv(dplyr::bind_rows(score_cycles, rebuilt_cycles), "cases/cohabitation/data/display_score_file.csv")
+
+# ---- The tables of the browser lab ---------------------------------------------
+# The browser lab of the case fits nothing: every number of its Task 2, and of
+# the two parts of Task 3 that need the union file, is read from the tables
+# below, each the object that the code of the workspace report produces, run
+# here on the same files with the same code, so that the lab and the workspace
+# give the same numbers. The lab reproduces 5X3KG and counts the unions of the
+# person-month file live, on the file itself.
+
+# The unions of each survey, and the unions of the paper by how they ended
+lab_cycles <- datawizard::data_summary(unions, unions = n(), by = "cycle")
+lab_paper_unions <- spec_unions(unions)
+lab_outcomes <- datawizard::data_summary(lab_paper_unions, unions = n(), by = c("cycle", "outcome"))
+
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_cycles, "cases/cohabitation/data/lab_cycles.csv")
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_outcomes, "cases/cohabitation/data/lab_outcomes.csv")
+
+# Weighted shares of Hispanic and Black women and of graduates, and the mean
+# age at which the couple moved in
+lab_composition <- lab_paper_unions |>
+  datawizard::data_summary(unions    = n(),
+                           hispanic  = round(100 * stats::weighted.mean(race == "hispanic", weight), 1),
+                           black     = round(100 * stats::weighted.mean(race == "black", weight), 1),
+                           college   = round(100 * stats::weighted.mean(educ == "college", weight), 1),
+                           mean_age  = round(stats::weighted.mean(age_start, weight), 1),
+                           by = "cycle")
+
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_composition, "cases/cohabitation/data/lab_composition.csv")
+
+# The months of one union of 1995 that became a marriage in its third month,
+# and every month of every union of the paper by how it ended
+lab_example <- lab_paper_unions |>
+  datawizard::data_filter(cycle == "1995", outcome == "marriage", duration == 2) |>
+  utils::head(1) |>
+  person_months() |>
+  datawizard::data_select(c("cycle", "caseid", "month", "y"))
+lab_months <- spec_frame(unions) |>
+  datawizard::data_summary(months = n(), by = "y")
+
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_example, "cases/cohabitation/data/lab_example.csv")
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_months, "cases/cohabitation/data/lab_months.csv")
+
+# The share of each cohort that had married by the end of each month, from the
+# Aalen-Johansen estimator of survival::survfit() with marriage and separation
+# as competing outcomes and an intact union censored at the interview
+# (Therneau and Grambsch 2000): the data of the figure of Task 2
+lab_life <- lab_paper_unions |>
+  datawizard::data_modify(months = duration + 1,
+                          ended = factor(outcome, levels = c("intact", "marriage", "separation")),
+                          cohort = factor(later, levels = 0:1, labels = c("begun 1990–1995", "begun 2005–2010")))
+lab_fit <- survival::survfit(survival::Surv(months, ended) ~ cohort, data = lab_life, weights = weight)
+lab_steps <- summary(lab_fit, times = 1:61)
+lab_married <- tibble::tibble(cohort = sub("cohort=", "", lab_steps$strata), month = lab_steps$time,
+                              married = lab_steps$pstate[, lab_fit$states == "marriage"])
+
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_married, "cases/cohabitation/data/lab_married.csv")
+
+# Task 3: which of the 929 unions of 1995 in the window of the paper are in the
+# person-month file, one row per union of the file taken from its last month
+lab_score_unions <- score |>
+  datawizard::data_filter(P95 == 1 | P10 == 1) |>
+  dplyr::slice_max(MONTHNUM, n = 1, by = CASEID) |>
+  datawizard::data_modify(survey = dplyr::if_else(P95 == 1, "1995", "2006-2010"),
+                          outcome = c("intact", "marriage", "separation")[OUTCOME])
+lab_score_check <- lab_paper_unions |>
+  datawizard::data_filter(cycle == "1995") |>
+  datawizard::data_modify(in_score_file = caseid %in% as.character(lab_score_unions$CASEID)) |>
+  datawizard::data_summary(unions = n(), by = c("outcome", "in_score_file"))
+
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_score_check, "cases/cohabitation/data/lab_score_check.csv")
+
+# Task 3, the optional extension: the months of the file in its own
+# conventions with the 1995 rows rebuilt from the 929 unions of the paper (an
+# intact union contributes as many months as it lasted and a union that ended
+# one more, with its outcome in the last), beside the months of 2006-2010 from
+# the file, and how many of each record a marriage; the lab runs the test of
+# two proportions on these counts
+lab_1995 <- lab_paper_unions |>
+  datawizard::data_filter(cycle == "1995") |>
+  datawizard::data_modify(MONTHNUM = duration + (outcome != "intact"),
+                          ended = factor(outcome, levels = c("intact", "marriage", "separation")))
+lab_rebuilt <- lab_1995 |>
+  survival::survSplit(cut = seq_len(max(lab_1995$MONTHNUM) - 1), end = "MONTHNUM", event = "ended") |>
+  datawizard::data_modify(OUTCOME = as.integer(ended), P95 = 1, P10 = 0) |>
+  datawizard::data_select(c("OUTCOME", "P95", "P10"))
+lab_rows_2010 <- score |>
+  datawizard::data_filter(P10 == 1) |>
+  datawizard::data_select(c("OUTCOME", "P95", "P10"))
+lab_repaired <- dplyr::bind_rows(lab_rebuilt, lab_rows_2010)
+lab_repaired_counts <- tibble::tibble(
+  survey = c("1995 (rebuilt)", "2006-2010"),
+  marriages = c(sum(lab_repaired$P95 == 1 & lab_repaired$OUTCOME == 2),
+                sum(lab_repaired$P10 == 1 & lab_repaired$OUTCOME == 2)),
+  months = c(sum(lab_repaired$P95), sum(lab_repaired$P10))
+)
+
+# r-style: keep – datawizard::data_write() writes other bytes than readr
+readr::write_csv(lab_repaired_counts, "cases/cohabitation/data/lab_repaired.csv")

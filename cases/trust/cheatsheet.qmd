@@ -32,20 +32,20 @@ format:
 
 ## The helpers {#helpers}
 
-The downloadable workspace and the browser lab have the same helpers, with the same names and arguments, and both fit every specification of the menu live. The workspace fits one in well under a second, the browser lab in about a second.
+The downloadable workspace and the browser lab have the same helpers, with the same names and arguments, and they print the same lines. The workspace fits every specification of the menu live, in well under a second, and asks dagitty about the graph. The browser lab is a demonstration that fits nothing: it reads each result from the curve, and each answer about the graph from a table of the answers of dagitty, both computed by the course pipeline.
 
 | Helper | Task | What it does |
 |---|---|---|
 | `make_dag(...)`, `plot_dag(dag)` | 2 | Builds the causal graph from arrows written `"cause -> effect"`, one per string, and draws it. |
-| `adjustmentSets(dag)` | 2 | Lists what has to be held constant to estimate the effect of concern about immigration on distrust. |
+| `adjustmentSets(dag)` | 2 | Lists what has to be held constant to estimate the effect of concern about immigration on distrust. In the workspace these three functions are those of dagitty; in the browser lab they print the stored answers of dagitty for the graphs that its cell offers. |
 | `paths(dag, Z = ...)` | 2 | Lists every path between concern and distrust, and whether each is open once the comparison holds the variables in `Z` constant. |
 | `isAdjustmentSet(dag, ...)` | 2 | Says whether one set of controls, such as the controls of the paper, closes every confounding path without opening another. |
 | `fetch_multi100()` | 3 | Workspace only: downloads the file that Multi100 gave the analysts from the OSF, once, into `data_private/`, and checks it. |
-| `try_spec(...)` | 4 | Fits one specification and prints the estimate in points of distrust per point of concern with its 95% interval, the *t* test with errors clustered by country, the conventional *t*, the respondents analysed, the partial *r*, the class of the result and its place among the 192 specifications on the curve. |
-| `my_experiments()` | 4 | Prints everything that `try_spec()` has fitted so far, side by side, with only the decisions that varied. |
+| `try_spec(...)` | 4 | Fits one specification (the browser lab reads it from the curve) and prints the estimate in points of distrust per point of concern with its 95% interval, the *t* test with errors clustered by country, the conventional *t*, the respondents analysed, the partial *r*, the class of the result and its place among the 192 specifications on the curve. |
+| `my_experiments()` | 4 | Prints everything that `try_spec()` has returned so far, side by side, with only the decisions that varied. |
 | `submit_exploration()` | 4 | Sends the last `try_spec()` to the class chart as an exploratory result, an open circle, and prints the pre-filled form link and your tag. |
 | `my_spec <- prereg()` | 5 | Checks the twelve `my_*` choices of the preregistration block against the menu, prints the block with its estimand statement, and keeps it as `my_spec`. |
-| `run_spec(my_spec)` | 5 | Fits the declared specification and prints the same lines as `try_spec()`. It refuses to run if the block has changed since `prereg()`. |
+| `run_spec(my_spec)` | 5 | Fits the declared specification (the browser lab reads it from the curve) and prints the same lines as `try_spec()`. It refuses to run if the block has changed since `prereg()`. |
 | `report_result()` | 5 | Sends the declared result to the class chart, a filled circle, with the same tag as your exploratory result. |
 
 Both submission functions take `nickname = "..."`, which replaces the tag that they draw for you, such as `amber-otter-42`. Use a nickname rather than your name, because the chart is public.
@@ -88,7 +88,7 @@ The [specification menu](menu.qmd) explains every option, and the [decision map]
 The target is the value that Multi100 recorded for analyst 6U3LL: **t = 46.625** on 72,733 respondents, from the three-level model of Table 3 of the paper without the unemployment rate, fitted with random intercepts for countries and country-rounds.
 
 - **In the workspace**, `fetch_multi100()` downloads the file of the analysts from the OSF (29 MB, once), and the chunk of Task 3 fits the model with `lme4::lmer()`. Run it once at home while online, so that the file is in place on the day. Offline, the report renders everything except this task.
-- **In the browser lab**, the file cannot be fetched, because the OSF does not let a page on another website read it. The lab fits the closest specification of the course to the course data instead, `fit_spec(ess, items = "available")`, which gives 0.174.
+- **In the browser lab**, the file cannot be fetched, because the OSF does not let a page on another website read it. The lab shows the reproduction as the course pipeline computed it with the code of the workspace, *t* = 46.625, beside that code, and reads the closest specification of the course on the course data from the curve, which gives 0.174.
 
 ------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ You submit twice, and the two submissions are different in kind.
 **Task 5 – the declared mark (filled circle).** Here you preregister one specification before you run it.
 
 4. **Preregister.** Make one choice for every `my_` line of the preregistration block, complete the dotted lines, and run the block, which ends in `my_spec <- prereg()`. The completed block is your preregistration. In the workspace, keep it in the report as set out under [Rendering the report](#rendering-the-report); on the browser lab page, copy the whole cell into your notes.
-5. **`run_spec(my_spec)`** – fits your specification and prints its result and its place on the curve.
+5. **`run_spec(my_spec)`** – fits your specification (in the browser lab, reads it from the curve) and prints its result and its place on the curve.
 6. **`report_result()`** – builds your submission from the preregistration and prints a pre-filled form link; open it and press **Send**. It reuses your tag from Task 4. In the browser lab, if you have reloaded the page since then, pass the tag back with `report_result(nickname = "your-tag")`.
 
 If any of that stalls, work down the list under [A stalled browser lab](#a-stalled-browser-lab) in the browser lab, or the [IDE quick fixes](#ide-quick-fixes) in the workspace.
@@ -134,9 +134,9 @@ If any of that stalls, work down the list under [A stalled browser lab](#a-stall
 
 ## A stalled browser lab
 
-The browser lab runs R inside your browser tab, and browsers occasionally baulk. Work down this list. Each step is more certain than the one before, and step 4 puts your mark on the chart whatever your machine does.
+The browser lab runs R inside your browser tab, reading the results of the course from small tables, and browsers occasionally baulk. Work down this list. Each step is more certain than the one before, and step 4 puts your mark on the chart whatever your machine does.
 
-1. **Hard reload, then rerun.** Reload the page clearing the cache (Ctrl+Shift+R / Cmd+Shift+R), wait for R and the ESS extract to load again, and **rerun the cells above** the one that failed – the R engine in the browser needs the earlier cells to have run in this session before a later one will work.
+1. **Hard reload, then rerun.** Reload the page clearing the cache (Ctrl+Shift+R / Cmd+Shift+R), wait for R and the tables of the course to load again, and **rerun the cells above** the one that failed – the R engine in the browser needs the earlier cells to have run in this session before a later one will work.
 2. **Switch browser.** If a cell still will not run, open the browser lab in a different browser (Chrome, Edge or Firefox). A fresh browser clears most stubborn problems.
 3. **Follow the shared screen.** If your machine simply will not cooperate, watch the facilitator run the same cell on the shared screen and read the printed results from there. You miss no step by doing this.
 4. **Read your printed result to the facilitator.** If `submit_exploration()` or `report_result()` printed your result but the form link will not open, read the printed `b`, `se`, `t`, `df`, `n` and `r` to the facilitator, who adds the mark to the chart for you. If a cell refuses to run at all, nothing is printed and there are no numbers to read, so give the facilitator your five choices instead, and the facilitator reads the result off the curve file by hand (the note below).
@@ -160,7 +160,7 @@ Last resort, facilitator-side, if the cells of a participant will not run at all
 | Task 3 says that the file could not be downloaded | Check the internet connection and run the chunk again. If the network of the venue blocks the OSF, carry on with Task 4: the rest of the report does not need the file. |
 | lme4 warns that "some predictor variables are on very different scales" | Nothing to fix: GDP per head runs into tens of thousands while the attitudes run from 0 to 10, and the analyst met the same warning. |
 | Something not listed here | The [setup help page](../../help.qmd) has the longer table, with prompts to give an AI assistant. |
-| Everything is stuck | Open the [browser lab](lab.qmd) and carry on there. You lose nothing required. |
+| Everything is stuck | Open the [browser lab](lab.qmd) and follow the tasks there: it shows every result and sends both of your submissions, though it cannot fit a specification of your own. |
 
 ------------------------------------------------------------------------
 

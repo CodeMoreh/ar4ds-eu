@@ -4,10 +4,13 @@
 #               fitted once at the reference settings, the inference of the
 #               reference specification under several rules, the estimate with
 #               each country left out, the reliability of the two scales, and the
-#               country-round means behind the between-country picture.
+#               country-round means behind the between-country picture; and the
+#               tables from which the browser lab reads Task 2: its counts,
+#               distributions and country means.
 # Reads:        cases/trust/data/trust_ess.csv
 # Writes:       cases/trust/data/display_options.csv, display_inference.csv,
-#               display_loo.csv, display_reliability.csv, display_country_means.csv
+#               display_loo.csv, display_reliability.csv, display_country_means.csv,
+#               lab_counts.csv, lab_distribution.csv, lab_countries.csv
 #               (all in cases/trust/data/)
 # Author:       Claude for CM
 # Last updated: 2026-10-26
@@ -167,3 +170,38 @@ display_country_means <- paper_sample |>
   datawizard::data_arrange(c("cntry", "essround"))
 
 readr::write_csv(display_country_means, "cases/trust/data/display_country_means.csv")
+
+# ---- The tables of the browser lab ---------------------------------------------
+# The browser lab of the case fits nothing: every number of its Task 2 is read
+# from the tables below, each the object that the code of Task 2 of the
+# workspace report produces, run here on the same file with the same code, so
+# that the lab and the workspace give the same numbers. Cronbach's alpha of
+# the task is the pooled row of display_reliability.csv.
+
+# The counts of the extract and of the sample of the paper
+lab_counts <- ess |>
+  datawizard::data_summary(respondents    = n(),
+                           countries      = dplyr::n_distinct(cntry),
+                           country_rounds = dplyr::n_distinct(paste(cntry, essround)),
+                           paper_sample   = sum(citizen %in% 1 & minority %in% 0))
+
+# readr writes the bytes of the committed files; datawizard::data_write() does not
+readr::write_csv(lab_counts, "cases/trust/data/lab_counts.csv")
+
+# The sample of the paper with concern as the mean of the three items, every
+# item answered; the distributions of the three outcomes and of concern; and
+# the means and the correlation within each of the 16 countries
+lab_paper <- ess |>
+  datawizard::data_filter(citizen == 1, minority == 0) |>
+  dplyr::mutate(concern = datawizard::row_means(dplyr::pick(imm_econ, imm_culture, imm_place),
+                                                min_valid = 3))
+lab_distribution <- lab_paper |>
+  datawizard::describe_distribution(select = c("distrust_parl", "distrust_pol", "distrust_legal", "concern"))
+readr::write_csv(lab_distribution, "cases/trust/data/lab_distribution.csv")
+
+lab_countries <- lab_paper |>
+  datawizard::data_summary(r_within      = stats::cor(concern, distrust_parl, use = "complete.obs"),
+                           concern       = mean(concern, na.rm = TRUE),
+                           distrust_parl = mean(distrust_parl, na.rm = TRUE),
+                           by = "cntry")
+readr::write_csv(lab_countries, "cases/trust/data/lab_countries.csv")

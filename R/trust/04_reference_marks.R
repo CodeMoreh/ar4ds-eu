@@ -6,13 +6,15 @@
 #               gave the analysts and checked against their recorded values, and
 #               the two SCORE replications on later ESS rounds. Also refits the
 #               model of the SCORE reproduction (osf.io/jp7tr) on the course
-#               extract, the reproduction target of the case.
+#               extract, the reproduction target of the case, and writes the
+#               results that Task 3 of the browser lab shows.
 # Reads:        cases/trust/data/trust_ess.csv, cases/trust/data/trust_macro.csv,
 #               data-raw/trust/multi100/multi100_mclaren_extract.csv, and the
 #               Multi100 analysis file (McLaren_SRD_final_data.csv, osf.io/e48gd),
 #               fetched once into data-raw/trust/cache/
 # Writes:       cases/trust/data/analysts5.csv, cases/trust/data/reference_marks.csv,
-#               cases/trust/data/display_reproduction.csv
+#               cases/trust/data/display_reproduction.csv,
+#               cases/trust/data/lab_reproduction.csv
 # Author:       Claude for CM
 # Last updated: 2026-10-26
 ################################################################################
@@ -212,7 +214,7 @@ reproduction <- dplyr::bind_rows(
   repro_row(repro_all, "course_repro_60",
             "The same model on all 60 country-rounds of the course extract, the Italian round 2 included."),
   fe_row(ref_fe_59, "course_reference_fe_59",
-         "The reference specification of the curve on the respondents of the SCORE reproduction (no Italian round 2): fixed effects for country-round, errors clustered by country (t on 15 df); the browser lab can fit it."),
+         "The reference specification of the curve on the respondents of the SCORE reproduction (no Italian round 2): fixed effects for country-round, errors clustered by country (t on 15 df); Task 3 of the browser lab shows it."),
   fe_row(ref_fe, "course_reference_fe",
          "The reference specification of the curve: fixed effects for country-round, errors clustered by country (t on 15 df).")
 )
@@ -246,3 +248,42 @@ marks <- dplyr::bind_rows(
 )
 
 readr::write_csv(marks, "cases/trust/data/reference_marks.csv", na = "")
+
+# The table of Task 3 of the browser lab, which cannot fetch the file of the
+# analysts (the OSF does not let a page on another site read it): the model of
+# 6U3LL as the workspace fits it with lme4 (the fit that lmerTest wraps) and
+# reads it with the defaults of parameters; the same individual-level model
+# with fixed effects for country-round, as the workspace fits it with fixest;
+# and the reference specification of the curve on the respondents of the
+# SCORE reproduction, without the Italian round 2, with its conventional t.
+# The lme4 row is kept to six significant digits, the precision that is
+# stable from run to run.
+lab_6u3ll <- methods::as(fit_6u3ll, "lmerMod")
+lab_6u3ll_coef <- parameters::model_parameters(lab_6u3ll, effects = "fixed", keep = "^im_conc$")
+lab_6u3ll_groups <- lme4::ngrps(lab_6u3ll)
+lab_fe <- fixest::feols(
+  trstprl_r ~ im_conc + happy_r + stflife_r + sclmeet_r + distrust + stfeco_r + hincfel +
+    stfhlth_r + stfedu_r + winner + far_right + lrscale + hhinc_std + agea + edulvla + female |
+    country_round,
+  data = srd, vcov = "iid")
+lab_fe_coef <- parameters::model_parameters(lab_fe, keep = "^im_conc$")
+
+lab_reproduction <- dplyr::bind_rows(
+  tibble::tibble(id = "6U3LL", model = "random intercepts for country and country-round (lme4), the file of the analysts",
+                 b = signif(lab_6u3ll_coef$Coefficient, 6), se = signif(lab_6u3ll_coef$SE, 6),
+                 ci_low = signif(lab_6u3ll_coef$CI_low, 6), ci_high = signif(lab_6u3ll_coef$CI_high, 6),
+                 t = signif(lab_6u3ll_coef$t, 6), df = lab_6u3ll_coef$df_error, p = lab_6u3ll_coef$p,
+                 n = stats::nobs(lab_6u3ll), country_rounds = lab_6u3ll_groups[["country_round"]],
+                 countries = lab_6u3ll_groups[["cntry"]]),
+  tibble::tibble(id = "6U3LL_fe", model = "fixed effects for country-round (fixest), conventional errors, the file of the analysts",
+                 b = lab_fe_coef$Coefficient, se = lab_fe_coef$SE, ci_low = lab_fe_coef$CI_low,
+                 ci_high = lab_fe_coef$CI_high, t = lab_fe_coef$t, df = lab_fe_coef$df_error, p = lab_fe_coef$p,
+                 n = stats::nobs(lab_fe), country_rounds = lab_fe$fixef_sizes[["country_round"]]),
+  tibble::tibble(id = "course_no_it2", model = "the reference specification of the curve without the Italian round 2, errors clustered by country",
+                 b = ref_fe_59$b, se = ref_fe_59$se, ci_low = ref_fe_59$ci_low, ci_high = ref_fe_59$ci_high,
+                 t = ref_fe_59$stat, df = ref_fe_59$df, p = ref_fe_59$p, n = ref_fe_59$n,
+                 country_rounds = ref_fe_59$n_country_rounds, countries = ref_fe_59$n_clusters,
+                 t_conv = ref_fe_59$t_conv)
+)
+
+readr::write_csv(lab_reproduction, "cases/trust/data/lab_reproduction.csv", na = "")

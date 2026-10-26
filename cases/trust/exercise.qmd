@@ -20,13 +20,13 @@ an <- \(id, col) analysts[[col]][analysts$id == id]
 ref <- datawizard::data_filter(curve, is_reference)
 n_paper <- sum(ess$citizen %in% 1 & ess$minority %in% 0)
 # the specification of the course closest to the model of 6U3LL, which the
-# browser lab fits in place of the reproduction
+# browser lab reads from the curve beside the reproduction
 analogue <- curve |>
   datawizard::data_filter(outcome == "parliament", controls == "paper", weights == "none",
                           items == "available", fe == "country_round")
 ```
 
-This page sets out the whole exercise of the course on the immigration-and-trust case. The [case study](index.qmd) presents the original study, the SCORE reproductions and replications and the five Multi100 reanalyses, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation and as a fallback, and it gives the same numbers, apart from the reproduction of Task 3, for which it fits the nearest analysis that it can. The page of your track gives the timing of each task.
+This page sets out the whole exercise of the course on the immigration-and-trust case. The [case study](index.qmd) presents the original study, the SCORE reproductions and replications and the five Multi100 reanalyses, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) is a demonstration of the same exercise in a browser tab: it fits no model, and shows every result as the course pipeline computed it with the code of the workspace, beside that code, so it gives the same numbers. It serves for following a demonstration and for submitting to the class chart if your machine fails; to fit a specification yourself, use the workspace. The page of your track gives the timing of each task.
 
 ---
 
@@ -69,7 +69,7 @@ The exercise runs as five numbered tasks. Each says what to do in the workspace 
 
 ### Task 1 – The setup check
 
-The only aim is to reach the point where a line of R runs and the data are in front of you. *Workspace:* open the workspace folder in your IDE and run `source("R/check_setup.R")`, which prints OK when everything is in place and otherwise says what is missing. Its last check fits the reference specification of the course, which must come out at `r fmt(ref$b, 4)` points of distrust per point of concern. While you are online, also run `source("R/spec_tools.R"); fetch_multi100()` once, which downloads the file of Task 3. *Browser lab:* wait for the engine and the ESS extract (about 10 MB) to finish downloading, then run the setup cell. If your installation will not cooperate, carry on in the browser lab, which runs every later task.
+The only aim is to reach the point where a line of R runs and the data are in front of you. *Workspace:* open the workspace folder in your IDE and run `source("R/check_setup.R")`, which prints OK when everything is in place and otherwise says what is missing. Its last check fits the reference specification of the course, which must come out at `r fmt(ref$b, 4)` points of distrust per point of concern. While you are online, also run `source("R/spec_tools.R"); fetch_multi100()` once, which downloads the file of Task 3. *Browser lab:* wait for the engine and the tables of the course to finish downloading, then run the setup cell, which reads two of them. If your installation will not cooperate, you can follow every later task in the browser lab and still send both results to the class chart, but you cannot fit a specification of your own there.
 
 ### Task 2 – The data, the estimand and the graph
 
@@ -77,13 +77,13 @@ First, meet the data in `trust_ess.csv` ([codebook](data/trust_ess_codebook.md))
 
 Second, write the **estimand statement** behind the claim. It says whose distrust is compared, which institution it concerns, how concern is measured and what the comparison holds constant. The [specification menu](menu.qmd#estimand) gives the template.
 
-Third, finish the **causal graph**. Age, sex, education and income, a pessimistic outlook and political ideology can each shape both concern about immigration and distrust of politics, which makes them possible confounders. A vote for a far-right party and the verdicts on the economy and on public services may follow from concern, from distrust or from both. The graph shows which of these the comparison should hold constant, and why holding constant all the controls of the paper can open paths that were closed. It also shows what no set of controls can do, which is to tell an effect of concern on distrust from an effect of distrust on concern, the doubt that analyst FQ1G7 raised. The workspace draws the graph with dagitty, and the browser lab gives the same answers with graph code of its own when the browser cannot run dagitty.
+Third, finish the **causal graph**. Age, sex, education and income, a pessimistic outlook and political ideology can each shape both concern about immigration and distrust of politics, which makes them possible confounders. A vote for a far-right party and the verdicts on the economy and on public services may follow from concern, from distrust or from both. The graph shows which of these the comparison should hold constant, and why holding constant all the controls of the paper can open paths that were closed. It also shows what no set of controls can do, which is to tell an effect of concern on distrust from an effect of distrust on concern, the doubt that analyst FQ1G7 raised. The workspace asks dagitty, the R package for causal graphs, and draws the graph with tinyplot. dagitty cannot run in a browser tab, so the browser lab prints the answers that dagitty gives for every graph that its cell offers, read from a table that the course computed with dagitty.
 
 ### Task 3 – The reproduction
 
 Reproduce the value that Multi100 recorded for analyst 6U3LL, **t = `r fmt(an("6U3LL", "statistic_recorded"), 3)` on `r big(an("6U3LL", "n_recorded"))` respondents**, from the file that Multi100 gave the analysts, the file that the SCORE reproduction osf.io/e48gd built from the ESS. *Workspace:* `fetch_multi100()` downloads the file from the OSF into `data_private/` (29 MB) and checks it against its MD5 sum; the file holds person-level survey data, so the workspace does not ship it, and git leaves the folder out. Fit the model of Table 3 of the paper without the unemployment rate, a three-level model with random intercepts for countries and country-rounds, with `lme4::lmer()`. When the facilitator says so, the whole class types its *t* and sends it at the same moment. *Optional extension:* reproduce N8P2J, the full model of Table 3, t = 42.148 on `r big(an("N8P2J", "n_refit"))` respondents, and find out why it loses the Swiss respondents.
 
-Then find out what the number depends on. An intercept for every country-round in place of the random intercepts gives almost the same coefficient on the same file, so the model is not what matters. The same specification on the course extract gives `r fmt(analogue$b, 3)` on `r big(analogue$n)` respondents against `r fmt(an("6U3LL", "b_refit"), 3)` on the file of the analysts, because the two files code several variables differently, the vote controls among them, as the [case study](index.qmd#sec-analyst-file) explains. *Browser lab:* the OSF does not give a page on another website permission to read the file, and the course cannot host a copy of its own, so the lab fits that analogue on the course extract instead, with the reason stated.
+Then find out what the number depends on. An intercept for every country-round in place of the random intercepts gives almost the same coefficient on the same file, so the model is not what matters. The same specification on the course extract gives `r fmt(analogue$b, 3)` on `r big(analogue$n)` respondents against `r fmt(an("6U3LL", "b_refit"), 3)` on the file of the analysts, because the two files code several variables differently, the vote controls among them, as the [case study](index.qmd#sec-analyst-file) explains. *Browser lab:* the OSF does not give a page on another website permission to read the file, and the course cannot host a copy of its own, so the lab shows the reproduction as the course pipeline computed it with the code of the workspace, beside that code, and reads the analogue on the course extract from the curve.
 
 ### Task 4 – The menu
 
@@ -107,7 +107,7 @@ A result counts for the class chart if it is one of the `r nrow(curve)` specific
 
 ## Links
 
-- [Browser lab](lab.qmd) – the whole exercise and its data in a browser tab.
+- [Browser lab](lab.qmd) – a demonstration of the whole exercise in a browser tab, with every result computed by the course pipeline.
 - [Setup](../../setup.qmd) – installing R and an IDE, and downloading the workspace.
 - [Specification menu](menu.qmd) – the decisions of the analysis, grouped by level, with the options that the curve keeps and the reasons for the ones that it does not.
 - [Decision map](map.qmd) – every decision in the order in which an analyst meets it; selecting an option rewrites the estimand statement and shows the result.

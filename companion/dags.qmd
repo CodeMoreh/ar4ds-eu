@@ -17,9 +17,8 @@ fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", r
 out <- \(o, cn, col) outcomes[[col]][outcomes$outcome == o & outcomes$contrast == cn]
 
 # A causal graph drawn from the coordinates stored in a dagitty object, with
-# ggplot2 alone, so that the same code runs where ggdag is not installed (the
-# browser lab). Observed nodes are filled boxes, latent ones outlined; arrows
-# are shortened at both ends so that they stop at the boxes.
+# ggplot2 alone, without ggdag. Observed nodes are filled boxes, latent ones
+# outlined; arrows are shortened at both ends so that they stop at the boxes.
 dag_plot <- function(g, gap = 0.3) {
   xy <- dagitty::coordinates(g)
   nodes <- tibble::tibble(name = names(xy$x), x = unname(xy$x), y = unname(xy$y)) |>

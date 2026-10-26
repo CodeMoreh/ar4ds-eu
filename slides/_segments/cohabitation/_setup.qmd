@@ -16,9 +16,11 @@ data_dir <- "../cases/cohabitation/data"
 # The addresses of the case, which the shared segments print. The record of
 # Multi100 lists a source-data reproduction for this paper, so it is not one
 # of the nine papers whose reproduction was never attempted, and the SCORE
-# slide of Part 1 must not say that it is.
+# slide of Part 1 must not say that it is. The browser lab of the case is a
+# demonstration, which fits no model before Task 3, and the shared slides on
+# the lab say so.
 case_vars <- yaml::read_yaml("../_variables.yml")$cases$cohabitation |>
-  c(list(`multi100-repro-never-attempted` = FALSE))
+  c(list(`multi100-repro-never-attempted` = FALSE, `lab-demonstration` = TRUE))
 
 # The unions rebuilt from the NSFG, and the unions of the paper: begun no more
 # than five years before the interview, lasting at least a month, and in

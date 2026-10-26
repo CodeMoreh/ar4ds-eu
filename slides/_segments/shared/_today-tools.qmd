@@ -16,9 +16,9 @@
 **The browser lab**
 
 - One web page. R is compiled to run **inside the browser**
-- Nothing installed, nothing to break, data already in place
-- The same tasks, data and helpers, on the shared screen and in your own tab
-- The fallback if your installation misbehaves at any point
+- Nothing installed, nothing to break, `r if (isTRUE(case_vars[["lab-demonstration"]])) "the results already computed" else "data already in place"`
+- `r if (isTRUE(case_vars[["lab-demonstration"]])) "A demonstration: the same tasks and helpers, every result computed by the course pipeline with the code of the workspace" else "The same tasks, data and helpers, on the shared screen and in your own tab"`
+- `r if (isTRUE(case_vars[["lab-demonstration"]])) "The fallback for following the tasks and submitting if your installation misbehaves" else "The fallback if your installation misbehaves at any point"`
 :::
 :::
 ::::
@@ -28,7 +28,7 @@
 :::
 
 ::: notes
-This is what you will actually be working in. The workspace is the folder you downloaded, open in your IDE, which is Positron on my screen and may be RStudio or VS Code on yours. Quarto renders your report, R fits every model live, and there is no git and no cloning because it is just a folder of files. That is what I will be driving on the shared screen, so you can follow keystroke for keystroke. The browser lab is one web page with R compiled to run inside the browser itself. Nothing installed, nothing to break, and the data are already there. Every task exists in both, with the same data and the same helper functions, so if your machine misbehaves you can carry on in the browser lab and come back to the workspace later. The address for the workspace zip is at the bottom, and it is on the setup page in the chat.
+This is what you will actually be working in. The workspace is the folder you downloaded, open in your IDE, which is Positron on my screen and may be RStudio or VS Code on yours. Quarto renders your report, R fits every model live, and there is no git and no cloning because it is just a folder of files. That is what I will be driving on the shared screen, so you can follow keystroke for keystroke. The browser lab is one web page with R compiled to run inside the browser itself. `r if (isTRUE(case_vars[["lab-demonstration"]])) "For this case it is a demonstration: it fits nothing, and shows every result as our pipeline computed it with the code of the workspace, next to that code. Every task exists in both, with the same numbers, so if your machine misbehaves you can follow along there, still send your results to the class chart, and come back to the workspace later." else "Nothing installed, nothing to break, and the data are already there. Every task exists in both, with the same data and the same helper functions, so if your machine misbehaves you can carry on in the browser lab and come back to the workspace later."` The address for the workspace zip is at the bottom, and it is on the setup page in the chat.
 :::
 
 ## What the tools cannot do {.smaller}

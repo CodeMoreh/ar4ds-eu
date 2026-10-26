@@ -8,17 +8,18 @@ format:
     webr:
       packages:
         - datawizard
-        - dplyr
         - purrr
         - tinyplot
-        - fixest
-        - parameters
-        - effectsize
         - htmltools
 resources:
-  - data/trust_ess.csv
   - data/spec_curve.csv
   - data/menu_options.csv
+  - data/lab_counts.csv
+  - data/lab_distribution.csv
+  - data/lab_countries.csv
+  - data/display_reliability.csv
+  - data/dag_answers.csv
+  - data/lab_reproduction.csv
 live:
   show-hints: true
   show-solutions: true
@@ -27,39 +28,28 @@ bibliography: [../../references.bib, ../../references-new.bib]
 
 {{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
 
-This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. The facilitator drives it on the shared screen, and it is the fallback for a machine that will not cooperate on the day. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page, and nothing done here is wasted, since both fit the same models to the same data and give the same numbers. The one exception is the reproduction of Task 3, which needs a file that a browser page cannot fetch; the task says why, and what the page does instead.
+This page is a demonstration lab: it walks through the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, but it fits no model. Every result on it was computed by the course pipeline with the code of the downloadable workspace, and the page reads it from small tables, so the page and the workspace give the same numbers. Each result sits beside the code of the workspace that produces it, shown as a block that does not run here. The facilitator uses the page on the shared screen to walk through the tasks, and if your machine fails on the day you can follow the tasks here and still send your two results to the class chart. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page, which fits every model live; to fit a model yourself, or to try a specification or a causal graph that this page does not hold, use the workspace.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
 
-The R engine and the ESS extract (about 10 MB) download into your browser the first time you open this page, which can take up to a minute on a slow connection. Read Task 1 while they load. You will know that the page is ready when the first code cell switches from a loading spinner to a "Run Code" button.
+The R engine, four packages with their dependencies (about 7.5 MB) and the tables of the course (about 0.2 MB) download into your browser the first time you open this page, which can take up to a minute on a slow connection. Read Task 1 while they load. You will know that the page is ready when the first code cell switches from a loading spinner to a "Run Code" button.
 
 Keep this tab open. Your work stays in this page until you refresh it – there is nothing to install, nothing to save to disk, and no account needed.
 :::
 
 ```{webr}
-#| edit: false
-#| autorun: true
-#| output: false
-# Shared setup – this runs automatically once the engine is ready. It loads
-# the ESS extract into your browser session as `ess`, one row per respondent,
-# the object from which the cells below work. The file arrives at data/... in
-# the browser through the `resources:` list at the top of this page.
-ess <- utils::read.csv("data/trust_ess.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
-```
-
-```{webr}
 #| include: false
 #| autorun: true
-# Lab machinery: the estimator of the course, the specification menu, its
-# validation, and the helpers of Tasks 4 and 5 – try_spec(), my_experiments(),
-# submit_exploration(), prereg(), run_spec() and report_result(). The same
-# code as R/spec_tools.R of the downloadable workspace, apart from the tag of
-# the class chart, which lasts for the browser session here, and the download
-# of Task 3, which a browser cannot make. Every specification is fitted live
-# (about a second in the browser); data/spec_curve.csv places it among the
-# 192, and data/menu_options.csv gives the reason for every option that is
-# not on the curve. Both arrive with the page through its `resources:` list.
+# Lab machinery: the specification menu, its validation, and the helpers of
+# Tasks 4 and 5 – try_spec(), my_experiments(), submit_exploration(), prereg(),
+# run_spec() and report_result(). The page fits nothing: the result of every
+# specification is its row of data/spec_curve.csv, which the course pipeline
+# fitted with the estimator of the workspace (R/spec_tools.R, a copy of
+# R/trust/_tools.R), and data/menu_options.csv gives the reason for every
+# option that is not on the curve. Both arrive with the page through its
+# `resources:` list. The workspace fits the same specifications live and
+# prints the same lines.
 
 # ============================================================================
 # CONFIGURATION – the class chart and the course site
@@ -78,24 +68,9 @@ ess <- utils::read.csv("data/trust_ess.csv", na.strings = c("", "NA"))  # r-styl
 # ============================================================================
 
 
-# ---- The estimator -------------------------------------------------------------
-# A verbatim copy of R/trust/_tools.R in the course repository, everything
-# below its banner, which builds the curve; the downloadable workspace carries
-# the same copy in R/spec_tools.R.
-
-# The same code runs in the downloadable workspace and in webR on the browser
-# lab, so all three give the same numbers. The statistics come from packages:
-# fixest fits the regression with the fixed effects absorbed and computes the
-# errors clustered by country, parameters reads the coefficient, its error, t,
-# df, p and 95% interval from each fit, datawizard averages the items of a
-# scale, and effectsize converts t to the partial correlation of Multi100.
-# R/trust/check_parity.R checks the fits against estimatr. The rows are chosen
-# with dplyr, because datawizard evaluates its conditions in a fresh
-# environment and so cannot see the arguments of a function.
-
-# The menu of the curve, in menu order: every combination is one specification
-# (4 x 4 x 3 x 2 x 2 = 192). Anything else is refused by check_spec() unless it
-# is one of the off-curve options listed in OFF_CURVE.
+# ---- The menu of the curve and the label of the class chart --------------------
+# As R/trust/_tools.R defines them. Every combination of the options of
+# SPEC_AXES is one specification of the curve (4 x 4 x 3 x 2 x 2 = 192).
 SPEC_AXES <- list(
   outcome  = c("parliament", "politicians", "legal", "index"),
   controls = c("none", "demog", "outlook", "paper"),
@@ -103,167 +78,6 @@ SPEC_AXES <- list(
   items    = c("complete", "available"),
   fe       = c("country_round", "country_and_round")
 )
-
-# Settings that the curve holds fixed, with the alternatives that fit_spec()
-# can also fit for the displays beside the curve. Where a list starts with the
-# setting of the curve, that first option is it; `controls`, `weights` and `fe`
-# list only the alternatives to the options of the curve.
-OFF_CURVE <- list(
-  controls = c("paper_no_unhappy"),
-  weights = c("post", "post_population"),
-  sample  = c("paper", "all_respondents"),
-  concern = c("index", "economy", "culture", "place"),
-  extra   = c("none", "gov_dissat"),
-  cluster = c("country", "country_round"),
-  fe      = c("pooled")
-)
-
-# Outcomes: distrust (0-10, the trust items reversed) in each institution, or
-# the mean of the three.
-OUTCOME_ITEMS <- list(
-  parliament  = "distrust_parl",
-  politicians = "distrust_pol",
-  legal       = "distrust_legal",
-  index       = c("distrust_parl", "distrust_pol", "distrust_legal")
-)
-
-CONCERN_ITEMS <- list(
-  index   = c("imm_econ", "imm_culture", "imm_place"),
-  economy = "imm_econ",
-  culture = "imm_culture",
-  place   = "imm_place"
-)
-
-# Adjustment sets, each nested in the next, and the set of the paper without
-# unhappiness, which the Multi100 instruction of Task 2 required. `soc_distrust`
-# is the mean of the three items of interpersonal distrust, built by the same
-# rule as the scales.
-CONTROL_TERMS <- list(
-  none    = character(0),
-  demog   = c("age", "female", "education", "hh_income_z"),
-  outlook = c("age", "female", "education", "hh_income_z",
-              "unhappy", "life_dissat", "meet_rarely", "soc_distrust", "left_right"),
-  paper   = c("age", "female", "education", "hh_income_z",
-              "unhappy", "life_dissat", "meet_rarely", "soc_distrust", "left_right",
-              "econ_dissat", "income_difficulty", "health_dissat", "educ_dissat",
-              "winner", "far_right_vote"),
-  paper_no_unhappy = c("age", "female", "education", "hh_income_z",
-                       "life_dissat", "meet_rarely", "soc_distrust", "left_right",
-                       "econ_dissat", "income_difficulty", "health_dissat", "educ_dissat",
-                       "winner", "far_right_vote")
-)
-
-# The specification closest to the model of the paper (Table 3, parliament)
-REFERENCE <- list(outcome = "parliament", controls = "paper", weights = "none",
-                  items = "complete", fe = "country_round")
-
-check_spec <- function(outcome, controls, weights, items, fe,
-                       sample = "paper", concern = "index", extra = "none", cluster = "country") {
-  chosen <- list(outcome = outcome, controls = controls, weights = weights, items = items, fe = fe,
-                 sample = sample, concern = concern, extra = extra, cluster = cluster)
-  widened <- intersect(names(SPEC_AXES), names(OFF_CURVE))
-  allowed <- c(purrr::imap(SPEC_AXES, \(options, axis) c(options, OFF_CURVE[[axis]])),
-               OFF_CURVE[setdiff(names(OFF_CURVE), widened)])
-  bad <- names(chosen)[!purrr::map2_lgl(chosen, allowed[names(chosen)], \(v, ok) length(v) == 1 && v %in% ok)]
-  if (length(bad) > 0) {
-    stop("Not on the menu: ", paste0(bad, " = '", unlist(chosen[bad]), "'", collapse = ", "),
-         ". The options are listed in menu_options.csv.", call. = FALSE)
-  }
-  invisible(TRUE)
-}
-
-# The mean of a set of 0-10 items. "complete" needs every item answered (the
-# focal rule of the jp7tr reproduction); "available" averages whatever items
-# were answered (its additional analysis, and the Multi100 file). A single item
-# is its own scale, since datawizard::row_means() needs two columns or more.
-scale_mean <- function(data, items, rule) {
-  if (length(items) == 1) return(data[[items]])
-  datawizard::row_means(data, select = items, min_valid = if (rule == "complete") length(items) else 1)
-}
-
-# The analysed rows of one specification: the sample, the outcome, the measure
-# of concern, the controls and the weight, without the rows that miss any of them.
-spec_frame <- function(ess, outcome = "parliament", controls = "paper", weights = "none",
-                       items = "complete", sample = "paper", concern = "index", extra = "none") {
-  terms <- c(CONTROL_TERMS[[controls]], if (extra != "none") extra)
-  ess |>
-    dplyr::filter(.env$sample == "all_respondents" | (citizen %in% 1 & minority %in% 0)) |>
-    dplyr::mutate(
-      y = scale_mean(dplyr::pick(dplyr::everything()), OUTCOME_ITEMS[[outcome]], items),
-      x = scale_mean(dplyr::pick(dplyr::everything()), CONCERN_ITEMS[[concern]], items),
-      soc_distrust = scale_mean(dplyr::pick(dplyr::everything()),
-                                c("distrust_people", "unfair_people", "unhelpful_people"), items),
-      w = switch(.env$weights, none = 1, design = dweight, population = dweight * pweight,
-                 post = pspwght, post_population = pspwght * pweight),
-      cr = paste0(cntry, essround)
-    ) |>
-    dplyr::select(cntry, essround, cr, y, x, w, dplyr::all_of(terms)) |>
-    dplyr::filter(dplyr::if_all(dplyr::everything(), \(v) !is.na(v)))
-}
-
-# One specification: the coefficient of concern about immigration (points of
-# distrust on the 0-10 scale per point of concern; positive = more concern goes
-# with more distrust, the direction of the claim), its errors clustered by
-# country (CR1, t on G - 1 df, the rule of the curve), the conventional test,
-# the 95% interval under each, and the partial correlation by the Multi100 rule.
-fit_spec <- function(ess, outcome = "parliament", controls = "paper", weights = "none",
-                     items = "complete", fe = "country_round", sample = "paper",
-                     concern = "index", extra = "none", cluster = "country") {
-  check_spec(outcome, controls, weights, items, fe, sample, concern, extra, cluster)
-  frame <- spec_frame(ess, outcome, controls, weights, items, sample, concern, extra)
-
-  # An intercept for every country-round, or for every country with a dummy for
-  # every round but the first, absorbed by fixest (Bergé, Butts and McDermott
-  # 2026, arXiv:2601.21749) rather than estimated
-  rhs <- c("x", CONTROL_TERMS[[controls]], if (extra != "none") extra,
-           if (fe == "country_and_round") "factor(essround)")
-  absorbed <- switch(fe, country_round = "| cr", country_and_round = "| cntry", pooled = "")
-  form <- stats::as.formula(paste("y ~", paste(rhs, collapse = " + "), absorbed))
-  fit <- fixest::feols(form, data = frame, weights = ~w, vcov = "iid")
-
-  # Errors clustered by country (or country-round): CR1 with the default
-  # small-sample correction of fixest, G / (G - 1) times (n - 1) / (n - K), where
-  # K leaves out the intercepts nested in the clusters (Cameron and Miller 2015,
-  # Journal of Human Resources), and t on G - 1 df
-  clustered <- summary(fit, cluster = if (cluster == "country") ~cntry else ~cr) |>
-    parameters::model_parameters() |>
-    datawizard::data_filter(Parameter == "x")
-  # Conventional (model-based) errors, with the absorbed intercepts in the df
-  conventional <- parameters::model_parameters(fit) |>
-    datawizard::data_filter(Parameter == "x")
-
-  n <- stats::nobs(fit)
-  data.frame(  # r-style: keep – a data frame prints every digit that the tasks quote
-    outcome = outcome, controls = controls, weights = weights, items = items, fe = fe,
-    sample = sample, concern = concern, extra = extra, cluster = cluster,
-    b = clustered$Coefficient, se = clustered$SE, stat_type = "t", stat = clustered$t,
-    df = clustered$df_error, p = clustered$p,
-    se_conv = conventional$SE, t_conv = conventional$t, df_conv = conventional$df_error,
-    p_conv = conventional$p,
-    r = r_multi100(conventional$t, "t", conventional$df_error, n),
-    # the coefficient in standard deviations of the analysed rows, unweighted;
-    # effectsize::standardize_parameters(method = "basic") gives the same for
-    # an unweighted fit but stops at the round dummies of a fixest fit
-    b_std = clustered$Coefficient * stats::sd(frame$x) / stats::sd(frame$y),
-    n = n, n_clusters = dplyr::n_distinct(if (cluster == "country") frame$cntry else frame$cr),
-    n_country_rounds = dplyr::n_distinct(frame$cr),
-    ci_low = clustered$CI_low, ci_high = clustered$CI_high,
-    ci_conv_low = conventional$CI_low, ci_conv_high = conventional$CI_high
-  )
-}
-
-# The conversion rules of Multi100 (standard_correlation_coefficient.R in
-# github.com/marton-balazs-kovacs/multi100): t with its df, which is the rule of
-# effectsize::t_to_r(); z with the sample size standing in for the missing df;
-# F with one numerator df read as the square of a t.
-r_multi100 <- function(stat, stat_type, df, n) {
-  stat_type <- rep_len(stat_type, length(stat))
-  dplyr::case_when(
-    stat_type == "t" ~ effectsize::t_to_r(stat, df, ci = NULL)$r,
-    stat_type == "z" ~ tanh(abs(stat) * sqrt(1 / (n - 3))) * sign(stat),
-    stat_type == "F" ~ sqrt(stat / (stat + df))
-  )
-}
 
 # The free-text label that carries a specification to the class chart.
 spec_line <- function(outcome, controls, weights, items, fe) {
@@ -300,31 +114,22 @@ spec_line <- function(outcome, controls, weights, items, fe) {
 
 
 # ---- The shipped files -----------------------------------------------------------
-# Each file is read once and cached, apart from the copy of the data that the
-# page loads as `ess`, so that edits made to that copy in a task never reach
-# the helpers. The base reader keeps this code identical, line for line, with
-# the copy in R/spec_tools.R of the workspace; it reads the empty cells of the
-# extract as NA, as readr does.
+# Each file is read once and cached. The base reader adds nothing to the
+# download of the page, and reads empty cells as NA, as readr does.
 .cache <- new.env(parent = emptyenv())
 .read_once <- function(name, path) {
   if (is.null(.cache[[name]])) {
     if (!file.exists(path))
       stop(sprintf("%s is missing – the page loads it through its resources list. Reload the page.",
                    path), call. = FALSE)
-    assign(name, utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8", # r-style: keep – the same reader as the workspace
+    assign(name, utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8", # r-style: keep – the base reader adds nothing to the download
                                  na.strings = c("", "NA")),
            envir = .cache)
   }
   .cache[[name]]
 }
-.ess     <- function() .read_once("ess", "data/trust_ess.csv")
 .curve   <- function() .read_once("curve", "data/spec_curve.csv")
 .options <- function() .read_once("options", "data/menu_options.csv")
-
-# The extract that the setup cell has just read goes into the cache as it is,
-# so that the helpers never read the 10 MB file a second time. An edit to
-# `ess` in a task makes a new copy and leaves the cached one untouched.
-if (exists("ess")) assign("ess", ess, envir = .cache)
 
 
 # ---- Pages of the course site ----------------------------------------------------
@@ -354,7 +159,11 @@ if (exists("ess")) assign("ess", ess, envir = .cache)
 # is how try_spec() supplies its arguments; .check_choices() reads the twelve
 # my_* choices of the preregistration cell. An option that is not on the
 # curve stops with the reason from menu_options.csv, the page of the course
-# site that teaches it, and the options that stay on the curve.
+# site that teaches it, and the options that stay on the curve. The rows are
+# found with datawizard::data_match(), which takes the values to match as a
+# list and so works inside a function; remove_na = FALSE, because with its
+# default it drops incomplete rows before matching and can return the wrong
+# rows.
 .on_menu <- function(axis, v) is.character(v) && length(v) == 1 && !is.na(v) && v %in% .menu[[axis]]
 
 .refuse <- function(axis, v, as_args) {
@@ -365,8 +174,8 @@ if (exists("ess")) assign("ess", ess, envir = .cache)
     stop(sprintf("%s needs one option in quotes, for example %s = \"%s\".", shown, shown, keep[1]),
          call. = FALSE)
   opts <- .options()
-  row  <- dplyr::filter(opts, .data$axis == .env$axis, .data$option == .env$v)
-  off  <- dplyr::filter(opts, .data$axis == .env$axis, !.data$on_curve)$option
+  row  <- datawizard::data_match(opts, list(axis = axis, option = v), remove_na = FALSE)
+  off  <- datawizard::data_match(opts, list(axis = axis, on_curve = FALSE), remove_na = FALSE)$option
   msg <- if (nrow(row) == 1) c(
     sprintf("%s = \"%s\" (%s) is not on the curve of %d specifications, so it has no result here.",
             shown, v, row$label, nrow(.curve())),
@@ -403,28 +212,18 @@ if (exists("ess")) assign("ess", ess, envir = .cache)
 }
 
 
-# ---- The live fit ----------------------------------------------------------------
-# fit_spec() on the five decisions that vary on the curve, with the 95%
-# interval that it returns (t on 15 df, from the errors clustered by country,
-# read by parameters) and the place of the result among the 192. The fit is
-# checked against its row of data/spec_curve.csv; a difference means that the
-# page loaded an incomplete file.
+# ---- The result of a specification ------------------------------------------------
+# The row of data/spec_curve.csv for the five decisions that vary on the curve:
+# the estimate with its 95% interval and test under errors clustered by
+# country (t on 15 df), the conventional test, the counts and the partial r,
+# as the estimator of the workspace computes them; and its place among the 192.
 .result <- function(ch) {
-  fit <- fit_spec(.ess(), ch$outcome, ch$controls, ch$weights, ch$items, ch$fe) |>
-    as.list()
   curve <- .curve()
-  stored <- dplyr::filter(curve, .data$outcome == ch$outcome, .data$controls == ch$controls,
-                          .data$weights == ch$weights, .data$items == ch$items,
-                          .data$fe == ch$fe)
-  if (nrow(stored) != 1) {
-    warning("This specification has no row in data/spec_curve.csv; reload the page.",
-            call. = FALSE)
-  } else if (abs(fit$b - stored$b) > 1e-6 || abs(fit$stat - stored$stat) > 1e-6) {
-    warning(sprintf("The live fit (b = %.5f, t = %.3f) differs from the curve that this page loaded (b = %.5f, t = %.3f). Reload the page.",
-                    fit$b, fit$stat, stored$b, stored$stat),
-            call. = FALSE)
-  }
-  c(fit, list(larger = sum(curve$b > fit$b + 1e-9), n_curve = nrow(curve)))
+  stored <- datawizard::data_match(curve, ch[c("outcome", "controls", "weights", "items", "fe")],
+                                   remove_na = FALSE)
+  if (nrow(stored) != 1)
+    stop("This specification has no row in data/spec_curve.csv; reload the page.", call. = FALSE)
+  c(as.list(stored), list(larger = sum(curve$b > stored$b + 1e-9), n_curve = nrow(curve)))
 }
 
 
@@ -480,26 +279,28 @@ try_spec <- function(outcome = "parliament", controls = "paper", weights = "none
   .print_result(ch, res, lead = "")
   row <- data.frame(ch, b = res$b, ci_low = res$ci_low, ci_high = res$ci_high,  # r-style: keep – data.frame() spreads the list of choices into columns
                     t = res$stat, p = res$p, n = res$n, stringsAsFactors = FALSE)
-  assign("log", dplyr::bind_rows(.tried$log, row), envir = .tried)
+  assign("log", if (is.null(.tried$log)) row else datawizard::data_merge(.tried$log, row, join = "bind"),
+         envir = .tried)
   assign("last", list(ch = ch, res = res), envir = .tried)
   invisible(row)
 }
 
-# The running log of everything try_spec() has fitted. Only the decisions that
-# varied are shown; the others are those of the reference specification.
+# The running log of everything that try_spec() has looked up. Only the
+# decisions that varied are shown; the others are those of the reference
+# specification. The datawizard verbs here name only columns of the log, which
+# they can see from inside a function.
 my_experiments <- function() {
   d <- .tried$log
   if (is.null(d)) {
     writeLines("Nothing tried yet – call try_spec() at least once.")
     return(invisible(NULL))
   }
-  varied <- purrr::keep(names(.menu), \(a) dplyr::n_distinct(d[[a]]) > 1)
+  varied <- purrr::keep(names(.menu), \(a) length(unique(d[[a]])) > 1)
   show <- d |>
-    dplyr::transmute(dplyr::across(dplyr::all_of(varied)),
-                     estimate = round(.data$b, 4),
-                     interval = sprintf("%.3f to %.3f", .data$ci_low, .data$ci_high),
-                     t = round(.data$t, 2),
-                     n = .data$n)
+    datawizard::data_modify(estimate = round(b, 4),
+                            interval = sprintf("%.3f to %.3f", ci_low, ci_high),
+                            t = round(t, 2)) |>
+    datawizard::data_select(c(varied, "estimate", "interval", "t", "n"))
   writeLines(sprintf("Specifications you have tried (%d), estimates in points of distrust per point of concern:\n",
                      nrow(d)))
   # wide enough for all five varied decisions on one line
@@ -523,13 +324,14 @@ submit_exploration <- function(nickname = NULL) {
 # ---- Task 5: the declared helpers --------------------------------------------------
 # prereg() prints the cell and returns it, so that run_spec() can check that
 # the cell has not changed since. The estimand statement is assembled from
-# the phrase column of menu_options.csv, in the order that its codebook sets.
+# the phrase column of menu_options.csv, in the order that its codebook sets;
+# the row of each choice is found in the order of the menu.
 prereg <- function() {
   ch <- .check_choices()
-  rows <- .options() |>
-    dplyr::filter(paste(.data$axis, .data$option) %in% paste(names(ch), unlist(ch))) |>
-    dplyr::arrange(match(.data$axis, names(.menu))) |>
-    dplyr::mutate(line = sprintf("    %-20s : %-17s (%s)", .data$decision, .data$option, .data$label))
+  rows <- purrr::imap(ch, \(option, axis) datawizard::data_match(.options(), list(axis = axis, option = option),
+                                                                 remove_na = FALSE)) |>
+    purrr::list_rbind() |>
+    datawizard::data_modify(line = sprintf("    %-20s : %-17s (%s)", decision, option, label))
   block <- purrr::imap(.level_titles, \(title, lv) c(paste0("  ", title), rows$line[rows$level == lv])) |>
     unlist(use.names = FALSE)
   ph <- stats::setNames(rows$phrase, rows$axis)
@@ -559,7 +361,8 @@ run_spec <- function(spec) {
   if (!identical(spec$choices, .check_choices()))
     stop("The preregistration cell has changed since prereg() returned this object. Run the whole cell again, then run_spec(my_spec).",
          call. = FALSE)
-  .print_result(spec$choices, .result(spec$choices), "Your preregistered specification, fitted live:")
+  .print_result(spec$choices, .result(spec$choices),
+                "Your preregistered specification, as the course pipeline fitted it:")
 }
 
 report_result <- function(nickname = NULL) {
@@ -672,21 +475,24 @@ assign("tag", NULL, envir = .tag_env)
 
 Five analysts reanalysed a claim of the immigration-and-trust case [@McLaren2012CulturalDivideEurope] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. The claim is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics", in the words of the original author (OA) as the SCORE programme selected them. The [exercise overview](exercise.qmd) sets out the five tasks, and the [case study](index.qmd) the original study, Multi100 and the five reanalyses.
 
-The five tasks take you from a setup check to two marks on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it. Every fit of the menu on this page is live: the estimator of the course runs in your browser, on the same file and with the same code as in the workspace, and each fit takes about a second.
+The five tasks take you from a setup check to two marks on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before you look up its result. The cells of this page read the results that the course pipeline computed on the ESS extract with the estimator of the workspace, so each answer comes at once; the blocks marked "In the workspace" hold the code that computes the same results in the workspace.
 
 ## Task 1 – The setup check {#task-1-setup}
 
-The aim of this task is only to reach the point where a line of R runs and the data are in front of you. Press **Run Code** on the cell below. If it prints the three lines that it should, you are set up and everything else on this page will work.
+The aim of this task is only to reach the point where a line of R runs and the tables of the course are in front of you. Press **Run Code** on the cell below. If it prints the three lines that it should, you are set up and everything else on this page will work.
 
 ```{webr}
 #| autorun: false
-# The setup check. It uses only what the page preloads, so if this runs, the
-# rest of the lab runs.
+# The setup check. It reads two of the tables that the page loads, so if this
+# runs, the rest of the lab runs.
+counts <- utils::read.csv("data/lab_counts.csv")  # r-style: keep – the base reader adds nothing to the download
+curve  <- utils::read.csv("data/spec_curve.csv")  # r-style: keep – as above
 writeLines(c(
   paste("R is running in your browser:", R.version.string),
-  sprintf("The ESS extract is loaded: %s respondents", format(nrow(ess), big.mark = ",")),
-  sprintf("The estimator reproduces the reference specification: %.4f points of distrust per point of concern",
-          fit_spec(ess)$b)))
+  sprintf("The tables of the course are loaded: the ESS extract holds %s respondents",
+          format(counts$respondents, big.mark = ",")),
+  sprintf("The curve holds the reference specification: %.4f points of distrust per point of concern",
+          datawizard::data_filter(curve, is_reference)$b)))
 ```
 
 You should see **120,080 respondents** and **0.1753 points of distrust per point of concern** on the last line. If any of that is missing, reload the page and wait for the engine to finish downloading before pressing Run Code again. If it still fails, say **STUCK** in the chat.
@@ -729,12 +535,11 @@ writeLines(c(
 
 ## Task 2 – The data {#task-2-data}
 
-The **ESS extract** (`trust_ess.csv`) is already loaded for you as `ess`, one row per respondent: every respondent of the 16 countries in rounds 1–4 of the European Social Survey (ESS). It is adapted from the ESS files of those rounds and shared under their licence, CC BY-NC-SA 4.0, and the downloadable workspace contains the same file. Each trust item is turned round, so that every distrust column runs from 0 (complete trust) to 10 (no trust at all), and each immigration item too, so that 10 is the answer most concerned about immigration. Run the cell below to count the respondents. Edit it freely – this is your environment.
+The **ESS extract** (`trust_ess.csv`) holds one row per respondent: every respondent of the 16 countries in rounds 1–4 of the European Social Survey (ESS). It is adapted from the ESS files of those rounds and shared under their licence, CC BY-NC-SA 4.0. The downloadable workspace loads it as `ess` and computes everything below from it; this page does not download it (about 10 MB) and reads the results instead, which the course pipeline computed with the same code (`R/trust/06_displays.R`; the tables have a [codebook](data/lab_tables_codebook.md)). Each trust item is turned round, so that every distrust column runs from 0 (complete trust) to 10 (no trust at all), and each immigration item too, so that 10 is the answer most concerned about immigration. The [codebook](data/trust_ess_codebook.md) describes every column.
 
-```{webr}
-#| autorun: false
-# How many respondents, countries and country-rounds, and how many in the
-# sample of the paper: citizens who do not belong to an ethnic minority?
+In the workspace, the counts of respondents, countries and country-rounds, and of the sample of the paper (citizens who do not belong to an ethnic minority):
+
+``` r
 ess |>
   datawizard::data_summary(respondents    = n(),
                            countries      = dplyr::n_distinct(cntry),
@@ -742,12 +547,21 @@ ess |>
                            paper_sample   = sum(citizen %in% 1 & minority %in% 0))
 ```
 
-You should find **120,080 respondents** in **16 countries** and **60 country-rounds**, and **110,732** in the sample of the paper, the count that it reports in every table. The paper leaves out non-citizens and members of ethnic minorities, because its argument concerns members of the national community who believe that community to be under threat. The [codebook](data/trust_ess_codebook.md) describes every column.
-
-The concern of the claim is measured by three items. A scale built from several items measures an attitude with less error than any single item, provided that the items move together. Cronbach's alpha says how far they do: it runs from 0 (the items are unrelated) to 1 (they move in lockstep), and values above about 0.7 are usually taken as good enough for a scale.
+On this page, run the cell below to read the same counts:
 
 ```{webr}
 #| autorun: false
+# The counts that the code above gives, written by the course pipeline and
+# printed as datawizard prints its summaries
+utils::read.csv("data/lab_counts.csv") |>  # r-style: keep – the base reader adds nothing to the download
+  insight::export_table()
+```
+
+You should find **120,080 respondents** in **16 countries** and **60 country-rounds**, and **110,732** in the sample of the paper, the count that it reports in every table. The paper leaves out non-citizens and members of ethnic minorities, because its argument concerns members of the national community who believe that community to be under threat.
+
+The concern of the claim is measured by three items. A scale built from several items measures an attitude with less error than any single item, provided that the items move together. Cronbach's alpha says how far they do: it runs from 0 (the items are unrelated) to 1 (they move in lockstep), and values above about 0.7 are usually taken as good enough for a scale. In the workspace:
+
+``` r
 # The sample of the paper, with concern as the mean of the three items. A
 # respondent who skipped any item has no score (NA): min_valid = 3 asks for
 # all three answers.
@@ -763,21 +577,43 @@ paper |>
   performance::cronbachs_alpha()
 
 # The mean distrust of the three institutions, and the mean concern
-paper |>  # r-style: keep – a webR cell prints text, so print_md() would show raw Markdown
-  datawizard::describe_distribution(select = c("distrust_parl", "distrust_pol", "distrust_legal", "concern"))
+paper |>
+  datawizard::describe_distribution(select = c("distrust_parl", "distrust_pol", "distrust_legal", "concern")) |>
+  datawizard::print_md()
 ```
 
-Alpha comes out at **0.84**, close to the average of 0.83 that the paper reports. The mean distrust is **5.08** for parliament, **6.06** for politicians and **4.45** for the legal system, within 0.01 of the means that the paper prints in its Table 1. Now the countries:
+On this page:
 
 ```{webr}
 #| autorun: false
-#| fig-width: 8
-#| fig-height: 5
+# Cronbach's alpha of the three items, the pooled row ("all") of the
+# reliability table that the pipeline writes with performance::cronbachs_alpha()
+reliability <- utils::read.csv("data/display_reliability.csv")  # r-style: keep – the base reader adds nothing to the download
+datawizard::data_filter(reliability, scale == "concern", cntry == "all")$alpha
+
+# The distributions of the three outcomes and of concern, from
+# datawizard::describe_distribution()
+utils::read.csv("data/lab_distribution.csv") |>  # r-style: keep – as above
+  insight::export_table(digits = 2)
+```
+
+Alpha comes out at **0.84**, close to the average of 0.83 that the paper reports. The mean distrust is **5.08** for parliament, **6.06** for politicians and **4.45** for the legal system, within 0.01 of the means that the paper prints in its Table 1. Now the countries. In the workspace, the mean concern and the mean distrust of parliament in each country, with the correlation of the two within it:
+
+``` r
 by_country <- paper |>
   datawizard::data_summary(r_within      = stats::cor(concern, distrust_parl, use = "complete.obs"),
                            concern       = mean(concern, na.rm = TRUE),
                            distrust_parl = mean(distrust_parl, na.rm = TRUE),
                            by = "cntry")
+```
+
+On this page, the 16 rows of `by_country` come from the pipeline, and the rest of the cell is the code of the workspace:
+
+```{webr}
+#| autorun: false
+#| fig-width: 8
+#| fig-height: 5
+by_country <- utils::read.csv("data/lab_countries.csv")  # r-style: keep – the base reader adds nothing to the download
 
 # The correlation across countries, and its range within them
 stats::cor(by_country$concern, by_country$distrust_parl)
@@ -811,16 +647,29 @@ A causal graph sets this out. A graph of this kind is a diagram of what causes w
 ```{webr}
 #| include: false
 #| autorun: true
-# Graph machinery for Task 2. dagitty runs its graph algorithms in a
-# JavaScript engine that a browser grants only to a page served with
-# cross-origin isolation headers (COOP and COEP); without them the call fails
-# with a JavaScript error that tryCatch() cannot catch. The functions below
-# answer the questions of Task 2 in R instead: make_dag() builds the graph,
-# adjustmentSets() returns the minimal adjustment sets for the total effect,
-# isAdjustmentSet() checks one set, paths() lists the paths between two nodes
-# and whether each is open given a conditioning set Z, and plot_dag() draws
-# the graph with tinyplot. They agree with dagitty on every graph of this
-# task, and plot_dag() also draws a graph that dagitty built.
+# Graph machinery for Task 2. make_dag() builds the graph from its arrows and
+# plot_dag() draws it with tinyplot. adjustmentSets(), isAdjustmentSet() and
+# paths() print the answers of dagitty, the R package that the workspace uses,
+# in the form in which dagitty prints them, from data/dag_answers.csv:
+# R/trust/07_dag_answers.R in the course repository computes them with dagitty
+# for every graph to which the graph cell below leads – the arrow of the claim
+# off, on or reversed, each with either swap – and for the adjustment sets of
+# the menu. dagitty itself cannot run on this page, because its graph
+# algorithms need a JavaScript engine that a browser grants only to a page
+# served with cross-origin isolation headers (COOP and COEP), and the course
+# site does not send them. Another graph, or another question, goes to dagitty
+# in the downloadable workspace. The table arrives with the page through its
+# `resources:` list; the rows are found with datawizard::data_match(), which
+# works inside a function, with remove_na = FALSE, because with its default it
+# drops incomplete rows before matching and can return the wrong rows.
+.dag_answers <- utils::read.csv("data/dag_answers.csv", stringsAsFactors = FALSE,  # r-style: keep – the base reader adds nothing to the download
+                                na.strings = "NA", colClasses = c(latent = "character"))
+.dag_elsewhere <- c(
+  "This page holds the answers that dagitty gives to the questions of Task 2, for the graph",
+  "of the cell with the arrow of the claim off, on or reversed, each with either swap, and for",
+  "the adjustment sets of the menu. For another graph or another question, use the",
+  "downloadable workspace, where R/dag_starter.R builds the graph and dagitty answers",
+  "whatever you ask of it.")
 
 # Where each node sits in the figure, with y counted upwards: concern on the
 # left, distrust on the right, the possible common causes above the line
@@ -829,111 +678,54 @@ A causal graph sets this out. A graph of this kind is a diagram of what causes w
 .dag_xy <- list(concern = c(0, 0), distrust = c(4, 0), background = c(2, 2.4),
                 pessimism = c(0.7, 1.5), ideology = c(3.3, 1.5),
                 far_right = c(2, -1.1), services = c(2, -2.1))
-dag_engine <- "built-in"
-
-.make_dag_builtin <- function(..., exposure, outcome, latent) {
-  arrows <- c(...)
-  edges <- purrr::map(arrows, \(a) {
-    ends <- trimws(strsplit(a, "->", fixed = TRUE)[[1]])
-    if (length(ends) < 2 || !all(nzchar(ends)) || grepl("<-", a, fixed = TRUE))
-      stop(sprintf("Write each arrow as \"cause -> effect\", for example \"pessimism -> concern\"; \"%s\" is not one.",
-                   a), call. = FALSE)
-    tibble::tibble(from = ends[-length(ends)], to = ends[-1])
-  }) |>
-    dplyr::bind_rows() |>
-    dplyr::distinct()
-  structure(list(edges = edges, nodes = unique(c(exposure, outcome, edges$from, edges$to)),
-                 exposure = exposure, outcome = outcome, latent = latent),
-            class = "simple_dag")
-}
-
-# The same graph as a dagitty object, as R/dag_starter.R of the workspace
-# builds it; dagitty counts y downwards, so the heights change sign.
-.make_dag_dagitty <- function(..., exposure, outcome, latent) {
-  arrows <- c(...)
-  nodes <- unique(c(exposure, outcome, trimws(unlist(strsplit(arrows, "->|<-")))))
-  declare <- purrr::map_chr(nodes, \(v) {
-    tags <- c(if (v %in% exposure) "exposure",
-              if (v %in% outcome) "outcome",
-              if (v %in% latent) "latent",
-              if (v %in% names(.dag_xy))
-                sprintf("pos=\"%s,%s\"", .dag_xy[[v]][1], -.dag_xy[[v]][2]))
-    if (length(tags) == 0) v else sprintf("%s [%s]", v, paste(tags, collapse = ","))
-  })
-  dagitty::dagitty(paste0("dag {\n", paste(c(declare, arrows), collapse = "\n"), "\n}"))
-}
 
 # A graph from arrows written "cause -> effect", one per string. The named
 # arguments come last, so that switching off the last arrow with a # never
-# leaves a comma dangling.
+# leaves a comma dangling. The arrows, sorted, are the key under which
+# data/dag_answers.csv holds the answers for the graph.
 make_dag <- function(..., exposure = "concern", outcome = "distrust", latent = character(0)) {
-  build <- if (identical(dag_engine, "dagitty")) .make_dag_dagitty else .make_dag_builtin
-  build(..., exposure = exposure, outcome = outcome, latent = latent)
-}
-
-# r-style: PENDING – the graph algorithms from here to .paths_builtin() (d-separation, the backdoor criterion, minimal adjustment sets, open paths); no package found that runs in the browser
-.dag_has_edge <- function(dag, a, b) any(dag$edges$from == a & dag$edges$to == b)
-
-# A node counts as one of its own descendants, which is what the collider rule
-# below needs.
-.dag_descendants <- function(dag, v) {
-  kids <- setdiff(dag$edges$to[dag$edges$from %in% v], v)
-  if (length(kids) == 0) v else .dag_descendants(dag, union(v, kids))
-}
-
-# Every simple path between two nodes, ignoring the direction of the arrows.
-# The recursion is safe only because a teaching graph is tiny.
-.dag_paths <- function(dag, from, to) {
-  neighbours <- \(v) unique(c(dag$edges$to[dag$edges$from == v], dag$edges$from[dag$edges$to == v]))
-  extend <- function(path) {
-    v <- path[length(path)]
-    if (v == to) return(list(path))
-    purrr::list_flatten(purrr::map(setdiff(neighbours(v), path), \(w) extend(c(path, w))))
-  }
-  extend(from)
-}
-
-# A path is blocked by the set z if any node along it is either a non-collider
-# inside z, or a collider with no descendant in z.
-.dag_path_blocked <- function(dag, path, z) {
-  if (length(path) < 3L) return(FALSE)
-  purrr::some(seq(2L, length(path) - 1L), \(i) {
-    node <- path[i]
-    collider <- .dag_has_edge(dag, path[i - 1L], node) && .dag_has_edge(dag, path[i + 1L], node)
-    if (collider) !any(.dag_descendants(dag, node) %in% z) else node %in% z
+  arrows <- c(...)
+  ends <- purrr::map(arrows, \(a) {
+    e <- trimws(strsplit(a, "->", fixed = TRUE)[[1]])
+    if (length(e) < 2 || !all(nzchar(e)) || grepl("<-", a, fixed = TRUE))
+      stop(sprintf("Write each arrow as \"cause -> effect\", for example \"pessimism -> concern\"; \"%s\" is not one.",
+                   a), call. = FALSE)
+    e
   })
+  from <- unlist(purrr::map(ends, \(e) e[-length(e)]))
+  to <- unlist(purrr::map(ends, \(e) e[-1]))
+  drawn <- paste(from, to, sep = " -> ")
+  structure(list(edges = list(from = from[!duplicated(drawn)], to = to[!duplicated(drawn)]),
+                 nodes = unique(c(exposure, outcome, from, to)),
+                 exposure = exposure, outcome = outcome, latent = latent,
+                 key = paste(sort(unique(drawn), method = "radix"), collapse = "; ")),
+            class = "simple_dag")
 }
 
-# The backdoor criterion: a set qualifies if it holds no descendant of the
-# exposure and blocks every path that starts with an arrow into the exposure.
-.closes_backdoors <- function(x, z, exposure = x$exposure, outcome = x$outcome) {
-  backdoor <- purrr::keep(.dag_paths(x, exposure, outcome), \(p) .dag_has_edge(x, p[2L], exposure))
-  !any(z %in% .dag_descendants(x, exposure)) &&
-    purrr::every(backdoor, \(p) .dag_path_blocked(x, p, z))
+# The minimal adjustment sets of the exposure on the outcome, for the total or
+# the direct effect, as dagitty::adjustmentSets() returns them, read from the
+# table
+adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, type = "minimal",
+                           effect = "total", ...) {
+  rows <- datawizard::data_match(.dag_answers,
+                                 list(call = "adjustmentSets", arrows = x$key,
+                                      exposure = paste(exposure, collapse = ", "),
+                                      outcome = paste(outcome, collapse = ", "),
+                                      latent = paste(sort(x$latent, method = "radix"), collapse = ", "),
+                                      effect = effect),
+                                 remove_na = FALSE)
+  if (nrow(rows) == 0 || !identical(type, "minimal")) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
+  }
+  structure(strsplit(rows$answer[rows$item > 0], ", ", fixed = TRUE), class = "simple_dag_sets")
 }
 
-# Brute-forced over subsets of the observed variables that are not
-# descendants of the exposure: smallest sets first, and a set is skipped once
-# it contains a set already found, which leaves the minimal ones.
-.adjustment_sets_builtin <- function(x, exposure = x$exposure, outcome = x$outcome,
-                                     effect = "total", ...) {
-  if (!identical(effect, "total"))
-    stop("The graph code built into this page answers the total effect only; paths() shows what a conditioning set opens and closes.",
-         call. = FALSE)
-  candidates <- setdiff(x$nodes, c(outcome, x$latent, .dag_descendants(x, exposure)))
-  subsets <- c(list(character(0)),
-               purrr::list_flatten(purrr::map(seq_along(candidates),
-                                              \(k) utils::combn(candidates, k, simplify = FALSE))))
-  closing <- purrr::keep(subsets, \(z) .closes_backdoors(x, z, exposure, outcome))
-  minimal <- purrr::reduce(closing, \(found, z)
-    if (purrr::some(found, \(f) all(f %in% z))) found else c(found, list(sort(z))), .init = list())
-  structure(minimal, class = "simple_dag_sets")
-}
-
+# As dagitty prints adjustment sets: one set per line, the empty set as {},
+# and nothing at all when no set closes every path that it must
 print.simple_dag_sets <- function(x, ...) {
-  shown <- if (length(x) == 0) "(no set of observed variables closes every backdoor path)" else
-    purrr::map_chr(x, \(z) if (length(z) > 0) paste0("{ ", paste(z, collapse = ", "), " }") else "{}")
-  writeLines(shown)
+  purrr::walk(x, \(z) writeLines(if (length(z) == 0) " {}" else
+    strwrap(paste("{ ", paste(z, collapse = ", "), " }\n"), exdent = 2)))
   invisible(x)
 }
 
@@ -941,128 +733,95 @@ print.simple_dag_sets <- function(x, ...) {
 # the global environment, so plain S3 dispatch would not find the method.
 registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
 
-.is_adjustment_set_builtin <- function(x, Z, exposure = x$exposure, outcome = x$outcome, ...) {
-  .closes_backdoors(x, Z, exposure, outcome)
-}
-
-# The paths between two nodes, each with its arrows, and whether it is open
-# given the conditioning set Z; sorted as dagitty sorts them.
-.paths_builtin <- function(x, from = x$exposure, to = x$outcome, Z = character(0), ...) {
-  found <- .dag_paths(x, from, to)
-  label <- purrr::map_chr(found, \(p) {
-    steps <- purrr::map_chr(seq_len(length(p) - 1L),
-                            \(i) if (.dag_has_edge(x, p[i], p[i + 1L])) " -> " else " <- ")
-    paste0(p[1], paste0(steps, p[-1], collapse = ""))
-  })
-  open <- purrr::map_lgl(found, \(p) !.dag_path_blocked(x, p, Z))
-  ord <- order(label, method = "radix")
-  list(paths = label[ord], open = open[ord])
-}
-
-adjustmentSets <- .adjustment_sets_builtin
-isAdjustmentSet <- .is_adjustment_set_builtin
-paths <- .paths_builtin
-
-# The figure, for a graph from either engine. Colour marks the exposure and
-# the outcome. Each arrow stops at the edge of the box of its target.
-.dag_parts <- function(d) {
-  if (inherits(d, "dagitty")) {
-    xy <- dagitty::coordinates(d)
-    list(nodes = tibble::tibble(name = names(xy$x), x = unname(xy$x), y = -unname(xy$y)),
-         edges = dplyr::transmute(dagitty::edges(d), from = as.character(.data$v),
-                                  to = as.character(.data$w)),
-         exposure = dagitty::exposures(d), outcome = dagitty::outcomes(d),
-         latent = dagitty::latents(d))
-  } else {
-    at <- \(v, k) if (v %in% names(.dag_xy)) .dag_xy[[v]][k] else NA_real_
-    list(nodes = tibble::tibble(name = d$nodes, x = purrr::map_dbl(d$nodes, \(v) at(v, 1)),
-                                y = purrr::map_dbl(d$nodes, \(v) at(v, 2))),
-         edges = d$edges, exposure = d$exposure, outcome = d$outcome, latent = d$latent)
+# Whether a set of variables closes every path that it must for the total
+# effect, as dagitty::isAdjustmentSet() answers, read from the table
+isAdjustmentSet <- function(x, Z, exposure = x$exposure, outcome = x$outcome, ...) {
+  rows <- datawizard::data_match(.dag_answers,
+                                 list(call = "isAdjustmentSet", arrows = x$key,
+                                      exposure = paste(exposure, collapse = ", "),
+                                      outcome = paste(outcome, collapse = ", "),
+                                      latent = paste(sort(x$latent, method = "radix"), collapse = ", "),
+                                      Z = paste(sort(unique(as.character(unlist(Z))), method = "radix"),
+                                                collapse = ", ")),
+                                 remove_na = FALSE)
+  if (nrow(rows) != 1) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
   }
+  as.logical(rows$answer)
 }
 
+# The paths between the exposure and the outcome, each with its arrows, and
+# whether it is open given the conditioning set Z, as dagitty::paths() returns
+# them, read from the table
+paths <- function(x, from = x$exposure, to = x$outcome, Z = list(), limit = 100, directed = FALSE) {
+  rows <- datawizard::data_match(.dag_answers,
+                                 list(call = "paths", arrows = x$key,
+                                      exposure = paste(from, collapse = ", "),
+                                      outcome = paste(to, collapse = ", "),
+                                      latent = paste(sort(x$latent, method = "radix"), collapse = ", "),
+                                      Z = paste(sort(unique(as.character(unlist(Z))), method = "radix"),
+                                                collapse = ", ")),
+                                 remove_na = FALSE)
+  if (nrow(rows) == 0 || !isFALSE(directed)) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
+  }
+  list(paths = rows$answer, open = rows$open)
+}
+
+# The figure. Colour marks the exposure and the outcome. Each arrow stops at
+# the edge of the box of its target, which is sized from the length of the name.
 plot_dag <- function(d) {
-  parts <- .dag_parts(d)
-  nodes <- parts$nodes |>
-    dplyr::mutate(
-      unplaced = is.na(.data$x),
-      x = dplyr::if_else(.data$unplaced, 1.2 * (cumsum(.data$unplaced) - 1), .data$x),
-      y = dplyr::if_else(.data$unplaced, -3, .data$y),
-      half_w = 0.06 + 0.032 * nchar(.data$name),
-      role = factor(dplyr::case_when(.data$name %in% parts$exposure ~ "exposure",
-                                     .data$name %in% parts$outcome ~ "outcome",
-                                     .data$name %in% parts$latent ~ "unobserved",
-                                     .default = "observed"),
-                    levels = c("exposure", "outcome", "observed", "unobserved")))
+  x <- purrr::map_dbl(d$nodes, \(v) if (v %in% names(.dag_xy)) .dag_xy[[v]][1] else NA_real_)
+  y <- purrr::map_dbl(d$nodes, \(v) if (v %in% names(.dag_xy)) .dag_xy[[v]][2] else NA_real_)
+  unplaced <- is.na(x)
+  x <- replace(x, unplaced, 1.2 * (cumsum(unplaced)[unplaced] - 1))
+  y <- replace(y, unplaced, -3)
+  half_w <- 0.06 + 0.032 * nchar(d$nodes)
+  role <- factor(datawizard::recode_into(d$nodes %in% d$exposure ~ "exposure",
+                                         d$nodes %in% d$outcome ~ "outcome",
+                                         d$nodes %in% d$latent ~ "unobserved",
+                                         default = "observed"),
+                 levels = c("exposure", "outcome", "observed", "unobserved"))
   # how far along a unit vector (ux, uy) the edge of a box of half-width w lies
   to_edge <- \(ux, uy, w) pmin(w / pmax(abs(ux), 1e-9), 0.15 / pmax(abs(uy), 1e-9))
-  tails <- dplyr::select(nodes, from = "name", x0 = "x", y0 = "y", w0 = "half_w")
-  heads <- dplyr::select(nodes, to = "name", x1 = "x", y1 = "y", w1 = "half_w")
-  arrows <- parts$edges |>
-    dplyr::inner_join(tails, by = "from") |>
-    dplyr::inner_join(heads, by = "to") |>
-    dplyr::mutate(len = sqrt((.data$x1 - .data$x0)^2 + (.data$y1 - .data$y0)^2),
-                  ux = (.data$x1 - .data$x0) / .data$len,
-                  uy = (.data$y1 - .data$y0) / .data$len,
-                  s0 = to_edge(.data$ux, .data$uy, .data$w0),
-                  s1 = to_edge(.data$ux, .data$uy, .data$w1) + 0.04,
-                  x = .data$x0 + .data$s0 * .data$ux, y = .data$y0 + .data$s0 * .data$uy,
-                  xend = .data$x1 - .data$s1 * .data$ux, yend = .data$y1 - .data$s1 * .data$uy)
+  tail <- match(d$edges$from, d$nodes)
+  head <- match(d$edges$to, d$nodes)
+  len <- sqrt((x[head] - x[tail])^2 + (y[head] - y[tail])^2)
+  ux <- (x[head] - x[tail]) / len
+  uy <- (y[head] - y[tail]) / len
+  s0 <- to_edge(ux, uy, half_w[tail])
+  s1 <- to_edge(ux, uy, half_w[head]) + 0.04
 
   # the boxes, coloured by role; tinyplot has no type for arrows, so they go
   # on the same canvas through graphics::arrows(); then the names, white on
   # the coloured boxes and dark on the pale one
-  tinyplot::tinyplot(xmin = nodes$x - nodes$half_w, xmax = nodes$x + nodes$half_w,
-                     ymin = nodes$y - 0.13, ymax = nodes$y + 0.13, by = nodes$role, type = "rect",
+  tinyplot::tinyplot(xmin = x - half_w, xmax = x + half_w, ymin = y - 0.13, ymax = y + 0.13,
+                     by = role, type = "rect",
                      palette = c("#1b6ca8", "#d1495b", "grey45", "grey88"), fill = "by",
                      legend = list("bottom!", title = NULL), axes = FALSE, frame.plot = FALSE,
                      xlab = NA, ylab = NA,
-                     xlim = range(nodes$x) + c(-0.45, 0.45), ylim = range(nodes$y) + c(-0.3, 0.3),
+                     xlim = range(x) + c(-0.45, 0.45), ylim = range(y) + c(-0.3, 0.3),
                      grid = FALSE, theme = "minimal")
-  graphics::arrows(arrows$x, arrows$y, arrows$xend, arrows$yend,
+  graphics::arrows(x[tail] + s0 * ux, y[tail] + s0 * uy, x[head] - s1 * ux, y[head] - s1 * uy,
                    length = 0.1, angle = 20, col = "grey40", lwd = 1.5)
-  tinyplot::tinyplot(x = nodes$x, y = nodes$y, by = nodes$role,
-                     type = tinyplot::type_text(labels = nodes$name, font = 2),
+  tinyplot::tinyplot(x = x, y = y, by = role,
+                     type = tinyplot::type_text(labels = d$nodes, font = 2),
                      palette = c("white", "white", "white", "grey25"), cex = 0.8, add = TRUE)
-}
-
-# Whether dagitty could work here at all. Its JavaScript engine needs
-# SharedArrayBuffer, which a browser grants only to a cross-origin-isolated
-# page, and the failure is a JavaScript error that tryCatch() cannot catch, so
-# the question has to be asked before anything calls dagitty.
-.dagitty_possible <- function() {
-  isTRUE(tryCatch(
-    as.numeric(webr::eval_js("typeof SharedArrayBuffer === 'undefined' ? 0 : 1")) == 1,
-    error = \(e) FALSE))
 }
 ```
 
-`make_dag()`, `adjustmentSets()`, `isAdjustmentSet()`, `paths()` and `plot_dag()` are already available on this page, so you can go straight to the graph. The optional cell below loads `dagitty`, the R package that the downloadable workspace uses for the same questions; where the browser cannot run it, the page keeps its own graph code, which gives the same answers.
+`make_dag()` builds the graph and `plot_dag()` draws it. `adjustmentSets()`, `isAdjustmentSet()` and `paths()` print the answers of dagitty, the R package that the downloadable workspace uses for the same questions, in the form in which dagitty prints them. The course pipeline computed those answers ([codebook](data/dag_answers_codebook.md)) for every graph that the cell below offers: the arrow of the claim off, on or reversed, each with either of the two swaps, and for the four adjustment sets of the menu. For any other graph, the workspace runs dagitty itself:
 
-```{webr}
-#| autorun: false
-# Optional: load dagitty. The check comes first, because dagitty runs its
-# graph algorithms in a JavaScript engine that this browser may not offer.
-if (!.dagitty_possible()) {
-  writeLines(c("This page is not served with the headers that the dagitty engine needs.",
-               "Everything in Task 2 still works: make_dag(), adjustmentSets(), isAdjustmentSet(),",
-               "paths() and plot_dag() use the graph code built into this page."))
-} else {
-  have_dagitty <- tryCatch({
-    webr::install("dagitty", quiet = TRUE)
-    loadNamespace("dagitty")
-    TRUE
-  }, error = \(e) FALSE)
-  if (have_dagitty) {
-    dag_engine <- "dagitty"
-    adjustmentSets <- dagitty::adjustmentSets
-    isAdjustmentSet <- dagitty::isAdjustmentSet
-    paths <- dagitty::paths
-    writeLines("dagitty is loaded: rerun the graph cell below, and every question goes to dagitty.")
-  } else {
-    writeLines("dagitty did not install. The graph code built into this page answers every question of Task 2.")
-  }
-}
+``` r
+source("R/dag_starter.R")
+plot_dag(dag)
+dagitty::adjustmentSets(dag)
+paper_set <- c("background", "pessimism", "ideology", "far_right", "services")
+dagitty::paths(dag)
+dagitty::paths(dag, Z = paper_set)
+dagitty::isAdjustmentSet(dag, paper_set)
 ```
 
 Now build the graph and put three questions to it. What has to be held constant to estimate the effect of concern on distrust? Which paths between the two are open before anything is held constant? And which are open once the controls of the paper are held constant, the background, pessimism and ideology together with the far-right vote and the verdict on services?
@@ -1097,9 +856,9 @@ my_dag <- make_dag(
 )
 
 paper_set <- c("background", "pessimism", "ideology", "far_right", "services")
-adjustmentSets(my_dag)              # r-style: keep – the function of this page, or of dagitty once loaded
-paths(my_dag, Z = paper_set)        # r-style: keep – the function of this page, or of dagitty once loaded
-isAdjustmentSet(my_dag, paper_set)  # r-style: keep – the function of this page, or of dagitty once loaded
+adjustmentSets(my_dag)              # r-style: keep – the function of this page, which prints the answer of dagitty
+paths(my_dag, Z = paper_set)        # r-style: keep – as above
+isAdjustmentSet(my_dag, paper_set)  # r-style: keep – as above
 plot_dag(my_dag)
 ```
 
@@ -1111,8 +870,8 @@ Now take the `#` off the arrow `"concern -> distrust"` and run the cell again. T
 ## Answers
 
 1.  The set stays `{ background, ideology, pessimism }`. The arrow of the claim is the effect itself, not a path to be blocked, and the controls of the paper still open the two collider paths.
-2.  After the swaps they are mediators: part of the effect of concern runs through them. Holding them constant removes that part and leaves what the graph calls the direct effect, so the controls of the paper then answer a narrower question than the claim.
-3.  No. With `"distrust -> concern"`, the path `concern <- distrust` stays open whatever is held constant, and `adjustmentSets()` finds no set, so a comparison of respondents at one point in time cannot tell the two directions apart. One Multi100 analyst raised this reverse direction, and the paper says that an analysis with instrumental variables confirmed its own direction, but does not report it.
+2.  After the swaps they are mediators: part of the effect of concern runs through them. Holding them constant removes that part and leaves what the graph calls the direct effect, which `adjustmentSets(my_dag, effect = "direct")` shows, so the controls of the paper then answer a narrower question than the claim.
+3.  No. With `"distrust -> concern"`, the path `concern <- distrust` stays open whatever is held constant, and `adjustmentSets()` finds no set and prints nothing, so a comparison of respondents at one point in time cannot tell the two directions apart. One Multi100 analyst raised this reverse direction, and the paper says that an analysis with instrumental variables confirmed its own direction, but does not report it.
 
 The four adjustment sets of the menu follow the graph: no controls (`"none"`), the background (`"demog"`), the background with pessimism and ideology (`"outlook"`), and those with the verdicts on the economy and public services and the two vote controls, the set of the paper (`"paper"`). The adjustment set is the second argument of `try_spec()` in Task 4, and whatever you conclude here belongs in field 4 of your preregistration in Task 5.
 :::
@@ -1121,17 +880,69 @@ The four adjustment sets of the menu follow the graph: no controls (`"none"`), t
 
 This is the **reproducibility** check. All five Multi100 analysts worked from one file, which a SCORE reproduction had built from the ESS files of rounds 1–4 with the variables of the paper already coded (osf.io/e48gd). Analyst 6U3LL fitted the model of Table 3 of the paper to it, without the unemployment rate of each country: a three-level model with random intercepts for countries and for country-rounds, fitted in R with the lmerTest package, which builds on lme4. Multi100 recorded **t = 46.625** on 72,733 respondents, and the coefficient behind it, which the log of the analyst prints, is 0.191.
 
-The downloadable workspace reproduces that value exactly, because it downloads the file from the OSF and fits the model with lme4, and this page cannot do the same. The OSF serves the file through a redirect that does not give a page on another website permission to read it, a rule that every browser enforces (cross-origin resource sharing), and the course cannot host a copy of its own, because the file holds person-level survey data. lme4 itself runs in the browser, so the file is the only obstacle. What the page can do is fit the specification of the course that comes closest to the model of 6U3LL, on the course data: distrust of parliament, the controls of the paper, and an intercept for every country-round (fixed effects) in place of the random intercepts. The country-level variables of the paper are constant within a country-round, so the fixed effects absorb them, unemployment included.
+The workspace reproduces that value: it downloads the file from the OSF once and fits the model with lme4. A page in a browser cannot download the file, because the OSF serves it through a redirect that does not give a page on another website permission to read it, a rule that every browser enforces (cross-origin resource sharing), and the course cannot host a copy of its own, because the file holds person-level survey data. In the workspace, the reproduction is this code:
 
-The cell below is an exercise. The file of the analysts builds each scale from the items that a respondent answered, which is one of the two options of the decision `items`. Replace the blank (`______`) with that option, then press "Run Code". If you get stuck, open the hint below; the solution has the full code.
+``` r
+have_srd <- fetch_multi100()
+
+srd <- read.csv(.multi100$path)  # r-style: keep – the reader in the script of the analyst
+
+m_6u3ll <- lme4::lmer(
+  trstprl_r ~ im_conc + happy_r + stflife_r + sclmeet_r + distrust + stfeco_r + hincfel +
+    stfhlth_r + stfedu_r + winner + far_right + lrscale + hhinc_std + agea + edulvla + female +
+    far_right_share + spr_estat + factor(round) + long_im_his + wgi + GDP +
+    (1 | country_round) + (1 | cntry),
+  data = srd)
+
+stats::nobs(m_6u3ll)
+lme4::ngrps(m_6u3ll)
+# the coefficient of concern, read with parameters; the t to three decimals
+coefs_6u3ll <- parameters::model_parameters(m_6u3ll, effects = "fixed", keep = "^im_conc$")
+coefs_6u3ll
+round(coefs_6u3ll$t, 3)
+```
+
+The course pipeline ran the same model on the same file (`R/trust/04_reference_marks.R`), and the cell below reads what it found: the respondents and groups of the fit, then the coefficient of concern with its standard error, *t* and degrees of freedom, as `parameters` reads them.
+
+```{webr}
+#| autorun: false
+reproduction <- utils::read.csv("data/lab_reproduction.csv")  # r-style: keep – the base reader adds nothing to the download
+reproduction |>
+  datawizard::data_filter(id == "6U3LL") |>
+  datawizard::data_select(c("n", "country_rounds", "countries", "b", "se", "t", "df"))
+round(datawizard::data_filter(reproduction, id == "6U3LL")$t, 3)
+```
+
+The model gives **t = 46.625** on **72,733 respondents**, in 57 country-rounds of 16 countries, with a coefficient of 0.191: the value on record for analyst 6U3LL, reproduced from the file of the analysts. Multi100 also recorded 72,700 degrees of freedom, which come from the lmerTest package that the analyst loaded: it adds an approximation of the degrees of freedom to the same *t*, which lme4 reports without them.
+
+What do the random intercepts contribute? The workspace fits the same individual-level model with an intercept for every country-round instead (fixed effects), which absorb the country-level variables, constant within a country-round:
+
+``` r
+m_fe <- fixest::feols(
+  trstprl_r ~ im_conc + happy_r + stflife_r + sclmeet_r + distrust + stfeco_r + hincfel +
+    stfhlth_r + stfedu_r + winner + far_right + lrscale + hhinc_std + agea + edulvla + female |
+    country_round,
+  data = srd, vcov = "iid")
+parameters::model_parameters(m_fe, keep = "^im_conc$")
+```
+
+```{webr}
+#| autorun: false
+utils::read.csv("data/lab_reproduction.csv") |>  # r-style: keep – the base reader adds nothing to the download
+  datawizard::data_filter(id == "6U3LL_fe") |>
+  datawizard::data_select(c("n", "country_rounds", "b", "se", "t", "df"))
+```
+
+The coefficient barely moves: 0.1914 with an intercept for every country-round as with the random intercepts, and *t* = 46.60 against 46.62. With hundreds of respondents in every country-round, random and fixed intercepts give almost the same answer. The course data come next. The specification of the course closest to the model of 6U3LL is distrust of parliament, the controls of the paper, and an intercept for every country-round, with the scales built as the file of the analysts builds them. The file of the analysts builds each scale from the items that a respondent answered, which is one of the two options of the decision `items`. The cell below is an exercise: replace the blank (`______`) with that option, then press "Run Code". If you get stuck, open the hint below; the solution has the full code.
 
 ```{webr}
 #| exercise: analogue
-# The specification of the course closest to the model of 6U3LL, fitted to the
-# course data: the reference specification with the rule of the file of the
-# analysts for unanswered items.
-analogue <- fit_spec(ess, items = "______")
-analogue[, c("b", "t_conv", "n", "n_country_rounds")]
+# The specification of the course closest to the model of 6U3LL: its row of
+# the curve, which the course pipeline fitted on the course data
+curve <- utils::read.csv("data/spec_curve.csv")  # r-style: keep – the base reader adds nothing to the download
+datawizard::data_filter(curve, outcome == "parliament", controls == "paper", weights == "none",
+                        items == "______", fe == "country_round") |>
+  datawizard::data_select(c("b", "t_conv", "n", "n_country_rounds"))
 ```
 
 :::: {.hint exercise="analogue"}
@@ -1147,22 +958,30 @@ The two options of `items` are `"complete"` (a scale counts only for respondents
 ## Fully worked solution
 
 ``` r
-analogue <- fit_spec(ess, items = "available")
-analogue[, c("b", "t_conv", "n", "n_country_rounds")]
+curve <- utils::read.csv("data/spec_curve.csv")  # r-style: keep – the base reader adds nothing to the download
+datawizard::data_filter(curve, outcome == "parliament", controls == "paper", weights == "none",
+                        items == "available", fe == "country_round") |>
+  datawizard::data_select(c("b", "t_conv", "n", "n_country_rounds"))
 ```
 
-You should get a coefficient of **0.174** on **72,620 respondents** in 57 country-rounds, with a conventional *t* of 41.7, against 0.191 and 46.625 on the file of the analysts.
+You should get a coefficient of **0.174** on **72,620 respondents** in 57 country-rounds, with a conventional *t* of 41.7, against 0.191 and 46.625 on the file of the analysts. In the workspace, `fit_spec(ess, items = "available")[, c("b", "t_conv", "n", "n_country_rounds")]` fits the same specification live and prints the same numbers.
 :::
 ::::
 
-The gap of 0.017 does not come from the model. In the workspace, the same fixed-effects model fitted to the file of the analysts gives almost exactly the coefficient of their random intercepts, so the gap lies in the two files. They code several variables differently, among them the vote for a party in government (the file of the analysts counts only voters for the party that won the last election) and the far-right vote.
+The gap of 0.017 does not come from the model. On the file of the analysts, fixed and random intercepts give almost exactly the same coefficient, so the gap lies in the two files. They code several variables differently, among them the vote for a party in government (the file of the analysts counts only voters for the party that won the last election) and the far-right vote.
 
-*Optional extension.* The SCORE reproduction osf.io/jp7tr rebuilt the data of the paper from the ESS files and published a coefficient of 0.1780 on 69,522 respondents. It read the integrated files of the four rounds, which lack the Italian round 2. Leave that country-round out of the course data and fit the reference specification:
+*Optional extension.* The SCORE reproduction osf.io/jp7tr rebuilt the data of the paper from the ESS files and published a coefficient of 0.1780 on 69,522 respondents. It read the integrated files of the four rounds, which lack the Italian round 2. In the workspace, leave that country-round out of the course data and fit the reference specification:
+
+``` r
+without_it2 <- datawizard::data_filter(ess, !(cntry == "IT" & essround == 2))
+fit_spec(without_it2)[, c("b", "se", "t_conv", "n", "n_country_rounds")]
+```
 
 ```{webr}
 #| autorun: false
-without_it2 <- datawizard::data_filter(ess, !(cntry == "IT" & essround == 2))
-fit_spec(without_it2)[, c("b", "se", "t_conv", "n", "n_country_rounds")]
+utils::read.csv("data/lab_reproduction.csv") |>  # r-style: keep – the base reader adds nothing to the download
+  datawizard::data_filter(id == "course_no_it2") |>
+  datawizard::data_select(c("b", "se", "t_conv", "n", "country_rounds"))
 ```
 
 The fit keeps exactly the 69,522 respondents of that reproduction and gives 0.1772, within 0.001 of its published 0.1780, without any multilevel model. The [case study](index.qmd) traces the small gap that remains to the coding of the vote controls.
@@ -1179,7 +998,7 @@ The five Multi100 analysts each wrote their own code for this claim, and all fiv
 
 This task is **exploratory**. You try several specifications, look at what each one does, and get a feel for which choices move the estimate and which barely touch it. Nothing in this task is preregistered; the preregistration comes in Task 5.
 
-`try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and every argument defaults to the reference specification, the one closest to the model of the paper: distrust of parliament, the controls of the paper, no weights, every item of a scale answered, an intercept for every country-round. So changing one thing means changing one argument, and everything you do not name stays as it was. Every call is a live fit in your browser and takes about a second.
+`try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and every argument defaults to the reference specification, the one closest to the model of the paper: distrust of parliament, the controls of the paper, no weights, every item of a scale answered, an intercept for every country-round. So changing one thing means changing one argument, and everything you do not name stays as it was. On this page every call reads the row of the curve that the course pipeline fitted for that specification; in the workspace, the same call fits it live and prints the same lines.
 
 ```{webr}
 #| autorun: false
@@ -1307,9 +1126,9 @@ my_spec <- prereg()   # checks every choice, prints your preregistration and kee
 
 The cell above, copied into your notes, is your preregistration record.
 
-## Task 5, continued – Fit, report and place {#task-5-fit-report}
+## Task 5, continued – Look up, report and place {#task-5-fit-report}
 
-This is the **robustness** check, and it is the part that your classmates cannot copy from you: together the class samples the multiverse of defensible analyses. `run_spec()` fits your declared specification and prints the same lines as `try_spec()`. It refuses to run if the preregistration cell has changed since `prereg()` read it.
+This is the **robustness** check, and it is the part that your classmates cannot copy from you: together the class samples the multiverse of defensible analyses. `run_spec()` reads your declared specification from the curve, as the course pipeline fitted it, and prints the same lines as `try_spec()`; in the workspace it fits the specification live. It refuses to run if the preregistration cell has changed since `prereg()` read it.
 
 ```{webr}
 #| autorun: false
@@ -1339,11 +1158,10 @@ spec_curve <- utils::read.csv("data/spec_curve.csv") |>  # r-style: keep – the
                           adjustment = factor(controls, levels = c("none", "demog", "outlook", "paper"),
                                               labels = c("none", "demographics", "outlook and ideology",
                                                          "controls of the paper")))
-# Yours, chosen with dplyr, because datawizard cannot see the my_ choices of
-# the preregistration cell
-mine <- spec_curve |>
-  dplyr::filter(outcome == my_outcome, controls == my_controls, weights == my_weights,
-                items == my_items, fe == my_fe)
+# Yours: the row of the five choices of the preregistration cell
+mine <- datawizard::data_match(spec_curve, list(outcome = my_outcome, controls = my_controls,
+                                                weights = my_weights, items = my_items, fe = my_fe),
+                               remove_na = FALSE)
 
 tinyplot::tinytheme("minimal")
 tinyplot::tinyplot(b ~ rank | adjustment, data = spec_curve, pch = 16,
@@ -1365,10 +1183,10 @@ If you want a second declared specification, edit the preregistration cell, reru
 
 ## Taking it home
 
-This page keeps nothing once you refresh it, so work you want to keep belongs in the downloadable workspace. Putting that work under version control and publishing the rendered report is the natural next step. The [Git and GitHub module](../../companion/git-github.qmd) of the companion curriculum explains it click by click.
+This page keeps nothing once you refresh it, and it fits nothing, so work you want to keep, and every model you want to fit yourself, belongs in the downloadable workspace. Putting that work under version control and publishing the rendered report is the natural next step. The [Git and GitHub module](../../companion/git-github.qmd) of the companion curriculum explains it click by click.
 
 ::: {.callout-tip icon="false"}
 ## The downloadable workspace
 
-The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE (Positron, RStudio, VS Code, etc.), edit and render offline, and in which everyone taking the course works. The same folder holds the reproduction of Task 3 as a script, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab-trust`]({{< var cases.trust.template-repo >}}) repository, and it is yours to reuse.
+The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE (Positron, RStudio, VS Code, etc.), edit and render offline, and in which everyone taking the course works. There every result of this page is computed live: the ESS extract is loaded, every specification of the menu is fitted when you ask for it, dagitty answers any graph, and the reproduction of Task 3 downloads the file of the analysts and fits the model. The folder also holds the reproduction as a script, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab-trust`]({{< var cases.trust.template-repo >}}) repository, and it is yours to reuse.
 :::

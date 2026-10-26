@@ -32,21 +32,21 @@ format:
 
 ## The helpers {#helpers}
 
-The downloadable workspace and the browser lab have the same helpers, with the same names and arguments, and both fit every specification of the menu live. Each fit takes a few seconds, the multinomial logit longest.
+The downloadable workspace and the browser lab have the same helpers of Tasks 4 and 5, with the same names and arguments, and they print the same lines. The workspace fits every specification of the menu live, each in a few seconds, the multinomial logit longest, and asks dagitty about the graph. The browser lab is a demonstration that fits nothing before Task 3: it reads each result from the curve, and each answer about the graph from a table of the answers of dagitty, both computed by the course pipeline; the reproduction of Task 3 runs there in full.
 
 | Helper | Task | What it does |
 |---|---|---|
 | `make_dag(...)`, `plot_dag(dag)` | 2 | Build the causal graph from arrows written `"cause -> effect"`, one per string, and draw it. |
-| `adjustmentSets(dag)` | 2 | Lists what has to be held constant to compare the periods among all women. |
+| `adjustmentSets(dag)` | 2 | Lists what has to be held constant to compare the periods among all women. In the workspace this function and `paths()` are those of dagitty; in the browser lab they print the stored answers of dagitty for the graphs that its cell offers. |
 | `paths(dag, Z = ...)` | 2 | Lists every path between the period and marriage, and whether each is open once the comparison holds the variables in `Z` constant; `Z = "cohabits"` is the selection that every analysis of cohabitors makes. |
 | `check_score_file()` | 3 | Checks that `data/score_person_months.csv` is, byte for byte, the file that Multi100 gave the analysts. |
-| `spec_unions(unions)`, `person_months()` | 2, 3 | Keep the unions of the paper (929 of 1995, 1,142 of 2006–2010), and turn unions into one row for every month in which they could end. |
-| `fit_spec(unions, ...)` | 3 | The estimator of the course, which fits any option of the menu, including those off the curve: `fit_spec(unions, adjust = "race_period")` is Model 2 of the paper. |
-| `try_spec(...)` | 4 | Fits one specification of the curve and prints the coefficient of the later cohort on the log scale with its 95% interval, the ratio of monthly chances, the *t* test with design-based errors, the conventional *z*, the person-months, unions and marriages analysed, the partial *r*, the class of the result and its place among the 144 specifications on the curve. |
-| `my_experiments()` | 4 | Prints everything that `try_spec()` has fitted so far, side by side, with only the decisions that varied. |
+| `spec_unions(unions)`, `person_months()` | 2, 3 | Workspace only: keep the unions of the paper (929 of 1995, 1,142 of 2006–2010), and turn unions into one row for every month in which they could end. |
+| `fit_spec(unions, ...)` | 3 | Workspace only: the estimator of the course, which fits any option of the menu, including those off the curve: `fit_spec(unions, adjust = "race_period")` is Model 2 of the paper. |
+| `try_spec(...)` | 4 | Fits one specification of the curve (the browser lab reads it from the curve) and prints the coefficient of the later cohort on the log scale with its 95% interval, the ratio of monthly chances, the *t* test with design-based errors, the conventional *z*, the person-months, unions and marriages analysed, the partial *r*, the class of the result and its place among the 144 specifications on the curve. |
+| `my_experiments()` | 4 | Prints everything that `try_spec()` has returned so far, side by side, with only the decisions that varied. |
 | `submit_exploration()` | 4 | Sends the last `try_spec()` to the class chart as an exploratory result, an open circle, and prints the pre-filled form link and your tag. |
 | `my_spec <- prereg()` | 5 | Checks the fifteen `my_*` choices of the preregistration block against the menu, prints the block with its estimand statement, and keeps it as `my_spec`. |
-| `run_spec(my_spec)` | 5 | Fits the declared specification and prints the same lines as `try_spec()`. It refuses to run if the block has changed since `prereg()`. |
+| `run_spec(my_spec)` | 5 | Fits the declared specification (the browser lab reads it from the curve) and prints the same lines as `try_spec()`. It refuses to run if the block has changed since `prereg()`. |
 | `report_result()` | 5 | Sends the declared result to the class chart, a filled circle, with the same tag as your exploratory result. |
 
 Both submission functions take `nickname = "..."`, which replaces the tag that they draw for you, such as `amber-otter-42`. Use a nickname rather than your name, because the chart is public.
@@ -90,7 +90,7 @@ The [specification menu](menu.qmd) explains every option, and the [decision map]
 
 ## Task 3 – the reproduction {#reproduction}
 
-The target is the value that Multi100 recorded for analyst 5X3KG: **$\chi^2(1)$ = 47.474** on 23,949 person-month rows, from `prop.test()` with the continuity correction, comparing the share of rows that record a marriage in the 1995 survey with that share in the 2006–2010 survey, on the file that Multi100 gave the analysts. Both the workspace and the browser lab hold that file, so the task runs in either.
+The target is the value that Multi100 recorded for analyst 5X3KG: **$\chi^2(1)$ = 47.474** on 23,949 person-month rows, from `prop.test()` with the continuity correction, comparing the share of rows that record a marriage in the 1995 survey with that share in the 2006–2010 survey, on the file that Multi100 gave the analysts. Both the workspace and the browser lab hold that file, so the reproduction and the count of the unions of the file run live in either. The parts of the task that need the union file of the course (which unions of the paper are in the file, the file with its 1995 rows rebuilt, and Model 2) run in the workspace; the browser lab shows their results as the course pipeline computed them, beside the code.
 
 - **The reproduction.** The code of the analyst gives 47.474 exactly: 4 marriages in 5,414 rows of 1995 against 195 in 18,535 rows of 2006–2010, so in this file marriage became more common, the opposite of the claim.
 - **The file.** One row per union (the last month of each) shows that the file holds 376 unions of 1995, with 3 intact, 4 marriages and 369 separations, where the paper has 929 unions: 242 intact, 340 marriages and 347 separations. SCORE took the length of each 1995 union from the date on which the woman stopped living with a former partner, which exists only for a union that dissolved. With the 1995 rows rebuilt, the same test gives $\chi^2$ = 87.68 in the direction of the claim.
@@ -111,7 +111,7 @@ You submit twice, and the two submissions are different in kind.
 **Task 5 – the declared mark (filled circle).** Here you preregister one specification before you run it.
 
 4. **Preregister.** Make one choice for every `my_` line of the preregistration block, complete the dotted lines, and run the block, which ends in `my_spec <- prereg()`. The completed block is your preregistration. In the workspace, keep it in the report as set out under [Rendering the report](#rendering-the-report); on the browser lab page, copy the whole cell into your notes.
-5. **`run_spec(my_spec)`** – fits your specification and prints its result and its place on the curve.
+5. **`run_spec(my_spec)`** – fits your specification (in the browser lab, reads it from the curve) and prints its result and its place on the curve.
 6. **`report_result()`** – builds your submission from the preregistration and prints a pre-filled form link; open it and press **Send**. It reuses your tag from Task 4. In the browser lab, if you have reloaded the page since then, pass the tag back with `report_result(nickname = "your-tag")`.
 
 If any of that stalls, work down the list under [A stalled browser lab](#a-stalled-browser-lab) in the browser lab, or the [IDE quick fixes](#ide-quick-fixes) in the workspace.
@@ -141,9 +141,9 @@ If any of that stalls, work down the list under [A stalled browser lab](#a-stall
 
 ## A stalled browser lab
 
-The browser lab runs R inside your browser tab, and browsers occasionally baulk. Work down this list. Each step is more certain than the one before, and step 4 puts your mark on the chart whatever your machine does.
+The browser lab runs R inside your browser tab, reading the results of the course from small tables, and browsers occasionally baulk. Work down this list. Each step is more certain than the one before, and step 4 puts your mark on the chart whatever your machine does.
 
-1. **Hard reload, then rerun.** Reload the page clearing the cache (Ctrl+Shift+R / Cmd+Shift+R), wait for R and the data to load again, and **rerun the cells above** the one that failed – the R engine in the browser needs the earlier cells to have run in this session before a later one will work.
+1. **Hard reload, then rerun.** Reload the page clearing the cache (Ctrl+Shift+R / Cmd+Shift+R), wait for R, the tables and the file of the analysts to load again, and **rerun the cells above** the one that failed – the R engine in the browser needs the earlier cells to have run in this session before a later one will work.
 2. **Switch browser.** If a cell still will not run, open the browser lab in a different browser (Chrome, Edge or Firefox). A fresh browser clears most stubborn problems.
 3. **Follow the shared screen.** If your machine simply will not cooperate, watch the facilitator run the same cell on the shared screen and read the printed results from there. You miss no step by doing this.
 4. **Read your printed result to the facilitator.** If `submit_exploration()` or `report_result()` printed your result but the form link will not open, read the printed `b`, `se`, `t`, `df`, `n` and `r` to the facilitator, who adds the mark to the chart for you. If a cell refuses to run at all, nothing is printed and there are no numbers to read, so give the facilitator your six choices instead, and the facilitator reads the result off the curve file by hand (the note below).
@@ -167,7 +167,7 @@ Last resort, facilitator-side, if the cells of a participant will not run at all
 | `check_score_file()` says that the file is missing or not the one that the analysts received | The file in `data/` has been changed or lost. Unzip a fresh copy of the workspace and copy `data/score_person_months.csv` across. |
 | `try_spec()` warns that the live fit differs from the curve | A file in `data/` has been edited. Copy `data/` from a fresh download of the workspace. |
 | Something not listed here | The [setup help page](../../help.qmd) has the longer table, with prompts to give an AI assistant. |
-| Everything is stuck | Open the [browser lab](lab.qmd) and carry on there. You lose nothing required. |
+| Everything is stuck | Open the [browser lab](lab.qmd) and follow the tasks there: it runs the reproduction of Task 3, shows every other result and sends both of your submissions, though it cannot fit a specification of your own. |
 
 ------------------------------------------------------------------------
 
