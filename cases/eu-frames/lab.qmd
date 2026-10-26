@@ -18,6 +18,7 @@ resources:
   - data/EUframes_cy.csv
   - data/spec_curve.csv
   - data/menu_options.csv
+  - data/dag_answers.csv
 live:
   show-hints: true
   show-solutions: true
@@ -717,72 +718,34 @@ Five arrows are drawn. `unemployment -> framing` is the path of interest. Above 
 
 You build the graph yourself in the cells below, in ordinary R. `dagify()` takes one formula per arrow, written the way you write a model, so `framing ~ unemployment` is the arrow that runs *into* `framing`. Read the tilde as 'is caused by' rather than 'is regressed on' and the direction comes out right every time. Because each arrow is its own line of R, an arrow you are unsure about can stay in the cell commented out, and adopting it means deleting a `#`.
 
-`dagify()` and `adjustmentSets()` are already available on this page, so you can go straight to the next cell. The optional cell below adds the *plot*. It installs `ggdag`, which brings `ggplot2`, `igraph`, `ggraph` and some forty further packages with it – roughly 60 MB of download, and a long pause on a slow connection. Run it if you want the plot. Skip it and everything else in Task 2 still works, because the figure above is the same graph.
+`dagify()` and `adjustmentSets()` are already available on this page, so you can go straight to the next cell. In the downloadable workspace they come from `ggdag` and `dagitty`, the R packages for causal graphs, which cannot run on this page. Here `adjustmentSets()` prints the answer that dagitty gives, read from a table that the course computed with dagitty for every combination of the arrows in the cell ([codebook](data/dag_answers_codebook.md)). Any other graph gets a pointer to the workspace, which also draws the graph that you finish.
 
 ```{webr}
 #| include: false
 #| autorun: true
-# r-style: PENDING – adjustment sets by the backdoor criterion; no package found that runs in webR
-# Graph machinery for Task 2. The adjustment-set question is answered here in
-# base R rather than by dagitty, because dagitty reaches its graph algorithms
-# through a JavaScript engine that a browser only exposes to a page served with
-# cross-origin isolation headers (COOP and COEP). Without them the call fails
-# with a JavaScript type error rather than an R error, so the browser lab
-# cannot depend on it. These functions agree with `dagitty::adjustmentSets()`
-# on every arrow combination that this task offers and on 378 random test graphs.
+# Graph machinery for Task 2. dagify() reads a graph from one formula per
+# arrow, written effect ~ cause as ggdag::dagify() reads it in the workspace.
+# adjustmentSets() prints the answer of dagitty from data/dag_answers.csv:
+# R/eu-frames/14_dag_answers.R in the course repository computes it with
+# dagitty for every combination of the arrows in the graph cell below.
+# dagitty itself cannot run on this page, because it reaches its graph
+# algorithms through a JavaScript engine that a browser grants only to a page
+# served with cross-origin isolation headers (COOP and COEP), and the course
+# site does not send them. Any other graph goes to dagitty in the downloadable
+# workspace. The table arrives with the page through its `resources:` list.
+.dag_answers <- utils::read.csv("data/dag_answers.csv", stringsAsFactors = FALSE, # r-style: keep – readr would add 4 MB to the download
+                                na.strings = "NA")
+.dag_elsewhere <- c(
+  "This page holds the adjustment sets that dagitty gives for the graph of the cell",
+  "with any of its commented arrows switched on. For another graph or another",
+  "question, use the downloadable workspace, where R/dag_starter.R builds the graph",
+  "and dagitty answers whatever you ask of it.")
 
-.dag_has_edge <- function(dag, a, b) any(dag$edges$from == a & dag$edges$to == b)
-
-# A node counts as one of its own descendants, which is what the collider rule
-# below needs.
-.dag_descendants <- function(dag, v) {
-  seen <- v
-  frontier <- v
-  while (length(frontier)) {
-    kids <- setdiff(dag$edges$to[dag$edges$from %in% frontier], seen)
-    seen <- c(seen, kids)
-    frontier <- kids
-  }
-  seen
-}
-
-# Every simple path between two nodes, ignoring arrow direction. The recursion
-# is safe only because a teaching graph is tiny.
-.dag_paths <- function(dag, from, to) {
-  out <- list()
-  neighbours <- function(v) unique(c(dag$edges$to[dag$edges$from == v],
-                                     dag$edges$from[dag$edges$to == v]))
-  walk <- function(path) {
-    v <- path[length(path)]
-    if (v == to) {
-      out[[length(out) + 1L]] <<- path
-      return(invisible(NULL))
-    }
-    for (w in setdiff(neighbours(v), path)) walk(c(path, w))
-  }
-  walk(from)
-  out
-}
-
-# A path is blocked by the set z if any node along it is either a non-collider
-# inside z, or a collider with no descendant in z.
-.dag_path_blocked <- function(dag, path, z) {
-  if (length(path) < 3L) return(FALSE)
-  for (i in seq(2L, length(path) - 1L)) {
-    node <- path[i]
-    collider <- .dag_has_edge(dag, path[i - 1L], node) &&
-                .dag_has_edge(dag, path[i + 1L], node)
-    if (collider) {
-      if (!any(.dag_descendants(dag, node) %in% z)) return(TRUE)
-    } else if (node %in% z) {
-      return(TRUE)
-    }
-  }
-  FALSE
-}
-
-.dagify_builtin <- function(..., exposure = NULL, outcome = NULL,
-                            coords = NULL) {
+# A graph from one formula per arrow. coords is accepted, as ggdag::dagify()
+# accepts it, and not used, because this page does not draw the graph. The
+# arrows, sorted, are the key under which data/dag_answers.csv holds the
+# answers for the graph.
+dagify <- function(..., exposure = NULL, outcome = NULL, coords = NULL) {
   e <- purrr::map(list(...), \(f) {
     child <- all.vars(f[[2]])
     parent <- all.vars(f[[3]])
@@ -790,30 +753,24 @@ You build the graph yourself in the cells below, in ordinary R. `dagify()` takes
   }) |>
     purrr::list_rbind()
   structure(list(edges = e, exposure = exposure, outcome = outcome,
-                 nodes = unique(c(e$from, e$to))),
+                 nodes = unique(c(e$from, e$to)),
+                 key = paste(sort(unique(paste(e$from, "->", e$to)), method = "radix"),
+                             collapse = "; ")),
             class = "simple_dag")
 }
 
-# The backdoor criterion, brute-forced over subsets of the eligible variables:
-# smallest sets first, and a set is skipped once it contains a set already
-# found, which leaves only the minimal ones.
-.adjustment_sets_builtin <- function(x, exposure = x$exposure,
-                                     outcome = x$outcome, ...) {
-  backdoor <- .dag_paths(x, exposure, outcome) |>
-    purrr::keep(\(p) .dag_has_edge(x, p[2L], exposure))
-  candidates <- setdiff(x$nodes, c(outcome, .dag_descendants(x, exposure)))
-  found <- list()
-  for (k in seq(0L, length(candidates))) {
-    subsets <- if (k == 0L) list(character(0)) else
-      utils::combn(candidates, k, simplify = FALSE)
-    for (z in subsets) {
-      if (any(purrr::map_lgl(found, \(f) all(f %in% z)))) next
-      if (all(purrr::map_lgl(backdoor, \(p) .dag_path_blocked(x, p, z)))) {
-        found[[length(found) + 1L]] <- sort(z)
-      }
-    }
+# The minimal adjustment sets for the total effect of the exposure on the
+# outcome, as dagitty::adjustmentSets() returns them, read from the table
+adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect = "total", ...) {
+  rows <- .dag_answers[.dag_answers$arrows %in% x$key &
+                         .dag_answers$exposure %in% paste(exposure, collapse = ", ") &
+                         .dag_answers$outcome %in% paste(outcome, collapse = ", ") &
+                         .dag_answers$effect %in% effect, ]
+  if (nrow(rows) == 0) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
   }
-  structure(found, class = "simple_dag_sets")
+  structure(strsplit(rows$answer[rows$item > 0], ", ", fixed = TRUE), class = "simple_dag_sets")
 }
 
 print.simple_dag_sets <- function(x, ...) {
@@ -829,56 +786,13 @@ print.simple_dag_sets <- function(x, ...) {
 # Registered rather than left in the session: these cells do not evaluate in
 # the global environment, so plain S3 dispatch would not find the method.
 registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
-
-dagify <- .dagify_builtin
-adjustmentSets <- .adjustment_sets_builtin
-dag_engine <- "built-in"
-
-# Whether dagitty could work here at all. Its JavaScript bridge needs
-# SharedArrayBuffer, which a browser grants only to a cross-origin-isolated
-# page, and the failure is a JavaScript error that tryCatch() cannot catch – so
-# the question has to be asked before anything calls dagitty.
-.dagitty_possible <- function() {
-  isTRUE(tryCatch(
-    as.numeric(webr::eval_js(
-      "typeof SharedArrayBuffer === 'undefined' ? 0 : 1")) == 1,
-    error = function(e) FALSE))
-}
-```
-
-```{webr}
-#| autorun: false
-# Optional: install ggdag so the graph can be drawn. The check comes first,
-# because ggdag draws through dagitty and there is no point downloading 60 MB
-# that this browser cannot use.
-if (!.dagitty_possible()) {
-  writeLines(c("This page is not served with the headers that the dagitty graph engine needs,",
-               "so there is no plot here – the figure above is the same graph.",
-               "Everything else in Task 2 works: the adjustment set uses graph code built into this page."))
-} else {
-  have_ggdag <- tryCatch({
-    webr::install("ggdag", quiet = TRUE)
-    suppressPackageStartupMessages(library(ggdag))
-    TRUE
-  }, error = function(e) FALSE)
-
-  if (have_ggdag) {
-    dagify <- ggdag::dagify
-    adjustmentSets <- dagitty::adjustmentSets
-    dag_engine <- "dagitty"
-    writeLines("ggdag is loaded: the graph, the adjustment set and the plot all work.")
-  } else {
-    writeLines(c("ggdag did not install. The adjustment set still works – it uses graph code built into this page.",
-                 "Use the figure above for the picture."))
-  }
-}
 ```
 
 Now specify the graph. The five committed arrows are live; the arguable ones are commented out, one substantive claim per line. Uncomment any you believe, then run the cell.
 
 ```{webr}
 #| autorun: false
-my_dag <- dagify( # r-style: keep – the built-in dagify() or that of ggdag, whichever this page could load
+my_dag <- dagify( # r-style: keep – the dagify() of this page; the workspace calls ggdag::dagify()
   # The path of interest, and the two common causes (country and year)
   # that two-way fixed effects absorb.
   framing      ~ unemployment,
@@ -911,25 +825,12 @@ my_dag <- dagify( # r-style: keep – the built-in dagify() or that of ggdag, wh
     y = c(unemployment = 0, framing = 0, country = 1.4, year = 1.4,
           growth = -1.0, bailout = -1.2, politicisation = -0.95)))
 
-adjustmentSets(my_dag) # r-style: keep – the built-in function or that of dagitty, as above
+adjustmentSets(my_dag) # r-style: keep – the function of this page, which reads the answers of dagitty
 ```
 
 With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the model that you will fit in Task 3 makes the same identification claim as the graph you have just written.
 
 Now uncomment the growth pair and run the cell again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The Task 3 model does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
-
-```{webr}
-#| autorun: false
-#| fig-width: 8
-#| fig-height: 4
-# Drawing needs both the ggdag install and the dagitty engine itself; where
-# either is missing the figure at the top of this task stands in.
-if (identical(dag_engine, "dagitty")) {
-  print(ggdag::ggdag_classic(my_dag, size = 4) + ggdag::theme_dag())
-} else {
-  writeLines("No plot here – scroll up to the reference figure, which is this same graph.")
-}
-```
 
 Write two sentences for your own notes. What do two-way fixed effects adjust for, and what can they **not** fix? (Hint: anything time-varying within a country that you have not measured.)
 

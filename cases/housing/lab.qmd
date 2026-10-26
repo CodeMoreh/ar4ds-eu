@@ -21,6 +21,7 @@ resources:
   - data/audit_original.csv
   - data/spec_curve.csv
   - data/menu_options.csv
+  - data/dag_answers.csv
 live:
   show-hints: true
   show-solutions: true
@@ -736,25 +737,36 @@ A causal graph makes the catch visible. A graph of this kind is a diagram of wha
 ```{webr}
 #| include: false
 #| autorun: true
-# Graph machinery for Task 2. dagitty runs its graph algorithms in a
-# JavaScript engine that a browser grants only to a page served with
-# cross-origin isolation headers (COOP and COEP); without them the call fails
-# with a JavaScript error that tryCatch() cannot catch. The functions below
-# answer the questions of Task 2 in R instead: make_dag() builds the graph,
-# adjustmentSets() returns the minimal adjustment sets for the total effect,
-# paths() lists the paths between two nodes and whether each is open given a
-# conditioning set Z, and plot_dag() draws the graph with tinyplot. They agree
-# with dagitty::adjustmentSets() and dagitty::paths() on every graph of this
-# task, and plot_dag() also draws a graph that dagitty built.
+# Graph machinery for Task 2. make_dag() reads a graph from its arrows, and
+# plot_dag() draws it with tinyplot. adjustmentSets() and paths() print the
+# answers of dagitty, the R package that the workspace uses, from
+# data/dag_answers.csv: R/housing/07_dag_answers.R in the course repository
+# computes them with dagitty for every graph to which the graph cell below
+# leads. dagitty itself cannot run on this page, because its graph algorithms
+# need a JavaScript engine that a browser grants only to a page served with
+# cross-origin isolation headers (COOP and COEP), and the course site does not
+# send them. Another graph, or another question, goes to dagitty in the
+# downloadable workspace. The table arrives with the page through its
+# `resources:` list.
+.dag_answers <- utils::read.csv("data/dag_answers.csv", stringsAsFactors = FALSE,  # r-style: keep – the base reader adds nothing to the download
+                                na.strings = "NA")
+.dag_elsewhere <- c(
+  "This page holds the answers that dagitty gives to the questions of Task 2, for the",
+  "graph of the cell with and without the arrow \"name -> greeting\". For another graph",
+  "or another question, use the downloadable workspace, where R/dag_starter.R builds",
+  "the graph and dagitty answers whatever you ask of it.")
 
 # Where each node sits in the figure, with y counted upwards: the name on the
 # left, the greeting on the right, the reply above the line between them. A
 # node without a position here is drawn on a row below the graph.
 .dag_xy <- list(name = c(0, 0), reply = c(1.5, 1.6), greeting = c(3, 0),
                 community = c(2, 0.65), official = c(3, 1.6))
-dag_engine <- "built-in"
 
-.make_dag_builtin <- function(..., exposure, outcome, latent) {
+# A graph from arrows written "cause -> effect", one per string. The named
+# arguments come last, so that switching off the last arrow with a # never
+# leaves a comma dangling. The arrows, sorted, are the key under which
+# data/dag_answers.csv holds the answers for the graph.
+make_dag <- function(..., exposure = "name", outcome = "greeting", latent = "official") {
   arrows <- c(...)
   edges <- purrr::map(arrows, \(a) {
     ends <- trimws(strsplit(a, "->", fixed = TRUE)[[1]])
@@ -766,84 +778,27 @@ dag_engine <- "built-in"
     dplyr::bind_rows() |>
     dplyr::distinct()
   structure(list(edges = edges, nodes = unique(c(exposure, outcome, edges$from, edges$to)),
-                 exposure = exposure, outcome = outcome, latent = latent),
+                 exposure = exposure, outcome = outcome, latent = latent,
+                 key = paste(sort(paste(edges$from, "->", edges$to), method = "radix"),
+                             collapse = "; ")),
             class = "simple_dag")
 }
 
-# The same graph as a dagitty object, as R/dag_starter.R of the workspace
-# builds it; dagitty counts y downwards, so the heights change sign.
-.make_dag_dagitty <- function(..., exposure, outcome, latent) {
-  arrows <- c(...)
-  nodes <- unique(c(exposure, outcome, trimws(unlist(strsplit(arrows, "->|<-")))))
-  declare <- purrr::map_chr(nodes, \(v) {
-    tags <- c(if (v %in% exposure) "exposure",
-              if (v %in% outcome) "outcome",
-              if (v %in% latent) "latent",
-              if (v %in% names(.dag_xy))
-                sprintf("pos=\"%s,%s\"", .dag_xy[[v]][1], -.dag_xy[[v]][2]))
-    if (length(tags) == 0) v else sprintf("%s [%s]", v, paste(tags, collapse = ","))
-  })
-  dagitty::dagitty(paste0("dag {\n", paste(c(declare, arrows), collapse = "\n"), "\n}"))
-}
-
-# A graph from arrows written "cause -> effect", one per string. The named
-# arguments come last, so that switching off the last arrow with a # never
-# leaves a comma dangling.
-make_dag <- function(..., exposure = "name", outcome = "greeting", latent = "official") {
-  build <- if (identical(dag_engine, "dagitty")) .make_dag_dagitty else .make_dag_builtin
-  build(..., exposure = exposure, outcome = outcome, latent = latent)
-}
-
-# r-style: PENDING – the graph algorithms from here to .paths_builtin() (d-separation, the backdoor criterion, minimal adjustment sets, open paths); no package found that runs in the browser
-.dag_has_edge <- function(dag, a, b) any(dag$edges$from == a & dag$edges$to == b)
-
-# A node counts as one of its own descendants, which is what the collider rule
-# below needs.
-.dag_descendants <- function(dag, v) {
-  kids <- setdiff(dag$edges$to[dag$edges$from %in% v], v)
-  if (length(kids) == 0) v else .dag_descendants(dag, union(v, kids))
-}
-
-# Every simple path between two nodes, ignoring the direction of the arrows.
-# The recursion is safe only because a teaching graph is tiny.
-.dag_paths <- function(dag, from, to) {
-  neighbours <- \(v) unique(c(dag$edges$to[dag$edges$from == v], dag$edges$from[dag$edges$to == v]))
-  extend <- function(path) {
-    v <- path[length(path)]
-    if (v == to) return(list(path))
-    purrr::list_flatten(purrr::map(setdiff(neighbours(v), path), \(w) extend(c(path, w))))
+# The minimal adjustment sets for the total effect of the exposure on the
+# outcome, as dagitty::adjustmentSets() returns them, read from the table. The
+# rows are chosen with dplyr, because datawizard cannot see the arguments of a
+# function.
+adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect = "total", ...) {
+  rows <- dplyr::filter(.dag_answers, .data$call == "adjustmentSets", .data$arrows %in% x$key,
+                        .data$exposure %in% paste(.env$exposure, collapse = ", "),
+                        .data$outcome %in% paste(.env$outcome, collapse = ", "),
+                        .data$latent %in% paste(sort(x$latent, method = "radix"), collapse = ", "),
+                        .data$effect %in% .env$effect)
+  if (nrow(rows) == 0) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
   }
-  extend(from)
-}
-
-# A path is blocked by the set z if any node along it is either a non-collider
-# inside z, or a collider with no descendant in z.
-.dag_path_blocked <- function(dag, path, z) {
-  if (length(path) < 3L) return(FALSE)
-  purrr::some(seq(2L, length(path) - 1L), \(i) {
-    node <- path[i]
-    collider <- .dag_has_edge(dag, path[i - 1L], node) && .dag_has_edge(dag, path[i + 1L], node)
-    if (collider) !any(.dag_descendants(dag, node) %in% z) else node %in% z
-  })
-}
-
-# The backdoor criterion, brute-forced over subsets of the observed variables
-# that are not descendants of the exposure: smallest sets first, and a set is
-# skipped once it contains a set already found, which leaves the minimal ones.
-.adjustment_sets_builtin <- function(x, exposure = x$exposure, outcome = x$outcome,
-                                     effect = "total", ...) {
-  if (!identical(effect, "total"))
-    stop("The graph code built into this page answers the total effect only; paths() shows what a conditioning set opens and closes.",
-         call. = FALSE)
-  backdoor <- purrr::keep(.dag_paths(x, exposure, outcome), \(p) .dag_has_edge(x, p[2L], exposure))
-  candidates <- setdiff(x$nodes, c(outcome, x$latent, .dag_descendants(x, exposure)))
-  subsets <- c(list(character(0)),
-               purrr::list_flatten(purrr::map(seq_along(candidates),
-                                              \(k) utils::combn(candidates, k, simplify = FALSE))))
-  closing <- purrr::keep(subsets, \(z) purrr::every(backdoor, \(p) .dag_path_blocked(x, p, z)))
-  minimal <- purrr::reduce(closing, \(found, z)
-    if (purrr::some(found, \(f) all(f %in% z))) found else c(found, list(sort(z))), .init = list())
-  structure(minimal, class = "simple_dag_sets")
+  structure(strsplit(rows$answer[rows$item > 0], ", ", fixed = TRUE), class = "simple_dag_sets")
 }
 
 print.simple_dag_sets <- function(x, ...) {
@@ -857,40 +812,31 @@ print.simple_dag_sets <- function(x, ...) {
 # the global environment, so plain S3 dispatch would not find the method.
 registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
 
-# The paths between two nodes, each with its arrows, and whether it is open
-# given the conditioning set Z; sorted as dagitty sorts them.
-.paths_builtin <- function(x, from = x$exposure, to = x$outcome, Z = character(0), ...) {
-  found <- .dag_paths(x, from, to)
-  label <- purrr::map_chr(found, \(p) {
-    steps <- purrr::map_chr(seq_len(length(p) - 1L),
-                            \(i) if (.dag_has_edge(x, p[i], p[i + 1L])) " -> " else " <- ")
-    paste0(p[1], paste0(steps, p[-1], collapse = ""))
-  })
-  open <- purrr::map_lgl(found, \(p) !.dag_path_blocked(x, p, Z))
-  ord <- order(label, method = "radix")
-  list(paths = label[ord], open = open[ord])
+# The paths between the exposure and the outcome, each with its arrows, and
+# whether it is open given the conditioning set Z, as dagitty::paths() returns
+# them, read from the table.
+paths <- function(x, from = x$exposure, to = x$outcome, Z = character(0), ...) {
+  rows <- dplyr::filter(.dag_answers, .data$call == "paths", .data$arrows %in% x$key,
+                        .data$exposure %in% paste(.env$from, collapse = ", "),
+                        .data$outcome %in% paste(.env$to, collapse = ", "),
+                        .data$latent %in% paste(sort(x$latent, method = "radix"), collapse = ", "),
+                        .data$Z %in% paste(sort(unique(as.character(unlist(.env$Z))), method = "radix"),
+                                           collapse = ", "))
+  if (nrow(rows) == 0) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
+  }
+  list(paths = rows$answer, open = rows$open)
 }
 
-adjustmentSets <- .adjustment_sets_builtin
-paths <- .paths_builtin
-
-# The figure, for a graph from either engine. Colour marks the exposure and
-# the outcome, and the official, whom nobody observed, is drawn pale. Each
-# arrow stops at the edge of the box of its target.
+# The figure. Colour marks the exposure and the outcome, and the official,
+# whom nobody observed, is drawn pale. Each arrow stops at the edge of the box
+# of its target.
 .dag_parts <- function(d) {
-  if (inherits(d, "dagitty")) {
-    xy <- dagitty::coordinates(d)
-    list(nodes = tibble::tibble(name = names(xy$x), x = unname(xy$x), y = -unname(xy$y)),
-         edges = dplyr::transmute(dagitty::edges(d), from = as.character(.data$v),
-                                  to = as.character(.data$w)),
-         exposure = dagitty::exposures(d), outcome = dagitty::outcomes(d),
-         latent = dagitty::latents(d))
-  } else {
-    at <- \(v, k) if (v %in% names(.dag_xy)) .dag_xy[[v]][k] else NA_real_
-    list(nodes = tibble::tibble(name = d$nodes, x = purrr::map_dbl(d$nodes, \(v) at(v, 1)),
-                                y = purrr::map_dbl(d$nodes, \(v) at(v, 2))),
-         edges = d$edges, exposure = d$exposure, outcome = d$outcome, latent = d$latent)
-  }
+  at <- \(v, k) if (v %in% names(.dag_xy)) .dag_xy[[v]][k] else NA_real_
+  list(nodes = tibble::tibble(name = d$nodes, x = purrr::map_dbl(d$nodes, \(v) at(v, 1)),
+                              y = purrr::map_dbl(d$nodes, \(v) at(v, 2))),
+       edges = d$edges, exposure = d$exposure, outcome = d$outcome, latent = d$latent)
 }
 
 plot_dag <- function(d) {
@@ -937,44 +883,9 @@ plot_dag <- function(d) {
                      type = tinyplot::type_text(labels = nodes$name, font = 2),
                      palette = c("white", "white", "white", "grey25"), cex = 0.85, add = TRUE)
 }
-
-# Whether dagitty could work here at all. Its JavaScript engine needs
-# SharedArrayBuffer, which a browser grants only to a cross-origin-isolated
-# page, and the failure is a JavaScript error that tryCatch() cannot catch, so
-# the question has to be asked before anything calls dagitty.
-.dagitty_possible <- function() {
-  isTRUE(tryCatch(
-    as.numeric(webr::eval_js("typeof SharedArrayBuffer === 'undefined' ? 0 : 1")) == 1,
-    error = \(e) FALSE))
-}
 ```
 
-`make_dag()`, `adjustmentSets()`, `paths()` and `plot_dag()` are already available on this page, so you can go straight to the graph. The optional cell below loads `dagitty`, the R package that the downloadable workspace uses for the same questions; where the browser cannot run it, the page keeps its own graph code, which gives the same answers.
-
-```{webr}
-#| autorun: false
-# Optional: load dagitty. The check comes first, because dagitty runs its
-# graph algorithms in a JavaScript engine that this browser may not offer.
-if (!.dagitty_possible()) {
-  writeLines(c("This page is not served with the headers that the dagitty engine needs.",
-               "Everything in Task 2 still works: make_dag(), adjustmentSets(), paths()",
-               "and plot_dag() use the graph code built into this page."))
-} else {
-  have_dagitty <- tryCatch({
-    webr::install("dagitty", quiet = TRUE)
-    loadNamespace("dagitty")
-    TRUE
-  }, error = \(e) FALSE)
-  if (have_dagitty) {
-    dag_engine <- "dagitty"
-    adjustmentSets <- dagitty::adjustmentSets
-    paths <- dagitty::paths
-    writeLines("dagitty is loaded: rerun the graph cell below, and every question goes to dagitty.")
-  } else {
-    writeLines("dagitty did not install. The graph code built into this page answers every question of Task 2.")
-  }
-}
-```
+`make_dag()`, `adjustmentSets()`, `paths()` and `plot_dag()` are already available on this page, so you can go straight to the graph. In the downloadable workspace the two questions go to `dagitty`, the R package for causal graphs, which cannot run on this page. Here `adjustmentSets()` and `paths()` print the answers that dagitty gives, read from a table that the course computed with dagitty for the graph of the cell below, with and without the arrow of the claim ([codebook](data/dag_answers_codebook.md)). Any other graph gets a pointer to the workspace.
 
 Now build the graph and put two questions to it. The first is what has to be adjusted for when the comparison counts every delivered email. The second is which paths from the name to the greeting are open once the comparison is made among replies only, which is what `Z = "reply"` asks: it conditions on the reply.
 
@@ -1000,8 +911,8 @@ my_dag <- make_dag(
   exposure = "name", outcome = "greeting", latent = "official"
 )
 
-adjustmentSets(my_dag)       # r-style: keep – the function of this page, or of dagitty once loaded
-paths(my_dag, Z = "reply")   # r-style: keep – the function of this page, or of dagitty once loaded
+adjustmentSets(my_dag)       # r-style: keep – the function of this page, which reads the answers of dagitty
+paths(my_dag, Z = "reply")   # r-style: keep – the function of this page, which reads the answers of dagitty
 plot_dag(my_dag)
 ```
 
@@ -1011,7 +922,7 @@ Now take the `#` off the arrow `"name -> greeting"`, run the cell again, then ru
 
 ```{webr}
 #| autorun: false
-paths(my_dag, Z = c("reply", "community"))  # r-style: keep – the function of this page, or of dagitty once loaded
+paths(my_dag, Z = c("reply", "community"))  # r-style: keep – the function of this page, which reads the answers of dagitty
 ```
 
 ::: {.callout-note collapse="true"}

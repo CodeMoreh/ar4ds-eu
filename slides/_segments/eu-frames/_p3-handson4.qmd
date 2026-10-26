@@ -36,10 +36,10 @@ Measured on the 270-row panel, on an ordinary laptop:
 ::: {.small}
 **Every fit is fast.** A participant who is waiting is waiting for a package **download**:
 
-- browser lab, `ggdag` for the Task 2 graph: **≈ 60 MB**, a long moment on poor wifi. The `adjustmentSets()` answer itself needs none of it
+- browser lab: its packages, **≈ 24 MB**, once when the page opens, a long moment on poor wifi. Nothing after that: the Task 2 graph reads its adjustment sets from a table that ships with the page
 - the workspace, first run: the whole package set installs once
 :::
 
 ::: notes
-[Facilitator slide, hidden in the deck – for answering "how long should this take?" without guessing.] Every fit on this panel is effectively instantaneous, and so is the CR2 test that classes it: the workspace fits each specification live and computes its clustered errors and Satterthwaite degrees of freedom in a tenth of a second, the first call being the slowest because it loads the packages. Nobody is waiting for a model. What people do wait for is a package download: ggdag in the browser lab is about sixty megabytes, because it brings the whole of ggplot2 with it, which is a long moment on a bad connection. The browser lab reads every result from the curve that ships with the page, so no choice on the menu triggers a package download there. The first run in the workspace installs the whole set once. So if someone reports that it is stuck, ask what it is stuck on before assuming the model is the problem.
+[Facilitator slide, hidden in the deck – for answering "how long should this take?" without guessing.] Every fit on this panel is effectively instantaneous, and so is the CR2 test that classes it: the workspace fits each specification live and computes its clustered errors and Satterthwaite degrees of freedom in a tenth of a second, the first call being the slowest because it loads the packages. Nobody is waiting for a model. What people do wait for is a package download. The browser lab downloads its packages, about twenty-four megabytes, once when the page opens, which is a long moment on a bad connection. After that it reads every result from files that ship with the page, the curve for the menu and a table of the answers of dagitty for the graph of Task 2, so nothing else triggers a download there. The first run in the workspace installs the whole set once. So if someone reports that it is stuck, ask what it is stuck on before assuming the model is the problem.
 :::
