@@ -7,80 +7,84 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(tinytable)
 source("../../R/housing/_tools.R")
 
-menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE)
-deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
-outcomes <- read_csv("data/display_outcomes.csv", show_col_types = FALSE)
-subgroups <- read_csv("data/display_subgroups.csv", show_col_types = FALSE)
-names_tab <- read_csv("data/display_names.csv", show_col_types = FALSE)
-marks <- read_csv("data/reference_marks.csv", show_col_types = FALSE)
-audit <- read_csv("data/housing_audit.csv", show_col_types = FALSE)
-original <- read_csv("data/audit_original.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+menu <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+outcomes <- readr::read_csv("data/display_outcomes.csv", show_col_types = FALSE)
+subgroups <- readr::read_csv("data/display_subgroups.csv", show_col_types = FALSE)
+names_tab <- readr::read_csv("data/display_names.csv", show_col_types = FALSE)
+marks <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+audit <- readr::read_csv("data/housing_audit.csv", show_col_types = FALSE)
+original <- readr::read_csv("data/audit_original.csv", show_col_types = FALSE)
 
 # Fixed decimals and a true minus sign; signed shifts carry a plus sign
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-sgn <- \(x, d = 1) paste0(if_else(x > 0, "+", ""), fmt(x, d))
+sgn <- \(x, d = 1) paste0(dplyr::if_else(x > 0, "+", ""), fmt(x, d))
 pct <- \(x, d = 1) paste0(fmt(x, d), "%")
-pe <- \(p) case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
-                     .default = paste("p =", fmt(p, 3)))
-num_word <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-                   "ten", "eleven", "twelve", "thirteen", "fourteen")[n]
+pe <- \(p) dplyr::case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", fmt(p, 4)),
+                            .default = paste("p =", fmt(p, 3)))
 
-ref <- curve |> filter(is_reference)
-row_of <- \(comparison, population, uncoded, model, adjust) {
-  curve[curve$comparison == comparison & curve$population == population & curve$uncoded == uncoded &
-          curve$model == model & curve$adjust == adjust, ]
-}
+ref <- datawizard::data_filter(curve, is_reference)
 dv <- \(axis, option, col) deviations[[col]][deviations$axis == axis & deviations$option == option]
 out <- \(o, cn, col) outcomes[[col]][outcomes$outcome == o & outcomes$contrast == cn]
 sub_ <- \(start, col) subgroups[[col]][startsWith(subgroups$subgroup, start)]
 grp <- \(g, col) names_tab[[col]][names_tab$level == "group" & names_tab$group == g]
 mark <- \(id, col) marks[[col]][marks$id == id]
 
-n_dec <- n_distinct(menu$axis)
+n_dec <- dplyr::n_distinct(menu$axis)
 varying <- names(SPEC_AXES)
 fixed_axes <- setdiff(unique(menu$axis), varying)
 
 # Bounced emails counted as unanswered: every email sent, against its twin on
 # the curve, which counts only the delivered emails
-bounced_twin <- row_of("white", "all", "not_named", "lpm", "none")
+bounced_twin <- datawizard::data_match(curve, tibble::tibble(comparison = "white", population = "all",
+                                                             uncoded = "not_named", model = "lpm", adjust = "none"))
 bounced_sent <- audit |>
-  filter(group %in% c("white", "hispanic")) |>
-  mutate(hisp = as.integer(group == "hispanic"), y = as.integer(reply %in% 1 & named %in% 1))
-bounced_fit <- lm(y ~ hisp, data = bounced_sent)
-bounced_b <- 100 * unname(coef(bounced_fit)["hisp"])
-bounced_n <- audit |> filter(is.na(reply)) |> count(group)
+  datawizard::data_filter(group %in% c("white", "hispanic")) |>
+  datawizard::data_modify(hisp = as.integer(group == "hispanic"), y = as.integer(reply %in% 1 & named %in% 1))
+bounced_fit <- stats::lm(y ~ hisp, data = bounced_sent)
+bounced_b <- 100 * unname(stats::coef(bounced_fit)["hisp"])
+bounced_n <- audit |>
+  datawizard::data_filter(is.na(reply)) |>
+  datawizard::data_summary(n = n(), by = "group")
 bounced_by <- \(g) bounced_n$n[bounced_n$group == g]
 no_thirds <- audit |>
-  filter(if_any(c(pop_third, poverty_third, black_third, hispanic_third), is.na)) |>
+  datawizard::data_filter(!stats::complete.cases(pop_third, poverty_third, black_third, hispanic_third)) |>
   nrow()
+# The twin of the reference specification that counts every delivered email
+all_twin <- datawizard::data_match(curve, tibble::tibble(comparison = "white", population = "all",
+                                                         uncoded = "drop", model = "lpm", adjust = "none"))
 
 # The sex of the name added to the reference specification, with HC2 errors
+# from parameters and sandwich
 sex_frame <- spec_frame(audit, "white", "replies", "drop")
-sex_fit <- lm(y ~ hisp + name_sex, data = sex_frame)
-sex_b <- 100 * unname(coef(sex_fit)["hisp"])
-sex_p <- 2 * pt(-abs(coef(sex_fit)["hisp"] / sqrt(vcov_hc2(sex_fit)["hisp", "hisp"])), sex_fit$df.residual)
+sex_fit <- stats::lm(y ~ hisp + name_sex, data = sex_frame)
+sex_b <- 100 * unname(stats::coef(sex_fit)["hisp"])
+sex_p <- parameters::model_parameters(sex_fit, vcov = "HC2") |>
+  datawizard::data_filter(Parameter == "hisp") |>
+  datawizard::data_extract("p")
 
 # The chi-square test of 8PTRZ on the public file of the OAs, with and without
 # the continuity correction that chisq.test() applies to a 2 x 2 table
 chi_tab <- original |>
-  filter(Response_Dichotomous == 1, !is.na(ProperName)) |>
-  with(table(startsWith(TreatmentGroup, "Hispanic"), ProperName))
-chi_yates <- chisq.test(chi_tab)
-chi_plain <- chisq.test(chi_tab, correct = FALSE)
+  datawizard::data_filter(Response_Dichotomous == 1 & !is.na(ProperName)) |>
+  stats::xtabs(formula = ~ startsWith(TreatmentGroup, "Hispanic") + ProperName, data = _)  # r-style: keep – the contingency table that chisq.test() takes
+chi_yates <- stats::chisq.test(chi_tab)
+chi_plain <- stats::chisq.test(chi_tab, correct = FALSE)
 
-logit_or <- curve |> filter(model == "logit") |> mutate(or = exp(coef))
-three_twin <- row_of("white", "replies", "drop", "logit", "place_ethnic")
+logit_or <- curve |>
+  datawizard::data_filter(model == "logit") |>
+  datawizard::data_modify(or = exp(coef))
+three_twin <- datawizard::data_match(curve, tibble::tibble(comparison = "white", population = "replies",
+                                                           uncoded = "drop", model = "logit", adjust = "place_ethnic"))
 ```
 
 This page sets out every decision that an analysis of the claim has to make, the options that each decision offers, and whether each option answers the claim. The claim, in the wording that SCORE took from the paper of the original authors (OAs) [@EinsteinGlick2017DoesRaceAffect], is that "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts". The [case study](index.qmd) sets out the experiment, the five reanalyses and the data. The [decision map](map.qmd) draws the same menu as a path from the data to a verdict, with every option selectable.
 
-`r stringr::str_to_sentence(num_word(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be fitted on the public file, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
+`r stringr::str_to_sentence(xfun::numbers_to_words(n_dec))` decisions stand between the data and a verdict. For each option the course has asked whether it is a defensible way of answering this claim, and the options that are defensible have been combined into the `r nrow(curve)` specifications of the curve of the claim. The options that are not stay on this page, because each of them answers a different question, answers this one less well, checks an answer that the curve already holds, or cannot be fitted on the public file, and working out which applies is a large part of understanding what the claim asks. `data/menu_options.csv` holds the options with the reason for each ([codebook](data/menu_options_codebook.md)), and the helpers of the browser lab and the workspace read it to explain why an option off the curve is refused.
 
 ## The estimand statement
 
@@ -94,7 +98,7 @@ Move one decision and reread the statement. If a bold slot changes, you have mad
 
 ## The curve of `r nrow(curve)` {#the-curve}
 
-Five decisions vary on the curve: the comparison group (white names, or white and Black names together), the emails counted (replies, or all delivered emails), the replies without a greeting code (left out, or counted as no greeting), the model (a difference in proportions, or a logistic regression) and the adjustment (none, the hard-to-find address, the size and poverty of the community, or those with its ethnic composition). That gives 2 × 2 × 2 × 2 × 4 = `r nrow(curve)` specifications. The other `r num_word(length(fixed_axes))` decisions take a single option on the curve.
+Five decisions vary on the curve: the comparison group (white names, or white and Black names together), the emails counted (replies, or all delivered emails), the replies without a greeting code (left out, or counted as no greeting), the model (a difference in proportions, or a logistic regression) and the adjustment (none, the hard-to-find address, the size and poverty of the community, or those with its ethnic composition). That gives 2 × 2 × 2 × 2 × 4 = `r nrow(curve)` specifications. The other `r xfun::numbers_to_words(length(fixed_axes))` decisions take a single option on the curve.
 
 Every estimate is in percentage points, and a negative estimate means that Hispanic names were greeted by name less often, the direction of the claim. All `r nrow(curve)` specifications are negative and significant at the 5% level under the test of their own model, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points, with p-values between `r fmt(min(curve$p), 5)` and `r fmt(max(curve$p), 4)`. The randomisation test, which reshuffles the names among the analysed emails 1,999 times, gives at most p = `r fmt(max(curve$p_ri), 4)`. The reference specification, Hispanic against white names among the replies with a difference in proportions and no covariates, is the raw gap of the paper: `r fmt(ref$b_pp)` points (`r pct(ref$rate_hisp)` against `r pct(ref$rate_comp)`), t = `r fmt(ref$stat, 2)` on `r ref$df` df, n = `r ref$n`.
 
@@ -107,22 +111,20 @@ Within the curve, what varies is the size of the gap, and @tbl-shifts shows whic
 lab <- \(axis, option) menu$label[menu$axis == axis & menu$option == option]
 dec <- \(axis) menu$decision[menu$axis == axis][1]
 deviations |>
-  filter(option != baseline) |>
-  mutate(
+  datawizard::data_filter(option != baseline) |>
+  datawizard::data_modify(
     Decision = purrr::map_chr(axis, dec),
     Option = purrr::map2_chr(axis, option, lab),
-    Against = purrr::map2_chr(axis, baseline, lab)
-  ) |>
-  transmute(
-    Decision, Option, Against,
-    Pairs = n_pairs,
+    Against = purrr::map2_chr(axis, baseline, lab),
     `Mean shift` = sgn(shift_mean, 2),
     Smallest = sgn(shift_min, 2),
     Largest = sgn(shift_max, 2),
     `Still significant` = pct(100 * sig_share, 0)
   ) |>
-  tt() |>
-  style_tt(j = 4:8, align = "r")
+  datawizard::data_select(c("Decision", "Option", "Against", Pairs = "n_pairs", "Mean shift",
+                            "Smallest", "Largest", "Still significant")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 4:8, align = "r")
 ```
 
 Counting all delivered emails moves the estimate by `r sgn(dv("population", "all", "shift_mean"))` points on average, towards zero, and every other option by at most `r fmt(max(abs(deviations$shift_max[deviations$axis != "population"])))` points. Within the original data, the claim holds under every defensible choice, and only its size moves.
@@ -139,10 +141,12 @@ judgement_txt <- c(kept = "on the curve", other_question = "another question",
                    weaker_answer = "a weaker answer", check = "a check",
                    unavailable = "not in the public file")
 level_table <- \(lv) {
+  # dplyr, because datawizard evaluates its conditions in a fresh environment
+  # and so cannot see the level that is asked for
   menu |>
-    filter(level == lv) |>
-    mutate(item = paste0(label, " <code>", option, "</code>")) |>
-    summarise(
+    dplyr::filter(level == lv) |>
+    dplyr::mutate(item = paste0(label, " <code>", option, "</code>")) |>
+    dplyr::summarise(
       on = paste(item[on_curve], collapse = " · "),
       off = if (any(!on_curve)) {
         paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = " · ")
@@ -151,8 +155,8 @@ level_table <- \(lv) {
       },
       .by = c(axis, decision)
     ) |>
-    transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
-    tt()
+    dplyr::transmute(Decision = decision, `On the curve` = on, `Off the curve` = off) |>
+    tinytable::tt()
 }
 level_table("estimand")
 ```
@@ -167,7 +171,7 @@ The claim as SCORE selected it compares Hispanic names with white names, and the
 
 ### Emails counted
 
-This is the decision that moves the estimate most. Counting only the emails that drew a reply is the comparison of the paper, and it answers the question about tone directly, how often the replies that came opened with the name. Counting every delivered email, with a missing reply as no greeting, keeps the groups exactly as randomisation made them, so the difference is an effect of the name on receiving a named greeting, but that outcome mixes whether a reply came with how it began. The first comparison is a pure effect of the name only if the name did not change which officials replied, the post-treatment problem that analyst 25N5D raised and that the [case study](index.qmd#sec-posttreatment) sets out. Both stay on the curve. Counting all emails moves the estimate by `r sgn(dv("population", "all", "shift_mean"))` points on average (from `r sgn(dv("population", "all", "shift_min"))` to `r sgn(dv("population", "all", "shift_max"))`), mostly because fewer than six in ten emails drew any reply: at the reference settings the shares become `r pct(row_of("white", "all", "drop", "lpm", "none")$rate_hisp)` against `r pct(row_of("white", "all", "drop", "lpm", "none")$rate_comp)`.
+This is the decision that moves the estimate most. Counting only the emails that drew a reply is the comparison of the paper, and it answers the question about tone directly, how often the replies that came opened with the name. Counting every delivered email, with a missing reply as no greeting, keeps the groups exactly as randomisation made them, so the difference is an effect of the name on receiving a named greeting, but that outcome mixes whether a reply came with how it began. The first comparison is a pure effect of the name only if the name did not change which officials replied, the post-treatment problem that analyst 25N5D raised and that the [case study](index.qmd#sec-posttreatment) sets out. Both stay on the curve. Counting all emails moves the estimate by `r sgn(dv("population", "all", "shift_mean"))` points on average (from `r sgn(dv("population", "all", "shift_min"))` to `r sgn(dv("population", "all", "shift_max"))`), mostly because fewer than six in ten emails drew any reply: at the reference settings the shares become `r pct(all_twin$rate_hisp)` against `r pct(all_twin$rate_comp)`.
 
 ### Names
 

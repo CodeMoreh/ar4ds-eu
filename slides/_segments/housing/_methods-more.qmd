@@ -13,7 +13,7 @@
 :::
 
 ::: {.fragment .small}
-An odds ratio changes when a covariate that predicts the outcome is added, **even in an experiment**, where the covariate is unrelated to the name. Adding the hard-to-find address moves the logit coefficient from `r fmt_num(twin("logit", "none")$coef, 3)` to `r fmt_num(twin("logit", "email")$coef, 3)`, while the gap in points stays at `r fmt_num(twin("logit", "email")$b_pp, 2)`.
+An odds ratio changes when a covariate that predicts the outcome is added, **even in an experiment**, where the covariate is unrelated to the name. Adding the hard-to-find address moves the logit coefficient from `r fmt_num(twin_logit_none$coef, 3)` to `r fmt_num(twin_logit_email$coef, 3)`, while the gap in points stays at `r fmt_num(twin_logit_email$b_pp, 2)`.
 :::
 
 ::: {.fragment .small}
@@ -48,8 +48,8 @@ Hispanic against white names, among the `r curve_ref$n` replies with a greeting 
 | Test | Statistic | p |
 |:--|--:|--:|
 | Difference in proportions, HC2 | *t* = `r fmt_num(curve_ref$stat, 2)` on `r curve_ref$df` df | `r fmt_num(curve_ref$p, 4)` |
-| Logit, the test of the model | *z* = `r fmt_num(logit_ref[["z value"]], 2)` | `r fmt_num(logit_ref[["Pr(>|z|)"]], 4)` |
-| $\chi^2$ of the two-by-two table, uncorrected | $\chi^2$ = `r fmt_num(chi_ref_plain, 2)` | `r fmt_num(pchisq(chi_ref_plain, 1, lower.tail = FALSE), 4)` |
+| Logit, the test of the model | *z* = `r fmt_num(logit_ref$z, 2)` | `r fmt_num(logit_ref$p, 4)` |
+| $\chi^2$ of the two-by-two table, uncorrected | $\chi^2$ = `r fmt_num(chi_ref_plain, 2)` | `r fmt_num(chi_ref_p, 4)` |
 | Randomisation test, 1,999 reshuffles | – | `r fmt_num(curve_ref$p_ri, 4)` |
 :::
 
@@ -73,25 +73,25 @@ The menu lists the test as a decision, so here are four tests of the same gap on
 # can only take values one step apart; one bar per step, centred on the
 # observed gap, avoids the empty bins of an arbitrary bin width.
 ri_step <- 100 * (1 / curve_ref$n_hisp + 1 / curve_ref$n_comp)
-ggplot(ri, aes(b_pp)) +
-  annotate("rect", xmin = ri_band[[1]], xmax = ri_band[[2]], ymin = -Inf, ymax = Inf,
+ggplot2::ggplot(ri, ggplot2::aes(b_pp)) +
+  ggplot2::annotate("rect", xmin = ri_band[[1]], xmax = ri_band[[2]], ymin = -Inf, ymax = Inf,
            fill = "#d6dde5", alpha = 0.6) +
-  geom_histogram(binwidth = ri_step, center = curve_ref$b_pp, fill = plain, colour = "white",
+  ggplot2::geom_histogram(binwidth = ri_step, center = curve_ref$b_pp, fill = plain, colour = "white",
                  alpha = 0.85) +
-  geom_vline(xintercept = curve_ref$b_pp, colour = burgundy, linewidth = 1.3) +
-  annotate("label", x = curve_ref$b_pp, y = Inf, vjust = 1.3, label = "observed",
+  ggplot2::geom_vline(xintercept = curve_ref$b_pp, colour = burgundy, linewidth = 1.3) +
+  ggplot2::annotate("label", x = curve_ref$b_pp, y = Inf, vjust = 1.3, label = "observed",
            colour = burgundy, fill = "white", linewidth = 0, fontface = "bold", size = 5) +
-  scale_x_continuous(limits = c(-25, 25), labels = \(x) fmt_num(x, 0)) +
-  labs(x = "Hispanic minus white names after a reshuffle (points)", y = "reshuffles") +
+  ggplot2::scale_x_continuous(limits = c(-25, 25), labels = \(x) fmt_num(x, 0)) +
+  ggplot2::labs(x = "Hispanic minus white names after a reshuffle (points)", y = "reshuffles") +
   theme_slide(15)
 ```
 
 ::: {.small}
-The central 95% of `r fmt_n(nrow(ri))` reshuffles lies between `r fmt_num(ri_band[[1]], 1)` and +`r fmt_num(ri_band[[2]], 1)` points; `r ri_extreme` give a gap as large as the observed `r fmt_num(curve_ref$b_pp, 2)`. The test uses nothing but the random assignment of the names [@Fisher1935DesignExperiments].
+The central 95% of `r fmt_n(nrow(ri))` reshuffles lies between `r fmt_num(ri_band[[1]], 1)` and +`r fmt_num(ri_band[[2]], 1)` points; a gap as large as the observed `r fmt_num(curve_ref$b_pp, 2)` comes up in `r ri_extreme` of them. The test uses nothing but the random assignment of the names [@Fisher1935DesignExperiments].
 :::
 
 ::: notes
-The randomisation test deserves a picture, because it is the test that the design itself supplies. Take the three hundred and sixty-two coded replies, shuffle the names among them at random, as if the name made no difference, and compute the gap again. Do that four thousand nine hundred and ninety-nine times and you get this histogram: what chance alone produces with these replies. Ninety-five per cent of the reshuffled gaps fall between minus ten and plus eleven points, the shaded band. The observed gap, in burgundy, is out at minus twenty, and only three reshuffles in nearly five thousand reach it. The argument goes back to Fisher, and it needs no model at all, only the fact that a random number generator decided which name each authority received. It is a check on the tests of the models, and here it agrees with them.
+The randomisation test deserves a picture, because it is the test that the design itself supplies. Take the three hundred and sixty-two coded replies, shuffle the names among them at random, as if the name made no difference, and compute the gap again. Do that four thousand nine hundred and ninety-nine times and you get this histogram: what chance alone produces with these replies. Ninety-five per cent of the reshuffled gaps fall between minus ten and plus ten points, the shaded band. The observed gap, in burgundy, is out at minus twenty, and only one reshuffle in nearly five thousand reaches it. The argument goes back to Fisher, and it needs no model at all, only the fact that a random number generator decided which name each authority received. It is a check on the tests of the models, and here it agrees with them.
 :::
 
 ## Covariates in an experiment {#covariates-in-an-experiment .smaller .deepdive run="methods"}
@@ -120,18 +120,17 @@ In an observational study, covariates are how you try to remove confounding. In 
 # The gap among the coded replies in subgroups that the curve leaves out
 # (data/display_subgroups.csv), each with its 95% interval and its replies.
 subgroups |>
-  mutate(subgroup = factor(subgroup, levels = rev(subgroup)),
-         n_lab = paste0("n = ", n)) |>
-  ggplot(aes(b_pp, subgroup)) +
-  geom_vline(xintercept = 0, colour = grey_mid) +
-  geom_linerange(aes(xmin = b_pp - 1.96 * se_pp, xmax = b_pp + 1.96 * se_pp),
-                 colour = plain, linewidth = 1) +
-  geom_point(colour = plain, size = 3.4) +
-  geom_text(aes(x = 22, label = n_lab), hjust = 1, size = 4, colour = grey_mid) +
-  scale_x_continuous(limits = c(-65, 22), labels = \(x) fmt_num(x, 0)) +
-  labs(x = "Hispanic minus white names (points), with 95% intervals", y = NULL) +
+  datawizard::data_modify(subgroup = factor(subgroup, levels = rev(subgroup)),
+                          n_lab = paste0("n = ", n)) |>
+  ggplot2::ggplot(ggplot2::aes(b_pp, subgroup)) +
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = ci_low, xmax = ci_high), colour = plain, linewidth = 1) +
+  ggplot2::geom_point(colour = plain, size = 3.4) +
+  ggplot2::geom_text(ggplot2::aes(x = 22, label = n_lab), hjust = 1, size = 4, colour = grey_mid) +
+  ggplot2::scale_x_continuous(limits = c(-65, 22), labels = \(x) fmt_num(x, 0)) +
+  ggplot2::labs(x = "Hispanic minus white names (points), with 95% intervals", y = NULL) +
   theme_slide(14) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20"))
 ```
 
 ::: {.small}

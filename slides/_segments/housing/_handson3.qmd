@@ -5,11 +5,11 @@
 :::
 
 ```{.r}
-original <- read_csv("data/audit_original.csv")
+original <- readr::read_csv("data/audit_original.csv")
 
 coded_replies <- original |>
-  filter(!is.na(ProperName)) |>
-  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
 
 tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
 chisq.test(tab_8ptrz)

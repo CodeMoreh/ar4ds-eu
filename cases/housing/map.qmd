@@ -14,19 +14,14 @@ resources:
 # the curve of the claim, every option of the curve against its twins, and the
 # displays that hold the options off the curve at the reference settings. All
 # of it is aggregate, and the twins are paired in the browser from the curve.
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(readr)
-  library(purrr)
-})
-
-menu <- read_csv("data/menu_options.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE) |>
-  arrange(b_pp, spec_id) |>
-  mutate(rank = row_number())
-deviations <- read_csv("data/menu_deviations.csv", show_col_types = FALSE)
-outcomes <- read_csv("data/display_outcomes.csv", show_col_types = FALSE)
-subgroups <- read_csv("data/display_subgroups.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+menu <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE) |>
+  datawizard::data_arrange(c("b_pp", "spec_id")) |>
+  datawizard::data_modify(rank = 1:n())
+deviations <- readr::read_csv("data/menu_deviations.csv", show_col_types = FALSE)
+outcomes <- readr::read_csv("data/display_outcomes.csv", show_col_types = FALSE)
+subgroups <- readr::read_csv("data/display_subgroups.csv", show_col_types = FALSE)
 stopifnot(nrow(curve) == 64, sum(curve$is_reference) == 1)
 
 fallback_titles <- c(
@@ -41,56 +36,56 @@ fallback_titles <- c(
 page_title <- \(f) {
   path <- file.path("../..", f)
   title <- if (file.exists(path)) rmarkdown::yaml_front_matter(path)$title
-  title <- title %||% unname(fallback_titles[f])
+  title <- title %||% unname(fallback_titles[f])  # %||% of base R, 4.4 and later
   if (is.na(title)) f else gsub("*", "", title, fixed = TRUE)
 }
 
 # taught_on is a path from the project root, and the page links up two levels
 menu_js <- menu |>
-  mutate(page = taught_on) |>
-  select(axis, level, option, label, on_curve, page, reason, decision, stage, judgement,
-         phrase, estimates, explanation)
+  datawizard::data_select(c("axis", "level", "option", "label", "on_curve", page = "taught_on", "reason",
+                            "decision", "stage", "judgement", "phrase", "estimates", "explanation"))
 pages <- unique(menu_js$page) |>
-  set_names() |>
-  map(page_title)
+  purrr::set_names() |>
+  purrr::map(page_title)
 
 curve_js <- curve |>
-  transmute(
-    spec_id, comparison, population, uncoded, model, adjust,
+  datawizard::data_modify(
     b_pp = round(b_pp, 3), se_pp = round(se_pp, 3), coef = round(coef, 4),
-    stat_type, stat = round(stat, 3), df, p = signif(p, 3), p_ri = signif(p_ri, 3),
-    r = round(r, 4), n, rate_hisp = round(rate_hisp, 2), rate_comp = round(rate_comp, 2),
-    rank, ref = is_reference
-  )
+    stat = round(stat, 3), p = signif(p, 3), p_ri = signif(p_ri, 3),
+    r = round(r, 4), rate_hisp = round(rate_hisp, 2), rate_comp = round(rate_comp, 2)
+  ) |>
+  datawizard::data_select(c("spec_id", "comparison", "population", "uncoded", "model", "adjust",
+                            "b_pp", "se_pp", "coef", "stat_type", "stat", "df", "p", "p_ri", "r", "n",
+                            "rate_hisp", "rate_comp", "rank", ref = "is_reference"))
 
 # the options off the curve that a display beside the curve holds, each fitted
 # as a difference in proportions with HC2 errors at the reference settings
-display <- bind_rows(
+display <- dplyr::bind_rows(
   outcomes |>
-    filter(contrast == "hispanic", outcome %in% c("reply", "reply24")) |>
-    transmute(axis = "outcome", option = outcome, b_pp, p, n,
-              note = if_else(outcome == "reply",
-                             "Hispanic against white names, the share of delivered emails that drew any reply",
-                             "Hispanic against white names, the share of replies that came within 24 hours")),
+    datawizard::data_filter(contrast == "hispanic" & outcome %in% c("reply", "reply24")) |>
+    dplyr::transmute(axis = "outcome", option = outcome, b_pp, p, n,
+                     note = dplyr::if_else(outcome == "reply",
+                                           "Hispanic against white names, the share of delivered emails that drew any reply",
+                                           "Hispanic against white names, the share of replies that came within 24 hours")),
   outcomes |>
-    filter(outcome == "named", contrast == "black") |>
-    transmute(axis = "comparison", option = "black", b_pp, p, n,
-              note = "Black against white names, the share of coded replies that opened with the name"),
+    datawizard::data_filter(outcome == "named" & contrast == "black") |>
+    dplyr::transmute(axis = "comparison", option = "black", b_pp, p, n,
+                     note = "Black against white names, the share of coded replies that opened with the name"),
   subgroups |>
-    filter(startsWith(subgroup, "male") | startsWith(subgroup, "female") |
-             startsWith(subgroup, "replies from officials")) |>
-    transmute(axis = if_else(startsWith(subgroup, "replies"), "officials", "names"),
-              option = case_when(startsWith(subgroup, "male") ~ "male",
-                                 startsWith(subgroup, "female") ~ "female",
-                                 .default = "hispanic"),
-              b_pp, p, n,
-              note = case_when(
-                option == "male" ~ "Santiago against Brett, the share of coded replies that opened with the name",
-                option == "female" ~ "Gabriela against Emily, the share of coded replies that opened with the name",
-                .default = "Hispanic against white names, among the coded replies from officials with Hispanic names"
-              ))
+    datawizard::data_filter(startsWith(subgroup, "male") | startsWith(subgroup, "female") |
+                              startsWith(subgroup, "replies from officials")) |>
+    dplyr::transmute(axis = dplyr::if_else(startsWith(subgroup, "replies"), "officials", "names"),
+                     option = dplyr::case_when(startsWith(subgroup, "male") ~ "male",
+                                               startsWith(subgroup, "female") ~ "female",
+                                               .default = "hispanic"),
+                     b_pp, p, n,
+                     note = dplyr::case_when(
+                       option == "male" ~ "Santiago against Brett, the share of coded replies that opened with the name",
+                       option == "female" ~ "Gabriela against Emily, the share of coded replies that opened with the name",
+                       .default = "Hispanic against white names, among the coded replies from officials with Hispanic names"
+                     ))
 ) |>
-  mutate(b_pp = round(b_pp, 2), p = signif(p, 3))
+  datawizard::data_modify(b_pp = round(b_pp, 2), p = signif(p, 3))
 
 ojs_define(menu_raw = menu_js, curve_raw = curve_js, dev_raw = deviations,
            display_raw = display, pages_raw = pages)

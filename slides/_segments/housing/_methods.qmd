@@ -37,7 +37,7 @@ The statistics of this case are about as simple as statistics gets, which is why
 ::: {.small}
 **Logistic regression (logit)**
 
-- Models the log odds of a greeting; the coefficient of the Hispanic names is `r fmt_num(logit_ref[["Estimate"]], 3)`, with *z* = `r fmt_num(logit_ref[["z value"]], 3)` (UYV3F)
+- Models the log odds of a greeting; the coefficient of the Hispanic names is `r fmt_num(logit_ref$Coefficient, 3)`, with *z* = `r fmt_num(logit_ref$z, 3)` (UYV3F)
 - Its **average marginal effect**, the change in the predicted share averaged over the emails, is on the course scale
 - Predicted shares always stay between 0 and 1
 :::
@@ -45,7 +45,7 @@ The statistics of this case are about as simple as statistics gets, which is why
 ::::
 
 ::: {.fragment .small}
-Without covariates a logit reproduces the two observed shares exactly, so its average marginal effect is the same `r fmt_num(twin("logit", "none")$b_pp, 2)` points. Across the curve, the logit moves the estimate by `r fmt_num(dev_of("logit", "shift_mean"), 2)` points on average against its linear twin.
+Without covariates a logit reproduces the two observed shares exactly, so its average marginal effect is the same `r fmt_num(twin_logit_none$b_pp, 2)` points. Across the curve, the logit moves the estimate by `r fmt_num(dev_of("logit", "shift_mean"), 2)` points on average against its linear twin.
 :::
 
 ::: notes

@@ -2,7 +2,7 @@
 
 The curve of the housing-audit case (`spec_curve.csv`, [codebook](spec_curve_codebook.md)) keeps only the specifications that answer the claim as the course reads it. Several findings stay in the course as displays of their own, because each describes the experiment or answers a related but different question. The five files below hold the numbers behind those displays. They are written by `R/housing/05_displays.R` from the course file `housing_audit.csv` ([codebook](housing_audit_codebook.md)).
 
-Every comparison in these files is a difference in proportions, the coefficient of a linear model of a 0/1 outcome on a 0/1 indicator of the group, in percentage points, with HC2 standard errors and a two-sided t test on the residual degrees of freedom, the estimator of the reference specification of the curve. A negative difference means that the first group did less well than the white names. The shares are of the emails that each comparison counts, and the bounced emails are never counted.
+Every comparison in these files is a difference in proportions, the coefficient of a linear model of a 0/1 outcome on a 0/1 indicator of the group, in percentage points, with HC2 standard errors (parameters, with sandwich) and a two-sided t test on the residual degrees of freedom, the estimator of the reference specification of the curve. A negative difference means that the first group did less well than the white names. The shares are of the emails that each comparison counts, and the bounced emails are never counted.
 
 ## `display_names.csv` – the six names
 
@@ -19,7 +19,7 @@ Nine rows: one for each of the six names (`level` = `name`) and one for each of 
 | `replies` | The delivered emails that drew a reply |
 | `coded` | The replies with a greeting code |
 | `named` | The replies that opened with the name of the sender |
-| `reply_pct`, `reply_lo`, `reply_hi` | The share of delivered emails that drew a reply, in per cent, with its 95% Wilson interval, which stays inside 0–100 for small groups |
+| `reply_pct`, `reply_lo`, `reply_hi` | The share of delivered emails that drew a reply, in per cent, with its 95% Wilson interval, which stays inside 0–100 for small groups: the score interval of `prop.test()` without the continuity correction |
 | `named_pct`, `named_lo`, `named_hi` | The share of coded replies that opened with the name, with its 95% Wilson interval |
 | `named_all_pct` | The named replies as a share of all delivered emails |
 
@@ -36,6 +36,7 @@ Eight rows: four outcomes, each compared for the Hispanic names and for the Blac
 | `b_pp`, `se_pp` | The difference in percentage points and its HC2 standard error |
 | `t`, `df`, `p` | The t, its residual degrees of freedom and its two-sided p-value |
 | `n` | The emails compared |
+| `ci_low`, `ci_high` | The 95% interval of the difference in percentage points, from the same t on the residual degrees of freedom |
 
 The Hispanic names drew a reply 4.8 points less often than the white names (p = 0.214, 665 emails), and the Black names 3.3 points more often (p = 0.404). Among replies, a reply within 24 hours came 2.1 points more often to Hispanic names (p = 0.642) and 4.5 points more often to Black names (p = 0.297). The named greeting is 20.0 points less common for Hispanic names among the coded replies (p = 0.0001, 362 replies) and 13.3 points less common among all delivered emails (p = 0.0001, 662 emails), against 5.0 points (p = 0.328) and 1.0 point (p = 0.789) for the Black names. The paper reports the gap in replies with p = .11, which is the one-tailed value of the same test.
 
@@ -47,20 +48,20 @@ Eight rows: the named greeting among the coded replies, Hispanic against white n
 |:--|:--|
 | `subgroup` | `all names`, the reference comparison; `male names (Santiago against Brett)`; `female names (Gabriela against Emily)`; `replies from officials with Hispanic names` and `replies from other officials`; and the communities in the lower, middle and top third of percent Hispanic |
 | `outcome`, `contrast` | `named` and `hispanic` throughout |
-| `b_pp` … `n` | As in `display_outcomes.csv` |
+| `b_pp` … `ci_high` | As in `display_outcomes.csv` |
 
 The gap is −23.3 points between Santiago and Brett (p = 0.0009, 201 replies) and −15.7 points between Gabriela and Emily (p = 0.046, 161). Among the 28 replies from officials with Hispanic names it is −25.7 points (p = 0.184), and among the 334 replies from other officials −19.8 (p = 0.0003). By the Hispanic third of the community it is −20.7 points in the lower third (p = 0.031, 109 replies), −14.8 in the middle third (p = 0.096, 127) and −22.5 in the top third (p = 0.011, 121). The subgroup of officials is selected after the email arrived, and the thirds lack 5 of the 362 replies.
 
 ## `display_ri.csv` – the randomisation distribution
 
-4,999 rows, one per reshuffle: the names of the 362 coded replies to Hispanic and white names, the rows of the reference specification, shuffled at random among those replies, and the difference in the share of named greetings recomputed each time. The seed is 20261025.
+4,999 rows, one per reshuffle: the names of the 362 coded replies to Hispanic and white names, the rows of the reference specification, reshuffled among those replies by complete random assignment of the 187 Hispanic names (ri2), and the difference in the share of named greetings recomputed each time. The seed is 20261025.
 
 | Column | Meaning |
 |:--|:--|
 | `draw` | The reshuffle, 1 to 4,999 |
 | `b_pp` | The difference in percentage points, Hispanic minus white, after the reshuffle |
 
-The central 95% of the reshuffled differences lies between −10.0 and +11.0 points, and the whole distribution between −20.0 and +22.1. Three of the 4,999 reshuffles give a difference at least as large in absolute value as the observed −19.97 points. The display shows what differences chance alone produces when the names are assigned at random to these replies.
+The central 95% of the reshuffled differences lies between −10.0 and +9.9 points, and the whole distribution between −17.8 and +23.2. One of the 4,999 reshuffles gives a difference at least as large in absolute value as the observed −19.97 points. The display shows what differences chance alone produces when the names are assigned at random to these replies.
 
 ## `display_power.csv` – the power of the two designs
 

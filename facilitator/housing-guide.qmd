@@ -14,32 +14,30 @@ execute:
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-
 # Every number of the expected-numbers section is read from the committed data
-# files of the case, so that the guide and the pages cannot drift apart.
-case_data <- \(file) read_csv(file.path("../cases/housing/data", file), show_col_types = FALSE)
+# files of the case, so that the guide and the pages cannot drift apart; readr
+# rather than datawizard::data_read(), which reads empty cells as "" rather than NA.
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 
-curve <- case_data("spec_curve.csv")
-analysts <- case_data("analysts5.csv")
-marks <- case_data("reference_marks.csv")
-deviations <- case_data("menu_deviations.csv")
-outcomes <- case_data("display_outcomes.csv")
-power <- case_data("display_power.csv")
-ri <- case_data("display_ri.csv")
+curve <- readr::read_csv("../cases/housing/data/spec_curve.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("../cases/housing/data/analysts5.csv", show_col_types = FALSE)
+marks <- readr::read_csv("../cases/housing/data/reference_marks.csv", show_col_types = FALSE)
+deviations <- readr::read_csv("../cases/housing/data/menu_deviations.csv", show_col_types = FALSE)
+outcomes <- readr::read_csv("../cases/housing/data/display_outcomes.csv", show_col_types = FALSE)
+power <- readr::read_csv("../cases/housing/data/display_power.csv", show_col_types = FALSE)
+ri <- readr::read_csv("../cases/housing/data/display_ri.csv", show_col_types = FALSE)
+n_emails <- nrow(readr::read_csv("../cases/housing/data/housing_audit.csv", show_col_types = FALSE))
 
-ref <- filter(curve, is_reference)
-ref_all <- filter(curve, comparison == "white", population == "all", uncoded == "drop",
-                  model == "lpm", adjust == "none")
+ref <- datawizard::data_filter(curve, is_reference)
+ref_all <- datawizard::data_match(curve, tibble::tibble(comparison = "white", population = "all",
+                                                        uncoded = "drop", model = "lpm", adjust = "none"))
 an <- \(id, col) analysts[[col]][analysts$id == id]
 mark <- \(id) marks$b_pp[marks$id == id]
 shift <- \(axis, option, col = "shift_mean") deviations[[col]][deviations$axis == axis & deviations$option == option]
 pw <- \(design, gap) power$power[startsWith(power$design, design) & power$gap_pp == gap]
-reply_gap <- filter(outcomes, outcome == "reply", contrast == "hispanic")
+reply_gap <- datawizard::data_filter(outcomes, outcome == "reply" & contrast == "hispanic")
 # The SCORE replication on the scale of the course (display_replication.csv)
-replication <- case_data("display_replication.csv")
+replication <- readr::read_csv("../cases/housing/data/display_replication.csv", show_col_types = FALSE)
 rep_val <- \(population_code, authorities_code, col) {
   replication[[col]][replication$population == population_code &
                        replication$authorities == authorities_code]
@@ -47,21 +45,21 @@ rep_val <- \(population_code, authorities_code, col) {
 sgn <- \(x, d = 1) paste0(if (round(x, d) >= 0) "+" else "", fmt(x, d))
 
 # The Task 3 table: Hispanic against all other names among the coded replies
-coded <- case_data("audit_original.csv") |>
-  filter(!is.na(ProperName)) |>
-  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
-tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded)
-chi_yates <- unname(chisq.test(tab_8ptrz)$statistic)
-chi_plain <- unname(chisq.test(tab_8ptrz, correct = FALSE)$statistic)
+coded <- readr::read_csv("../cases/housing/data/audit_original.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+tab_8ptrz <- stats::xtabs(~ hispanic_name + ProperName, data = coded)  # r-style: keep – the table that chisq.test() takes
+chi_yates <- unname(stats::chisq.test(tab_8ptrz)$statistic)
+chi_plain <- unname(stats::chisq.test(tab_8ptrz, correct = FALSE)$statistic)
 
 # Placement as try_spec() prints it: the specifications further below zero,
 # with the tolerance of the helpers, so that the logit twin of the reference
 # specification ties with it
 placement_ref <- sum(curve$b_pp < ref$b_pp - 1e-9)
 other_max <- deviations |>
-  filter(axis != "population") |>
-  summarise(m = max(shift_max)) |>
-  pull(m)
+  datawizard::data_filter(axis != "population") |>
+  datawizard::data_summary(m = max(shift_max)) |>
+  datawizard::data_extract("m")
 ```
 
 ::: {.callout-note}
@@ -302,7 +300,7 @@ Each row names the first move, not the only one, and every ladder ends at a poin
 ## Expected numbers {#expected-numbers}
 
 - **Task 1.** The last check of `R/check_setup.R`: the reference specification reproduces at `r fmt(ref$b_pp, 2)` percentage points.
-- **Task 2.** `r format(nrow(case_data("housing_audit.csv")), big.mark = ",")` emails, 23 bounced, 991 delivered, 563 replies, 5 without a greeting code, 558 coded. Greeted by name among the coded replies: white 61.1%, Black 56.1%, Hispanic 41.2%; Santiago lowest at 37.1%. The graph: with every delivered email counted, `adjustmentSets()` returns the empty set, because the name was assigned at random; `paths(dag, Z = "reply")` reports the paths through the official and through the community as open. Adding the community to `Z` closes the second, and nothing can close the first, because nobody observed the official.
+- **Task 2.** `r format(n_emails, big.mark = ",")` emails, 23 bounced, 991 delivered, 563 replies, 5 without a greeting code, 558 coded. Greeted by name among the coded replies: white 61.1%, Black 56.1%, Hispanic 41.2%; Santiago lowest at 37.1%. The graph: with every delivered email counted, `adjustmentSets()` returns the empty set, because the name was assigned at random; `paths(dag, Z = "reply")` reports the paths through the official and through the community as open. Adding the community to `Z` closes the second, and nothing can close the first, because nobody observed the official.
 - **Task 3.** $\chi^2$ = `r fmt(chi_yates, 3)` on `r an("8PTRZ", "n_recorded")` coded replies with the continuity correction, the value recorded for 8PTRZ; `r fmt(chi_plain, 3)` without it. The optional logit of UYV3F: z = `r fmt(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` replies to Hispanic and white names.
 - **The reference specification** (white names, replies, uncoded dropped, linear model, no covariates): `r fmt(ref$b_pp, 2)` points (`r fmt(ref$rate_hisp)`% against `r fmt(ref$rate_comp)`%), t = `r fmt(ref$stat, 2)` on `r ref$df` df, n = `r ref$n`. Its twin on every delivered email: `r fmt(ref_all$b_pp, 2)` points (`r fmt(ref_all$rate_hisp)`% against `r fmt(ref_all$rate_comp)`%), n = `r ref_all$n`.
 - **The curve.** `r nrow(curve)` specifications, all below zero and all significant at 5% under the test of the model, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points; the largest p is `r fmt(max(curve$p), 4)`, and the largest randomisation p is `r fmt(max(curve$p_ri), 4)`. Counting every delivered email moves the estimate by `r fmt(shift("population", "all"), 2)` points on average (from `r fmt(shift("population", "all", "shift_min"), 2)` to `r fmt(shift("population", "all", "shift_max"), 2)`); every other decision by at most `r fmt(other_max, 2)`. No pair changes its sign or its significance.

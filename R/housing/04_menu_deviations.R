@@ -6,27 +6,28 @@
 # Reads:        cases/housing/data/spec_curve.csv
 # Writes:       cases/housing/data/menu_deviations.csv
 # Author:       Claude for CM
-# Last updated: 2026-10-25
+# Last updated: 2026-10-26
 ################################################################################
 
-library(tidyverse)
 source("R/housing/_tools.R")
 
-curve <- read_csv("cases/housing/data/spec_curve.csv", show_col_types = FALSE)
+curve <- readr::read_csv("cases/housing/data/spec_curve.csv", show_col_types = FALSE)
 axes <- names(SPEC_AXES)
 
 # For each decision, the first option is the baseline; every other option is
 # compared with it on pairs of specifications that agree on all other decisions.
-deviations <- imap(SPEC_AXES, \(options, axis) {
+# The verbs are those of dplyr, because datawizard evaluates its conditions in
+# a fresh environment and so cannot see the decision that each pass handles.
+deviations <- purrr::imap(SPEC_AXES, \(options, axis) {
   others <- setdiff(axes, axis)
   base <- curve |>
-    filter(.data[[axis]] == options[1]) |>
-    select(all_of(others), b_base = b_pp, p_base = p)
+    dplyr::filter(.data[[axis]] == options[1]) |>
+    dplyr::select(dplyr::all_of(others), b_base = "b_pp", p_base = "p")
   curve |>
-    inner_join(base, by = others) |>
-    group_by(option = .data[[axis]]) |>
-    summarise(
-      n_pairs = n(),
+    dplyr::inner_join(base, by = others) |>
+    dplyr::group_by(option = .data[[axis]]) |>
+    dplyr::summarise(
+      n_pairs = dplyr::n(),
       shift_mean = mean(b_pp - b_base),
       shift_min = min(b_pp - b_base),
       shift_max = max(b_pp - b_base),
@@ -35,8 +36,8 @@ deviations <- imap(SPEC_AXES, \(options, axis) {
       flips = sum((p < 0.05) != (p_base < 0.05)),
       .groups = "drop"
     ) |>
-    mutate(axis = axis, baseline = options[1], .before = 1)
+    dplyr::mutate(axis = axis, baseline = options[1], .before = 1)
 }) |>
-  bind_rows()
+  dplyr::bind_rows()
 
-write_csv(deviations, "cases/housing/data/menu_deviations.csv")
+readr::write_csv(deviations, "cases/housing/data/menu_deviations.csv")  # r-style: keep – datawizard::data_write() writes other bytes

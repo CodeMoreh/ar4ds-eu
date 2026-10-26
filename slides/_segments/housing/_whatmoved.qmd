@@ -8,23 +8,23 @@
 # the same decision (data/menu_deviations.csv): the mean shift of the
 # estimate, with the smallest and largest shift as a bar. A positive shift
 # moves the estimate towards zero.
-option_labels <- select(menu_opts, axis, option, decision, label)
+option_labels <- datawizard::data_select(menu_opts, c("axis", "option", "decision", "label"))
 shift_rows <- deviations |>
-  filter(option != baseline) |>
-  left_join(option_labels, by = c("axis", "option")) |>
-  mutate(lab = reorder(paste0(decision, ": ", label), shift_mean),
-         big = axis == "population")
+  datawizard::data_filter(option != baseline) |>
+  dplyr::left_join(option_labels, by = c("axis", "option")) |>
+  datawizard::data_modify(lab = stats::reorder(paste0(decision, ": ", label), shift_mean),
+                          big = axis == "population")
 other_max <- max(shift_rows$shift_max[!shift_rows$big])
 
-ggplot(shift_rows, aes(shift_mean, lab, colour = big)) +
-  geom_vline(xintercept = 0, colour = grey_mid) +
-  geom_linerange(aes(xmin = shift_min, xmax = shift_max), linewidth = 3, alpha = 0.35) +
-  geom_point(size = 4.2) +
-  scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
-  scale_x_continuous(labels = \(x) paste0(if_else(x > 0, "+", ""), fmt_num(x, 0))) +
-  labs(x = "shift against the twin (points); positive is towards zero", y = NULL) +
+ggplot2::ggplot(shift_rows, ggplot2::aes(shift_mean, lab, colour = big)) +
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = shift_min, xmax = shift_max), linewidth = 3, alpha = 0.35) +
+  ggplot2::geom_point(size = 4.2) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = plain, `TRUE` = burgundy), guide = "none") +
+  ggplot2::scale_x_continuous(labels = \(x) paste0(dplyr::if_else(x > 0, "+", ""), fmt_num(x, 0))) +
+  ggplot2::labs(x = "shift against the twin (points); positive is towards zero", y = NULL) +
   theme_slide(15) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20"))
 ```
 
 ::: {.fs-80}

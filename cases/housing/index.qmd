@@ -7,24 +7,22 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(tinytable)
+# The estimator of the case, for the conversion rule of Multi100
+source("../../R/housing/_tools.R")
 
-audit <- read_csv("data/housing_audit.csv", show_col_types = FALSE)
-names_tab <- read_csv("data/display_names.csv", show_col_types = FALSE)
-outcomes <- read_csv("data/display_outcomes.csv", show_col_types = FALSE)
-analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
-marks <- read_csv("data/reference_marks.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE)
-power <- read_csv("data/display_power.csv", show_col_types = FALSE)
-ri <- read_csv("data/display_ri.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+audit <- readr::read_csv("data/housing_audit.csv", show_col_types = FALSE)
+names_tab <- readr::read_csv("data/display_names.csv", show_col_types = FALSE)
+outcomes <- readr::read_csv("data/display_outcomes.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+marks <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+power <- readr::read_csv("data/display_power.csv", show_col_types = FALSE)
+ri <- readr::read_csv("data/display_ri.csv", show_col_types = FALSE)
 
 # Fixed decimals and a true minus sign, for every number on the page
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
 pct <- \(x, d = 1) paste0(fmt(x, d), "%")
-big <- \(x) format(x, big.mark = ",")
 pe <- \(p) if (p < 0.001) "p < 0.001" else paste("p =", fmt(p, 3))
 
 # one value from a display or record file, for inline use
@@ -33,11 +31,13 @@ mark <- \(id, col) marks[[col]][marks$id == id]
 an <- \(id, col) analysts[[col]][analysts$id == id]
 out <- \(o, cn, col) outcomes[[col]][outcomes$outcome == o & outcomes$contrast == cn]
 pw <- \(design, gap) power$power[startsWith(power$design, design) & power$gap_pp == gap]
-ref <- curve |> filter(is_reference)
+ref <- datawizard::data_filter(curve, is_reference)
 
 counts <- audit |>
-  mutate(no_thirds = if_any(c(white_third, black_third, hispanic_third, pop_third, poverty_third), is.na)) |>
-  summarise(
+  datawizard::data_modify(
+    no_thirds = !stats::complete.cases(white_third, black_third, hispanic_third, pop_third, poverty_third)
+  ) |>
+  datawizard::data_summary(
     sent = n(),
     bounced = sum(is.na(reply)),
     delivered = sum(!is.na(reply)),
@@ -52,20 +52,20 @@ counts <- audit |>
 # P9W8Y, Task 1: in a model with the interaction of ethnicity and sex and the
 # default treatment coding of R, the Type III test of ethnicity is the test
 # among the female names, the reference level of sex
-female <- audit |> filter(reply == 1, !is.na(named), name_sex == "female")
-lr_female <- anova(glm(named ~ 1, family = binomial(), data = female),
-                   glm(named ~ group, family = binomial(), data = female), test = "LRT")
+female <- datawizard::data_filter(audit, reply == 1 & !is.na(named) & name_sex == "female")
+lr_female <- stats::anova(stats::glm(named ~ 1, family = stats::binomial(), data = female),
+                          stats::glm(named ~ group, family = stats::binomial(), data = female), test = "LRT")
 p_female <- lr_female$`Pr(>Chi)`[2]
 
-ri_band <- quantile(ri$b_pp, c(0.025, 0.975))
+ri_band <- stats::quantile(ri$b_pp, c(0.025, 0.975))
 reply_range <- range(names_tab$reply_pct[names_tab$level == "group"])
 gap_pooled <- grp("hispanic", "named_pct") -
   100 * (grp("white", "named") + grp("black", "named")) / (grp("white", "coded") + grp("black", "coded"))
 oa_z <- abs(mark("OA", "statistic"))
 oa_n <- mark("OA", "n")
-oa_r <- tanh(oa_z / sqrt(oa_n - 3))
+oa_r <- r_multi100(oa_z, "z", NA, oa_n)
 
-stat_txt <- \(type, x) case_when(
+stat_txt <- \(type, x) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(x, 3)),
   .default = paste(type, "=", fmt(x, 3))
@@ -93,21 +93,19 @@ The OAs emailed "all public housing authorities that could plausibly be matched 
 #| tbl-cap: "The six names of the experiment, with the emails sent and delivered, the replies and the share of replies with a greeting code that opened with the name of the sender. Source: `data/display_names.csv`."
 #| echo: false
 names_tab |>
-  filter(level == "name") |>
-  mutate(group = factor(group, levels = c("white", "black", "hispanic"),
-                        labels = c("White", "Black", "Hispanic"))) |>
-  arrange(group, desc(name_sex)) |>
-  transmute(
-    Name = name,
+  datawizard::data_filter(level == "name") |>
+  datawizard::data_modify(group = factor(group, levels = c("white", "black", "hispanic"),
+                                         labels = c("White", "Black", "Hispanic"))) |>
+  datawizard::data_arrange(c("group", "-name_sex")) |>
+  datawizard::data_modify(
     `Meant to indicate` = as.character(group),
-    Sent = sent,
-    Delivered = delivered,
-    Replies = replies,
     `Reply rate` = pct(reply_pct),
     `Greeted by name` = pct(named_pct)
   ) |>
-  tt() |>
-  style_tt(j = 3:7, align = "r")
+  datawizard::data_select(c(Name = "name", "Meant to indicate", Sent = "sent", Delivered = "delivered",
+                            Replies = "replies", "Reply rate", "Greeted by name")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:7, align = "r")
 ```
 
 Every authority received the same text, with the name of the sender in place of X (p. 10).
@@ -134,19 +132,19 @@ The authorities replied at similar rates to every group, 60.7% to Black names ag
 #| fig-height: 3
 #| echo: false
 names_tab |>
-  filter(level == "name") |>
-  mutate(
+  datawizard::data_filter(level == "name") |>
+  datawizard::data_modify(
     hispanic = group == "hispanic",
-    name = reorder(name, named_pct)
+    name = stats::reorder(name, named_pct)
   ) |>
-  ggplot(aes(x = named_pct, y = name, colour = hispanic)) +
-  geom_pointrange(aes(xmin = named_lo, xmax = named_hi), size = 0.4, linewidth = 0.7) +
-  scale_colour_manual(values = c(`FALSE` = "#1d2731", `TRUE` = "#8b1538"), guide = "none") +
-  scale_x_continuous(labels = \(x) paste0(x, "%")) +
-  coord_cartesian(xlim = c(20, 80)) +
-  labs(x = "replies that open with the name of the sender", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank())
+  ggplot2::ggplot(ggplot2::aes(x = named_pct, y = name, colour = hispanic)) +
+  ggplot2::geom_pointrange(ggplot2::aes(xmin = named_lo, xmax = named_hi), size = 0.4, linewidth = 0.7) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = "#1d2731", `TRUE` = "#8b1538"), guide = "none") +
+  ggplot2::scale_x_continuous(labels = \(x) paste0(x, "%")) +
+  ggplot2::coord_cartesian(xlim = c(20, 80)) +
+  ggplot2::labs(x = "replies that open with the name of the sender", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
 ```
 
 The abstract states the finding in the sentence from which the claim was taken: "Hispanic housing applicants were twenty percentage points less likely to be greeted by name than were their black and white counterparts" (abstract). The twenty points come from the comparison with white names. Against the white and Black names together, the raw gap among replies is `r fmt(gap_pooled)` points.
@@ -194,19 +192,17 @@ All five analysts worked from the public file of the OAs. The course refits each
 #| tbl-cap: "The five reanalyses in Task 2, with the statistic as Multi100 recorded it and the conclusion of Task 1. Source: `data/analysts5.csv`."
 #| echo: false
 analysts |>
-  transmute(
-    Analyst = id,
-    Discipline = discipline,
+  datawizard::data_modify(
     Hours = as.character(hours),
     Comparison = sub(" vs ", " against ", comparison),
-    `Emails counted` = population,
-    Method = method,
-    `Emails analysed` = n_refit,
-    `Recorded statistic` = stat_txt(statistic_type, statistic_recorded),
-    `Task 1 conclusion` = task1
+    `Recorded statistic` = stat_txt(statistic_type, statistic_recorded)
   ) |>
-  tt() |>
-  style_tt(j = c(3, 7), align = "r")
+  datawizard::data_select(c(Analyst = "id", Discipline = "discipline", "Hours", "Comparison",
+                            `Emails counted` = "population", Method = "method",
+                            `Emails analysed` = "n_refit", "Recorded statistic",
+                            `Task 1 conclusion` = "task1")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = c(3, 7), align = "r")
 ```
 :::
 
@@ -242,22 +238,21 @@ The five results are a $\chi^2$ test of a table, a two-proportion test, two z st
 #| label: tbl-scale
 #| tbl-cap: "The published result and the five reanalyses, with the gap in percentage points (the published change in predicted probability for the OAs, the course refit for the analysts) and the correlation by the Multi100 rule, signs as recorded. Sources: `data/reference_marks.csv`, `data/analysts5.csv`."
 #| echo: false
-bind_rows(
-  tibble(Result = "OAs 2017", gap = mark("OA", "b_pp"), stat = paste("z =", fmt(oa_z, 2)),
-         n = oa_n, r = oa_r),
+dplyr::bind_rows(
+  tibble::tibble(Result = "OAs 2017", gap = mark("OA", "b_pp"), stat = paste("z =", fmt(oa_z, 2)),
+                 n = oa_n, r = oa_r),
   analysts |>
-    transmute(Result = id, gap = b_pp_refit, stat = stat_txt(statistic_type, statistic_recorded),
-              n = n_refit, r = r_recorded)
+    datawizard::data_modify(stat = stat_txt(statistic_type, statistic_recorded)) |>
+    datawizard::data_select(c(Result = "id", gap = "b_pp_refit", "stat", n = "n_refit", r = "r_recorded"))
 ) |>
-  transmute(
-    Result,
+  datawizard::data_modify(
     `Gap (points)` = fmt(gap),
-    `Recorded statistic` = stat,
-    `Emails in the conversion` = n,
-    `r recorded` = if_else(is.na(r), "–", fmt(r, 3))
+    `r recorded` = dplyr::if_else(is.na(r), "–", fmt(r, 3))
   ) |>
-  tt() |>
-  style_tt(j = c(2, 4, 5), align = "r")
+  datawizard::data_select(c("Result", "Gap (points)", `Recorded statistic` = "stat",
+                            `Emails in the conversion` = "n", "r recorded")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = c(2, 4, 5), align = "r")
 ```
 
 The same gap gives different correlations. UYV3F and the OAs both report a gap of twenty points, yet their correlations are `r fmt(abs(an("UYV3F", "r_recorded")), 3)` and `r fmt(oa_r, 3)`, because one z comes from a model without covariates on `r an("UYV3F", "n_refit")` replies and the other from a model with covariates and all three groups on `r oa_n`. The `r fmt(abs(an("25N5D", "b_pp_refit")))`-point gap of 25N5D converts to almost as large a correlation as the `r fmt(abs(an("8PTRZ", "b_pp_refit")))`-point gap of 8PTRZ, because a correlation depends on the shares in each group and on the sizes of the groups as well as on the gap. The signs follow the statistics as the analysts typed them, so UYV3F carries a negative correlation, although all five found the gap in the direction of the claim. For the effect sizes Multi100 took the direction from the box that each analyst ticked, so that they "are negative only when they indicate an opposite effect compared with the original study" [@AczelEtAl2026InvestigatingAnalyticalRobustness, Methods].
@@ -272,22 +267,21 @@ The course puts every result on the scale of the claim, the difference in the sh
 #| fig-height: 2.8
 #| echo: false
 marks |>
-  filter(on_chart, id != "SCORE") |>
-  mutate(
-    label = if_else(id == "OA", "OAs 2017", id),
-    label = reorder(label, -b_pp),
+  datawizard::data_filter(on_chart & id != "SCORE") |>
+  datawizard::data_modify(
+    label = stats::reorder(dplyr::if_else(id == "OA", "OAs 2017", id), -b_pp),
     oa = id == "OA"
   ) |>
-  ggplot(aes(x = b_pp, y = label, colour = oa)) +
-  annotate("rect", xmin = min(curve$b_pp), xmax = max(curve$b_pp), ymin = -Inf, ymax = Inf,
-           fill = "#d6dde5", alpha = 0.6) +
-  geom_vline(xintercept = 0, colour = "#9aa8b3") +
-  geom_point(size = 2.6) +
-  scale_colour_manual(values = c(`FALSE` = "#1d2731", `TRUE` = "#8b1538"), guide = "none") +
-  coord_cartesian(xlim = c(-25, 2)) +
-  labs(x = "gap in greetings by name, Hispanic minus comparison names (points)", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.minor = element_blank())
+  ggplot2::ggplot(ggplot2::aes(x = b_pp, y = label, colour = oa)) +
+  ggplot2::annotate("rect", xmin = min(curve$b_pp), xmax = max(curve$b_pp), ymin = -Inf, ymax = Inf,
+                    fill = "#d6dde5", alpha = 0.6) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_point(size = 2.6) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = "#1d2731", `TRUE` = "#8b1538"), guide = "none") +
+  ggplot2::coord_cartesian(xlim = c(-25, 2)) +
+  ggplot2::labs(x = "gap in greetings by name, Hispanic minus comparison names (points)", y = NULL) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
 ```
 
 ## 5. The replication {#sec-replication}
@@ -300,7 +294,7 @@ The authorities sent 1,811 replies. To match Table 1, the team kept the authorit
 
 ### 5.2 Reading the replication {#sec-reading}
 
-Within the original data the claim is hard to dislodge. Reshuffling the names at random among the replies to Hispanic and white names gives gaps between `r fmt(ri_band[1])` and `r fmt(ri_band[2])` points in 95% of `r big(nrow(ri))` reshuffles, far from the observed `r fmt(ref$b_pp)`, and all `r nrow(curve)` specifications of the curve of the claim are negative and significant, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points. The replication shows that the same contrast, asked of a wider set of authorities in another year with other names, gave a gap close to zero, but it does not show which difference between the two studies is responsible.
+Within the original data the claim is hard to dislodge. Reshuffling the names at random among the replies to Hispanic and white names gives gaps between `r fmt(ri_band[1])` and `r fmt(ri_band[2])` points in 95% of `r format(nrow(ri), big.mark = ",")` reshuffles, far from the observed `r fmt(ref$b_pp)`, and all `r nrow(curve)` specifications of the curve of the claim are negative and significant, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points. The replication shows that the same contrast, asked of a wider set of authorities in another year with other names, gave a gap close to zero, but it does not show which difference between the two studies is responsible.
 
 The names are one candidate. Names that are meant to indicate the same group are not read in the same way: @Gaddis2017HowBlackAre found that names used in audits to indicate Black applicants vary in how often they are perceived as Black, and that names given more often by highly educated mothers are perceived as Black less often, so that the findings of an audit may depend on which names represent a group. The OAs could not match the ages of their Hispanic names, so Santiago and Gabriela may have suggested younger senders as well as a Hispanic background, while the replication chose its names to hold class and migrant status constant. Chance is another. The published interval runs from −30.5 to −10.0 points, and a study of this size detects a twenty-point gap almost always but a smaller one far less reliably. At a white rate of 61%, about 181 replies a group give a power of `r fmt(pw("original", 20), 2)` for a gap of 20 points, `r fmt(pw("original", 13), 2)` for 13 and `r fmt(pw("original", 10), 2)` for 10, against `r fmt(pw("replication", 10), 2)` for 10 points with the 369 a group of the replication. A significant estimate from a study with modest power for realistic effects tends to overstate their size. Time and place are a third candidate. The replication emailed the authorities on the HUD list, six years later, and a change in who answers such emails, or how, could move the result without either study being wrong.
 
@@ -314,17 +308,19 @@ The OAs published their data and code on the Harvard Dataverse ([doi:10.7910/DVN
 #| label: tbl-counts
 #| tbl-cap: "The emails in the public file. Source: `data/housing_audit.csv`."
 #| echo: false
-tibble(
+tibble::tibble(
   Emails = c("In the public file (the paper reports 1,017)", "Bounced, with no reply status",
              "Delivered", "Replied", "Replied, without a greeting code", "Replied, with a greeting code",
              "Sent to authorities without community thirds", "Of these, replied",
              "Sent to authorities without a HUD assessment third"),
-  Count = with(counts, c(sent, bounced, delivered, replies, uncoded, coded, no_thirds,
-                         no_thirds_replies, no_assessment))
+  Count = counts |>
+    datawizard::data_select(c("sent", "bounced", "delivered", "replies", "uncoded", "coded", "no_thirds",
+                              "no_thirds_replies", "no_assessment")) |>
+    unlist(use.names = FALSE) |>
+    format(big.mark = ",")
 ) |>
-  mutate(Count = big(Count)) |>
-  tt() |>
-  style_tt(j = 2, align = "r")
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2, align = "r")
 ```
 
 The `r counts$bounced` bounced emails never reached an official, and the `r counts$uncoded` uncoded replies are replies whose greeting nobody coded. Both are decisions on the [specification menu](menu.qmd). `audit_original.csv` is the public file with the column names of the OAs, on which the reproduction of Task 3 runs ([codebook](data/audit_original_codebook.md)). `housing_audit.csv` is the course file, with readable names and derived columns, on which every other exercise runs ([codebook](data/housing_audit_codebook.md)). The [exercise overview](exercise.qmd) sets out what to do with them.

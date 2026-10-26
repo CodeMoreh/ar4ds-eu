@@ -80,27 +80,27 @@ This is the whole email, word for word, with X standing for the name of the send
 # The six names (data/display_names.csv): the share of delivered emails that
 # drew a reply, and the share of replies with a greeting code that opened
 # with the name of the sender, each with its 95% Wilson interval.
-name_rows <- filter(names_disp, level == "name")
-names_long <- bind_rows(
-  transmute(name_rows, name, group, measure = "Replied: share of delivered emails",
+name_rows <- datawizard::data_filter(names_disp, level == "name")
+names_long <- dplyr::bind_rows(
+  dplyr::transmute(name_rows, name, group, measure = "Replied: share of delivered emails",
             pct = reply_pct, lo = reply_lo, hi = reply_hi),
-  transmute(name_rows, name, group, measure = "Greeted by name: share of coded replies",
+  dplyr::transmute(name_rows, name, group, measure = "Greeted by name: share of coded replies",
             pct = named_pct, lo = named_lo, hi = named_hi)
 ) |>
-  mutate(name = factor(name, levels = rev(name_order)),
-         measure = factor(measure, levels = unique(measure)))
+  datawizard::data_modify(name = factor(name, levels = rev(name_order)),
+                          measure = factor(measure, levels = unique(measure)))
 
-ggplot(names_long, aes(pct, name, colour = group)) +
-  geom_linerange(aes(xmin = lo, xmax = hi), linewidth = 1.1) +
-  geom_point(size = 3.8) +
-  facet_wrap(~ measure) +
-  scale_colour_manual(values = group_cols) +
-  scale_x_continuous(limits = c(25, 75), labels = \(x) paste0(x, "%")) +
-  labs(x = "per cent, with 95% intervals", y = NULL) +
+ggplot2::ggplot(names_long, ggplot2::aes(pct, name, colour = group)) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = lo, xmax = hi), linewidth = 1.1) +
+  ggplot2::geom_point(size = 3.8) +
+  ggplot2::facet_wrap(~ measure) +
+  ggplot2::scale_colour_manual(values = group_cols) +
+  ggplot2::scale_x_continuous(limits = c(25, 75), labels = \(x) paste0(x, "%")) +
+  ggplot2::labs(x = "per cent, with 95% intervals", y = NULL) +
   theme_slide(16) +
-  theme(strip.text = element_text(face = "bold", colour = ncl_blue, size = 15),
+  ggplot2::theme(strip.text = ggplot2::element_text(face = "bold", colour = ncl_blue, size = 15),
         panel.spacing.x = unit(2, "lines"),
-        axis.text.y = element_text(face = "bold"))
+        axis.text.y = ggplot2::element_text(face = "bold"))
 ```
 
 ::: {.small}
@@ -129,21 +129,21 @@ outcome_labels <- c(reply = "Any reply\n(delivered emails)",
                     named = "Greeted by name\n(coded replies)",
                     named_any = "Greeted by name\n(delivered emails)")
 outcomes |>
-  mutate(outcome = factor(outcome_labels[outcome], levels = rev(outcome_labels)),
-         contrast = factor(contrast, levels = c("black", "hispanic"))) |>
-  ggplot(aes(b_pp, outcome, colour = contrast)) +
-  geom_vline(xintercept = 0, colour = grey_mid) +
-  geom_linerange(aes(xmin = b_pp - 1.96 * se_pp, xmax = b_pp + 1.96 * se_pp),
-                 linewidth = 1.1, position = position_dodge(width = 0.55)) +
-  geom_point(size = 3.6, position = position_dodge(width = 0.55)) +
-  scale_colour_manual(values = c(hispanic = burgundy, black = "#4a78ab"),
+  datawizard::data_modify(outcome = factor(outcome_labels[outcome], levels = rev(outcome_labels)),
+                          contrast = factor(contrast, levels = c("black", "hispanic"))) |>
+  ggplot2::ggplot(ggplot2::aes(b_pp, outcome, colour = contrast)) +
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid) +
+  ggplot2::geom_linerange(ggplot2::aes(xmin = ci_low, xmax = ci_high),
+                          linewidth = 1.1, position = ggplot2::position_dodge(width = 0.55)) +
+  ggplot2::geom_point(size = 3.6, position = ggplot2::position_dodge(width = 0.55)) +
+  ggplot2::scale_colour_manual(values = c(hispanic = burgundy, black = "#4a78ab"),
                       labels = c(hispanic = "Hispanic names", black = "Black names"),
                       breaks = c("hispanic", "black"), name = NULL) +
-  scale_x_continuous(labels = \(x) fmt_num(x, 0)) +
-  labs(x = "difference from the white names (percentage points), with 95% intervals", y = NULL) +
+  ggplot2::scale_x_continuous(labels = \(x) fmt_num(x, 0)) +
+  ggplot2::labs(x = "difference from the white names (percentage points), with 95% intervals", y = NULL) +
   theme_slide(15) +
-  theme(legend.position = "top", legend.justification = "right",
-        legend.margin = margin(0, 0, -6, 0), axis.text.y = element_text(face = "bold"))
+  ggplot2::theme(legend.position = "top", legend.justification = "right",
+        legend.margin = ggplot2::margin(0, 0, -6, 0), axis.text.y = ggplot2::element_text(face = "bold"))
 ```
 
 ::: {.small}

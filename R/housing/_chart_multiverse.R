@@ -12,11 +12,9 @@
 #               adapt the chart to this curve are listed at the top of
 #               multiverse.js.
 # Author:       Claude for CM
-# Last updated: 2026-10-25
+# Last updated: 2026-10-26
 # Sourced by:   cases/housing/multiverse.qmd
 ################################################################################
-
-library(dplyr)
 
 # The decisions that vary on the curve, in the order of the "Colour by" and
 # "Show only" menus. The keys are the short names that the payload and
@@ -49,12 +47,12 @@ mv_menu_relation <- tibble::tribble(
 # A typographic minus for negative numbers, and an en-dash in ranges, in text
 # that the data files write with hyphens.
 mv_minus <- \(x, d = 1) sub("^-", "−", formatC(x, format = "f", digits = d))
-mv_p_label <- \(p) if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
+mv_p_label <- \(p) dplyr::if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
 mv_clean <- \(x) x |>
   stringr::str_replace_all("(?<=\\d)-(?=\\d)", "–") |>
   stringr::str_replace_all("(?<![\\w.])-(?=[0-9.])", "−")
 mv_upper_first <- \(x) paste0(toupper(substr(x, 1, 1)), substring(x, 2))
-mv_placement <- \(rank, n) case_when(
+mv_placement <- \(rank, n) dplyr::case_when(
   rank == 0 ~ sprintf("None of the %d specifications lies further below zero", n),
   rank == 1 ~ sprintf("1 of the %d specifications lies further below zero", n),
   .default = sprintf("%d of the %d specifications lie further below zero", rank, n)
@@ -65,8 +63,8 @@ mv_placement <- \(rank, n) case_when(
 # menu_options.csv, with their labels and phrases.
 mv_levels <- function(curve, options, axis_code) {
   lev <- options |>
-    filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
-    select("option", "label", "phrase")
+    dplyr::filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
+    dplyr::select("option", "label", "phrase")
   stopifnot(all(curve[[axis_code]] %in% lev$option))
   lev
 }
@@ -79,26 +77,26 @@ mv_marks <- function(marks, analysts, curve) {
   # not n: a lambda built inside mutate() would find the column n of the marks first
   n_spec <- nrow(curve)
   out <- marks |>
-    filter(.data$on_chart) |>
-    left_join(mv_menu_relation, by = "id") |>
-    left_join(analysts |> select("id", "comparison_txt" = "comparison", "population_txt" = "population",
+    dplyr::filter(.data$on_chart) |>
+    dplyr::left_join(mv_menu_relation, by = "id") |>
+    dplyr::left_join(analysts |> dplyr::select("id", "comparison_txt" = "comparison", "population_txt" = "population",
                                  "method", "task1"),
               by = "id") |>
-    mutate(
+    dplyr::mutate(
       # strictly below, as try_spec() and the slides count: a tie is not further below zero
       rank  = purrr::map_int(.data$b_pp, \(x) sum(curve$b_pp < x - 1e-9)),
-      p_num = case_when(
+      p_num = dplyr::case_when(
         .data$statistic_type == "chi2" ~ pchisq(.data$statistic, 1, lower.tail = FALSE),
         grepl("2 df", .data$statistic_type) ~ pchisq(.data$statistic, 2, lower.tail = FALSE),
         .default = 2 * pnorm(-abs(.data$statistic))
       ),
       sg    = as.integer(.data$p_num < 0.05),
-      tag   = case_when(.data$id == "OA" ~ "OAs 2017", .data$id == "SCORE" ~ "SCORE 2020",
+      tag   = dplyr::case_when(.data$id == "OA" ~ "OAs 2017", .data$id == "SCORE" ~ "SCORE 2020",
                         .default = .data$id),
-      title = case_when(.data$id == "OA" ~ "The original authors (2017), Table 1, model 3",
+      title = dplyr::case_when(.data$id == "OA" ~ "The original authors (2017), Table 1, model 3",
                         .data$id == "SCORE" ~ "The SCORE replication, a new audit (2020)",
                         .default = paste("Multi100 analyst", .data$id)),
-      stat  = case_when(
+      stat  = dplyr::case_when(
         .data$id == "OA" ~ sprintf("z = %s as published; %s", mv_minus(.data$statistic, 2),
                                    mv_p_label(.data$p_num)),
         .data$id == "SCORE" ~ sprintf("t = %s with HC2 errors, from the course refit of the replication data; %s",
@@ -112,12 +110,12 @@ mv_marks <- function(marks, analysts, curve) {
         .default = sprintf("z = %s, as recorded by Multi100; %s", mv_minus(.data$statistic, 3),
                            mv_p_label(.data$p_num))
       ),
-      comparison_txt = case_when(
+      comparison_txt = dplyr::case_when(
         !is.na(.data$comparison_txt) ~ sub(" vs ", " against ", .data$comparison_txt),
         .data$id == "SCORE" ~ "Hispanic against white names, four new male names",
         .default = "Hispanic against white names, in a model of all three groups"),
-      population_txt = coalesce(.data$population_txt, "replies"),
-      method = case_when(
+      population_txt = dplyr::coalesce(.data$population_txt, "replies"),
+      method = dplyr::case_when(
         !is.na(.data$method) ~ .data$method,
         .data$id == "SCORE" ~ "difference in proportions on the replication data",
         .default = "logit with the continuous 2012 census covariates of the community and the hard-to-find address"),
@@ -140,8 +138,8 @@ mv_marks <- function(marks, analysts, curve) {
 
   # every mark that claims a twin on the curve must sit on it
   twins <- out |>
-    filter(!is.na(.data$comparison)) |>
-    left_join(curve |> select("comparison", "population", "uncoded", "model", "adjust",
+    dplyr::filter(!is.na(.data$comparison)) |>
+    dplyr::left_join(curve |> dplyr::select("comparison", "population", "uncoded", "model", "adjust",
                               "b_twin" = "b_pp"),
               by = c("comparison", "population", "uncoded", "model", "adjust"))
   stopifnot(nrow(twins) > 0, all(abs(twins$b_pp - twins$b_twin) < 1e-6))
@@ -156,7 +154,7 @@ mv_marks <- function(marks, analysts, curve) {
 mv_payload <- function(curve, options, marks, analysts, file = "spec-curve-housing.csv",
                        size = c(4.5, 6), sw = "1",
                        op = list(sig = "0.55", ns = "0.3", ghostSig = "0.12", ghostNs = "0.06")) {
-  curve <- curve |> arrange(.data$b_pp)
+  curve <- curve |> dplyr::arrange(.data$b_pp)
   levels <- purrr::map(mv_axes$axis, \(a) mv_levels(curve, options, a)) |>
     rlang::set_names(mv_axes$key)
   code <- purrr::map2(mv_axes$axis, levels, \(a, lev) match(curve[[a]], lev$option) - 1L) |>
@@ -165,7 +163,7 @@ mv_payload <- function(curve, options, marks, analysts, file = "spec-curve-housi
   lab_of <- \(k, i) levels[[k]]$label[code[[k]][i] + 1L]
   phrase_of <- \(k, i) levels[[k]]$phrase[code[[k]][i] + 1L]
 
-  stat_line <- if_else(
+  stat_line <- dplyr::if_else(
     curve$stat_type == "t",
     sprintf("t = %s on %d df · %s", mv_minus(curve$stat, 2), as.integer(curve$df), mv_p_label(curve$p)),
     sprintf("z = %s · %s", mv_minus(curve$stat, 2), mv_p_label(curve$p))

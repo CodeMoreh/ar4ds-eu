@@ -7,26 +7,22 @@ bibliography: [../../references.bib, ../../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-library(dplyr)
-library(readr)
-library(tinytable)
-
-analysts <- read_csv("data/analysts5.csv", show_col_types = FALSE)
-curve <- read_csv("data/spec_curve.csv", show_col_types = FALSE)
-original <- read_csv("data/audit_original.csv", show_col_types = FALSE)
-audit <- read_csv("data/housing_audit.csv", show_col_types = FALSE)
+# readr rather than datawizard::data_read(), which reads empty cells as "" rather than NA
+analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+original <- readr::read_csv("data/audit_original.csv", show_col_types = FALSE)
+audit <- readr::read_csv("data/housing_audit.csv", show_col_types = FALSE)
 
 fmt <- \(x, d = 1) formatC(x, format = "f", digits = d) |> sub(pattern = "^-", replacement = "−")
-big <- \(x) format(x, big.mark = ",")
 an <- \(id, col) analysts[[col]][analysts$id == id]
 
 # The Task 3 target, on the public file of the OAs: Hispanic against all other
 # names among the coded replies, with and without the continuity correction
 chi_tab <- original |>
-  filter(Response_Dichotomous == 1, !is.na(ProperName)) |>
-  with(table(startsWith(TreatmentGroup, "Hispanic"), ProperName))
-chi_yates <- unname(chisq.test(chi_tab)$statistic)
-chi_plain <- unname(chisq.test(chi_tab, correct = FALSE)$statistic)
+  datawizard::data_filter(Response_Dichotomous == 1 & !is.na(ProperName)) |>
+  stats::xtabs(formula = ~ startsWith(TreatmentGroup, "Hispanic") + ProperName, data = _)  # r-style: keep – the contingency table that chisq.test() takes
+chi_yates <- unname(stats::chisq.test(chi_tab)$statistic)
+chi_plain <- unname(stats::chisq.test(chi_tab, correct = FALSE)$statistic)
 ```
 
 This page sets out the whole exercise of the course on the housing-audit case. The [case study](index.qmd) presents the original study, the SCORE replication and the five Multi100 reanalyses, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation and as a fallback, and it gives the same numbers. The page of your track gives the timing of each task.
@@ -39,7 +35,7 @@ Five independent analysts reanalysed one claim of the original authors (OAs) in 
 
 > "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts" (p. 100 of the published article)
 
-The published result behind it is the coefficient of the Hispanic names in a logistic regression of a named greeting on the three groups of names, with community controls and the Hard Email indicator: **−0.82 (standard error 0.22) on 549 replies**, which the OAs translate into a gap of **−20.0 percentage points** in the probability of a named greeting, with a 95% confidence interval from −30.5 to −10.0. The data come from an experiment: `r big(nrow(audit))` emails to housing authorities, each of which was signed with one of six names that were assigned at random.
+The published result behind it is the coefficient of the Hispanic names in a logistic regression of a named greeting on the three groups of names, with community controls and the Hard Email indicator: **−0.82 (standard error 0.22) on 549 replies**, which the OAs translate into a gap of **−20.0 percentage points** in the probability of a named greeting, with a 95% confidence interval from −30.5 to −10.0. The data come from an experiment: `r format(nrow(audit), big.mark = ",")` emails to housing authorities, each of which was signed with one of six names that were assigned at random.
 
 Your first job is to reproduce the value that Multi100 recorded for one of the analysts, from the public file of the OAs. Your second is to depart from it deliberately, with a written reason, and to find out what that does to the estimate.
 
@@ -50,20 +46,20 @@ Your first job is to reproduce the value that Multi100 recorded for one of the a
 #| tbl-cap: "The five reanalyses, with the statistic that Multi100 recorded and the gap in percentage points by the course refit. Source: `data/analysts5.csv`."
 #| echo: false
 analysts |>
-  transmute(
-    Analyst = id,
+  datawizard::data_modify(
     Comparison = sub(" vs ", " against ", comparison),
-    `Emails counted` = population,
-    `Recorded statistic` = case_when(
+    `Recorded statistic` = dplyr::case_when(
       is.na(statistic_recorded) ~ "none recorded",
       statistic_type == "chi2" ~ paste0("χ<sup>2</sup> = ", fmt(statistic_recorded, 3)),
       .default = paste(statistic_type, "=", fmt(statistic_recorded, 3))
     ),
-    `Gap (points)` = fmt(b_pp_refit),
-    `Conclusion in Multi100 Task 1` = task1
+    `Gap (points)` = fmt(b_pp_refit)
   ) |>
-  tt() |>
-  style_tt(j = 5, align = "r")
+  datawizard::data_select(c(Analyst = "id", "Comparison", `Emails counted` = "population",
+                            "Recorded statistic", "Gap (points)",
+                            `Conclusion in Multi100 Task 1` = "task1")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 5, align = "r")
 ```
 
 All five found Hispanic names greeted by name less often than the comparison names, and all four recorded statistics reproduce exactly on the public file. Two of the five nevertheless concluded in Task 1 of Multi100 that the data showed no evidence either way. The analysts compared different groups, counted different emails and used four kinds of test, and the [case study](index.qmd#sec-reanalysts) sets out what question each of them answered.
@@ -80,7 +76,7 @@ The only aim is to reach the point where a line of R runs and the data are in fr
 
 ### Task 2 – The data, the estimand and the graph
 
-First, meet the `r big(nrow(audit))` emails of `housing_audit.csv` ([codebook](data/housing_audit_codebook.md)): who was emailed, which names they received, and what came back. Count the emails that bounced, the replies, and the replies that opened with the name of the sender, for each name.
+First, meet the `r format(nrow(audit), big.mark = ",")` emails of `housing_audit.csv` ([codebook](data/housing_audit_codebook.md)): who was emailed, which names they received, and what came back. Count the emails that bounced, the replies, and the replies that opened with the name of the sender, for each name.
 
 Second, write the **estimand statement** behind the claim. It says which comparison is made (Hispanic names against which names), which emails are counted (the replies, or every delivered email), and which outcome is compared. The [specification menu](menu.qmd) gives the template.
 

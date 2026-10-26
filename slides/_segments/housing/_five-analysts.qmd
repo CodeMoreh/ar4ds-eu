@@ -7,30 +7,30 @@
 # The published result and the five reanalyses (data/reference_marks.csv,
 # with the choices from data/analysts5.csv), each placed by its gap in points;
 # the shaded band is the range of the curve of the claim.
-choices <- select(analysts, id, comparison, population)
+choices <- datawizard::data_select(analysts, c("id", "comparison", "population"))
 five <- marks |>
-  left_join(choices, by = "id") |>
-  mutate(
-    comparison = coalesce(comparison, "Hispanic vs white names"),
-    population = coalesce(population, "replies"),
+  dplyr::left_join(choices, by = "id") |>
+  datawizard::data_modify(
+    comparison = dplyr::coalesce(comparison, "Hispanic vs white names"),
+    population = dplyr::coalesce(population, "replies"),
     lab = paste0(tag, "   ", sub("^Hispanic vs ", "against ", comparison), " · ", population),
     oa = id == "OA"
   ) |>
-  arrange(desc(b_pp)) |>
-  mutate(lab = factor(lab, levels = lab))
+  datawizard::data_arrange("-b_pp") |>
+  datawizard::data_modify(lab = factor(lab, levels = lab))
 
-ggplot(five, aes(b_pp, lab)) +
-  annotate("rect", xmin = min(curve$b_pp), xmax = max(curve$b_pp), ymin = -Inf, ymax = Inf,
+ggplot2::ggplot(five, ggplot2::aes(b_pp, lab)) +
+  ggplot2::annotate("rect", xmin = min(curve$b_pp), xmax = max(curve$b_pp), ymin = -Inf, ymax = Inf,
            fill = "#d6dde5", alpha = 0.6) +
-  geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
-  geom_point(aes(colour = oa), size = 5.5) +
-  geom_text(aes(label = fmt_num(b_pp, 1)), hjust = -0.6, size = 5, colour = ink) +
-  scale_colour_manual(values = c(`FALSE` = ncl_blue, `TRUE` = burgundy), guide = "none") +
-  scale_x_continuous(limits = c(-24, 2), labels = \(x) fmt_num(x, 0)) +
-  labs(x = "Hispanic minus comparison names (points); shaded: the range of the curve",
+  ggplot2::geom_vline(xintercept = 0, colour = grey_mid, linewidth = 0.4) +
+  ggplot2::geom_point(ggplot2::aes(colour = oa), size = 5.5) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_num(b_pp, 1)), hjust = -0.6, size = 5, colour = ink) +
+  ggplot2::scale_colour_manual(values = c(`FALSE` = ncl_blue, `TRUE` = burgundy), guide = "none") +
+  ggplot2::scale_x_continuous(limits = c(-24, 2), labels = \(x) fmt_num(x, 0)) +
+  ggplot2::labs(x = "Hispanic minus comparison names (points); shaded: the range of the curve",
        y = NULL) +
   theme_slide(15) +
-  theme(axis.text.y = element_text(hjust = 0, colour = "grey20"))
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20"))
 ```
 
 ::: {.small}
@@ -47,16 +47,16 @@ And here are the five, with the published result of the OAs in burgundy for refe
 #| label: five-table
 #| output: asis
 # The five reanalyses as a Markdown table, from data/analysts5.csv.
-stat_txt <- \(type, x) case_when(
+stat_txt <- \(type, x) dplyr::case_when(
   is.na(x) ~ "none recorded",
   type == "chi2" ~ paste0("$\\chi^2$ = ", fmt_num(x, 3)),
   .default = paste0("*", type, "* = ", fmt_num(x, 3))
 )
 rows <- analysts |>
-  mutate(line = paste0("| ", id, " | ", sub("^Hispanic vs ", "", comparison), " | ", population,
-                       " | ", method, " | ", stat_txt(statistic_type, statistic_recorded),
-                       " | ", task1, " |")) |>
-  pull(line)
+  datawizard::data_modify(line = paste0("| ", id, " | ", sub("^Hispanic vs ", "", comparison), " | ", population,
+                                        " | ", method, " | ", stat_txt(statistic_type, statistic_recorded),
+                                        " | ", task1, " |")) |>
+  datawizard::data_extract("line")
 cat(c("::: {.fs-60}", # r-style: keep – writes the Markdown of the table
       "| Analyst | Compared with | Emails counted | Method | Recorded | Verdict |",
       "|:--|:--|:--|:--|--:|:--|",

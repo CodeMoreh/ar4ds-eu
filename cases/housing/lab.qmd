@@ -8,8 +8,13 @@ format:
     webr:
       packages:
         - dplyr
+        - datawizard
         - purrr
-        - ggplot2
+        - tinyplot
+        - parameters
+        - sandwich
+        - marginaleffects
+        - effectsize
         - htmltools
 resources:
   - data/housing_audit.csv
@@ -42,7 +47,7 @@ Keep this tab open. Your work stays in this page until you refresh it – there 
 # the housing-audit data into your browser session as `audit`, one row per
 # email, the object from which the cells below work. The file arrives at
 # data/... in the browser through the `resources:` list at the top of this page.
-audit <- read.csv("data/housing_audit.csv", na.strings = c("", "NA"))
+audit <- utils::read.csv("data/housing_audit.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
 ```
 
 ```{webr}
@@ -78,11 +83,14 @@ audit <- read.csv("data/housing_audit.csv", na.strings = c("", "NA"))
 # A verbatim copy of R/housing/_tools.R in the course repository, which builds
 # the curve; the downloadable workspace carries the same copy in R/spec_tools.R.
 
-# The fits use stats only (and dplyr for the rows), on purpose: the same code
-# runs in the downloadable workspace and in webR on the browser lab, so all
-# three give the same numbers. R/housing/check_parity.R in the course
-# repository checks it against estimatr (HC2) and marginaleffects (average
-# marginal effects).
+# The same code runs in the downloadable workspace and in webR on the browser
+# lab, so all three give the same numbers. The standard errors and the average
+# marginal effect come from packages: parameters with sandwich for the HC2
+# errors of the linear model, marginaleffects for the average marginal effect
+# of the logit. R/housing/check_parity.R in the course repository checks both
+# against estimatr and margins. The rows are chosen with dplyr, because
+# datawizard evaluates its conditions in a fresh environment and so cannot see
+# the arguments of a function.
 
 # The options of the curve, in menu order. Anything else is refused by
 # check_spec() with the reason recorded in data/menu_options.csv.
@@ -118,43 +126,13 @@ spec_frame <- function(audit, comparison = "white", population = "replies", unco
     dplyr::filter(!is.na(y))
 }
 
-# HC2 standard errors (Neyman-style for a randomised comparison), written out so
-# that no package is needed in the browser.
-vcov_hc2 <- function(fit) {
-  x <- model.matrix(fit)
-  e <- residuals(fit)
-  h <- hat(qr(x), intercept = FALSE)
-  bread <- solve(crossprod(x))
-  meat <- crossprod(x * (e / sqrt(1 - h)))
-  bread %*% meat %*% bread
-}
-
-# Average marginal effect of hisp in a logit, with a delta-method SE taken from
-# a numerical gradient: the mean of p(hisp = 1) - p(hisp = 0) over the analysed rows.
-ame_logit <- function(fit) {
-  x1 <- model.matrix(fit)
-  x0 <- x1
-  x1[, "hisp"] <- 1  # r-style: keep – a model matrix, not a data frame
-  x0[, "hisp"] <- 0  # r-style: keep – a model matrix, not a data frame
-  ame <- \(beta) mean(plogis(x1 %*% beta) - plogis(x0 %*% beta))
-  beta <- coef(fit)
-  grad <- purrr::map_dbl(seq_along(beta), \(k) {
-    step <- 1e-6 * max(1, abs(beta[k]))
-    up <- beta
-    dn <- beta
-    up[k] <- up[k] + step
-    dn[k] <- dn[k] - step
-    (ame(up) - ame(dn)) / (2 * step)
-  })
-  list(est = ame(beta), se = sqrt(drop(t(grad) %*% vcov(fit) %*% grad)))
-}
-
-# The conversion rules of Multi100 (standard_correlation_coefficient.R): t with
-# its df; z with the sample size standing in for the missing df; a chi-square
-# read as the square of a z, so it carries no sign.
+# The conversion rules of Multi100 (standard_correlation_coefficient.R in
+# github.com/marton-balazs-kovacs/multi100): t with its df, which is the rule of
+# effectsize::t_to_r(); z with the sample size standing in for the missing df;
+# a chi-square read as the square of a z, so it carries no sign.
 r_multi100 <- function(stat, stat_type, df, n) {
   dplyr::case_when(
-    stat_type == "t" ~ stat / sqrt(stat^2 + df),
+    stat_type == "t" ~ effectsize::t_to_r(stat, df, ci = NULL)$r,
     stat_type == "z" ~ tanh(abs(stat) * sqrt(1 / (n - 3))) * sign(stat),
     stat_type == "chi2" ~ tanh(sqrt(abs(stat)) * sqrt(1 / (n - 3)))
   )
@@ -172,51 +150,54 @@ check_spec <- function(comparison, population, uncoded, model, adjust) {
 }
 
 # One specification: estimate in percentage points (negative = Hispanic names
-# greeted by name less often, the direction of the claim), its SE, the test of
-# the model that the specification fits, and the partial correlation by the Multi100 rule.
+# greeted by name less often, the direction of the claim), its SE and 95%
+# interval, the test of the model that the specification fits, and the partial
+# correlation by the Multi100 rule.
 fit_spec <- function(audit, comparison = "white", population = "replies", uncoded = "drop",
                      model = "lpm", adjust = "none") {
   check_spec(comparison, population, uncoded, model, adjust)
   terms <- ADJUST_TERMS[[adjust]]
+  # only the model columns, and only the emails with every covariate;
+  # marginaleffects refuses a data column called `group`
   frame <- spec_frame(audit, comparison, population, uncoded) |>
-    dplyr::filter(dplyr::if_all(dplyr::all_of(terms), \(x) !is.na(x)))
-  rhs <- paste(c("hisp", terms), collapse = " + ")
-  form <- stats::as.formula(paste("y ~", rhs))
+    dplyr::select("y", "hisp", dplyr::all_of(terms)) |>
+    stats::na.omit()
+  form <- stats::reformulate(c("hisp", terms), response = "y")
 
   if (model == "lpm") {
     fit <- stats::lm(form, data = frame)
-    coef_b <- unname(coef(fit)["hisp"])
-    coef_se <- sqrt(vcov_hc2(fit)["hisp", "hisp"])
-    stat <- coef_b / coef_se
-    df <- fit$df.residual
-    p <- 2 * stats::pt(-abs(stat), df)
-    est <- coef_b
-    est_se <- coef_se
-    stat_type <- "t"
+    # HC2 errors (MacKinnon and White 1985) from sandwich::vcovHC() (Zeileis
+    # 2004, Journal of Statistical Software), with the t test on the residual df
+    coefs <- parameters::model_parameters(fit, vcov = "HC2")
+    row <- datawizard::data_filter(coefs, Parameter == "hisp")
+    test <- list(coef = row$Coefficient, coef_se = row$SE, stat_type = "t", stat = row$t,
+                 df = row$df_error, p = row$p)
+    est <- list(b = row$Coefficient, se = row$SE, low = row$CI_low, high = row$CI_high)
   } else {
     fit <- stats::glm(form, family = stats::binomial(), data = frame)
-    coef_b <- unname(coef(fit)["hisp"])
-    coef_se <- sqrt(vcov(fit)["hisp", "hisp"])
-    stat <- coef_b / coef_se
-    df <- NA_real_
-    p <- 2 * stats::pnorm(-abs(stat))
-    ame <- ame_logit(fit)
-    est <- ame$est
-    est_se <- ame$se
-    stat_type <- "z"
+    coefs <- parameters::model_parameters(fit, ci_method = "wald")
+    row <- datawizard::data_filter(coefs, Parameter == "hisp")
+    test <- list(coef = row$Coefficient, coef_se = row$SE, stat_type = "z", stat = row$z,
+                 df = NA_real_, p = row$p)
+    # The average marginal effect: the mean over the analysed emails of the
+    # predicted probability with a Hispanic name minus that with a comparison
+    # name, with delta-method errors (marginaleffects; Arel-Bundock, Greifer and
+    # Heiss 2024, Journal of Statistical Software)
+    ame <- marginaleffects::avg_comparisons(fit, variables = list(hisp = 0:1))
+    est <- list(b = ame$estimate, se = ame$std.error, low = ame$conf.low, high = ame$conf.high)
   }
 
-  n <- nrow(frame)
-  data.frame(
+  tibble::tibble(
     comparison = comparison, population = population, uncoded = uncoded,
     model = model, adjust = adjust,
-    b_pp = 100 * est, se_pp = 100 * est_se,
-    coef = coef_b, coef_se = coef_se,
-    stat_type = stat_type, stat = stat, df = df, p = p,
-    r = r_multi100(stat, stat_type, df, n),
-    n = n, n_hisp = sum(frame$hisp == 1), n_comp = sum(frame$hisp == 0),
+    b_pp = 100 * est$b, se_pp = 100 * est$se,
+    coef = test$coef, coef_se = test$coef_se,
+    stat_type = test$stat_type, stat = test$stat, df = test$df, p = test$p,
+    r = r_multi100(test$stat, test$stat_type, test$df, nrow(frame)),
+    n = nrow(frame), n_hisp = sum(frame$hisp == 1), n_comp = sum(frame$hisp == 0),
     rate_hisp = 100 * mean(frame$y[frame$hisp == 1]),
-    rate_comp = 100 * mean(frame$y[frame$hisp == 0])
+    rate_comp = 100 * mean(frame$y[frame$hisp == 0]),
+    ci_low = 100 * est$low, ci_high = 100 * est$high
   )
 }
 
@@ -352,14 +333,14 @@ spec_line <- function(comparison, population, uncoded, model, adjust) {
 
 # ---- The live fit ----------------------------------------------------------------
 # fit_spec() on the five decisions that vary on the curve, with the 95%
-# interval of the estimate (t for the linear model, normal for the average
+# interval of the estimate that it returns (a t interval from parameters for
+# the linear model, a normal interval from marginaleffects for the average
 # marginal effect of the logit) and the place of the result among the 64. The
 # fit is checked against its row of data/spec_curve.csv; a difference means
 # that the page loaded an incomplete file.
 .result <- function(ch) {
   fit <- fit_spec(.audit(), ch$comparison, ch$population, ch$uncoded, ch$model, ch$adjust) |>
     as.list()
-  crit <- if (fit$stat_type == "t") stats::qt(0.975, fit$df) else stats::qnorm(0.975)
   curve <- .curve()
   stored <- dplyr::filter(curve, .data$comparison == ch$comparison, .data$population == ch$population,
                           .data$uncoded == ch$uncoded, .data$model == ch$model,
@@ -372,8 +353,7 @@ spec_line <- function(comparison, population, uncoded, model, adjust) {
                     fit$b_pp, fit$stat_type, fit$stat, stored$b_pp, fit$stat_type, stored$stat),
             call. = FALSE)
   }
-  c(fit, list(ci_low = fit$b_pp - crit * fit$se_pp, ci_high = fit$b_pp + crit * fit$se_pp,
-              further = sum(curve$b_pp < fit$b_pp - 1e-9), n_curve = nrow(curve)))
+  c(fit, list(further = sum(curve$b_pp < fit$b_pp - 1e-9), n_curve = nrow(curve)))
 }
 
 
@@ -436,7 +416,7 @@ try_spec <- function(comparison = "white", population = "replies", uncoded = "dr
                        inference = inference, scale = scale), as_args = TRUE)
   res <- .result(ch)
   .print_result(ch, res, lead = "")
-  row <- data.frame(ch, b_pp = res$b_pp, ci_low = res$ci_low, ci_high = res$ci_high,
+  row <- data.frame(ch, b_pp = res$b_pp, ci_low = res$ci_low, ci_high = res$ci_high,  # r-style: keep – data.frame() spreads the list of choices into columns
                     stat_type = res$stat_type, stat = res$stat, p = res$p, n = res$n,
                     stringsAsFactors = FALSE)
   assign("log", dplyr::bind_rows(.tried$log, row), envir = .tried)
@@ -695,11 +675,11 @@ The **housing-audit data** (`housing_audit.csv`) are already loaded for you as `
 #| autorun: false
 # How many emails, and what came back?
 audit |>
-  summarise(emails    = n(),
-            bounced   = sum(is.na(reply)),
-            delivered = sum(!is.na(reply)),
-            replies   = sum(reply %in% 1),
-            coded     = sum(!is.na(named)))
+  datawizard::data_summary(emails    = n(),
+                           bounced   = sum(is.na(reply)),
+                           delivered = sum(!is.na(reply)),
+                           replies   = sum(reply %in% 1),
+                           coded     = sum(!is.na(named)))
 ```
 
 You should find **1,014 emails** (the paper reports 1,017, three more than the public file holds), of which **23 bounced** and never reached an official, **991 delivered**, **563 replies**, and **558 replies with a greeting code**. The column `reply` is 1 for a reply, 0 for none and missing for a bounced email. `named` is 1 when a reply greeted the sender by name, 0 when it did not, and missing for every email without a reply and for the five replies that carry no greeting code. The [codebook](data/housing_audit_codebook.md) describes every column.
@@ -711,27 +691,34 @@ Now the replies and the greetings by the group of the name, and the share of gre
 #| fig-width: 8
 #| fig-height: 3.6
 audit |>
-  filter(!is.na(reply)) |>
-  summarise(delivered   = n(),
-            replies     = sum(reply == 1),
-            coded       = sum(!is.na(named)),
-            greeted     = sum(named %in% 1),
-            greeted_pct = round(100 * greeted / coded, 1),
-            .by = group)
+  datawizard::data_filter(!is.na(reply)) |>
+  datawizard::data_summary(delivered   = n(),
+                           replies     = sum(reply == 1),
+                           coded       = sum(!is.na(named)),
+                           greeted     = sum(named %in% 1),
+                           greeted_pct = round(100 * sum(named %in% 1) / sum(!is.na(named)), 1),
+                           by = "group")
 
-audit |>
-  filter(!is.na(named)) |>
-  summarise(greeted_pct = 100 * mean(named), .by = c(group, name)) |>
-  mutate(name = reorder(name, greeted_pct)) |>
-  ggplot(aes(x = greeted_pct, y = name, fill = group)) +
-  geom_col(width = 0.7) +
-  geom_text(aes(label = sprintf("%.1f%%", greeted_pct)), hjust = -0.15, size = 3.5) +
-  scale_fill_manual(values = c(white = "grey60", black = "#4a78ab", hispanic = "#8b1538"),
-                    labels = c(white = "white", black = "Black", hispanic = "Hispanic"),
-                    name = "Names meant to indicate") +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.15))) +
-  labs(x = "Replies that greeted the sender by name (%)", y = NULL) +
-  theme_minimal(base_size = 11)
+# The share greeted by name for each of the six names, from the lowest, drawn
+# with tinyplot (McDermott, Arel-Bundock and Zeileis; CRAN,
+# doi:10.32614/CRAN.package.tinyplot)
+greeted <- audit |>
+  datawizard::data_filter(!is.na(named)) |>
+  datawizard::data_summary(greeted_pct = 100 * mean(named), by = c("group", "name")) |>
+  datawizard::data_arrange("greeted_pct") |>
+  datawizard::data_modify(group = factor(group, levels = c("white", "black", "hispanic"),
+                                         labels = c("white", "Black", "Hispanic")))
+
+tinyplot::tinyplot(greeted_pct ~ name | group, data = greeted,
+                   type = tinyplot::type_barplot(xlevels = greeted$name, width = 0.7, drop.zeros = TRUE), flip = TRUE,
+                   palette = c("grey60", "#4a78ab", "#8b1538"), fill = "by",
+                   legend = list("right!", title = "Names meant to indicate"),
+                   xlab = NA, ylab = "Replies that greeted the sender by name (%)",
+                   ylim = c(0, 72), theme = "minimal")
+# the share at the end of each bar
+tinyplot::tinyplot(x = seq_len(nrow(greeted)), y = greeted$greeted_pct, flip = TRUE,
+                   type = tinyplot::type_text(labels = sprintf("%.1f%%", greeted$greeted_pct), pos = 4),
+                   cex = 0.9, add = TRUE)
 ```
 
 The replies to white names greeted the sender by name in 61.1% of cases, those to Hispanic names in 41.2%: a gap of about 20 points, the size of the published estimate. Black names fall in between, at 56.1%, and of the six names Santiago received the fewest greetings by name.
@@ -756,7 +743,7 @@ A causal graph makes the catch visible. A graph of this kind is a diagram of wha
 # answer the questions of Task 2 in R instead: make_dag() builds the graph,
 # adjustmentSets() returns the minimal adjustment sets for the total effect,
 # paths() lists the paths between two nodes and whether each is open given a
-# conditioning set Z, and plot_dag() draws the graph with ggplot2. They agree
+# conditioning set Z, and plot_dag() draws the graph with tinyplot. They agree
 # with dagitty::adjustmentSets() and dagitty::paths() on every graph of this
 # task, and plot_dag() also draws a graph that dagitty built.
 
@@ -807,6 +794,7 @@ make_dag <- function(..., exposure = "name", outcome = "greeting", latent = "off
   build(..., exposure = exposure, outcome = outcome, latent = latent)
 }
 
+# r-style: PENDING – the graph algorithms from here to .paths_builtin() (d-separation, the backdoor criterion, minimal adjustment sets, open paths); no package found that runs in the browser
 .dag_has_edge <- function(dag, a, b) any(dag$edges$from == a & dag$edges$to == b)
 
 # A node counts as one of its own descendants, which is what the collider rule
@@ -892,15 +880,15 @@ paths <- .paths_builtin
 .dag_parts <- function(d) {
   if (inherits(d, "dagitty")) {
     xy <- dagitty::coordinates(d)
-    list(nodes = data.frame(name = names(xy$x), x = unname(xy$x), y = -unname(xy$y)),
+    list(nodes = tibble::tibble(name = names(xy$x), x = unname(xy$x), y = -unname(xy$y)),
          edges = dplyr::transmute(dagitty::edges(d), from = as.character(.data$v),
                                   to = as.character(.data$w)),
          exposure = dagitty::exposures(d), outcome = dagitty::outcomes(d),
          latent = dagitty::latents(d))
   } else {
     at <- \(v, k) if (v %in% names(.dag_xy)) .dag_xy[[v]][k] else NA_real_
-    list(nodes = data.frame(name = d$nodes, x = purrr::map_dbl(d$nodes, \(v) at(v, 1)),
-                            y = purrr::map_dbl(d$nodes, \(v) at(v, 2))),
+    list(nodes = tibble::tibble(name = d$nodes, x = purrr::map_dbl(d$nodes, \(v) at(v, 1)),
+                                y = purrr::map_dbl(d$nodes, \(v) at(v, 2))),
          edges = d$edges, exposure = d$exposure, outcome = d$outcome, latent = d$latent)
   }
 }
@@ -913,10 +901,11 @@ plot_dag <- function(d) {
       x = dplyr::if_else(.data$unplaced, 1.2 * (cumsum(.data$unplaced) - 1), .data$x),
       y = dplyr::if_else(.data$unplaced, -0.9, .data$y),
       half_w = 0.06 + 0.032 * nchar(.data$name),
-      role = dplyr::case_when(.data$name %in% parts$exposure ~ "exposure",
-                              .data$name %in% parts$outcome ~ "outcome",
-                              .data$name %in% parts$latent ~ "unobserved",
-                              .default = "observed"))
+      role = factor(dplyr::case_when(.data$name %in% parts$exposure ~ "exposure",
+                                     .data$name %in% parts$outcome ~ "outcome",
+                                     .data$name %in% parts$latent ~ "unobserved",
+                                     .default = "observed"),
+                    levels = c("exposure", "outcome", "observed", "unobserved")))
   # how far along a unit vector (ux, uy) the edge of a box of half-width w lies
   to_edge <- \(ux, uy, w) pmin(w / pmax(abs(ux), 1e-9), 0.15 / pmax(abs(uy), 1e-9))
   tails <- dplyr::select(nodes, from = "name", x0 = "x", y0 = "y", w0 = "half_w")
@@ -932,26 +921,21 @@ plot_dag <- function(d) {
                   x = .data$x0 + .data$s0 * .data$ux, y = .data$y0 + .data$s0 * .data$uy,
                   xend = .data$x1 - .data$s1 * .data$ux, yend = .data$y1 - .data$s1 * .data$uy)
 
-  ggplot2::ggplot() +
-    ggplot2::geom_segment(data = arrows, ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
-                          colour = "grey40", linewidth = 0.6,
-                          arrow = grid::arrow(length = grid::unit(7, "pt"), type = "closed")) +
-    ggplot2::geom_label(data = nodes, ggplot2::aes(x = x, y = y, label = name, fill = role, colour = role),
-                        fontface = "bold", size = 3.6, linewidth = 0,
-                        label.r = grid::unit(4, "pt"), label.padding = grid::unit(5, "pt")) +
-    ggplot2::scale_fill_manual(values = c(exposure = "#1b6ca8", outcome = "#d1495b",
-                                          observed = "grey45", unobserved = "grey88"),
-                               breaks = c("exposure", "outcome", "observed", "unobserved"),
-                               name = NULL) +
-    ggplot2::scale_colour_manual(values = c(exposure = "white", outcome = "white",
-                                            observed = "white", unobserved = "grey25"),
-                                 guide = "none") +
-    # Without the override, the legend keys show the letter "a" that geom_label draws.
-    ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(label = ""))) +
-    ggplot2::scale_x_continuous(expand = ggplot2::expansion(add = 0.45)) +
-    ggplot2::scale_y_continuous(expand = ggplot2::expansion(add = 0.3)) +
-    ggplot2::theme_void() +
-    ggplot2::theme(legend.position = "bottom")
+  # the boxes, coloured by role; tinyplot has no type for arrows, so they go
+  # on the same canvas through graphics::arrows(); then the names, white on
+  # the coloured boxes and dark on the pale one
+  tinyplot::tinyplot(xmin = nodes$x - 0.8 * nodes$half_w, xmax = nodes$x + 0.8 * nodes$half_w,
+                     ymin = nodes$y - 0.1, ymax = nodes$y + 0.1, by = nodes$role, type = "rect",
+                     palette = c("#1b6ca8", "#d1495b", "grey45", "grey88"), fill = "by",
+                     legend = list("bottom!", title = NULL), axes = FALSE, frame.plot = FALSE,
+                     xlab = NA, ylab = NA,
+                     xlim = range(nodes$x) + c(-0.45, 0.45), ylim = range(nodes$y) + c(-0.3, 0.3),
+                     grid = FALSE, theme = "minimal")
+  graphics::arrows(arrows$x, arrows$y, arrows$xend, arrows$yend,
+                   length = 0.1, angle = 20, col = "grey40", lwd = 1.5)
+  tinyplot::tinyplot(x = nodes$x, y = nodes$y, by = nodes$role,
+                     type = tinyplot::type_text(labels = nodes$name, font = 2),
+                     palette = c("white", "white", "white", "grey25"), cex = 0.85, add = TRUE)
 }
 
 # Whether dagitty could work here at all. Its JavaScript engine needs
@@ -978,7 +962,7 @@ if (!.dagitty_possible()) {
 } else {
   have_dagitty <- tryCatch({
     webr::install("dagitty", quiet = TRUE)
-    suppressPackageStartupMessages(library(dagitty))
+    loadNamespace("dagitty")
     TRUE
   }, error = \(e) FALSE)
   if (have_dagitty) {
@@ -1016,8 +1000,8 @@ my_dag <- make_dag(
   exposure = "name", outcome = "greeting", latent = "official"
 )
 
-adjustmentSets(my_dag)
-paths(my_dag, Z = "reply")
+adjustmentSets(my_dag)       # r-style: keep – the function of this page, or of dagitty once loaded
+paths(my_dag, Z = "reply")   # r-style: keep – the function of this page, or of dagitty once loaded
 plot_dag(my_dag)
 ```
 
@@ -1027,7 +1011,7 @@ Now take the `#` off the arrow `"name -> greeting"`, run the cell again, then ru
 
 ```{webr}
 #| autorun: false
-paths(my_dag, Z = c("reply", "community"))
+paths(my_dag, Z = c("reply", "community"))  # r-style: keep – the function of this page, or of dagitty once loaded
 ```
 
 ::: {.callout-note collapse="true"}
@@ -1049,15 +1033,15 @@ The cell below is an exercise. Replace the blanks (`______`) with the missing co
 ```{webr}
 #| setup: true
 #| exercise: reproduce
-original <- read.csv("data/audit_original.csv", na.strings = c("", "NA"))
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
 ```
 
 ```{webr}
 #| exercise: reproduce
 # 1. keep the replies that carry a greeting code, and mark the Hispanic names
 coded_replies <- original |>
-  filter(!is.na(______)) |>
-  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+  datawizard::data_filter(!is.na(______)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
 
 # 2. the 2 x 2 table: Hispanic or other name, by greeting
 tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
@@ -1074,7 +1058,7 @@ chisq.test(______)
 `ProperName` is missing for every email without a reply, for the bounced emails and for the five replies without a greeting code, so keeping the rows in which it is not missing leaves the 558 coded replies:
 
 ``` r
-filter(!is.na(ProperName))
+datawizard::data_filter(!is.na(ProperName))
 ```
 :::
 ::::
@@ -1097,8 +1081,8 @@ chisq.test(tab_8ptrz)
 
 ``` r
 coded_replies <- original |>
-  filter(!is.na(ProperName)) |>
-  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
 tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
 tab_8ptrz
 chisq.test(tab_8ptrz)
@@ -1112,11 +1096,11 @@ Now find out why it is 14.265. For a 2 × 2 table, `chisq.test()` applies the co
 
 ```{webr}
 #| autorun: false
-original <- read.csv("data/audit_original.csv", na.strings = c("", "NA"))
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
 coded_replies <- original |>
-  filter(!is.na(ProperName)) |>
-  mutate(hispanic_name = grepl("^Hispanic", TreatmentGroup))
-tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)  # r-style: keep – the table that chisq.test() takes
 
 chisq.test(tab_8ptrz, correct = FALSE)
 ```
@@ -1128,7 +1112,7 @@ Without the correction the statistic is 14.95. Neither number changes the conclu
 ```{webr}
 #| autorun: false
 m_uyv3f <- glm(ProperName ~ hispanic_name, family = binomial(),
-               data = filter(coded_replies, !grepl("^black", TreatmentGroup)))
+               data = datawizard::data_filter(coded_replies, !grepl("^black", TreatmentGroup)))
 nobs(m_uyv3f)
 coef(summary(m_uyv3f))
 ```
@@ -1296,24 +1280,28 @@ Finally, place your result on the curve of the claim: the 64 specifications that
 #| autorun: false
 #| fig-width: 8
 #| fig-height: 4.5
-spec_curve <- read.csv("data/spec_curve.csv") |>
-  arrange(b_pp) |>
-  mutate(rank = row_number(),
-         mine = comparison == my_comparison & population == my_population &
-           uncoded == my_uncoded & model == my_model & adjust == my_adjust)
+spec_curve <- utils::read.csv("data/spec_curve.csv") |>  # r-style: keep – the base reader adds nothing to the download
+  datawizard::data_arrange("b_pp") |>
+  datawizard::data_modify(rank = 1:n(),
+                          emails = factor(population, levels = c("replies", "all"),
+                                          labels = c("replies only", "all delivered emails")))
+# Yours, chosen with dplyr, because datawizard cannot see the my_ choices of
+# the preregistration cell
+mine <- spec_curve |>
+  dplyr::filter(comparison == my_comparison, population == my_population, uncoded == my_uncoded,
+                model == my_model, adjust == my_adjust)
 
-ggplot(spec_curve, aes(x = rank, y = b_pp)) +
-  geom_hline(yintercept = 0, colour = "grey60") +
-  geom_point(aes(colour = population), size = 2) +
-  geom_point(data = filter(spec_curve, mine), shape = 21, size = 5, stroke = 1.2,
-             colour = "#8b1538") +
-  scale_colour_manual(values = c(replies = "#0e3b6a", all = "#2b8585"),
-                      breaks = c("replies", "all"),
-                      labels = c(replies = "replies only", all = "all delivered emails"),
-                      name = "Emails counted") +
-  labs(x = "The 64 specifications, from the most negative estimate",
-       y = "Hispanic minus comparison names (points)") +
-  theme_minimal(base_size = 11)
+tinyplot::tinytheme("minimal")
+tinyplot::tinyplot(b_pp ~ rank | emails, data = spec_curve, pch = 16,
+                   palette = c("#0e3b6a", "#2b8585"), legend = list("right!", title = "Emails counted"),
+                   ylim = c(min(spec_curve$b_pp), 0),
+                   xlab = "The 64 specifications, from the most negative estimate",
+                   ylab = "Hispanic minus comparison names (points)")
+tinyplot::tinyplot(b_pp ~ rank, data = spec_curve, type = tinyplot::type_hline(h = 0), col = "grey60", add = TRUE)
+# your specification, ringed; clim keeps a single ring at the size of cex
+tinyplot::tinyplot(b_pp ~ rank, data = mine, type = tinyplot::type_points(clim = c(3, 3)),
+                   pch = 1, cex = 3, lwd = 2.5, col = "#8b1538", add = TRUE)
+tinyplot::tinytheme()
 ```
 
 All 64 estimates lie below zero, from −20.0 to −12.1 points, and every one of them is significant at 5% under the test of its model. The two clusters are the two answers to the decision on which emails are counted: counting every delivered email moves the estimate about 5 points towards zero, and no other decision moves it by more than about 2.7 points. Within these data the claim holds under every choice on the menu, and only its size moves. The [Multiverse]({{< var cases.housing.live-results-url >}}) page sets the class submissions beside this curve.

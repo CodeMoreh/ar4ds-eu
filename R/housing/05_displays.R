@@ -9,27 +9,22 @@
 #               cases/housing/data/display_subgroups.csv, cases/housing/data/display_ri.csv,
 #               cases/housing/data/display_power.csv
 # Author:       Claude for CM
-# Last updated: 2026-10-25
+# Last updated: 2026-10-26
 ################################################################################
 
-library(tidyverse)
 source("R/housing/_tools.R")
 
-audit <- read_csv("cases/housing/data/housing_audit.csv", show_col_types = FALSE)
+audit <- readr::read_csv("cases/housing/data/housing_audit.csv", show_col_types = FALSE)
 
-# Wilson interval in percent, which stays inside 0-100 for small groups
-wilson <- function(x, n, side) {
-  z <- qnorm(0.975)
-  p <- x / n
-  centre <- (p + z^2 / (2 * n)) / (1 + z^2 / n)
-  half <- z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2)) / (1 + z^2 / n)
-  100 * if (side == "lower") centre - half else centre + half
-}
-
+# Counts and shares of one set of emails, with 95% Wilson intervals in percent,
+# which stay inside 0-100 for small groups: the score interval of
+# stats::prop.test() without the continuity correction (Wilson 1927; Newcombe
+# 1998, Statistics in Medicine). The verbs are those of dplyr, because the data
+# arrive grouped by the caller.
 summarise_names <- function(data) {
   data |>
-    summarise(
-      sent = n(),
+    dplyr::summarise(
+      sent = dplyr::n(),
       bounced = sum(is.na(reply)),
       delivered = sum(!is.na(reply)),
       replies = sum(reply == 1, na.rm = TRUE),
@@ -37,77 +32,87 @@ summarise_names <- function(data) {
       named = sum(named == 1, na.rm = TRUE),
       .groups = "drop"
     ) |>
-    mutate(
+    dplyr::mutate(
       reply_pct = 100 * replies / delivered,
-      reply_lo = wilson(replies, delivered, "lower"), reply_hi = wilson(replies, delivered, "upper"),
+      reply_lo = purrr::map2_dbl(replies, delivered, \(x, n) 100 * stats::prop.test(x, n, correct = FALSE)$conf.int[1]),
+      reply_hi = purrr::map2_dbl(replies, delivered, \(x, n) 100 * stats::prop.test(x, n, correct = FALSE)$conf.int[2]),
       named_pct = 100 * named / coded,
-      named_lo = wilson(named, coded, "lower"), named_hi = wilson(named, coded, "upper"),
+      named_lo = purrr::map2_dbl(named, coded, \(x, n) 100 * stats::prop.test(x, n, correct = FALSE)$conf.int[1]),
+      named_hi = purrr::map2_dbl(named, coded, \(x, n) 100 * stats::prop.test(x, n, correct = FALSE)$conf.int[2]),
       named_all_pct = 100 * named / delivered
     )
 }
 
-names_tab <- bind_rows(
-  audit |> group_by(level = "name", name, group, name_sex) |> summarise_names(),
-  audit |> group_by(level = "group", group) |> summarise_names() |> mutate(name = group)
+names_tab <- dplyr::bind_rows(
+  audit |> dplyr::group_by(level = "name", name, group, name_sex) |> summarise_names(),
+  audit |> dplyr::group_by(level = "group", group) |> summarise_names() |> dplyr::mutate(name = group)
 )
-write_csv(names_tab, "cases/housing/data/display_names.csv")
+readr::write_csv(names_tab, "cases/housing/data/display_names.csv")  # r-style: keep – datawizard::data_write() writes other bytes
 
-# Each outcome as a difference in percentage points from white names, HC2 errors
+# Each outcome as a difference in percentage points from white names, as a
+# linear probability model with HC2 errors from parameters and sandwich, and
+# its 95% interval
 diff_from_white <- function(data, outcome, contrast) {
   frame <- data |>
-    filter(group %in% c("white", contrast), !is.na(.data[[outcome]])) |>
-    mutate(hisp = as.integer(group == contrast), y = .data[[outcome]])
-  fit <- lm(y ~ hisp, data = frame)
-  b <- unname(coef(fit)["hisp"])
-  se <- sqrt(vcov_hc2(fit)["hisp", "hisp"])
-  tibble(outcome = outcome, contrast = contrast, b_pp = 100 * b, se_pp = 100 * se,
-         t = b / se, df = fit$df.residual, p = 2 * pt(-abs(b / se), fit$df.residual), n = nrow(frame))
+    dplyr::filter(group %in% c("white", contrast), !is.na(.data[[outcome]])) |>
+    dplyr::mutate(hisp = as.integer(group == contrast), y = .data[[outcome]])
+  fit <- stats::lm(y ~ hisp, data = frame)
+  est <- parameters::model_parameters(fit, vcov = "HC2") |>
+    datawizard::data_filter(Parameter == "hisp")
+  tibble::tibble(outcome = outcome, contrast = contrast, b_pp = 100 * est$Coefficient,
+                 se_pp = 100 * est$SE, t = est$t, df = est$df_error, p = est$p, n = nrow(frame),
+                 ci_low = 100 * est$CI_low, ci_high = 100 * est$CI_high)
 }
 
 outcomes_data <- audit |>
-  filter(!is.na(reply)) |>
-  mutate(named_any = if_else(reply == 0, 0, named))
+  datawizard::data_filter(!is.na(reply)) |>
+  datawizard::data_modify(named_any = dplyr::if_else(reply == 0, 0, named))
 
-outcomes <- expand_grid(outcome = c("reply", "reply24", "named", "named_any"),
-                        contrast = c("hispanic", "black")) |>
-  pmap(\(outcome, contrast) diff_from_white(outcomes_data, outcome, contrast)) |>
-  bind_rows()
-write_csv(outcomes, "cases/housing/data/display_outcomes.csv")
+outcomes <- tidyr::expand_grid(outcome = c("reply", "reply24", "named", "named_any"),
+                               contrast = c("hispanic", "black")) |>
+  purrr::pmap(\(outcome, contrast) diff_from_white(outcomes_data, outcome, contrast)) |>
+  dplyr::bind_rows()
+readr::write_csv(outcomes, "cases/housing/data/display_outcomes.csv")  # r-style: keep – datawizard::data_write() writes other bytes
 
 # Subgroups that the curve leaves out because each is a different question
-replies <- filter(audit, reply == 1, !is.na(named))
+replies <- datawizard::data_filter(audit, reply == 1 & !is.na(named))
 subgroup <- function(data, label) {
-  diff_from_white(data, "named", "hispanic") |> mutate(subgroup = label, .before = 1)
+  diff_from_white(data, "named", "hispanic") |> dplyr::mutate(subgroup = label, .before = 1)
 }
-subgroups <- bind_rows(
+subgroups <- dplyr::bind_rows(
   subgroup(replies, "all names"),
-  subgroup(filter(replies, name_sex == "male"), "male names (Santiago against Brett)"),
-  subgroup(filter(replies, name_sex == "female"), "female names (Gabriela against Emily)"),
-  subgroup(filter(replies, hispanic_official == 1), "replies from officials with Hispanic names"),
-  subgroup(filter(replies, hispanic_official == 0), "replies from other officials"),
-  subgroup(filter(replies, hispanic_third == "lower"), "communities in the lower third of percent Hispanic"),
-  subgroup(filter(replies, hispanic_third == "middle"), "communities in the middle third of percent Hispanic"),
-  subgroup(filter(replies, hispanic_third == "top"), "communities in the top third of percent Hispanic")
+  subgroup(datawizard::data_filter(replies, name_sex == "male"), "male names (Santiago against Brett)"),
+  subgroup(datawizard::data_filter(replies, name_sex == "female"), "female names (Gabriela against Emily)"),
+  subgroup(datawizard::data_filter(replies, hispanic_official == 1), "replies from officials with Hispanic names"),
+  subgroup(datawizard::data_filter(replies, hispanic_official == 0), "replies from other officials"),
+  subgroup(datawizard::data_filter(replies, hispanic_third == "lower"), "communities in the lower third of percent Hispanic"),
+  subgroup(datawizard::data_filter(replies, hispanic_third == "middle"), "communities in the middle third of percent Hispanic"),
+  subgroup(datawizard::data_filter(replies, hispanic_third == "top"), "communities in the top third of percent Hispanic")
 )
-write_csv(subgroups, "cases/housing/data/display_subgroups.csv")
+readr::write_csv(subgroups, "cases/housing/data/display_subgroups.csv")  # r-style: keep – datawizard::data_write() writes other bytes
 
-# Randomisation distribution of the reference specification: the names shuffled
-# among the white and Hispanic replies, 4,999 times
+# Randomisation distribution of the reference specification: the names
+# reshuffled among the white and Hispanic replies, 4,999 times, by complete
+# random assignment of as many Hispanic names as the design gave them
+# (ri2; Gerber and Green 2012, chapter 3), with the gap recomputed each time
 set.seed(20261025)
-ref_frame <- spec_frame(audit, "white", "replies", "drop")
-ri <- tibble(draw = 1:4999) |>
-  mutate(b_pp = map_dbl(draw, \(i) {
-    h <- sample(ref_frame$hisp)
-    100 * (mean(ref_frame$y[h == 1]) - mean(ref_frame$y[h == 0]))
-  }))
-write_csv(ri, "cases/housing/data/display_ri.csv")
+ref_frame <- spec_frame(audit, "white", "replies", "drop") |>
+  datawizard::data_select(c("y", "hisp"))
+ri_ref <- ri2::conduct_ri(y ~ hisp, assignment = "hisp",
+                          declaration = randomizr::declare_ra(N = nrow(ref_frame), m = sum(ref_frame$hisp)),
+                          sharp_hypothesis = 0, IPW = FALSE, data = ref_frame, sims = 4999)
+ri <- tibble::tibble(draw = 1:4999, b_pp = 100 * ri_ref$sims_df$est_sim)
+readr::write_csv(ri, "cases/housing/data/display_ri.csv")  # r-style: keep – datawizard::data_write() writes other bytes
 
 # Power of a two-sided test at the 5% level for a gap of a given size from a
 # white rate of 61%, at the group sizes of the original (replies, Hispanic
-# against white) and of the replication (738 replies in two equal groups)
-power <- expand_grid(design = c("original (175 and 187 replies)", "replication (369 and 369 replies)"),
-                     gap_pp = seq(2, 25, by = 1)) |>
-  mutate(n_per_group = if_else(str_starts(design, "original"), 181, 369),
-         power = map2_dbl(gap_pp, n_per_group, \(g, n)
-                          power.prop.test(n = n, p1 = 0.61, p2 = 0.61 - g / 100)$power))
-write_csv(power, "cases/housing/data/display_power.csv")
+# against white) and of the replication (738 replies in two equal groups),
+# from the normal approximation of stats::power.prop.test()
+power <- tidyr::expand_grid(design = c("original (175 and 187 replies)", "replication (369 and 369 replies)"),
+                            gap_pp = seq(2, 25, by = 1)) |>
+  datawizard::data_modify(
+    n_per_group = dplyr::if_else(stringr::str_starts(design, "original"), 181, 369),
+    power = purrr::map2_dbl(gap_pp, n_per_group, \(g, n)
+                            stats::power.prop.test(n = n, p1 = 0.61, p2 = 0.61 - g / 100)$power)
+  )
+readr::write_csv(power, "cases/housing/data/display_power.csv")  # r-style: keep – datawizard::data_write() writes other bytes
