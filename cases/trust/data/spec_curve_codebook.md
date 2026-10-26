@@ -1,6 +1,6 @@
 # Codebook: `spec_curve.csv`
 
-The curve of the claim of the immigration-and-trust case, "... concerns about the effect of immigration on the national community have a(n) [reducing] impact on trust in politics", in the wording that SCORE took from the abstract of the paper of the original author (OA): every specification that the specification menu of the course keeps, 192 rows, fitted once on the course extract `trust_ess.csv` ([codebook](trust_ess_codebook.md)). The file is written by `R/trust/03_spec_curve.R` with the estimator of `R/trust/_tools.R` (`fit_spec()`), which uses base R, dplyr and purrr only, so that the workspace and the browser lab run the identical code; `R/trust/check_parity.R` checks it against fixest and sandwich on every row.
+The curve of the claim of the immigration-and-trust case, "... concerns about the effect of immigration on the national community have a(n) [reducing] impact on trust in politics", in the wording that SCORE took from the abstract of the paper of the original author (OA): every specification that the specification menu of the course keeps, 192 rows, fitted once on the course extract `trust_ess.csv` ([codebook](trust_ess_codebook.md)). The file is written by `R/trust/03_spec_curve.R` with the estimator of `R/trust/_tools.R` (`fit_spec()`), which uses base R, dplyr and purrr only, so that the workspace and the browser lab run the identical code, and `R/trust/check_parity.R` checks it against fixest and sandwich on every row.
 
 ## The specifications
 

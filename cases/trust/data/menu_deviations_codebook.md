@@ -1,6 +1,6 @@
 # Codebook: `menu_deviations.csv`
 
-What each option of the five decisions that vary on the curve does to the estimate. For every decision, the first option of the menu is the baseline, and every specification is set against its twin that differs from it on that decision alone; the file summarises those pairs, one row per option, 15 rows. Written by `R/trust/05_menu_deviations.R` from `spec_curve.csv` ([codebook](spec_curve_codebook.md)); the decision map reads it.
+What each option of the five decisions that vary on the curve does to the estimate. For every decision, the first option of the menu is the baseline, and every specification is set against its twin that differs from it on that decision alone; the file summarises those pairs, one row per option, 15 rows. It is written by `R/trust/05_menu_deviations.R` from `spec_curve.csv` ([codebook](spec_curve_codebook.md)), and the decision map reads it.
 
 ## Columns
 

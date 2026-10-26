@@ -45,7 +45,7 @@ What comes back is a **data frame**: a rectangle with one row per observation, h
 :::
 
 ::: notes
-Getting data in. The library line makes the functions of a package available for this session, and it does not install anything; installing is a separate step that you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on ess is our data. Typing the name on its own prints it. What you get back is a data frame, the central object of R: a rectangle with one row for each respondent and one column for each variable, every column holding a single type. Nearly every function that you will meet takes a data frame and hands one back, which is why the pipe works so well: the output of one step is the right shape to be the input of the next.
+Getting data in. The library line makes the functions of a package available for this session, and it does not install anything; installing is a separate step that you do once. Then read underscore csv reads the file and the arrow gives the result a name, so from here on ess is our data. Typing the name on its own prints it. What you get back is a data frame, the central object of R: a rectangle with one row for each respondent and one column for each variable, every column holding a single type. Nearly every function that you will meet takes a data frame and hands one back, which is why the pipe works so well, since the output of one step is the right shape to be the input of the next.
 :::
 
 ## Inspecting the data {#inspecting-the-data .smaller .deepdive run="tools"}
@@ -124,7 +124,7 @@ ri <- lme4::lmer(distrust_parl ~ concern + age + female + (1 | cntry),
 ```
 
 ::: {.small}
-The tilde `~` reads **outcome on the left, predictors on the right**; add predictors with `+`. `factor()` gives every group its own intercept (fixed effects); `(1 | cntry)` asks lme4 for random intercepts. The helpers of Task 4 use the first, the model of Task 3 the second.
+The tilde `~` reads **outcome on the left, predictors on the right**, and `+` adds predictors. `factor()` gives every group its own intercept (fixed effects); `(1 | cntry)` asks lme4 for random intercepts. The helpers of Task 4 use the first, the model of Task 3 the second.
 :::
 
 ::: notes
@@ -146,7 +146,7 @@ Three parts, always: the **data**, the **mapping** (`aes`) from variables to wha
 :::
 
 ::: notes
-Plotting, briefly. A ggplot always has three parts. The data, here the mean concern and the mean distrust of parliament in each of the sixteen countries. The mapping, which is what aes does: it says which variable becomes which visual property, here concern on the horizontal axis, distrust on the vertical one, and the country code as the label. And one or more geoms that actually draw something, stacked with plus signs; this one writes the labels. Notice that the pipe carries the summarised data straight into ggplot, so the whole thing reads as one sentence from the respondents to the picture. The plot it makes is a rough version of the scatter of country means from earlier, and the first figure in Task 2 of your report.
+Plotting, briefly. A ggplot always has three parts. The data, here the mean concern and the mean distrust of parliament in each of the sixteen countries. The mapping, which is what aes does: it says which variable becomes which visual property, here concern on the horizontal axis, distrust on the vertical one, and the country code as the label. And one or more geoms that actually draw something, stacked with plus signs, and this one writes the labels. Notice that the pipe carries the summarised data straight into ggplot, so the whole thing reads as one sentence from the respondents to the picture. The plot it makes is a rough version of the scatter of country means from earlier, and the first figure in Task 2 of your report.
 :::
 
 ## Causal graphs in R {#causal-graphs-in-r .smaller .deepdive run="tools"}

@@ -98,7 +98,7 @@ check_spec <- function(outcome, controls, weights, items, fe,
 }
 
 # The mean of a set of 0-10 items. "complete" needs every item answered (the
-# focal rule of the SCORE reproduction); "available" averages whatever items
+# focal rule of the jp7tr reproduction); "available" averages whatever items
 # were answered (its additional analysis, and the Multi100 file).
 scale_mean <- function(data, items, rule) {
   m <- as.matrix(data[, items, drop = FALSE])

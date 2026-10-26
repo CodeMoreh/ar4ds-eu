@@ -24,7 +24,7 @@ Three parts of the course read it. The decision map (`cases/trust/map.qmd`) buil
 
 ## The phrases of the estimand statement
 
-The decision map can assemble the statement from the `phrase` column in a fixed order: "[Respondents], [weights], the change in [outcome] that goes with one more point of [measure of concern] ([unanswered items]), [adjustment] ([education], [vote controls], [missing answers])." The respondent phrases begin with "among", which the page capitalises. A second sentence carries the Level 3 decisions: "Estimated by [countries and rounds], tested [standard errors] and reported [effect scale]." The order is a proposal for the page that builds the map.
+The decision map and the `prereg()` helper assemble the statement from the `phrase` column in a fixed order: "[Respondents], [weights], the change in [outcome] that goes with one more point of [measure of concern] ([unanswered items]), [adjustment] ([education], [vote controls], [missing answers])." The respondent phrases begin with "among", which is capitalised at the start of the statement. A second sentence carries the Level 3 decisions: "Estimated by [countries and rounds], tested [standard errors] and reported [effect scale]."
 
 ## Options with numbers elsewhere
 
