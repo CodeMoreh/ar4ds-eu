@@ -30,7 +30,7 @@ The multi-decrement life table of the two cohorts of the paper, overall, by educ
 | `h_marriage`, `h_separation` | The weighted shares of the unions at risk that married or separated in the month |
 | `cohabiting`, `married`, `separated` | The cumulative shares by the end of the month |
 
-By the end of month 36, 45.3% of the unions of 1990–1995 had become a marriage and 37.6% had dissolved; of the unions of 2005–2010, 28.7% and 45.6%. The paper quotes 41% and 35%, and 24% and 41%, from a life table that it did not publish ("available upon request"); the course table is higher by 2.6 to 4.7 points in every cell, and its difference between the cohorts in marriage (−16.6 points) is close to the published one (−17). The unweighted table gives 40.4% and 21.9% for marriage.
+By the end of month 36, 45.3% of the unions of 1990–1995 had become a marriage and 37.6% had dissolved; of the unions of 2005–2010, 28.7% and 45.6%. The paper quotes 41% and 35%, and 24% and 41%, from a life table that it did not publish ("available upon request"). The course table is higher by 2.6 to 4.7 points in every cell, and its difference between the cohorts in marriage (−16.6 points) is close to the published one (−17). The unweighted table gives 40.4% and 21.9% for marriage.
 
 ## `display_shares.csv`
 

@@ -75,7 +75,7 @@ The data of the analyses themselves:
 | trust | `trust_macro.csv` | The country and country-round variables of the paper, for the multilevel models that the course fits as checks |
 | cohabitation | `cohab_unions.csv` | Every first premarital cohabitation of the women of five cycles of the NSFG, one row per union |
 | cohabitation | `cohab_months.csv` | The person-month file built from it for the two surveys of the paper |
-| cohabitation | `score_person_months.csv` | The person-month file that SCORE gave the five analysts, from the OSF; the reproduction of Task 3 runs on it |
+| cohabitation | `score_person_months.csv` | The person-month file that SCORE built for its replication and Multi100 gave the five analysts, from the OSF; the reproduction of Task 3 runs on it |
 | eu-frames | `EUframes_cy.csv` | The EU-frames panel of 270 country-years, rebuilt from the raw GESIS microdata; `EUframes_cy_edu.csv` splits it by education band |
 | eu-frames | `teney_panel_measurement.csv`, `teney_panel_weights.csv`, `macro/` | The panel under every measurement variant, the weighting panel, and the unemployment, growth and population series |
 | eu-frames | `rep_data.csv` | The file that analyst C6HJR submitted to Multi100, kept for provenance and for the exercise on the case page |
