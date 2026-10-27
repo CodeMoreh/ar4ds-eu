@@ -63,7 +63,7 @@ The claim can be checked on anything recorded before the emails went out. @tbl-b
 balance_vars <- c(hard_email = "Hard-to-find address", hispanic_third = "Percent Hispanic, top third",
                   black_third = "Percent Black, top third", pop_third = "Population, top third",
                   poverty_third = "Poverty rate, top third", assessment_third = "HUD assessment, top third")
-# dplyr inside the loop, because datawizard cannot see the variable of each pass
+# dplyr inside the loop, because datawizard does not find the variable of each pass
 balance <- purrr::imap(balance_vars, \(label, v) {
   shares <- audit |>
     dplyr::mutate(top = if (v == "hard_email") .data[[v]] == 1 else .data[[v]] == "top") |>

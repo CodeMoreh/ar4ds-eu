@@ -1,6 +1,6 @@
 ---
 title: "Missing answers"
-subtitle: "The respondents who mentioned nothing, and the conventions for them"
+subtitle: "Respondents who mention nothing, and items left unanswered"
 bibliography: [../references.bib, ../references-missing.bib]
 ---
 
@@ -89,6 +89,8 @@ delta_zero <- -weighted.mean(ans$m_ans, ans$n_noop)
 ```
 
 The [specification menu](../cases/eu-frames/menu.qmd) has a decision called **respondents who mention nothing** with five options, and this module explains why it is there. Of the `r format(n_all, big.mark = ",")` respondents in the EU-frames data, `r format(n_noop, big.mark = ",")` (`r pct(n_noop / n_all)`) answered the question "What does the EU mean to you personally?" by mentioning none of the thirteen things on the list, so that on every framing scale their score is zero divided by zero. The original paper and its five reanalyses resolved that in two different ways, mostly without saying so, and the people concerned are not a random slice of the sample. The curve of the claim keeps both of the two common rules, scoring the silent respondents zero and leaving them out, and this module teaches the other three options beside them.
+
+The EU-frames case leads, and participants meet it on day 3 of the [three-day course](../tracks/eu-frames-three-days/day-3.qmd) on that case, after the [one-day course with a methods focus](../tracks/eu-frames-one-day-methods/after.qmd), and in [stage 11](../tracks/self-study/stage-11.qmd) of the self-study route. Its missing answers lie in the outcome, a battery of mentions, and its rules are rules about one kind of silence. The [immigration-and-trust case](#sec-trust), at the end of the module, adds what those rules do not show: answers missing on the predictor and on a long list of controls, missing answers that accumulate from one control to the next until a third of the respondents are gone, and questions that were not asked at all in whole country-rounds. Its menu offers multiple imputation as a check on the rule of the curve, and the module computes it. Participants meet that case on day 2 of the [three-day course](../tracks/trust-three-days/day-2.qmd), when they build the analysis file and reproduce a result, and in [stage 6](../tracks/self-study/stage-6.qmd) of the self-study route.
 
 ## The missing answers
 
@@ -215,6 +217,116 @@ ggplot2::ggplot(band, ggplot2::aes(delta, r)) +
 
 The band runs in one direction. The further the silent respondents are assumed to fall short of those who answered, the weaker the association, from r = `r num(band$r[which.max(band$delta)])` at δ = `r num(max(band$delta), 1)` through `r num(band$r[which.min(abs(band$delta))])` at δ = 0 to `r num(band$r[which.min(band$delta)])` at δ = `r num(min(band$delta), 1)`, and the zero convention, which assumes that everyone who stayed silent would have scored the lowest value that the scale allows, is the most extreme assumption that the bounds of the scale permit, and among the assumptions that they permit it moves the result furthest towards zero. Every value on the band remains below zero, so the direction of the association does not depend on the assumption, while its strength does, and that is what should be reported alongside a result on these data. Reporting the missing-data treatment, the assumption it makes and the sensitivity of the result to that assumption is what @Lee2021Framework and @Sterne2009Imputation ask for in observational research, and the proportion of missing data is not, on its own, the thing to report [@MadleyDowd2019Proportion].
 
+## The immigration-and-trust case {#sec-trust}
+
+```{r}
+#| label: setup-trust
+#| include: false
+# The section on the immigration-and-trust case (objects tr_): the extract of
+# the ESS, the rows of the reference specification as the estimator of the
+# case builds them, the curve and its deviations, and the imputation written
+# by companion/_model-outputs/impute_trust.R
+source("../R/trust/_tools.R")
+tr_ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
+tr_paper <- tr_ess |> datawizard::data_filter(citizen == 1, minority == 0)
+tr_ref_frame <- spec_frame(tr_ess)
+tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+tr_ref <- tr_curve |> datawizard::data_filter(is_reference)
+tr_devs <- readr::read_csv("../cases/trust/data/menu_deviations.csv", show_col_types = FALSE)
+tr_available <- tr_devs |> datawizard::data_filter(axis == "items", option == "available")
+tr_controls_paper <- tr_devs |> datawizard::data_filter(axis == "controls", option == "paper")
+tr_imp <- readr::read_csv("_model-outputs/trust_imputation.csv", show_col_types = FALSE)
+tr_pooled <- tr_imp |> datawizard::data_filter(row == "pooled")
+tr_each <- tr_imp |> datawizard::data_filter(row != "pooled")
+
+# whether each respondent of the paper lacks each variable of the reference
+# specification; a scale of three items counts as missing when any item is,
+# the rule of the reference specification
+tr_missing <- tr_paper |>
+  dplyr::transmute(
+    `Household income` = is.na(hh_income_z),
+    `Left–right position` = is.na(left_right),
+    `Concern about immigration (three items)` = is.na(imm_econ) | is.na(imm_culture) | is.na(imm_place),
+    `Interpersonal distrust (three items)` = is.na(distrust_people) | is.na(unfair_people) | is.na(unhelpful_people),
+    `Feeling about household income` = is.na(income_difficulty),
+    `Dissatisfaction with education` = is.na(educ_dissat),
+    `Dissatisfaction with the economy` = is.na(econ_dissat),
+    `Distrust of parliament (the outcome)` = is.na(distrust_parl),
+    `Dissatisfaction with health services` = is.na(health_dissat),
+    Age = is.na(age),
+    Education = is.na(education),
+    `Dissatisfaction with life` = is.na(life_dissat),
+    Unhappiness = is.na(unhappy),
+    `Meeting friends` = is.na(meet_rarely),
+    Sex = is.na(female)
+  )
+tr_shares <- tr_missing |>
+  dplyr::summarise(dplyr::across(dplyr::everything(), mean)) |>
+  datawizard::data_to_long(names_to = "Variable", values_to = "share")
+tr_income_share <- tr_shares$share[tr_shares$Variable == "Household income"]
+tr_left_right_share <- tr_shares$share[tr_shares$Variable == "Left–right position"]
+
+# the variables of the specification that a whole country-round lacks
+tr_absent <- tr_paper |>
+  dplyr::summarise(dplyr::across(c(hh_income_z, income_difficulty, left_right, educ_dissat),
+                                 \(v) all(is.na(v))),
+                   .by = c(cntry, essround)) |>
+  datawizard::data_to_long(select = c("hh_income_z", "income_difficulty", "left_right", "educ_dissat"),
+                           names_to = "variable", values_to = "absent") |>
+  datawizard::data_filter(absent)
+```
+
+The immigration-and-trust case takes its claim from a survey study by the original author (OA) of that case, and in this section OA refers to that author: citizens who are more concerned about the effect of immigration on the national community distrust their national political institutions more, in the first four rounds of the European Social Survey (ESS) in sixteen countries [@McLaren2012CulturalDivideEurope]. The model regresses distrust of parliament on an index of concern and fifteen controls of the respondent, and every one of those variables has answers missing. The [specification menu](../cases/trust/menu.qmd) of the case has two decisions about them. The rule for a scale with unanswered items, which the [measurement module](measurement.qmd#sec-trust-unanswered) treats, decides whether a respondent who answered two of the three items of concern keeps a score. The decision on missing answers decides what happens to a respondent who lacks any variable of the model: the curve leaves such respondents out, the menu keeps multiple imputation as a check, and the option of doing what the paper did is unavailable, because the paper does not say what it did.
+
+### Answers missing on the controls {#sec-trust-missing}
+
+@tbl-trust-missing counts the respondents of the paper who lack each variable of the reference specification.
+
+```{r}
+#| label: tbl-trust-missing
+#| echo: false
+#| tbl-cap: "The share of the respondents of the paper (the citizens of the 16 countries who do not belong to an ethnic minority) who lack each variable of the reference specification of the immigration-and-trust case. The two vote controls are coded for everyone and are not listed. Source: `cases/trust/data/trust_ess.csv`."
+tr_shares |>
+  datawizard::data_arrange("-share") |>
+  dplyr::transmute(Variable, `Missing` = pc(100 * share)) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+No single variable is missing for more than a quarter of the respondents, household income for `r pc(100 * tr_income_share)` and the left–right position for `r pc(100 * tr_left_right_share)`, but the gaps fall on different respondents and add up from one control to the next. Listwise deletion, which leaves out every respondent who lacks any variable of the specification, keeps `r format(nrow(tr_ref_frame), big.mark = ",")` of the `r format(nrow(tr_paper), big.mark = ",")` respondents of the paper, `r pc(100 * nrow(tr_ref_frame) / nrow(tr_paper))`, in `r dplyr::n_distinct(tr_ref_frame$cr)` of the `r dplyr::n_distinct(paste0(tr_paper$cntry, tr_paper$essround))` country-rounds. Three country-rounds disappear whole, because a question was not asked or not released there: household income is missing for every respondent in France and Ireland in round 1, and the feeling about household income for every respondent in France in rounds 1 and 2. Listwise deletion therefore changes the population of the analysis as well as its size. No respondent from France in the first two rounds or from Ireland in the first round enters a specification with the controls of the paper, while the specifications without controls keep all `r dplyr::n_distinct(paste0(tr_paper$cntry, tr_paper$essround))` country-rounds.
+
+The contrast with the EU-frames case lies here. There the missing answers lay in the outcome, and the rules for them changed whose framing the average describes. Here they lie in the controls, and the rule for them decides which respondents and which country-rounds the association is estimated on, so that a specification with more controls answers its question on a narrower population, a cost that is easy to overlook when the controls are added one at a time.
+
+The paper reports 110,732 respondents in every model, the full number of its respondents, without saying how it treated the missing answers. A model with fifteen controls cannot have analysed all of them unless the missing answers were filled in by some means that the paper does not report. Both SCORE reproductions from the survey files analysed about 69,000 respondents by listwise deletion, and SCORE scored them as reproducing the coefficient but not the sample. A reported number of respondents that equals the full sample of a survey is therefore a clue for anyone reproducing the result, and participants meet it on day 2 of the three-day course, when they build the analysis file from the survey files and reproduce one of the five reanalyses.
+
+### Multiple imputation for the trust case {#sec-trust-imputation}
+
+The check on the menu fills the missing answers in. The script `companion/_model-outputs/impute_trust.R` imputes every missing answer of the variables of the reference specification except the outcome, `r xfun::numbers_to_words(tr_pooled$m)` times, by predictive mean matching with mice [@Buuren2011Mice], from the other variables of the model, the two vote controls, the outcome itself, and the country and round of the interview. It then fits the reference specification on each completed file, with errors clustered by country, and pools the `r xfun::numbers_to_words(tr_pooled$m)` results by the rules of Rubin set out [above](#multiple-imputation), with 15 complete-data degrees of freedom, the degrees of freedom of the clustered test.
+
+```{r}
+#| label: tbl-trust-imputation
+#| echo: false
+#| tbl-cap: "The reference specification of the immigration-and-trust case under listwise deletion, the rule of the curve, and under multiple imputation of the missing answers, pooled over ten imputations by Rubin's rules. Errors clustered by country; the fraction of missing information is the share of the uncertainty about the coefficient that is due to the missing answers. Sources: `cases/trust/data/spec_curve.csv` and `companion/_model-outputs/trust_imputation.csv`."
+tibble::tibble(
+  Treatment = c("listwise deletion (the curve)", "multiple imputation (mice, predictive mean matching)"),
+  Coefficient = num(c(tr_ref$b, tr_pooled$b), 4),
+  SE = num(c(tr_ref$se, tr_pooled$se), 4),
+  t = num(c(tr_ref$stat, tr_pooled$t), 1),
+  df = num(c(tr_ref$df, tr_pooled$df), 1),
+  Respondents = format(c(tr_ref$n, tr_pooled$n), big.mark = ","),
+  `Fraction of missing information` = c("–", num(tr_pooled$fmi, 3))
+) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:7, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+The imputed analysis keeps `r format(tr_pooled$n, big.mark = ",")` respondents, everyone of the paper who answered the item on parliament, and its coefficient of `r num(tr_pooled$b, 4)` lies `r num(tr_ref$b - tr_pooled$b, 4)` below the coefficient under listwise deletion, about one standard error of either; the ten imputations range from `r num(min(tr_each$b), 4)` to `r num(max(tr_each$b), 4)`, so that the uncertainty of the imputed values adds little to the uncertainty of the coefficient. The fraction of missing information, `r num(tr_pooled$fmi, 3)`, puts a number on that addition: about an eighth of the uncertainty of the pooled coefficient comes from not knowing the missing answers. A shift of this size is a fraction of what the controls do, which lower the coefficient by `r num(abs(tr_controls_paper$shift_mean), 3)` on average when the set of the paper replaces no controls, and it leaves the coefficient far from zero, so for the claim of the case the treatment of the missing answers matters less than the choice of controls, and the curve can keep listwise deletion with imputation as a check, as the menu does. The available-items rule of the measurement module points the same way: it keeps `r format(round(tr_available$n_shift_mean), big.mark = ",")` more respondents on average and moves the estimate by `r num(tr_available$shift_mean, 4)`. The direction of the shift is worth noting all the same. With the dropped respondents restored the association is somewhat weaker, so the respondents whom listwise deletion drops may differ from the others in how concern and distrust go together, which is what a reader of the [mechanisms](#the-three-missingness-mechanisms) above would check before treating the missing answers as missing completely at random.
+
+The imputation rests on an assumption that the earlier sections of this module set out, missingness at random given what the imputation model conditions on, and here it is stretched in one place. Household income for France and Ireland in round 1, and the feeling about household income for France in rounds 1 and 2, were never asked or never released, so the imputed values there come wholly from the other country-rounds, through the terms for the country and the round in the imputation model. The model borrows the relation of income to the other variables from the later rounds of France and from the other countries of round 1, and nothing in the data can check whether the relation held in the country-rounds that lack the question. That the two treatments come this close is the useful result. Had they parted further, the difference would have depended on an assumption about three country-rounds that no data can test.
+
 ## What to take away
 
 - A respondent who mentioned nothing belongs to one of three groups, and the survey codes record which. Look for the codes before choosing a rule.
@@ -223,9 +335,11 @@ The band runs in one direction. The further the silent respondents are assumed t
 - A correlation across country-years is not the comparison that a fixed-effects design makes. Across the cells the no-opinion rate rises with unemployment, but within countries it falls slightly, so the zero rule weakens the slopes of the curve rather than producing them.
 - Imputation replaces a rule with a model and includes the uncertainty of the imputed values in the result; it assumes missingness at random given what it conditions on, and that assumption is where a critic will press.
 - Show the band. A result that holds across the range of defensible assumptions about the silent is a different kind of result from one that depends on a single convention.
+- In the immigration-and-trust case the missing answers lie in the controls rather than in the outcome. They add up from one control to the next, so that listwise deletion keeps about two respondents in three and drops whole country-rounds in which a question was never asked, and a published number of respondents that equals the full sample cannot be the number analysed by a model with complete cases.
 
 ## Exercise
 
 1. From `teney_panel_weights.csv`, plot the no-opinion rate against the unemployment rate across the 270 cells and describe the pattern in one sentence. Which mechanism does it rule out? Then remove the country means from both variables and plot again. What changes, and why does the second plot matter more for the curve of the claim?
 2. Find your preregistered specification in `cases/eu-frames/data/spec_curve.csv` and its twin under the other rule, which differs only in `noop`. Then look up its split twin in `cases/eu-frames/data/menu_deviations_rows.csv.gz` (`axis == "noop"`, `option == "split"`). Which rule is the split rule closest to, and why would you expect that from what it does with the three kinds of silent respondent?
 3. Rewrite the estimand statement for the zero rule and for the drop rule. Which word changes?
+4. In the immigration-and-trust case, build the rows of the reference specification with `spec_frame()` from `R/trust/_tools.R` and count the respondents of each country-round in them. Which country-rounds disappear, and which variable takes each of them out? Then build the rows of the specification without controls (`controls = "none"`) and count again.

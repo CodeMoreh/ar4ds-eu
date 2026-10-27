@@ -49,6 +49,38 @@ ref_twin <- dev_rows |>
 twin <- \(op, col, rl = NA) ref_twin |>
   dplyr::filter(option == op, is.na(rl) | rule == rl) |>
   dplyr::pull(col)
+
+# The immigration-and-trust case, for the end of section 5 (objects tr_): the
+# reference specification and its twin with country effects from the curve,
+# the off-curve options and the rules of inference from the displays of the
+# case, and the multilevel fits of companion/_model-outputs/fit_trust_multilevel.R
+tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+tr_ref <- tr_curve |> datawizard::data_filter(is_reference)
+tr_country <- tr_curve |>
+  datawizard::data_filter(outcome == "parliament", controls == "paper", weights == "none",
+                          items == "complete", fe == "country_and_round")
+tr_pooled <- readr::read_csv("../cases/trust/data/display_options.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(axis == "fe", option == "pooled")
+tr_inference <- readr::read_csv("../cases/trust/data/display_inference.csv", show_col_types = FALSE)
+tr_ml <- readr::read_csv("_model-outputs/trust_multilevel.csv", show_col_types = FALSE)
+tr_ri_country <- tr_ml |> datawizard::data_filter(model == "ri_country", term == "x")
+tr_ri_both <- tr_ml |> datawizard::data_filter(model == "ri_country_round", term == "x")
+tr_re <- tr_ml |> datawizard::data_filter(model == "re_plm", term == "x")
+tr_theta <- tr_ml |> datawizard::data_filter(model == "re_plm", kind == "theta")
+tr_within <- tr_ml |> datawizard::data_filter(model == "within_between", term == "x_within")
+tr_between <- tr_ml |> datawizard::data_filter(model == "within_between", term == "x_between")
+tr_context <- tr_ml |> datawizard::data_filter(model == "contextual", term == "x_between")
+tr_slope <- tr_ml |> datawizard::data_filter(model == "random_slope", term == "x")
+tr_slope_sd <- tr_ml |> datawizard::data_filter(model == "random_slope", term == "cntry: SD (x)")
+# the share of the variance of concern that lies within countries, on the
+# respondents of the reference specification as the estimator of the case
+# builds them
+source("../R/trust/_tools.R")
+tr_frame <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE) |>
+  spec_frame() |>
+  datawizard::demean(select = "x", by = "cntry")
+tr_within_share <- stats::var(tr_frame$x_within) / stats::var(tr_frame$x)
 ```
 
 This is the statistics module of the [companion curriculum](index.qmd). It works through the statistical methods that the EU-frames case draws on, from the simplest linear model to Bayesian and generalised extensions, using the course data throughout: the country-year panel you fit models on, the raw respondent-level records behind it, the curve of `r nrow(curve)` specifications that the [Multiverse page](../cases/eu-frames/multiverse.qmd) draws, and the five Multi100 analysts whose results the [case page](../cases/eu-frames/index.qmd) presents. It follows on from [getting started with R](intro-r.qmd) and assumes only what that module covers – reading a CSV, a dplyr chain, and the idea of a model formula.
@@ -429,6 +461,69 @@ Across the countries the association is positive, +`r num(bwc$b_between, 4)` per
 
 These results settle the place of the estimators that do not hold the comparison within countries. Random effects is consistent only if the stable differences between countries are unrelated to the predictor, which the test of the two slopes rejects. Because each country is observed ten times, its quasi-demeaning weight θ is high, `r num(plm::ercomp(m_re)$theta[[1]], 2)` in the fit above, so its slope lies close to the within slope while importing a little of the opposite association between countries, under errors that ignore the correlation of a country with itself from year to year ([section 4](#sec-inference)). Pooled OLS, which section 3 showed to be a blend of the same two associations, and random effects therefore stay off the curve of the claim. The within–between model would repeat points that the curve already holds, since its within slope equals the slope with country effects exactly, and its use is to show the two associations side by side, as the figure does. A reader who wants to ask the cross-national question has its answer in the regression on country means, outside the curve of the claim, and the [specification menu](../cases/eu-frames/menu.qmd#level-estimand) records the reasons for each estimator.
 
+### The immigration-and-trust case {#sec-trust}
+
+The immigration-and-trust case sets the same comparison on respondents. It takes its claim from a survey study by the original author (OA) of that case, and in this subsection OA refers to that author: that concern about the effect of immigration on the national community lowers trust in national politics, among the respondents of the first four rounds of the European Social Survey (ESS) in sixteen Western European countries [@McLaren2012CulturalDivideEurope]. The reference specification of its curve regresses distrust of parliament (0 to 10) on concern about immigration (0 to 10) with the controls of the paper, on `r format(tr_ref$n, big.mark = ",")` respondents in `r tr_ref$n_country_rounds` country-rounds of the 16 countries, and the menu of the case asks whether each country-round receives its own intercept, each country with a shift for each round, or a random intercept as in the model of the paper. Participants meet that choice in session 2 of [day 3](../tracks/trust-three-days/day-3.qmd) of the three-day course and in [stage 6](../tracks/self-study/stage-6.qmd) of the self-study route.
+
+The predictor differs in kind from the unemployment rate of the panel. Concern is an answer of each respondent, so that it varies within every country-round as well as between countries, and each country contributes thousands of respondents where the panel has ten years. @tbl-trust-estimators sets the estimators of this section side by side on the respondents of the reference specification. The fits with fixed effects come from the files of the curve, and the multilevel fits, which take minutes each on 70,000 respondents, from the script `companion/_model-outputs/fit_trust_multilevel.R`, whose results the page reads.
+
+```{r}
+#| label: tbl-trust-estimators
+#| echo: false
+#| tbl-cap: "The coefficient of concern about immigration on distrust of parliament under the estimators of this section, on the respondents of the reference specification of the immigration-and-trust case (the controls of the paper; dummies for the rounds wherever the model has no intercept for each country-round). Sources: `cases/trust/data/spec_curve.csv`, `cases/trust/data/display_options.csv` and `companion/_model-outputs/trust_multilevel.csv`."
+tibble::tibble(
+  Estimator = c("Pooled OLS, no country terms",
+                "Country fixed effects",
+                "Country-round fixed effects (the reference specification)",
+                "Random effects by generalised least squares (plm), countries",
+                "Random intercepts for countries (lme4)",
+                "Random intercepts for countries and country-rounds (lme4)",
+                "Within–between, slope within countries",
+                "Within–between, slope between countries"),
+  `What is compared` = c("all respondents with one another",
+                         "respondents of the same country",
+                         "respondents of the same country-round",
+                         paste0("a share θ of each country mean removed, θ from ", num(tr_theta$estimate[tr_theta$term == "theta_min"], 2),
+                                " to ", num(tr_theta$estimate[tr_theta$term == "theta_max"], 2)),
+                         "partial pooling of the country intercepts",
+                         "partial pooling at both levels, the model of the paper without its variables of country and round",
+                         "the departure of each respondent from the country mean",
+                         "the 16 country means"),
+  Coefficient = c(tr_pooled$b, tr_country$b, tr_ref$b, tr_re$estimate, tr_ri_country$estimate,
+                  tr_ri_both$estimate, tr_within$estimate, tr_between$estimate)
+) |>
+  datawizard::data_modify(Coefficient = num(Coefficient, 4)) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+Every estimator that holds the countries apart lands between `r num(min(tr_ref$b, tr_country$b, tr_re$estimate, tr_ri_country$estimate, tr_ri_both$estimate, tr_within$estimate), 3)` and `r num(max(tr_ref$b, tr_country$b, tr_re$estimate, tr_ri_country$estimate, tr_ri_both$estimate, tr_within$estimate), 3)`, and the reason lies in the formula for $\theta$ above. With thousands of respondents a country in place of $T$ = 10 years, the random-effects estimator removes most of each country mean, `r num(tr_theta$estimate[tr_theta$term == "theta_min"], 2)` to `r num(tr_theta$estimate[tr_theta$term == "theta_max"], 2)` of it where the panel of the EU-frames case gave `r num(plm::ercomp(m_re)$theta[[1]], 2)`, and since `r pct(100 * tr_within_share, 0)` of the variance of concern lies within countries in any case, what is left of the comparison between countries can barely move the slope. Random intercepts therefore give the answer of fixed effects here, which they did not on the panel. Pooled OLS gives `r num(tr_pooled$b, 3)`, only a little more, for the same reason. The within–between model separates the two comparisons as it did for unemployment. Within countries the slope is `r num(tr_within$estimate, 3)`, and between the 16 country means it is `r num(tr_between$estimate, 3)`, with a standard error of `r num(tr_between$se, 3)` on `r num(tr_between$df, 1)` Satterthwaite degrees of freedom. A difference between the two slopes is the contextual effect of concern, which the [individual-level module](individual-level.qmd#sec-trust-context) reads as a question of composition against context. Here it is not distinguishable from zero (p = `r num(tr_context$p, 2)`), so that the test on which the choice between random and fixed effects rests finds no conflict between them, and with sixteen countries it could detect only a large one.
+
+What sixteen countries do to the errors is a separate matter, and @tbl-trust-errors sets the reference specification under the rules of inference of the case, beside the random slope of concern.
+
+```{r}
+#| label: tbl-trust-errors
+#| echo: false
+#| tbl-cap: "The reference specification of the immigration-and-trust case under six rules of inference. The first five rows share the coefficient of the fixed-effects fit or of the random intercepts, which agree to the fourth decimal; the random slope estimates an average of the slopes of the 16 countries. Sources: `cases/trust/data/display_inference.csv` and `companion/_model-outputs/trust_multilevel.csv`."
+tr_inference |>
+  dplyr::transmute(rule, b, se, t = stat, df) |>
+  dplyr::bind_rows(tibble::tibble(rule = "random slope of concern by country (multilevel model)",
+                                  b = tr_slope$estimate, se = tr_slope$se, t = tr_slope$t, df = tr_slope$df)) |>
+  dplyr::transmute(
+    Rule = paste0(toupper(substr(rule, 1, 1)), substring(rule, 2)),
+    Coefficient = num(b, 4),
+    SE = num(se, 4),
+    t = num(t, 1),
+    df = dplyr::if_else(df > 1000, format(round(df), big.mark = ","), sprintf("%.1f", df))
+  ) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:5, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+The random intercepts give almost exactly the conventional t, because they model the level of distrust in each country and leave the slope of concern the same everywhere, so that every respondent still counts as an independent piece of evidence about it. The slope is not the same everywhere. A random slope of concern by country has a standard deviation of `r num(tr_slope_sd$estimate, 3)` around an average of `r num(tr_slope$estimate, 3)`, and once the model allows for that variation the degrees of freedom of the average slope fall to `r num(tr_slope$df, 1)`, the order of the number of countries, as the random slopes of section 6 do for unemployment. Clustering by country makes the same correction from the other side, without a model of the variation, and the [weights module](weighting.qmd#sec-trust-describe) shows the coefficient of a regression on respondents as an average of one slope per country. The CR2 correction of section 4 changes almost nothing here: its Satterthwaite degrees of freedom are `r num(tr_inference$df[grepl("CR2", tr_inference$rule)], 1)` of a possible 15, because the sixteen countries carry similar amounts of information about concern, whereas on the panel Greece, Spain and Poland carried much of the variation of unemployment and the degrees of freedom fell to `r sprintf("%.1f", inf("fe_twoway", "cr2_satterthwaite", "df"))` of 26. With sixteen clusters the evidence is counted in countries, and it remains overwhelming under every rule, a t of `r num(tr_inference$stat[grepl("CR2", tr_inference$rule)], 1)` under CR2, because the association between concern and distrust is positive in every one of them, with correlations from about 0.17 in southern Europe and Ireland to 0.38 in Norway.
+
 ## 6. Multilevel models {#sec-multilevel}
 
 Every model so far has been fitted at the country-year level, whereas OA's own study worked with individual respondents. Its published coefficient – **b = −0.0034, t = −4.03, p < .001** (Table 3, Model 1) – comes from a three-level random-intercept model fitted to those respondents, with interactions between education and the two economic measures, so that it is the slope of unemployment for the low-education band; the [individual-level module](individual-level.qmd#sec-published-model) sets it beside the slope averaged over the bands. This section moves down to that level and fits the same family of models on the actual microdata: 416,698 respondents, rebuilt from the sixteen GESIS waves as the codebook describes.
@@ -756,7 +851,7 @@ The decisions that move the curve most are therefore the ones that set what a mo
 
 ## Sources and provenance {#sec-sources}
 
-This module was written from scratch for the course, and its numbers are computed rather than typed. The models of sections 2 to 5, the inference rules of section 4, the display of section 5, the outcome-scale figure and the beta comparison of section 9 and the meta-analysis of section 10 execute on this page from committed files: the course panel `EUframes_cy.csv`, the curve `spec_curve.csv` and its decomposition `spec_curve_forks.csv`, the comparison of every option with its twins on the curve in `menu_deviations.csv` and `menu_deviations_rows.csv.gz`, the displays `display_inference.csv`, `display_between_within.csv`, `display_country_means.csv` and `display_loo.csv`, the analyst record `analysts5.csv` and `cosmo_dist.csv`. The pipeline of the case in the folder `R/eu-frames/` of the source repository writes them, and computes the CR2 test of section 4 with the clubSandwich package in `R/eu-frames/_curve_tools.R`. Two figures in section 4 are quoted from the review of the menu that settled which options the curve keeps, because no data file holds them: the share of the variation of unemployment within countries that year effects absorb (29%) and the share of the variation of growth within countries that is common to all countries in a year (59%). The country-year construction and item definitions are in the [data codebook](../cases/eu-frames/data/EUframes_cy_codebook.md), and the files of results are described in the [codebook of the curve](../cases/eu-frames/data/spec_curve_codebook.md) and the [codebook of the displays](../cases/eu-frames/data/displays_codebook.md). The person-level and Bayesian outputs of sections 6 to 9 were produced by `companion/_model-outputs/fit_models.R` in the source repository for the site, run against the person-level rebuild of the sixteen GESIS waves. The raw microdata are GESIS-licensed and are never distributed with the course – the [data sources module](data-sources.qmd#sec-gesis) explains the registration route. The Task-1 free-phase recipes and recorded verdicts in section 10 come from the public code of the five analysts and the public dataset of the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]. The exhibit fits on this page are illustrations of each method, and no other model on this page is fitted to the microdata.
+This module was written from scratch for the course, and its numbers are computed rather than typed. The models of sections 2 to 5, the inference rules of section 4, the display of section 5, the outcome-scale figure and the beta comparison of section 9 and the meta-analysis of section 10 execute on this page from committed files: the course panel `EUframes_cy.csv`, the curve `spec_curve.csv` and its decomposition `spec_curve_forks.csv`, the comparison of every option with its twins on the curve in `menu_deviations.csv` and `menu_deviations_rows.csv.gz`, the displays `display_inference.csv`, `display_between_within.csv`, `display_country_means.csv` and `display_loo.csv`, the analyst record `analysts5.csv` and `cosmo_dist.csv`. The pipeline of the case in the folder `R/eu-frames/` of the source repository writes them, and computes the CR2 test of section 4 with the clubSandwich package in `R/eu-frames/_curve_tools.R`. Two figures in section 4 are quoted from the review of the menu that settled which options the curve keeps, because no data file holds them: the share of the variation of unemployment within countries that year effects absorb (29%) and the share of the variation of growth within countries that is common to all countries in a year (59%). The country-year construction and item definitions are in the [data codebook](../cases/eu-frames/data/EUframes_cy_codebook.md), and the files of results are described in the [codebook of the curve](../cases/eu-frames/data/spec_curve_codebook.md) and the [codebook of the displays](../cases/eu-frames/data/displays_codebook.md). The person-level and Bayesian outputs of sections 6 to 9 were produced by `companion/_model-outputs/fit_models.R` in the source repository for the site, run against the person-level rebuild of the sixteen GESIS waves. The raw microdata are GESIS-licensed and are never distributed with the course – the [data sources module](data-sources.qmd#sec-gesis) explains the registration route. The Task-1 free-phase recipes and recorded verdicts in section 10 come from the public code of the five analysts and the public dataset of the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]. The exhibit fits on this page are illustrations of each method, and no other model on this page is fitted to the microdata. The subsection on the immigration-and-trust case at the end of section 5 reads the extract of the European Social Survey that the course ships, `cases/trust/data/trust_ess.csv`, the curve and the displays of that case (`spec_curve.csv`, `display_options.csv` and `display_inference.csv` in `cases/trust/data/`, written by the pipeline in `R/trust/`), and the multilevel fits of `companion/_model-outputs/fit_trust_multilevel.R`, saved in `trust_multilevel.csv` beside it.
 
 The methods and software cited above are gathered in the reference list below: the panel estimators [@BergeEtAl2026FastUserfriendlyEconometrics; @CroissantMillo2023PanelDataEconometrics], within–between modelling [@BellJones2015ExplainingFixedEffects], the multilevel workhorse [@BatesEtAl2015FittingLinearMixedeffects], survey-weighted estimation, which section 7 leaves to the [weights module](weighting.qmd) [@Lumley2004AnalysisComplexSurvey; @Rabe-HeskethSkrondal2006MultilevelModellingComplex; @Carle2009FittingMultilevelModels; @BaileyEtAl2023WeMixWeightedMixed; @GESISWeightingOverview], Bayesian estimation and its textbooks [@Burkner2017BrmsPackageBayesian; @GelmanHill2007DataAnalysisUsing; @McElreath2020StatisticalRethinkingBayesian; @Kurz2023StatisticalRethinkingBrms], the generalised models [@BrooksEtAl2017GlmmTMBBalancesSpeed; @Kubinec2023OrderedBetaRegression], and meta-analysis [@Viechtbauer2010ConductingMetaanalysesMetafor].
 

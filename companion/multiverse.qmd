@@ -30,7 +30,7 @@ by_pop <- curve |> dplyr::summarise(lo = min(b_pp), hi = max(b_pp), .by = popula
 bp <- \(pop, col) by_pop[[col]][by_pop$population == pop]
 no_evidence <- analysts |> datawizard::data_filter(task1 == "no evidence either way") |> dplyr::pull(id)
 
-# The EU-frames case, for section 9; pct_eu() takes values already in per cent and
+# The EU-frames case, for section 11; pct_eu() takes values already in per cent and
 # rounds halves up, as the specification menu of that case does, so that the pages agree
 eu_curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
@@ -58,7 +58,7 @@ eu_ref <- eu_curve |> datawizard::data_filter(is_reference)
 twoway <- eu_curve |> datawizard::data_filter(estimator == "fe_twoway")
 country <- eu_curve |> datawizard::data_filter(estimator == "fe_country")
 
-# the displays of section 9.5: the reproduced specification and its country twin
+# the displays of section 11.5: the reproduced specification and its country twin
 is_ref_spec <- \(d) d$outcome == "mcosmo" & d$predictor == "unemp" & d$copredictor == "none" &
   d$pred_form == "raw"
 per_ref <- \(smp, col) periods[[col]][is_ref_spec(periods) & periods$estimator == "fe_twoway" &
@@ -70,9 +70,59 @@ vs <- \(cc) loo_two$variation_share[loo_two$left_out == cc]
 ba <- \(grp, col) bailout[[col]][bailout$outcome == "mcosmo" & bailout$predictor == "unemp" &
                                    bailout$estimator == "fe_twoway" & bailout$group == grp]
 design_label <- c(fe_twoway = "Two-way fixed effects", fe_country = "Country fixed effects")
+
+# The immigration-and-trust case, for section 9 (objects tr_), and the
+# cohabitation case, for section 10 (objects co_); a column that holds only
+# "t" is read as logical unless its type is given
+tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+tr_menu <- readr::read_csv("../cases/trust/data/menu_options.csv", show_col_types = FALSE)
+tr_marks <- readr::read_csv("../cases/trust/data/reference_marks.csv", show_col_types = FALSE)
+tr_round5 <- tr_marks |> datawizard::data_filter(id == "SCORE_1634")
+tr_rounds59 <- tr_marks |> datawizard::data_filter(id == "SCORE_65wm6_DAR")
+tr_ref <- tr_curve |> datawizard::data_filter(is_reference)
+# the share of the variance of the estimates that each decision carries: the eta
+# squared of each decision in a main-effects model (effectsize)
+tr_var <- stats::lm(b ~ outcome + controls + weights + items + fe, data = tr_curve) |>
+  effectsize::eta_squared(partial = FALSE, ci = NULL)
+tr_share <- 100 * stats::setNames(tr_var$Eta2, tr_var$Parameter)
+tr_by_controls <- tr_curve |>
+  datawizard::data_summary(lo = min(b), hi = max(b), mean = mean(b), by = "controls")
+tr_none <- tr_by_controls |> datawizard::data_filter(controls == "none")
+tr_paper <- tr_by_controls |> datawizard::data_filter(controls == "paper")
+
+co_curve <- readr::read_csv("../cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+co_menu <- readr::read_csv("../cases/cohabitation/data/menu_options.csv", show_col_types = FALSE)
+co_marks <- readr::read_csv("../cases/cohabitation/data/reference_marks.csv", show_col_types = FALSE)
+co_options <- readr::read_csv("../cases/cohabitation/data/display_options.csv", show_col_types = FALSE,
+                              col_types = readr::cols(stat_type = readr::col_character()))
+co_ref <- co_curve |> datawizard::data_filter(is_reference)
+co_oa <- co_marks |> datawizard::data_filter(mark == "OA")
+co_score <- co_marks |> datawizard::data_filter(mark == "SCORE_replication")
+co_1995_2011 <- co_options |> datawizard::data_filter(changed == "comparison", option == "1995_2011")
+co_2002_2011 <- co_options |> datawizard::data_filter(changed == "comparison", option == "2002_2011")
+co_var <- stats::lm(b ~ cohorts + horizon + adjust + weights + time + model, data = co_curve) |>
+  effectsize::eta_squared(partial = FALSE, ci = NULL)
+co_share <- 100 * stats::setNames(co_var$Eta2, co_var$Parameter)
+
+# The four curves on one figure, each on its own scale, for section 12: the
+# rank of each specification, its estimate and its class at the 5% level (the
+# test that classes the curve of each case: HC2 or Wald for the housing audit,
+# CR1 by country for trust, design-based for cohabitation, CR2 for EU frames)
+case_names <- c("Housing audit", "Immigration and trust", "Cohabitation", "EU frames")
+four_curves <- dplyr::bind_rows(
+  curve |> dplyr::transmute(case = case_names[1], estimate = b_pp, p),
+  tr_curve |> dplyr::transmute(case = case_names[2], estimate = b, p),
+  co_curve |> dplyr::transmute(case = case_names[3], estimate = b, p),
+  eu_curve |> dplyr::transmute(case = case_names[4], estimate = r_ca, p = p_cr2)
+) |>
+  dplyr::mutate(rank = rank(estimate, ties.method = "first"), .by = case) |>
+  datawizard::data_modify(case = factor(case, case_names),
+                          class = dplyr::if_else(p < 0.05, "p < 0.05", "p ≥ 0.05"))
 ```
 
-This module of the [companion curriculum](index.qmd) works on two cases: sections 1 to 8 use the housing-audit case, and section 9 the EU-frames case.
+This module of the [companion curriculum](index.qmd) works on the four cases of the course, in the order of their difficulty. Sections 1 to 8 use the housing-audit case, section 9 the immigration-and-trust case, section 10 the cohabitation case and section 11 the EU-frames case, and section 12 sets the four curves side by side. Each case meets the module on the day that it builds its curve: Part 4 of the one-day courses with a methods focus on the housing-audit and EU-frames cases, day 3 of the three-day courses, and stages 4 and 11 of the [self-study route](../tracks/self-study/index.qmd).
 
 The module is about the method that the course teaches, the multiverse or specification curve: where the idea came from, what it is claimed to do, and the arguments that are now being made against it. The course has you run one. You fix a specification in a preregistration, fit it, and read your result against the `r n_spec` specifications of the curve of the claim on the [multiverse page](../cases/housing/multiverse.qmd). The claim, from a field experiment by the original authors (OAs) on emails to public housing authorities [@EinsteinGlick2017DoesRaceAffect], is that "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts". The method is under live debate in 2025–26, the objections to it are serious, and the aim of the module is that you can take a position in that debate. Throughout, the housing-audit case serves as the worked example, and it is an unusual one, because on this case every specification agrees and a replication with new data still failed.
 
@@ -90,7 +140,7 @@ Rohrer, Hullman and Gelman ask the question that organises the current debate, w
 
 The three purposes impose different rules for building the set of specifications. A multiverse built for critique may mix analyses that answer slightly different questions, since its aim is to show that researchers plausibly disagree about the question, and "it may be perfectly sensible to include analyses with different estimands as long as it is plausible that researchers may try out different estimands" [@RohrerEtAl2026WhatsMultiverseGood, p. 6]. The same set cannot then be read as inference about one quantity. Hullman puts the condition in a companion blog post: "what kinds of equivalence are needed will also depend on your goal in using a multiverse" [@Hullman2026WhatMultiverseGood].
 
-The course builds its artefacts to different rules for that reason. The [specification menu](../cases/housing/menu.qmd) of `r xfun::numbers_to_words(n_decisions)` decisions, the [decision map](../cases/housing/map.qmd) and the class chart serve reflection, since they make visible how much a result depends on decisions that look arbitrary from outside, and they show options that answer other questions beside those that answer the claim. The curve of `r n_spec` is built to the standard that inference would require and is used to persuade: every specification on it is meant to answer the claim as the course reads it, and the two decisions that leave two estimands on it, the comparison group and the emails counted, are named as such. The EU-frames case applies the same rules to a menu of fourteen decisions, and section 9 reads its curve against the arguments of sections 3 to 6.
+The course builds its artefacts to different rules for that reason. The [specification menu](../cases/housing/menu.qmd) of `r xfun::numbers_to_words(n_decisions)` decisions, the [decision map](../cases/housing/map.qmd) and the class chart serve reflection, since they make visible how much a result depends on decisions that look arbitrary from outside, and they show options that answer other questions beside those that answer the claim. The curve of `r n_spec` is built to the standard that inference would require and is used to persuade: every specification on it is meant to answer the claim as the course reads it, and the two decisions that leave two estimands on it, the comparison group and the emails counted, are named as such. The three other cases apply the same rules to menus of twelve to fifteen decisions, and sections 9 to 11 read their curves against the arguments of sections 3 to 7.
 
 ::: {.callout-tip}
 ## Try it
@@ -152,7 +202,7 @@ The live class chart on the multiverse page, on which every submitted specificat
 
 SCORE, the programme from which Multi100 came, put claims through three kinds of repetition [@AlipourfardEtAl2021SystematizingConfidenceOpen]. A reproduction repeats the original analysis on the original data, a robustness check applies different but defensible analyses to the same data, and a replication asks the same question of new data. A multiverse is a robustness check in that sense, however large it is. Every one of its specifications is fitted to the same `r format(n_emails, big.mark = ",")` emails, so that a chance feature of that sample, a run of unusually cold replies to Santiago in one week of 2014, would be found by every specification together. The specifications are not independent tests, and their agreement is evidence about the analysis, given the data.
 
-The housing-audit case separates the two properties cleanly. On the original data all `r n_spec` specifications are negative and significant, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points, and the randomisation test stored for each specification gives at most p = `r fmt(max(curve$p_ri), 4)`. The SCORE replication then emailed 3,050 housing authorities from new names, and its logistic coefficient for the Hispanic names was positive and far from significant (z = 0.66, p = 0.511). The curve could not have warned of this. Its specifications vary the analysis and hold the sample fixed, so their agreement says nothing about how far a new sample might differ, which is what the confidence interval of any one of them describes. The candidates for the difference lie outside the curve: the names, which conveyed more than ethnicity; the authorities and the year; and the power of the original comparison, which leaves a significant estimate from a study of its size likely to overstate the effect, as the [audit-experiments module](experiments.qmd#sec-power) shows. Robustness to analytic choices and replicability are separate properties of a finding, and this case has the first without the second.
+The housing-audit case separates the two properties cleanly. On the original data all `r n_spec` specifications are negative and significant, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points, and the randomisation test stored for each specification gives at most p = `r fmt(max(curve$p_ri), 4)`. The SCORE replication then emailed 3,050 housing authorities from new names, and its logistic coefficient for the Hispanic names was positive and far from significant (z = 0.66, p = 0.511). The curve could not have warned of this. Its specifications vary the analysis and hold the sample fixed, so their agreement says nothing about how far a new sample might differ, which is what the confidence interval of any one of them describes. The candidates for the difference lie outside the curve: the names, which conveyed more than ethnicity; the authorities and the year; and the power of the original comparison, which leaves a significant estimate from a study of its size likely to overstate the effect, as the [audit-experiments module](experiments.qmd#sec-power) shows. Robustness to analytic choices and replicability are separate properties of a finding, and this case has the first without the second. Section 12 sets the four cases of the course side by side on the two properties.
 
 ## 8. The multiverse in the classroom {#sec-teaching}
 
@@ -160,15 +210,91 @@ Every side of the debate agrees that the multiverse is useful in teaching. Rohre
 
 Hullman gives a further reason why this literacy will matter more. Building a multiverse is becoming cheap, because "lots of forms of robustness checking that used to be difficult are now trivially easy" [@Hullman2026WhatMultiverseGood] once software can generate the specifications. When anyone can produce a curve on demand, the skill that remains scarce lies in judging what belongs in it, naming the purpose that it serves, and refusing the readings that its construction cannot support.
 
-## 9. The multiverse at scale: the EU-frames case {#sec-eu-frames}
+## 9. The immigration-and-trust curve {#sec-trust}
+
+The immigration-and-trust case takes its claim from a survey study by the original author (OA) of that case, and in this section OA refers to that author. In the wording that SCORE selected from the abstract, "concerns about the effect of immigration on the national community have a(n) [reducing] impact on trust in politics" [@McLaren2012CulturalDivideEurope, p. 199]. The curve of the claim holds `r nrow(tr_curve)` specifications, every combination of the options of five decisions: the institution whose distrust is the outcome (parliament, politicians, the legal system or the mean of the three), the set of controls, the weights, the rule for a scale with unanswered items, and whether each country-round or each country has its own intercept. Every specification is fitted to the respondents of the first four rounds of the European Social Survey (ESS) in sixteen countries, in the extract that the course ships, and classed by errors clustered by country, with t on 15 degrees of freedom. The [Multiverse page of the case](../cases/trust/multiverse.qmd) draws the curve with the class results, and participants read it on [day 3](../tracks/trust-three-days/day-3.qmd) of the three-day course and in [stage 7](../tracks/self-study/stage-7.qmd) of the self-study route.
+
+```{r}
+#| label: fig-trust-curve
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 3.6
+#| fig-cap: "The curve of the immigration-and-trust case: the 192 specifications ranked by their coefficient, in points of distrust (0–10) per point of concern about immigration (0–10), coloured by the set of controls. Every specification has p < 0.05 with errors clustered by country, so every mark is a circle. Source: `cases/trust/data/spec_curve.csv`."
+#| fig-alt: "Ranked dots rising from about 0.12 to 0.33 in four bands of colour: the specifications with the controls of the paper lie lowest, from about 0.12 to 0.18, those with outlook and ideology around 0.18 to 0.25, and those with demographics or no controls highest, around 0.25 to 0.33."
+tr_curve |>
+  dplyr::left_join(tr_menu |>
+                     datawizard::data_filter(axis == "controls") |>
+                     datawizard::data_select(select = c("option", "label")),
+                   by = c("controls" = "option")) |>
+  dplyr::mutate(rank = rank(b, ties.method = "first"),
+                label = factor(label, tr_menu$label[tr_menu$axis == "controls" & tr_menu$on_curve])) |>
+  ggplot2::ggplot(ggplot2::aes(rank, b, colour = label)) +
+  ggplot2::geom_hline(yintercept = 0, colour = "grey70") +
+  ggplot2::geom_point(shape = 1, size = 1.7, stroke = 0.6, alpha = 0.8) +
+  ggplot2::scale_colour_manual(values = c("#8fb0d6", "#2a5d8f", "#0f6b6b", "#8c5a10"), name = "Controls") +
+  ggplot2::scale_y_continuous(limits = c(0, NA)) +
+  ggplot2::labs(x = "specifications, ranked by the coefficient", y = "points of distrust per point of concern") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank())
+```
+
+All `r sum(tr_curve$b > 0 & tr_curve$p < 0.05)` specifications lie above zero, in the direction of the claim, with p < 0.05, so that this curve meets the precondition that Rohrer and colleagues set for a persuasive multiverse (section 6) as fully as the housing curve does. The coefficients run from `r fmt(min(tr_curve$b), 3)` to `r fmt(max(tr_curve$b), 3)` points of distrust per point of concern, both measured on scales of 0 to 10, and one decision carries most of that spread. Split by decision, the set of controls carries `r pct(tr_share[["controls"]])` of the variance of the `r nrow(tr_curve)` estimates and the outcome `r pct(tr_share[["outcome"]])`, while the weights, the rule for unanswered items and the fixed effects carry `r pct(sum(tr_share[c("weights", "items", "fe")]))` between them. Without controls the coefficient averages `r fmt(tr_none$mean, 3)`, and with the controls of the paper `r fmt(tr_paper$mean, 3)`.
+
+The four sets of controls are nested, and they answer four questions rather than one question four times. The demographic set (age, sex, education and household income) and the set that adds outlook and ideology hold constant characteristics that the graph of the case treats as common causes of concern and distrust. The set of the paper adds evaluations of the economy and of public services and two controls for the vote at the last election, which the graph places on the path from concern to distrust or downstream of both attitudes, as the [causal-graphs module](dags.qmd#sec-trust-mediators) explains. Holding a mediator constant removes the part of the association that runs through it, so that the curve moves from the whole association within a country-round towards the part that remains once the evaluations and the votes are fixed. This is the third category of Auspurg, misspecification by covariates. Her remedy, a selection of models grounded in theory, takes here the form that Young and Cumberworth give it, a causal diagram behind every necessary control, which is what Task 2 of the case asks for. The curve keeps all four sets because the claim does not choose between them. The ellipsis with which SCORE selected it from the abstract removes the words "even after controlling for other predictors of trust in the political system", and the course names the four sets as estimands rather than averaging over them.
+
+The pruning of the menu follows the rules of section 3. Of the `r nrow(tr_menu)` options of the `r xfun::numbers_to_words(dplyr::n_distinct(tr_menu$axis))` decisions on the [specification menu](../cases/trust/menu.qmd), `r sum(tr_menu$judgement == "kept")` are on the curve. Of the others, `r sum(tr_menu$judgement == "other_question")` answer another question (distrust of the European Parliament, for instance, which the paper uses as a contrast), `r sum(tr_menu$judgement == "weaker_answer")` answer this one less well (among them the regression without country effects and the conventional errors that treat respondents as independent), `r sum(tr_menu$judgement == "check")` check an answer that the curve already holds (among them the random intercepts of the model of the paper), and `r sum(tr_menu$judgement == "unavailable")` cannot be fitted on the public data. Inference takes the countries as its unit. The clustered t runs from `r fmt(min(tr_curve$stat), 1)` to `r fmt(max(tr_curve$stat), 1)` on 15 degrees of freedom, against `r fmt(min(tr_curve$t_conv), 0)` to `r fmt(max(tr_curve$t_conv), 0)` for the conventional t, which counts some 70,000 respondents as independent, so that every specification stays far beyond the threshold under either test, and the [statistics module](stats-methods.qmd#sec-trust) explains what sixteen clusters do to the errors.
+
+SCORE tested the claim twice on later rounds of the ESS. On round 5, from 2010, the coefficient was `r fmt(tr_round5$b, 3)` (t = `r fmt(tr_round5$statistic, 2)`, on `r format(tr_round5$n, big.mark = ",")` respondents in 13 countries), and on rounds 5 to 9, from 2010 to 2018, it was `r fmt(tr_rounds59$b, 3)` (t = `r fmt(tr_rounds59$statistic, 2)`, on `r format(tr_rounds59$n, big.mark = ",")` respondents of the 16 countries), both close to the specifications of the curve with the controls of the paper. The case therefore has both of the properties that the housing-audit case separated, robustness to the analysis and replication on new data, and both concern the association between concern and distrust. The claim reads that association as an effect of concern on distrust. The reverse order is as easy to argue, and one of the five Multi100 analysts argued it in Task 1, that "one could argue for an at least partially reverse direction of the effect, given that there is ample evidence that trust in authorities impacts on attitudinal variables". The paper reports that an analysis with instrumental variables confirmed its order, with the results "provided upon request" [@McLaren2012CulturalDivideEurope, pp. 226–228]. The causal order is the kind of auxiliary assumption that Lakens and colleagues (section 4) want settled by research, and neither a curve of specifications on one sample nor a replication on another can settle it.
+
+## 10. The cohabitation curve {#sec-cohabitation}
+
+::: {.callout-note}
+If you are taking the cohabitation case, read this section after Task 3 of the case.
+:::
+
+The cohabitation case takes its claim from a study in *Demography* by the original authors (OAs) of that case, and in this section OAs refers to them. The claim is that American "cohabitors have increasingly become less likely to progress to marriage" [@KuoRaley2016DivergingPatternsUnion, p. 932]. The curve of the claim holds `r nrow(co_curve)` specifications, the combinations of six decisions: the cohorts compared, the time frame of each union, the adjustment, the weights, the form of the time since the start of a union, and the model. Every specification is fitted to the first premarital cohabitations that the course rebuilt from the National Survey of Family Growth (NSFG) of 1995 and of 2006–2010, split into person-months, the months in which a union could end, and classed by design-based errors that follow the strata and clusters of both surveys. The [Multiverse page of the case](../cases/cohabitation/multiverse.qmd) draws it with the class results on [day 3](../tracks/cohabitation-three-days/day-3.qmd) of the three-day course.
+
+```{r}
+#| label: fig-cohabitation-curve
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 3.6
+#| fig-cap: "The curve of the cohabitation case: the 144 specifications ranked by the coefficient of the later cohort on the log scale of the model, coloured by the cohorts compared. Every specification has p < 0.05 with design-based errors, so every mark is a circle. Source: `cases/cohabitation/data/spec_curve.csv`."
+#| fig-alt: "Ranked dots rising from about −0.83 to −0.63, all below zero, in two blocks: the specifications with the window of the paper lie lower, those with the same five-year window in both surveys higher."
+co_curve |>
+  dplyr::left_join(co_menu |>
+                     datawizard::data_filter(axis == "cohorts") |>
+                     datawizard::data_select(select = c("option", "label")),
+                   by = c("cohorts" = "option")) |>
+  dplyr::mutate(rank = rank(b, ties.method = "first"),
+                label = factor(label, co_menu$label[co_menu$axis == "cohorts" & co_menu$on_curve])) |>
+  ggplot2::ggplot(ggplot2::aes(rank, b, colour = label)) +
+  ggplot2::geom_hline(yintercept = 0, colour = "grey70") +
+  ggplot2::geom_point(shape = 1, size = 1.7, stroke = 0.6, alpha = 0.8) +
+  ggplot2::scale_colour_manual(values = c("#8c5a10", "#0e3b6a"), name = "Cohorts") +
+  ggplot2::scale_y_continuous(limits = c(NA, 0), labels = minus) +
+  ggplot2::labs(x = "specifications, ranked by the coefficient", y = "coefficient of the later cohort (log scale)") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank())
+```
+
+All `r sum(co_curve$b < 0 & co_curve$p < 0.05)` specifications lie below zero, in the direction of the claim, with p < 0.05. The coefficients run from `r num(min(co_curve$b))` to `r num(max(co_curve$b))`, so that in any month a cohabiting couple of the later cohort was `r num(min(co_curve$ratio), 2)` to `r num(max(co_curve$ratio), 2)` times as likely to marry as a couple of the earlier one. Split by decision, the cohorts compared carry `r pct(co_share[["cohorts"]])` of the variance of the estimates, the weights `r pct(co_share[["weights"]])` and the adjustment `r pct(co_share[["adjust"]])`, while the time frame, the form of the time since the start and the model carry `r pct(sum(co_share[c("horizon", "time", "model")]))` between them.
+
+The decisions that carry the spread fix what is compared and for whom. The window of the paper sets unions begun in 1990–1995 against unions begun in 2005–2010, and the same five-year window in both surveys reaches back to unions begun in 2001–2004 in the later one, so that the two windows compare cohorts of slightly different dates. The weights decide whether the estimate describes the women aged 15–44 of the United States or every union of the two samples counted alike. The model is the opposite kind of decision. A multinomial logit of marrying or separating against staying together, a logit of marrying in a month and a complementary log-log model of the monthly rate of marriage estimate three different quantities in principle, and with monthly chances of marrying of one or two per cent they nearly coincide. On this curve the three models are equally plausible ways of estimating one quantity, which is the condition that Auspurg sets for a multiverse to be informative.
+
+The published coefficient, `r num(co_oa$b)` (SE `r num(co_oa$se, 2)`), is not among the `r nrow(co_curve)`. It comes from a model with an interaction of race-ethnicity and period, beside which the coefficient of the period is the change for non-Hispanic white women alone, and the menu lists that interaction among the options that answer another question. The reference specification, the same model without the interaction, gives `r num(co_ref$b)`. A reader who sets the published number against the curve therefore compares two estimands, which is the incoherence that Rohrer and colleagues warn of when a multiverse is used for inference, and the same holds for any published coefficient that is conditional on an interaction which the claim does not mention.
+
+The curve holds the two surveys of the paper fixed. The menu keeps comparisons with later surveys off the curve, as replications of the trend rather than answers about the cohorts of the paper, and the course has fitted them on its own rebuild of the NSFG: the unions of 1995 set against those of 2011–2015 give `r num(co_1995_2011$b)`, and those of 2002 against 2011–2015 give `r num(co_2002_2011$b)` (`r pe(co_2002_2011$p)`), both in the direction of the claim. The SCORE replication of the paper tested a different coefficient, the interaction of some college education and period in the first model of the paper (−0.725 in the paper), on the surveys of 2002 and 2011–2015 without weights, and found `r num(co_score$b)` (`r pe(co_score$p)`), which SCORE recorded as not replicated. Which result of a paper counts as replicated therefore depends on the coefficient that a programme attaches to it, and here two parts of the same project attached different ones, Multi100 the period coefficient of the second model and SCORE the education interaction of the first.
+
+## 11. The EU-frames curve {#sec-eu-frames}
 
 The housing-audit curve is small and unanimous. The EU-frames case shows the same debate on a curve of `r nrow(eu_curve)` specifications, built from a menu of fourteen decisions, on which the strength of the evidence depends on the decisions. Its claim, from a paper of 2016 [@Teney2016DoesEUEconomic], is that "poor national economic performances significantly decrease positive EU-framing dimensions". The subsections below read the arguments of sections 3 to 6 against that curve, and the last sets out the displays that the course keeps beside it. The section is a companion to [the inference reading](../cases/eu-frames/reading-inference.qmd) of the case, which covers one narrow question, namely what a test of the curve as a whole can and cannot establish.
 
-### 9.1 Pruning a menu of fourteen decisions {#sec-eu-pruning}
+### 11.1 Pruning a menu of fourteen decisions {#sec-eu-pruning}
 
-The EU-frames case applied the test of Auspurg, and the stricter standard that Rohrer and colleagues set for a multiverse used for inference, to its own menu. Every option of every decision was asked one question, whether it is a justifiable way of answering the claim as the course reads it, and the options that failed left the curve without leaving the course. Three of her categories reappeared. The pooled estimator, fitted without country effects, falls in her first category, and so do the conventional standard errors of the fixed-effects designs, which treat the ten years of a country as independent although the residuals of a country correlate from one year to the next; the curve keeps the two fixed-effects designs and classes every point by CR2 errors clustered by country with Satterthwaite degrees of freedom, as the [statistical methods module](stats-methods.qmd#sec-inference) explains. The four restricted samples, two periods and two sets of excluded countries, are versions of her second category, and the findings that they carry moved to the displays of section 9.5. Her fourth category, measurement nonequivalence, described the outcome axis of the full menu, on which six framing scales of different scope stood in for 'EU framing'.
+The EU-frames case applied the test of Auspurg, and the stricter standard that Rohrer and colleagues set for a multiverse used for inference, to its own menu. Every option of every decision was asked one question, whether it is a justifiable way of answering the claim as the course reads it, and the options that failed left the curve without leaving the course. Three of her categories reappeared. The pooled estimator, fitted without country effects, falls in her first category, and so do the conventional standard errors of the fixed-effects designs, which treat the ten years of a country as independent although the residuals of a country correlate from one year to the next; the curve keeps the two fixed-effects designs and classes every point by CR2 errors clustered by country with Satterthwaite degrees of freedom, as the [statistical methods module](stats-methods.qmd#sec-inference) explains. The four restricted samples, two periods and two sets of excluded countries, are versions of her second category, and the findings that they carry are kept in the displays of section 11.5. Her fourth category, measurement nonequivalence, described the outcome axis of the full menu, on which six framing scales of different scope stood in for 'EU framing'.
 
-The four scales of the paper are shares of one instrument that sum to one for each respondent who mentions anything, and the two composites are sums of them, so whatever raises one share must lower the others, and [the simulation module](simulation.qmd#sec-outcomes) lets you examine the arithmetic directly. Under the convention of the course panel, which scores a respondent who mentions nothing as zero, the cell means of the positive and the negative composites sum to one minus the share of silent respondents, so that a confirmation of the claim on the negative composite largely counts the result on the positive composite a second time. The communitarian scale also contains the item "unemployment", which ties the outcome to the predictor by content. The curve of the claim therefore keeps the three positive scales that the claim names, scored as shares, as the paper scores them, while the negative scales have a curve of their own as the other half of the first hypothesis of the paper, and the count of items, which measures how much a respondent says about the EU rather than how the EU is framed, is taught in the [items module](measurement.qmd).
+The four scales of the paper are shares of one instrument that sum to one for each respondent who mentions anything, and the two composites are sums of them, so whatever raises one share must lower the others, and [the measurement module](measurement.qmd#sec-negative) works through the arithmetic. Under the convention of the course panel, which scores a respondent who mentions nothing as zero, the cell means of the positive and the negative composites sum to one minus the share of silent respondents, so that a confirmation of the claim on the negative composite largely counts the result on the positive composite a second time. The communitarian scale also contains the item "unemployment", which ties the outcome to the predictor by content. The curve of the claim therefore keeps the three positive scales that the claim names, scored as shares, as the paper scores them, while the negative scales have a curve of their own as the other half of the first hypothesis of the paper, and the count of items, which measures how much a respondent says about the EU rather than how the EU is framed, is taught in the [items module](measurement.qmd).
 
 @fig-off-curve shows what each option that left the curve does when it is swapped into every specification of the curve with everything else held as it was. The reason recorded for each, in the list of options that the specification menu draws on (`cases/eu-frames/data/menu_options.csv`), is one of three: the option answers another question, it answers this question less well because an assumption that it needs fails on these data, or it is a check of an answer that the curve already holds.
 
@@ -207,13 +333,13 @@ Read against Auspurg, the pruning changes the picture in the direction that her 
 Pick one decision of the [specification menu](../cases/eu-frames/menu.qmd) and write Auspurg's case for pruning it. Which of her four nonequivalence categories applies, and what would the curve look like if the decision were fixed at its best-justified option? Then write the case for keeping it, in Rohrer, Hullman and Gelman's terms: which purpose does varying this decision serve? The estimator and the sample are the two decisions where both cases are strong. Compare what you have written with the reason that the menu gives for each option.
 :::
 
-### 9.2 One correct analysis on a larger curve {#sec-eu-lakens}
+### 11.2 One correct analysis on a larger curve {#sec-eu-lakens}
 
-The pruning described in section 9.1 moves some way towards the position of Lakens and colleagues. The inference rule of the curve, for instance, was decided from evidence about the data, the correlation of the residuals of a country from year to year and the few countries that carry most of the variation, rather than from convention, which is the kind of empirical work on an auxiliary assumption that they ask for. It stops short of their position on the estimator, where the curve keeps two designs because the claim, as written, does not say whether the changes common to all of Europe belong to the comparison, and their argument would require the analyst to settle that question before the test.
+The pruning described in section 11.1 moves some way towards the position of Lakens and colleagues. The inference rule of the curve, for instance, was decided from evidence about the data, the correlation of the residuals of a country from year to year and the few countries that carry most of the variation, rather than from convention, which is the kind of empirical work on an auxiliary assumption that they ask for. It stops short of their position on the estimator, where the curve keeps two designs because the claim, as written, does not say whether the changes common to all of Europe belong to the comparison, and their argument would require the analyst to settle that question before the test.
 
 A participant choosing one specification from a fourteen-decision menu after ninety minutes of instruction is, on their reading, still choosing on an uninformed hunch. That limits what the exercise demonstrates without invalidating it.
 
-### 9.3 The fork chart {#sec-eu-forks}
+### 11.3 The fork chart {#sec-eu-forks}
 
 The fork chart of the EU-frames case decomposes the variance of the claim-aligned partial correlation across the `r nrow(eu_curve)` specifications of the curve by decision. The estimator carries `r pct_eu(fk("estimator"))`, the predictor `r pct_eu(fk("predictor"))`, the choice among the three positive scales `r pct_eu(fk("outcome"))` and the adjustment set `r pct_eu(fk("copredictor"))`, while the decisions of measurement together carry a few per cent and the interactions between decisions `r pct_eu(fk("interactions"))`. Moving the estimator alone changes whether a specification lies below zero with CR2 p < 0.05 in `r pct_eu(fk("estimator", "crossing_rate"))` of the pairs, and moving the predictor alone in `r pct_eu(fk("predictor", "crossing_rate"))`. Numbers like these invite a particular over-claim when they are put to the critics.
 
@@ -221,7 +347,7 @@ The over-claim would be that the dispersion on the curve is estimator dispersion
 
 The decomposition supports a more modest reading, in which it *locates* where the argument has to happen. That use is endorsed by every party to the debate. Lakens and colleagues "support the use of multimodel analyses to hypothesize about 'which analytical decisions are most consequential'" [@LakensEtAl2026ThereOnlyOne, p. 6]; Ganslmeier and Vlandas offer their method as something that "can help inform which combinations of choices are more or less warranted" [@GanslmeierVlandas2025EstimatingExtentSources, p. 6]; Steegen and colleagues promised pointers to the most consequential choices from the start. Read this way, the fork chart identifies which decisions of the menu need a theory. A large estimator share means that you have to decide whether your question concerns change relative to the common European path or all change within a country, and a large predictor share means that you have to decide which measure of the economy the claim is about.
 
-### 9.4 The strength of the evidence {#sec-eu-reading}
+### 11.4 The strength of the evidence {#sec-eu-reading}
 
 The rule of section 6 applies with more force to a larger curve. The share of the specifications of the EU-frames case that support its claim – `r pct_eu(below(eu_curve))` below zero on the curve of `r nrow(eu_curve)`, `r pct_eu(below_sig(eu_curve))` below zero with CR2 p < 0.05 – is a description of a curated set of analyses, not the probability that the claim is true.
 
@@ -237,7 +363,7 @@ The class chart of the EU-frames case is a many-analysts demonstration in the se
 Open [the Multiverse page](../cases/eu-frames/multiverse.qmd) and find the black mark for the specification that you declared in Task 5 (or the reproduced specification, if you did not submit one). First read its neighbourhood possibilistically: what is the full range of aligned estimates among specifications that differ from yours on exactly one decision? Then catch yourself the moment you start counting – 'most of my neighbours agree with me' – and write one sentence on what that count would and would not establish, given how this universe was built.
 :::
 
-### 9.5 Heterogeneity and influence {#sec-heterogeneity}
+### 11.5 Heterogeneity and influence {#sec-heterogeneity}
 
 The four sample restrictions of the EU-frames menu left the curve because each changes the population about which the claim is made, but the findings that they carry belong in the course, and three displays keep them. Each answers a question that a curve of one population cannot answer, namely where and when in that population the association is found, and none of them adds a point to the curve.
 
@@ -336,9 +462,70 @@ For the reproduced specification the slope is `r num(ba("bailout", "b"), 5)` in 
 
 Read together, the three displays suggest that the association between unemployment and positive framing is concentrated in the countries in which the crisis was deepest, and appears in both halves of the decade, which is what a reader of the claim needs to know about it. The reason for keeping them off the curve is the requirement of section 2. A curve that mixed the full panel with its halves and its subsets would count answers about different populations as votes on one question, and its share of supporting specifications would then depend on how many restrictions the menu happened to offer. As displays, the same fits show how the association varies across the population of the claim, which is a finding in its own right, without being read as evidence that the claim is robust or fragile.
 
+## 12. Four curves compared {#sec-four-curves}
+
+@fig-four-curves draws the four curves of the course side by side, each on its own scale, and @tbl-four-curves sets out what each of them shows.
+
+```{r}
+#| label: fig-four-curves
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.4
+#| fig-cap: "The four curves of the course, each ranked by its estimate and drawn on its own scale: the gap in named greetings in percentage points (housing audit), points of distrust per point of concern (immigration and trust), the coefficient of the later cohort on the log scale (cohabitation) and the claim-aligned partial correlation (EU frames). Open circles have p < 0.05 and crosses p ≥ 0.05, each case under the test that classes its curve. Sources: the `spec_curve.csv` file of each case."
+#| fig-alt: "Four panels of ranked marks. The housing, trust and cohabitation curves are all circles on one side of zero. The EU-frames curve runs from below zero to slightly above it, with crosses mixed among the circles near zero."
+four_curves |>
+  ggplot2::ggplot(ggplot2::aes(rank, estimate, shape = class)) +
+  ggplot2::geom_hline(yintercept = 0, colour = "grey70") +
+  ggplot2::geom_point(colour = "#0e3b6a", size = 1.3, stroke = 0.5, alpha = 0.6) +
+  ggplot2::scale_shape_manual(values = c("p < 0.05" = 1, "p ≥ 0.05" = 4), name = NULL) +
+  ggplot2::scale_y_continuous(labels = minus) +
+  ggplot2::facet_wrap(ggplot2::vars(case), scales = "free") +
+  ggplot2::labs(x = "specifications, ranked by the estimate", y = "estimate, on the scale of the case") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank())
+```
+
+```{r}
+#| label: tbl-four-curves
+#| echo: false
+#| tbl-cap: "The four curves of the course. The decision with the largest share is the one that carries most of the variance of the estimates of the curve when the variance is split by decision. Sources: the `spec_curve.csv` and `reference_marks.csv` files of each case and `cases/eu-frames/data/spec_curve_forks.csv`; the replications of the housing-audit and EU-frames cases from their case studies."
+tibble::tibble(
+  Case = case_names,
+  Specifications = c(nrow(curve), nrow(tr_curve), nrow(co_curve), nrow(eu_curve)),
+  `Decisions that vary` = c(5L, 5L, 6L, sum(forks$axis != "interactions")),
+  `In the direction of the claim with p < 0.05` = c(
+    paste(n_neg_sig, "of", n_spec),
+    paste(sum(tr_curve$b > 0 & tr_curve$p < 0.05), "of", nrow(tr_curve)),
+    paste(sum(co_curve$b < 0 & co_curve$p < 0.05), "of", nrow(co_curve)),
+    paste(sum(eu_curve$supports & eu_curve$sig), "of", nrow(eu_curve))
+  ),
+  `Decision with the largest share` = c(
+    paste0("the emails counted (", pct(var_share[["population"]]), ")"),
+    paste0("the set of controls (", pct(tr_share[["controls"]]), ")"),
+    paste0("the cohorts compared (", pct(co_share[["cohorts"]]), ")"),
+    paste0("the estimator (", pct_eu(fk("estimator")), ")")
+  ),
+  `Replication on new data` = c(
+    "SCORE, 3,050 authorities and new names: positive, not significant (z = 0.66)",
+    paste0("SCORE, ESS round 5 and rounds 5–9: ", fmt(tr_round5$b, 3), " and ", fmt(tr_rounds59$b, 3),
+           ", both significant"),
+    paste0("course refits on NSFG 2011–2015: ", num(co_1995_2011$b), " and ", num(co_2002_2011$b),
+           "; SCORE, another coefficient: not replicated"),
+    "SCORE, fourteen Eurobarometer waves of 2013–2019: opposite sign, not significant"
+  )
+) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:3, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+Three of the four curves are unanimous, with every specification in the direction of the claim and p < 0.05. On the EU-frames curve `r pct_eu(below(eu_curve))` of the specifications point in the direction of the claim and `r pct_eu(below_sig(eu_curve))` do so with p < 0.05, so that the curve agrees on the direction and divides on the strength of the evidence. On each curve the decision that carries most of the spread fixes what is compared: which emails, which controls, which cohorts, and which design. How a fixed comparison is estimated, by a linear model or a logit, with one form of the time since the start of a union or another, moves every curve far less. The spread of each curve is therefore largely a spread of questions, as the critics of section 3 would lead one to expect, and the menus name those decisions as estimands for that reason.
+
+The replications came out both ways. The housing audit, a randomised experiment, and the EU-frames claim, on a panel of countries, did not replicate on new data. The trust claim replicated on later rounds of the same survey, and the decline in marriage among cohabitors appears in the later surveys that the course has fitted, although the SCORE replication of another coefficient of the same paper did not succeed. How unanimous a curve was gave no indication of which of these outcomes would follow, because every specification of a curve is fitted to one sample and a replication draws another. The curve measures how far a result depends on the analysis of the data in hand, the question of section 7, and a replication asks whether a new sample gives the same answer.
+
 ## Sources and further reading {#sec-sources}
 
-The debate read here: @GanslmeierVlandas2025EstimatingExtentSources and the reply by @Auspurg2025RobustnessBetterAssessed; @RohrerEtAl2026WhatsMultiverseGood with the companion post by @Hullman2026WhatMultiverseGood; and @LakensEtAl2026ThereOnlyOne. The origins: @SteegenEtAl2016IncreasingTransparencyMultiverse, @GelmanLoken2014StatisticalCrisisScience and @SimonsohnEtAl2020SpecificationCurveAnalysis, with a framework for judging which analytic decisions are equivalent in @DelGiudiceGangestad2021TravelersGuideMultiverse. The many-analysts strand: @SilberzahnEtAl2018ManyAnalystsOne, @BreznauEtAl2022ObservingManyResearchers and @AczelEtAl2026InvestigatingAnalyticalRobustness, and, for the diagnosis that many disagreements between analysts are disagreements about the estimand, @AuspurgBruderl2021HasCredibilitySocial. The book-length guide is @YoungCumberworth2025MultiverseAnalysisComputational, the tools are @SarmaEtAl2023MultiverseMultiplexingAlternative and @SarmaEtAl2024MilliwaysTamingMultiverses, and the classroom design is @HeymanVanpaemel2022MultiverseAnalysesClassroom. Quotations from the PsyArXiv preprints are cited by the pagination of the preprints. The numbers on this page are computed when it is built from `spec_curve.csv`, `menu_options.csv`, `display_outcomes.csv`, `display_subgroups.csv` and `analysts5.csv` in `cases/housing/data/`, which are described by their codebooks. The numbers of section 9 are computed from files that the pipeline of the EU-frames case writes: the curve `cases/eu-frames/data/spec_curve.csv` and its decomposition `spec_curve_forks.csv`, the comparison of every option with its twins on the curve in `menu_deviations.csv`, the reasons in `menu_options.csv`, and the displays `display_periods.csv`, `display_loo.csv` and `display_bailout.csv`, which the [codebook of the displays](../cases/eu-frames/data/displays_codebook.md) describes.
+The debate read here: @GanslmeierVlandas2025EstimatingExtentSources and the reply by @Auspurg2025RobustnessBetterAssessed; @RohrerEtAl2026WhatsMultiverseGood with the companion post by @Hullman2026WhatMultiverseGood; and @LakensEtAl2026ThereOnlyOne. The origins: @SteegenEtAl2016IncreasingTransparencyMultiverse, @GelmanLoken2014StatisticalCrisisScience and @SimonsohnEtAl2020SpecificationCurveAnalysis, with a framework for judging which analytic decisions are equivalent in @DelGiudiceGangestad2021TravelersGuideMultiverse. The many-analysts strand: @SilberzahnEtAl2018ManyAnalystsOne, @BreznauEtAl2022ObservingManyResearchers and @AczelEtAl2026InvestigatingAnalyticalRobustness, and, for the diagnosis that many disagreements between analysts are disagreements about the estimand, @AuspurgBruderl2021HasCredibilitySocial. The book-length guide is @YoungCumberworth2025MultiverseAnalysisComputational, the tools are @SarmaEtAl2023MultiverseMultiplexingAlternative and @SarmaEtAl2024MilliwaysTamingMultiverses, and the classroom design is @HeymanVanpaemel2022MultiverseAnalysesClassroom. Quotations from the PsyArXiv preprints are cited by the pagination of the preprints. The numbers on this page are computed when it is built from `spec_curve.csv`, `menu_options.csv`, `display_outcomes.csv`, `display_subgroups.csv` and `analysts5.csv` in `cases/housing/data/`, which are described by their codebooks. The numbers of sections 9, 10 and 12 are computed in the same way from the files of the curve of each case in `cases/trust/data/`, `cases/cohabitation/data/` and `cases/eu-frames/data/` (`spec_curve.csv`, `menu_options.csv`, `reference_marks.csv`, and for the cohabitation case `display_options.csv`), and the replications of the housing-audit and EU-frames cases come from their case studies. The numbers of section 11 are computed from files that the pipeline of the EU-frames case writes: the curve `cases/eu-frames/data/spec_curve.csv` and its decomposition `spec_curve_forks.csv`, the comparison of every option with its twins on the curve in `menu_deviations.csv`, the reasons in `menu_options.csv`, and the displays `display_periods.csv`, `display_loo.csv` and `display_bailout.csv`, which the [codebook of the displays](../cases/eu-frames/data/displays_codebook.md) describes.
 
 ## References {.unnumbered}
 
