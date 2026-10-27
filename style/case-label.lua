@@ -99,8 +99,7 @@ function Pandoc(doc)
   local inlines = { pandoc.Str(#parts > 1 and "Cases:" or "Case:"), pandoc.Space() }
   for i, inl in ipairs(parts) do
     if i > 1 then
-      table.insert(inlines, pandoc.Space())
-      table.insert(inlines, pandoc.Str("·"))
+      table.insert(inlines, pandoc.Str(","))
       table.insert(inlines, pandoc.Space())
     end
     for _, x in ipairs(inl) do table.insert(inlines, x) end

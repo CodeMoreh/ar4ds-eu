@@ -45,8 +45,8 @@ published   <- readr::read_csv("data/reference_marks.csv", show_col_types = FALS
   datawizard::data_filter(id == "OA")
 
 # The curve of the EU-frames case, for the figures quoted in section 17, read
-# from the folder of that case beside the housing one; none of the code shown
-# in sections 14 to 18 runs.
+# from the folder of that case beside the housing one; the code shown in
+# sections 16 and 17 does not run.
 eu_curve <- readr::read_csv("../eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 eu_ref   <- eu_curve |> datawizard::data_filter(is_reference)
 num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
@@ -55,14 +55,16 @@ pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", di
 
 This is the first module of the [companion curriculum](index.qmd), and it is written for the person who arrives with no R at all: a student, a professional from another field, or anyone curious about how the analysis of the course is built. It does not assume that you have programmed before. Sections 1 to 13 work on one file, the housing-audit data, which holds one row for each of the `r format(n_emails, big.mark = ",")` emails that the original authors (OAs) sent to public housing authorities in the United States, signed with names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect]. The [case study](../cases/housing/index.qmd) tells the story of the experiment. Here it serves as a dataset small enough to look at whole, with an outcome that is either yes or no, which makes it a good place to learn. By the end you will be able to read the file into R, look at it, reshape it with a handful of verbs, compute the share of replies that greeted the sender by name and the difference between two such shares, set the result out as a table and as a figure, and fit your first specification with the helper that the exercise uses.
 
-Sections 14 to 18 take the same tools further on the country-year panel of the EU-frames case, a table of 270 rows built from Eurobarometer surveys: reading other file formats and fetching data from an archive, the three dialects in which R is written, the grammar of graphics in more depth, the specification curve of that case, and the habit of naming the estimand before a model is read. They are for a second reading, or for a track on the EU-frames case.
+Sections 14 to 18 take the same tools further, for a second reading. Section 14 reads the Stata file that the OAs deposited, with its labels, and introduces the packages that fetch data from an archive. Section 15 sets out the three dialects in which R is written, section 16 the grammar of graphics in more depth, section 17 the specification curve, and section 18 the habit of naming the estimand before a model is read. Sections 14, 15 and 18 stay with the emails. Sections 16 and 17 move to the country-year panel of the EU-frames case, a table of 270 rows built from Eurobarometer surveys, for two things that the emails cannot show. A scatterplot with a fitted line needs measures that vary continuously, and the panel holds them, among them the unemployment rate and the mean score with which the respondents of a country-year framed the EU in cosmopolitan terms. The curve of that case mixes predictors whose results point in opposite directions, so it has to be aligned with the claim before it can be read.
 
-Unlike many pages that teach R, this one runs its code in sections 1 to 13. Every block there was executed when the page was built, and what R printed appears underneath it, so you can compare your own output with the page line by line. The code of sections 14 to 18 is shown without being run, because it reads files that are on your machine only once you have the EU-frames workspace. The way to learn is still to type. Copy each block into the workspace that you downloaded from the [setup page](../setup.qmd), or into the [browser lab](../cases/housing/lab.qmd), where a copy of R starts inside the browser tab with the data already in place.
+Unlike many pages that teach R, this one runs its code. Every block in sections 1 to 15 and in section 18 was executed when the page was built, and what R printed appears underneath it, so you can compare your own output with the page line by line. The code of sections 16 and 17 is shown without being run, because it reads the panel of the EU-frames case, which is on your machine once you have the workspace of that case. The way to learn is still to type. Copy each block into the workspace that you downloaded from the [setup page](../setup.qmd), or into the [browser lab](../cases/housing/lab.qmd), where a copy of R starts inside the browser tab with the data already in place.
+
+The courses use the module at several points. It is the companion of the R tutorial in Part 2 of the [one-day course on data tools](../tracks/housing-one-day-data-tools/part-2.qmd), which works on the same emails, and of the first session of day 2 in the three-day courses, for example on the [immigration-and-trust case](../tracks/trust-three-days/day-2.qmd). The self-study track reads sections 1 to 5 in [stage 1](../tracks/self-study/stage-1.qmd) and sections 6 to 13 in [stage 2](../tracks/self-study/stage-2.qmd).
 
 ::: {.callout-tip}
 ## Try it
 
-The browser lab is the quickest way to follow along on a first read, since there is nothing to install. It loads the data for you as an object called `audit` and has datawizard, dplyr and tinyplot ready, but it does not hold readr, tinytable or ggplot2. Skip the line that reads the file in [section 6](#sec-reading), the formatted table in [section 11](#sec-table) and the ggplot2 figures at the end of [section 12](#sec-ggplot); everything else runs there as printed.
+The browser lab is the quickest way to follow along on a first read, since there is nothing to install. It loads the data for you as an object called `audit` and has datawizard, dplyr, tinyplot and parameters ready, but it does not hold readr, tinytable, ggplot2, haven, performance or modelbased. Skip the line that reads the file in [section 6](#sec-reading), the formatted table in [section 11](#sec-table), the ggplot2 figures at the end of [section 12](#sec-ggplot), the Stata file of [section 14](#sec-formats) and everything in [section 18](#sec-easystats) after `parameters::model_parameters()`; everything else runs there as printed.
 :::
 
 ## 1. R and the IDE {#sec-what}
@@ -168,6 +170,21 @@ readr::read_csv("data/housing_audit.csv")   # step 2: call a function by its pac
 
 `pak::pak()` downloads a package, together with everything that it depends on, and stores it on your machine. You run it once, and again only when you want an update. The second step is the call itself, and the course writes every function that does not come with R by the name of its package, two colons and the name of the function, as in `readr::read_csv()`. Written that way, a line works in any session on a machine where the package is installed, and anyone who reads it can see at once where each function comes from, which matters when two packages offer functions of the same name. You will also meet the older habit of attaching a package to the session with `library(readr)` at the top of a script, after which its functions can be called by their names alone. The two error messages that you will meet most often come from these two steps: `there is no package called 'readr'` means that step 1 never happened on this machine, and `could not find function "read_csv"` means that the function was called by its name alone in a session to which its package was never attached.
 
+Research code that only its authors run, such as the scripts of a paper, is often written the other way, with every function called by its name alone, and the facilitator of the course writes it so. What keeps it readable is a single import script, run at the top of every other script of the project, that attaches each package with `library()` and lists in `include.only` the functions that the project takes from it. Anyone who wants to know where a function comes from then has one place to look. Two attached packages can offer functions of the same name, and the conflicted package stops with an error when such a name is called, until `conflicts_prefer()` has said which of the two is meant:
+
+```{r}
+#| label: import-script
+#| eval: false
+# R/00_packages.R: the packages of a project and the functions taken from each
+library(readr, include.only = c("read_csv", "write_csv"))
+library(datawizard, include.only = c("data_filter", "data_summary", "data_tabulate"))
+library(dplyr, include.only = c("filter", "if_else"))
+library(conflicted)
+conflicts_prefer(dplyr::filter)   # stats::filter(), which R attaches at start-up, has the same name
+```
+
+The course writes `pkg::fun()` in all of its own code because that code is read a block at a time, by people who did not write it, and each block has to say where its functions come from without an import script beside it.
+
 In the workspace, `R/check_setup.R` checks the twelve packages that the exercise needs (dplyr, purrr, readr, tibble, datawizard, parameters, sandwich, marginaleffects, effectsize, tinyplot, dagitty and rmarkdown) and, if any are missing, prints the line that installs them.
 
 ## 6. Reading the data {#sec-reading}
@@ -194,7 +211,7 @@ names(audit)   # the names of the columns
 
 The workspace also holds `audit_original.csv`, the public file of the OAs with their own column names, on which the reproduction of Task 3 runs. Both files are described column by column in their codebooks, [`housing_audit_codebook.md`](../cases/housing/data/housing_audit_codebook.md) and [`audit_original_codebook.md`](../cases/housing/data/audit_original_codebook.md), and a codebook is the second thing to read after any import.
 
-Data reach researchers in other formats too. The OAs deposited their file in the format of Stata, a statistical package, and the course converted it to CSV. The haven package reads Stata (`read_dta()`) and SPSS (`read_sav()`) files with their labels, readxl reads Excel workbooks one sheet at a time, and arrow reads the newer Parquet format, which stores the type of each column inside the file. Whatever the source, the result is the same kind of data frame, and everything below applies to it unchanged. [Section 14](#sec-formats) shows each of them at work, with the packages that fetch data straight from an archive.
+Data reach researchers in other formats too. The OAs deposited their file on the Harvard Dataverse in the format of Stata, a statistical package, and the course converted it to CSV; the [data sources module](data-sources.qmd#sec-dataverse) shows how to download the deposited file. The haven package reads Stata (`read_dta()`) and SPSS (`read_sav()`) files with their labels, readxl reads Excel workbooks one sheet at a time, and arrow reads the newer Parquet format, which stores the type of each column inside the file. Whatever the source, the result is the same kind of data frame, and everything below applies to it unchanged. [Section 14](#sec-formats) reads the deposited Stata file and introduces the packages that fetch data straight from an archive.
 
 ## 7. Looking at the data {#sec-looking}
 
@@ -394,7 +411,7 @@ by_group |>
 
 tinytable is not among the twelve packages of the workspace, so install it with `pak::pak("tinytable")` before you try this. The names in backticks, such as `` `Replied (%)` ``, are column names that contain spaces or symbols, which R accepts only inside backticks.
 
-Task 3 builds a different kind of table, a cross-tabulation of two columns, with the base function `xtabs()`, and passes it to a test. The first look at that table is `datawizard::data_tabulate(audit, select = "named", by = "group")`, which holds the same counts and the missing codes beside them.
+Task 3 meets a different kind of table. Of the five analyses that you can choose to reproduce there, the one by analyst 8PTRZ cross-tabulates two columns with the base function `xtabs()` and passes the table to a chi-square test. A first look at such a table is `datawizard::data_tabulate(audit, select = "named", by = "group")`, which holds the counts of the three groups and the missing codes beside them.
 
 ## 12. A first figure {#sec-ggplot}
 
@@ -559,20 +576,50 @@ That is the whole of Task 4 in miniature: change one decision at a time, read wh
 
 ## 14. Other formats, and fetching data {#sec-formats}
 
-This section and the four that follow it work on the EU-frames case. Its data begin as Eurobarometer surveys, which the GESIS data archive distributes as **Stata** (`.dta`) and **SPSS** (`.sav`) files, because those are the packages that much of survey research historically ran on. R reads both through the `haven` package, one function per format (the file names below are illustrative – none of these files ship with the course):
+The course file is a CSV, but the data reached the course as a file in the format of Stata (`.dta`), which the OAs deposited on the Harvard Dataverse. The [data sources module](data-sources.qmd#sec-dataverse) shows how to download it, by hand or through the API of the Dataverse, and [the next subsection](#sec-fetching) names the package that does it in R. R reads Stata files, and SPSS files (`.sav`), through the haven package, one function for each format:
 
-```r
-eb <- haven::read_dta("eurobarometer_wave.dta")   # Stata; haven::read_sav() reads SPSS
+```{r}
+#| label: read-dta
+#| eval: false
+deposit <- haven::read_dta("HousingAuditAJPSFinalPublic_Unidentified.dta")   # haven::read_sav() reads SPSS
 ```
 
-These formats differ from a CSV in storing **labelled data**. A Stata or SPSS survey file records that a column called `eu_meaning` contains the answers to the question "What does the EU mean to you?", and that its stored values 1, 2, 3 stand for named answer options. `haven` keeps all of that: labelled columns print with their question text attached, and `as_label()` from the sjlabelled package turns the numeric codes into their labels when you want to work with the words rather than the numbers, leaving out the labels of codes that no respondent gave, which `as_factor()` from haven would keep.
-
-```r
-eb$eu_meaning                            # prints with its question and value labels attached
-sjlabelled::as_label(eb$eu_meaning)      # codes become their labels: a factor
+```{r}
+#| label: read-dta-page
+#| include: false
+# The page reads the copy of the deposited file that the course keeps in
+# data-raw/housing/, byte for byte the file on the Dataverse.
+deposit <- haven::read_dta("../../data-raw/housing/dataverse_1HOVTU/HousingAuditAJPSFinalPublic_Unidentified.dta")
 ```
 
-Many organisations keep their data in **Excel** files, and the `readxl` package reads them one sheet at a time, since a workbook is really a stack of tables:
+These formats differ from a CSV in storing **labelled data**. Each column can carry a variable label, a short description of what it holds, and a column of numeric codes can carry value labels, the words for which the codes stand. haven keeps both. In the deposited file, `poverty_pop_third` places the community of each housing authority in a third of the poverty rate, coded 1, 2 and 3, and it prints with its variable label and its value labels:
+
+```{r}
+#| label: labelled
+head(deposit$poverty_pop_third)
+```
+
+`as_label()` from the sjlabelled package turns the codes into their labels, which gives a factor. It leaves out the labels of codes that no row holds, which `as_factor()` from haven would keep as empty levels. The row headed `NA` counts the emails whose community has no poverty third in the file:
+
+```{r}
+#| label: as-label
+deposit$poverty_pop_third |>
+  sjlabelled::as_label() |>
+  datawizard::data_tabulate()
+```
+
+Labels are metadata that somebody typed, and they can be wrong. `get_label()` from sjlabelled returns the variable labels of the columns that it is given:
+
+```{r}
+#| label: label-error
+deposit |>
+  datawizard::data_select(select = c("HardEmail", "HispanicEmailer")) |>
+  sjlabelled::get_label()
+```
+
+`HispanicEmailer` records whether the official who replied had a Hispanic name, the column `hispanic_official` of the course file, and yet it carries the same label as the column before it, the hard-to-find address. The codebook that the OAs deposited beside the file labels it "Respondent had Hispanic name", and the [codebook of the public file](../cases/housing/data/audit_original_codebook.md) records the slip. Read the labels as a first guide and the codebook as the authority. The survey files of the immigration-and-trust and EU-frames cases arrive as Stata files too, from the ESS Data Portal and from the GESIS archive, with value labels on their answer codes, and the [data management module](data-management.qmd#sec-trust-read) reads the ESS rounds with the same function.
+
+Many organisations keep their data in **Excel** files, and the `readxl` package reads them one sheet at a time, since a workbook is really a stack of tables. The file names in this block and the next are illustrative, since the course ships no workbook and no Parquet file:
 
 ```r
 rates <- readxl::read_excel("unemployment_rates.xlsx", sheet = "annual")
@@ -583,16 +630,30 @@ Treat what arrives from a spreadsheet with mild suspicion. Excel displays one th
 Finally, **Parquet** and **Feather** are the newer columnar formats, which store a table column by column, and you will increasingly meet them where datasets are large or move between programming languages. They are compressed and fast, and unlike a CSV they store the type of each column inside the file, so nothing has to be re-inferred on reading. The `arrow` package reads both, and the small `nanoparquet` package reads and writes Parquet without needing any other package:
 
 ```r
-panel <- arrow::read_parquet("EUframes_cy.parquet")   # arrow::read_feather() for Feather
+emails <- arrow::read_parquet("housing_audit.parquet")   # arrow::read_feather() for Feather
 ```
 
 Whatever the source format, what you end up with in R is the same data frame, and everything downstream – the verbs of sections 8 and 9, the models fitted in later modules – proceeds identically. Every `read_` function here also has a `write_` counterpart (`write_csv()`, `write_dta()`, `write_parquet()`, and `write_xlsx()` from the `writexl` package), so R also serves as the converter between all of these formats. The course ships its data as CSV all the same, because for tables of a few hundred or a thousand rows the efficiency of the binary formats buys nothing, while plain text can be opened in anything, compared line by line or read in an email.
 
 ### Fetching data from a repository or an API {#sec-fetching}
 
-Most data come from an archive, a statistical office or a repository, and for many of those sources an R package fetches the data straight into a data frame. The query is then written down in your script instead of being clicked through on a website, and that is what makes the download repeatable. The [data sources module](data-sources.qmd) maps the sources themselves, while this subsection covers the packages that query them, which fall into three groups.
+Most data come from an archive, a statistical office or a repository, and for many of those sources an R package fetches the data straight into a data frame. The query is then written down in your script instead of being clicked through on a website, and that is what makes the download repeatable. The [data sources module](data-sources.qmd) maps the sources and works through the route of each case of the course step by step, while this subsection covers the packages that query them, which fall into three groups.
 
-**Indicators from the international organisations and statistical offices**, which are open and need no account. The `WDI` package (and `wbstats`, which covers more of the World Bank databases) queries the World Bank indicators by their codes, which is how the macro variables of the EU-frames panel were obtained:
+**Repositories of deposited work**, which need no account for a public file. The `dataverse` package downloads a file from any Dataverse installation by the DOI of its record, which is how the [data sources module](data-sources.qmd#sec-dataverse) fetches the deposited file that this section read:
+
+```r
+deposit <- dataverse::get_dataframe_by_name(
+  "HousingAuditAJPSFinalPublic_Unidentified.tab",
+  dataset  = "doi:10.7910/DVN/1HOVTU",
+  server   = "dataverse.harvard.edu",
+  original = TRUE,             # the Stata file as deposited, not the tab-separated copy
+  .f       = haven::read_dta   # the function that reads it
+)
+```
+
+`osfr` reads and writes the Open Science Framework through its API, which is how the script `R/get_data.R` in the workspace of the EU-frames case fetches its panel, and `zen4R` does the same for Zenodo, and deposits there as well. For a source with no package, `httr2` sends the request and `jsonlite` parses the answer, and `rvest` reads a table out of a web page, with the caution that scraping a site is subject to its terms and to the courtesy of not hammering it.
+
+**Indicators from the international organisations and statistical offices**, which are open and need no account. The `WDI` package (and `wbstats`, which covers more of the World Bank databases) queries the World Bank indicators by their codes, which is how the macro variables of the EU-frames panel were obtained, as [section 3.5](data-sources.qmd#sec-worldbank) of the data sources module sets out:
 
 ```r
 macro <- WDI::WDI(country = c("DE", "FR", "GB"),
@@ -602,53 +663,59 @@ macro <- WDI::WDI(country = c("DE", "FR", "GB"),
 
 The `eurostat` package does the same for the Eurostat tables (`get_eurostat("une_rt_a")` fetches the annual unemployment table, with `restatapi` as an alternative that uses the newer API, the interface through which programs request data from Eurostat); `OECD` and the general-purpose `rsdmx` query the OECD and any other service that publishes in SDMX, the standard format in which many statistical agencies exchange data; `Rilostat` reaches ILOSTAT; `onsr` the Office for National Statistics; `wid` the World Inequality Database. Each returns a long, tidy table, one row per country and period, that pivots into whatever shape a model needs.
 
-**Survey and census microdata behind a registration.** These packages log in for you, so the credentials belong in an environment variable or a keyring, never in the script. `ipumsr` builds and downloads IPUMS extracts through the IPUMS API and reads them with their labels; `gesisdata` downloads studies from the GESIS archive by study number with your GESIS login, which is the reproducible way of fetching the Eurobarometer waves behind the EU-frames case; `rdhs` does the same for the Demographic and Health Surveys, `pewdata` for the files of the Pew Research Center, and `manifestoR` for the coded programmes of the Manifesto Project, with an API key. The `essurvey` package was written for the previous download site of the European Social Survey, and the survey has since moved to a new portal, so check that it still works before building on it. Whatever the package, the file that arrives is usually Stata or SPSS, and `haven` reads it with its labels, as the previous subsection showed.
-
-**Repositories of deposited work.** `osfr` reads and writes the Open Science Framework through its API and needs no login for a public node, which is how the script `R/get_data.R` in the EU-frames workspace fetches its panel; `dataverse` downloads a dataset from any Dataverse installation by its DOI; `zen4R` does the same for Zenodo, and deposits there as well. For a source with no package, `httr2` sends the request and `jsonlite` parses the answer, and `rvest` reads a table out of a web page, with the caution that scraping a site is subject to its terms and to the courtesy of not hammering it.
+**Survey and census microdata behind a registration.** Packages are fewer here, and less dependable, because an archive that asks for an account and a statement of purpose seldom offers programs a way in. Where one does, the credentials belong in an environment variable or a keyring, never in the script. `ipumsr` builds and downloads IPUMS extracts through the IPUMS API and reads them with their labels. The ESS Data Portal has a download API of its own, still in beta, which the data sources module calls with base R in [section 3.3](data-sources.qmd#sec-ess), because the `essurvey` package was written for the download site that the ESS replaced on 30 May 2022 and has had no release since. The GESIS archive, which distributes the Eurobarometer waves behind the EU-frames case, offers no such interface. The `gesisdata` package scripts the clicks of a download by driving a web browser, but it has not been updated since July 2023, and a report of a failed download, opened on its issue tracker in February 2025, has had no answer. The course therefore downloads the waves by hand, as [section 3.4](data-sources.qmd#sec-gesis) of the same module shows step by step. `rdhs` serves the Demographic and Health Surveys, `pewdata` the files of the Pew Research Center, and `manifestoR` the coded programmes of the Manifesto Project with an API key, and any such package is worth testing on one file before a project is built on it. Whatever the package, the file that arrives is usually Stata or SPSS, and haven reads it with its labels, as the first part of this section showed.
 
 Two habits keep a fetched dataset reproducible. Write the fetch as a function or a script of its own, save what it returns as a dated file, and read that file in the analysis, so that the analysis does not depend on the network being up or the source being unchanged. And record the version or the download date in the file name or the README, because the World Bank and Eurostat revise past years without renaming the series.
 
 ## 15. Three dialects {#sec-dialects}
 
-R is old enough to have grown dialects, families of packages with their own vocabulary and style, all doing the same underlying work. You will meet three – base R, the tidyverse and easystats – and this section sets the same small task in each, so that none of them ever looks foreign. The task is to keep the rows of the crisis years in the EU-frames panel, read as `euframes <- readr::read_csv("data/EUframes_cy.csv")` in the workspace of that case, with a handful of columns.
+R is old enough to have grown dialects, families of packages with their own vocabulary and style, all doing the same underlying work. You will meet three – base R, the tidyverse and easystats – and this section sets the same small task in each, so that none of them ever looks foreign. The task is to keep the delivered emails, the ones with a reply status, with four of their columns.
 
 **Base R** does it with the bracket-and-`$` machinery of [section 4](#sec-dataframes), no packages required:
 
-```r
-crisis <- euframes[euframes$year >= 2009, c("country", "year", "unemp", "mcosmo")]
+```{r}
+#| label: dialect-base
+delivered <- audit[!is.na(audit$reply), c("name", "group", "reply", "named")]  # r-style: keep – base R, shown for comparison
+nrow(delivered)
 ```
 
 It works, and code written this way twenty years ago still runs. Its weakness is that the brackets spell out the mechanics of the selection, so the reader must decode positions and conditions to reconstruct what the line is for.
 
 **The tidyverse** is the dominant modern dialect, a family of packages that share one design philosophy and can be installed and attached under the single name `tidyverse` [@WickhamEtAl2019WelcomeTidyverse]. You have already met two of its members, readr, whose `read_csv()` section 6 used, and dplyr, whose `if_else()` and `transmute()` sections 10 and 11 used. In dplyr, the same task reads as a list of named steps:
 
-```r
-euframes |>
-  dplyr::filter(year >= 2009) |>              # crisis-period rows only
-  dplyr::select(country, year, unemp, mcosmo) # the columns of interest
+```{r}
+#| label: dialect-dplyr
+delivered <- audit |>
+  dplyr::filter(!is.na(reply)) |>            # the delivered emails only
+  dplyr::select(name, group, reply, named)   # the columns of interest
+nrow(delivered)
 ```
 
-`dplyr::mutate()` derives a new column from existing ones, and `dplyr::summarise()` reduces the table to a single row (or, with `dplyr::group_by()`, one row per group). The pipeline below adds a plain-language crisis flag, groups the country-years by whether a bailout programme was active, and reports the average cosmopolitan-framing score in each group:
+`dplyr::mutate()` derives a new column from existing ones, and `dplyr::summarise()` reduces the table to a single row, or, after `dplyr::group_by()`, to one row per group. The chain below keeps the delivered emails, adds the greeting counted among all of them, as the second calculation of [section 10](#sec-shares) did, groups the emails by the group of the name, and reports three numbers for each group:
 
-```r
-euframes |>
-  dplyr::mutate(crisis = year >= 2009) |>     # a new TRUE/FALSE column
-  dplyr::group_by(bailout) |>                 # split by bailout status
+```{r}
+#| label: dialect-dplyr-summary
+audit |>
+  dplyr::filter(!is.na(reply)) |>
+  dplyr::mutate(greeted = dplyr::if_else(reply == 1, named, 0)) |>   # no reply counts as no greeting
+  dplyr::group_by(group) |>                                         # one set of rows per group of names
   dplyr::summarise(
-    n_cells    = dplyr::n(),                  # how many country-years
-    mean_cosmo = mean(mcosmo),                # their average outcome
-    mean_unemp = mean(unemp)
+    emails     = dplyr::n(),                    # how many delivered emails
+    reply_rate = mean(reply),                   # the share that drew a reply
+    greeted    = mean(greeted, na.rm = TRUE)    # the share greeted by name, the five uncoded replies left out
   )
 ```
 
-Read the chain aloud and it is almost English: take the panel, add a crisis flag, group by bailout status, and for each group report the count and two averages. Readability of that kind serves reproducibility, because a reviewer who can read the code can check it, and that is why the scripts of the course are built from chains of named verbs.
+Read the chain aloud and it is almost English: take the emails, keep the delivered ones, add a column for the greeting, group by the names, and for each group report the count and two shares. Readability of that kind serves reproducibility, because a reviewer who can read the code can check it, and that is why the scripts of the course are built from chains of named verbs.
 
 **easystats** is the third dialect, and the one that the course reaches for first. It is likewise a family of packages under one installable name, `easystats` [@LudeckeEtAl2022EasystatsFrameworkEasy]. Its data-preparation member is datawizard, the package of sections 7 to 11, whose verbs are modelled on those of dplyr, and the course uses it wherever it has the verb that a task needs, before turning to dplyr:
 
-```r
-euframes |>
-  datawizard::data_filter(year >= 2009) |>
-  datawizard::data_select(select = c("country", "year", "unemp", "mcosmo"))
+```{r}
+#| label: dialect-datawizard
+delivered <- audit |>
+  datawizard::data_filter(!is.na(reply)) |>
+  datawizard::data_select(select = c("name", "group", "reply", "named"))
+nrow(delivered)
 ```
 
 The other members are built for what happens *after* a model is fitted, the subject of [section 18](#sec-easystats). The three dialects are used together, in layers. Base R is always underneath, datawizard and the tidyverse give data work a grammar of named verbs, and the rest of easystats gives the modelling stage one of its own.
@@ -656,12 +723,12 @@ The other members are built for what happens *after* a model is fitted, the subj
 ::: {.callout-tip}
 ## Try it
 
-Write a chain on `euframes` that keeps only Greece (`datawizard::data_filter(country == "Greece")`), selects `year`, `unemp` and `mcosmo`, and prints the result. Then extend it with `datawizard::data_summary()` to report the mean unemployment of Greece across the whole period. If you are curious, redo the first step in base R and in dplyr, and notice that you can already read all three.
+Write a chain on `audit` that keeps only the emails signed Santiago (`datawizard::data_filter(name == "Santiago")`), selects `reply` and `named`, and prints the result. Then extend it with `datawizard::data_summary()` to report the share of the emails to Santiago that drew a reply, leaving out the bounced ones with `mean(reply, na.rm = TRUE)`. If you are curious, redo the first step in base R and in dplyr, and notice that you can already read all three.
 :::
 
 ## 16. The grammar of graphics {#sec-grammar}
 
-[Section 12](#sec-ggplot) drew a first figure from the housing-audit data, and this section takes the grammar further on the EU-frames panel. Section 15 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart on the pages and slides of the course is built with it, so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The figures that you draw yourself, in the workspaces and the browser labs, and the live class charts on the multiverse page of each case, are drawn with tinyplot ([section 12](#sec-tinyplot)), which is light enough to run in a browser. The other exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd), which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and two figures in the [statistics module](stats-methods.qmd): the rotating plane of section 2, drawn with rgl, and the forest plot of section 10, drawn by metafor.
+[Section 12](#sec-ggplot) drew a first figure from the housing-audit data, and this section takes the grammar further on the panel of the EU-frames case, read as `euframes <- readr::read_csv("data/EUframes_cy.csv")` in the workspace of that case. Its 270 rows are 27 countries in each of ten years, and its columns include the unemployment rate (`unemp`), the mean score of cosmopolitan framing of the EU among the respondents of each country-year (`mcosmo`, from 0 to 1) and whether an EU or IMF assistance programme was running (`bailout`), so it has the continuous measures that a scatterplot, a fitted line and a panel for each country need. Section 15 introduced the tidyverse as a family and named two of its members. **ggplot2** is the third, and it is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart on the pages and slides of the course is built with it, so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The figures that you draw yourself, in the workspaces and the browser labs, and the live class charts on the multiverse page of each case, are drawn with tinyplot ([section 12](#sec-tinyplot)), which is light enough to run in a browser. The other exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd) of the EU-frames case, which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and a few figures in the methods modules that packages with plotting functions of their own draw.
 
 The name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts, much as a grammar describes how words combine into sentences. ggplot2 therefore has no separate function for each chart type. It splits a figure into parts that recombine freely: the data, the mapping from columns to visual properties, the geometric shapes drawn, the scales that decide what those shapes look like, the panels that the plot is divided into, and last the labels and the styling. A scatterplot and a bar chart are two fillings of the same slots, and once you know the slots you can read the figures on this site, including kinds you have not met yet.
 
@@ -670,8 +737,6 @@ The name abbreviates 'the grammar of graphics', the idea that any chart can be d
 A plot needs data, a mapping, and at least one geom. Everything else has a default good enough to start with.
 
 ```r
-library(ggplot2)
-
 ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
   ggplot2::geom_point()
 ```
@@ -735,7 +800,7 @@ ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo, colour = factor(ba
   ggplot2::scale_x_continuous(breaks = seq(0, 30, by = 5))
 ```
 
-`scale_colour_manual()` names a colour for each level of the variable. Giving `values` and `labels` as *named* vectors, with `"0" = …` rather than a bare pair, means the assignment cannot silently reverse itself if the data ever arrives in a different order. The colours that the course uses throughout are `#0e3b6a` (dark blue), `#E69F00` (orange), `#009E73` (green), `#a10000` (dark red) and `#848c94` (mid grey), with `#c7ccd2` reserved as the muted grey for results that are not statistically significant. The orange and green belong to a palette built to stay distinguishable under the commonest forms of colour vision deficiency, which is why the deck never rests an argument on a red-green contrast alone.
+`scale_colour_manual()` names a colour for each level of the variable. Giving `values` and `labels` as *named* vectors, with `"0" = …` rather than a bare pair, means the assignment cannot silently reverse itself if the data ever arrives in a different order. The colours that the course uses throughout are `#0e3b6a` (dark blue), `#E69F00` (orange), `#009E73` (green), `#a10000` (dark red) and `#848c94` (mid grey), with `#c7ccd2` reserved as the muted grey for results that are not statistically significant. The orange and green belong to a palette built to stay distinguishable under the commonest forms of colour vision deficiency, which is why the decks never rest an argument on a red-green contrast alone.
 
 Position scales follow the same override logic, and one of their arguments catches people out. `scale_x_continuous(breaks = …)` decides where the tick marks fall, but the sibling argument `limits` **removes** every row outside the range before any statistic is computed, so a smoother is refitted on whatever rows remain.
 
@@ -774,8 +839,8 @@ ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
   ggplot2::geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15) +
   ggplot2::labs(
     x       = "Unemployment rate (%)",
-    y       = "Cosmopolitan framing (share of respondents)",
-    title   = "Where unemployment is higher, cosmopolitan framing is lower",
+    y       = "Cosmopolitan framing (mean score, 0–1)",
+    title   = "Unemployment and cosmopolitan framing",
     caption = "270 country-years, EU-frames dataset"
   ) +
   ggplot2::theme_minimal(base_size = 12) +
@@ -836,7 +901,7 @@ Build a chain that keeps the crisis years, groups by `year`, and reports the mea
 
 The central figure of the course is a **specification curve**, and you now have every part needed to build one yourself. A hypothesis about a dataset admits many defensible analyses, and if you fit all of them and line the results up in order, you can see the range of answers that the data supports instead of the single answer that one analyst happened to report.
 
-`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [statistics module](stats-methods.qmd#sec-inference) explains it), and `is_reference` marks the specification that the EU-frames tracks reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
+`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [statistics module](stats-methods.qmd#sec-inference) explains it), and `is_reference` marks the reference specification of the course, the analysis that analyst C6HJR submitted to Multi100, which is one of the three analyses that the one-day courses on the EU-frames case let you choose to reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
 
 ```r
 curve <- readr::read_csv("data/spec_curve.csv") |>
@@ -844,7 +909,7 @@ curve <- readr::read_csv("data/spec_curve.csv") |>
   datawizard::data_arrange("r_ca") |>
   datawizard::data_modify(rank = 1:n())
 
-reproduced <- datawizard::data_filter(curve, is_reference)
+reference <- datawizard::data_filter(curve, is_reference)
 ```
 
 The claim under test is that poor economic performance depresses the positive framing of the EU. With unemployment as the predictor, a negative correlation supports it, because a rise in unemployment is a worsening of the economy. With GDP growth as the predictor, support means a *positive* correlation instead, because a fall in growth is the worsening, and plotting the raw numbers together would scatter agreeing results on opposite sides of zero. **Claim alignment** repairs that. Flip the sign wherever the predictor is growth, and afterwards a negative value means support for every row alike. `if_else()` performs the flip, and the `_ca` suffix is the naming habit of the course for any claim-aligned quantity. The file already carries the aligned value in a column of the same name, so the line rebuilds something that you can check against the stored column. Sorting by the aligned value and numbering the rows then gives each specification a rank, and that rank becomes the horizontal axis.
@@ -853,11 +918,11 @@ The claim under test is that poor economic performance depresses the positive fr
 ggplot2::ggplot(curve, ggplot2::aes(x = rank, y = r_ca)) +
   ggplot2::geom_hline(yintercept = 0, linewidth = 0.4, colour = "#848c94") +
   ggplot2::geom_point(ggplot2::aes(shape = sig), size = 1.1, alpha = 0.5, colour = "#0e3b6a") +
-  ggplot2::geom_point(data = reproduced, colour = "#8b1538", size = 3) +
+  ggplot2::geom_point(data = reference, colour = "#8b1538", size = 3) +
   ggplot2::annotate(
     "text",
-    x = reproduced$rank, y = reproduced$r_ca - 0.08,
-    label = "the reproduced specification\nt = -3.804",
+    x = reference$rank, y = reference$r_ca - 0.08,
+    label = "the reference specification\n(C6HJR, t = -3.804)",
     colour = "#8b1538", fontface = "bold", size = 3.2, hjust = 1
   ) +
   ggplot2::scale_shape_manual(
@@ -875,9 +940,9 @@ ggplot2::ggplot(curve, ggplot2::aes(x = rank, y = r_ca)) +
   ggplot2::theme(legend.position = "top", panel.grid.minor = ggplot2::element_blank())
 ```
 
-Almost everything in that block has come up already: a reference line, a layer of small points whose shape is mapped to a logical column, a second point layer drawn from a *different* data frame, a manual scale, a zoom, labels and a theme. The manual scale sets the convention of the charts of the course, an open circle for a result below the 5% threshold and a cross for one above it, drawn at the same size and in translucent ink so that dense stretches of the curve stay readable and the class of a point is read from its shape rather than from a colour. `data = reproduced` inside the geom overrides the frame given to `ggplot()`, and that is how a single row gets picked out and emphasised. `annotate()` is the one function you have not met. It adds a mark that comes from no column at all, since you supply the coordinates and the text yourself, and that is why its position is read off `reproduced` rather than mapped.
+Almost everything in that block has come up already: a reference line, a layer of small points whose shape is mapped to a logical column, a second point layer drawn from a *different* data frame, a manual scale, a zoom, labels and a theme. The manual scale sets the convention of the charts of the course, an open circle for a result below the 5% threshold and a cross for one above it, drawn at the same size and in translucent ink so that dense stretches of the curve stay readable and the class of a point is read from its shape rather than from a colour. `data = reference` inside the geom overrides the frame given to `ggplot()`, and that is how a single row gets picked out and emphasised. `annotate()` is the one function you have not met. It adds a mark that comes from no column at all, since you supply the coordinates and the text yourself, and that is why its position is read off `reference` rather than mapped.
 
-Every point below the grey line is an analysis in the direction of the claim. Of the `r nrow(eu_curve)` specifications, `r pct(100 * mean(eu_curve$supports))` lie below it and `r pct(100 * mean(eu_curve$supports & eu_curve$sig))` lie below it with a CR2 p-value under 0.05. The aligned correlations run from `r num(min(eu_curve$r_ca))` to `r num(max(eu_curve$r_ca))`, so the curve holds firm support and a few results on the other side of zero. The burgundy point is the specification that the EU-frames tracks reproduce in Task 3, the one with the t-statistic of −3.804, which is also the specification that analyst C6HJR submitted to Multi100. Of the other specifications, `r sum(eu_curve$r_ca < eu_ref$r_ca)` lie further below zero than it does, and with a CR2 p-value of `r num(eu_ref$p_cr2)` it is drawn as a cross. The submitted analysis was neither an outlier nor a cherry-pick, and yet the same menu, worked through in good faith by any competent analyst, would have produced a great many other numbers, most of them further in the direction of the claim.
+Every point below the grey line is an analysis in the direction of the claim. Of the `r nrow(eu_curve)` specifications, `r pct(100 * mean(eu_curve$supports))` lie below it and `r pct(100 * mean(eu_curve$supports & eu_curve$sig))` lie below it with a CR2 p-value under 0.05. The aligned correlations run from `r num(min(eu_curve$r_ca))` to `r num(max(eu_curve$r_ca))`, so the curve holds firm support and a few results on the other side of zero. The burgundy point is the reference specification, the analysis that C6HJR submitted to Multi100, with a t-statistic of −3.804. Of the other specifications, `r sum(eu_curve$r_ca < eu_ref$r_ca)` lie further below zero than it does, and with a CR2 p-value of `r num(eu_ref$p_cr2)` it is drawn as a cross. The submitted analysis was neither an outlier nor a cherry-pick, and yet the same menu, worked through in good faith by any competent analyst, would have produced a great many other numbers, most of them further in the direction of the claim.
 
 ::: {.callout-tip}
 ## Try it
@@ -887,37 +952,46 @@ Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first
 
 ## 18. Naming the estimand {#sec-easystats}
 
-Fitting models is the subject of the statistical methods module, where every model is read through the `summary()` printout of base R. Nothing that follows is needed for the course tasks. It is here because it completes the map of the dialects, and because it ties the tools of R to the habit that the course asks of you throughout, which is to name the quantity you want before you estimate it.
+Fitting models is the subject of the methods modules. On these data, the [binary-outcomes module](binary-outcomes.qmd) builds from the table of counts of section 10 up to the logistic regression of the paper. Nothing that follows is needed for the tasks. It is here because it completes the map of the dialects, and because it ties the tools of R to the habit that the course asks of you throughout, which is to name the quantity you want before you estimate it.
 
-Suppose the model exists, a plain linear model of cosmopolitan framing on unemployment and growth. The [statistical methods module](stats-methods.qmd) goes through this kind of output line by line.
+Take the simplest model of the claim, a linear model of the greeting on the group of the name, fitted to the replies that carry a greeting code. With an outcome of 0s and 1s and a predictor made of groups, each coefficient is a difference between two shares, the quantity of [section 10](#sec-shares). One step comes first. The modelbased package used below works through the marginaleffects package, which refuses a column called `group` because its own output has a column of that name, so the column is renamed, and made a factor with the white names first, before the model is fitted:
 
-```r
-m <- lm(mcosmo ~ unemp + growth, data = euframes)
+```{r}
+#| label: lm-groups
+replies <- audit |>
+  datawizard::data_filter(!is.na(named)) |>
+  datawizard::data_rename(select = "group", replacement = "names_of") |>
+  datawizard::data_modify(names_of = factor(names_of, levels = c("white", "black", "hispanic")))
+
+m <- lm(named ~ names_of, data = replies)
 ```
 
 In base R you call `summary(m)` and read the printout. The easystats packages instead give you one function for each question you might ask of the fitted model:
 
-```r
-parameters::model_parameters(m)     # the coefficient table as a tidy data frame, with confidence intervals
-performance::model_performance(m)   # fit indices – R2, AIC and friends – in one row
-performance::check_model(m)         # the assumption dashboard: residual plots, normality, influential rows
-report::report(m)                   # the model written out in publishable sentences
+```{r}
+#| label: easystats-model
+parameters::model_parameters(m)     # the coefficient table as a data frame, with confidence intervals
+performance::model_performance(m)   # fit indices, R2, AIC and the like, in one row
 ```
 
-`model_parameters()` returns the coefficients as a data frame that you can filter, join or plot [@LudeckeEtAl2020ExtractingComputingExploring]; `check_model()` draws the standard diagnostic checks in one figure [@LudeckeEtAl2021PerformanceRPackage]; and `report()` writes the results paragraph itself, with the numbers drawn live from the object. In a rendered Quarto document the prose then cannot fall out of step with the model, as a number pasted in by hand can.
-
-One member of the family, `modelbased`, builds that habit into its functions [@MakowskiEtAl2025ModelbasedRPackage]. The coefficients in a table are whatever quantities the parameterisation of the model happens to produce, whereas these functions make you *name the quantity you want* – the **estimand** – and then compute that quantity from the model:
-
-```r
-euframes <- euframes |> datawizard::data_modify(bailout = factor(bailout))
-m2 <- lm(mcosmo ~ unemp + bailout, data = euframes)
-
-modelbased::estimate_slopes(m, trend = "unemp")           # the unemployment slope, with its uncertainty
-modelbased::estimate_means(m2, by = "bailout")            # expected framing with and without a bailout programme
-modelbased::estimate_contrasts(m2, contrast = "bailout")  # the difference between those two expectations
+```{r}
+#| label: easystats-more
+#| eval: false
+performance::check_model(m)         # the diagnostic checks in one figure: residuals, influential rows
+report::report(m)                   # the model written out in sentences
 ```
 
-An expected outcome under each condition, a slope, a contrast between scenarios: each is a quantity you can state in words before touching the software. (Under the bonnet these functions call the `marginaleffects` package, which does the job that Stata users will know from `margins`.) Saying what you want to estimate first, and only then deriving the analysis that estimates it, is what the course practises in Part 2, with the estimand and the causal graph, and again in Task 5, where you state your specification and the quantity that it estimates in the preregistration block of your report before running it.
+`model_parameters()` returns the coefficients as a data frame that you can filter, join or plot [@LudeckeEtAl2020ExtractingComputingExploring]. The row `names of [hispanic]`, in which the function has written the name of the column in words, is the gap between the Hispanic and the white names, on the scale of a share rather than in percentage points. `check_model()` draws the standard diagnostic checks in one figure [@LudeckeEtAl2021PerformanceRPackage], and `report()` writes the results paragraph itself, with the numbers drawn live from the object. Its words are generic, though. It calls each coefficient an effect, a word that a comparison among replies earns only under the assumptions that the [audit-experiments module](experiments.qmd#sec-posttreatment) sets out, and a sentence written for any model needs editing before it describes this one. In a rendered Quarto document the numbers in such prose cannot fall out of step with the model, as a number pasted in by hand can.
+
+One member of the family, `modelbased`, builds the habit of naming the quantity into its functions [@MakowskiEtAl2025ModelbasedRPackage]. The coefficients in a table are whatever quantities the parameterisation of the model happens to produce, so that a different reference group would give different coefficients from the same fit. These functions make you *name the quantity you want* – the **estimand** – and then compute that quantity from the model:
+
+```{r}
+#| label: modelbased
+modelbased::estimate_means(m, by = "names_of")             # the expected share greeted by name, for each group of names
+modelbased::estimate_contrasts(m, contrast = "names_of")   # the differences between those shares
+```
+
+The expected outcome under each condition and the contrast between two conditions are each a quantity that you can state in words before touching the software, and the contrast of the Hispanic with the white names is the gap of section 10 once more. Under the bonnet these functions call the `marginaleffects` package, which does the job that Stata users will know from `margins`. The intervals above rest on the ordinary standard errors of a linear model, which assume that the outcome varies as much in every group. `try_spec()` uses HC2 standard errors, which allow the variance of a 0/1 outcome to differ from group to group, and `estimate_contrasts(m, contrast = "names_of", vcov = "HC2")` asks for them here. Saying what you want to estimate first, and only then deriving the analysis that estimates it, is what the course practises in Task 2, with the estimand statement and the causal graph, and again in Task 5, where you state your specification and the quantity that it estimates in the preregistration block of your report before running it.
 
 ## Sources and further study {#sec-sources}
 
@@ -930,7 +1004,7 @@ For a fuller, self-paced grounding in R, these open resources are recommended:
 - **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>. Its chapters on data transformation and on visualisation cover the dplyr counterparts of the verbs of section 9 and the grammar of ggplot2 in sections 12 and 16 in full.
 - **The documentation of the packages**, which is readable as an introduction as well as a reference: [easystats.github.io/datawizard](https://easystats.github.io/datawizard/), [grantmcdermott.com/tinyplot](https://grantmcdermott.com/tinyplot/), [dplyr.tidyverse.org](https://dplyr.tidyverse.org/), [readr.tidyverse.org](https://readr.tidyverse.org/), [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), [vincentarelbundock.github.io/tinytable](https://vincentarelbundock.github.io/tinytable/), [easystats.github.io/easystats](https://easystats.github.io/easystats/), [haven.tidyverse.org](https://haven.tidyverse.org/), [readxl.tidyverse.org](https://readxl.tidyverse.org/), and the arrow R package site at [arrow.apache.org/docs/r](https://arrow.apache.org/docs/r/).
 
-When you are ready for a first statistical model, the [binary-outcomes module](binary-outcomes.qmd) starts from the table of counts of section 10 and builds up to the logistic regression of the housing-audit paper, and the module on [the statistical methods behind the course](stats-methods.qmd) starts with a single `lm()` on the EU-frames panel and works up from there to the models that the EU-frames case requires.
+When you are ready for a first statistical model, the [binary-outcomes module](binary-outcomes.qmd) starts from the table of counts of section 10 and builds up to the logistic regression of the housing-audit paper, and the module on [the statistical methods behind the course](stats-methods.qmd) takes the linear model on to the panel models that the EU-frames case requires.
 
 ## References {.unnumbered}
 
