@@ -21,7 +21,7 @@ pe <- \(p) dplyr::case_when(p < 0.0001 ~ "p < 0.0001", p < 0.001 ~ paste("p =", 
 an <- \(id, col) analysts[[col]][analysts$id == id]
 logit_or <- curve |> datawizard::data_filter(model == "logit") |> datawizard::data_modify(or = exp(coef))
 
-# The EU-frames part of the page (section 8) reads the aggregate tables that
+# The EU-frames part of the page (section 9) reads the aggregate tables that
 # companion/_model-outputs/fit_items_glm.R wrote from the respondent file;
 # nothing of it is refitted here.
 prev  <- readr::read_csv("_model-outputs/items_glm_prevalence.csv", show_col_types = FALSE)
@@ -40,7 +40,7 @@ am  <- \(it, link, contrast) ame_items$estimate[ame_items$item == it & ame_items
 n_resp <- prev$n[prev$item == "it9" & prev$by == "year"] |> sum()
 ```
 
-This module of the [companion curriculum](index.qmd) works on two cases. Sections 1 to 7 use the housing-audit case and section 8 the EU-frames case.
+This module of the [companion curriculum](index.qmd) works on three cases. Sections 1 to 7 use the housing-audit case, whose outcome is a single yes or no for every email. Section 8 uses the cohabitation case, in which the outcome is asked once for every month of a union and is rare in any one month, and section 9 the EU-frames case, in which respondents are grouped in country-years and the clustering, the link and a country-level predictor become part of the model.
 
 Sections 1 to 7 fit the models that the course uses for a yes-or-no outcome, on the outcome of the housing-audit claim: whether a reply from a housing authority opened with the name of the person who wrote to it. The housing-audit case comes from a field experiment by the original authors (OAs), who emailed public housing authorities from six names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect], and the [case study](../cases/housing/index.qmd) describes it. The module starts from a table of counts and builds up to the logistic regression of the paper, so that each step can be checked against the one before it. Every number is computed when the page is built, from the files of the course in `cases/housing/data/`, and the code is shown. The estimator of the course, `fit_spec()` in `R/housing/_tools.R`, does the same arithmetic for every specification of the curve.
 
@@ -271,15 +271,132 @@ Every method finds the same gap, or a statistic that tests it, and the largest p
 Change the two shares of the arithmetic in section 6 to 0.65 and 0.55, which predict the greeting much more weakly, and rerun the chunk. How far does the odds ratio for all authorities now move from the odds ratio within them? Then go back to 0.85 and 0.35 and replace the odds ratio of the data with 1, the case where the names make no difference: does the odds ratio for all authorities still move?
 :::
 
-## 8. A survey item in clustered data: the EU-frames case {#sec-eu-frames}
+## 8. The cohabitation case {#sec-cohabitation}
 
-The housing-audit data are a single experiment, in which every email is independent of every other. Survey data are rarely like that, and this section fits the same kind of model to a yes-or-no answer in the EU-frames case, where respondents are grouped in country-years. The outcome is the simplest one in that case: one item of the question that asks what the European Union means to the respondent personally. Every framing scale on the specification menu is built from thirteen such items, so an item is the rung of the data ladder below every scale, and a model for one item is the building block under everything that the [statistics module](stats-methods.qmd) fits to the scales and that the [items module](measurement.qmd) says about how they hang together. The page follows two items: "Unemployment", the answer that shares its content with the predictor of the whole case, and "Peace", the most-named positive answer after freedom to travel.
+::: {.callout-note}
+If you are working through the cohabitation case, read this section after Task 3 of the case, which asks you to look at the data for yourself first.
+:::
+
+```{r}
+#| label: setup-cohabitation
+#| include: false
+# section 8: the person-months of the cohabitation case, from the files of the
+# course rebuild of the unions; the objects of the section carry the prefix
+# co_. The case numbers, strata and clusters are codes, so readr reads them as
+# text.
+co_types <- readr::cols(caseid = readr::col_character(), stratum = readr::col_character(),
+                        psu = readr::col_character())
+co_curve <- readr::read_csv("../cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE)
+co_options <- readr::read_csv("../cases/cohabitation/data/display_options.csv", show_col_types = FALSE)
+# the reference settings of the curve with the model left free
+co_ref <- co_curve |>
+  datawizard::data_filter(cohorts == "paper", horizon == "five_years", adjust == "composition",
+                          weights == "weighted", time == "linear")
+co_b <- stats::setNames(co_ref$b, co_ref$model)
+```
+
+The cohabitation case takes its claim from a study in *Demography* by the original authors (OAs) of that case, and in this section OAs refers to them: American "cohabitors have increasingly become less likely to progress to marriage" [@KuoRaley2016DivergingPatternsUnion]. The study compares the first cohabitations that came before any marriage, begun in 1990–1995 among the women interviewed by the National Survey of Family Growth (NSFG) in 1995 and begun in 2005–2010 among the women interviewed in 2006–2010, and the [case study](../cases/cohabitation/index.qmd) describes it. The outcome is again yes or no, whether a cohabiting couple married, but it differs from the greeting of the housing-audit case in one respect that changes the model. A union may have been observed for a month or for five years before the interview, and a couple observed for longer has had more time to marry, so a comparison of the shares that had married by the interview mixes the chance of marrying with the time for which each union was observed. Event-history analysis asks instead, once for every month, whether the couple married in that month, given that they were still together when it began. One union becomes many yes-or-no outcomes, almost all of them no. The [event-history module](event-history.qmd) builds the method from the beginning, and this section sets it beside the models of sections 1 to 7 as a model for a binary outcome. Every number is computed when the page is built from the person-month file of the course rebuild of the unions, `cases/cohabitation/data/cohab_months.csv`.
+
+### 8.1 One row per month {#sec-person-months}
+
+The person-month file has one row for every month in which a union could have ended, from the month in which the couple moved in to the month in which they married, separated or, for a union still intact, the woman was interviewed. The outcome of the union is recorded in its last row, and every earlier row is a month in which nothing happened. `marry` is 1 in a month in which the couple married and 0 otherwise, so a month in which they separated is a 0 after which the union leaves the data, because a separated couple can no longer marry each other.
+
+```{r}
+#| label: person-months
+co_months <- readr::read_csv("../cases/cohabitation/data/cohab_months.csv", show_col_types = FALSE,
+                             col_types = co_types) |>
+  # the unions of the paper: in 2006-2010 only those begun from 2005
+  datawizard::data_filter(cycle == "1995" | from_2005) |>
+  datawizard::data_modify(marry = as.integer(y == "marriage"), age2 = age_start^2,
+                          race = factor(race, c("white", "black", "hispanic", "other")),
+                          educ = factor(educ, c("college", "some_college", "hs", "less_hs")),
+                          w = weight / mean(weight), keep = TRUE)
+
+# a union of 1995 that became a marriage in its fourth month
+co_months |>
+  datawizard::data_filter(cycle == "1995") |>
+  dplyr::filter(caseid == dplyr::first(caseid[y == "marriage" & month == 4])) |>
+  datawizard::data_select(select = c("cycle", "caseid", "month", "y", "marry"))
+```
+
+The `r format(nrow(co_months), big.mark = ",")` person-months of the paper belong to `r format(dplyr::n_distinct(paste(co_months$cycle, co_months$caseid)), big.mark = ",")` unions, and `r sum(co_months$marry)` of them record a marriage, `r pct(100 * mean(co_months$marry))` of the rows. That is the first difference from the housing-audit case, in which `r pct(100 * mean(frame$y))` of the coded replies to white and Hispanic names opened with the name. The second is that the rows are not independent observations. The months of one union belong to one couple, and the women were sampled in clusters within strata, so the errors of every model below follow the design of the two surveys, as the [weights module](weighting.qmd#sec-cohabitation) explains.
+
+### 8.2 The discrete-time logit {#sec-discrete-logit}
+
+A logistic regression of `marry` on the person-months is the simplest discrete-time event-history model. It models the log odds that a couple married in a month, given that they were still together at its start, with the later cohort (`later`, 1 for the unions of 2005–2010), the months since the couple moved in, and the controls of the reference specification of the curve: the age at the start and its square, race-ethnicity and education. The fit below uses the survey weights and declares the design of the surveys on every one of their clusters before keeping the analysed months, which is how the estimator of the case does it.
+
+```{r}
+#| label: discrete-logit
+# every stratum and cluster of the two surveys, with no months of their own
+co_clusters <- readr::read_csv("../cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
+                               col_types = co_types) |>
+  datawizard::data_filter(cycle %in% c("1995", "2006-10")) |>
+  dplyr::distinct(stratum, psu) |>
+  datawizard::data_modify(w = 1, keep = FALSE)
+co_design <- survey::svydesign(ids = ~psu, strata = ~stratum, weights = ~w, nest = TRUE,
+                               data = dplyr::bind_rows(co_months, co_clusters)) |>
+  subset(keep)  # r-style: keep – the subset method of a survey design keeps the strata of the full design
+# quasibinomial() gives the coefficients of binomial() without its warning
+# about weights that are not whole numbers
+co_logit <- survey::svyglm(marry ~ later + month + age_start + age2 + race + educ,
+                           design = co_design, family = stats::quasibinomial())
+parameters::model_parameters(co_logit, exponentiate = TRUE) |>
+  datawizard::data_filter(Parameter %in% c("later", "month"))
+```
+
+```{r}
+#| label: discrete-logit-check
+#| include: false
+# the same fit as the logit of the curve at the reference settings
+# (to 1e-5: the estimator of the case iterates to a stricter criterion)
+stopifnot(abs(stats::coef(co_logit)[["later"]] - co_b[["logit"]]) < 1e-5)
+```
+
+The coefficient of the later cohort is `r fmt(stats::coef(co_logit)[["later"]], 3)`, an odds ratio of `r fmt(exp(stats::coef(co_logit)[["later"]]), 3)`: in a given month of the union, the odds that a couple of 2005–2010 married were less than half the odds for a couple of 1990–1995 of the same age at the start, race-ethnicity and education. The months since the start enter as a straight line on the log-odds scale, the baseline of the reference specification, and the [event-history module](event-history.qmd#sec-logit) sets it beside other baselines. The fit is the logit of the curve of the case at its reference settings, the same coefficient to five decimals.
+
+### 8.3 A rare outcome {#sec-rare}
+
+The probability scale of section 5 applies here as well. `avg_predictions()` gives the average monthly chance of marrying with every union set to the earlier cohort and then to the later one, each union keeping its own months, age, race-ethnicity and education, averaged with the survey weights; `avg_comparisons()` gives their difference, the average marginal effect, and their ratio.
+
+```{r}
+#| label: rare-outcome
+co_pred <- marginaleffects::avg_predictions(co_logit, variables = "later", wts = "(weights)")
+co_pred
+co_ame <- marginaleffects::avg_comparisons(co_logit, variables = "later", wts = "(weights)")
+co_ratio <- marginaleffects::avg_comparisons(co_logit, variables = "later", wts = "(weights)",
+                                             comparison = "ratioavg")
+round(c(ame_points = 100 * co_ame$estimate, se_points = 100 * co_ame$std.error,
+        ratio_of_chances = co_ratio$estimate, odds_ratio = exp(stats::coef(co_logit)[["later"]])), 3)
+```
+
+The average monthly chance of marrying falls by `r fmt(100 * abs(co_ame$estimate), 2)` percentage points, from `r pct(100 * co_pred$estimate[co_pred$later == 0], 2)` to `r pct(100 * co_pred$estimate[co_pred$later == 1], 2)` a month, and the ratio of the two chances is `r fmt(co_ratio$estimate, 3)`, almost the odds ratio of `r fmt(exp(stats::coef(co_logit)[["later"]]), 3)`. When a chance $p$ is small, the odds $p / (1 - p)$ are almost $p$, so a ratio of odds is almost a ratio of chances. In the housing-audit case the same two numbers part: the odds ratio of the greeting was `r fmt(exp(coef(logit)[["hisp"]]), 3)`, while the share of replies that opened with the name was `r fmt(shares$share[2] / shares$share[1], 3)` times as large for Hispanic as for white names. The warnings of sections 5 and 6, that an odds ratio is hard to picture and changes when a covariate is added, therefore bite hardest when the outcome is common, and they matter far less when it is rare.
+
+The choice of link matters little for the same reason. At the reference settings the curve gives `r fmt(co_b[["logit"]], 3)` for the logit, `r fmt(co_b[["cloglog"]], 3)` for the complementary log-log model and `r fmt(co_b[["mlogit"]], 3)` for the multinomial logit of the paper. The complementary log-log coefficient is the log of a ratio of monthly rates, from the version of the proportional hazards model for time that is measured in whole months, and the multinomial logit models marriage and separation together, each against staying together. With a monthly chance of a few per cent the three coefficients nearly coincide, and the curve keeps all three.
+
+A rare outcome also changes what a correlation can show. At the reference settings the partial correlation of the later cohort with marrying in the month, by the conversion rule of Multi100, is `r fmt(co_ref$r[co_ref$model == "logit"], 3)`, although the monthly chance halved. Almost every row is a 0, and a correlation over person-months stays small whatever the size of the change. A correlation is therefore a poor common scale for results on rare outcomes, which matters wherever the results of several analysts are converted to one scale, as the [case study of the housing-audit case](../cases/housing/index.qmd#sec-scale) shows for the greeting.
+
+### 8.4 The linear probability model near zero {#sec-lpm-floor}
+
+The linear probability model of section 3 gives the difference in the monthly chance directly, as its coefficient, and on the person-months its fault, a straight line without floor or ceiling, becomes visible.
+
+```{r}
+#| label: lpm-floor
+co_lpm <- stats::lm(marry ~ later + month + age_start + age2 + race + educ, data = co_months, weights = w)
+round(100 * c(later = stats::coef(co_lpm)[["later"]], range(stats::fitted(co_lpm))), 2)
+round(100 * mean(stats::fitted(co_lpm) < 0), 1)
+```
+
+Its coefficient, `r fmt(100 * stats::coef(co_lpm)[["later"]], 2)` points a month, is almost the average marginal effect of the logit, `r fmt(100 * co_ame$estimate, 2)`, and the estimator of the case gives `r fmt(100 * co_options$b[co_options$option == "lpm"], 2)` with the design of the surveys. Its predictions run from `r pct(100 * min(stats::fitted(co_lpm)), 2)` to `r pct(100 * max(stats::fitted(co_lpm)), 2)`, and `r pct(100 * mean(stats::fitted(co_lpm) < 0))` of the months receive a negative chance of marrying, which no month can have. In the housing-audit case the predictions stayed well inside the range from 0 to 1, because the shares were far from both ends. The linear probability model is a fair check of the size of a change in a rare outcome and a poor model of the outcome itself, and the menu of the case keeps it off the curve as a check, because its coefficient is on another scale from the log ratios of the curve.
+
+## 9. The EU-frames case {#sec-eu-frames}
+
+The housing-audit data are a single experiment, in which every email is independent of every other, and in the cohabitation case the dependence between the months of a union and between the women of a sampled cluster is handled by the design of the survey. In the EU-frames case respondents are grouped in country-years that differ in their economic conditions, so the grouping is part of the question, and this section fits the models of the page to a yes-or-no answer with that grouping in view. The outcome is the simplest one in that case: one item of the question that asks what the European Union means to the respondent personally. Every framing scale on the specification menu is built from thirteen such items, so an item is the rung of the data ladder below every scale, and a model for one item is the building block under everything that the [statistics module](stats-methods.qmd) fits to the scales and that the [items module](measurement.qmd) says about how they hang together. The page follows two items: "Unemployment", the answer that shares its content with the predictor of the whole case, and "Peace", the most-named positive answer after freedom to travel.
 
 Everything in this section was fitted on the real respondents, the `r format(n_resp, big.mark = ",")` people in the file that the build script of the EU-frames workspace produces from the sixteen GESIS surveys, and written out as the aggregate tables that the page reads; the [respondent codebook](../cases/eu-frames/data/eb_respondents_codebook.md) describes the variables. The script that fitted them, `companion/_model-outputs/fit_items_glm.R`, runs on that file, so anyone who has built it can refit every model of the section. Besides sections 1 to 7, it assumes section 2 of the statistics module, on the first linear model.
 
-The section uses a second link besides the logit. The probit models the point on a standard normal distribution below which a share *p* of the area lies, so that a coefficient in a probit model is a difference in standard-normal units, where a logit coefficient is a difference in log-odds. Neither is a probability, and section 8.4 is about getting back to one.
+The section uses a second link besides the logit. The probit models the point on a standard normal distribution below which a share *p* of the area lies, so that a coefficient in a probit model is a difference in standard-normal units, where a logit coefficient is a difference in log-odds. Neither is a probability, and section 9.4 is about getting back to one.
 
-### 8.1 Who names unemployment, and when {#sec-prevalence}
+### 9.1 Who names unemployment, and when {#sec-prevalence}
 
 The two items differ in level and in who names them. "Peace" is named by about `r pct_share(mean(prev$share[prev$item == "it1" & prev$by == "year"]))` of respondents across the ten years and "Unemployment" by about `r pct_share(mean(prev$share[prev$item == "it9" & prev$by == "year"]))`, and both move with the education of the respondent, in opposite directions.
 
@@ -317,7 +434,7 @@ prev |>
 
 Both items also change over the decade. "Unemployment" falls from `r pct_share(pv("it9", "year", "2004"))` in 2004 to `r pct_share(pv("it9", "year", "2008"))` in 2008, the last year before the crisis reached the labour market, and climbs back to `r pct_share(pv("it9", "year", "2013"))` by 2013. "Peace" declines from `r pct_share(pv("it1", "year", "2004"))` to `r pct_share(pv("it1", "year", "2011"))` in 2011. That the item which names the predictor of the case tracks the predictor so visibly is one reason that the specification menu offers an item set without it.
 
-### 8.2 Logit and probit, side by side {#sec-links}
+### 9.2 Logit and probit, side by side {#sec-links}
 
 Both links are fitted with the same predictors: the three education bands, age, sex, the eight occupational groups and the three types of community, which is the respondent-level part of the published models. The coefficients are on different scales and the table shows them next to each other.
 
@@ -337,9 +454,9 @@ coefs |>
   tinytable::tt()
 ```
 
-The two links order and sign every coefficient identically, and each logit coefficient is about 1.6 to 1.8 times its probit counterpart, which is the known ratio between the scales of the logistic and the normal distributions. The choice of link therefore changes the units in which the coefficients are expressed, while their signs and their order stay the same. As for their sizes, being in the highest education band rather than the lowest lowers the log-odds of naming unemployment by `r num(abs(co("it9", "logit", "edu3high")))`, which is an odds ratio of `r num(exp(co("it9", "logit", "edu3high")), 2)`, meaning that the odds of naming it are about half those in the lowest band. Being unemployed oneself raises the log-odds by `r num(co("it9", "logit", "sesunemployed"))`, an odds ratio of `r num(exp(co("it9", "logit", "sesunemployed")), 2)`; being a student lowers them by more than being unemployed raises them. Odds ratios are the conventional way of reporting a logit, and they are exact and portable. They are also hard to picture, because a doubling of small odds and a doubling of large odds are very different changes in probability, which is why section 8.4 converts them, as section 5 did for the housing-audit data.
+The two links order and sign every coefficient identically, and each logit coefficient is about 1.6 to 1.8 times its probit counterpart, which is the known ratio between the scales of the logistic and the normal distributions. The choice of link therefore changes the units in which the coefficients are expressed, while their signs and their order stay the same. As for their sizes, being in the highest education band rather than the lowest lowers the log-odds of naming unemployment by `r num(abs(co("it9", "logit", "edu3high")))`, which is an odds ratio of `r num(exp(co("it9", "logit", "edu3high")), 2)`, meaning that the odds of naming it are about half those in the lowest band. Being unemployed oneself raises the log-odds by `r num(co("it9", "logit", "sesunemployed"))`, an odds ratio of `r num(exp(co("it9", "logit", "sesunemployed")), 2)`; being a student lowers them by more than being unemployed raises them. Odds ratios are the conventional way of reporting a logit, and they are exact and portable. They are also hard to picture, because a doubling of small odds and a doubling of large odds are very different changes in probability, which is why section 9.4 converts them, as section 5 did for the housing-audit data.
 
-### 8.3 The cluster {#sec-cluster}
+### 9.3 The cluster {#sec-cluster}
 
 The standard errors in the table above assume that the `r format(n_resp, big.mark = ",")` respondents are independent draws. They are not, because they are grouped in 270 country-years, and respondents in the same country-year share a survey, a moment and a labour market. The [statistics module](stats-methods.qmd#sec-pooled) makes the same point for the panel; here it is made for a binary outcome, by refitting the logit with standard errors clustered by country-year.
 
@@ -359,9 +476,9 @@ coefs |>
   tinytable::tt()
 ```
 
-The standard error of the high-education coefficient nearly triples once the clustering is admitted, and its z statistic falls from `r num(co("it9", "logit", "edu3high", "z"), 1)` to `r num(co("it9", "logit", "edu3high", "z", "clustered by country-year"), 1)`. No coefficient in the table loses its significance, because the education gap is large and consistent across cells, but the conventional errors overstate the precision by a factor that would lead to a real mistake with a predictor that varies only at the cell level. Section 8.5 shows that predictor. The other way of dealing with the cluster is to model it, with a random intercept for the country-year, and section 8.7 does that.
+The standard error of the high-education coefficient nearly triples once the clustering is admitted, and its z statistic falls from `r num(co("it9", "logit", "edu3high", "z"), 1)` to `r num(co("it9", "logit", "edu3high", "z", "clustered by country-year"), 1)`. No coefficient in the table loses its significance, because the education gap is large and consistent across cells, but the conventional errors overstate the precision by a factor that would lead to a real mistake with a predictor that varies only at the cell level. Section 8.5 shows that predictor. The other way of dealing with the cluster is to model it, with a random intercept for the country-year, and section 9.7 does that.
 
-### 8.4 From coefficients to probabilities {#sec-ame}
+### 9.4 From coefficients to probabilities {#sec-ame}
 
 A coefficient on the link scale is a change in the log-odds, while the question that a reader usually has is by how many percentage points the probability changes. The average marginal effect gives that figure: for every respondent, the change in predicted probability that the model implies for a change in one variable, averaged over the respondents as they are.
 
@@ -384,13 +501,13 @@ ame_items |>
 
 On the probability scale the two links agree to the second decimal, which settles the logit-or-probit question for practical purposes. The differences are those of the prevalence table with the other characteristics taken into account: a high-educated respondent is `r num(100 * abs(am("it9", "logit", "high - low")), 1)` percentage points less likely to name unemployment than a low-educated one of the same age, sex, occupation and community, and `r num(100 * am("it1", "logit", "high - low"), 1)` points more likely to name peace. The [quantitative writing register](../resources.qmd) of the course asks for binary models to be reported this way, in points of probability with the uncertainty estimated by the model, because a difference in points of probability is one that a reader can weigh.
 
-### 8.5 The national unemployment rate on a single item {#sec-macro}
+### 9.5 The national unemployment rate on a single item {#sec-macro}
 
 The predictor in the case is the unemployment rate of the country in the survey year, and it can be entered in a model for one item as it is in a model for a scale. Two ways to do it are shown, and they disagree in the way that the panel models of the statistics module disagree. Pooled, with errors clustered by country-year, the coefficient compares countries with one another. With country and year fixed effects it compares each country with itself over time, net of what all countries share in a year.
 
 ```{r}
 #| label: tbl-macro
-#| tbl-cap: "The centred national unemployment rate on the log-odds of naming each item, with the respondent characteristics of section 8.2 and the education × unemployment interaction of section 8.6, pooled and with country and year fixed effects; standard errors clustered by country-year. With the interaction in the model, each coefficient is the slope for the lowest education band."
+#| tbl-cap: "The centred national unemployment rate on the log-odds of naming each item, with the respondent characteristics of section 9.2 and the education × unemployment interaction of section 9.6, pooled and with country and year fixed effects; standard errors clustered by country-year. With the interaction in the model, each coefficient is the slope for the lowest education band."
 inter |>
   datawizard::data_filter(term == "unemp_c") |>
   datawizard::data_modify(item = dplyr::if_else(item == "it9", "Unemployment", "Peace")) |>
@@ -400,7 +517,7 @@ inter |>
 
 For "Unemployment" the pooled comparison finds almost nothing, `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("pooled", inter$model)], 3)` on the log-odds per point of unemployment; the within-country comparison finds `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("fixed", inter$model)], 3)`, about a six per cent rise in the odds of naming unemployment for every point by which the national rate rises above its own average. Respondents in countries with high unemployment do not name unemployment more often than respondents in countries with low unemployment, but within any one country, respondents name it more often in years of rising unemployment than in years of falling unemployment. That is the between-and-within distinction of [section 5 of the statistics module](stats-methods.qmd#sec-re), on one item and a binary outcome. For "Peace" the sign is negative under both designs and smaller within countries, which is the pattern that the scales built from these items inherit.
 
-### 8.6 The education gap and the rate together {#sec-interaction}
+### 9.6 The education gap and the rate together {#sec-interaction}
 
 The second part of the second hypothesis of the paper, H2b, states that the high-educated are more strongly affected by an economic downturn than the low-educated, and the [individual-level module](individual-level.qmd#sec-claim2) tests it on the scales with the unemployment rate as the measure of the downturn. On a single item the test is a product term, education band times the unemployment rate, and the table gives it under both designs.
 
@@ -417,7 +534,7 @@ inter |>
 
 On these two items the interaction is absent: no product term reaches conventional significance under either design, and the fixed-effects estimates are at zero. The education gap in naming unemployment is large, and it neither widens nor narrows as the national rate moves. The hypothesis, however, is about the scales, which sum items with different prevalences and different movements, and the individual-level module reports what happens there, under the published design and under fixed effects, and under both rules for the respondents who named nothing. A result on a scale is a sum of results on items, not every one of which need show it, and that is the reason for looking one rung down the ladder before believing a coefficient one rung up.
 
-### 8.7 A random intercept for the cluster {#sec-random}
+### 9.7 A random intercept for the cluster {#sec-random}
 
 The other treatment of the cluster is to give each country-year, and each country, its own intercept, drawn from a distribution whose spread the model estimates: the multilevel logit, which is the binary-outcome form of the models in [section 6 of the statistics module](stats-methods.qmd#sec-multilevel). It is fitted here with glmmTMB, which took about twenty-five minutes on the four hundred thousand rows with the full covariate set; the older lme4 routine takes several times as long on the same model.
 
@@ -439,23 +556,25 @@ if (is.null(rnd)) {
 }
 ```
 
-The variance components show how much of the variation in naming unemployment lies between countries and between country-years once the respondent characteristics are in the model. The fixed part of the model, the coefficients that are common to all country-years, gives much the same result as the models with country and year fixed effects in sections 8.5 and 8.6, with the cluster modelled instead of corrected for in the standard errors. In the lowest education band the log-odds of naming unemployment rise by `r num(rnd$estimate[rnd$term == "unemp_c"], 3)` per point of the national rate, against `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("fixed", inter$model)], 3)` with the fixed effects, and neither education × unemployment term reaches conventional significance. Which of the two treatments to prefer is taken up in the multilevel section of the statistics module, and the answer does not depend on the link.
-
-## 9. Where this leads {#sec-next}
-
-In the housing-audit case the curve of the claim takes the models of sections 1 to 7 as they are, and the [specification menu](../cases/housing/menu.qmd) sets out which of them it keeps. In the EU-frames case a scale is a sum or a share of items like those of section 8, and the [data management module](data-management.qmd#sec-scoring) builds the three scoring rules from them. Once summed, the outcome is bounded and lumpy rather than binary, and the [bounded-outcomes section](stats-methods.qmd#sec-glm) of the statistics module fits the second member of the same family, the beta regression, to it. Both pages apply the same idea at two rungs of the ladder: a link that keeps predictions inside the range of values that the outcome can take and a conversion of the results back to the scale of the outcome.
+The variance components show how much of the variation in naming unemployment lies between countries and between country-years once the respondent characteristics are in the model. The fixed part of the model, the coefficients that are common to all country-years, gives much the same result as the models with country and year fixed effects in sections 9.5 and 9.6, with the cluster modelled instead of corrected for in the standard errors. In the lowest education band the log-odds of naming unemployment rise by `r num(rnd$estimate[rnd$term == "unemp_c"], 3)` per point of the national rate, against `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("fixed", inter$model)], 3)` with the fixed effects, and neither education × unemployment term reaches conventional significance. Which of the two treatments to prefer is taken up in the multilevel section of the statistics module, and the answer does not depend on the link.
 
 ::: {.callout-tip}
-## Try it
+### Try it
 
-If you have built the respondent file, open `companion/_model-outputs/fit_items_glm.R` and change the two items to "Waste of money" (`it11`) and "Freedom to travel" (`it5`). Rerun it and read the education contrasts in section 8.2 and the within-country unemployment slope in section 8.5. Then replace the logit in one of the fits with a linear probability model, `feols()` instead of `feglm()`, and set its coefficient for the high-education band beside the average marginal effect of section 8.4. They should be close, and the reasons they are not identical are the two faults of the linear probability model that section 3 describes, a line without floor or ceiling and a variance that changes with the share.
+If you have built the respondent file, open `companion/_model-outputs/fit_items_glm.R` and change the two items to "Waste of money" (`it11`) and "Freedom to travel" (`it5`). Rerun it and read the education contrasts in section 9.2 and the within-country unemployment slope in section 9.5. Then replace the logit in one of the fits with a linear probability model, `feols()` instead of `feglm()`, and set its coefficient for the high-education band beside the average marginal effect of section 9.4. They should be close, and the reasons they are not identical are the two faults of the linear probability model that section 3 describes, a line without floor or ceiling and a variance that changes with the share.
 :::
+
+## 10. Where this leads {#sec-next}
+
+In the housing-audit case the curve of the claim takes the models of sections 1 to 7 as they are, and the [specification menu](../cases/housing/menu.qmd) sets out which of them it keeps. In the cohabitation case the curve holds the logit of section 8 beside the complementary log-log model and the multinomial logit of the paper, and the [event-history module](event-history.qmd) treats the three as models of time to an event, with the life table and the competing risk of separation. In the EU-frames case a scale is a sum or a share of items like those of section 9, and the [data management module](data-management.qmd#sec-scoring) builds the three scoring rules from them. Once summed, the outcome is bounded and lumpy rather than binary, and the [bounded-outcomes section](stats-methods.qmd#sec-glm) of the statistics module fits the second member of the same family, the beta regression, to it. Both pages apply the same idea at two rungs of the ladder: a link that keeps predictions inside the range of values that the outcome can take and a conversion of the results back to the scale of the outcome.
 
 ## Sources {#sec-sources}
 
 The models on this page are fitted with `lm()` and `glm()` from base R, with the HC2 standard error and the average marginal effect of the estimator of the course in `R/housing/_tools.R`, which `R/housing/check_parity.R` checks against `estimatr` and `marginaleffects`. The data are `cases/housing/data/housing_audit.csv` and the curve `cases/housing/data/spec_curve.csv`, both with codebooks; the analyses of the five Multi100 analysts are in `analysts5.csv`. @GelmanEtAl2020RegressionOtherStories treat logistic regression and its interpretation on the probability scale at length, and the [specification menu](../cases/housing/menu.qmd#level-estimation) sets out which models, tests and scales the curve of the claim keeps.
 
-The models of section 8 were fitted with the fixest package for the pooled and fixed-effects logits and probits, the marginaleffects package for the average marginal effects, and glmmTMB for the random-intercept logit, on the respondent file described in the [respondent codebook](../cases/eu-frames/data/eb_respondents_codebook.md); the script is `companion/_model-outputs/fit_items_glm.R`. The respondent characteristics follow the published coding of the original paper of the EU-frames case [@Teney2016DoesEUEconomic]. The ratio between logit and probit coefficients and the conversion to average marginal effects are textbook material; the quantitative-methods references on the [resources page](../resources.qmd) cover both.
+The models of section 8 are fitted on `cases/cohabitation/data/cohab_months.csv`, the person-months of the course rebuild of the unions from the public-use files of the NSFG, with `survey::svyglm()` [@Lumley2004AnalysisComplexSurvey] and the design of both surveys, as in the estimator of the case in `R/cohabitation/_tools.R`; the average predictions and comparisons come from marginaleffects, and the values of the curve from `spec_curve.csv` and `display_options.csv` beside it. @Allison1982DiscreteTimeMethodsEvent sets out the discrete-time models.
+
+The models of section 9 were fitted with the fixest package for the pooled and fixed-effects logits and probits, the marginaleffects package for the average marginal effects, and glmmTMB for the random-intercept logit, on the respondent file described in the [respondent codebook](../cases/eu-frames/data/eb_respondents_codebook.md); the script is `companion/_model-outputs/fit_items_glm.R`. The respondent characteristics follow the published coding of the original paper of the EU-frames case [@Teney2016DoesEUEconomic]. The ratio between logit and probit coefficients and the conversion to average marginal effects are textbook material; the quantitative-methods references on the [resources page](../resources.qmd) cover both.
 
 ## References {.unnumbered}
 

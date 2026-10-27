@@ -1,6 +1,6 @@
 ---
 title: "Causal graphs and adjustment sets"
-subtitle: "Confounders, mediators and colliders in the housing-audit and EU-frames cases"
+subtitle: "Confounders, mediators, colliders and selection in the four cases"
 bibliography: [../references.bib, ../references-new.bib]
 ---
 
@@ -44,9 +44,9 @@ dag_plot <- function(g, gap = 0.3) {
 }
 ```
 
-This module of the [companion curriculum](index.qmd) works on two cases. Sections 1 to 6 use the housing-audit case, section 7 the EU-frames case, and sections 8 and 9 draw on both.
+This module of the [companion curriculum](index.qmd) works on all four cases of the course, with one lesson from each. Sections 1 to 6 use the housing-audit case to introduce causal graphs and what happens when a comparison is restricted to the cases in which a common effect took one value. Section 7 takes the immigration-and-trust case, in which some of the controls of the paper may be consequences of the exposure or of the outcome rather than causes of both. Section 8 takes the cohabitation case, whose data hold only women who cohabited, and section 9 the EU-frames case, a panel of country-years in which country and year fixed effects stand for the adjustment set. Sections 10 and 11 draw on all four. Each graph is the graph of Task 2 in the browser lab and in the workspace of its case, so that the graph of this page and the graph of the task are the same.
 
-Sections 1 to 6 draw the causal graphs of the housing-audit case and read off them what an analysis has to hold constant, and what it must not. The case comes from a field experiment by the original authors (OAs), who emailed public housing authorities from six names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect], and the [case study](../cases/housing/index.qmd) describes it. Task 2 of the exercise asks you to finish a graph of the case, and this module builds it step by step, with the R package dagitty, whose questions the browser lab also answers, with graph code of its own where the browser cannot run the package. The code is shown, and every number about the case is computed from the files of the course in `cases/housing/data/` when the page is built.
+Sections 1 to 6 draw the causal graphs of the housing-audit case and read off them what an analysis has to hold constant, and what it must not. The case comes from a field experiment by the original authors (OAs), who emailed public housing authorities from six names meant to indicate a white, a Black or a Hispanic applicant [@EinsteinGlick2017DoesRaceAffect], and the [case study](../cases/housing/index.qmd) describes it. Task 2 of the exercise asks you to finish a graph of the case, and this module builds it step by step with the R package dagitty, which answers the questions in the workspace. The browser lab prints the same answers from a table that the course computes with dagitty, because the package cannot run in a browser. The code is shown, and every number about the case is computed from the files of the course in `cases/housing/data/` when the page is built.
 
 ## 1. Arrows as claims {#sec-arrows}
 
@@ -228,9 +228,311 @@ Among the replies, the adjustment for the community moves the gap from `r curve 
 
 The sex of the name and the ethnicity of the official who replied, two further decisions of the menu, sit at different places on the graph. The sex of the name is part of the treatment and was crossed with the group by design, so it confounds nothing and adjusting for it is a check. Whether the official who replied had a Hispanic name is known only for replies, so it is a descendant of the collider, and a comparison within the replies from such officials conditions on the reply and on what came after it, which is why the menu treats that subgroup as another question.
 
-## 7. The EU-frames case: a panel of country-years {#sec-eu-frames}
+## 7. The immigration-and-trust case {#sec-trust}
 
-The housing-audit data come from an experiment, in which random assignment closes every back door at once. The EU-frames case is observational: a panel of 270 country-years, in which countries and years differ in ways that may move both the unemployment rate and how people frame the EU. This section draws the graph of that case, derives the adjustment set from it, fits the models that the graph prescribes and the ones that it does not, and shows what country and year fixed effects can and cannot absorb. Its graphs are written with the ggdag package, as formulas, rather than as the dagitty text of sections 1 to 6; both produce the same dagitty object, and the same questions can be put to either. Every chunk runs when the page is built, from the shipped `cases/eu-frames/data/EUframes_cy.csv`, and the setup chunk below loads the packages and data of the section.
+```{r}
+#| label: setup-trust
+#| include: false
+# section 7: the graph of Task 2 of the immigration-and-trust case and the
+# coefficient of concern under each set of controls, computed from the extract
+# of the European Social Survey that the course ships; the objects of the
+# section carry the prefix tr_
+source("../R/trust/_tools.R")
+tr_ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
+tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
+                            col_types = readr::cols(stat_type = readr::col_character()))
+tr_answers <- readr::read_csv("../cases/trust/data/dag_answers.csv", show_col_types = FALSE)
+tr_means <- tr_curve |> dplyr::summarise(b = mean(b), n_specs = dplyr::n(), .by = controls)
+```
+
+The immigration-and-trust case takes its claim from a study of political trust in sixteen Western European countries by the original author (OA) of that case, and in this section OA refers to that author. The claim is that citizens who are more concerned about the effect of immigration on the national community trust their national politicians and political institutions less [@McLaren2012CulturalDivideEurope], and the [case study](../cases/trust/index.qmd) describes the study and the extract of the European Social Survey (ESS) that the course ships. Nobody assigns concern about immigration, so a comparison of more and less concerned respondents has to hold constant what causes both concern and distrust, and the paper holds constant a long list of characteristics, attitudes and votes. Some of them plausibly cause both. Others may follow from concern, from distrust or from both, and holding a consequence constant does something other than removing confounding, which is the lesson of this case. The graph is the graph of Task 2 in the [browser lab](../cases/trust/lab.qmd#task-2-estimand-and-graph) and in `R/dag_starter.R` of the workspace of the case, with the arrow of the claim switched on, and every number is computed when the page is built from `cases/trust/data/trust_ess.csv` and the files of the curve of the case.
+
+### 7.1 The graph of Task 2 {#sec-trust-graph}
+
+Three groups of variables may cause both concern and distrust: the background of the respondent, settled before either attitude forms (age, sex, education and household income); a general pessimism (unhappiness, dissatisfaction with life, meeting friends rarely and distrust of other people); and ideology, the position of the respondent on the left–right scale. Two groups may follow from concern, from distrust or from both. The node `far_right` stands for the two vote controls of the paper, a vote at the last election for a far-right party and a vote for a party in government, and the node `services` for its four verdicts, dissatisfaction with the economy, with health services and with education, and difficulty in living on the household income.
+
+```{r}
+#| label: trust-dag
+tr_graph <- dagitty::dagitty('dag {
+  concern [exposure, pos="0,0"]
+  distrust [outcome, pos="4,0"]
+  background [pos="2,2.4"]
+  pessimism [pos="0.7,1.5"]
+  ideology [pos="3.3,1.5"]
+  far_right [pos="2,-1.1"]
+  services [pos="2,-2.1"]
+  background -> concern
+  background -> distrust
+  pessimism -> concern
+  pessimism -> distrust
+  ideology -> concern
+  ideology -> distrust
+  concern -> far_right
+  distrust -> far_right
+  concern -> services
+  distrust -> services
+  concern -> distrust
+}')
+```
+
+```{r}
+#| label: trust-dag-check
+#| include: false
+# the graph is graph 5 of the table that the lab prints (Task 2 with the arrow
+# of the claim switched on), whose arrows were computed by R/trust/07_dag_answers.R
+tr_edges <- dagitty::edges(tr_graph)
+stopifnot(identical(paste(sort(paste(tr_edges$v, "->", tr_edges$w), method = "radix"), collapse = "; "),
+                    unique(tr_answers$arrows[tr_answers$graph == 5])))
+```
+
+```{r}
+#| label: fig-trust-dag
+#| fig-cap: "The immigration-and-trust case as a graph. Background, pessimism and ideology point into both concern and distrust; the votes (`far_right`) and the verdicts on the economy and public services (`services`) are drawn as common effects of the two."
+#| fig-alt: "A graph with concern on the left and distrust on the right, joined by an arrow. Background at the top and pessimism and ideology below it each point to both concern and distrust. Below the line, far_right and services each receive arrows from both concern and distrust."
+#| fig-width: 7
+#| fig-height: 4.2
+dag_plot(tr_graph)
+```
+
+The three questions of Task 2 go to dagitty in one chunk: the adjustment set, the paths between concern and distrust once the controls of the paper are held constant, and whether those controls are an adjustment set.
+
+```{r}
+#| label: trust-queries
+tr_paper_set <- c("background", "pessimism", "ideology", "far_right", "services")
+dagitty::adjustmentSets(tr_graph)
+dagitty::paths(tr_graph, Z = tr_paper_set)
+dagitty::isAdjustmentSet(tr_graph, tr_paper_set)
+```
+
+The adjustment set is the background, pessimism and ideology, which the menu of the case calls the outlook controls. Six paths connect concern and distrust: the arrow of the claim, three back doors through the common causes, and two paths that run into the votes and into the verdicts. Each of those two meets a common effect of concern and distrust, a collider, and is closed as long as nothing is held constant there. The controls of the paper close the three back doors and open the two paths through the colliders, so `isAdjustmentSet()` answers `FALSE`. Comparing respondents who voted alike and judge the economy and the services alike makes concern and distrust go together along those two paths, over and above whatever the arrow of the claim carries.
+
+### 7.2 Votes and verdicts as mediators {#sec-trust-mediators}
+
+The workspace offers to turn two arrows round. A respondent who votes for a far-right party may come to distrust the established institutions more, and poor public services may feed distrust of the people who run them. Turned round, the two arrows make the votes and the verdicts mediators, steps on paths that lead from concern to distrust.
+
+```{r}
+#| label: trust-mediators
+tr_turned <- dagitty::dagitty('dag {
+  concern [exposure]
+  distrust [outcome]
+  background -> concern
+  background -> distrust
+  pessimism -> concern
+  pessimism -> distrust
+  ideology -> concern
+  ideology -> distrust
+  concern -> far_right
+  far_right -> distrust
+  concern -> services
+  services -> distrust
+  concern -> distrust
+}')
+list(total = "total", direct = "direct") |>
+  purrr::map(\(e) dagitty::adjustmentSets(tr_turned, effect = e))
+dagitty::isAdjustmentSet(tr_turned, tr_paper_set)
+```
+
+The set for the total effect does not change, and the controls of the paper are still not one. They are now the set for the direct effect, the part of the effect of concern that runs neither through the votes nor through the verdicts. Under neither reading, then, do the controls of the paper estimate the total effect of concern on distrust. Under the first they open two paths that carry no effect of concern, and under the second they remove two paths that do. A third reading is also defensible, in which a poor economy makes people both anxious about newcomers and hostile to those who govern, so that the verdict on the economy is a common cause of concern and distrust and belongs in the adjustment set. The graph states each reading so that it can be argued over, and section 10 explains why the data cannot choose among them. One arrow lies beyond any set of controls: if distrust causes concern, as one of the five Multi100 analysts suggested, the reversed arrow is a path that nothing can close, and dagitty finds no adjustment set at all.
+
+### 7.3 The controls on the data {#sec-trust-controls}
+
+@tbl-trust-controls fits the coefficient of concern on distrust of parliament under six sets of controls, from nothing to every control of the paper, adding the votes and the verdicts to the adjustment set one group at a time. Every fit compares respondents within their own country and round, with errors clustered by country, as the curve of the case does. The six fits use the same respondents, those who answered every item that the controls of the paper need, so that the rows differ only in what they hold constant; on the curve each set of controls keeps its own respondents.
+
+```{r}
+#| label: trust-ladder
+# The respondents who answered every item that the controls of the paper need
+tr_frame <- spec_frame(tr_ess, controls = "paper")
+tr_votes <- c("winner", "far_right_vote")
+tr_verdicts <- c("econ_dissat", "income_difficulty", "health_dissat", "educ_dissat")
+tr_sets <- list(
+  "Nothing" = character(0),
+  "Background" = CONTROL_TERMS$demog,
+  "Background, pessimism and ideology" = CONTROL_TERMS$outlook,
+  "The same and the two votes" = c(CONTROL_TERMS$outlook, tr_votes),
+  "The same and the four verdicts" = c(CONTROL_TERMS$outlook, tr_verdicts),
+  "Every control of the paper" = CONTROL_TERMS$paper
+)
+# an intercept for every country-round, absorbed by fixest, and errors
+# clustered by country, as on the curve of the case
+tr_ladder <- tr_sets |>
+  purrr::imap(\(terms, set) {
+    form <- stats::as.formula(paste("y ~", paste(c("x", terms), collapse = " + "), "| cr"))
+    fixest::feols(form, data = tr_frame, cluster = ~cntry) |>
+      parameters::model_parameters() |>
+      datawizard::data_filter(Parameter == "x") |>
+      dplyr::transmute(set = set, b = Coefficient, se = SE, t = t)
+  }) |>
+  purrr::list_rbind()
+```
+
+```{r}
+#| label: tbl-trust-controls
+#| echo: false
+#| tbl-cap: !expr 'sprintf("The coefficient of concern about immigration on distrust of parliament, in points of distrust (0–10) per point of concern (0–10), under six sets of controls, within country-rounds, all fitted on the %s respondents of the paper who answered every item that its controls need. Errors clustered by country (t on 15 df). Source: `cases/trust/data/trust_ess.csv`.", format(nrow(tr_frame), big.mark = ","))'
+tr_ladder |>
+  dplyr::transmute(`Held constant` = set, Coefficient = fmt(b, 3), `Clustered SE` = fmt(se, 4), t = fmt(t, 1)) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:4, align = "r")
+```
+
+Read the rows in order. Without controls the coefficient is `r fmt(tr_ladder$b[1], 3)`; the background takes it to `r fmt(tr_ladder$b[2], 3)`, and pessimism and ideology, which complete the adjustment set of the graph, to `r fmt(tr_ladder$b[3], 3)`. Beyond that set the two votes move it little, to `r fmt(tr_ladder$b[4], 3)`, while the four verdicts take it to `r fmt(tr_ladder$b[5], 3)`, and every control of the paper together gives `r fmt(tr_ladder$b[6], 3)`, the coefficient of the reference specification of the curve of the case. Most of what separates the adjustment set of the graph from the controls of the paper is therefore the verdicts. Dissatisfaction with the economy, the strongest of them, correlates at `r fmt(cor(tr_frame$econ_dissat, tr_frame$y), 2)` with distrust of parliament and at `r fmt(cor(tr_frame$econ_dissat, tr_frame$x), 2)` with concern, so holding it constant takes much of the covariation of concern and distrust with it. If the verdicts follow from distrust, part of the fall from `r fmt(tr_ladder$b[3], 3)` to `r fmt(tr_ladder$b[6], 3)` is produced by conditioning on a collider; if they follow from concern, the fall is the part of the effect that runs through them; and if they cause both, the fall removes confounding that the graph of Task 2 leaves out.
+
+On the curve of the case, where each set of controls keeps the respondents who answered its own items, the mean coefficient over the `r tr_means$n_specs[tr_means$controls == "none"]` specifications of each set is `r fmt(tr_means$b[tr_means$controls == "none"], 3)` without controls, `r fmt(tr_means$b[tr_means$controls == "demog"], 3)` with the background, `r fmt(tr_means$b[tr_means$controls == "outlook"], 3)` with outlook and ideology and `r fmt(tr_means$b[tr_means$controls == "paper"], 3)` with the controls of the paper. The [specification menu](../cases/trust/menu.qmd) keeps all four sets, as four estimands rather than as one estimate and three mistakes. The claim as SCORE selected it begins with an ellipsis that removes the words "even after controlling for other predictors of trust in the political system", and so asks only whether concern goes with distrust, while the paper defines its own claim by its full set of controls. Which set answers the claim depends on which reading of the graph an analyst defends, and Task 5 asks for that defence in the preregistration.
+
+## 8. The cohabitation case {#sec-cohabitation}
+
+```{r}
+#| label: setup-cohabitation
+#| include: false
+# section 8: the graph of Task 2 of the cohabitation case and the composition
+# of the two cohorts, from the union file of the course and the files of the
+# curve; the objects of the section carry the prefix co_. The case numbers,
+# strata and clusters are codes, so readr reads them as text.
+co_unions <- readr::read_csv("../cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
+                             col_types = readr::cols(caseid = readr::col_character(),
+                                                     stratum = readr::col_character(),
+                                                     psu = readr::col_character()))
+co_curve <- readr::read_csv("../cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE)
+co_options <- readr::read_csv("../cases/cohabitation/data/display_options.csv", show_col_types = FALSE)
+co_answers <- readr::read_csv("../cases/cohabitation/data/dag_answers.csv", show_col_types = FALSE)
+# the reference settings of the curve with the adjustment set left free
+co_ref <- co_curve |>
+  datawizard::data_filter(cohorts == "paper", horizon == "five_years", weights == "weighted",
+                          time == "linear", model == "mlogit")
+co_b <- stats::setNames(co_ref$b, co_ref$adjust)
+```
+
+The cohabitation case takes its claim from a study in *Demography* by the original authors (OAs) of that case, and in this section OAs refers to them. The claim is that American "cohabitors have increasingly become less likely to progress to marriage" [@KuoRaley2016DivergingPatternsUnion]. The study compares the first cohabitations that came before any marriage, begun in 1990–1995 among the women whom the National Survey of Family Growth (NSFG) interviewed in 1995, with those begun in 2005–2010 among the women interviewed in 2006–2010, and the [case study](../cases/cohabitation/index.qmd) describes it. The exposure is the period in which a union began, which nobody assigns but which nothing in the graph causes either. The lesson of the case is selection: every union in the data is a cohabitation, so every comparison is made among women who all cohabited, and which women cohabit changed between the two periods. The graph is the graph of Task 2 in the [browser lab](../cases/cohabitation/lab.qmd#task-2-estimand-and-graph) and in `R/dag_starter.R` of the workspace of the case, with the arrow of the claim switched on, and the numbers are computed from the union file of the course, `cases/cohabitation/data/cohab_unions.csv`, and the files of its curve.
+
+### 8.1 Selection into cohabitation {#sec-selection}
+
+Whether a woman cohabits at all, the node `cohabits` of the graph, depends on the period, because cohabitation spread between the two, and on her education and race-ethnicity, which also shape whether a cohabiting couple marries. The age at which the couple moved in shapes whether they marry, and it depends on education, since women who stay longer in education can move in later.
+
+```{r}
+#| label: cohabitation-dag
+co_graph <- dagitty::dagitty('dag {
+  period [exposure, pos="0,0"]
+  marriage [outcome, pos="4,0"]
+  race [pos="1.2,1.6"]
+  education [pos="2.6,1.8"]
+  age_start [pos="3.6,1.1"]
+  cohabits [pos="2,-1.4"]
+  period -> cohabits
+  education -> cohabits
+  race -> cohabits
+  education -> marriage
+  race -> marriage
+  education -> age_start
+  age_start -> marriage
+  period -> marriage
+}')
+```
+
+```{r}
+#| label: cohabitation-dag-check
+#| include: false
+# the graph is graph 3 of the table that the lab prints (Task 2 with the arrow
+# of the claim switched on), whose arrows were computed by
+# R/cohabitation/07_dag_answers.R
+co_edges <- dagitty::edges(co_graph)
+stopifnot(identical(paste(sort(paste(co_edges$v, "->", co_edges$w), method = "radix"), collapse = "; "),
+                    unique(co_answers$arrows[co_answers$graph == 3])))
+```
+
+```{r}
+#| label: fig-cohabitation-dag
+#| fig-cap: "The cohabitation case as a graph. The period, education and race-ethnicity each point into `cohabits`, the selection into cohabitation; education and race-ethnicity also point into marriage, directly and, for education, through the age at which the couple moved in."
+#| fig-alt: "A graph with period on the left and marriage on the right, joined by an arrow. Race and education above the line point to marriage, education also through age_start. Below the line, cohabits receives arrows from period, education and race."
+#| fig-width: 7
+#| fig-height: 3.8
+dag_plot(co_graph)
+```
+
+```{r}
+#| label: cohabitation-queries
+dagitty::adjustmentSets(co_graph)
+dagitty::paths(co_graph, Z = "cohabits")
+dagitty::paths(co_graph, Z = c("cohabits", "education", "race"))
+```
+
+The adjustment set is empty, which dagitty prints as `{}`. Nothing in the graph points into the period, so among all women nothing confounds the comparison of the two periods. Every path besides the arrow of the claim runs through `cohabits`, a common effect of the period, education and race-ethnicity, and is closed while nothing is held constant there. A comparison among cohabitors holds `cohabits` fixed and opens all three. Among the women who cohabited, the period goes together with education and race-ethnicity, because the mix of women who cohabit changed, and whatever education and race-ethnicity do to marriage enters the comparison of the periods. Holding education and race-ethnicity constant as well closes the three paths again. The bias that a common effect produces when it is held fixed by the way in which a sample was drawn is called endogenous selection bias, and @ElwertWinship2014EndogenousSelectionBias trace it through examples from social demography, social stratification and the sociology of education.
+
+The selection has a second side in this case. The claim is about cohabitors, so holding `cohabits` fixed is part of the question rather than a mistake of the analysis, and no analysis of these data could undo it, because the union file holds only women whose first cohabitation came before any marriage. What the graph decides is what the comparison among cohabitors means: the change in marriage among cohabitors as they were, the change in who cohabits included, or the change among cohabitors of the same education and race-ethnicity.
+
+### 8.2 The composition of the cohorts {#sec-composition}
+
+@tbl-composition gives the composition of the two cohorts of unions, weighted by the survey weights so that the shares describe the population of first premarital cohabitations rather than the sample.
+
+```{r}
+#| label: tbl-composition
+#| tbl-cap: "The first premarital cohabitations of the two cohorts by race-ethnicity and by education, weighted shares. Source: `cases/cohabitation/data/cohab_unions.csv`."
+# the unions of the paper: begun in the five years before the interview and
+# lasting at least a month, and in 2006-2010 begun from 2005
+co_paper <- co_unions |>
+  datawizard::data_filter(in_window %in% TRUE, cycle == "1995" | (cycle == "2006-10" & from_2005)) |>
+  datawizard::data_modify(cohort = dplyr::if_else(cycle == "1995", "1990–1995", "2005–2010"))
+co_labels <- c(white = "Non-Hispanic white", black = "Non-Hispanic Black", hispanic = "Hispanic",
+               other = "Non-Hispanic other", less_hs = "Less than high school",
+               hs = "High school diploma or GED", some_college = "Some college",
+               college = "Bachelor's degree or more")
+co_shares <- co_paper |>
+  datawizard::data_to_long(select = c("race", "educ"), names_to = "by", values_to = "group") |>
+  dplyr::summarise(w = sum(weight), .by = c(by, group, cohort)) |>
+  dplyr::mutate(share = w / sum(w), .by = c(by, cohort))
+co_shares |>
+  datawizard::data_modify(group = factor(group, names(co_labels))) |>
+  datawizard::data_arrange("group") |>
+  datawizard::data_select(select = c("group", "cohort", "share")) |>
+  tidyr::pivot_wider(names_from = cohort, values_from = share) |>
+  dplyr::transmute(Group = unname(co_labels[as.character(group)]),
+                   `1990–1995` = paste0(fmt(100 * `1990–1995`), "%"),
+                   `2005–2010` = paste0(fmt(100 * `2005–2010`), "%")) |>
+  tinytable::tt() |>
+  tinytable::group_tt(i = list("Race-ethnicity" = 1, "Education" = 5)) |>
+  tinytable::style_tt(j = 2:3, align = "r")
+```
+
+```{r}
+#| label: cohabitation-shares
+#| include: false
+stopifnot(nrow(co_paper) == 2071)
+co_sh <- stats::setNames(co_shares$share, paste(co_shares$group, co_shares$cohort))
+co_age <- co_paper |> dplyr::summarise(age = stats::weighted.mean(age_start, weight), .by = cohort)
+stopifnot(round(co_age$age[1], 1) == round(co_age$age[2], 1))
+```
+
+Between the cohorts the share of non-Hispanic white women among cohabitors fell from `r fmt(100 * co_sh[["white 1990–1995"]])`% to `r fmt(100 * co_sh[["white 2005–2010"]])`%, and the share of Hispanic women nearly doubled, from `r fmt(100 * co_sh[["hispanic 1990–1995"]])`% to `r fmt(100 * co_sh[["hispanic 2005–2010"]])`%. The shares by education barely moved, and the mean age at which the couple moved in was the same in both cohorts, `r fmt(co_age$age[1])` years. On the curve of the case, at the reference settings, the coefficient of the later cohort, the log of the ratio of the monthly chances of marrying in the later and the earlier cohort, is `r fmt(co_b[["none"]], 3)` without controls, `r fmt(co_b[["age"]], 3)` with the age at the start and `r fmt(co_b[["composition"]], 3)` with age, race-ethnicity and education.
+
+The age at the start changes nothing, as the graph leads one to expect of a variable whose mean did not move. If the period shaped the age at the start, which the workspace offers as an arrow to switch on, the age would be a mediator, but a mediator that did not change between the cohorts carries little of the change. Holding race-ethnicity and education constant moves the coefficient by about `r fmt(co_b[["composition"]] - co_b[["none"]], 2)`. The change in who cohabits therefore explains a small part of the decline, and most of the decline happened within groups of the same race-ethnicity and education. Both comparisons are readings of 'cohabitors' that an analyst could defend, and the [specification menu](../cases/cohabitation/menu.qmd) keeps all three sets as estimands that answer different questions.
+
+### 8.3 The length of the whole union {#sec-union-length}
+
+One control of the menu sits elsewhere on the graph: the length of the whole union, from the month in which the couple moved in to the month in which they married or separated, or to the interview. It is known only once the union has ended, and it depends on whether and when the couple married, so it is a consequence of the outcome. @fig-cohabitation-dag does not draw it, and the graph below adds it as a node into which marriage points.
+
+```{r}
+#| label: cohabitation-length
+co_length <- dagitty::dagitty('dag {
+  period [exposure]
+  marriage [outcome]
+  period -> cohabits
+  education -> cohabits
+  race -> cohabits
+  education -> marriage
+  race -> marriage
+  education -> age_start
+  age_start -> marriage
+  period -> marriage
+  marriage -> union_length
+}')
+dagitty::isAdjustmentSet(co_length, c("cohabits", "education", "race"))
+dagitty::isAdjustmentSet(co_length, c("cohabits", "education", "race", "union_length"))
+```
+
+The comparison among cohabitors of the same education and race-ethnicity is an adjustment set, and adding the length of the union makes it one no longer. A descendant of the outcome can never belong in an adjustment set, because holding it constant compares unions by how they ended. At the reference settings the coefficient moves from `r fmt(co_b[["composition"]], 3)` to `r fmt(co_options$b[co_options$option == "total_duration"], 3)` once the total length is held constant, which is why the menu lists it as a weaker answer and keeps it off the curve. In a discrete-time event-history model, time enters instead as the months since the couple moved in, which are known in every month of the union, and the [event-history module](event-history.qmd#sec-logit) shows that model.
+
+## 9. The EU-frames case {#sec-eu-frames}
+
+The housing-audit data come from an experiment, in which random assignment closes every back door at once. The EU-frames case is observational: a panel of 270 country-years, in which countries and years differ in ways that may move both the unemployment rate and how people frame the EU. This section draws the graph of that case, derives the adjustment set from it, fits the models that the graph prescribes and the ones that it does not, and shows what country and year fixed effects can and cannot absorb. Its graphs are written with the ggdag package, as formulas, rather than as the dagitty text of sections 1 to 8; both produce the same dagitty object, and the same questions can be put to either. Every chunk runs when the page is built, from the shipped `cases/eu-frames/data/EUframes_cy.csv`, and the setup chunk below loads the packages and data of the section.
 
 ```{r}
 #| label: setup-eu-frames
@@ -244,7 +546,7 @@ options(width = 88, pillar.sigfig = 4)
 
 euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
 
-# the adjustment decision on the curve of the claim, for section 7.5
+# the adjustment decision on the curve of the claim, for section 9.5
 eu_curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive")
@@ -262,7 +564,7 @@ node_box <- function() {
 }
 ```
 
-### 7.1 Graphs written as formulas {#sec-dagify}
+### 9.1 Graphs written as formulas {#sec-dagify}
 
 In R the graph is built with `dagify()` from the **ggdag** package, and each edge is written as an ordinary formula. The outcome goes on the left of the tilde and its causes on the right, as in `lm()`, so `framing ~ unemployment` reads 'unemployment causes framing'.
 
@@ -301,7 +603,7 @@ first_formulas |>
   ggplot2::expand_limits(x = c(-0.35, 2.35), y = c(-0.25, 1.25))
 ```
 
-### 7.2 A collider in a regression {#sec-collider-regression}
+### 9.2 A collider in a regression {#sec-collider-regression}
 
 The rule against conditioning on a collider has a second lesson when the outcome is continuous and the collider enters a regression as a control. The recipe below writes a real effect into the data – a one-unit rise in unemployment moves framing by exactly 0.5 – and then creates a variable caused by both. In the terms of the EU-frames case, that third variable is politicisation. A slump raises unemployment, sour public framing pushes in the same direction, and parties and media respond to both by making the EU a live political issue.
 
@@ -341,7 +643,7 @@ Stated generally, **selecting on a variable is conditioning on it**. Restricting
 Change the recipe so that politicisation is caused only by unemployment and not by framing, making it a descendant of the exposure rather than a collider. Refit both models. Then make it a cause of both instead, so it is a confounder, and refit again. Across the three graphs, each generating its own dataset, the same second model is wrong, harmless and required in turn.
 :::
 
-### 7.3 The graph of the EU-frames case {#sec-case-eu-frames}
+### 9.3 The graph of the EU-frames case {#sec-case-eu-frames}
 
 The claim of the EU-frames case comes from a 2016 study of how Europeans frame the European Union, whose author this site refers to as the original author, or OA [@Teney2016DoesEUEconomic]. OA's argument is that economic hardship shifts the terms in which people talk about the EU away from cosmopolitan ones, and the reanalysis you work on tests one version of it: whether the unemployment rate in a country-year is associated with the mean cosmopolitan framing of its respondents.
 
@@ -355,7 +657,7 @@ case <- ggdag::dagify(
   framing      ~ year,           # EU-wide shocks common to a given year
   unemployment ~ country,        # those same traits shape the labour market
   unemployment ~ year,           # and so do the common shocks
-  # framing      ~ growth,       # section 7.5 turns these two on
+  # framing      ~ growth,       # section 9.5 turns these two on
   # unemployment ~ growth,
   exposure = "unemployment",
   outcome  = "framing",
@@ -385,9 +687,9 @@ case |>
   ggplot2::expand_limits(x = c(-0.4, 3.4), y = c(-0.4, 1.8))
 ```
 
-Note the two commented lines inside the `dagify()` call. They are the arrows that section 7.5 discusses, written out in the file as beliefs but switched off. Because a commented formula takes its trailing comma with it, the call parses as it stands, and `growth` does not exist in the graph at all until you delete the two hash marks.
+Note the two commented lines inside the `dagify()` call. They are the arrows that section 9.5 discusses, written out in the file as beliefs but switched off. Because a commented formula takes its trailing comma with it, the call parses as it stands, and `growth` does not exist in the graph at all until you delete the two hash marks.
 
-### 7.4 The adjustment set {#sec-formula}
+### 9.4 The adjustment set {#sec-formula}
 
 The adjustment set comes from `adjustmentSets()`, which returns the variables that, once held constant, close every back door and leave the causal path open.
 
@@ -419,17 +721,17 @@ list(
   dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 4)))
 ```
 
-Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 7.6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Task 3 in the EU-frames case and the value recorded for analyst C6HJR in the Multi100 project.
+Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 9.6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Task 3 in the EU-frames case and the value recorded for analyst C6HJR in the Multi100 project.
 
 Of the four models, one is correct because it adjusts for the set that the graph requires, and one of the other three points the opposite way. Nothing in the data picks out the correct one. The choice comes from the graph, and so from five arrows that were drawn before any model was fitted.
 
 The name `adjustmentSets()` is plural because the function returns *minimally sufficient* sets – sets that close every back door and have no smaller subset that also does so – and a more complicated graph will often return several, any one of which will do. The graph narrows the choice, sometimes to a single set, but often the analyst still has to choose among several.
 
-### 7.5 The limits of fixed effects {#sec-growth}
+### 9.5 The limits of fixed effects {#sec-growth}
 
 Country and year fixed effects are frequently described as though they adjust for everything, and the graph shows why they do not. A country fixed effect absorbs whatever is constant within a country across the whole period, and a year fixed effect absorbs whatever is common to all countries in a given year. A variable that moves *within* a country *over* time is untouched by both, and if that variable causes unemployment and framing alike, it is a back door that the reproduced specification does not close. This is the substance of the methodological warnings about reading fixed-effects coefficients as causal quantities [@KeeleEtAl2020CausalInterpretationEstimated; @BellJones2015ExplainingFixedEffects].
 
-GDP growth is such a variable, and on the [specification menu](../cases/eu-frames/menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 7.3 and run `adjustmentSets()` again.
+GDP growth is such a variable, and on the [specification menu](../cases/eu-frames/menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 9.3 and run `adjustmentSets()` again.
 
 ```{r}
 #| label: growth-confounder
@@ -509,11 +811,11 @@ list(total = "total", direct = "direct") |>
 
 Depending on which of the two defensible beliefs about growth you hold, and which quantity you want, the graphs give three different formulas. The menu axis that offers growth as a copredictor is therefore a choice between two claims about what the unemployment coefficient means, and running the model both ways as a robustness check does not make that choice. Nor will a coefficient on growth that looks 'supported by the data' settle it, because the two graphs make identical predictions about the data.
 
-### 7.6 The adjustment on the curve {#sec-adjustment-eu-frames}
+### 9.6 The adjustment on the curve {#sec-adjustment-eu-frames}
 
 The curve of the claim keeps both options of the adjustment decision, the slope with the other economic measure left out and the slope with it held fixed, and the reasoning is the one that the two graphs above set out. Unemployment and growth are two expressions of the same downturn rather than a cause and its confounder, so leaving growth out and holding it fixed give two estimands rather than a right and a wrong set of controls. The unadjusted slope is the association of framing with unemployment whatever happened to output, which is what the reproduced specification estimates, and the adjusted slope is the association at a given rate of growth, which is what the model of the original study estimates, since it carries both measures. The roles swap when growth is the predictor and unemployment is held fixed, and growth then has less to work with, because 59% of its variation within countries is common to all of them in the same year, above all the recession of 2009, which the year effects remove. On the curve the adjustment carries `r pp(fk("copredictor"))` of the variance of the claim-aligned partial correlations, and moving it alone changes the class of `r pp(fk("copredictor", "crossing_rate"))` of the pairs of specifications that differ in nothing else; `r pp(below_sig(dplyr::filter(eu_curve, copredictor == "none")))` of the unadjusted specifications and `r pp(below_sig(dplyr::filter(eu_curve, copredictor == "other")))` of the adjusted ones lie below zero with CR2 p < 0.05.
 
-The year effects of the graph are a decision on the curve as well, made with the estimator. The two-way design, which adjusts for country and year as the graph of section 7.3 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly. Without year effects the comparison within each country keeps the changes that every member state went through in the same year, which on this panel make up 29% of the variation in unemployment within countries, so that the slope describes all change within a country, the shared recession included, and is open to confounding by any shift in framing across Europe that coincided with the crisis. An analyst who draws the year arrows of section 7.3 wants the two-way slope, while one who counts the shared recession as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../cases/eu-frames/map.qmd) shows both decisions, with every option and what each does to the curve.
+The year effects of the graph are a decision on the curve as well, made with the estimator. The two-way design, which adjusts for country and year as the graph of section 9.3 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly. Without year effects the comparison within each country keeps the changes that every member state went through in the same year, which on this panel make up 29% of the variation in unemployment within countries, so that the slope describes all change within a country, the shared recession included, and is open to confounding by any shift in framing across Europe that coincided with the crisis. An analyst who draws the year arrows of section 9.3 wants the two-way slope, while one who counts the shared recession as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../cases/eu-frames/map.qmd) shows both decisions, with every option and what each does to the curve.
 
 ::: {.callout-tip}
 ## Try it
@@ -521,7 +823,7 @@ The year effects of the graph are a decision on the curve as well, made with the
 In the `fe-sim` recipe, change the coefficient of the slump on framing from −0.4 to 0 and refit. The fixed-effects estimate comes out at the planted value, because a variable that causes only the exposure is not a confounder at all. Then set it to −0.4 again and change the coefficient of the slump on unemployment to 0. The same thing happens for the mirror-image reason. A confounder has to reach both ends of the arrow you are estimating, and the recipe lets you break each half in turn.
 :::
 
-### 7.7 The bailout on the graph {#sec-bailout}
+### 9.7 The bailout on the graph {#sec-bailout}
 
 The EU-frames dataset contains a `bailout` column, a 0/1 indicator marking the `r sum(euframes$bailout)` country-years in which the country was under a financial-assistance programme. It is a small variable that can cause a good deal of trouble, because two reasonable analysts can put it in two different places on the graph.
 
@@ -558,19 +860,19 @@ On `r nobs(m_dropped)` country-years instead of 270, the effect is gone. The coe
 
 The rule of section 2 says that selecting on a variable is conditioning on it, so if the bailout is a common effect of unemployment and of framing, dropping bailout country-years is conditioning on a collider and the vanished effect is an artefact of the restriction. If instead the bailout is a mediator, the restriction removes the very country-years in which the mechanism operated, and the vanished effect indicates that the association was concentrated there. If it is neither, and bailout countries simply happen to account for most of the real relationship, then the restriction has thrown away the informative half of the sample. No statistic computed from these 270 rows can tell the three explanations apart. The choice between them has to be made before the restricted model is fitted, in a graph that states which one you are assuming.
 
-## 8. Graphs and data {#sec-quartet}
+## 10. Graphs and data {#sec-quartet}
 
-No statistic computed from the housing-audit data can say whether the route through the official is open, or in which direction it bends. @DAgostinoMcGowanEtAl2024CausalInferenceNot construct four datasets with identical summary statistics that come from four different causal structures, and in which adjusting for the same covariate is right in one and wrong in the others, because what differs between the structures is not in the observed variables. The same holds here. The graph, the reasons behind its arrows and the assumption on which the bound of the [audit-experiments module](experiments.qmd#sec-posttreatment) rests are claims about the world. An analyst states them so that a reader can dispute an arrow, and no output of a model can take their place.
+No statistic computed from the housing-audit data can say whether the route through the official is open, or in which direction it bends, and no statistic computed from the ESS extract can say whether the verdicts on the economy and public services of section 7 are causes of distrust, consequences of it or consequences of concern. @DAgostinoMcGowanEtAl2024CausalInferenceNot construct four datasets with identical summary statistics that come from four different causal structures, and in which adjusting for the same covariate is right in one and wrong in the others, because what differs between the structures is not in the observed variables. The same holds here. The graph, the reasons behind its arrows and the assumption on which the bound of the [audit-experiments module](experiments.qmd#sec-posttreatment) rests are claims about the world. An analyst states them so that a reader can dispute an arrow, and no output of a model can take their place.
 
-Two working rules follow, and both are cheap. The first is time order: nothing that happens after the treatment can be a confounder of it, so a variable recorded after the email arrived, such as the reply or the ethnicity of the official who wrote it, needs a reason before it enters an analysis of the effect of the name. The second is to put the graph in the report, which is what the preregistration of Task 5 asks for when it wants a sentence, grounded in the graph, on why the chosen specification answers the claim.
+Two working rules follow, and both are cheap. The first is time order: nothing that happens after the treatment can be a confounder of it, so a variable recorded after the email arrived, such as the reply or the ethnicity of the official who wrote it, needs a reason before it enters an analysis of the effect of the name. Time order helps less in a survey, where concern, distrust, the votes and the verdicts are all recorded in the same interview, and there the order of the arrows has to rest on an argument about which attitude forms first. The second is to put the graph in the report, which is what the preregistration of Task 5 asks for when it wants a sentence, grounded in the graph, on why the chosen specification answers the claim.
 
-Fit criteria can actively mislead in choosing a control set, as the regression of section 7.2 showed. Katrin Auspurg makes the point about a large multiverse of political-science models, where the AIC comparison reported in the study itself systematically favours the specifications she classes as unjustified [@Auspurg2025RobustnessBetterAssessed, p. 1]. A model that adjusts for a collider will often fit better than the one that does not, because the collider genuinely predicts the outcome. Predictive performance is a poor guide to a control set, even though it is often the one that analysts follow without saying so. For the first of the two rules, `ggdag::time_ordered_coords()` lays a graph out in temporal layers, so that an arrow which runs backwards in time is visible on the page.
+Fit criteria can actively mislead in choosing a control set, as the regression of section 9.2 showed. Katrin Auspurg makes the point about a large multiverse of political-science models, where the AIC comparison reported in the study itself systematically favours the specifications she classes as unjustified [@Auspurg2025RobustnessBetterAssessed, p. 1]. A model that adjusts for a collider will often fit better than the one that does not, because the collider genuinely predicts the outcome. Predictive performance is a poor guide to a control set, even though it is often the one that analysts follow without saying so. For the first of the two rules, `ggdag::time_ordered_coords()` lays a graph out in temporal layers, so that an arrow which runs backwards in time is visible on the page.
 
 A four-step procedure covers most first graphs. State the estimand in words – the quantity, for which units, contrasting what with what. List every variable that you believe is causally involved as a node of the graph, including the ones you cannot measure. Draw the arrows you would defend and comment out the ones you would not. Then read the adjustment set, and write the model formula from it. The [multiverse module](multiverse.qmd#sec-auspurg) picks the argument up from there, since a graph is what the critics of large specification universes ask analysts to supply.
 
-## 9. Your own graph {#sec-yours}
+## 11. Your own graph {#sec-yours}
 
-The exercise for this section uses a question from your own research in place of the two cases, and it has two halves.
+The exercise for this section uses a question from your own research in place of the four cases, and it has two halves.
 
 First, state an estimand for a question you actually care about, in one or two sentences and in the vocabulary of @LundbergEtAl2021WhatYourEstimand. Name the unit of analysis, the outcome, the contrast that defines the effect, and the population over which you want it. 'The effect of unemployment on framing' is not yet an estimand. 'The average change in a country's mean cosmopolitan framing associated with a one-point rise in its own unemployment rate, across EU member states between 2004 and 2013, holding fixed everything that persists within a country and everything common to a year' is one, and notice that the second half of it is already an adjustment set.
 
@@ -584,7 +886,7 @@ Do the exercise above on the last analysis you ran, not on a hypothetical one. T
 
 ## Sources and further reading {#sec-sources}
 
-The estimand-first framing is @LundbergEtAl2021WhatYourEstimand, and the standard treatment of causal graphs for social scientists is @HernanRobins2020CausalInferenceWhat, which is freely available online; @Huntington-Klein2021EffectIntroductionResearch is a gentler introduction to the three shapes. On colliders, @ColeEtAl2010IllustratingBiasDue give the general treatment and @GriffithEtAl2020ColliderBiasUndermines a widely read applied example, and on conditioning after the treatment in experiments, @MontgomeryEtAl2018HowConditioningPosttreatment, with @Coppock2019AvoidingPosttreatmentBias for audit studies. The demonstration that no statistic chooses an adjustment set is @DAgostinoMcGowanEtAl2024CausalInferenceNot. On fixed effects in section 7, @KeeleEtAl2020CausalInterpretationEstimated is the careful statement of what a fixed-effects coefficient does and does not identify, and @BellJones2015ExplainingFixedEffects makes the same argument from the multilevel side. The software documentation is worth reading directly: the ggdag package site at <https://r-causal.github.io/ggdag/>, whose introductory vignette pictures association flowing along a path as water flows down a pipe, and the dagitty documentation at <https://dagitty.net/>, which also hosts a browser tool for sketching a graph by hand before writing it down. The numbers of the housing-audit case come from `display_outcomes.csv` and `spec_curve.csv` in `cases/housing/data/`, and those of the EU-frames case from `EUframes_cy.csv`, `spec_curve.csv` and `spec_curve_forks.csv` in `cases/eu-frames/data/`.
+The estimand-first framing is @LundbergEtAl2021WhatYourEstimand, and the standard treatment of causal graphs for social scientists is @HernanRobins2020CausalInferenceWhat, which is freely available online; @Huntington-Klein2021EffectIntroductionResearch is a gentler introduction to the three shapes. On colliders, @ColeEtAl2010IllustratingBiasDue give the general treatment, @ElwertWinship2014EndogenousSelectionBias the treatment for sociologists, with selection into a sample as the leading case, and @GriffithEtAl2020ColliderBiasUndermines a widely read applied example, and on conditioning after the treatment in experiments, @MontgomeryEtAl2018HowConditioningPosttreatment, with @Coppock2019AvoidingPosttreatmentBias for audit studies. The demonstration that no statistic chooses an adjustment set is @DAgostinoMcGowanEtAl2024CausalInferenceNot. On fixed effects in section 9, @KeeleEtAl2020CausalInterpretationEstimated is the careful statement of what a fixed-effects coefficient does and does not identify, and @BellJones2015ExplainingFixedEffects makes the same argument from the multilevel side. The software documentation is worth reading directly: the ggdag package site at <https://r-causal.github.io/ggdag/>, whose introductory vignette pictures association flowing along a path as water flows down a pipe, and the dagitty documentation at <https://dagitty.net/>, which also hosts a browser tool for sketching a graph by hand before writing it down. The numbers of the housing-audit case come from `display_outcomes.csv` and `spec_curve.csv` in `cases/housing/data/`; those of the immigration-and-trust case from the extract `trust_ess.csv` and from `spec_curve.csv` in `cases/trust/data/`; those of the cohabitation case from the union file `cohab_unions.csv` and from `spec_curve.csv` and `display_options.csv` in `cases/cohabitation/data/`; and those of the EU-frames case from `EUframes_cy.csv`, `spec_curve.csv` and `spec_curve_forks.csv` in `cases/eu-frames/data/`. The graphs of sections 7 and 8 are checked, when the page is built, against the arrows of the graphs whose answers the browser labs print, in `dag_answers.csv` of each case.
 
 ## References {.unnumbered}
 
