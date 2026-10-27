@@ -1,0 +1,163 @@
+---
+title: "Applied replication for data skills"
+subtitle: "One day – open science and replication"
+format: revealjs
+aliases:
+  - /slides/one-day-replication.html
+# Optional runs that this deck includes in its main flow (core-runs.lua
+# strips their .deepdive mark); the others stay on the d toggle.
+core-runs: []
+---
+
+{{< include _segments/eu-frames/_setup.qmd >}}
+## {#today .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.todaymeta}
+A full-day workshop in four parts, with open science in the foreground
+:::
+
+:::: {.todaybox}
+::: {.nonincremental}
+1. Credibility and open research – the three Rs, SCORE and Multi100, and where data and code are kept
+2. The claim and its estimand – the paper and the questions of the five analysts
+3. The reproduction – one of three recorded results, and the slips behind them
+4. Replication and preregistration – new data, and a plan fixed in advance
+:::
+::::
+
+::: {.todaytake}
+You leave with a reproduced result, an estimand statement and a preregistration for a replication
+:::
+
+::: {.todaymeta}
+Work along in the browser lab, solo or in pairs
+:::
+
+::: notes
+Welcome. A full day in four parts of ninety minutes, and this version of it keeps open science in the foreground. The first part asks what a claim is for, why people say social science is in trouble, and what open research proposes, and it ends on the places where data, code and plans are kept. The second part goes inside one published paper and asks what question five analysts were each answering when they reanalysed it. In the third you reproduce one of their results, to the third decimal, and read the code behind it for the slips that it carries. And in the fourth we take the claim to new data and you write the plan for a replication before anyone has opened them.
+:::
+
+## Two kinds of aim {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**What I want you to understand**
+
+- What reproducibility, robustness and replicability each mean, and why they come apart
+- What open research asks of a study, and where its data, code and plans are kept
+- Why five analysts of one claim answered five different questions
+- What it takes for a published number to come back: data, code and versions
+- What a preregistration fixes, and what it leaves open
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**What I want you to be able to do**
+
+- Find the deposited materials of a published analysis and read them
+- Write an estimand statement for a claim in one sentence
+- Reproduce a recorded result to the third decimal from someone else's materials
+- Write one check that would catch a slip in a pipeline
+- Preregister a replication before the new data are opened
+:::
+:::
+::::
+
+::: notes
+Two columns, because the day has two kinds of aim. The left-hand column is what I want you to understand, and today most of it concerns the practices of open research: what reproducing, testing for robustness and replicating each mean, where the materials of a study are kept, and what it takes for a published number to come back. The right-hand column is what you will have done with your own hands by the end: found and read somebody else's deposit, written an estimand statement, reproduced a recorded result, written a check that would have caught a slip, and preregistered a replication. The two columns belong together, because the concepts tell you which of those things to do and when.
+:::
+
+{{< include _segments/eu-frames/_opening-lab.qmd >}}
+# PART 1 – Credibility and open research {#part-1-credibility-and-tools .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 1 – 90 minutes
+:::
+
+::: notes
+Part one. We start with what science is for, why anyone thinks it is in trouble, and the red-card study, in which twenty-nine teams analysed one dataset and disagreed. Then the vocabulary of the three Rs and the practices of open research, and the evidence from SCORE, three large studies that put numbers on how often findings survive being repeated. Then the one of those studies that I took part in, five analysts of the same claim, and the places where data, code and plans are kept, which is where every check of a published finding has to start. We finish by getting the browser lab running on every machine.
+:::
+
+{{< include _segments/eu-frames/_p1-credibility.qmd >}}
+{{< include _segments/eu-frames/_p1-matrix.qmd >}}
+{{< include _segments/eu-frames/_p1-score.qmd >}}
+{{< include _segments/eu-frames/_p1-multi100.qmd >}}
+{{< include _segments/eu-frames/_p1-infrastructure.qmd >}}
+{{< include _segments/eu-frames/_p1-today-lab.qmd >}}
+{{< include _segments/eu-frames/_p1-handson1-lab.qmd >}}
+## Break {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+30 minutes – the return time is in the chat\
+Keep the browser lab open
+:::
+
+::: notes
+Break – thirty minutes, and the return time is in the chat. If the browser lab has not loaded on your machine, use the break for it and flag me; I will stay on the call.
+:::
+
+# PART 2 – The claim and its estimand {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2 – 90 minutes
+:::
+
+::: notes
+Part two. In the first part you met five analysts who took on one claim and came back with answers that differ several times over. This part asks why. It goes properly inside the paper first: what it claimed, what it fitted, and what happened when three kinds of repetition were tried on it. Then it turns the question around, because analysts who seem to disagree about an answer are often answering different questions without noticing. The tool for saying which question you are answering is the estimand statement, and you write your own before the part ends.
+:::
+
+{{< include _segments/eu-frames/_p2-paper.qmd >}}
+{{< include _segments/eu-frames/_p2-estimands.qmd >}}
+{{< include _segments/eu-frames/_p2-lundberg.qmd >}}
+{{< include _segments/eu-frames/_p2-estimand-statement.qmd >}}
+## Lunch {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+An hour – the return time is in the chat\
+Lunchtime browsing, if you like: section 3 of the case study, on the five reanalysts
+:::
+
+::: notes
+Lunch – a full hour, and the return time is in the chat. If you want a head start on the afternoon, section three of the case study describes the five reanalysts one by one, and it will help you choose whose result to reproduce. See you back here.
+:::
+
+# PART 3 – The reproduction {#part-3-reproduction-and-exploration .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 3 – 90 minutes
+:::
+
+::: notes
+Welcome back. This is the part in which you work with code. You become the sixth analyst, choose one of the three analysts whose results rest on country means, and reproduce the value that Multi100 recorded for it, to the third decimal. Then we ask what that took, data, code and the right versions of both, and you read the code that the analyst deposited, looking for the slip that it carries. By the end you will know what a published number depends on, and how a check written into a pipeline would have caught each slip before it reached a result.
+:::
+
+{{< include _segments/eu-frames/_p3-task2.qmd >}}
+{{< include _segments/eu-frames/_p3-handson3.qmd >}}
+{{< include _segments/eu-frames/_p3-onenumber.qmd >}}
+{{< include _segments/eu-frames/_p3-repro-conditions.qmd >}}
+## Break {#break-part-3 .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+30 minutes – the return time is in the chat\
+Keep your reproduction in your notes
+:::
+
+::: notes
+Break – thirty minutes, and the return time is in the chat. Before you go, copy your Task 3 cell and its output into your notes, because the browser lab forgets everything when it reloads, and the last part of the day builds on the analysis that you reproduced.
+:::
+
+# PART 4 – Replication and preregistration {#part-4-multiverse-and-preregistration .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 4 – 90 minutes
+:::
+
+::: notes
+Last part. So far we have repeated the analysis on the original data. Now the third R: the same question asked of new data. The claim has already been taken to later waves of the Eurobarometer, and we look at what that replication found and at what changed in the survey in the meantime. Then we turn to the one protection that a replication has against the temptation to adjust its plan once the results are in, the preregistration, and you write one for a replication of the analysis that you reproduced, before any new data are opened.
+:::
+
+{{< include _segments/eu-frames/_p4-replication.qmd >}}
+{{< include _segments/eu-frames/_p4-prereg-replication.qmd >}}
+{{< include _segments/eu-frames/_p4-close-open-science.qmd >}}
+{{< include _segments/eu-frames/_references.qmd >}}

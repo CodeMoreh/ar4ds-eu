@@ -1,0 +1,35 @@
+---
+title: "Stage 10 – From respondents to a panel"
+case: eu-frames
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at Part 2](../../slides/eu-frames-full.html#/part-2-the-claim-and-its-estimand){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+The last case is the hardest of the four in its data. The original author (OA) asked whether the economic crisis changed how citizens of the European Union frame the Union, and answered from sixteen waves of the Eurobarometer, ten years of surveys in twenty-seven member states. The claim is about countries in years, while the surveys hold respondents, so the analysis rests on a panel of country-years, built by averaging the answers of each country in each year, and on models for such a panel. This stage downloads the sixteen files, turns them into the panel with the scripts of the workspace, and reproduces a recorded result. It takes about six and a quarter hours with the download and the build, and about five without them.
+
+::: {.callout-warning appearance="simple" icon=false}
+**The licence of the files.** The Eurobarometer files come under the terms of use of GESIS, which forbid passing them on, publishing anything about individual respondents, and processing them with an AI assistant. They stay on your own machine, out of every repository and out of any session that an AI assistant can read. The panel that the workspace ships is an aggregate, to which none of these restrictions applies.
+:::
+
+| Work through | What you do | Timing |
+|---|---|---|
+| The paper of the OA [@Teney2016DoesEUEconomic] | Read the whole article: the two hypotheses about economic crisis and the framing of the EU, the question on what the EU means to the respondent, the macro indicators, the multilevel models, and the sentence from which SCORE took the claim. | 60 minutes |
+| [Case study](../../cases/eu-frames/index.qmd), sections 1 to 3 | [The original study](../../cases/eu-frames/index.qmd#sec-study), its data, the selections made by the OA and the focal estimate; [SCORE and Multi100](../../cases/eu-frames/index.qmd#sec-score), with what each kind of repetition found on this paper and the instruction that the analysts received; then [the five reanalysts](../../cases/eu-frames/index.qmd#sec-reanalysts), each in turn, with an assessment of their choices and the coding errors that two of them made. | 50 minutes |
+| [Setup](../../setup.qmd#the-workspace), Task 1 of the case | Download the workspace of the EU-frames case and run `source("R/check_setup.R")` until every line prints OK. | 15 minutes |
+| [The Eurobarometer files](../../setup.qmd#the-eurobarometer-files-for-the-individual-level-work) on the Setup page, and [the Eurobarometer microdata at GESIS](../../companion/data-sources.qmd#sec-gesis) in the data-sources module | Register with GESIS, which is free and immediate, and download the Stata file of each of the sixteen studies, about half a gigabyte in all, following the steps screen by screen. Read what the terms of use allow and what they forbid. | 45 minutes |
+| [Building the analysis file](../../companion/data-management.qmd) | Run the first script of the workspace on your sixteen files and read the report that it prints; then work through the second, which scores the items into scales, deals with the respondents who named nothing, averages the respondents into country-years with and without survey weights, merges the macro series, and reproduces the panel of the course. | 60 minutes |
+| [The statistical methods behind the course](../../companion/stats-methods.qmd), [The country-year level](../../companion/stats-methods.qmd#sec-aggregation) | Why the predictor is measured at the country-year, and what a cell mean is a mean of. | 20 minutes |
+| Slides, Part 2, and Task 2 in your report or working script | The paper, the claim and the five analysts; then the panel of 270 country-years, with the outcome drawn country by country; the [estimand statement](../../cases/eu-frames/lab.qmd#task-4-estimand-and-dag) and the graph, with two sentences on what two-way fixed effects adjust for and what they cannot fix. The estimands run, the causal-graph crash course and the run of slides on R repeat earlier stages; skip them. | 45 minutes |
+| [Causal graphs and adjustment sets](../../companion/dags.qmd#sec-eu-frames), the section on the EU-frames case | Graphs written as formulas, a collider in a regression, the graph of the case and its adjustment set, the limits of fixed effects, and the bailout on the graph. | 45 minutes |
+| Slides, [the opening of Part 3](../../slides/eu-frames-full.html#/part-3-reproduction-and-exploration){target="_blank"}, and Task 3 in your report or working script, or [browser lab](../../cases/eu-frames/lab.qmd#task-3-reproduction) Task 3 | The instruction of Task 2 of Multi100, then the reproduction: choose one of the analyses that the lab and the workspace offer, and refit it until the value on record comes back to the third decimal. The [exercise overview](../../cases/eu-frames/exercise.qmd) lists the analyses with their data, their models and the values on record. | 40 minutes |
+
+**Shortcuts.** Without a GESIS account, or without the time and the disk space that the download takes, skip the download and read the data-management module without running it: the module quotes what the scripts print, and the panel of the workspace is the one that the scripts rebuild. If you have drawn causal graphs for panel data before, read only [the limits of fixed effects](../../companion/dags.qmd#sec-growth) in the graph module.
+
+**By the end of the stage** you have the panel of the course rebuilt from your own sixteen files, or the module that rebuilds it read; a recorded result reproduced to the third decimal; the estimand behind the claim written in one sentence; and two sentences on what two-way fixed effects absorb and what they leave.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

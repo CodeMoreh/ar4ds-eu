@@ -105,7 +105,7 @@ One more lens: power, the probability that a study of a given size detects a gap
 # the curve and record files.
 sb <- tibble::tribble(
   ~ord, ~R,              ~verdict,                ~detail,                                                                                                   ~fill,
-  3,    "Reproducible?", "NOT TESTED BY SCORE",   "data and code public; the reproduction component\nholds an empty template – and the class reproduced 8PTRZ", grey_mid,
+  3,    "Reproducible?", "NOT TESTED BY SCORE",   "data and code public; the reproduction component\nholds an empty template – and the class reproduced the analysts", grey_mid,
   2,    "Robust?",       "ANALYSTS SPLIT 3–2",    sprintf("%d specifications, all negative and significant,\n%s to %s points; but two of the five analysts\nfound no evidence, and Multi100 asks all five", nrow(curve), fmt_num(min(curve$b_pp), 0), fmt_num(max(curve$b_pp), 0)), orange,
   1,    "Replicable?",   "NOT REPLICATED",        "new audit, 3,050 authorities, four new names:\nz = 0.66, p = 0.511",                         d_red
 )
@@ -133,7 +133,7 @@ The SCORE project of the paper: [osf.io/3a8bg](https://osf.io/3a8bg/)
 :::
 
 ::: notes
-Put the whole dossier together. Reproducibility was never tested by SCORE: the data and code are public on the Dataverse, but the reproduction component on the OSF holds only an empty template. You have done part of that job yourselves today, since the class reproduced the number of 8PTRZ exactly, and the course refits reproduce all four recorded statistics. Robustness, on the original data, holds in the strongest sense that a curve can offer: every analysis that the course judged justifiable, and every one of the five analysts, finds the gap in the same direction and significant, and only its size moves. By the rule of Multi100, though, which counts a claim as robust only when every reanalyst finds evidence for it, this claim would not count, because two of the five did not. Replication with new data found nothing. So the one paper has a different answer for each R, and they do not line up.
+Put the whole dossier together. Reproducibility was never tested by SCORE: the data and code are public on the Dataverse, but the reproduction component on the OSF holds only an empty template. You have done part of that job yourselves today, since the class reproduced the recorded numbers of the analysts exactly, and the course refits reproduce all four of them. Robustness, on the original data, holds in the strongest sense that a curve can offer: every analysis that the course judged justifiable, and every one of the five analysts, finds the gap in the same direction and significant, and only its size moves. By the rule of Multi100, though, which counts a claim as robust only when every reanalyst finds evidence for it, this claim would not count, because two of the five did not. Replication with new data found nothing. So the one paper has a different answer for each R, and they do not line up.
 :::
 
 ## Robustness and replicability {#robustness-and-replicability}

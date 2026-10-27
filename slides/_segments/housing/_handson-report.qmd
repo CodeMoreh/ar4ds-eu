@@ -1,0 +1,33 @@
+## Hands-on 4 – The reproduction in the report {#hands-on-4-the-reproduction-in-the-report .smaller}
+
+::: {.small}
+**In your workspace:**
+
+1. Open `index.qmd`, go to Task 3, and find the tab of the analyst whom you reproduced
+2. Under the chunk of that analyst, write one sentence that gives your value with inline code, for example `` `r knitr::inline_expr("round(chisq.test(tab_8ptrz)$statistic, 3)")` ``. The value sits in `$statistic` of a `chisq.test()` or a `prop.test()`, and in the `z` column of `parameters::model_parameters()`
+3. Render the report, with the Render button of your IDE or `quarto preview` in the terminal, and find your sentence
+:::
+
+::: {.fragment .small}
+**In the browser lab:** follow on the shared screen, and write the same sentence in your notes with the value that your cell printed.
+:::
+
+::: notes
+Now the reproduction goes into the report. If you have the workspace, open the report, go to Task 3 and find the tab of the analyst whom you reproduced; the code that you ran is already there. Under it, write one sentence that gives your value, with inline code rather than the typed number. For 8PTRZ and 25N5D the value sits in the statistic of the test; for the logistic regressions it is the z column of the table that model parameters returns. Then render, with the button at the top of the editor or with quarto preview in the terminal, and find your sentence in the rendered page. If you are in the browser lab, follow on my screen and write the same sentence in your notes with the number that your cell printed. Twenty minutes, and the most common error will be a typo inside the backticks, so read the message that comes back.
+:::
+
+## Hands-on 5 – A clean run {#hands-on-5-a-clean-run .smaller}
+
+::: {.small}
+1. Restart R, from the Session or the Console menu of your IDE
+2. Render the report again from nothing, and check that every number is the one that you had before
+3. In the browser lab, reload the page and run the cells of Task 3 again, in order
+:::
+
+::: {.fragment .small}
+What breaks a clean run: an object that was made in the console and never in the report; a file read from a path that exists only on your machine; a package that is attached in your session but not named in the code.
+:::
+
+::: notes
+The last hands-on of the day is the shortest, and it is the one that I would most like you to keep. Restart R, so that nothing from the session survives: no objects, no attached packages. Then render the report again from nothing, and check that every number in it is the one that you had before. In the browser lab, reload the page and run the cells of Task 3 again, in order. [advance] If something breaks, it is almost always one of three things: an object that you made in the console and never in the report, a file read from a path that exists only on your machine, or a package that your session had attached but your code never names. Each of those would also break the report for anyone else who tried to run it, so a clean run is the cheapest reproducibility check that there is, and you can do it every time.
+:::

@@ -7,16 +7,16 @@
 # The curve of the claim, the chart that the Multiverse page draws, minus the
 # hover: the specifications ranked by the claim-aligned partial r and classed
 # by CR2 errors clustered by country, with the reproduced specification
-# of Task 3 tagged in ink. Built on spec_base() (setup chunk), so that the
+# (the model of C6HJR) tagged in ink. Built on spec_base() (setup chunk), so that the
 # next slide reuses this exact panel.
 spec_base() +
   mark_layer(dplyr::transmute(curve_ref, rank, r = r_ca, sig,
-                              label = paste0("reproduced in Task 3\nCR2 p = ", fmt_num(p_cr2, 4))))
+                              label = paste0("reproduced specification\nCR2 p = ", fmt_num(p_cr2, 4))))
 ```
 
 ::: {.small}
 - The curve of the claim: **`r fmt_n(nrow(spec_curve))`** specifications of the three positive scales – unemployment or GDP growth, two fixed-effects designs, and the measurement options that the audit keeps
-- **`r fmt_pct(share_below(spec_curve))`** below zero · **`r fmt_pct(share_sig(spec_curve))`** below zero with CR2 p < 0.05 · claim-aligned partial r from **`r fmt_num(min(spec_curve$r_ca))` to +`r fmt_num(max(spec_curve$r_ca))`**
+- **`r fmt_pct(share_below(spec_curve))`** below zero, **`r fmt_pct(share_sig(spec_curve))`** below zero with CR2 p < 0.05, and the claim-aligned partial r runs from **`r fmt_num(min(spec_curve$r_ca))` to +`r fmt_num(max(spec_curve$r_ca))`**
 :::
 
 ::: {.src}
@@ -24,7 +24,7 @@ cases/eu-frames/data/spec_curve.csv: the height of a mark is the partial r of th
 :::
 
 ::: notes
-This is the curve of the claim, the same curve over which the Multiverse page has been drawing your dots. Eight hundred and sixty-four specifications, each one a mark, ranked from the strongest support for the claim on the left to the weakest on the right. Every one is a justifiable answer to the claim: three positive scales, unemployment or growth, with or without the other measure, two kinds of fixed effects, and the measurement options that the audit kept. Below zero is the direction of the claim, and almost everything is below zero, so direction is not where the disagreement lies. The shape is the test: a circle where errors clustered by country, with the CR2 correction, give a p under point zero five, a cross where they do not, and about three in four are circles. The specification that we all reproduced is a cross, with a CR2 p just above the line, at point zero five zero four. Where did the class results fall? Did anyone end up above the line? Which choice moved your estimate most?
+This is the curve of the claim, the same curve over which the Multiverse page has been drawing your dots. Eight hundred and sixty-four specifications, each one a mark, ranked from the strongest support for the claim on the left to the weakest on the right. Every one is a justifiable answer to the claim: three positive scales, unemployment or growth, with or without the other measure, two kinds of fixed effects, and the measurement options that the audit kept. Below zero is the direction of the claim, and almost everything is below zero, so direction is not where the disagreement lies. The shape is the test: a circle where errors clustered by country, with the CR2 correction, give a p under point zero five, a cross where they do not, and about three in four are circles. The reproduced specification, my own model, is a cross, with a CR2 p just above the line, at point zero five zero four. Where did the class results fall? Did anyone end up above the line? Which choice moved your estimate most?
 :::
 
 ## The published results on the curve {#where-your-result-lands}

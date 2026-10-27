@@ -1,0 +1,19 @@
+## Your own placement {#find-your-own-percentile .smaller}
+
+<!-- The first line differs by format: the methods deck places the
+     specification that was submitted, the short session the one that the
+     participant would defend. Keyed on the deck map in the YAML of each deck. -->
+
+::: {.small}
+- Rerun `try_spec()` with [the choices that you submitted]{.content-visible when-meta="deck.methods"}[the specification that you would defend]{.content-visible unless-meta="deck.methods"}, in the browser lab[ or in your workspace]{.content-visible unless-meta="deck.short"}: its last line places your estimate on the curve
+- The placement counts the specifications of the curve whose estimate lies further below zero than yours. For the reference specification it is `r sum(curve$b_pp < curve_ref$b_pp - 1e-9)`: nothing on the curve lies further below zero, and the logit without covariates ties with it
+- The same count places the published result and the five analysts
+:::
+
+::: {.fragment}
+Paste your placement in chat, hold it, and send on "go".
+:::
+
+::: notes
+Your turn to be placed. Rerun try underscore spec with [the choices that you submitted]{.content-visible when-meta="deck.methods"}[the specification that you would defend, the one you tried last if you like]{.content-visible unless-meta="deck.methods"}. The last line of its output is your placement: how many of the sixty-four specifications of the curve have a gap further below zero than yours. For the reference specification it is zero: nothing on the curve lies further below zero, and the logit without covariates ties with it. Two or three minutes, then paste your placement in chat, hold it, and send on go. [go] Look at the range in the chat. Every one of you can now say where your estimate stands among sixty-four justifiable alternatives, and that sentence – my estimate sits here among the specifications of the curve, built in this way – is a publishable way to report a robustness check.
+:::

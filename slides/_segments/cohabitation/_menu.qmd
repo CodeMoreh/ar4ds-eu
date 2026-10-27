@@ -13,17 +13,17 @@ level_txt <- c(estimand = "1 – Estimands", measurement = "2 – Measurement",
 # order the decisions by name rather than as the menu lists them
 off_txt <- menu_opts |>
   datawizard::data_filter(!on_curve) |>
-  dplyr::summarise(txt = paste0(paste(label, collapse = " · "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
+  dplyr::summarise(txt = paste0(paste(label, collapse = "; "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
                    .by = c(axis, judgement)) |>
   dplyr::summarise(off = paste(txt, collapse = "; "), .by = axis) |>
   # the four other pairs of surveys in one phrase, so that the row fits the slide
   dplyr::mutate(off = dplyr::if_else(axis == "comparison",
-                                     "Four other pairs of NSFG surveys · Trend over five surveys *(another question)*",
+                                     "Four other pairs of NSFG surveys; Trend over five surveys *(another question)*",
                                      off))
 menu_rows <- menu_opts |>
   datawizard::data_filter(on_curve) |>
   dplyr::summarise(level = dplyr::first(level), decision = dplyr::first(decision),
-                   on = paste(label, collapse = " · "), .by = axis) |>
+                   on = paste(label, collapse = "; "), .by = axis) |>
   dplyr::left_join(off_txt, by = "axis") |>
   dplyr::mutate(off = dplyr::coalesce(off, "–"),
                 level = dplyr::if_else(level == dplyr::lag(level, default = ""), "", level_txt[level]),
@@ -45,12 +45,12 @@ Here is the menu. It is the full list of decisions that any analyst of this clai
 ## The curve of 144 {#the-curve-of-144 .smaller}
 
 ::: {.small}
-- **Cohorts** – the window of the paper · the same five-year window in both surveys
-- **Time frame** – all observed months · the first three years
-- **Adjustment** – none · the age at the start · age, race-ethnicity and education
-- **Weights** – the weights of the surveys · none
-- **Time since the start** – the months as a straight line · one step per year of the union
-- **Model** – multinomial logit · logit · complementary log-log
+- **Cohorts** – the window of the paper; the same five-year window in both surveys
+- **Time frame** – all observed months; the first three years
+- **Adjustment** – none; the age at the start; age, race-ethnicity and education
+- **Weights** – the weights of the surveys; none
+- **Time since the start** – the months as a straight line; one step per year of the union
+- **Model** – multinomial logit; logit; complementary log-log
 :::
 
 ::: {.fragment .small}

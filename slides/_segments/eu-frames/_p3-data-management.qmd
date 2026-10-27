@@ -1,0 +1,62 @@
+## From sixteen files to one panel {#from-sixteen-files-to-one-panel .smaller}
+
+::: {.small}
+| Step | What it holds | Who may see it |
+|:--|:--|:--|
+| The raw waves | sixteen Eurobarometer files, about 477,000 respondents | each user, under their own GESIS account |
+| The respondent file | one row per respondent, the items recoded, the scales built | the analyst only, in a private folder |
+| The panel | one row per country and year, means of the scales, the macro series merged | anyone: it is an aggregate, CC BY 4.0 |
+| The analysis | the model, its output, the report | anyone |
+:::
+
+::: {.fragment .small}
+Each arrow between steps is a script that runs from the start, and each output has a **codebook** beside it: what every column holds, how it was built and from what.
+:::
+
+::: notes
+Data management is the work between the raw files and the analysis, and on this case it has four steps. The raw waves are sixteen Eurobarometer files with about four hundred and seventy-seven thousand respondents, and each user downloads them under their own account. A script turns them into a respondent file, with the items recoded and the scales built, which stays in a private folder because it is still respondent data. A second script averages it into the panel that you have been working on, one row per country and year, which anyone may see because it holds only means. The analysis comes last. [advance] Two habits hold the chain together. Every step is a script that runs from the start, never a file edited by hand, and every output has a codebook beside it that says what each column holds and where it came from. The course files that you use today all have one.
+:::
+
+## Checks on the inputs {#checks-on-the-inputs .smaller}
+
+::: {.small}
+- **Each input read once** – a list of the files that a script reads, with no name repeated
+- **One wave per fieldwork period** – each wave with its date, and the count of respondents that its documentation gives
+- **Counts by year and country** – a table that a duplicated or missing wave cannot hide from
+- **Two builds compared cell by cell** – every cell that differs, listed, before a new build replaces an old one
+:::
+
+::: {.fragment .small}
+Three of the five Multi100 pipelines carry a slip of exactly the kind that these checks catch, and the results tables of all three look normal.
+:::
+
+::: notes
+Here are four checks that belong in any pipeline that assembles a panel from many files. List every file that the script reads and make sure that no name appears twice. Give every wave its fieldwork date and its expected number of respondents, and check both. Count respondents by year and country, because a duplicated or a missing wave shows up there at once. And when you rebuild, compare the new build with the old one cell by cell, and read the list of the cells that differ before you replace anything. [advance] These are not hypothetical. Three of the five Multi100 pipelines on this claim carry a slip that one of these checks would have caught, mine among them, and the results tables of all three look perfectly normal. We come back to the three slips after the reproduction.
+:::
+
+## Hands-on 3a – Checking a panel {#hands-on-3a-checking-a-panel .smaller}
+
+::: {.small}
+In an editable cell of the browser lab, or in the working script:
+:::
+
+```{.r}
+euframes |>                                    # respondents behind each year
+  datawizard::data_summary(respondents = sum(n_cy), by = "year")
+
+kqxue <- utils::read.csv("data/analyst_KQXUE.csv")  # r-style: keep – base R in the lab
+kqxue |>                                       # rows counted twice in 2004?
+  datawizard::data_filter(n != n_once)
+
+o18ol <- utils::read.csv("data/analyst_018OL.csv")  # r-style: keep – base R in the lab
+o18ol |>                                       # a wave dated to the wrong year?
+  datawizard::data_filter(year != year_fieldwork)
+```
+
+::: {.fragment .small}
+Each of the last two files carries a slip of its analyst. Which one, in a sentence? Type it in the chat, hold it, send on "go".
+:::
+
+::: notes
+Now run three checks yourself, on the files of the three analysts. First, the respondents behind each year of the course panel. Years with two waves hold about twice as many as years with one, and in the build that I first submitted, 2009 held exactly as many respondents as the autumn wave of 2008, which is how this table could have caught my own slip. Then read the file of KQXUE and keep the rows in which the count of respondents differs from the count with each wave read once. Then read the file of 018OL and keep the rows in which the year in the data differs from the year of the fieldwork. Each of the two analyst files carries a slip that its own code introduced, and these filters show it. [advance] Say what you found in one sentence, in the chat, and hold it until I say go. [go; read three aloud.] Notice that you found both without fitting a single model.
+:::

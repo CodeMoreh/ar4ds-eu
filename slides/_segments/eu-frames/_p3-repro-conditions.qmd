@@ -1,0 +1,55 @@
+## What a reproduction needs {#what-a-reproduction-needs .smaller}
+
+::: {.small}
+| | Data used here | Code | Reproduced in the browser lab |
+|:--|:--|:--|:--|
+| C6HJR | the panel, on the OSF | R script, on the OSF | yes |
+| KQXUE | rebuilt by the course from GESIS | Stata do-file, on the OSF | yes |
+| 018OL | rebuilt by the course from GESIS | R Markdown, on the OSF | yes |
+| KEVF1 | respondents, from GESIS | R script, on the OSF | no – needs the respondent files |
+| PRL47 | respondents, from GESIS | Stata do-files, on the OSF | no – needs the respondent files |
+:::
+
+::: {.fragment .small}
+Data and code are not enough without the **versions**. Eurostat revised one value of the series of KQXUE after 2023, Portugal in 2013, and the recorded t = −7.169 comes back only on the series as it was published then; on today's series it is −7.172.
+:::
+
+::: notes
+What did it take to get those numbers back? Two things are obvious: the data and the code. My panel and my script are on the OSF. KQXUE and 018OL deposited their code but not data that could be published, so the course rebuilt their files from the GESIS waves by following their code line by line. KEVF1 and PRL47 worked on respondents, so their reproduction needs the respondent files, which only reach you through your own GESIS account. [advance] The third thing is less obvious: the versions. After 2023 Eurostat revised a single value of the series that KQXUE merged, unemployment in Portugal in 2013. On today's series the t comes out at minus seven point one seven two. The recorded minus seven point one six nine comes back only on the series as it was published at the time, which the course found in a web archive. A source that moves under you is part of the record too.
+:::
+
+## Slips in the pipelines {#slips-in-the-pipelines .smaller}
+
+::: {.small}
+| Analyst | The slip | With it | Without it |
+|:--|:--|:--|:--|
+| C6HJR | the file of EB 70.1 read twice, and EB 72.4 never read, in the build first submitted | t = −3.853 | t = −3.804, the value on record |
+| KQXUE | the wave EB 62.0 appended twice | t = −7.169, the value on record | t = −7.166 |
+| 018OL | the wave EB 79.3, fielded in 2013, dated to 2012 | t = −1.206, the value on record | t = −1.606 |
+:::
+
+::: {.fragment .small}
+None of the three changed a conclusion, and none shows in a table of results. All three show in the **inputs**: a list of the files read, a count of respondents by wave and year, a date for each wave.
+:::
+
+::: notes
+Three of the five pipelines carry a slip, and one of them is mine. In the build that I first submitted, one file was read twice and the 2009 wave never, and the value on record is the corrected one. KQXUE appended the autumn wave of 2004 twice, and 018OL dated a wave of 2013 to 2012. For the other two the value on record carries the slip, so a reproduction has to keep it, and the course files do. [advance] Look at what the slips did: they move the t in the third decimal for KQXUE and by four tenths for 018OL, and none of them changes a conclusion. And none would ever show in a table of coefficients. Each is visible only in the inputs, where a list of files, a count by wave or a date for each wave gives it away. That is where checking belongs.
+:::
+
+## Hands-on 3b – Reading deposited code {#hands-on-3b-reading-deposited-code .smaller}
+
+::: {.small}
+Open the deposit of the analyst whose result you reproduced, and find the line that carries the slip:
+
+- **KQXUE** – osf.io/vycgd, `task2.do`, the block that appends the waves (lines 440–456)
+- **018OL** – osf.io/nz7ka, `multi100_Teney2016_task-2.Rmd`, the line that sets `YEA`
+- **C6HJR** – osf.io/6zqct, the folder `moreh_rep_vAPR2025/`, the comment dated April 2025
+:::
+
+::: {.fragment .small}
+Then write one **check** that would have caught it, in a sentence or a line of R. Type it in the chat, hold it, send on "go".
+:::
+
+::: notes
+Now read some code that somebody else deposited. Open the OSF component of the analyst whose result you reproduced. For KQXUE it is a Stata do-file; find the block near line four hundred and forty where the waves are appended one after another, and look for the wave that appears twice. For 018OL it is an R Markdown file; find the line that sets the year, and look at where the year comes from, and at the comment beside it. For mine, the fork holds a folder dated April 2025 with the comment in which I corrected the file name. [advance] Then write one check that would have caught the slip before it reached a result: a sentence, or a line of R if you can. Type it, hold it, and we send them together. [go; read four or five aloud.]
+:::

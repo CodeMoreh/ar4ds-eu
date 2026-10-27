@@ -1,0 +1,40 @@
+---
+title: "Self-study"
+subtitle: "Twelve stages across the four cases"
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+This route takes the course through all four of its cases for a reader who works alone, without a facilitator and without a class. The cases come in the order of their difficulty: [the housing-audit case](../../cases/housing/index.qmd), [the immigration-and-trust case](../../cases/trust/index.qmd), [the cohabitation case](../../cases/cohabitation/index.qmd) and [the EU-frames case](../../cases/eu-frames/index.qmd). The modules of the [companion curriculum](../../companion/index.qmd) sit between them, each at the point where a case first needs its method, so that every case adds what the one before it did not need: from a comparison of proportions among a thousand emails, through regression on survey respondents and models of the time to an event, to panel models fitted to country-years that you build yourself from sixteen surveys. The route ends on a project of your own. A semester course can take the same route in class.
+
+Every case runs through the same five tasks. Task 1 is the setup check; Task 2 meets the data, writes the estimand statement and finishes the causal graph; Task 3 reproduces a result that Multi100 recorded for one of the five analysts of the case; Task 4 explores the specification menu one decision at a time; and Task 5 declares one specification in a short preregistration, runs it and reports it. The tasks therefore come round four times. The later cases move faster through what the earlier ones taught and spend the time saved on what is new.
+
+No programming is assumed. Stage 1 installs R, Quarto and an IDE (Positron, RStudio, VS Code, etc.), and stage 2 teaches enough R to start the first case. Each stage has a page with a table of what to work through, and every row links a page or a section of this site. The figure in the Timing column is the whole of the work that a row asks of someone working alone, and a stage adds up to between five and six and a half hours. The route as a whole asks for about seventy hours. Nothing in it depends on a pace, so a stage can be taken in one sitting or spread over a week. Where a stage can be shortened for a reader who already knows part of its material, its page says how, in a paragraph headed **Shortcuts**.
+
+The data of the first three cases come with their workspaces, which you download from the [Setup page](../../setup.qmd#the-workspace) as each case begins, and the workspace of the immigration-and-trust case also downloads the one file that its Task 3 needs. The EU-frames workspace ships its country-year panel. Stage 10 offers to rebuild that panel from the sixteen Eurobarometer files from which it was made, which the GESIS archive distributes under a free account; the download is optional, and the stage says what to do without it.
+
+Without a facilitator, the checks are built into the pages. Each stage names the numbers that your code should reach, the browser lab of each case holds hints and worked solutions for its tasks, and the [help page](../../help.qmd) lists the problems that other participants have met. The slides were written to be presented. Open a deck in its own tab and press `s` for the speaker view, whose notes give what is said over each slide, and where a slide asks the class to write something and send it together, write it into your report instead.
+
+Sending your results to the class chart of a case is optional. A result sent alone joins the chart on the Multiverse page of its case, beside the results that earlier cohorts sent, and the helpers of Tasks 4 and 5 work exactly as they do in a workshop: `submit_exploration()` and `report_result()` fill in the results form for you. To find your own marks again, give the same nickname in every case, as `nickname = "..."`.
+
+| | Case | What happens |
+|---|---|---|
+| [Stage 1 – Credibility and the three Rs](stage-1.qmd) | – | Why the field talks of a crisis, reproduction, robustness and replication, SCORE and Multi100, and R, Quarto and an IDE installed. |
+| [Stage 2 – R and Quarto](stage-2.qmd) | Housing audit | A first session in R on the data of a field experiment, the document format of the reports, and the first paper. |
+| [Stage 3 – The claim and its reproduction](stage-3.qmd) | Housing audit | Tasks 1 to 3: the estimand statement, the graph of an experiment, and the reproduction of one of the five reanalyses, chosen by you. |
+| [Stage 4 – The menu and the declaration](stage-4.qmd) | Housing audit | Tasks 4 and 5, randomisation inference and power, the replication with new data, and the first case report. |
+| [Stage 5 – Survey data and scales](stage-5.qmd) | Immigration and trust | Tasks 1 and 2 on the European Social Survey: an attitude scale and its reliability, and what the controls of the paper do. |
+| [Stage 6 – Regression on respondents](stage-6.qmd) | Immigration and trust | Task 3: a multilevel model reproduced, fixed effects against random intercepts, survey weights, and errors clustered by 16 countries. |
+| [Stage 7 – The menu and the public record](stage-7.qmd) | Immigration and trust | Tasks 4 and 5, two rebuilds of the data that part ways, the file of the analysts, how a record keeps its versions, and the second case report. |
+| [Stage 8 – Unions as person-months](stage-8.qmd) | Cohabitation | Tasks 1 and 2 on the National Survey of Family Growth: censoring, the life table, and a comparison made among women who all cohabited. |
+| [Stage 9 – The reproduction and competing risks](stage-9.qmd) | Cohabitation | Tasks 3 to 5: a recorded test reproduced and what it rests on, discrete-time models with two ways out of a union, and the third case report. |
+| [Stage 10 – From respondents to a panel](stage-10.qmd) | EU frames | Tasks 1 to 3: sixteen Eurobarometer files turned into country-years, fixed effects on a panel, and a recorded result reproduced. |
+| [Stage 11 – Few clusters and the multiverse](stage-11.qmd) | EU frames | Tasks 4 and 5 on a curve of 864 specifications, inference with 27 countries, missing answers, the fourth case report, and the choice of a project. |
+| [Stage 12 – Your own project](stage-12.qmd) | Your choice | Version control, a question beyond the claim of one case, preregistered before it runs, and a repository ready for an archive. |
+
+Each case takes one claim of a published article. The pages of a case call its writer the original author (OA), or the original authors (OAs) where there are two. The route asks you to read all four articles, each at the stage at which its case begins: the field experiment on public housing authorities in the United States [@EinsteinGlick2017DoesRaceAffect] in stage 2, the survey study of concern about immigration and trust in politics in Western Europe [@McLaren2012CulturalDivideEurope] in stage 5, the study of cohabiting unions and marriage among American women [@KuoRaley2016DivergingPatternsUnion] in stage 8, and the study of economic crisis and how citizens frame the European Union [@Teney2016DoesEUEconomic] in stage 10.
+
+By the end of the route you hold four case reports. Each contains the estimand statement and the causal graph of its claim, the reproduction of a recorded result, your exploration of the menu, a preregistration completed before its specification ran, and the result of that specification with its place on the curve of the claim. You also hold a project that asks a question beyond the claim of one case, preregistered before it ran. All five sit in a version-controlled repository that another person can clone and re-render, with the licensed survey files left out of it, as the terms of their archives require.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

@@ -491,10 +491,10 @@ draw_class_chart <- function(cls, my_tag = "") {
   } else if (!has_pts) {
     "No submission can be placed yet – press Run Code to refresh"
   } else if (any(pts$mine)) {
-    paste0(nrow(pts), " class result(s) on the chart · tag ", my_tag, ": ",
+    paste0(nrow(pts), " class result(s) on the chart; tag ", my_tag, ": ",
            paste(pts$n_lab[pts$mine], collapse = ", "))
   } else if (nzchar(my_tag)) {
-    paste0(nrow(pts), " class result(s) on the chart · no mark carries the tag ", my_tag, " yet")
+    paste0(nrow(pts), " class result(s) on the chart; no mark carries the tag ", my_tag, " yet")
   } else {
     paste(nrow(pts), "class result(s) on the chart")
   }

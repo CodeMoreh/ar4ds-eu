@@ -148,7 +148,7 @@ mark_layer <- function(m, label_x = 92, top = 0.228, gap = 0.024) {
   tags <- m |>
     dplyr::mutate(spot = round(b, 3),
                   label = dplyr::if_else(new_data, paste0(tag, " (new data)"), tag)) |>
-    dplyr::summarise(rank = mean(rank), b = mean(b), label = paste(label, collapse = " · "),
+    dplyr::summarise(rank = mean(rank), b = mean(b), label = paste(label, collapse = "; "),
                      .by = c(spot, new_data)) |>
     dplyr::arrange(dplyr::desc(b)) |>
     dplyr::mutate(lab_y = top - gap * (dplyr::row_number() - 1))

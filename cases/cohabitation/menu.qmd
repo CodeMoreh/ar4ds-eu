@@ -173,9 +173,9 @@ level_table <- \(lv) {
     dplyr::filter(level == lv) |>  # dplyr: datawizard cannot see the argument `lv`
     dplyr::mutate(item = paste0(label, " <code>", option, "</code>")) |>
     dplyr::summarise(
-      on = paste(item[on_curve], collapse = " · "),
+      on = paste(item[on_curve], collapse = "; "),
       off = if (any(!on_curve)) {
-        paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = " · ")
+        paste0(item[!on_curve], " (", judgement_txt[judgement[!on_curve]], ")", collapse = "; ")
       } else {
         "–"
       },

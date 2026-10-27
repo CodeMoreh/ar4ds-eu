@@ -1,0 +1,35 @@
+## The three reproduced models {#the-three-reproduced-models .smaller}
+
+::: {.small}
+| Analyst | Model | What it compares | Conventional *t* |
+|:--|:--|:--|:--|
+| C6HJR | fixed effects for country and year | each country with itself, after the change common to all countries in a year | −3.804 on 233 df |
+| KQXUE | a fixed effect for each country | each country with itself, the common change included | −7.169 on 242 df |
+| 018OL | random intercepts for country, year and wave | change within countries and differences between them at once | −1.206 on 396.9 df |
+:::
+
+::: {.fragment .small}
+Between the 27 country means the slope is +`r fmt_num(bw_cosmo$b_between, 4)`, within countries `r fmt_num(bw_cosmo$b_within, 4)`: a model that blends the two comparisons, as random intercepts do, assumes them equal, and the within–between model rejects that (p = `r fmt_num(bw_cosmo$p_difference)`).
+:::
+
+::: notes
+The three models that the class reproduced are the three estimators that the menu is built around, so they are worth reading side by side. My model has fixed effects for country and for year, so each country is compared with itself after removing whatever all of Europe went through in a given year. KQXUE has a fixed effect for each country only, so the common change stays in the comparison. 018OL has random intercepts, which use the change within countries and the differences between them at the same time. [advance] On this panel those two comparisons point in opposite directions. Across the country means the slope is slightly positive, and within countries it is negative, and the within–between model rejects the equality that random intercepts assume. That is one reason why the three t-values are so far apart.
+:::
+
+## Few clusters and the CR2 test {#few-clusters-and-the-cr2-test .smaller}
+
+::: {.small}
+| Test | Two-way fixed effects (C6HJR) | Country fixed effects, on the course panel |
+|:--|:--|:--|
+| Conventional | t = `r fmt_num(inference_of("conventional", "t"), 2)` on `r inference_of("conventional", "df")` df, p = `r fmt_num(inference_of("conventional", "p"), 4)` | t = `r fmt_num(disp_inference$t[disp_inference$estimator == "fe_country" & disp_inference$inference == "conventional"], 2)` on `r disp_inference$df[disp_inference$estimator == "fe_country" & disp_inference$inference == "conventional"]` df |
+| Clustered by country, CR1 | t = `r fmt_num(inference_of("cr1_g1", "t"), 2)` on 26 df, p = `r fmt_num(inference_of("cr1_g1", "p"), 3)` | t = `r fmt_num(disp_inference$t[disp_inference$estimator == "fe_country" & disp_inference$inference == "cr1_g1"], 2)` on 26 df |
+| Clustered, CR2, Satterthwaite df | t = `r fmt_num(inference_of("cr2_satterthwaite", "t"), 2)` on `r fmt_num(inference_of("cr2_satterthwaite", "df"), 1)` df, p = `r fmt_num(inference_of("cr2_satterthwaite", "p"), 4)` | t = `r fmt_num(disp_inference$t[disp_inference$estimator == "fe_country" & disp_inference$inference == "cr2_satterthwaite"], 2)` on `r fmt_num(disp_inference$df[disp_inference$estimator == "fe_country" & disp_inference$inference == "cr2_satterthwaite"], 1)` df, p = `r fmt_num(disp_inference$p[disp_inference$estimator == "fe_country" & disp_inference$inference == "cr2_satterthwaite"], 4)` |
+:::
+
+::: {.fragment .small}
+The estimate is the same in every row; only the test changes. The years of one country are not independent, 27 countries are few clusters of unequal weight, and the CR2 test with Satterthwaite df, which classes every point of the curve, counts the countries that effectively carry the evidence.
+:::
+
+::: notes
+Now the question that conventional errors avoid. All three reproduced t-values treat each row as independent evidence, but the years of one country resemble each other. Clustering by country allows any pattern of correlation within a country, and the evidence then rests on twenty-seven countries rather than two hundred and seventy rows. With so few clusters, of very unequal weight, the usual clustered test is still too generous, so the course uses the CR2 correction, with Satterthwaite degrees of freedom that count how many countries effectively carry the information, fewer than ten here. Read my row: the same estimate goes from a p of two in ten thousand to just above point zero five. Read the row of the design of KQXUE on the course panel: it stays significant under every test. [advance] The estimate never moves, only the test does, and the CR2 test is the one that classes every point of the curve that you are about to explore.
+:::

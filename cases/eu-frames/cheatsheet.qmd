@@ -30,13 +30,27 @@ aliases:
 
 ---
 
+## Task 3 – the reproduction {#task-3-the-reproduction}
+
+Choose one of the three analysts whose results rest on aggregate data. In the browser lab each has an exercise cell of its own, with a hint and a full solution; in the workspace the three are written out in the working script and in Task 3 of the report.
+
+| Analyst | Data | Model | On record |
+|:--|:--|:--|:--|
+| C6HJR | `EUframes_cy.csv` | `fixest::feols(mcosmo ~ unemp_c \| cntry + year, vcov = "iid")` | t = −3.804 on 233 df |
+| KQXUE | `analyst_KQXUE.csv` | `fixest::feols(cosmo ~ unemp \| cntry, vcov = "iid")` | t = −7.169 on 242 df |
+| 018OL | `analyst_018OL.csv` | `lmerTest::lmer(pos01 ~ unemp + (1 \| cntry) + (1 \| year) + (1 \| wave))`, Satterthwaite df | t = −1.206 on 396.9 df |
+
+The first run of the cell of 018OL in the browser lab downloads two packages, about 32 MB, so give it a minute. When you have your value, type the analyst and the value into the chat, for example `KQXUE t = -7.169`, hold it, and send it when the facilitator says go.
+
+---
+
 ## Submitting to the chart {#getting-your-dot-on-the-chart-route-2}
 
-You submit twice, and the two are different in kind. The browser lab and the workspace use the same function names.
+Only the methods day submits results to the class chart; the open-science and data-tools days submit nothing. You submit twice, and the two are different in kind. The browser lab and the workspace use the same function names.
 
 **Task 4 – the exploratory dot (green).** Nothing in this task is preregistered.
 
-1. **`try_spec(...)`** – one argument per decision, every one defaulting to the specification you reproduced. `try_spec(estimator = "fe_country")` changes one thing and leaves the rest alone. An option that left the curve, such as `estimator = "pooled_cl"`, stops with the reason and the page that teaches it.
+1. **`try_spec(...)`** – one argument per decision, every one defaulting to the reproduced specification, the model of C6HJR. `try_spec(estimator = "fe_country")` changes one thing and leaves the rest alone. An option that is off the curve, such as `estimator = "pooled_cl"`, stops with the reason and the page that teaches it.
 2. **`my_experiments()`** – prints everything you have tried so far, side by side, with only the decisions that varied.
 3. **`submit_exploration()`** – sends the most recent try to the chart, labelled as exploration. Open the printed link and press **Send**. It also prints your tag, such as `amber-otter-42`, which marks your submissions on the class chart; `submit_exploration(nickname = "...")` sets your own instead.
 

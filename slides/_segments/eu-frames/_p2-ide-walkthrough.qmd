@@ -1,0 +1,20 @@
+## The IDE, step by step {#the-ide-step-by-step .smaller}
+
+::: {.small}
+Six steps in the workspace, on my screen first:
+
+1. **Open the folder** – File → Open Folder in Positron and VS Code, `replication-lab.Rproj` in RStudio
+2. **Run the check** – open `R/check_setup.R` and run it as a whole; read the OK and FAIL lines in the console
+3. **Read the panel and view it** – `euframes <- readr::read_csv("data/EUframes_cy.csv")`, then open it from the Variables pane
+4. **Filter the view** – one country, sorted by year; then `nrow(euframes)` shows that the object itself is unchanged
+5. **Draw one figure** – `tinyplot::tinyplot(mcosmo ~ year, data = euframes)`, and find it in the plots pane
+6. **Render the report** – open `index.qmd`, render it, and find the finished page and the file it wrote in `_site`
+:::
+
+::: {.fragment .small}
+No installation? Watch these six on my screen, then do steps 3 to 5 in an editable cell of Task 2 in the browser lab.
+:::
+
+::: notes
+An IDE is the program in which you write, run and look at code, and today I show it in six steps, on my screen first, in Positron. Open the folder of the workspace, so that every path in the scripts starts from it. Run the check script and read what it says. Read the panel and open it in the data viewer, which is where you look at your data before any model touches it. Filter the view to one country and sort by year, and notice that the object in your session has not changed, because the viewer only shows. Draw one figure and find the pane where it appears. And render the report, so that you see where the finished page goes. [advance] If you have not installed anything, follow on my screen, and then do the middle three steps in an editable cell of the browser lab.
+:::

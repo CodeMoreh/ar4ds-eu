@@ -23,9 +23,21 @@ chi_tab <- original |>
   stats::xtabs(formula = ~ startsWith(TreatmentGroup, "Hispanic") + ProperName, data = _)  # r-style: keep – the contingency table that chisq.test() takes
 chi_yates <- unname(stats::chisq.test(chi_tab)$statistic)
 chi_plain <- unname(stats::chisq.test(chi_tab, correct = FALSE)$statistic)
+
+# The same for 25N5D: the delivered emails to Hispanic and white names, a
+# missing reply counted as no greeting, with and without the correction that
+# prop.test() applies by default
+counts_25n5d <- original |>
+  datawizard::data_filter(!is.na(Response_Dichotomous) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup),
+                          greeted = Response_Dichotomous == 1 & ProperName %in% 1) |>
+  datawizard::data_summary(greetings = sum(greeted), emails = n(), by = "hispanic_name")
+prop_yates <- unname(stats::prop.test(counts_25n5d$greetings, counts_25n5d$emails)$statistic)
+prop_plain <- unname(stats::prop.test(counts_25n5d$greetings, counts_25n5d$emails, correct = FALSE)$statistic)
+stopifnot(abs(prop_yates - an("25N5D", "statistic_recorded")) < 0.0015)
 ```
 
-This page sets out the whole exercise of the course on the housing-audit case. The [case study](index.qmd) presents the original study, the SCORE replication and the five Multi100 reanalyses, and it is the place to start if you have not read it. Your work happens in the workspace that you downloaded and opened in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes. The [browser lab](lab.qmd) runs the same exercise in a browser tab, for following a demonstration, for trying it without an installation and as a fallback, and it gives the same numbers. The page of your track gives the timing of each task.
+This page sets out the whole exercise of the course on the housing-audit case. The [case study](index.qmd) presents the original study, the SCORE replication and the five Multi100 reanalyses, and it is the place to start if you have not read it. The short session and the one-day formats of the case are worked in the [browser lab](lab.qmd), which runs the exercise in a browser tab with nothing to install. The workspace that you download and open in your IDE (Positron, RStudio, VS Code, etc.), as the [Setup page](../../setup.qmd) describes, holds the same tasks for anyone who has installed R, and it gives the same numbers. The page of your track says which tasks your session covers and how long each takes.
 
 ---
 
@@ -37,7 +49,7 @@ Five independent analysts reanalysed one claim of the original authors (OAs) in 
 
 The published result behind it is the coefficient of the Hispanic names in a logistic regression of a named greeting on the three groups of names, with community controls and the Hard Email indicator: **−0.82 (standard error 0.22) on 549 replies**, which the OAs translate into a gap of **−20.0 percentage points** in the probability of a named greeting, with a 95% confidence interval from −30.5 to −10.0. The data come from an experiment: `r format(nrow(audit), big.mark = ",")` emails to housing authorities, each of which was signed with one of six names that were assigned at random.
 
-Your first job is to reproduce the value that Multi100 recorded for one of the analysts, from the public file of the OAs. Your second is to depart from it deliberately, with a written reason, and to find out what that does to the estimate.
+Your first job is to reproduce the value that Multi100 recorded for one of the analysts, whichever you choose, from the public file of the OAs. Your second is to depart from it deliberately, with a written reason, and to find out what that does to the estimate.
 
 ## The five Multi100 analysts
 
@@ -72,7 +84,7 @@ The exercise runs as five numbered tasks. Each says what to do in the workspace 
 
 ### Task 1 – The setup check
 
-The only aim is to reach the point where a line of R runs and the data are in front of you. *Workspace:* open the workspace folder in your IDE and run `source("R/check_setup.R")`, which prints OK when everything is in place and otherwise says what is missing. *Browser lab:* wait for the engine to finish downloading, then run the setup cell. If your installation will not cooperate, carry on in the browser lab, which runs every later task.
+The only aim is to reach the point where a line of R runs and the data are in front of you. *Browser lab:* wait for the engine to finish downloading, then run the setup cell. *Workspace:* open the workspace folder in your IDE and run `source("R/check_setup.R")`, which prints OK when everything is in place and otherwise says what is missing. If your installation will not cooperate, carry on in the browser lab, which runs every later task.
 
 ### Task 2 – The data, the estimand and the graph
 
@@ -84,9 +96,9 @@ Third, finish the **causal graph**. The name affects whether an official replies
 
 ### Task 3 – The reproduction
 
-Reproduce the value that Multi100 recorded for analyst 8PTRZ, **$\chi^2$ = `r fmt(an("8PTRZ", "statistic_recorded"), 3)` on `r an("8PTRZ", "n_recorded")` replies**, from the public file of the OAs, `audit_original.csv` ([codebook](data/audit_original_codebook.md)). Keep the replies that carry a greeting code, build a two-by-two table of Hispanic against all other names by `ProperName`, and pass it to `chisq.test()`. When the facilitator says so, the whole class types its $\chi^2$ and sends it at the same moment.
+Choose one of the five analysts in the table above and reproduce the analysis from the public file of the OAs, `audit_original.csv` ([codebook](data/audit_original_codebook.md)). Four of them have a statistic that Multi100 recorded, from the $\chi^2$ test of a two-by-two table that 8PTRZ ran to the logistic regression of three groups with covariates that EWFMI fitted, and all four come out exactly. Multi100 recorded no statistic for P9W8Y, so its likelihood-ratio test of the three groups, $\chi^2$ = `r fmt(an("P9W8Y", "statistic_refit"), 3)` on 2 degrees of freedom, can be run again but cannot be matched against the record. The [browser lab](lab.qmd#task-3-reproduction) has a cell for each analyst, and the workspace has all five in its report and in `prep/reproduce_reanalyses.R`. When the facilitator says so, the whole class types the analyst and the value that each person reproduced, and sends them at the same moment.
 
-Then find out why your number is what it is. `chisq.test()` applies a continuity correction to a two-by-two table unless it is told otherwise, and `correct = FALSE` gives `r fmt(chi_plain, 2)` instead of `r fmt(chi_yates, 3)`. A reproduction depends on defaults of the software as well as on the data and the model. *Optional extension:* reproduce the logistic regression of UYV3F, z = `r fmt(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` replies, which compares Hispanic with white names only.
+Then find out why your number is what it is. `chisq.test()` and `prop.test()` apply a continuity correction to a two-by-two table unless they are told otherwise, so `correct = FALSE` gives `r fmt(chi_plain, 2)` instead of `r fmt(chi_yates, 3)` for 8PTRZ and `r fmt(prop_plain, 2)` instead of `r fmt(prop_yates, 3)` for 25N5D. The z of EWFMI is positive, where that of UYV3F is negative, because its model takes the Hispanic names as the base group. A reproduction depends on the defaults and the codings of the software as well as on the data and the model.
 
 ### Task 4 – The menu
 

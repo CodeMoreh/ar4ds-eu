@@ -1,0 +1,24 @@
+## The curve of the claim {#the-curve-of-the-claim}
+
+```{r}
+#| label: curve-glance
+#| fig-width: 9.5
+#| fig-height: 4.3
+# The curve of the claim with the six reference results in ink, as the chart
+# at the top of the Multiverse page draws them: a look at why the code of an
+# analysis has to be readable, not a lesson on the curve itself.
+spec_base() +
+  mark_layer(dplyr::transmute(ref_marks, rank, r = r_placement, sig, label = tag))
+```
+
+::: {.small}
+**`r fmt_n(nrow(spec_curve))`** defensible analyses of one claim on one panel, and the five Multi100 results among them. Only the code says which of them a paper ran.
+:::
+
+::: {.src}
+cases/eu-frames/data/spec_curve.csv and reference_marks.csv: the height of a mark is the partial r of the conventional fit, its shape the class under CR2 errors clustered by country.
+:::
+
+::: notes
+One look at where the robustness part of the course goes, because it is the best argument I know for everything we did with the tools today. Each mark is one analysis of this claim on this panel, eight hundred and sixty-four of them, all defensible: a different scale, the other economic measure, another fixed-effects design, another way of scoring the respondents who mention nothing. The ink marks are the five Multi100 analyses and the design of the original author. They lie at very different places along the curve. A table of results does not tell you where on this curve a paper sits. Only its code does, read line by line, and that is why a report that runs, a codebook beside every file and a history of every change are part of the evidence rather than housekeeping.
+:::

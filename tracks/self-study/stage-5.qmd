@@ -1,0 +1,29 @@
+---
+title: "Stage 5 – Survey data and scales"
+case: trust
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at Part 2](../../slides/trust-one-day.html#/part-2-the-claim-its-estimand-and-its-causal-graph){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+The second case moves from an experiment to a survey: more than a hundred thousand respondents of the European Social Survey (ESS) in sixteen countries, asked how far they trust their parliament, their politicians and their legal system, and what immigration does to the economy of their country, to its cultural life and to it as a place to live. The claim is that concern about immigration lowers trust in politics. This first stage of the case is about the data and the measures, and takes about five and a quarter hours.
+
+| Work through | What you do | Timing |
+|---|---|---|
+| The paper of the original author (OA) [@McLaren2012CulturalDivideEurope] | Read the whole article: the argument about the national community, the data and the measures, the association between and within countries, the multilevel model of Table 3, and the sentence of the abstract from which SCORE took the claim. | 75 minutes |
+| [Case study](../../cases/trust/index.qmd), sections 1 to 3 | [The original study](../../cases/trust/index.qmd#sec-study) and its data, [SCORE and Multi100](../../cases/trust/index.qmd#sec-score) with the claim and the Task 2 instruction, and [the five reanalyses](../../cases/trust/index.qmd#sec-reanalysts) and what each of them held constant. | 45 minutes |
+| [Social science data sources](../../companion/data-sources.qmd), [Three ways in](../../companion/data-sources.qmd#sec-access) and [Cross-national survey programmes](../../companion/data-sources.qmd#sec-surveys), then [the data you will use](../../cases/trust/index.qmd#sec-data) in the case study | Open download, registration and licence, and secure access, the three routes by which data are reached; the ESS among the cross-national survey programmes, with its access rule; then the licence under which the course ships its extract of rounds 1 to 4, CC BY-NC-SA 4.0, and the [codebook of the extract](../../cases/trust/data/trust_ess_codebook.md) with its citations. | 35 minutes |
+| [Setup](../../setup.qmd#the-workspace), Task 1 of the case | Download the workspace of the immigration-and-trust case and run `source("R/check_setup.R")` until it prints OK; the last check prints 0.1753 points of distrust per point of concern. Then, while you are online, run `source("R/spec_tools.R"); fetch_multi100()` once, which downloads from the OSF the file that Multi100 gave the analysts (29 MB) and checks it. | 30 minutes |
+| Slides, Part 2 | The paper of the OA, the five analysts placed by their coefficients, with one verdict and estimates that differ by a factor of two, and the claim: the estimand statement, the causal graph, what holding the controls of the paper constant does in it, and why no set of controls can settle reverse causation. The estimands run, the causal-graph crash course and the run of slides on R repeat stages 2 and 3; skip them. | 30 minutes |
+| Task 2 in your report or working script | Count the respondents, the countries, the country-rounds and the respondents of the paper; compute Cronbach's alpha for the three immigration items; compare the correlation of concern with distrust across the country means and within the countries. Write the estimand statement, saying which institution and what you hold constant. Then open `R/dag_starter.R`, keep the arrows that you are willing to defend, run `adjustmentSets(dag)`, `paths(dag, Z = paper_set)` and `isAdjustmentSet(dag, paper_set)`, and try the two swaps that the file offers. The [browser lab](../../cases/trust/lab.qmd#task-2-data) shows the same steps with their results, against which to check your own. | 35 minutes |
+| [The items behind the scales](../../companion/measurement.qmd#sec-trust), the section on this case | The three items of concern about immigration and their index; Cronbach's alpha of each scale, and why a single item weakens the coefficient; the two rules for unanswered items; the three trust items, why the paper keeps them apart, and what the choice among them does on the curve. | 60 minutes |
+
+**Shortcuts.** If you know the ESS, skip the data-sources module and read only the licence of the extract. The browser lab of this case is a demonstration: it fits no model, and shows each result as the course pipeline computed it with the code of the workspace, so it serves to check your numbers rather than to replace the workspace.
+
+**By the end of the stage** you have the workspace of the case passing its setup check with the file of Task 3 in place, Cronbach's alpha of the concern items computed yourself, the estimand behind the claim written in one sentence, a graph that holds only the arrows that you are willing to defend, and two sentences on what the controls of the paper do to the comparison and what no control can do.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

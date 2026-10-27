@@ -165,8 +165,8 @@ mv_payload <- function(curve, options, marks, analysts, file = "spec-curve-housi
 
   stat_line <- dplyr::if_else(
     curve$stat_type == "t",
-    sprintf("t = %s on %d df · %s", mv_minus(curve$stat, 2), as.integer(curve$df), mv_p_label(curve$p)),
-    sprintf("z = %s · %s", mv_minus(curve$stat, 2), mv_p_label(curve$p))
+    sprintf("t = %s on %d df, %s", mv_minus(curve$stat, 2), as.integer(curve$df), mv_p_label(curve$p)),
+    sprintf("z = %s, %s", mv_minus(curve$stat, 2), mv_p_label(curve$p))
   )
   detail <- purrr::map(seq_len(nrow(curve)), \(i) list(
     c("Comparison", lab_of("cp", i)),

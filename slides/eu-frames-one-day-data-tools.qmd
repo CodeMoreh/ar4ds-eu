@@ -1,0 +1,163 @@
+---
+title: "Applied replication for data skills"
+subtitle: "One day – data tools"
+format: revealjs
+# Optional runs that this deck includes in its main flow (core-runs.lua
+# strips their .deepdive mark); the others stay on the d toggle.
+core-runs: [tools, r]
+aliases:
+  - /slides/one-day-tools.html
+---
+
+{{< include _segments/eu-frames/_setup.qmd >}}
+## {#today .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.todaymeta}
+A full-day workshop in four parts, with the tools in the foreground
+:::
+
+:::: {.todaybox}
+::: {.nonincremental}
+1. Credibility and software – the three Rs, five analysts, and the toolchain
+2. R and the IDE – the language, the editor, and a first session on the panel
+3. Data management and the reproduction – the checks that catch slips, and a recorded result
+4. The report, version control and archiving – a record that someone else can rerun
+:::
+::::
+
+::: {.todaytake}
+You leave with a reproduced result in a rendered report, the checks that a panel needs, and a map of the toolchain
+:::
+
+::: {.todaymeta}
+Work along in the browser lab or in your IDE, solo or in pairs
+:::
+
+::: notes
+Welcome. A full day in four parts of ninety minutes, and this version of it keeps the tools in the foreground. The first part says briefly why any of this matters, through five analysts of one claim whose disagreement could be diagnosed because every one of them shipped code that runs, and then lays out the toolchain. The second part is R itself and the IDE, ending on a first session with the data. The third is data management, the work between the raw files and the panel, and it ends with you reproducing one of the recorded results to the third decimal. The fourth turns your work into a record: a rendered report, a history of changes, and a place where someone else can find it.
+:::
+
+## Two kinds of aim {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**What I want you to understand**
+
+- What reproducibility, robustness and replicability each mean, and why they come apart
+- Why plain text, a render step and a version history are what make an analysis checkable
+- What an IDE, a document format and a package layer each do, and what none of them can do
+- How a panel is built from raw files, and where the slips in such a build hide
+- Where a finished analysis is deposited, and what a licence allows others to do with it
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**What I want you to be able to do**
+
+- Read a data frame, filter it, summarise it and draw it in R
+- Find your way around an IDE and render a report
+- Write the checks that a panel built from many files needs
+- Reproduce a recorded result to the third decimal from someone else's materials
+- Keep the work in a report and under version control
+:::
+:::
+::::
+
+::: notes
+Two columns, because the day has two kinds of aim. The left-hand column is conceptual, and today most of it concerns what the tools are for rather than which one to pick: why plain text survives, why a render step matters, why a version history belongs to the scientific record, and where the slips in a data pipeline hide. The right-hand column is what you will have done with your own hands by the end: R on a real panel, an IDE, the checks that a panel needs, a reproduction of a recorded result, and a report that holds it, under version control if you have git.
+:::
+
+{{< include _segments/eu-frames/_opening-lab.qmd >}}
+# PART 1 – Credibility and software {#part-1-credibility-as-a-software-problem .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 1 – 90 minutes
+:::
+
+::: notes
+Part one, and it starts with a short version of the argument for why tools matter. The vocabulary first: the three operations that go under the word replication. Then the study that I took part in, five analysts of the same claim, who disagreed, and whose disagreement could be diagnosed afterwards because every one of them shipped a document that somebody else could run. Keep an eye on the labels of that chart, because the toolchain that follows starts from them: open-source software, plain text, the render step, packages, version control, archives and licences. We finish by getting the browser lab running on every machine.
+:::
+
+{{< include _segments/eu-frames/_p1-matrix.qmd >}}
+{{< include _segments/eu-frames/_p1-multi100.qmd >}}
+{{< include _segments/eu-frames/_p1-opensource.qmd >}}
+{{< include _segments/eu-frames/_p1-tools.qmd >}}
+{{< include _segments/eu-frames/_p1-today-lab.qmd >}}
+{{< include _segments/eu-frames/_p1-handson1-lab.qmd >}}
+## Break {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+30 minutes – the return time is in the chat\
+Keep setting up if you need to
+:::
+
+::: notes
+Break – thirty minutes, and the return time is in the chat. If your setup is not finished, the browser lab or the workspace, use the break for it and flag me; I will stay on the call.
+:::
+
+# PART 2 – R and the IDE {#part-2-the-toolchain .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2 – 90 minutes
+:::
+
+::: notes
+Part two is R itself, and the IDE in which you write it. First the R tutorial, ten slides, worked live: what you need to read most R, getting data in, looking at it, the verbs that do most of the work, model formulas and fixed effects, reading what comes back, a figure, a causal graph and the common error messages. Then the IDE in six steps on my screen, and then you work through the same moves on the panel yourselves, in the browser lab or in your IDE. By lunch you will have read a data frame, filtered it, summarised it and drawn it.
+:::
+
+{{< include _segments/eu-frames/_p2-rtutorial.qmd >}}
+{{< include _segments/eu-frames/_p2-ide-walkthrough.qmd >}}
+{{< include _segments/eu-frames/_p2-handson-r.qmd >}}
+## Lunch {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+An hour – the return time is in the chat\
+Lunchtime browsing, if you like: the codebook of the panel
+:::
+
+::: notes
+Lunch – a full hour, and the return time is in the chat. If you want a head start on the afternoon, open the codebook of the panel from the browser lab, and read how the file was built and what each column holds, because the first thing we do after lunch is ask how such a file comes into being and what can go wrong on the way.
+:::
+
+# PART 3 – Data management and the reproduction {#part-3-one-claim-in-your-hands .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 3 – 90 minutes
+:::
+
+::: notes
+Part three. First data management, the work between the raw survey files and the panel that you used this morning: the steps, what may be shared at each of them, and the checks that a build from many files needs. You run three of those checks yourself. Then the task that the R work of the day leads up to: you become the sixth analyst, choose one of three recorded results and reproduce it to the third decimal. We end on what that took, and on the code that the analysts deposited, where the slips that your checks found are visible line by line.
+:::
+
+{{< include _segments/eu-frames/_p3-data-management.qmd >}}
+{{< include _segments/eu-frames/_p3-task2.qmd >}}
+{{< include _segments/eu-frames/_p3-handson3.qmd >}}
+{{< include _segments/eu-frames/_p3-onenumber.qmd >}}
+{{< include _segments/eu-frames/_p3-repro-conditions.qmd >}}
+## Break {#break-part-3 .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+30 minutes – the return time is in the chat\
+Keep your reproduction in your notes or your report
+:::
+
+::: notes
+Break – thirty minutes, and the return time is in the chat. Before you go, copy your Task 3 cell and its output into your notes if you are in the browser lab, because the page forgets everything when it reloads. The last part of the day puts that reproduction into a report.
+:::
+
+# PART 4 – The report, version control and archiving {#part-4-explore-declare-publish .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 4 – 90 minutes
+:::
+
+::: notes
+Part four turns the work of the day into a record that somebody else can find and rerun. First the report: one file that holds the prose, the code and the output, rendered from the start. Then version control, which I show on my screen, and you try if you have git. Then one look at where the robustness part of the course goes, which is the best argument I know for readable code. And last, the places where finished work is deposited, with the record of this paper on the OSF as the example.
+:::
+
+{{< include _segments/eu-frames/_p4-report-git.qmd >}}
+{{< include _segments/eu-frames/_p4-curve-glance.qmd >}}
+{{< include _segments/eu-frames/_p1-infrastructure.qmd >}}
+{{< include _segments/eu-frames/_p4-close-data-tools.qmd >}}
+{{< include _segments/eu-frames/_references.qmd >}}

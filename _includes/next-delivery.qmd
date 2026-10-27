@@ -47,30 +47,25 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     }
 
     # The tracks, keyed by the slug that names the folder of each under
-    # tracks/ (<slug>-<format>, and semester for the track across the four
-    # cases). A slug that the EU-frames tracks had before they carried the case
-    # is read as the slug that replaced it, except "semester", which names the
-    # cross-case track. Anything else in delivery.track – a typo,
-    # a retired name, an empty string – matches nothing here, so no line is
-    # printed and no link is written to a page that does not exist. The link
-    # is relative to the including page, and index.qmd at the site root is the
-    # only one; an include from a subdirectory would need a ../ in front of
-    # tracks/.
+    # tracks/ (<slug>-<format>, and self-study for the track across the four
+    # cases). Anything else in delivery.track – a typo, a retired name, an
+    # empty string – matches nothing here, so no line is printed and no link is
+    # written to a page that does not exist. The link is relative to the
+    # including page, and index.qmd at the site root is the only one; an
+    # include from a subdirectory would need a ../ in front of tracks/.
     track_labels <- c(
-      "housing-short"                 = "short session on the housing-audit case",
-      "housing-one-day"               = "one-day course on the housing-audit case",
-      "trust-one-day"                 = "one-day course on the immigration-and-trust case",
-      "cohabitation-one-day"          = "one-day course on the cohabitation case",
-      "eu-frames-one-day-replication" = "one-day course on the EU-frames case, open science and replication",
-      "eu-frames-one-day-tools"       = "one-day course on the EU-frames case, social data science tools",
-      "eu-frames-one-day-methods"     = "one-day course on the EU-frames case, the statistical methods",
-      "eu-frames-three-days"          = "three-day format of the EU-frames case",
-      "eu-frames-semester"            = "semester format of the EU-frames case",
-      "eu-frames-self-study"          = "self-study track of the EU-frames case",
-      "semester"                      = "semester track across the four cases"
+      "housing-short"                  = "short session on the housing-audit case",
+      "housing-one-day-open-science"   = "one-day course on the housing-audit case, with open science in focus",
+      "housing-one-day-data-tools"     = "one-day course on the housing-audit case, with data tools in focus",
+      "housing-one-day-methods"        = "one-day course on the housing-audit case, with methods in focus",
+      "eu-frames-one-day-open-science" = "one-day course on the EU-frames case, with open science in focus",
+      "eu-frames-one-day-data-tools"   = "one-day course on the EU-frames case, with data tools in focus",
+      "eu-frames-one-day-methods"      = "one-day course on the EU-frames case, with methods in focus",
+      "trust-three-days"               = "three-day course on the immigration-and-trust case",
+      "cohabitation-three-days"        = "three-day course on the cohabitation case",
+      "eu-frames-three-days"           = "three-day course on the EU-frames case",
+      "self-study"                     = "self-study track across the four cases"
     )
-    former_slugs <- c("one-day-replication", "one-day-tools", "one-day-methods",
-                      "three-days", "self-study")
 
     date <- field(delivery[["date"]])
     venue <- field(delivery[["venue"]])
@@ -79,7 +74,6 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     reg_url <- field(delivery[["registration_url"]])
     note <- field(delivery[["note"]])
     track <- tolower(trimws(field(delivery[["track"]])))
-    if (track %in% former_slugs) track <- paste0("eu-frames-", track)
 
     out <- c("", '::: {.callout-tip title="Next delivery" appearance="default"}')
 

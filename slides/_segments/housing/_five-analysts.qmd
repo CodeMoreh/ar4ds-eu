@@ -13,7 +13,7 @@ five <- marks |>
   datawizard::data_modify(
     comparison = dplyr::coalesce(comparison, "Hispanic vs white names"),
     population = dplyr::coalesce(population, "replies"),
-    lab = paste0(tag, "   ", sub("^Hispanic vs ", "against ", comparison), " · ", population),
+    lab = paste0(tag, "   ", sub("^Hispanic vs ", "against ", comparison), ", ", population),
     oa = id == "OA"
   ) |>
   datawizard::data_arrange("-b_pp") |>
@@ -38,7 +38,7 @@ Every gap points the way of the claim, from `r fmt_num(min(five$b_pp), 1)` to `r
 :::
 
 ::: notes
-And here are the five, with the published result of the OAs in burgundy for reference, each placed by its gap in percentage points, the scale of the claim. On direction, everybody agrees: every gap is negative, Hispanic names greeted by name less often, and every test is significant. On size, the spread runs from twenty points down to thirteen. Read the labels. UYV3F, P9W8Y and the published result compare Hispanic with white names among replies, and land on twenty. EWFMI does the same with covariates and lands close by. 8PTRZ, whose number you will reproduce later, compares with all other names, and lands at seventeen, because the Black names were greeted by name less often than the white ones. And 25N5D counts every delivered email, a choice whose reason the causal graph will make clear, and lands at thirteen. The shaded band is the range of every specification that the course fits, which we come back to at the end.
+And here are the five, with the published result of the OAs in burgundy for reference, each placed by its gap in percentage points, the scale of the claim. On direction, everybody agrees: every gap is negative, Hispanic names greeted by name less often, and every test is significant. On size, the spread runs from twenty points down to thirteen. Read the labels. UYV3F, P9W8Y and the published result compare Hispanic with white names among replies, and land on twenty. EWFMI does the same with covariates and lands close by. 8PTRZ compares with all other names, and lands at seventeen, because the Black names were greeted by name less often than the white ones. And 25N5D counts every delivered email, a choice whose reason [the causal graph will make clear]{.content-visible unless-meta="deck.data-tools"}[the slide on missing values has just set out]{.content-visible when-meta="deck.data-tools"}, and lands at thirteen. The shaded band is the range of every specification that the course fits, which we come back to at the end.
 :::
 
 ## What the five analysts did {#five-questions-two-verdicts .smaller}

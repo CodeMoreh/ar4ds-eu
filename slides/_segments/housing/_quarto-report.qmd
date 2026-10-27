@@ -1,0 +1,73 @@
+## The report as a document {#the-report-as-a-document .smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+```{.yaml}
+---
+title: "Testing the robustness of a published claim"
+date: today
+format: html
+---
+```
+
+```{{r}}
+#| label: reproduce-8ptrz
+chisq.test(tab_8ptrz)
+```
+:::
+::: {.column width="48%"}
+::: {.small}
+- **The header** sets the title, the date of the run and the output
+- **The prose** is Markdown: headings, lists, links, emphasis
+- **The chunks** hold the code, with options such as a `label` on lines that start with `#|`
+- **Rendering** runs every chunk in a fresh session and puts its output under it
+:::
+:::
+::::
+
+::: {.fragment .small}
+Your report, `index.qmd`, is a file of this kind, and every task of the day has a place in it.
+:::
+
+::: notes
+This is the anatomy of the report in your workspace, and of every Quarto document. At the top, between two lines of three dashes, the header, which sets the title, the date and the format of the output; date today means the date of the run, which is part of the record. Then prose, written in Markdown, which is plain text with a few marks for headings, lists and emphasis. And chunks of code, each between fences, with options on lines that start with a hash and a vertical bar, such as a label that names the chunk. When you render, Quarto runs every chunk in a fresh session, top to bottom, and puts the output under the code. [advance] Your report is a file of exactly this kind. Each of the five tasks has a place in it, and the reproduction that you ran this afternoon is already there, in the tab of your analyst.
+:::
+
+## Numbers in the text {#numbers-in-the-text .smaller}
+
+::: {.small}
+A number typed into a sentence is a copy, and it goes stale the moment the data or the code change. Inline code computes it when the report renders:
+:::
+
+```{.markdown}
+The test gives `r knitr::inline_expr("round(chisq.test(tab_8ptrz)$statistic, 3)")`.
+```
+
+::: {.small}
+renders as "The test gives `r fmt_num(chi_yates, 3)`."
+:::
+
+::: {.fragment .small}
+Every number in the text then comes from the same run as the tables and the figures. Change a filter, render again, and the sentence follows.
+:::
+
+::: notes
+Here is the habit that separates a report from a document with numbers pasted into it. A number typed into a sentence is a copy, and copies go stale: you change a filter, rerun the analysis, and the old number sits on in paragraph three. Inline code fixes that. Between single backticks, the letter r and a piece of code: when the report renders, the code runs and its value takes its place in the sentence. So the sentence on the slide renders as "the test gives fourteen point two six five", and if the data or the code change, the sentence changes with them. [advance] Every number in the text then comes from the same run as the tables and the figures, so the three cannot disagree. It costs a few more keystrokes than typing the number, and it removes a whole class of errors.
+:::
+
+## From the folder to the record {#from-the-folder-to-the-record .smaller}
+
+::: {.small}
+- **Render.** The rendered report carries the date of its run, from `date: today` in its header
+- **Version control.** The folder becomes a git repository, and every commit is a dated snapshot with a reason attached
+- **Publish.** Pushed to GitHub, the workspace renders the report and publishes it as a web page, through the workflow that it already carries in `.github/`
+- **Archive.** A release deposited on Zenodo or the OSF gets a DOI and a version that does not change
+:::
+
+::: {.fragment .small}
+Today stops at the first step. The companion modules on Git and GitHub and on repositories take the other three, on this same folder.
+:::
+
+::: notes
+Once the report renders, there are four steps between your folder and a public record, and today we take only the first. Rendering gives you a document that carries the date of its run. Version control turns the folder into a git repository, and every commit is then a dated snapshot of everything in it, with a sentence saying why it changed. Publishing pushes that repository to GitHub, and the workspace already carries a small workflow that renders the report there and publishes it as a web page every time you push. And archiving deposits a release with Zenodo or the OSF, which gives it a DOI and a version that will not change, so that a paper can cite it. [advance] The companion modules on Git and GitHub and on repositories walk through the last three, click by click, on the folder that you have open now.
+:::

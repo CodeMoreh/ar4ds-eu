@@ -11,13 +11,13 @@ level_txt <- c(estimand = "1 – Estimands", measurement = "2 – Measurement",
                estimation = "3 – Estimation")
 off_txt <- menu_opts |>
   dplyr::filter(!on_curve) |>
-  dplyr::summarise(txt = paste0(paste(label, collapse = " · "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
+  dplyr::summarise(txt = paste0(paste(label, collapse = ", "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
             .by = c(axis, judgement)) |>
   dplyr::summarise(off = paste(txt, collapse = "; "), .by = axis)
 menu_rows <- menu_opts |>
   dplyr::filter(on_curve) |>
   dplyr::summarise(level = dplyr::first(level), decision = dplyr::first(decision),
-            on = paste(label, collapse = " · "), .by = axis) |>
+            on = paste(label, collapse = "; "), .by = axis) |>
   dplyr::left_join(off_txt, by = "axis") |>
   dplyr::mutate(off = dplyr::coalesce(off, "–"),
          level = dplyr::if_else(level == dplyr::lag(level, default = ""), "", level_txt[level]),
@@ -39,11 +39,11 @@ Here is the menu, and everything that follows is built on it. It is the full lis
 ## The curve of 64 {#the-curve-of-64 .smaller}
 
 ::: {.small}
-- **Comparison group** – white names · white and Black names
-- **Emails counted** – replies only · all delivered emails
-- **Replies without a greeting code** – left out · counted as no greeting
-- **Model** – a difference in proportions · logistic regression
-- **Adjustment** – none · hard-to-find address · place, without ethnic composition · place, with ethnic composition
+- **Comparison group** – white names, or white and Black names
+- **Emails counted** – replies only, or all delivered emails
+- **Replies without a greeting code** – left out, or counted as no greeting
+- **Model** – a difference in proportions, or logistic regression
+- **Adjustment** – none; hard-to-find address; place, without ethnic composition; or place, with ethnic composition
 :::
 
 ::: {.fragment .small}

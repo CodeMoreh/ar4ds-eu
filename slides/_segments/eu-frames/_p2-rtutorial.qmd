@@ -1,7 +1,7 @@
 ## R, in one slide {.smaller .deepdive run="r"}
 
 ::: {.skiplink}
-[R tutorial · 10 slides · skip to Hands-on 2 →](#hands-on-2-meet-the-panel-draw-the-graph)
+[R tutorial, 10 slides – skip to Hands-on 2 →](#hands-on-2-meet-the-panel-draw-the-graph)
 :::
 
 ```{.r code-line-numbers="|1|3|5|7"}
@@ -15,7 +15,7 @@ euframes |> nrow()               # |> the pipe: send the left into the right
 ```
 
 ::: {.small}
-With four pieces of syntax you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
+With four pieces of syntax you can read most R: **assign** with `<-`, **call** a function with `name(...)`, **reach into** an object with `$`, and **chain** with the pipe `|>`.
 :::
 
 ::: notes
@@ -117,11 +117,11 @@ The equivalent with dummies would be `mcosmo ~ unemp_c + factor(cntry) + factor(
 :::
 
 ::: {.fragment .small}
-This is the model that you reproduce in Hands-on 3, where it gives **`t = −3.804`**.
+This is the model of C6HJR, one of the three that you can reproduce in Hands-on 3, where it gives **`t = −3.804`**. The model of KQXUE keeps only `| cntry`.
 :::
 
 ::: notes
-This is the line that you will run yourself when you reproduce the result of my Multi100 reanalysis, so it is worth a slow look. Feols comes from the fixest package and fits linear models with fixed effects very fast. The bar is the key piece of syntax: everything to the left of it is the regression, everything to the right is absorbed as fixed effects. Country gives every country its own intercept, so we are comparing each country with itself over time rather than comparing countries with each other. Year gives every year its own intercept, so anything that hit all of Europe in a given year is soaked up. You could write the same model with dummy variables – the estimate would be identical – but you would get thirty-six extra rows of output that nobody wants to read. The last argument, vcov equals iid, asks for conventional standard errors, the kind used for the recorded value. And in the third hands-on this same line gives a t of minus three point eight zero four.
+This is the line that reproduces my own Multi100 reanalysis, one of the three that you can choose in the third hands-on, so it is worth a slow look. Feols comes from the fixest package and fits linear models with fixed effects very fast. The bar is the key piece of syntax: everything to the left of it is the regression, everything to the right is absorbed as fixed effects. Country gives every country its own intercept, so we are comparing each country with itself over time rather than comparing countries with each other. Year gives every year its own intercept, so anything that hit all of Europe in a given year is soaked up. You could write the same model with dummy variables – the estimate would be identical – but you would get thirty-six extra rows of output that nobody wants to read. The last argument, vcov equals iid, asks for conventional standard errors, the kind used for the recorded value. And in the third hands-on this same line gives a t of minus three point eight zero four, while the model of KQXUE drops the year from the right of the bar.
 :::
 
 ## Reading what comes back {.smaller .deepdive run="r"}

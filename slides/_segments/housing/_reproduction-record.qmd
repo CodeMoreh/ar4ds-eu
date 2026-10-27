@@ -1,0 +1,40 @@
+## What a reproduction needs {#what-a-reproduction-needs .smaller}
+
+::: {.small}
+- **The data, under a licence that allows reuse.** The OAs deposited theirs on the Harvard Dataverse under CC0, so anyone may download, use and pass them on
+- **The code, or every choice that it made.** Four of the five analysts published their scripts on the OSF, and UYV3F only a review document
+- **The software and its defaults.** The continuity correction of `chisq.test()` and `prop.test()`, and the base group of a factor, are part of the result
+- **Someone who tries.** SCORE opened a reproduction component for this paper, and it holds an empty template
+:::
+
+::: {.fragment .small}
+Today the class had the first three, and supplied the fourth.
+:::
+
+::: {.src}
+The deposit: doi.org/10.7910/DVN/1HOVTU. The SCORE project of the paper: osf.io/3a8bg, with Multi100 at osf.io/38rsh.
+:::
+
+::: notes
+So what did the reproduction need? Four things, and this case has each of them in a form that you can check. The data, under a licence that allows reuse: the original authors put theirs on the Harvard Dataverse under CC0, which places them in the public domain, so the course can hand you the file without asking anyone. The code, or at least every choice that it made: four of the five analysts published scripts on the OSF, and the fifth a review document. The software and its defaults, which is the lesson of the continuity correction. And someone who actually tries. SCORE opened a reproduction component for this paper on the OSF, and it holds only an empty template, so nobody in the programme ever ran the check. [advance] Today the class had the first three and supplied the fourth.
+:::
+
+## The published model and the public file {#the-published-model-and-the-public-file .smaller}
+
+::: {.small}
+- The census codes and the continuous values of the communities would identify the housing authorities, so the public file holds **thirds** of population, ethnic composition, poverty and the HUD assessment (lower, middle, top)
+- The published model, Table 1, model 3, adjusts for the continuous values: Hispanic name −0.82 (SE 0.22), *z* = `r fmt_num(mark_of("OA", "statistic"), 2)`, **`r fmt_num(mark_of("OA", "b_pp"), 1)` points**
+- The same model refitted on the thirds of the public file: *z* = `r fmt_num(mark_of("OA_blinded", "statistic"), 2)`, **`r fmt_num(mark_of("OA_blinded", "b_pp"), 1)` points**, on `r mark_of("OA_blinded", "n")` replies
+:::
+
+::: {.fragment .small}
+Every comparison between groups of names reproduces exactly from the public file. A model with community covariates can only be approximated, by design: the file protects the authorities that were studied.
+:::
+
+::: {.src}
+The ReadMe of the deposit; @EinsteinGlick2017DoesRaceAffect, Table 1; cases/housing/data/reference_marks.csv.
+:::
+
+::: notes
+And here is the limit of reproduction on this case, which is worth seeing because it is not anybody's mistake. The housing authorities could be identified from the census codes of their communities and from the exact population, ethnic composition and poverty of each one, so the public file replaces those values with thirds: lower, middle and top. The published model adjusts for the continuous values, and gives a z of minus three point seven three, twenty points. Refitted on the thirds, the same model gives minus three point four seven and a little over eighteen points. [advance] So every comparison between the groups of names comes back exactly, which is what you just did, and the model with community covariates can only be approximated. The ReadMe of the deposit says as much. The data are open, the code is open, and the published number still cannot come back, because the file protects the people who were studied.
+:::

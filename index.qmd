@@ -19,16 +19,16 @@ chunk below (.github/workflows/publish.yml); a package that the chunk starts
 to use has to be added there too.
 
 The page uses a custom layout: every section is a fenced div with a home-
-class (styled in style/home.css), and the case cards, the track cards, their
-unit lists and all the text are ordinary Markdown below. The script in
-_includes/home-script.html adds the Choose and See-the-units controls to each
-track card that carries a data-slug, and remembers the chosen track in the
-browser under the key ar-track, which the navbar item of
-_includes/track-choice.html reads. The data-slug of each card is the folder of
-its track under tracks/, and its data-case names the case for the button of
-the hero. The case cards are in the order of the ladder of
-difficulty (housing, trust, cohabitation, eu-frames); the facts on the cards
-come from the fact sheet of each case and its data files. -->
+class (styled in style/home.css), and the case cards, the format cards and all
+the text are ordinary Markdown below. Each case card shows the paragraph that
+introduces the case and folds the rest into a details element (class
+home-more). The format cards link to the tracks of each format; the
+facilitator chooses the track of a course, so the page has no control that
+chooses one (_planning/formats-2026-10-27.md), and the navbar item of
+_includes/track-choice.html shows the last track page that a visitor opened.
+The case cards are in the order of the ladder of difficulty (housing, trust,
+cohabitation, eu-frames); the facts on the cards come from the fact sheet of
+each case and its data files. -->
 
 ```{r}
 #| label: numbers
@@ -65,7 +65,6 @@ tr_sig <- sum(tr_curve$b > 0 & tr_curve$p < 0.05)
 tr_sig_txt <- if (tr_sig == tr_spec) "every one of them" else paste(tr_sig, "of them")
 tr_for <- sum(tr_analysts$task1 == "evidence for the claim")
 tr_for_txt <- if (tr_for == 5) "All five" else paste(tools::toTitleCase(in_words(tr_for)), "of the five")
-t_6u3ll <- tr_analysts$statistic_recorded[tr_analysts$id == "6U3LL"]
 
 # The cohabitation case
 c_curve <- readr::read_csv("cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE)
@@ -79,21 +78,19 @@ c_sig <- sum(c_curve$b < 0 & c_curve$p < 0.05)
 c_sig_txt <- if (c_sig == c_spec) "every one of them" else paste(c_sig, "of them")
 c_count <- \(outcome) sum(c_analysts$task1 == outcome)
 c_1995_marriages <- c_score$marriages[c_score$source == "SCORE file" & c_score$cycle == "1995"]
-chi_5x3kg <- c_analysts$statistic_recorded[c_analysts$id == "5X3KG"]
 
 # The EU-frames case
 e_curve <- readr::read_csv("cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
 e_analysts <- readr::read_csv("cases/eu-frames/data/analysts5.csv", show_col_types = FALSE)
 e_cells <- nrow(readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE))
 e_spec <- nrow(e_curve)
-t_c6hjr <- e_analysts$statistic[e_analysts$analyst_id == "C6HJR"]
 ```
 
 :::::: {.home-hero}
 ::::: {.home-inner .home-reveal}
 
 ::: {.home-eyebrow}
-A collection of hands-on training courses · {{< var workshop.format >}}
+Hands-on training in {{< var workshop.format >}}
 :::
 
 # {{< var workshop.name >}} {.unnumbered .unlisted}
@@ -103,7 +100,7 @@ The course takes published claims, the reanalyses that each of them received in 
 :::
 
 ::: {.home-cta}
-[Choose a case](#cases) [Choose a track](#tracks)
+[The cases](#cases) [Formats](#formats)
 :::
 
 :::::
@@ -116,10 +113,10 @@ The course takes published claims, the reanalyses that each of them received in 
 :::::: {.home-section #cases}
 ::::: {.home-wrap}
 
-## Choose a case {.unnumbered .home-reveal}
+## The cases {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-Every case teaches the same exercise in the same order. The cases differ in the statistics and the data handling that they ask for: the first compares proportions in one public file of emails, and the last builds a panel of country-years from sixteen licensed surveys. A short session uses the first case, and a longer course can take several in turn.
+Every case teaches the same exercise in the same order. The cases differ in the statistics and the data handling that they ask for: the first compares proportions in one public file of emails, and the last builds a panel of country-years from sixteen licensed surveys. The housing-audit case is taught in a short session or in one day, the EU-frames case in one day on its country-year panel or over three days from the raw surveys, and the immigration-and-trust and cohabitation cases over three days. The self-study track takes all four in turn.
 :::
 
 :::: {.home-cases}
@@ -129,9 +126,12 @@ Every case teaches the same exercise in the same order. The cases differ in the 
 
 ### [The housing-audit case](cases/housing/index.qmd) {.unnumbered .unlisted}
 
-[A field experiment · a short session or one day]{.home-meta}
+[A field experiment, taught in a short session or in one day]{.home-meta}
 
 A field experiment published in 2017 sent the same short email to about a thousand public housing authorities in the United States, each signed with one of six names meant to indicate a white, a Black or a Hispanic sender. The claim is that "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts".
+
+<details class="home-more">
+<summary>More about the case</summary>
 
 **What it teaches.** Proportions and the chi-square test, the linear probability model set against the logit, what conditioning on a reply does to an experiment, randomisation inference and statistical power.
 
@@ -143,6 +143,8 @@ A field experiment published in 2017 sent the same short email to about a thousa
 - **Replication.** A preregistered audit of 3,050 housing authorities, with new names, found no significant gap (z = 0.66, p = 0.51).
 :::
 
+</details>
+
 [Read the case study](cases/housing/index.qmd){.home-go}
 :::
 
@@ -151,9 +153,12 @@ A field experiment published in 2017 sent the same short email to about a thousa
 
 ### [The immigration-and-trust case](cases/trust/index.qmd) {.unnumbered .unlisted}
 
-[A cross-national survey · one day]{.home-meta}
+[A cross-national survey, taught over three days]{.home-meta}
 
 A paper of 2012 in *World Politics* asked, from the European Social Survey, whether citizens of Western European countries who see immigration as a threat to the national community trust their national politics less. The claim is that "... concerns about the effect of immigration on the national community have a(n) \[reducing\] impact on trust in politics".
+
+<details class="home-more">
+<summary>More about the case</summary>
 
 **What it teaches.** Attitude scales and their reliability, regression with controls and what a causal graph says about them, survey weights, country fixed effects set against random intercepts, inference with 16 countries, and the question of reverse causation.
 
@@ -165,6 +170,8 @@ A paper of 2012 in *World Politics* asked, from the European Social Survey, whet
 - **Replication.** Two SCORE replications on later rounds of the survey, 2010 and 2010–2018, found `r fmt(tr_mark("SCORE_1634"), 3)` and `r fmt(tr_mark("SCORE_65wm6_DAR"), 3)`, both meeting the criterion of SCORE.
 :::
 
+</details>
+
 [Read the case study](cases/trust/index.qmd){.home-go}
 :::
 
@@ -173,9 +180,12 @@ A paper of 2012 in *World Politics* asked, from the European Social Survey, whet
 
 ### [The cohabitation case](cases/cohabitation/index.qmd) {.unnumbered .unlisted}
 
-[Life histories · one day]{.home-meta}
+[Life histories, taught over three days]{.home-meta}
 
 A paper of 2016 in *Demography* compared the first cohabitations of American women begun in the early 1990s with those begun in the late 2000s, and found that the couples of the later cohort married less often. The claim is that "cohabitors have increasingly become less likely to progress to marriage".
+
+<details class="home-more">
+<summary>More about the case</summary>
 
 **What it teaches.** Censoring and the life table, person-period data, discrete-time event-history models, competing risks, comparisons between periods, and what a reproduction does not show.
 
@@ -187,6 +197,8 @@ A paper of 2016 in *Demography* compared the first cohabitations of American wom
 - **Replication.** The SCORE replication tested another coefficient of the paper, the interaction of some college and period, and did not replicate it (z = `r fmt(c_mark("SCORE_replication", "stat"), 2)`, p = `r fmt(c_mark("SCORE_replication", "p"), 2)`). The change of the claim holds on later surveys rebuilt by the course (`r fmt(c_mark("course_2002_2011"), 3)` between 2002 and 2011–2015).
 :::
 
+</details>
+
 [Read the case study](cases/cohabitation/index.qmd){.home-go}
 :::
 
@@ -195,9 +207,12 @@ A paper of 2016 in *Demography* compared the first cohabitations of American wom
 
 ### [The EU-frames case](cases/eu-frames/index.qmd) {.unnumbered .unlisted}
 
-[Repeated cross-sections · one day to a semester]{.home-meta}
+[Repeated cross-sections, taught in one day or over three days]{.home-meta}
 
 A sociological paper of 2016 asked whether the economic crisis changed how citizens of the European Union frame the Union. The claim is that "poor national economic performances significantly decrease positive EU-framing dimensions".
+
+<details class="home-more">
+<summary>More about the case</summary>
 
 **What it teaches.** Aggregating repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r format(e_spec, big.mark = ",")` specifications.
 
@@ -209,6 +224,8 @@ A sociological paper of 2016 asked whether the economic crisis changed how citiz
 - **Replication.** A replication on later Eurobarometer waves was judged not successful.
 :::
 
+</details>
+
 [Read the case study](cases/eu-frames/index.qmd){.home-go}
 :::
 
@@ -217,276 +234,51 @@ A sociological paper of 2016 asked whether the economic crisis changed how citiz
 :::::
 ::::::
 
-:::::: {.home-section .home-alt #tracks}
+:::::: {.home-section .home-alt #formats}
 ::::: {.home-wrap}
 
-## Choose a track {.unnumbered .home-reveal}
+## Formats {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-A track is one case taught in one format, apart from the semester track at the end, which takes all four cases in turn. Each is an ordered route through pages already on this site, with a sidebar of its own and, at the end, the slide deck that the track uses. Choose one, and the site keeps your place in it.
+The course is taught in four formats, and the facilitator of each course chooses its format and its case. Each format is an ordered route through pages of this site, with a sidebar of its own and the slide deck that it uses. The link that you receive for a course leads to its route, and the navbar keeps the last route that you opened.
 :::
 
-::: {.home-group}
-The housing-audit case
-:::
+:::: {.home-grid .home-formats}
 
-:::: {.home-grid}
-
-::: {.home-track .home-reveal data-slug="housing-short" data-case="housing audit"}
+::: {.home-track .home-reveal}
 ### [Short session](tracks/housing-short/index.qmd) {.unnumbered .unlisted}
 
-[Two halves of about seventy-five minutes, with a facilitator]{.home-meta}
+[About two and a half hours, in the browser]{.home-meta}
 
-The claim, its estimand and its reproduction before the break; the specification menu, the class chart and the replication with new data after it. The preregistration is left for afterwards.
-
-<div class="home-units">
-
-1. **Before the session** – Install R and an IDE, download the workspace, read the case study.
-2. **First half – The claim and its reproduction** – The three Rs, the paper and the five analysts, the estimand statement, and the reproduction.
-3. **Second half – Exploration and replication** – The specification menu, the class chart and the curve, and the replication with new data.
-4. **After the session** – The preregistration of Task 5, and the companion modules.
-
-</div>
+The housing-audit case in the browser lab, with nothing to install and nothing to submit: the claim and the five reanalyses, the estimand statement, the reproduction of one reanalysis of your choice, a look at the menu of analyses and the curve of the claim, and the replication with new data.
 :::
 
-::: {.home-track .home-reveal data-slug="housing-one-day" data-case="housing audit"}
-### [One day](tracks/housing-one-day/index.qmd) {.unnumbered .unlisted}
+::: {.home-track .home-reveal}
+### One day {.unnumbered .unlisted}
 
-[Four parts of ninety minutes, with a facilitator]{.home-meta}
+[Four parts of ninety minutes, mainly in the browser]{.home-meta}
 
-The whole exercise, with the tools, the statistics and the practices of open research taught together. You reproduce a recorded result, write the estimand statement behind the claim, finish its causal graph, explore a menu of defensible analyses and declare one before you run it.
+The housing-audit case, or the EU-frames case on its country-year panel, taught mainly in the browser lab, with the downloadable workspace as an option for anyone who has installed R. Each day has one of three focuses. The open-science day takes the reproduction of a reanalysis and the replication of the claim, and ends on what a preregistration fixes. The data-tools day uses the case to practise R, the IDE and data management. The methods day puts the menu of defensible analyses and the class chart at its centre.
 
-<div class="home-units">
-
-1. **Before the day** – Install R and an IDE, download the workspace, read the case study.
-2. **Part 1 – Credibility and tools** – What a claim is for, why the field speaks of a crisis, the three Rs, and the toolchain.
-3. **Part 2 – The claim and its estimand** – The paper and the five analysts, estimands and causal graphs.
-4. **Part 3 – Reproduction and exploration** – The reproduction, then the specification menu.
-5. **Part 4 – Multiverse, replication and preregistration** – The class chart, the replication with new data, and one analysis declared before it runs.
-6. **After the day** – Where to go next in the companion curriculum.
-
-</div>
+Housing audit: [open science](tracks/housing-one-day-open-science/index.qmd), [data tools](tracks/housing-one-day-data-tools/index.qmd), [methods](tracks/housing-one-day-methods/index.qmd). EU frames: [open science](tracks/eu-frames-one-day-open-science/index.qmd), [data tools](tracks/eu-frames-one-day-data-tools/index.qmd), [methods](tracks/eu-frames-one-day-methods/index.qmd).
 :::
 
-::::
+::: {.home-track .home-reveal}
+### Three days {.unnumbered .unlisted}
 
-::: {.home-group}
-The immigration-and-trust case
+[Four sessions of ninety minutes a day, in R]{.home-meta}
+
+One of the three harder cases, taken from its raw data. Day 1 introduces open research and its infrastructures, SCORE and Multi100, and the paper of the case in detail, and ends with the tools and the data installed. Day 2 teaches R and the IDE on the data of the case, builds the analysis file from the raw surveys, and reproduces one of the five reanalyses, chosen by each participant. Day 3 turns to robustness: the menu of specifications, the multiverse, and an analysis of your own design, preregistered and added to the class chart.
+
+[Immigration and trust](tracks/trust-three-days/index.qmd), [cohabitation](tracks/cohabitation-three-days/index.qmd), [EU frames](tracks/eu-frames-three-days/index.qmd).
 :::
 
-:::: {.home-grid}
+::: {.home-track .home-reveal}
+### [Self-study](tracks/self-study/index.qmd) {.unnumbered .unlisted}
 
-::: {.home-track .home-reveal data-slug="trust-one-day" data-case="immigration and trust"}
-### [One day](tracks/trust-one-day/index.qmd) {.unnumbered .unlisted}
+[At your own pace, in R]{.home-meta}
 
-[Four parts of ninety minutes, with a facilitator]{.home-meta}
-
-The whole exercise on a survey of more than a hundred thousand respondents in sixteen countries. You reproduce a recorded result, write the estimand statement behind the claim, finish a causal graph that asks what each control does, explore a menu of defensible analyses, weigh the evidence of sixteen countries, and declare one analysis before you run it.
-
-<div class="home-units">
-
-1. **Before the day** – Install R and an IDE, download the workspace and the file of Task 3, read the case study.
-2. **Part 1 – Credibility and tools** – What a claim is for, why the field speaks of a crisis, the three Rs, and the toolchain.
-3. **Part 2 – The claim, its estimand and its causal graph** – The paper and the five analysts, estimands, and what the controls of the paper are.
-4. **Part 3 – Reproduction and exploration** – The reproduction from the file of the analysts, then the specification menu.
-5. **Part 4 – Multiverse, inference and preregistration** – The class chart, inference with sixteen countries, the replications, and one analysis declared before it runs.
-6. **After the day** – Where to go next in the companion curriculum.
-
-</div>
-:::
-
-::::
-
-::: {.home-group}
-The cohabitation case
-:::
-
-:::: {.home-grid}
-
-::: {.home-track .home-reveal data-slug="cohabitation-one-day" data-case="cohabitation"}
-### [One day](tracks/cohabitation-one-day/index.qmd) {.unnumbered .unlisted}
-
-[Four parts of ninety minutes, with a facilitator]{.home-meta}
-
-The whole exercise on the first cohabitations of American women in two waves of a national survey. You reproduce a recorded result and find out what it rests on, refit the published coefficient from the survey, write the estimand statement behind the claim, finish a causal graph that asks what it means that everyone in the data cohabited, explore a menu of defensible analyses, and declare one analysis before you run it.
-
-<div class="home-units">
-
-1. **Before the day** – Install R and an IDE, download the workspace, read the first sections of the case study.
-2. **Part 1 – Credibility and tools** – What a claim is for, why the field speaks of a crisis, the three Rs, and the toolchain.
-3. **Part 2 – The claim, its estimand and its causal graph** – The paper and the five analysts, estimands, and who cohabits at all.
-4. **Part 3 – Reproduction and exploration** – The reproduction from the file of the analysts and what it rests on, then the specification menu.
-5. **Part 4 – Multiverse, replication and preregistration** – The class chart, the two replications, and one analysis declared before it runs.
-6. **After the day** – Where to go next in the companion curriculum.
-
-</div>
-:::
-
-::::
-
-::: {.home-group}
-The EU-frames case – one day
-:::
-
-:::: {.home-grid}
-
-::: {.home-track .home-reveal data-slug="eu-frames-one-day-replication" data-case="EU frames"}
-### [One day – open science and replication](tracks/eu-frames-one-day-replication/index.qmd) {.unnumbered .unlisted}
-
-[Four parts of ninety minutes, with a facilitator]{.home-meta}
-
-The day in its original shape. You reproduce a recorded result, state the estimand behind the claim, finish its causal graph, explore a menu of defensible analyses and declare one before you run it.
-
-<div class="home-units">
-
-1. **Before the day** – Install R and an IDE, download the workspace, read the claim.
-2. **Part 1 – Credibility and tools** – What a claim is for, why the field speaks of a crisis, and the toolchain.
-3. **Part 2 – The claim and its estimand** – The paper in full, estimands and causal graphs.
-4. **Part 3 – Reproduction and exploration** – The reproduction, then the specification menu.
-5. **Part 4 – Multiverse and preregistration** – The class chart, and one analysis declared before it runs.
-6. **After the day** – Where to go next in the companion curriculum.
-
-</div>
-:::
-
-::: {.home-track .home-reveal data-slug="eu-frames-one-day-tools" data-case="EU frames"}
-### [One day – social data science tools](tracks/eu-frames-one-day-tools/index.qmd) {.unnumbered .unlisted}
-
-[Four parts of ninety minutes, with a facilitator]{.home-meta}
-
-The same case and exercise with the toolchain in the foreground: the language, the IDE, the document format, the packages, version control, and where finished work is archived.
-
-<div class="home-units">
-
-1. **Before the day** – Install R and an IDE, download the workspace, read the claim.
-2. **Part 1 – Credibility and software** – The evidence on how often findings hold up, and why shared code mattered.
-3. **Part 2 – The toolchain** – Each layer of the toolchain, then a first session in R.
-4. **Part 3 – The claim and its reproduction** – The paper, its estimand and its graph, and the reproduction.
-5. **Part 4 – Exploration, preregistration and archiving** – The menu, the declaration, and where the work is deposited.
-6. **After the day** – Quarto, git and GitHub, and the rest of the curriculum.
-
-</div>
-:::
-
-::: {.home-track .home-reveal data-slug="eu-frames-one-day-methods" data-case="EU frames"}
-### [One day – the statistical methods](tracks/eu-frames-one-day-methods/index.qmd) {.unnumbered .unlisted}
-
-[Four parts of ninety minutes, with a facilitator]{.home-meta}
-
-The same case and exercise with the statistics in the foreground: the causal-graph crash course in full, and the specification menu taken apart one decision at a time.
-
-<div class="home-units">
-
-1. **Before the day** – Install R and an IDE, read the claim, and fit one linear model.
-2. **Part 1 – The case and the vocabulary** – The paper, the verdicts reached on it, and what 'replication' names.
-3. **Part 2 – The claim and its estimand** – Estimands and the causal-graph crash course.
-4. **Part 3 – Reproduction and the specification menu** – The reproduction, then the menu decision by decision.
-5. **Part 4 – Multiverse and preregistration** – Reading the curve, and the analysis declared before it runs.
-6. **After the day** – Every model on the menu, and the rest of the methods strand.
-
-</div>
-:::
-
-::::
-
-::: {.home-group}
-The EU-frames case – longer formats
-:::
-
-:::: {.home-grid}
-
-::: {.home-track .home-reveal data-slug="eu-frames-three-days" data-case="EU frames"}
-### [Three days](tracks/eu-frames-three-days/index.qmd) {.unnumbered .unlisted}
-
-[Four sessions a day, with the workshop on day 2]{.home-meta}
-
-Day 1 builds the tools, day 2 is the workshop, and day 3 goes back through the methods that the workshop used at speed.
-
-<div class="home-units">
-
-1. **Day 1 – The tools** – The credibility debate, the toolchain, a first session in R, and the document format.
-2. **Day 2 – The workshop** – The claim, the reproduction, the menu, the multiverse and the preregistration.
-3. **Day 3 – The methods in depth** – Graphs, the estimators, weights and missing answers, the multiverse and its critics.
-4. **After the week** – What remains in the curriculum.
-
-</div>
-:::
-
-::: {.home-track .home-reveal data-slug="eu-frames-semester" data-case="EU frames"}
-### [Semester](tracks/eu-frames-semester/index.qmd) {.unnumbered .unlisted}
-
-[Ten sessions across a term]{.home-meta}
-
-The companion curriculum and the workshop spread over a term, for a group that meets weekly and pairs exposition with time at a keyboard.
-
-<div class="home-units">
-
-1. Session 1 – The case, and the three Rs
-2. Session 2 – Getting started with R
-3. Session 3 – Quarto and the reproducible document
-4. Session 4 – From country-years to a model
-5. Session 5 – Estimands and causal graphs
-6. Session 6 – The individual level
-7. Session 7 – Data with a known recipe
-8. Session 8 – Repositories and preregistration
-9. Session 9 – The workshop day
-10. Session 10 – Reading the curve and publishing the work
-
-</div>
-:::
-
-::: {.home-track .home-reveal data-slug="eu-frames-self-study" data-case="EU frames"}
-### [Self-study](tracks/eu-frames-self-study/index.qmd) {.unnumbered .unlisted}
-
-[About thirty-five hours, at your own pace]{.home-meta}
-
-The companion modules and the exercise, ordered into a route that holds together without a facilitator or a cohort.
-
-<div class="home-units">
-
-1. Stage 1 – The case, and what you are aiming at
-2. Stage 2 – A language, an IDE, and a document to write in
-3. Stage 3 – The models of the claim
-4. Stage 4 – The question underneath the models
-5. Stage 5 – The exercise
-6. Stage 6 – Reading the curve you joined
-7. Stage 7 – Two extensions
-8. Stage 8 – Putting the work where it can be found
-
-</div>
-:::
-
-::::
-
-::: {.home-group}
-Across the four cases
-:::
-
-:::: {.home-grid}
-
-::: {.home-track .home-reveal data-slug="semester" data-case="four cases"}
-### [Semester](tracks/semester/index.qmd) {.unnumbered .unlisted}
-
-[Twelve weekly sessions, one case after another]{.home-meta}
-
-The exercise taken through the four cases in the order of their difficulty, with the modules of the companion curriculum between them, so that each case adds the methods that the one before it did not need. A final project goes beyond the claim of one case.
-
-<div class="home-units">
-
-1. **Week 1 – Credibility and the three Rs** – The three Rs, SCORE and Multi100, and R, Quarto and an IDE installed.
-2. **Week 2 – R and Quarto** – A first session in R on the housing-audit data, and the first paper.
-3. **Week 3 – The claim and its reproduction** – The housing-audit case, Tasks 1 to 3.
-4. **Week 4 – The menu and the declaration** – The housing-audit case, Tasks 4 and 5, and the first case report.
-5. **Week 5 – Survey data and scales** – The immigration-and-trust case, Tasks 1 and 2.
-6. **Week 6 – Regression on respondents** – The immigration-and-trust case, Task 3.
-7. **Week 7 – The menu and the public record** – The immigration-and-trust case, Tasks 4 and 5, and the second case report.
-8. **Week 8 – Unions as person-months** – The cohabitation case, Tasks 1 and 2.
-9. **Week 9 – The reproduction and competing risks** – The cohabitation case, Tasks 3 to 5, and the third case report.
-10. **Week 10 – From respondents to a panel** – The EU-frames case, Tasks 1 to 3.
-11. **Week 11 – Few clusters and the multiverse** – The EU-frames case, Tasks 4 and 5, the fourth case report, and the preregistration of the final project.
-12. **Week 12 – The final project** – A question beyond the claim of one case, versioned with git.
-
-</div>
+The four cases in the order of their difficulty, with the modules of the companion curriculum between them, so that each case adds the methods that the one before it did not need. A semester course can take the same route in class.
 :::
 
 ::::
@@ -500,7 +292,7 @@ The exercise taken through the four cases in the order of their difficulty, with
 ## The five tasks {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-Every track of every case meets the same five tasks, in the same order. The decisions that the tasks ask for fall into three levels: Level 1 – Estimands, the question that the analysis answers; Level 2 – Measurement, how the variables are built; and Level 3 – Estimation, how the model is fitted and its uncertainty judged.
+The exercise has the same five tasks, in the same order, in every case. The short session and the one-day courses on open science and on data tools centre on the first three and send nothing to the class chart; the one-day course on methods, the three-day courses and the self-study track take all five. The decisions that the tasks ask for fall into three levels: Level 1 – Estimands, the question that the analysis answers; Level 2 – Measurement, how the variables are built; and Level 3 – Estimation, how the model is fitted and its uncertainty judged.
 :::
 
 :::: {.home-reveal}
@@ -508,7 +300,7 @@ Every track of every case meets the same five tasks, in the same order. The deci
 <details>
 <summary><span class="home-n">Task 1</span>The setup check</summary>
 
-Run the check script in the workspace of your case, so that the rest of the work runs on a machine that is known to work.
+Check that your tools work before the rest of the work depends on them: the setup check of the browser lab, or the check script of the workspace of your case.
 
 </details>
 
@@ -522,7 +314,7 @@ Meet the data of the case, write the estimand statement behind the claim, and fi
 <details>
 <summary><span class="home-n">Task 3</span>The reproduction</summary>
 
-Reproduce a value that Multi100 recorded for one of the five analysts, from the data behind it: $\chi^2$ = `r fmt(chi_8ptrz, 3)` in the housing-audit case, from the public file of the original authors (OAs), where the task is also to find out why it is not `r fmt(chi_plain, 2)`; t = `r fmt(t_6u3ll, 3)` in the immigration-and-trust case, from the file that Multi100 gave the analysts; $\chi^2$ = `r fmt(chi_5x3kg, 3)` in the cohabitation case, where the task goes on to ask what the file behind it holds; and t = `r fmt(t_c6hjr, 3)` in the EU-frames case.
+Choose one of the five analysts of your case and reproduce the value that Multi100 recorded for that analyst, from the data behind it. In the housing-audit case the four analysts who recorded a statistic reproduce exactly from the public file of the original authors (OAs); one of them, 8PTRZ, recorded $\chi^2$ = `r fmt(chi_8ptrz, 3)` where the plain test gives `r fmt(chi_plain, 2)`, and finding out why is part of the task. In the immigration-and-trust and cohabitation cases the analysts worked on files that Multi100 handed out, which the three-day courses set against the analysis file that they build from the raw surveys; in the cohabitation case that comparison shows what the file behind the recorded values holds. In the EU-frames case the one-day courses reproduce the analyses that worked on country-years, and the three-day course works from the raw Eurobarometer files.
 
 </details>
 
@@ -555,13 +347,13 @@ Declare one specification in a short preregistration, run it, report it, and fin
 <details>
 <summary>What the course teaches</summary>
 
-This is a course with a workshop at its centre. The workshop runs as a single day of four 90-minute parts, and a short session of two to three hours takes the housing-audit case through the first four tasks. The EU-frames case is also taught over three days and across a semester, and a reader studying alone can work through the same pages at their own pace. A second semester track takes all four cases in turn, from the housing-audit case to the EU-frames case.
+The course is taught in four formats. A short session of about two and a half hours takes the housing-audit case in the browser, with nothing to install. A one-day workshop takes the housing-audit case or the EU-frames case, with open science, data tools or methods in focus. A three-day course takes one of the three harder cases from its raw data, and the self-study track takes all four cases in turn, with the companion modules between them; a semester course can follow the same route in class.
 
 The main aim of the course is to introduce technical skills for modern empirical data analysis: finding the data and code of a study in an online repository, working with code so that another person (or your future self) can reproduce your steps, fixing your analytical choices in a preregistration before you run the analysis, and writing a live report that combines code and text.
 
 These skills are taught through an applied 'replication' exercise. Participants reproduce one of the reanalyses that made up the Multi100 project, whose results appeared in *Nature* [@AczelEtAl2026InvestigatingAnalyticalRobustness]. Each case focuses on one claim of a published study – a field experiment in the *American Journal of Political Science* [@EinsteinGlick2017DoesRaceAffect], a study of the European Social Survey in *World Politics* [@McLaren2012CulturalDivideEurope], a study of union histories in *Demography* [@KuoRaley2016DivergingPatternsUnion] or a study of Eurobarometer surveys in the *European Sociological Review* [@Teney2016DoesEUEconomic] – and tests the statistical robustness of a claim made by the original author or authors. You will:
 
-1. **Reproduce a published analyst's result.** Run the analysis that one Multi100 analyst ran, on the data behind it, and find the exact value that it produced.
+1. **Reproduce a published analyst's result.** Choose one of the five Multi100 analysts of your case, run the analysis that they ran on the data behind it, and find the exact value that it produced.
 2. **Find out why five analysts got five different answers.** When you run the same code, you get the same result; but there are different analysis options to choose from, and the five analysts each made different choices. Working through those options involves engaging with and choosing between various statistical methods.
 3. **State an _estimand_ and draw a causal graph.** Often, variation in methods and therefore results is driven by having an imprecise understanding of the *quantity* that the study is trying to estimate. That quantity is the *estimand*. Causal graphs, or directed acyclic graphs (DAGs), are a useful way to set out the relationships between the variables in your dataset and to decide what to adjust for.
 4. **Preregister one specification.** Pick one defensible analysis from a menu of choices. Before you run it, fill in the preregistration block of your report, which is a shortened version of a real preregistration template: the claim you are testing, one option for each decision on the menu, and a sentence grounded in your causal graph on why the specification answers the claim.
@@ -575,26 +367,22 @@ The exercise follows the design of Multi100 on a smaller scale, with many analys
 <details id="four-blocks-ninety-minutes-each">
 <summary>The workshop day</summary>
 
-The one-day tracks have the structure below. Two breaks and a lunch separate the parts, and when a delivery is scheduled, the callout near the top of this page gives its date. The tools-focused and methods-focused days of the EU-frames case keep four 90-minute parts but divide the material differently, and its three-day track teaches the first part on day 1 and runs the other three across the four sessions of day 2. The short session of the housing-audit case runs as two halves of about seventy-five minutes and leaves the preregistration of Task 5 for afterwards.
+A one-day workshop runs as four parts of ninety minutes, with two breaks and a lunch between them, and when a delivery is scheduled, the callout near the top of this page gives its date. It takes the housing-audit case or the EU-frames case, and the facilitator chooses one of three focuses for it.
 
-| Part | Length | Focus |
-|---|---|---|
-| Part 1 – Credibility and tools | 90 minutes | What social science is for and why people say it is in crisis; what open research proposes; the three Rs (reproducibility, robustness, replicability) and the evidence on each; and the computational toolchain that makes any of it checkable. |
-| Break | | |
-| Part 2 – The claim and its estimand | 90 minutes | The paper, its claim and the five analysts who reanalysed it, and why analysts who look as though they disagree are often answering different questions. Estimands, causal graphs, and the graph of the case, which you finish yourself. |
-| Lunch | | |
-| Part 3 – Reproduction and exploration | 90 minutes | Reproducing a recorded result exactly, then working through the specification menu: what each analytical choice does, and what happens to the estimate when you change one. |
-| Break | | |
-| Part 4 – Multiverse and preregistration | 90 minutes | Reading the results from the class against the curve of the claim, on which the five reanalyses and the original study are marked; what a curve can and cannot establish, set beside the replication of the claim on new data in three of the four cases; and settling on the one analysis you would defend, preregistered before you run it. |
+- **Open science.** Credibility, the three Rs (reproducibility, robustness and replicability) and the infrastructures of open research; the paper, its claim, the five analysts and the estimand statement; the reproduction of one reanalysis, chosen by each participant; and the replication of the claim with new data, ending on what a preregistration fixes.
+- **Data tools.** R, the IDE, a Quarto report, data management and version control, practised on the data of the case, with the reproduction of a reanalysis as the target that the code works towards.
+- **Methods.** The estimand and the causal graph, the reproduction, and then the robustness exercise at the centre of the day: the specification menu, the class chart and its submissions, the curve of the claim, and one analysis declared before it runs.
+
+The short session runs as two halves of about seventy-five minutes in the browser lab of the housing-audit case and sends nothing to the class chart. The three-day courses give a day to open research and the case, a day to the tools and the reproduction, and a day to robustness.
 
 </details>
 
 <details id="two-routes-one-destination">
 <summary>Running the analyses</summary>
 
-The exercise is the same in every track, and it is done in R. Install R and an IDE (Positron, RStudio, VS Code, etc.) once, before the course, then download the ready-made workspace of your case, a single zip file holding the analysis code, the data and a report to fill in. There is nothing to configure and no account to create, so you open the folder and start working, and the workspace is yours to keep afterwards. The data of the housing-audit and cohabitation cases are in the public domain and ship inside their workspaces, and the workspace of the immigration-and-trust case ships an extract of the European Social Survey, released under a licence that allows it to be passed on for non-commercial use, and downloads the one further file that Task 3 needs. The EU-frames workspace ships the country-year panel, and only its optional individual-level work needs files from the GESIS archive. The [Setup](setup.qmd) page walks you through the installation in plain steps.
+The exercise is done in R, either in the browser or on your own machine. The short session needs only a browser, and the one-day workshops are taught mainly in the browser lab of their case, with the workspace as an option. The three-day courses and the self-study track are taught in R on your own machine: install R and an IDE (Positron, RStudio, VS Code, etc.) once, then download the ready-made workspace of your case, a single zip file holding the analysis code, the data and a report to fill in. There is nothing to configure, so you open the folder and start working, and the workspace is yours to keep afterwards. The data of the housing-audit and cohabitation cases are in the public domain and ship inside their workspaces, and the workspace of the immigration-and-trust case ships an extract of the European Social Survey, released under a licence that allows it to be passed on for non-commercial use, and downloads the one further file that Task 3 needs. The EU-frames workspace ships the country-year panel, and the three-day course, which builds the panel from the respondents, needs files from the GESIS archive, downloaded under a free account. The [Setup](setup.qmd) page walks you through the installation in plain steps.
 
-Each case has a browser lab – [housing audit](cases/housing/lab.qmd), [immigration and trust](cases/trust/lab.qmd), [cohabitation](cases/cohabitation/lab.qmd) and [EU frames](cases/eu-frames/lab.qmd) – that holds the same exercise on a version of R that runs inside a browser tab, with nothing installed. The labs of the housing-audit and EU-frames cases are live, with the data in the page: the place to try R and the data before you have installed anything, and the fallback if a machine fails on the day. The labs of the immigration-and-trust and cohabitation cases are demonstrations, which show every result as the course pipeline computed it with the code of the workspace: the page on which the facilitator walks through the tasks on a shared screen, and from which a participant whose machine fails can still send results to the class chart. Anyone can use them, whether or not they are taking the course.
+Each case has a browser lab – [housing audit](cases/housing/lab.qmd), [immigration and trust](cases/trust/lab.qmd), [cohabitation](cases/cohabitation/lab.qmd) and [EU frames](cases/eu-frames/lab.qmd) – that holds the same exercise on a version of R that runs inside a browser tab, with nothing installed. The labs of the housing-audit and EU-frames cases are live, with the data in the page: the place where the short session and the one-day workshops are taught, and the place to try R and the data before you have installed anything. The labs of the immigration-and-trust and cohabitation cases are demonstrations, which show every result as the course pipeline computed it with the code of the workspace: the page on which the facilitator walks through the tasks on a shared screen, and from which a participant whose machine fails can still send results to the class chart. Anyone can use them, whether or not they are taking the course.
 
 </details>
 
@@ -603,7 +391,7 @@ Each case has a browser lab – [housing audit](cases/housing/lab.qmd), [immigra
 
 The [companion curriculum](companion/index.qmd) holds the teaching material of the course, arranged in three strands: computational tools, data management and sharing, and statistical methods. Every module keeps its own page and stands on its own, so you can read one for the skill it covers or take it in the place that a track gives it. Each module of the methods strand says at the top which case it works on.
 
-A single day has room for the exercise and very little else, which is why a one-day track points to the modules rather than working through them. The longer tracks are built out of them. The three-day track of the EU-frames case spends a day on the tools underneath the exercise and a day on the methods behind it, its semester track spreads the same modules across a term, and its self-study track puts them in an order that needs no facilitator at all. The semester track across the four cases sets each module beside the case that uses it, so that the methods arrive in the order of the ladder of difficulty.
+A single day has room for the exercise and very little else, which is why a one-day workshop points to the modules rather than working through them. The longer formats are built out of them: each three-day course takes the modules that its case needs, and the self-study track sets each module beside the case that demonstrates it, so that the methods arrive in the order of the ladder of difficulty.
 
 </details>
 
@@ -618,7 +406,7 @@ A single day has room for the exercise and very little else, which is why a one-
 ## Getting started {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-Everyone taking the course works in R, in an IDE of their choice, on the workspace of their case, which is downloaded once.
+The short session and the one-day workshops need only a browser, with the workspace as an option. The three-day courses and the self-study track need R, an IDE and the workspace of the case, installed before the course starts.
 :::
 
 :::: {.home-steps .home-reveal}
@@ -638,7 +426,7 @@ Download the workspace of your case as a zip file, open it in your IDE and run t
 ::: {.home-step}
 ### The browser lab {.unnumbered .unlisted}
 
-Try the exercise in the browser, without installing anything: live in the housing-audit and EU-frames cases, and as a demonstration with every result computed for you in the immigration-and-trust and cohabitation cases. [Housing audit](cases/housing/lab.qmd) · [Immigration and trust](cases/trust/lab.qmd) · [Cohabitation](cases/cohabitation/lab.qmd) · [EU frames](cases/eu-frames/lab.qmd)
+Try the exercise in the browser, without installing anything: live in the housing-audit and EU-frames cases, and as a demonstration with every result computed for you in the immigration-and-trust and cohabitation cases. The labs: [housing audit](cases/housing/lab.qmd), [immigration and trust](cases/trust/lab.qmd), [cohabitation](cases/cohabitation/lab.qmd), [EU frames](cases/eu-frames/lab.qmd).
 :::
 
 ::::

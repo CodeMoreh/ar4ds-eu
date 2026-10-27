@@ -30,7 +30,7 @@ bibliography: [../../references.bib, ../../references-new.bib]
 
 {{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
 
-This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. The facilitator drives it on the shared screen, and it is the fallback for a machine that will not cooperate on the day. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page, and nothing done here is wasted, since both fit the same models to the same data and give the same numbers.
+This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. The short session and the one-day formats of the housing-audit case are worked on this page, and the facilitator drives it on the shared screen. The downloadable workspace described on the [Setup](../../setup.qmd) page holds the same tasks for anyone who has installed R and an IDE (Positron, RStudio, VS Code, etc.), and nothing done in either is wasted, since both fit the same models to the same data and give the same numbers.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
@@ -613,7 +613,7 @@ assign("tag", NULL, envir = .tag_env)
 
 Five analysts reanalysed a claim of the housing-audit case [@EinsteinGlick2017DoesRaceAffect] for the Multi100 project [@AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. The claim is that "Hispanic housing applicants were ... less likely to be greeted by name than were ... white counterparts", in the words of the original authors (OAs) as the SCORE programme selected them. The [exercise overview](exercise.qmd) sets out the five tasks, and the [case study](index.qmd) the original study, Multi100 and the five reanalyses.
 
-The five tasks take you from a setup check to two marks on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it. Every fit on this page is live: the estimator of the course runs in your browser, on the same file and with the same code as in the workspace.
+The five tasks take you from a setup check to two marks on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it. The page of your track says which tasks your session covers, and whether it sends anything to the class chart. Every fit on this page is live: the estimator of the course runs in your browser, on the same file and with the same code as in the workspace.
 
 ## Task 1 – The setup check {#task-1-setup}
 
@@ -937,103 +937,298 @@ The difference between the two comparisons is the decision on which emails are c
 
 ## Task 3 – The reproduction {#task-3-reproduction}
 
-This is the **reproducibility** check. Analyst 8PTRZ compared Hispanic names with all other names among the 558 replies that carry a greeting code, with a chi-square test of the 2 × 2 table. Multi100 recorded $\chi^2$ = 14.265. Reproduce it from the public file of the OAs, `audit_original.csv`, which keeps their column names: `ProperName` is the greeting by name and `TreatmentGroup` the name group and sex (`"Hispanic male"`, `"white female"` and so on).
+This is the **reproducibility** check. Five analysts reanalysed the claim for Multi100, each with code of their own, and Multi100 recorded a test statistic for four of them. Choose one of the five and reproduce the analysis from the public file of the OAs, `audit_original.csv`, which keeps their column names. `Response_Dichotomous` is 1 for a reply, 0 for none and empty for a bounced email. `ProperName` is the greeting by name, empty for every email that has no reply with a greeting code. `TreatmentGroup` holds the group and the sex of the name (`"Hispanic male"`, `"white female"` and so on).
 
-The cell below is an exercise. Replace the blanks (`______`) with the missing code, then press "Run Code". If you get stuck, open the hints below; the solution has the full code.
+| Analyst | What the analysis compared | Emails counted | Test | Recorded by Multi100 |
+|:--|:--|:--|:--|:--|
+| [8PTRZ](#task-3-8ptrz) | Hispanic names against all other names | the 558 replies with a greeting code | chi-square test of a 2 × 2 table | $\chi^2$ = 14.265 |
+| [UYV3F](#task-3-uyv3f) | Hispanic against white names | the 362 coded replies to those names | logistic regression without covariates | z = −3.771 |
+| [EWFMI](#task-3-ewfmi) | the three groups, with Hispanic names as the base | the 549 coded replies that carry a poverty third | logistic regression with the sex of the name, the poverty third and the hard-to-find address | z = 3.645 |
+| [25N5D](#task-3-25n5d) | Hispanic against white names | the 665 delivered emails to those names, a missing reply counted as no greeting | two-proportion test | $\chi^2$ = 13.683 |
+| [P9W8Y](#task-3-p9w8y) | the three groups | the 558 replies with a greeting code | likelihood-ratio test of a logistic regression | none |
+
+Each analyst has a cell of their own below, and each cell is an exercise: replace the blank (`______`) with the missing code, then press "Run Code". A hint and the full solution sit under every cell. When you have your value, type the analyst and the value into the chat, for example `UYV3F z = -3.771`, hold it, and send it on the facilitator's word. The course computes the same five refits in its own pipeline, with the same functions, and the four recorded statistics all come out exactly ([`analysts5.csv`](data/analysts5_codebook.md)). For P9W8Y Multi100 recorded no statistic, so its analysis can be run again but there is nothing on record to match it against.
+
+### 8PTRZ – the test of a table {#task-3-8ptrz}
+
+Analyst 8PTRZ compared Hispanic names with all other names, white and Black together, among the 558 replies that carry a greeting code, with a chi-square test of the 2 × 2 table. Multi100 recorded $\chi^2$ = 14.265.
 
 ```{webr}
-#| setup: true
-#| exercise: reproduce
+#| exercise: repro-8ptrz
 original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
-```
 
-```{webr}
-#| exercise: reproduce
 # 1. keep the replies that carry a greeting code, and mark the Hispanic names
 coded_replies <- original |>
   datawizard::data_filter(!is.na(______)) |>
   datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
 
 # 2. the 2 x 2 table: Hispanic or other name, by greeting
-tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)  # r-style: keep – the table that chisq.test() takes
 tab_8ptrz
 
 # 3. the chi-square test of the table
-chisq.test(______)
-```
-
-:::: {.hint exercise="reproduce"}
-::: {.callout-note collapse="false"}
-## Hint 1 – the replies with a greeting code
-
-`ProperName` is missing for every email without a reply, for the bounced emails and for the five replies without a greeting code, so keeping the rows in which it is not missing leaves the 558 coded replies:
-
-``` r
-datawizard::data_filter(!is.na(ProperName))
-```
-:::
-::::
-
-:::: {.hint exercise="reproduce"}
-::: {.callout-note collapse="false"}
-## Hint 2 – the test
-
-`chisq.test()` takes the table itself:
-
-``` r
 chisq.test(tab_8ptrz)
 ```
+
+:::: {.hint exercise="repro-8ptrz"}
+::: {.callout-note collapse="false"}
+## Hint – the replies with a greeting code
+
+`ProperName` is empty for every email without a reply, for the bounced emails and for the five replies without a greeting code, so keeping the rows in which it is not missing leaves the 558 coded replies.
 :::
 ::::
 
-:::: {.solution exercise="reproduce"}
+:::: {.solution exercise="repro-8ptrz"}
 ::: {.callout-tip collapse="false"}
-## Fully worked solution
+## Solution
 
 ``` r
-coded_replies <- original |>
-  datawizard::data_filter(!is.na(ProperName)) |>
-  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
-tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
-tab_8ptrz
-chisq.test(tab_8ptrz)
-```
-
-You should get `X-squared = 14.265, df = 1`, the value on record for analyst 8PTRZ, reproduced from the public data. Type your $\chi^2$ into the chat, hold it, and send it on the facilitator's word.
-:::
-::::
-
-Now find out why it is 14.265. For a 2 × 2 table, `chisq.test()` applies the continuity correction of Yates unless it is told otherwise: it shrinks each gap between an observed and an expected count by 0.5 before squaring, a remedy designed for small tables. The analyst did not choose it; the default of the function did. The cell below runs the same test without the correction.
-
-```{webr}
-#| autorun: false
 original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
 coded_replies <- original |>
   datawizard::data_filter(!is.na(ProperName)) |>
   datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
 tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)  # r-style: keep – the table that chisq.test() takes
-
-chisq.test(tab_8ptrz, correct = FALSE)
+tab_8ptrz
+chisq.test(tab_8ptrz)
 ```
 
-Without the correction the statistic is 14.95. Neither number changes the conclusion, but only one of them matches the record, and the description "a chi-square test" fits both. A reproduction needs the code, or at least every default on which the code relied.
+You should get `X-squared = 14.265, df = 1`, the value on record for 8PTRZ.
+:::
+::::
 
-*Optional extension.* Analyst UYV3F compared Hispanic with white names only, among their 362 coded replies, with a logistic regression and no covariates. Multi100 recorded z = −3.771:
+### UYV3F – a logistic regression {#task-3-uyv3f}
+
+Analyst UYV3F compared Hispanic with white names only, among the 362 coded replies to those names, with a logistic regression of the greeting on the name and no covariates. Multi100 recorded z = −3.771, the z of the coefficient of the Hispanic names.
+
+```{webr}
+#| exercise: repro-uyv3f
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+
+# 1. the coded replies to Hispanic and white names, with the Hispanic names marked
+replies_uyv3f <- original |>
+  datawizard::data_filter(!is.na(ProperName) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+
+# 2. the logistic regression of the greeting on the name
+m_uyv3f <- glm(ProperName ~ hispanic_name, family = ______(), data = replies_uyv3f)
+nobs(m_uyv3f)
+
+# 3. the coefficients, with the z of each
+print(parameters::model_parameters(m_uyv3f, ci_method = "wald"), digits = 3)
+```
+
+:::: {.hint exercise="repro-uyv3f"}
+::: {.callout-note collapse="false"}
+## Hint – the family of the model
+
+A logistic regression is a generalised linear model of a 0/1 outcome with the family that R calls `binomial`.
+:::
+::::
+
+:::: {.solution exercise="repro-uyv3f"}
+::: {.callout-tip collapse="false"}
+## Solution
+
+``` r
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+replies_uyv3f <- original |>
+  datawizard::data_filter(!is.na(ProperName) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+m_uyv3f <- glm(ProperName ~ hispanic_name, family = binomial(), data = replies_uyv3f)
+nobs(m_uyv3f)
+print(parameters::model_parameters(m_uyv3f, ci_method = "wald"), digits = 3)
+```
+
+The row of the Hispanic names gives z = −3.771 on 362 replies, the value on record for UYV3F.
+:::
+::::
+
+### EWFMI – a model of three groups {#task-3-ewfmi}
+
+Analyst EWFMI fitted a logistic regression of the greeting on all three groups of names, with the Hispanic names as the base group, the sex of the name, the poverty third of the community entered as a number, and the hard-to-find address, in Stata. The 9 coded replies from communities without a poverty third drop out, which leaves 549. Multi100 recorded z = 3.645, the z of the white names against the Hispanic names.
+
+```{webr}
+#| exercise: repro-ewfmi
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+
+# 1. the coded replies, with TreatmentGroup split into the group and the sex of the name
+replies_ewfmi <- original |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_separate(select = "TreatmentGroup", new_columns = c("ethnicity", "name_sex"),
+                            separator = " ", append = TRUE) |>
+  # 2. the first level of a factor is the base group of the model
+  datawizard::data_modify(ethnicity = factor(ethnicity, levels = c("______", "black", "white")))
+
+# 3. the model of EWFMI; a reply without a poverty third drops out
+m_ewfmi <- glm(ProperName ~ ethnicity + name_sex + poverty_pop_third + HardEmail,
+               family = binomial(), data = replies_ewfmi)
+nobs(m_ewfmi)
+print(parameters::model_parameters(m_ewfmi, ci_method = "wald"), digits = 3)
+```
+
+:::: {.hint exercise="repro-ewfmi"}
+::: {.callout-note collapse="false"}
+## Hint – the base group
+
+The analyst compared the other groups with the Hispanic names, so `"Hispanic"` comes first among the levels, spelled as in `TreatmentGroup`.
+:::
+::::
+
+:::: {.solution exercise="repro-ewfmi"}
+::: {.callout-tip collapse="false"}
+## Solution
+
+``` r
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+replies_ewfmi <- original |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_separate(select = "TreatmentGroup", new_columns = c("ethnicity", "name_sex"),
+                            separator = " ", append = TRUE) |>
+  datawizard::data_modify(ethnicity = factor(ethnicity, levels = c("Hispanic", "black", "white")))
+m_ewfmi <- glm(ProperName ~ ethnicity + name_sex + poverty_pop_third + HardEmail,
+               family = binomial(), data = replies_ewfmi)
+nobs(m_ewfmi)
+print(parameters::model_parameters(m_ewfmi, ci_method = "wald"), digits = 3)
+```
+
+The row `ethnicity [white]` gives z = 3.645 on 549 replies, the value on record for EWFMI.
+:::
+::::
+
+### 25N5D – every delivered email {#task-3-25n5d}
+
+Analyst 25N5D compared Hispanic with white names among every email that was delivered, counting an email without a reply as one without a greeting, with the two-proportion test of R, `prop.test()`. The five replies without a greeting code stay in the denominators and count as no greeting. Multi100 recorded $\chi^2$ = 13.683 on 665 emails.
+
+```{webr}
+#| exercise: repro-25n5d
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+
+# 1. the delivered emails to Hispanic and white names; a bounced email has no reply status
+emails_25n5d <- original |>
+  datawizard::data_filter(!is.na(______) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup),
+                          greeted = Response_Dichotomous == 1 & ProperName %in% 1)
+
+# 2. the greetings by name and the emails, for each group of names
+counts_25n5d <- datawizard::data_summary(emails_25n5d, greetings = sum(greeted), emails = n(),
+                                         by = "hispanic_name")
+counts_25n5d
+
+# 3. the test of the two proportions
+prop.test(counts_25n5d$greetings, counts_25n5d$emails)
+```
+
+:::: {.hint exercise="repro-25n5d"}
+::: {.callout-note collapse="false"}
+## Hint – the delivered emails
+
+`Response_Dichotomous` is empty for the 23 emails that bounced, so keeping the rows in which it is not missing keeps every delivered email.
+:::
+::::
+
+:::: {.solution exercise="repro-25n5d"}
+::: {.callout-tip collapse="false"}
+## Solution
+
+``` r
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+emails_25n5d <- original |>
+  datawizard::data_filter(!is.na(Response_Dichotomous) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup),
+                          greeted = Response_Dichotomous == 1 & ProperName %in% 1)
+counts_25n5d <- datawizard::data_summary(emails_25n5d, greetings = sum(greeted), emails = n(),
+                                         by = "hispanic_name")
+counts_25n5d
+prop.test(counts_25n5d$greetings, counts_25n5d$emails)
+```
+
+You should get `X-squared = 13.683, df = 1` on 308 + 357 = 665 emails, the value on record for 25N5D.
+:::
+::::
+
+### P9W8Y – a test of three groups {#task-3-p9w8y}
+
+Analyst P9W8Y fitted a logistic regression of the greeting on the three groups of names among the 558 coded replies and tested whether the three differ at all, with a likelihood-ratio test of the model against a model without the groups. Multi100 recorded no statistic for this analysis, so the rerun cannot be matched against the record. The report that the analyst filed for Task 2 gives $\chi^2$ = 15.951 on 2 degrees of freedom in its text, and the rerun gives the same value. The verdict of "no evidence" in Task 1 came from another model, with an interaction between the group and the sex of the name, whose test of the groups compared the three female names only under the default coding of R.
+
+```{webr}
+#| exercise: repro-p9w8y
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+
+# 1. the coded replies, with the group of the name as a factor
+replies_p9w8y <- original |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_separate(select = "TreatmentGroup", new_columns = c("ethnicity", "name_sex"),
+                            separator = " ", append = TRUE) |>
+  datawizard::data_modify(ethnicity = factor(ethnicity, levels = c("white", "black", "Hispanic")))
+
+# 2. the model of the three groups
+m_p9w8y <- glm(ProperName ~ ethnicity, family = binomial(), data = replies_p9w8y)
+nobs(m_p9w8y)
+
+# 3. the likelihood-ratio test against the same model without the groups
+anova(update(m_p9w8y, . ~ 1), m_p9w8y, test = "______")
+```
+
+:::: {.hint exercise="repro-p9w8y"}
+::: {.callout-note collapse="false"}
+## Hint – the test
+
+`anova()` compares two nested models fitted to the same rows; a likelihood-ratio test is asked for with `test = "LRT"`.
+:::
+::::
+
+:::: {.solution exercise="repro-p9w8y"}
+::: {.callout-tip collapse="false"}
+## Solution
+
+``` r
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+replies_p9w8y <- original |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_separate(select = "TreatmentGroup", new_columns = c("ethnicity", "name_sex"),
+                            separator = " ", append = TRUE) |>
+  datawizard::data_modify(ethnicity = factor(ethnicity, levels = c("white", "black", "Hispanic")))
+m_p9w8y <- glm(ProperName ~ ethnicity, family = binomial(), data = replies_p9w8y)
+nobs(m_p9w8y)
+anova(update(m_p9w8y, . ~ 1), m_p9w8y, test = "LRT")
+```
+
+The column `Deviance` gives 15.951 on 2 degrees of freedom for 558 replies. Multi100 holds no value to compare it with.
+:::
+::::
+
+### Defaults and codings {#task-3-defaults}
+
+Now find out why your number is exactly that number. For a 2 × 2 table, `chisq.test()` and `prop.test()` both apply the continuity correction of Yates unless they are told otherwise: it shrinks each gap between an observed and an expected count by 0.5 before squaring, a remedy designed for small tables. Neither 8PTRZ nor 25N5D asked for the correction. The defaults of the two functions applied it, and the recorded values are the corrected ones. The cell below runs both tests without the correction.
 
 ```{webr}
 #| autorun: false
-m_uyv3f <- glm(ProperName ~ hispanic_name, family = binomial(),
-               data = datawizard::data_filter(coded_replies, !grepl("^black", TreatmentGroup)))
-nobs(m_uyv3f)
-coef(summary(m_uyv3f))
+original <- utils::read.csv("data/audit_original.csv", na.strings = c("", "NA"))  # r-style: keep – the base reader adds nothing to the download
+
+# 8PTRZ: the replies with a greeting code, Hispanic against all other names
+coded_replies <- original |>
+  datawizard::data_filter(!is.na(ProperName)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
+tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)  # r-style: keep – the table that chisq.test() takes
+chisq.test(tab_8ptrz, correct = FALSE)
+
+# 25N5D: the delivered emails, Hispanic against white names
+counts_25n5d <- original |>
+  datawizard::data_filter(!is.na(Response_Dichotomous) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup),
+                          greeted = Response_Dichotomous == 1 & ProperName %in% 1) |>
+  datawizard::data_summary(greetings = sum(greeted), emails = n(), by = "hispanic_name")
+prop.test(counts_25n5d$greetings, counts_25n5d$emails, correct = FALSE)
 ```
 
-The scripts that the analysts submitted are on the OSF, in the Multi100 component of the paper (osf.io/38rsh); that of 8PTRZ is at osf.io/j8wvh.
+Without the correction the two statistics are 14.95 and 14.33. Neither changes the conclusion, but only the corrected values match the record, and the description "a chi-square test" fits both. The coding of the data matters in the same way. The z of EWFMI is positive and the z of UYV3F negative, although both describe Hispanic names greeted by name less often, because EWFMI took the Hispanic names as the base group, so that the coefficient compares white names with Hispanic names. A reproduction needs the code, or at least every default and every coding on which the code relied.
+
+The scripts that the analysts submitted are on the OSF, in the Multi100 component of the paper ([osf.io/38rsh](https://osf.io/38rsh/)), one sub-component for each analyst: 8PTRZ [osf.io/j8wvh](https://osf.io/j8wvh/), UYV3F [osf.io/3672s](https://osf.io/3672s/) (a review document only), EWFMI [osf.io/jhvca](https://osf.io/jhvca/), 25N5D [osf.io/v8zah](https://osf.io/v8zah/) and P9W8Y [osf.io/pzwbm](https://osf.io/pzwbm/).
 
 ::: {.callout-note collapse="true"}
 ## Reproduction and the five analysts
 
-You reproduced the recorded value, and so did everyone else in the class, because everyone ran the same code on the same file. This is why reproducibility is the cheapest of the three Rs to establish.
+You reproduced the value of the analyst whom you chose, and so did everyone else who chose the same analyst, because everyone ran the same code on the same file. This is why reproducibility is the cheapest of the three Rs to establish.
 
 The five Multi100 analysts each wrote their own code for this claim. Three concluded that the results were evidence for the claim and two that they were evidence neither for nor against it, although the four statistics that Multi100 recorded all come from gaps in the same direction. Part of the difference lies in the questions that each analyst chose to answer (which names to compare, which emails to count), and part in what each analyst took to count as evidence: one of the two who answered 'neither' found the gap but judged it substantially smaller than the published one. The [case study](index.qmd) sets out what each analyst chose.
 :::
@@ -1226,5 +1421,5 @@ This page keeps nothing once you refresh it, so work you want to keep belongs in
 ::: {.callout-tip icon="false"}
 ## The downloadable workspace
 
-The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE (Positron, RStudio, VS Code, etc.), edit and render offline, and in which everyone taking the course works. The same folder holds the reproduction of Task 3 as a script, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab-housing`]({{< var cases.housing.template-repo >}}) repository, and it is yours to reuse.
+The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE, edit and render offline, and keep after the session. The same folder holds the five reproductions of Task 3 as a script, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab-housing`]({{< var cases.housing.template-repo >}}) repository, and it is yours to reuse.
 :::

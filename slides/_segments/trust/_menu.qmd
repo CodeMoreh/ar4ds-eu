@@ -13,13 +13,13 @@ level_txt <- c(estimand = "1 – Estimands", measurement = "2 – Measurement",
 # datawizard::data_summary() would sort the decisions
 off_txt <- menu_opts |>
   datawizard::data_filter(!on_curve) |>
-  dplyr::summarise(txt = paste0(paste(label, collapse = " · "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
+  dplyr::summarise(txt = paste0(paste(label, collapse = "; "), " *(", judgement_txt[dplyr::first(judgement)], ")*"),
                    .by = c(axis, judgement)) |>
   dplyr::summarise(off = paste(txt, collapse = "; "), .by = axis)
 menu_rows <- menu_opts |>
   datawizard::data_filter(on_curve) |>
   dplyr::summarise(level = dplyr::first(level), decision = dplyr::first(decision),
-                   on = paste(label, collapse = " · "), .by = axis) |>
+                   on = paste(label, collapse = "; "), .by = axis) |>
   dplyr::left_join(off_txt, by = "axis") |>
   dplyr::mutate(off = dplyr::coalesce(off, "–"),
                 level = dplyr::if_else(level == dplyr::lag(level, default = ""), "", level_txt[level]),
@@ -41,11 +41,11 @@ Here is the menu. It is the full list of decisions that any analyst of this clai
 ## The curve of 192 {#the-curve-of-192 .smaller}
 
 ::: {.small}
-- **Outcome** – distrust of parliament · of politicians · of the legal system · the mean of the three
-- **Adjustment** – no controls · demographics · outlook and ideology · the controls of the paper
-- **Weights** – none · design weights · design and population weights
-- **Unanswered items** – every item answered · the answered items
-- **Countries and rounds** – an intercept for every country-round · one for every country, with a shift for every round
+- **Outcome** – distrust of parliament; of politicians; of the legal system; the mean of the three
+- **Adjustment** – no controls; demographics; outlook and ideology; the controls of the paper
+- **Weights** – none; design weights; design and population weights
+- **Unanswered items** – every item answered; the answered items
+- **Countries and rounds** – an intercept for every country-round; one for every country, with a shift for every round
 :::
 
 ::: {.fragment .small}

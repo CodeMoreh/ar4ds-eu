@@ -72,13 +72,19 @@
 .home-3r li { margin: 0; color: #5b6673; font-size: .9rem; line-height: 1.45; }
 .home-3r li strong { color: #0e3b6a; }
 .home-casecard .home-go { margin-top: auto; padding-top: .5rem; font-weight: 600; color: #a10000; text-underline-offset: 3px; }
+/* the folded part of a case card: lighter than the openable boxes of the sections */
+.home-section .home-casecard details.home-more { background: none; border: 0; border-top: 1px solid #dde3ea; border-radius: 0; box-shadow: none; margin: 0; }
+.home-section .home-casecard details.home-more summary { padding: .6rem 0 .2rem; font-size: .9rem; color: #2a5d8f; }
+.home-section .home-casecard details.home-more > :not(summary) { padding: 0; margin-top: .6rem; }
+.home-section .home-casecard details.home-more > :last-child { padding-bottom: .2rem; }
 .home-casecard p:has(> .home-go) { margin-top: auto; }
 .home-track.home-soon { box-shadow: none; border-style: dashed; }
 .home-track.home-soon:hover { transform: none; }
 
-/* track cards */
+/* format cards */
 .home-group { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: #5b6673; margin: 1.8rem 0 .8rem; font-weight: 600; }
 .home-grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.home-formats { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
 .home-track {
   position: relative; background: #fff; border: 1px solid #dde3ea; border-radius: 14px;
   padding: 1.3rem 1.3rem 1.15rem; display: flex; flex-direction: column; gap: .4rem;
@@ -86,21 +92,12 @@
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
 }
 .home-track:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgba(16, 32, 52, .08), 0 16px 40px rgba(16, 32, 52, .14); }
-.home-track.chosen { border-color: #c1a037; box-shadow: 0 0 0 3px rgba(193, 160, 55, .35), 0 8px 24px rgba(16, 32, 52, .08); }
 .home-track h3 { margin: 0; font-size: 1.15rem; line-height: 1.3; color: #1d2733; }
 .home-track h3 a { color: inherit; text-decoration: none; }
 .home-track .home-meta { display: block; font-size: .85rem; color: #2a5d8f; font-weight: 600; }
 .home-track p:has(> .home-meta) { margin: 0; }
 .home-track p { margin: 0; color: #5b6673; font-size: .97rem; }
-.home-track .home-units { display: none; }
-.home-actions { margin-top: auto; padding-top: .7rem; display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
-.home-choose {
-  font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer;
-  background: #0e3b6a; color: #fff; border: 0; border-radius: 999px; padding: .4rem 1rem;
-}
-.home-choose:hover { background: #2a5d8f; }
-.home-track.chosen .home-choose { background: #c1a037; color: #1d1a10; }
-.home-link { font: inherit; font-size: .9rem; background: none; border: 0; padding: .35rem 0; color: #a10000; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.home-track p + p { margin-top: .5rem; }
 
 /* the case */
 .home-case { display: grid; gap: 2.4rem; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; }
@@ -145,19 +142,6 @@
 }
 .home-portrait:hover { background-image: url("../assets/home/portrait-casual.jpg"); border-radius: 20% 80% 55% 35% / 55% 40% 60% 35%; }
 .home-role { color: #2a5d8f; font-weight: 600; margin-top: -.4rem; }
-
-/* the units of a track, in a dialog */
-dialog.home-dialog {
-  border: 0; border-radius: 14px; padding: 0; width: min(640px, calc(100vw - 32px));
-  box-shadow: 0 30px 80px rgba(10, 20, 35, .35);
-}
-dialog.home-dialog::backdrop { background: rgba(16, 26, 38, .55); }
-.home-dialog .home-dlg-head { padding: 1.2rem 1.4rem .3rem; }
-.home-dialog .home-dlg-head h3 { margin: 0; color: #0e3b6a; }
-.home-dialog .home-dlg-body { padding: .4rem 1.4rem 1rem; }
-.home-dialog .home-dlg-foot { display: flex; justify-content: flex-end; gap: .7rem; padding: .9rem 1.4rem 1.2rem; border-top: 1px solid #dde3ea; }
-.home-dialog button { font: inherit; cursor: pointer; border-radius: 999px; padding: .45rem 1.1rem; border: 1px solid #dde3ea; background: #fff; }
-.home-dialog button.go { background: #0e3b6a; color: #fff; border-color: #0e3b6a; }
 
 /* reveal on scroll */
 .home-reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }

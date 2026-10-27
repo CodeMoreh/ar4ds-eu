@@ -1,0 +1,59 @@
+## The public file and the course file {#the-public-file-and-the-course-file .smaller}
+
+::: {.fs-75}
+| `audit_original.csv`, as the OAs published it | `housing_audit.csv`, as the course uses it |
+|:--|:--|
+| `TreatmentGroup`: `"Hispanic male"`, `"white female"` … | `group` and `name_sex`, and `name` from `NumberAssignment` |
+| `Response_Dichotomous`: 1, 0, empty | `reply`: 1, 0, missing |
+| `ProperName`: 1, 0, empty | `named`: 1, 0, missing |
+| `HardEmail` | `hard_email` |
+| `poverty_pop_third`: 1, 2, 3 | `poverty_third`: `lower`, `middle`, `top` |
+:::
+
+::: {.fragment .small}
+Same rows, same order, same values: only the names and the codes change, and a script does it, never a hand. Each file has a **codebook** beside it, which says what every column holds and where it came from.
+:::
+
+::: {.src}
+cases/housing/data/audit_original_codebook.md and housing_audit_codebook.md; the script is R/housing/01_audit_data.R.
+:::
+
+::: notes
+Two files hold the same thousand and fourteen emails. On the left, the public file as the original authors published it, with their column names: the group and the sex of the name in one text column, the reply as one, nought or empty, the greeting by name, and the thirds of the community as one, two and three. On the right, the course file, with names that say what they hold and codes that read as words. [advance] Nothing else differs: the same rows in the same order, the same values. A script makes one from the other, and nobody edits either by hand. And beside each file sits a codebook, which says what every column holds and where it came from. Much of the data work in a real project is of this kind, and it is where many errors enter, which is why the reproduction this afternoon starts from the public file.
+:::
+
+## Three kinds of missing value {#three-kinds-of-missing-value .smaller}
+
+::: {.small}
+| What happened to the email | `reply` | `named` | Emails |
+|:--|:--|:--|--:|
+| It bounced and never reached an official | missing | missing | `r sum(is.na(audit$reply))` |
+| It reached an official, who did not reply | 0 | missing | `r sum(audit$reply %in% 0)` |
+| It drew a reply whose greeting nobody coded | 1 | missing | `r sum(audit$reply %in% 1 & is.na(audit$named))` |
+| It drew a reply with a greeting code | 1 | 0 or 1 | `r sum(!is.na(audit$named))` |
+:::
+
+::: {.fragment .small}
+`!is.na(named)` keeps the `r sum(!is.na(audit$named))` coded replies; `!is.na(reply)` keeps the `r sum(!is.na(audit$reply))` delivered emails; `named %in% 1` counts a missing greeting as no greeting. Each filter is a decision about the question: four of the five analysts kept the replies, and 25N5D every delivered email.
+:::
+
+::: notes
+In these data a missing value means three different things, and it is worth learning to read them apart. An email that bounced never reached anyone, so both the reply and the greeting are missing. An email that reached an official who did not reply has a reply of nought, and its greeting is missing, because there was nothing to greet. And five replies have a greeting that nobody coded. Only the last row of the table holds a greeting that can be compared. [advance] So the filter that you write is a decision about the question. Keeping the coded replies compares how replies began. Keeping every delivered email, and counting a missing greeting as no greeting, asks whether an email drew a reply that greeted the sender by name at all. UYV3F made the first choice and 25N5D the second, from the same file.
+:::
+
+## Raw data, scripts and derived files {#raw-data-scripts-and-derived-files .smaller}
+
+::: {.small}
+- **Raw:** the file of the deposit, `HousingAuditAJPSFinalPublic_Unidentified`, kept exactly as it was downloaded and never edited
+- **Script:** `R/housing/01_audit_data.R` reads it and writes the two CSV files, so that anyone can make them again
+- **Derived:** `audit_original.csv` and `housing_audit.csv`, each with its codebook, and every result that is computed from them
+- **Analysis:** the reproduction reads a derived file and changes nothing in it
+:::
+
+::: {.fragment .small}
+If a derived file is lost or doubted, run the script again. If the raw file is changed by hand, nothing downstream can be trusted, and nothing records what changed.
+:::
+
+::: notes
+This is the shape of a project that can be checked, and the course follows it for this case. The raw file is the one in the deposit of the original authors, kept exactly as it was downloaded. Nobody edits it, ever. A script reads it and writes the derived files, the public file as a plain CSV and the course file with its readable names, and a codebook beside each. The analysis reads a derived file and changes nothing in it. [advance] The payoff comes when something goes wrong. If a derived file is lost, or someone doubts it, you run the script again and get it back. If the raw file has been changed by hand, every number downstream is suspect, and nothing records what was changed or when. That is the whole of data management in one slide: keep the raw file untouched, and let scripts do everything else.
+:::

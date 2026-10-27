@@ -1,0 +1,27 @@
+---
+title: "Part 3 – Data management and the reproduction"
+aliases:
+  - /tracks/one-day-tools/part-3.html
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at this part](../../slides/eu-frames-one-day-data-tools.html#/part-3-one-claim-in-your-hands){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+Part 3 starts with data management, the work between the raw survey files and the panel that you used in the morning: the steps of the build, what may be shared at each of them, and the checks that a build from many files needs. Then comes the task that the R work of the day leads up to: you reproduce, to the third decimal, the result that Multi100 recorded for one of three analysts, chosen by you. The part ends on what the reproduction took, and on the slips in the code that the analysts deposited.
+
+| Analyst | Data | Model | Recorded by Multi100 |
+|:--|:--|:--|:--|
+| C6HJR | the course panel, `EUframes_cy.csv`, 270 country-years | fixed effects for country and year, conventional standard errors | t = −3.804 on 233 df |
+| KQXUE | `analyst_KQXUE.csv`, 270 country-years | a fixed effect for each country, conventional standard errors | t = −7.169 on 242 df |
+| 018OL | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
+
+| Work through | What you do | Timing |
+|---|---|---|
+| Slides, data management, with [Building the analysis file](../../companion/data-management.qmd) as the companion | From sixteen Eurobarometer files to one panel, and who may see each step; the codebook beside every file; the checks on the inputs that a build from many files needs. | 12 minutes |
+| An editable cell of the [Browser lab](../../cases/eu-frames/lab.qmd), or the working script | Hands-on 3a: count the respondents behind each year of the panel, then find the rows of `analyst_KQXUE.csv` in which a wave is counted twice and the rows of `analyst_018OL.csv` in which a wave carries the wrong year; say in one sentence what each file reveals, hold it, send on go. The [codebook of the two files](../../cases/eu-frames/data/analyst_panels_codebook.md) explains their columns. | 15 minutes |
+| Slides, the constrained task | The four instructions of the second Multi100 task, what each assumes, the columns of the panel, and the three analyses that can be reproduced on aggregate data. | 8 minutes |
+| [Browser lab](../../cases/eu-frames/lab.qmd#task-3-reproduction) Task 3, or the working script | Choose one analyst and fill the gaps in its cell, with a hint and a full solution under each; in the working script the three are written out. The first run of the cell of 018OL downloads two packages, about 32 MB. Type the analyst and the value in the chat, for example `C6HJR t = -3.804`, hold it, and send it when the facilitator says go. | 25 minutes |
+| Slides, reproducibility and analytical choice, and what a reproduction needs | Why everyone with the same analyst got the same t; data, code and versions; the slips of three of the five pipelines and what each does to the t. | 15 minutes |
+| The OSF deposit of your analyst | Hands-on 3b: find the line that carries the slip, and write one check that would have caught it, as a sentence or a line of R. | 15 minutes |
+
+**By the end of the part** you can describe how the panel was built and where its slips could hide, you have run the checks that find them, and you have reproduced a recorded result to the third decimal.

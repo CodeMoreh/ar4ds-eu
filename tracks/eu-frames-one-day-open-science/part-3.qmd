@@ -1,0 +1,28 @@
+---
+title: "Part 3 – The reproduction"
+aliases:
+  - /tracks/one-day-replication/part-3.html
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at this part](../../slides/eu-frames-one-day-open-science.html#/part-3-reproduction-and-exploration){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+Part 3 is the reproduction. Three of the five Multi100 analysts fitted their models on means of countries or of cells, and their recorded results come back to the third decimal from files that the browser lab already holds; you choose one of the three. The other two worked on respondents, and their reproduction needs the respondent files that only a GESIS account can give, so it belongs to the three-day course. The part ends on what the reproduction took, and on the code that your analyst deposited.
+
+| Analyst | Data | Model | Recorded by Multi100 |
+|:--|:--|:--|:--|
+| C6HJR | the course panel, `EUframes_cy.csv`, 270 country-years | fixed effects for country and year, conventional standard errors | t = −3.804 on 233 df |
+| KQXUE | `analyst_KQXUE.csv`, 270 country-years | a fixed effect for each country, conventional standard errors | t = −7.169 on 242 df |
+| 018OL | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
+
+| Work through | What you do | Timing |
+|---|---|---|
+| Slides, the constrained task | The four instructions of the second Multi100 task, read verbatim, what each of them assumes, the columns of the panel, and the three analyses that can be reproduced on aggregate data. | 12 minutes |
+| [Browser lab](../../cases/eu-frames/lab.qmd#task-3-reproduction) Task 3, or the working script of the workspace | Choose one analyst and fill the gaps in its cell; there is a hint and a full solution under each. The first run of the cell of 018OL downloads two packages, about 32 MB. When you have the value on record, type the analyst and the value in the chat, for example `KQXUE t = -7.169`, hold it, and send it when the facilitator says go. If you finish early, take a second analyst. | 25 minutes |
+| Slides, reproducibility and analytical choice | Why everyone who chose the same analyst got the same t, and why the three analysts did not get the same t as each other. | 5 minutes |
+| Slides, what a reproduction needs | Data, code and versions, including a value of a Eurostat series that was revised after the analyst used it; and the slips that three of the five pipelines carry, with what each does to the t. | 13 minutes |
+| The OSF deposit of your analyst | Hands-on 3b: find the line that carries the slip (KQXUE at osf.io/vycgd, `task2.do`; 018OL at osf.io/nz7ka, the R Markdown file of Task 2; C6HJR at osf.io/6zqct, the folder of April 2025), then write one check that would have caught it, hold it and send it on the facilitator's word. | 20 minutes |
+
+The two files of KQXUE and 018OL were rebuilt by the course from the GESIS waves, following the code that each analyst deposited, and their [codebook](../../cases/eu-frames/data/analyst_panels_codebook.md) says how. Before the break, copy your Task 3 cell and its output into your notes, because the browser lab forgets everything when it reloads.
+
+**By the end of the part** you have reproduced a recorded result to the third decimal, you know what it took besides the code, and you have written a check that would have caught the slip in the pipeline of your analyst.

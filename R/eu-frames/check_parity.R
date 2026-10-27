@@ -20,7 +20,7 @@
 #               and in the rebuild folder
 # Writes:       nothing
 # Author:       Chris Moreh
-# Last updated: 2026-10-26
+# Last updated: 2026-10-27
 ##############################################################################
 
 source("R/eu-frames/_paths.R")
@@ -54,7 +54,9 @@ checks <- list(
   list(file = "display_bailout.csv",
        keys = c("outcome", "predictor", "estimator", "group")),
   list(file = "display_inference.csv", keys = c("estimator", "inference")),
-  list(file = "reference_marks.csv",   keys = "id")
+  list(file = "reference_marks.csv",   keys = "id"),
+  list(file = "analyst_KQXUE.csv",     keys = c("cntry", "year")),
+  list(file = "analyst_018OL.csv",     keys = c("cntry", "wave"))
 )
 
 flag_names <- c("sig", "supports_claim", "supports", "baseline", "is_reference", "positive_outcome")

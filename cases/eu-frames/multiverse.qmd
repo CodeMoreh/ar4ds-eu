@@ -288,9 +288,9 @@ draw_class_chart <- function(cls, my_tag = "") {
     mine <- cls$mine
     sub_txt <- paste(nrow(cls), "class result(s) so far")
     if (any(mine)) {
-      sub_txt <- paste0(sub_txt, " · tag ", my_tag, ": ", paste(cls$n_lab[mine], collapse = ", "))
+      sub_txt <- paste0(sub_txt, "; tag ", my_tag, ": ", paste(cls$n_lab[mine], collapse = ", "))
     } else if (nzchar(my_tag)) {
-      sub_txt <- paste0(sub_txt, " · no mark carries the tag ", my_tag, " yet")
+      sub_txt <- paste0(sub_txt, "; no mark carries the tag ", my_tag, " yet")
     }
     caption <- c(
       "Circles and crosses: the class of the matching specification on the curve under CR2 errors clustered by country (p < 0.05 or p ≥ 0.05).",
@@ -348,7 +348,7 @@ draw_class_chart <- function(cls, my_tag = "") {
   # tinyplot draws no hover tooltips, so the lines that a tooltip would hold
   # are printed under the chart, one for each submission
   cls$tip |>
-    gsub(pattern = "<br/>", replacement = " · ", fixed = TRUE) |>
+    gsub(pattern = "<br/>", replacement = "; ", fixed = TRUE) |>
     gsub(pattern = "<[^>]+>", replacement = "") |>
     gsub(pattern = "&lt;", replacement = "<", fixed = TRUE) |>
     gsub(pattern = "&amp;", replacement = "&", fixed = TRUE) |>

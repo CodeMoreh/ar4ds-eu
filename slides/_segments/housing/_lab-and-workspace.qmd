@@ -1,0 +1,58 @@
+## The browser lab and the workspace {#what-we-use-today .smaller}
+
+<!-- The browser-first counterpart of the slide of the same id in
+     slides/_segments/shared/_today-tools.qmd, for the one-day decks of the
+     housing-audit case, which are worked mainly in the browser lab. The second
+     slide is the shared one, copied verbatim, because a shared segment cannot
+     be included in part. -->
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**The browser lab**
+
+- One web page, with R compiled to run **inside the browser**
+- Nothing installed, and the data already in place
+- Every task of the day, with the same helpers as the workspace
+- What I drive on the shared screen
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**The workspace, if you have installed R**
+
+- The folder that you downloaded, opened in your IDE
+- Quarto renders your report, and R fits every model in a moment
+- No git, no cloning, no configuration – it is just files
+- What you keep after the day
+:::
+:::
+::::
+
+::: {.urlbox .fragment}
+[`r case_vars[["template-repo"]]`](`r case_vars[["template-repo"]]`)<br>[download the zip → unzip → open in your IDE]{.fs-60}
+:::
+
+::: notes
+Two places to work, with the same tasks and the same numbers. The browser lab is one web page with R compiled to run inside the browser itself: nothing to install, nothing to break, and the data are already there. It is what I drive on the shared screen, and it is where most of you will work today. The workspace is the folder that you can download and open in your IDE, which is Positron on my screen and may be RStudio or VS Code on yours. Quarto renders the report, R fits every model live, and there is no git and no cloning, because it is just a folder of files. If you installed it, use it; if not, the lab does everything that the day needs.[ Today the IDE has a part of its own after the break, so if you have the workspace, keep it open, and if not, follow that part on my screen and do the R in the lab.]{.content-visible when-meta="deck.data-tools"} The address of the zip is at the bottom.
+:::
+
+## What the tools cannot do {.smaller}
+
+:::: {.none}
+::: {.fragment}
+A perfectly reproducible pipeline can be a perfectly reproducible answer to **a question you never stated**.
+:::
+
+::: {.fragment}
+None of this software will tell you what your estimand is, whether your controls belong in the model, or whether the association you found means what you think it means.
+:::
+
+::: {.fragment}
+Tooling is the **cheap** half of the problem, because it can be learned. **The expensive half is the question that the analysis is meant to answer.**
+:::
+::::
+
+::: notes
+All of this software is worth having, but a perfectly reproducible pipeline can be a perfectly reproducible answer to a question you never stated. None of this software will tell you what your estimand is, whether the variables you put in the model belong there, or whether the association you found means what you think it means. Tooling is the cheap half of the problem, in the sense that it can be solved by learning things. The expensive half starts from a question that every quantitative study has to answer, namely what exactly you are trying to estimate, and a good deal of what follows is about that question. First, though, you need a setup that works.
+:::

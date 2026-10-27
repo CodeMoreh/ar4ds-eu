@@ -1,0 +1,65 @@
+## The report as a record {#the-report-as-a-record .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**One file holds the work**
+
+- `index.qmd` in the workspace: the prose, the code and its output, task by task
+- Your reproduction is the chunk of Task 3, with the analyst you chose and the *t* you obtained in its TODO
+- Rendering runs every chunk again from the start, so the page cannot show a number that the code no longer gives
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**What the render leaves**
+
+- An HTML page in `_site/`, dated on the day it was rendered
+- A frozen copy of each result in `_freeze/`, which lets the page be published without running R again
+- The page and the folder that made it are what you deposit
+:::
+:::
+::::
+
+::: notes
+The report in the workspace is the place where the work of the day becomes a record. It is one file, index dot qmd, with your prose, your code and its output in the order of the tasks, and your reproduction sits in the chunk of Task 3, with the analyst you chose and the t you got written into its TODO. Rendering runs every chunk again from the start, which is the point: the page cannot show a number that the code no longer produces. What the render leaves behind is an HTML page with the date on it, and a frozen copy of each result, which lets the page be published later without running R again. The page and the folder that made it are what you would deposit. If you have no workspace today, the browser lab keeps nothing after a reload, so copy your cell and its output into your notes.
+:::
+
+## Version control in practice {#version-control-in-practice .smaller}
+
+::: {.small}
+On my screen, in the workspace:
+:::
+
+```{.bash}
+git init                                  # the folder becomes a repository
+git add index.qmd data/ R/
+git commit -m "Reproduce the result of KQXUE in Task 3"
+# ... edit the report, then
+git diff                                  # every line changed since the commit
+git commit -am "Write the check of the double append"
+```
+
+::: {.fragment .small}
+Pushed to GitHub, the repository renders and publishes the report itself: the workflow in `.github/` of the workspace does it on every push. The companion module on Git and GitHub takes it click by click.
+:::
+
+::: notes
+Version control is the history of a folder: every commit is a snapshot with a message that says why it was taken. I do it on my screen, in the workspace, because git is optional today. Init turns the folder into a repository. Add and commit take the first snapshot, with a message that says what it holds, here the reproduction of Task 3. Then I edit the report, and diff shows every line that has changed since the last snapshot, which is how a reviewer, or you in six months, reads what happened. Another commit, another message. [advance] Pushed to GitHub, the workspace publishes itself: the workflow that ships in its github folder renders the report on every push and puts it on a web page. The companion module on Git and GitHub goes through all of it slowly, and it is the natural next step after today.
+:::
+
+## Hands-on 4 – The reproduction in a report {#hands-on-4-the-reproduction-in-a-report .smaller}
+
+::: {.small}
+- **Workspace:** fill the TODO of Task 3 in `index.qmd` – the analyst, the *t* and its degrees of freedom, one sentence on how its model differs from the other two – then add the check of Hands-on 3a as a chunk beneath it, and render
+- **Git, if you have it:** initialise the folder and commit, then change one sentence and read `git diff`
+- **Browser lab only:** copy your Task 3 cell, its output and your check into your notes
+:::
+
+::: {.fragment .small}
+Green circle in the chat when your report renders, or when your notes hold the cell and its output.
+:::
+
+::: notes
+Your turn. If you have the workspace, open the report, fill the TODO of Task 3 with the analyst you chose, the t and its degrees of freedom, and one sentence on how that model differs from the other two. Then paste the check that you wrote in Hands-on 3a into a chunk beneath it, and render. The rendered page now holds your reproduction and the check that would have caught the slip of your analyst, with the date on which both ran. If you have git, initialise the folder, commit, change one sentence and read the diff. If you are in the browser lab only, copy the cell, its output and your check into your notes, because the page forgets everything on reload. Green circle in the chat when it is done. [state the time]
+:::

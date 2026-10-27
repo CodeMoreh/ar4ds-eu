@@ -1,0 +1,21 @@
+## Hands-on 2 – Counting the emails {#hands-on-2-meet-the-emails-draw-the-graph .smaller}
+
+<!-- The id is that of Hands-on 2 in the other housing decks, so that the skip
+     link at the start of the R tutorial (_rtutorial.qmd) lands here. -->
+
+::: {.small}
+**Task 2**, in the first cells of Task 2 in the browser lab, or in the Task 2 section of your report or `working_script.R`:
+
+1. Count the emails, the bounced ones, the delivered ones, the replies and the replies with a greeting code, with `datawizard::data_summary()`
+2. Count the same for each group of names with `by = "group"`, and the share of the coded replies that greeted the sender by name
+3. Draw the share greeted by name for each of the six names with `tinyplot::tinyplot()`
+4. Change one thing and run it again: count by `name_sex`, or by `hard_email`, in place of `group`
+:::
+
+::: {.fragment .small}
+Check: `r fmt_n(nrow(audit))` emails, `r sum(is.na(audit$reply))` bounced, `r sum(!is.na(audit$reply))` delivered, `r sum(audit$reply %in% 1)` replies, `r sum(!is.na(audit$named))` with a greeting code.
+:::
+
+::: notes
+Your turn, and the next half hour is yours. Open Task 2, in the browser lab or in your workspace. The first cell counts what came back: the emails, the ones that bounced and never reached anyone, the delivered ones, the replies, and the replies whose greeting was coded. The second counts the same for each group of names and works out the share of replies that greeted the sender by name. The third draws that share for each of the six names. Run them, read every line before you run it, and then change one thing: count by the sex of the name, or by the hard-to-find address, in place of the group, and read what changes. [advance] These are the numbers that you should get, and if yours differ, the filter is the first place to look. Shout if you get stuck.
+:::

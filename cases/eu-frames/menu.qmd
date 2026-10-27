@@ -132,13 +132,13 @@ Each decision at this level rewrites the estimand statement, so that two analyst
 
 | Decision | On the curve | Off the curve, and where it is taught | Share of the variance | Class changes |
 |:--|:--|:--|--:|--:|
-| **Frame set** | cosmopolitan `mcosmo` · utilitarian `mutil` · positive composite `mpos` | communitarian `mcomm` · libertarian `mlib` · negative composite `mneg`, on a curve of their own | `r pct(fk("outcome"))` | `r pct(fk("outcome", "crossing_rate"))` |
-| **Scoring rule** | share of mentions `share` | count of items `count` · count per item `rate`, on [The items behind the scales](../../companion/measurement.qmd) | fixed | – |
-| **Predictor** | unemployment `unemp` · GDP growth `growth` | – | `r pct(fk("predictor"))` | `r pct(fk("predictor", "crossing_rate"))` |
-| **Adjustment set** | none `none` · the other measure `other` | – | `r pct(fk("copredictor"))` | `r pct(fk("copredictor", "crossing_rate"))` |
-| **Sample** | all 270 country-years `all` | 2004–2008 `y2004_2008` · 2009–2013 `y2009_2013` · without the bailout countries `no_bailout` · without Greece and Spain `no_GR_ES`, on [The multiverse and its critics](../../companion/multiverse.qmd) | fixed | – |
-| **Whose average** | each country-year once `none` | respondents `n_cell` · effective sample size `n_eff` · adult population `pop`, on [Weights](../../companion/weighting.qmd) | fixed | – |
-| **Estimator** | two-way fixed effects `fe_twoway` · country fixed effects `fe_country` | random effects `re` · pooled OLS `pooled_cl` · within–between model `rewb`, on [the statistical methods page](../../companion/stats-methods.qmd) | `r pct(fk("estimator"))` | `r pct(fk("estimator", "crossing_rate"))` |
+| **Frame set** | cosmopolitan `mcosmo`, utilitarian `mutil`, positive composite `mpos` | communitarian `mcomm`, libertarian `mlib`, negative composite `mneg`, on a curve of their own | `r pct(fk("outcome"))` | `r pct(fk("outcome", "crossing_rate"))` |
+| **Scoring rule** | share of mentions `share` | count of items `count`, count per item `rate`, on [The items behind the scales](../../companion/measurement.qmd) | fixed | – |
+| **Predictor** | unemployment `unemp`, GDP growth `growth` | – | `r pct(fk("predictor"))` | `r pct(fk("predictor", "crossing_rate"))` |
+| **Adjustment set** | none `none`, the other measure `other` | – | `r pct(fk("copredictor"))` | `r pct(fk("copredictor", "crossing_rate"))` |
+| **Sample** | all 270 country-years `all` | 2004–2008 `y2004_2008`, 2009–2013 `y2009_2013`, without the bailout countries `no_bailout`, without Greece and Spain `no_GR_ES`, on [The multiverse and its critics](../../companion/multiverse.qmd) | fixed | – |
+| **Whose average** | each country-year once `none` | respondents `n_cell`, effective sample size `n_eff`, adult population `pop`, on [Weights](../../companion/weighting.qmd) | fixed | – |
+| **Estimator** | two-way fixed effects `fe_twoway`, country fixed effects `fe_country` | random effects `re`, pooled OLS `pooled_cl`, within–between model `rewb`, on [the statistical methods page](../../companion/stats-methods.qmd) | `r pct(fk("estimator"))` | `r pct(fk("estimator", "crossing_rate"))` |
 
 : The seven estimand decisions. The last two columns describe the curve, as in @tbl-forks; "fixed" marks a decision with a single option on the curve. {#tbl-level1}
 
@@ -197,10 +197,10 @@ The question stays fixed, and these decisions change how a named construct becom
 
 | Decision | On the curve | Off the curve, and where it is taught | Share of the variance | Class changes |
 |:--|:--|:--|--:|--:|
-| **Respondents who mention nothing** | scored zero `zero` · left out `drop` | split rule `split` · multiple imputation `mi_mice`, `mi_amelia`, on [Missing answers](../../companion/missingness.qmd) | `r pct(fk("noop"))` | `r pct(fk("noop", "crossing_rate"))` |
-| **Item set** | all 13 items `all` · without "unemployment" `un` | – | `r pct(fk("item_set"))` | `r pct(fk("item_set", "crossing_rate"))` |
-| **Cell weighting** | as interviewed `unweighted` · weighted `design` | – | `r pct(fk("cell_weight"))` | `r pct(fk("cell_weight", "crossing_rate"))` |
-| **Published series** | unemployment: World Bank `wb_nat` · Eurostat 15–74 `es_1574_act` · Eurostat 20–64 as a share of the population `es_2064_pop` · Labour Force Survey 25–64 `es_2564_lfs`; growth: World Bank `wb_growth` | Eurostat table tipsun20 `es_1574_tips` · Eurostat growth `es_growth`, on [Social science data sources](../../companion/data-sources.qmd) | `r pct(fk("measure"))` | `r pct(fk("measure", "crossing_rate"))` |
+| **Respondents who mention nothing** | scored zero `zero`, left out `drop` | split rule `split`; multiple imputation `mi_mice`, `mi_amelia`, on [Missing answers](../../companion/missingness.qmd) | `r pct(fk("noop"))` | `r pct(fk("noop", "crossing_rate"))` |
+| **Item set** | all 13 items `all`, without "unemployment" `un` | – | `r pct(fk("item_set"))` | `r pct(fk("item_set", "crossing_rate"))` |
+| **Cell weighting** | as interviewed `unweighted`, weighted `design` | – | `r pct(fk("cell_weight"))` | `r pct(fk("cell_weight", "crossing_rate"))` |
+| **Published series** | unemployment: World Bank `wb_nat`, Eurostat 15–74 `es_1574_act`, Eurostat 20–64 as a share of the population `es_2064_pop`, Labour Force Survey 25–64 `es_2564_lfs`; growth: World Bank `wb_growth` | Eurostat table tipsun20 `es_1574_tips`, Eurostat growth `es_growth`, on [Social science data sources](../../companion/data-sources.qmd) | `r pct(fk("measure"))` | `r pct(fk("measure", "crossing_rate"))` |
 
 : The four measurement decisions, with the last two columns as in @tbl-forks. {#tbl-level2}
 
@@ -228,9 +228,9 @@ With the question and the measures fixed, these decisions change the model that 
 
 | Decision | On the curve | Off the curve, and where it is taught | Share of the variance | Class changes |
 |:--|:--|:--|--:|--:|
-| **Predictor form** | raw `raw` · logged `log` (unemployment only) | – | `r pct(fk("pred_form"), 2)` | `r pct(fk("pred_form", "crossing_rate"))` |
+| **Predictor form** | raw `raw`, logged `log` (unemployment only) | – | `r pct(fk("pred_form"), 2)` | `r pct(fk("pred_form", "crossing_rate"))` |
 | **Outcome family** | linear `gaussian` | beta regression `beta`, on [the statistical methods page](../../companion/stats-methods.qmd) | fixed | – |
-| **Inference** | CR2 with Satterthwaite df `cr2` | clustered, CR1 `cr1` · conventional `conventional`, on [the statistical methods page](../../companion/stats-methods.qmd) | nil | – |
+| **Inference** | CR2 with Satterthwaite df `cr2` | clustered, CR1 `cr1`, conventional `conventional`, on [the statistical methods page](../../companion/stats-methods.qmd) | nil | – |
 
 : The three estimation decisions: two about the fit, one about the inference. The inference cannot change the partial correlation, so its share of the variance is nil. {#tbl-level3}
 

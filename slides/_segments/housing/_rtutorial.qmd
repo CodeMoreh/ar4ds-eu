@@ -7,7 +7,7 @@
 ## R, in one slide {.smaller .deepdive run="tools"}
 
 ::: {.skiplink}
-[R tutorial · 9 slides · skip to Hands-on 2 →](#hands-on-2-meet-the-emails-draw-the-graph)
+[R tutorial, 9 slides – skip to Hands-on 2 →](#hands-on-2-meet-the-emails-draw-the-graph)
 :::
 
 ```{.r code-line-numbers="|1|3|5|7"}
@@ -21,7 +21,7 @@ audit |> nrow()                   # |> the pipe: send the left into the right
 ```
 
 ::: {.small}
-With four pieces of syntax you can read most R: **assign** with `<-` · **call** a function with `name(...)` · **reach into** an object with `$` · **chain** with the pipe `|>`.
+With four pieces of syntax you can read most R: **assign** with `<-`, **call** a function with `name(...)`, **reach into** an object with `$`, and **chain** with the pipe `|>`.
 :::
 
 ::: notes
@@ -99,11 +99,11 @@ chisq.test(tab_8ptrz)
 ```
 
 ::: {.small}
-`xtabs()` counts the rows in each combination of two variables, a **cross-tabulation**. `chisq.test()` asks whether the two variables are independent in the table. This is the whole of Task 3, on the public file of the OAs, whose column names are kept as they were published.
+`xtabs()` counts the rows in each combination of two variables, a **cross-tabulation**. `chisq.test()` asks whether the two variables are independent in the table. This is the reproduction of 8PTRZ in Task 3, on the public file of the OAs, whose column names are kept as they were published.
 :::
 
 ::: notes
-Two functions that you will use in Task 3. The first block reads the public file of the original authors, keeps the replies that carry a greeting code, and makes a true or false column for the Hispanic names, using grepl, which asks whether a piece of text matches a pattern; the little hat means "starts with". Then xtabs counts the replies in each combination of two variables, Hispanic name or not and greeted by name or not, which gives a two-by-two table. And chisq dot test asks whether the two variables are independent in that table. That is the whole of the reproduction, and it is the test that one of the five analysts ran. When you get there, look at the first line of what it prints, because it names something that matters.
+Two functions that you will use in Task 3. The first block reads the public file of the original authors, keeps the replies that carry a greeting code, and makes a true or false column for the Hispanic names, using grepl, which asks whether a piece of text matches a pattern; the little hat means "starts with". Then xtabs counts the replies in each combination of two variables, Hispanic name or not and greeted by name or not, which gives a two-by-two table. And chisq dot test asks whether the two variables are independent in that table. That is the whole reproduction of one of the five analysts, 8PTRZ, and the other four put a model or a test of two proportions in place of the table. When you get there, look at the first line of what it prints, because it names something that matters.
 :::
 
 ## Model formulas {#a-model-is-a-formula-plus-data .smaller .deepdive run="tools"}
@@ -121,11 +121,11 @@ The tilde `~` reads **outcome on the left, predictors on the right**; add predic
 :::
 
 ::: {.fragment .small}
-With a 0/1 outcome and a 0/1 predictor, the coefficient of `lm()` **is** the difference between the two shares. Part 3 comes back to both models.
+With a 0/1 outcome and a 0/1 predictor, the coefficient of `lm()` **is** the difference between the two shares. Part 3 comes back to both models[, in the reproduction]{.content-visible unless-meta="deck.menu"}.
 :::
 
 ::: notes
-A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, more predictors added with a plus. Then lm fits a linear model, and glm with the binomial family fits a logistic regression, a logit. Almost every modelling function in R has this same shape, a formula and then data, so once you know it, lm, glm and everything after them become variations on one pattern. [advance] And one fact that makes this case easy to learn on: when the outcome is zero or one and the predictor is zero or one, the coefficient of the linear model is exactly the difference between the two shares. A greeting rate of forty-one per cent against sixty-one gives a coefficient of minus point two. We come back to both models in Part 3.
+A model in R is a formula plus data, and the tilde is the heart of the formula: outcome on the left, predictors on the right, more predictors added with a plus. Then lm fits a linear model, and glm with the binomial family fits a logistic regression, a logit. Almost every modelling function in R has this same shape, a formula and then data, so once you know it, lm, glm and everything after them become variations on one pattern. [advance] And one fact that makes this case easy to learn on: when the outcome is zero or one and the predictor is zero or one, the coefficient of the linear model is exactly the difference between the two shares. A greeting rate of forty-one per cent against sixty-one gives a coefficient of minus point two. We come back to both models in Part 3[, when you reproduce the analysts]{.content-visible unless-meta="deck.menu"}.
 :::
 
 ## Plotting with tinyplot {#one-line-of-ggplot .smaller .deepdive run="tools"}
@@ -167,7 +167,7 @@ One arrow per line, written **cause -> effect**, so a `#` takes an arrow out and
 :::
 
 ::: notes
-The last piece of R is the one you use in the next task. A causal graph in the workspace is a list of arrows, one per line, written cause, then an arrow, then effect. The name points at the reply, the reply at the greeting, and the official and the community each point at both. The arrow that the claim is about is commented out with a hash, so that you decide whether to switch it on. You also declare which node is the exposure, which the outcome, and that the official is latent, unobserved. Then two questions for dagitty. adjustmentSets asks what you must adjust for to estimate the effect of the name, and paths, with Z set to the reply, asks which paths between the name and the greeting are open once the comparison is made among the replies.
+[The last piece of R is the one you use in the next task.]{.content-visible unless-meta="deck.data-tools"}[The last piece of R is one that the other formats of the course use for the causal graph of the experiment, so I take it quickly.]{.content-visible when-meta="deck.data-tools"} A causal graph in the workspace is a list of arrows, one per line, written cause, then an arrow, then effect. The name points at the reply, the reply at the greeting, and the official and the community each point at both. The arrow that the claim is about is commented out with a hash, so that you decide whether to switch it on. You also declare which node is the exposure, which the outcome, and that the official is latent, unobserved. Then two questions for dagitty. adjustmentSets asks what you must adjust for to estimate the effect of the name, and paths, with Z set to the reply, asks which paths between the name and the greeting are open once the comparison is made among the replies.
 :::
 
 ## Common error messages {#when-it-breaks .smaller .deepdive run="tools"}

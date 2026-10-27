@@ -1,0 +1,19 @@
+---
+title: "Part 3 – Data management and the reproduction"
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at this part](../../slides/housing-one-day-data-tools.html#/part-3-data-management-and-the-reproduction){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+Part 3 is where the R work reaches its target. It starts with the data management that every analysis of the case needs, then sets out what the five Multi100 analysts did with the claim, and you reproduce one of their analyses from the public file of the original study.
+
+| Work through | What you do | Timing |
+|---|---|---|
+| Slides, data management | The public file of the original authors (OAs) and the course file built from it, with a codebook beside each; the three things that a missing value means in these data; and raw files, scripts and derived files. | 15 minutes |
+| Slides, the five analysts | The five Multi100 analysts placed by their gaps in percentage points, then a table of what each of them did. | 6 minutes |
+| Slides, the reproduction | The instruction of Task 2 of Multi100 read word for word, what it left open, and the aim of the reproduction: one of the five reanalyses, whichever you choose. | 10 minutes |
+| [Browser lab](../../cases/housing/lab.qmd#task-3-reproduction) Task 3, or your report or `prep/reproduce_reanalyses.R` | Choose one of the five analysts and complete their cell on the public file `audit_original.csv`. Four of them have a value that Multi100 recorded: $\chi^2$ = 14.265 for 8PTRZ, z = −3.771 for UYV3F, z = 3.645 for EWFMI and $\chi^2$ = 13.683 for 25N5D. P9W8Y has none, so its test of three groups, $\chi^2$ = 15.951 on 2 degrees of freedom, can be run again but not matched. Every one of them filters, recodes or splits a column of the public file first. Everyone types the analyst and the value without sending them, and sends them when the facilitator says go. | 25 minutes |
+| Slides | The continuity correction, which `chisq.test()` and `prop.test()` apply to a two-by-two table unless they are told otherwise, the base group that sets the sign of the z of EWFMI, and why everyone who chose the same analyst got the same value while the five analysts, each writing their own code, did not. | 8 minutes |
+| [Browser lab](../../cases/housing/lab.qmd#task-3-reproduction) Task 3, a second time | Reproduce a second analyst whose analysis differs from your first in one decision, and compare the data work that the two need and their gaps in percentage points. | 20 minutes |
+
+**By the end of the part** you can read a codebook, tell the three kinds of missing value in the data apart, and say why the raw file is never edited by hand, and you have reproduced one or two of the five reanalyses from the public file yourself.

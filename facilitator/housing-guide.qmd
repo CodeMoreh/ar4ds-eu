@@ -1,6 +1,6 @@
 ---
 title: "Facilitator guide – the housing-audit case"
-subtitle: "Run sheet – the one-day course and the short session"
+subtitle: "Run sheets of the short session and the three one-day courses"
 format:
   html:
     toc: true
@@ -44,13 +44,24 @@ rep_val <- \(population_code, authorities_code, col) {
 }
 sgn <- \(x, d = 1) paste0(if (round(x, d) >= 0) "+" else "", fmt(x, d))
 
-# The Task 3 table: Hispanic against all other names among the coded replies
+# The Task 3 test of 8PTRZ: Hispanic against all other names among the coded replies
 coded <- readr::read_csv("../cases/housing/data/audit_original.csv", show_col_types = FALSE) |>
   datawizard::data_filter(!is.na(ProperName)) |>
   datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
 tab_8ptrz <- stats::xtabs(~ hispanic_name + ProperName, data = coded)  # r-style: keep – the table that chisq.test() takes
 chi_yates <- unname(stats::chisq.test(tab_8ptrz)$statistic)
 chi_plain <- unname(stats::chisq.test(tab_8ptrz, correct = FALSE)$statistic)
+
+# The Task 3 test of 25N5D: Hispanic against white names among the delivered
+# emails, a missing reply counted as no greeting, with and without the
+# continuity correction that prop.test() applies by default
+counts_25n5d <- readr::read_csv("../cases/housing/data/audit_original.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(!is.na(Response_Dichotomous) & !grepl("^black", TreatmentGroup)) |>
+  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup),
+                          greeted = Response_Dichotomous == 1 & ProperName %in% 1) |>
+  datawizard::data_summary(greetings = sum(greeted), emails = n(), by = "hispanic_name")
+prop_yates <- unname(stats::prop.test(counts_25n5d$greetings, counts_25n5d$emails)$statistic)
+prop_plain <- unname(stats::prop.test(counts_25n5d$greetings, counts_25n5d$emails, correct = FALSE)$statistic)
 
 # Placement as try_spec() prints it: the specifications further below zero,
 # with the tolerance of the helpers, so that the logit twin of the reference
@@ -63,8 +74,21 @@ other_max <- deviations |>
 ```
 
 ::: {.callout-note}
-**This document is for the facilitator.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. It holds the run sheet of the one-day course (deck `slides/housing-one-day.qmd`) and of the short session (deck `slides/housing-short.qmd`), the checks before a delivery, the expected numbers and the fallbacks. The participant pages under `tracks/` carry the same timings without the instructor guidance.
+**This document is for the facilitator.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. It holds the run sheets of the four formats of the housing-audit case – the short session (deck `slides/housing-short.qmd`) and the one-day courses on open science, data tools and methods (decks `slides/housing-one-day-open-science.qmd`, `slides/housing-one-day-data-tools.qmd` and `slides/housing-one-day-methods.qmd`) – with the checks before a delivery, the expected numbers and the fallbacks. The participant pages under `tracks/` carry the same timings without the instructor guidance.
 :::
+
+---
+
+## The formats {#formats}
+
+| Format | Track | Taught in | What it leaves out |
+|---|---|---|---|
+| Short session, two halves of about 75 minutes | `housing-short` | the browser lab only | installation, the class chart, Task 5 |
+| One day, open science | `housing-one-day-open-science` | the browser lab, the workspace as an option | the menu, the class chart, the run of Task 5 |
+| One day, data tools | `housing-one-day-data-tools` | the browser lab, the workspace as an option (and recommended) | the menu, the class chart, Task 5 |
+| One day, methods | `housing-one-day-methods` | the browser lab, the workspace as an option | nothing of the five tasks |
+
+In every format the participant chooses which of the five reanalyses to reproduce in Task 3. Only the methods day sends results to the class chart. The segments that differ by format read the `deck:` map in the YAML of each deck through Quarto conditional content (`when-meta="deck.short"` and the like), so a change of wording for one format is made in the segment, inside the span or the div that carries that condition.
 
 ---
 
@@ -74,11 +98,11 @@ Between deliveries the opening page advertises no delivery. Scheduling one takes
 
 **Scheduling.**
 
-- [ ] Fill the `delivery:` block in `_variables.yml` (date, venue, event, mode, registration URL), set `track: housing-one-day` or `track: housing-short`, and set `active: 'true'`. Render the opening page (`quarto render index.qmd`), and it shows a "Next delivery" callout with a link to the track. Set `active: 'false'` again afterwards.
+- [ ] Fill the `delivery:` block in `_variables.yml` (date, venue, event, mode, registration URL), set `track:` to one of the four track slugs of the table above, and set `active: 'true'`. Render the opening page (`quarto render index.qmd`), and it shows a "Next delivery" callout with a link to the track. Set `active: 'false'` again afterwards.
 - [ ] Decide on recording. If you record, record the talk only, announce it at the start of each recorded stretch, and pause it for the hands-on tasks. Nothing in the day depends on the recording either way.
-- [ ] Decide which way the day leans. The one-day deck keeps two kinds of optional run on the `d` key: `tools` (five slides in the tools segment of Part 1 and the nine-slide R tutorial of Part 2) and `methods` (the six-slide methods tutorial of Part 3 and the two slides of multiverse background in Part 4). To make a run part of the main flow, list it under `core-runs:` in the YAML of `slides/housing-one-day.qmd` and render the deck again; a run that is not listed stays optional and can still be switched on live.
+- [ ] Decide which way the day leans. The decks keep optional runs on the `d` key: `tools` (five slides in the tools segment of Part 1 and the nine-slide R tutorial of Part 2) in the three one-day decks, and `methods` (the six-slide methods tutorial of Part 3 and the two slides of multiverse background in Part 4) in the methods deck, whose multiverse background is also the one optional run of the short session. The data-tools deck lists `tools` under `core-runs:`, so its tour of the toolchain and its R tutorial are part of the main flow. To make a run part of the main flow of another deck, list it under `core-runs:` in the YAML of that deck and render it again; a run that is not listed stays optional and can still be switched on live.
 
-**Resetting, before the next delivery.**
+**Resetting, before the next delivery of the methods day.**
 
 - [ ] Export the responses Sheet (File → Download → CSV) and keep it as a dated snapshot, for example `cases/housing/data/class_results_2026-11-06.csv`.
 - [ ] Clear the data rows of the Sheet, so that the chart opens almost empty for the next class. Do not touch the Form, the Worker or the field schema; only the rows change from one class to the next.
@@ -89,123 +113,53 @@ Between deliveries the opening page advertises no delivery. Scheduling one takes
 
 ### The week before
 
-- [ ] **The workspace repository.** The pages of the case are part of the course site (`CodeMoreh/applied-replication`), but the workspace (`CodeMoreh/replication-lab-housing`) does not exist on GitHub yet, and every address that points at it is a placeholder until it does: the workspace zip on the setup page and the cheatsheet, the workspace address on the tools slide of Part 1, and the links in the README of the workspace. Create the repository, push it, and download the zip once from its public address to confirm that it unzips into `replication-lab-housing-main`.
-- [ ] **The class-results Form.** Out of the box, the housing helpers submit to the results Form that every case shares, the one set up for the EU-frames case, and the housing chart reads the same Sheet through the same Worker, keeping only the rows whose label carries the word `housing` after the tag. That works as it stands. Clear the Sheet of the rows of earlier deliveries before the day (the data rows below the header of the tab "Form Responses 1"; the Form keeps working), because the EU-frames chart reads every row and would draw housing rows as unclassed diamonds. The alternative, which keeps the two classes apart for good, is a Form of its own, about twenty minutes once, following `facilitator/live-results-setup.md`: copy the Form, link a new Sheet, deploy a second Worker, and wire the new codes into the four marked blocks that the note lists.
-- [ ] **Joining instructions.** Send the address of the track page, the setup page (with the request to run `R/check_setup.R` until it prints OK before the day, and to bring a laptop and its charger), the case study as the pre-reading, and the help page.
-- [ ] **The tab switching.** Click once through the sequence of Parts 3 and 4 (deck → specification menu and decision map → the Multiverse page and back), which is the one sequence that you run live several times in the day.
-- [ ] **The room.** Confirm the projector, the power sockets, the wifi for visitors (webR downloads its engine and packages on first load) and whether the room has Vevox or a similar response tool. The slides say "type in chat" for the four held answers of the day; in the room, decide in advance what "chat" means; the cue sheet below sets out the options.
+- [ ] **The browser lab.** Every format is taught mainly in the browser lab, so check it on the published site in a real browser: the engine loads, the setup cell of Task 1 runs, and each of the five cells of Task 3 prints its value (the expected numbers are at the end of this guide).
+- [ ] **The workspace repository.** The pages of the case are part of the course site, but the workspace (`CodeMoreh/replication-lab-housing`) does not exist on GitHub yet, and every address that points at it is a placeholder until it does: the workspace zip on the setup page and the cheatsheet, the workspace address on the tools slide of Part 1, and the links in the README of the workspace. Create the repository, push it, and download the zip once from its public address to confirm that it unzips into `replication-lab-housing-main`. The short session does not need it.
+- [ ] **The class-results Form**, for the methods day only. Out of the box, the housing helpers submit to the results Form that every case shares, the one set up for the EU-frames case, and the housing chart reads the same Sheet through the same Worker, keeping only the rows whose label carries the word `housing` after the tag. That works as it stands. Clear the Sheet of the rows of earlier deliveries before the day (the data rows below the header of the tab "Form Responses 1"; the Form keeps working), because the EU-frames chart reads every row and would draw housing rows as unclassed diamonds. The alternative, which keeps the two classes apart for good, is a Form of its own, about twenty minutes once, following `facilitator/live-results-setup.md`.
+- [ ] **Joining instructions.** Send the address of the track page, the case study as the pre-reading, and the request to open the browser lab once on the machine that each participant will bring, with a laptop charger. For the one-day courses add the setup page as optional, and as recommended for the data-tools day, with the request to run `R/check_setup.R` until it prints OK; add the help page.
+- [ ] **The tab switching.** Click once through the sequences that you run live: the deck and the browser lab in every format; the deck, the specification menu and the decision map, and the Multiverse page in the short session and the methods day.
+- [ ] **The room.** Confirm the projector, the power sockets, the wifi for visitors (webR downloads its engine and packages on first load) and whether the room has Vevox or a similar response tool. The slides say "type in chat" for the held answers; in the room, decide in advance what "chat" means, as the cue sheet below sets out.
 
 ### The night before
 
-- [ ] Render the site. Pause pCloud first, because a full `quarto render` of a project inside a pCloud folder dies on renamed files; otherwise render page by page. Check that the opening page, both track sections, the case pages and both decks are current, and push if the site is published.
-- [ ] **The live-results loop.** Submit one test result from the browser lab (`try_spec()`, then `submit_exploration(nickname = "test-row")`), confirm that it reaches the Sheet, press *Run Code* on the class chart of the [Multiverse](../cases/housing/multiverse.qmd#class-results) page and find the test circle. Then delete the test row from the Sheet.
-- [ ] **The workspace, as a participant meets it.** Download the zip afresh, unzip it, open the folder in your IDE, run `source("R/check_setup.R")` (every line OK, the last at −19.97 points), complete the preregistration block with a dummy specification and render the report.
-- [ ] **The browser lab, cold.** Open the live page of the lab in a private window on a connection like that of the venue, time the load of the R engine, and run the setup cell and the Task 3 cell (14.265).
-- [ ] **The public record.** Confirm that the three addresses of the records slide load without an account: doi.org/10.7910/DVN/1HOVTU, osf.io/3a8bg and osf.io/2ug8x, and that the final report of the replication is findable from the last one, because it is the target of the three-minute search in Part 4. The de-identified data of the replication are in its sub-component osf.io/xseqg, for anyone who asks.
-- [ ] **The fallback zip.** Put the workspace zip on a USB stick, for anyone whose download fails in the room.
-- [ ] Prepare the catch-up card (below) as a ready-to-paste text, and charge everything.
+- [ ] Render the pages that have changed, page by page (pCloud breaks a full render), and check that the opening page, the track pages, the case pages and the deck of the day are current; push if the site is published.
+- [ ] **The browser lab, cold.** Open the live page of the lab in a private window on a connection like that of the venue, time the load of the R engine, and run the setup cell and one cell of Task 3.
+- [ ] **The live-results loop**, for the methods day. Submit one test result from the browser lab (`try_spec()`, then `submit_exploration(nickname = "test-row")`), confirm that it reaches the Sheet, press *Run Code* on the class chart of the [Multiverse](../cases/housing/multiverse.qmd#class-results) page and find the test circle. Then delete the test row from the Sheet.
+- [ ] **The workspace, as a participant meets it**, for the one-day courses. Download the zip afresh, unzip it, open the folder in your IDE, run `source("R/check_setup.R")` (every line OK, the last at −19.97 points) and render the report. For the data-tools day, also try the inline sentence of Part 4 and a clean run.
+- [ ] **The public record**, for the open-science and methods days. Confirm that the three addresses of the records slide load without an account: doi.org/10.7910/DVN/1HOVTU, osf.io/3a8bg and osf.io/2ug8x, and that the final report of the replication is findable from the last one, because it is the target of the three-minute search in Part 4. The de-identified data of the replication are in its sub-component osf.io/xseqg, for anyone who asks.
+- [ ] **The fallback zip**, for the one-day courses. Put the workspace zip on a USB stick, for anyone whose download fails in the room.
+- [ ] Prepare the catch-up card of the format (in its run sheet) as a ready-to-paste text, and charge everything.
 
 ### Opening the room
 
 - [ ] Put the address of the course site, the browser lab and the cheatsheet on the screen or the whiteboard as people arrive, with the wifi details.
 - [ ] Hand out the green and red sticky notes, or open the response tool, and say what each means: green, working; red, stuck.
-- [ ] Keep four tabs ready: the deck, the [decision map](../cases/housing/map.qmd), the [specification menu](../cases/housing/menu.qmd) and the [Multiverse](../cases/housing/multiverse.qmd) page.
+- [ ] Keep the tabs of the day ready: the deck and the browser lab in every format, and in the short session and the methods day the [decision map](../cases/housing/map.qmd), the [specification menu](../cases/housing/menu.qmd) and the [Multiverse](../cases/housing/multiverse.qmd) page.
 - [ ] If you record, announce it now and say what is and is not recorded.
 
 ---
 
-## Run sheet – the one-day course
-
-Times in the part tables are relative: 0:00 is the start of that part. The clock below maps them onto the day.
-
-::: {.callout-warning}
-**Draft clock times for CM to adjust.** Newcastle on Friday 6 November 2026 is on GMT, because British Summer Time ends on 25 October. The default below starts at 10:00 and keeps the breaks of the slides (thirty minutes, an hour, thirty minutes), so the day ends at 18:00. A 09:30 start ends at 17:30. Shorter breaks need the text of the break slides changed as well (`slides/_segments/shared/_break1.qmd`, `_lunch.qmd`, `_break2.qmd`).
-:::
-
-| Segment | Elapsed | Newcastle (GMT) |
-|---|---|---|
-| Part 1 – Credibility and tools | 0:00–1:30 | 10:00–11:30 |
-| Break | 1:30–2:00 | 11:30–12:00 |
-| Part 2 – The claim and its estimand | 2:00–3:30 | 12:00–13:30 |
-| Lunch | 3:30–4:30 | 13:30–14:30 |
-| Part 3 – Reproduction and exploration | 4:30–6:00 | 14:30–16:00 |
-| Break | 6:00–6:30 | 16:00–16:30 |
-| Part 4 – Multiverse, replication and preregistration | 6:30–8:00 | 16:30–18:00 |
-
-**Four stretches of the deck are optional**, marked on screen and switched in one keystroke: the five tools slides of Part 1, the R tutorial of Part 2 (nine slides), the methods tutorial of Part 3 (six slides) and the multiverse background of Part 4 (two slides). The timings below assume that you walk about half of each. Walking all of them in full costs about fifteen minutes that the day does not have, and skipping them all leaves the hands-on tasks more room than they need.
-
-### Deck controls {#deck-controls}
+## Deck controls {#deck-controls}
 
 | Key | What it does |
 |---|---|
-| space · right arrow · clicker | next slide, always exactly one: the deck is linear, so that no clicker press can skip a part |
+| space, right arrow or clicker | next slide, always exactly one: the deck is linear, so that no clicker press can skip a part |
 | **`d`** | switch between the **extended** and the **lean** deck, live; in lean mode the optional slides are taken out of the deck and every key skips them |
 | **`]`** and **`[`** | jump to the next or the previous part |
 | **`g`** | jump bar: type a few letters of any slide title and press Enter |
 | **`s`** | speaker view, with the notes, a timer and the next slide |
-| **`f`** · **`esc`** | full screen · slide overview |
+| **`f`**, **`esc`** | full screen, and the slide overview |
 
 The readout at the top right names the part and the position, and its badge shows the state of the deck: green **extended**, burgundy **optional** on a slide of an optional run, amber **lean** when the runs are off, with a burgundy dot where a run has been lifted out. Adding `?depth=0` to the address opens the deck lean. The first slide of each optional run carries a small grey link that jumps to where the main flow resumes.
 
-### Part 1 – Credibility and tools (90′)
-
-| Rel. | Segment | What I do | What participants do | Watch out for |
-|---|---|---|---|---|
-| 0:00 | Welcome, the two kinds of aim, what you do not need (6′) | The premise in two sentences: *Nature* asked three times whether social science holds up, I was inside one of the papers, and today you sit where I sat. Walk the aims slide. "Open your workspace now." | Open the workspace in their IDE (Positron, RStudio, VS Code, etc.), or the browser lab. | Late arrivals: a nod and the address on the screen, never a restart. |
-| 0:06 | Talk: what social science is for, and why it is called a crisis (10′) | Claims and checking; false positives and forking paths; the evidence from replications; incentives and questionable research practices, and why the problem is structural rather than fraud. | Listen. | – |
-| 0:16 | Talk: the red-card study (4′) | The question, the design, and the twenty-nine estimates. | Watch. | The study returns in Part 2 as a single row, so tell it in full only here. |
-| 0:20 | Talk: the vocabulary and open research (10′) | Replication crises; the data × analysis matrix; repeatability and credibility; the quick check, two slides, answered aloud; open-research practices. | Answer the quick check. | The matrix is the slide to copy down. If the segment runs long, the open-research table compresses to one sentence a row. |
-| 0:30 | Talk: SCORE and its three studies (20′) | The programme; the three studies, each with its result; the three Rs across SCORE and why they do not travel together. | Listen. | If behind, cut the data-availability slide of Miske et al. to one line. |
-| 0:50 | Talk: Multi100 from the inside (8′) | What an analyst received, the two tasks, results on a common scale. | Listen. | The paper of the case and its five analysts come in Part 2; this segment presents Multi100 as a study. |
-| 0:58 | Talk: the tools (18′) | Open source; the toolchain; plain-text formats and rendering; archives; the workspace and the browser lab; what the tools cannot do. Optional: languages, editors, packages, version control, licences. | Note what they might switch to. | The two slides to cover in full are plain-text formats and what the tools cannot do, which leads into Part 2. |
-| 1:16 | Task 1 and the break (14′) | "Get to the point where a line of R runs and the data are in front of you; take the break for it if you need to." Circulate. Stay in the room through the break for red notes. | `source("R/check_setup.R")`, every line OK, the last at −19.97 points; or the setup cell of the lab. | This is the only point of the day where a broken machine can be fixed without costing anyone content. Anyone still stuck at the end of the break moves to the browser lab or to the zip on the USB stick. |
-
-### Part 2 – The claim and its estimand (90′)
-
-| Rel. | Segment | What I do | What participants do | Watch out for |
-|---|---|---|---|---|
-| 0:00 | Talk: the paper (16′) | Define the original authors (OAs) here. The question, the design, the email, what came back by name, four outcomes, the claim with its two ellipses. | Listen; ask. | The two ellipses decide the comparison group later, so read both aloud. |
-| 0:16 | Talk: the five analysts (6′) | The five placed by their gaps, then the table: five questions behind two verdicts. | Watch. | Never rush this pair: it sets up the rest of the day. |
-| 0:22 | Talk: estimands (12′) | Two studies beside our five; four estimands in the red-card study; the spread with and without a fixed estimand; under-specified questions; Lundberg's steps. | Listen. | The figure with and without a fixed estimand is the point of the segment. |
-| 0:34 | Talk: the causal-graph crash course (14′) | Confounder, mediator, collider; the stories behind one correlation; open and closed paths; total and direct effects; selection and feedback. | Listen. | If running long, selection and feedback drops to one sentence. |
-| 0:48 | Talk: the claim (14′) | The estimand statement and the first held answer: "write your statement, hold it, go"; read three or four aloud. Then the graph, the box around the reply, and every delivered email. | Write the statement; send on "go". | The held answer is never compressed. A split between the replies and every delivered email is the same split as among the five analysts; say so. |
-| 1:02 | R tutorial, optional (10′) | Walk as much as the least confident half of the class needs. | Follow. | The first thing to cut if the morning has overrun. |
-| 1:12 | Hands-on 2: Task 2 (18′) | Counting the emails, the estimand statement in the report, then `R/dag_starter.R`: the arrow from the name to the greeting, `adjustmentSets(dag)`, `paths(dag, Z = "reply")`. | Count, write, finish the graph, two sentences. | At 1:22, if the class is behind, switch to demonstration: run it on the shared screen, and they finish over lunch. |
-| 1:30 | Lunch | Post the return time. | Lunch. | A hard stop. |
-
-### Part 3 – Reproduction and exploration (90′)
-
-| Rel. | Segment | What I do | What participants do | Watch out for |
-|---|---|---|---|---|
-| 0:00 | Re-entry and the instruction (10′) | A visual sweep; the catch-up card on screen. The Task 2 instruction of Multi100 word for word, what it left open, and analyst no. 6. | Rejoin; latecomers follow the card. | Do not wait past 0:05. |
-| 0:10 | Hands-on 3: Task 3, the reproduction (20′) | Drive the workspace or the lab on the shared screen beside them; circulate. Then the second held answer: "type your X-squared, hold it, go". | Run the Task 3 code; land on 14.265; send on "go". | The wall of identical values is the point of the beat, so wait until most of the class has a number. A failing machine goes to the browser lab. |
-| 0:30 | The continuity correction, reproducibility and choice (7′) | Why the class agrees to the third decimal (the default of `chisq.test()`), and why five analysts writing their own code did not. | Early finishers try the logit of UYV3F. | Leave the question of the choices open for the menu. |
-| 0:37 | The menu (13′) | The eleven decisions at three levels, the five that vary on the curve, the curve of 64, the ground rules. | Start choosing which decision interests them. | Present the options off the curve as decisions to think through, each answering another question or this one less well; the decision map gives the reason for each. |
-| 0:50 | The methods (15′, part optional) | A difference in proportions; the linear probability model and the logit. Optional: odds ratios, standard errors, four tests, the randomisation test, covariates, subgroups. | Listen; ask. | The compressible segment: if Task 3 overran, take time from here, not from Task 4. |
-| 1:05 | Hands-on 4: Task 4, exploring the menu (25′) | "Try several, read what each does, then submit the one you would defend." Suggest `try_spec(model = "three_group")` so that people read a refusal. Keep the Multiverse page on screen and press *Run Code* as the open circles land. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits a mark, because Part 4 opens on them. Say twice that this is exploration and that Task 5 is the preregistered analysis. |
-| 1:30 | Break | Leave the Multiverse page open. | Break. | – |
-
-### Part 4 – Multiverse, replication and preregistration (90′)
-
-| Rel. | Segment | What I do | What participants do | Watch out for |
-|---|---|---|---|---|
-| 0:00 | Your own small multiverse and the curve (10′) | Name what Task 4 was; optionally the origins and the garden of forking paths; then the curve of the claim and the published results placed on it. | Watch. | – |
-| 0:10 | The class multiverse and the placement (10′) | Refresh the class chart; the question bank (below). Then the third held answer: "rerun your submitted specification, read your placement, hold it, go". | Find their mark; read and send their placement. | Participants without a submission use the reference specification, whose placement is `r placement_ref`. |
-| 0:20 | What moved the estimate (6′) | The shifts by option, then the curve coloured by the emails counted. | Connect the step to their own choice. | – |
-| 0:26 | The SCORE replication (14′) | The design, the result, the two studies compared, power, the three Rs on this paper, robustness against replicability. | Listen; argue. | The robustness and replicability slide is the lesson of the day; never compress it. |
-| 0:40 | Critics and preregistration (10′) | The critics; one correct analysis and how to identify it; what preregistration settles; exploration against declaration. | Listen; ask. | If the clock is tight, the identification slide goes to one sentence. |
-| 0:50 | Archiving and the public record (10′) | Archiving and registering; the Multi100 preregistration; the two templates; the records slide with the three-minute search of the replication report; the eight AsPredicted questions. | Search the report; read. | The target of the search: not significant "approximately 93 percent of the time". If time is short, show it on the shared screen. |
-| 1:00 | Hands-on 5: preregistration, run and report (22′) | Called from the front: complete fields 1–5, render or copy the cell, then the fourth held answer, "declared". Count aloud. Move on at about 80% declared or at eight minutes. Then `run_spec()` and `report_result()`; press *Run Code* as the filled circles land. | Declare, render, run, submit. | Never cut the declaration. Re-declaring a specification already explored is allowed, and the block must say so. |
-| 1:22 | Close and feedback (8′) | Two points from the literature; the single analytical path; what you take with you; the feedback form, with the chart on screen. | Feedback. | End on time. |
-
 ---
 
-## Run sheet – the short session
+## Run sheet – the short session {#run-short}
 
-The short session runs on `slides/housing-short.qmd` as two halves of about seventy-five minutes with a break of fifteen. It has no Task 2 at the keyboard (the estimand statement is written as a held answer, and the graph is followed on the slides) and no Task 5, which `tracks/housing-short/after.qmd` sets as work for afterwards. Its one optional run is the two slides of multiverse background.
+The short session runs on `slides/housing-short.qmd` as two halves of about seventy-five minutes with a break of fifteen, entirely in the browser lab. It has no Task 2 at the keyboard (the estimand statement is written as a held answer, and the graph is followed on the slides), sends nothing to the class chart and has no Task 5; `tracks/housing-short/after.qmd` points to them for afterwards. Its one optional run is the two slides of multiverse background.
 
 ::: {.callout-warning}
-**Draft clock times for CM to adjust**, here for an afternoon slot from 14:00. For a slot of two hours, drop the multiverse background, take the SCORE slides of the first half at speed, and shorten the replication to three slides (the design, the result, and robustness against replicability); the reproduction and the exploration keep their full time.
+**Draft clock times for CM to adjust**, here for an afternoon slot from 14:00 GMT.
 :::
 
 | Segment | Elapsed | Example clock (GMT) |
@@ -218,38 +172,284 @@ The short session runs on `slides/housing-short.qmd` as two halves of about seve
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | Welcome, what you do not need (3′) | The premise and the plan. | Open the workspace. | – |
+| 0:00 | Welcome, what you do not need (3′) | The premise and the plan. "Open the browser lab now." | Open the lab in a tab. | Late arrivals: the address on the screen. |
 | 0:03 | The matrix, SCORE in brief, Multi100 (12′) | The four cells; SCORE on one slide; what an analyst received, the two tasks, the common scale. | Listen. | – |
-| 0:15 | Hands-on 1: the setup check (5′) | A quick confirmation, not an installation. | `source("R/check_setup.R")`, or the lab. | A machine that fails now goes straight to the browser lab. |
-| 0:20 | The paper and the five analysts (18′) | Define the OAs; the design, the email, what came back, the claim; the five analysts and their table. | Listen. | – |
-| 0:38 | The estimand and the graph (12′) | The held estimand statement; the graph; the box around the reply; every delivered email. | Write and send on "go". | Never compressed. |
-| 0:50 | The instruction and analyst no. 6 (6′) | The Multi100 instruction, what it left open, the aim of the reproduction. | Listen. | – |
-| 0:56 | Hands-on 3: the reproduction (14′) | Drive the lab or the workspace beside them; the held X-squared. | Land on 14.265; send on "go". | Wait for most of the class. |
-| 1:10 | The continuity correction, reproducibility and choice (5′) | The default of `chisq.test()`; the class against the five analysts. | – | – |
+| 0:15 | Hands-on 1: the setup check (5′) | A quick confirmation in the lab. | Run the setup cell; 1,014 rows. | A lab that will not load: another browser, then the shared screen. |
+| 0:20 | The paper and the five analysts (18′) | Define the original authors (OAs); the design, the email, what came back, the claim; the five analysts and their table. | Listen. | – |
+| 0:38 | The estimand and the graph (12′) | The held estimand statement; the graph; the box around the reply; every delivered email. | Write the statement; send on "go". | Never compressed. |
+| 0:50 | The instruction and analyst no. 6 (6′) | The Multi100 instruction, what it left open, the choice of analyst. | Choose an analyst. | Encourage a spread across the five, so that the held answer shows several matches rather than one. |
+| 0:56 | Hands-on 3: the reproduction (14′) | Drive one analyst in the lab on the shared screen; circulate. Then the held answer: "type the analyst and the value, hold it, go". | Complete one cell; send on "go". | Wait for most of the class. |
+| 1:10 | The continuity correction, reproducibility and choice (5′) | The defaults of `chisq.test()` and `prop.test()`, the base group of EWFMI; the class against the five analysts. | – | – |
 
 ### Second half (75′)
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
 | 0:00 | The menu and the two models (14′) | The eleven decisions, the curve of 64, the ground rules; a difference in proportions; the linear probability model and the logit. | Choose a decision to vary. | – |
-| 0:14 | Hands-on 4: Task 4 (20′) | As in the one-day course; press *Run Code* as the marks land. | `try_spec()` two or three times; `submit_exploration()`. | Everyone submits a mark. |
-| 0:34 | The multiverse, the curve, the class chart (10′) | Your own small multiverse; the curve of the claim; the published results; the class chart and its questions. | Find their mark. | – |
-| 0:44 | The placement (5′) | The held placement. | Read and send. | – |
-| 0:49 | What moved the estimate (6′) | The shifts, and the denominator. | – | – |
-| 0:55 | The SCORE replication (13′) | As in the one-day course. | Listen; argue. | – |
-| 1:08 | Close and feedback (7′) | Two points, the single path, what you take, the form; Task 5 as work for afterwards. | Feedback. | – |
+| 0:14 | Hands-on 4: Task 4 (20′) | "Try two or three, one decision at a time; read one refusal; rerun the one you would defend." | `try_spec()` two or three times; `my_experiments()`. | Say that nothing is submitted, so `submit_exploration()` is skipped. |
+| 0:34 | Your own small multiverse and the curve (8′) | Name what Task 4 was; optionally the origins of the idea; the curve of the claim and the published results placed on it. | Watch. | – |
+| 0:42 | The placement (5′) | The held placement: "rerun the one you would defend, read your placement, hold it, go". | Read and send. | A placement of 32 or more comes from counting every delivered email. |
+| 0:47 | What moved the estimate (6′) | The shifts, and the denominator. | – | – |
+| 0:53 | The SCORE replication (13′) | The design, the result, the two studies compared, power, the three Rs on this paper, robustness against replicability. | Listen; argue. | The robustness and replicability slide is the lesson of the session. |
+| 1:06 | Close and feedback (7′) | Two points, the single path, what you take, the form; the class chart and Task 5 as work for afterwards. | Feedback. | End on time. |
+
+### Cutting order and what is never cut {#cutting-short}
+
+For a slot of two hours, cut in this order: the multiverse background; the SCORE slide of the first half at speed; the slide on the linear probability model and the logit, to one sentence; the placement; and the replication to three slides (the design, the result, and robustness against replicability). The reproduction and the exploration keep their full time.
+
+**Never cut:** the five analysts and their table; the held estimand statement; the box around the reply; the reproduction and its held answer; one try of `try_spec()` that changes the emails counted; robustness against replicability.
+
+---
+
+## Run sheet – one day, open science {#run-open-science}
+
+The day runs on `slides/housing-one-day-open-science.qmd`, mainly in the browser lab. It has no menu of specifications, no class chart and no submission; Task 5 is filled in and not run. Its optional run is `tools`: five slides of the toolchain in Part 1 and the R tutorial of Part 2.
+
+::: {.callout-warning}
+**Draft clock times for CM to adjust.** The default starts at 10:00 GMT and keeps the breaks of the slides (thirty minutes, an hour, thirty minutes), so the day ends at 18:00. A 09:30 start ends at 17:30.
+:::
+
+| Segment | Elapsed | Clock (GMT) |
+|---|---|---|
+| Part 1 – Credibility and open research | 0:00–1:30 | 10:00–11:30 |
+| Break | 1:30–2:00 | 11:30–12:00 |
+| Part 2 – The claim and its estimand | 2:00–3:30 | 12:00–13:30 |
+| Lunch | 3:30–4:30 | 13:30–14:30 |
+| Part 3 – Reproduction | 4:30–6:00 | 14:30–16:00 |
+| Break | 6:00–6:30 | 16:00–16:30 |
+| Part 4 – Replication and preregistration | 6:30–8:00 | 16:30–18:00 |
+
+### Part 1 – Credibility and open research (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Welcome, the aims, what you do not need (8′) | The premise in two sentences, the aims of the day, and "open the browser lab now". | Open the lab in a tab. | Late arrivals: a nod and the address on the screen. |
+| 0:08 | Talk: what social science is for, the crisis, the red-card study (20′) | Claims and checking; false positives and forking paths; the evidence; incentives and questionable research practices; the twenty-nine teams; the 'replication' crises. | Listen. | The red-card study returns in Part 2, so tell it in full only here. |
+| 0:28 | Talk: the three Rs and open research (12′) | The data × analysis matrix; repeatability and credibility; the quick check, answered aloud; the practices of open research. | Answer the quick check. | The matrix is the slide to copy down. |
+| 0:40 | Talk: SCORE and its three studies (20′) | The programme; the three studies, each with its result; the three Rs across SCORE. | Listen. | If behind, cut the data-availability slide of Miske et al. to one line. |
+| 1:00 | Talk: Multi100 from the inside (8′) | What an analyst received, the two tasks, results on a common scale. | Listen. | – |
+| 1:08 | Talk: the infrastructure (14′) | Open source; the toolchain; plain text and rendering; where data and code are archived; the lab and the workspace; what the tools cannot do. | Note the archives. | The archive slide is the one to cover in full; the tools run stays optional. |
+| 1:22 | Task 1, the warm-up and the break (8′) | "Get the lab running; the warm-up asks which R each scenario is." | Setup cell; the warm-up. | Anyone stuck at the end of the break follows the shared screen. |
+
+### Part 2 – The claim and its estimand (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Talk: the paper (16′) | Define the OAs. The question, the design, the email, what came back, four outcomes, the claim with its two ellipses. | Listen; ask. | Read both ellipses aloud. |
+| 0:16 | Talk: the five analysts (6′) | Placed by their gaps; the table of five questions behind two verdicts. | Watch. | Never rush this pair. |
+| 0:22 | Talk: estimands (16′) | Two studies beside our five; the four estimands of the red-card study; the spread with and without a fixed estimand; under-specified questions; the steps of Lundberg and colleagues. | Listen. | The figure with and without a fixed estimand is the point of the segment. |
+| 0:38 | Talk: the claim (14′) | The held estimand statement: "write it, hold it, go"; read three or four aloud. Then the graph, the box around the reply, and every delivered email. | Write the statement; send on "go". | A split between the replies and every delivered email is the split among the five analysts; say so. |
+| 0:52 | R tutorial, optional (10′) | Walk as much as the class needs before the afternoon. | Follow. | The first thing to cut. |
+| 1:02 | Hands-on 2: Task 2 (24′) | Counting the emails, the estimand statement written out, the graph if there is time, two sentences. | Count, write. | At 1:20, wrap up; the statement is what Part 4 needs. |
+| 1:26 | Lunch | Post the return time. | Lunch. | A hard stop. |
+
+### Part 3 – Reproduction (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Re-entry and the instruction (10′) | The catch-up card on screen. The Task 2 instruction of Multi100, what it left open, analyst no. 6 and the choice of analyst. | Rejoin; choose an analyst. | Encourage a spread across the five. |
+| 0:10 | Hands-on 3: the reproduction (25′) | Drive one analyst in the lab on the shared screen; circulate. Then the held answer: "the analyst and the value, hold it, go". | Complete one cell; send on "go". | Wait until most of the class has a value. |
+| 0:35 | Defaults, reproducibility and choice (10′) | The continuity correction of `chisq.test()` and `prop.test()`, the base group of EWFMI, then the class against the five analysts. | Listen. | – |
+| 0:45 | What a reproduction needs (12′) | The data under a licence, the code, the defaults, someone who tries; the published model and the blinded thirds of the public file. | Listen; ask. | The point is that open data can still stop short of the published number, by design. |
+| 0:57 | Hands-on 3b: a second reproduction (25′) | "Choose a second analyst who differs from your first in one decision." | Reproduce a second analyst; compare the gaps. | If the class is slow, demonstrate UYV3F beside 25N5D on the shared screen. |
+| 1:22 | Discussion (8′) | "Which of your two answers the claim as SCORE selected it?" | Answer. | – |
+
+**The catch-up card**, for the re-entry to Part 3:
+
+> Just back? You have missed nothing that you cannot recover: (1) if Task 2 is unfinished, keep the estimand statement that you wrote in chat; (2) Task 3 is the reproduction – choose one analyst in the browser lab, complete the cell, and compare your value with the table above the cells; (3) if you finish, reproduce a second analyst. Put up a red note and I will come to you.
+
+### Part 4 – Replication and preregistration (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | The curve (6′) | The curve of the claim and the published results placed on it, as the robustness of the three Rs on these data. | Watch. | One look only: the day has no menu. |
+| 0:06 | The SCORE replication (16′) | The design, the result, the two studies compared, power, the three Rs on this paper, robustness against replicability. | Listen; argue. | The robustness and replicability slide is the lesson of the day; never compress it. |
+| 0:22 | The preregistration of the replication (10′) | What the plan fixed, what the report added and listed as deviations; what a preregistration fixes and leaves open. | Listen. | – |
+| 0:32 | Archiving and the public record (14′) | Archiving and registering; the Multi100 preregistration; the two templates; the records slide with the three-minute search of the replication report; the eight AsPredicted questions. | Search the report; read. | The target of the search: not significant "approximately 93 percent of the time". If time is short, show it on the shared screen. |
+| 0:46 | Hands-on 5: the preregistration block (30′) | "Fill in the block, copy it into your notes, swap with a neighbour." | Fill, copy, swap. | Say twice that nothing is run and nothing is sent. |
+| 1:16 | Debrief on the swapped blocks (6′) | "Could your neighbour run your analysis from your block alone?" | Answer. | – |
+| 1:22 | Close and feedback (8′) | What you take with you; the feedback form; the methods day as the next step. | Feedback. | End on time. |
+
+### Cutting order and what is never cut {#cutting-open-science}
+
+- **Part 1** – at 0:40, cut the data-availability slide of Miske et al. to one line and the open-research table to one sentence a row. At 1:08, leave the optional tools run switched off.
+- **Part 2** – at 0:22, take the Lundberg slide in one sentence. At 0:52, skip the R tutorial. At 1:20, the graph is left out of Task 2.
+- **Part 3** – at 0:45, the slide on the published model goes to one sentence. At 0:57, Hands-on 3b becomes a demonstration on the shared screen.
+- **Part 4** – at 0:00, the curve goes to one sentence. At 0:32, show the three-minute search on the shared screen instead of setting it.
+
+**Never cut:** the five analysts and their table; the held estimand statement; the reproduction and its held answer; what a reproduction needs; the preregistration of the replication against its report; robustness against replicability; a preregistration block filled in by every participant.
+
+---
+
+## Run sheet – one day, data tools {#run-data-tools}
+
+The day runs on `slides/housing-one-day-data-tools.qmd`, mainly in the browser lab, with the workspace recommended because the IDE and the report have parts of their own. Its `tools` run is part of the main flow (`core-runs: [tools]`). It has no menu of specifications, no class chart and no Task 5. The curve appears once, near the end, as what the code makes possible.
+
+::: {.callout-warning}
+**Draft clock times for CM to adjust**, on the same clock as the other one-day courses: 10:00–18:00 GMT, with breaks of thirty minutes, an hour and thirty minutes.
+:::
+
+| Segment | Elapsed | Clock (GMT) |
+|---|---|---|
+| Part 1 – Credibility and the toolchain | 0:00–1:30 | 10:00–11:30 |
+| Break | 1:30–2:00 | 11:30–12:00 |
+| Part 2 – R and the IDE | 2:00–3:30 | 12:00–13:30 |
+| Lunch | 3:30–4:30 | 13:30–14:30 |
+| Part 3 – Data management and the reproduction | 4:30–6:00 | 14:30–16:00 |
+| Break | 6:00–6:30 | 16:00–16:30 |
+| Part 4 – The report and its record | 6:30–8:00 | 16:30–18:00 |
+
+### Part 1 – Credibility and the toolchain (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Welcome, the aims, what you do not need (8′) | The premise, the aims, "open the browser lab now, and your workspace if you have one". | Open the lab, or the workspace. | – |
+| 0:08 | Talk: the three Rs and the evidence (17′) | The matrix; SCORE in brief; Multi100 from the inside. | Listen. | Keep it short: this day spends its time on the tools. |
+| 0:25 | Talk: the toolchain (40′) | Open source; the toolchain by job; languages; editors and IDEs; plain text and rendering; packages; version control; archives; licences. | Note what they might switch to. | The slides on plain text, rendering and version control are the ones that the afternoon builds on. |
+| 1:05 | The lab and the workspace, what the tools cannot do (5′) | – | – | – |
+| 1:10 | Task 1 and the break (20′) | "Get the lab running, and the workspace if you installed it." Circulate; stay in the room through the break. | Setup cell; or `source("R/check_setup.R")`. | The workspace is worth fixing now, because Part 4 uses it. |
+
+### Part 2 – R and the IDE (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Talk: the paper (16′) | Define the OAs. The question, the design, the email, what came back, four outcomes, the claim. | Listen. | – |
+| 0:16 | The IDE (10′) | Show the four places of the IDE on the shared screen; the folder, the console and the script. | Follow in their IDE. | Participants without the workspace watch; the lab cells are their scripts. |
+| 0:26 | The R tutorial (30′) | Walk all nine slides; type each block in the lab or the console. | Type along. | Slow down at the verbs of datawizard; skip the slide on causal graphs if behind. |
+| 0:56 | Hands-on 2: counting the emails (34′) | "Count, by group, plot, then change one thing." | Run and edit the Task 2 cells. | Expected counts on the slide; a wrong filter is the usual cause of other numbers. |
+| 1:30 | Lunch | Post the return time. | Lunch. | A hard stop. |
+
+### Part 3 – Data management and the reproduction (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Talk: data management (15′) | The public file and the course file; three kinds of missing value; raw, scripts and derived files. | Listen; open the codebooks. | The missing values are the slide to dwell on: the reproductions depend on them. |
+| 0:15 | Talk: the five analysts (6′) | Placed by their gaps; the table. | Watch. | – |
+| 0:21 | The instruction and analyst no. 6 (10′) | The Multi100 instruction, what it left open, the choice of analyst. | Choose an analyst. | Encourage a spread across the five. |
+| 0:31 | Hands-on 3: the reproduction (25′) | Drive one analyst on the shared screen; the held answer. | Complete one cell; send on "go". | Point at the data work in each cell: the filter, the recode, the split of `TreatmentGroup`. |
+| 0:56 | Defaults, reproducibility and choice (8′) | The continuity correction, the base group, the class against the five analysts. | Listen. | – |
+| 1:04 | Hands-on 3b: a second reproduction (20′) | "A second analyst who differs from your first in one decision; compare the data work." | Reproduce a second analyst. | The first thing to cut. |
+| 1:24 | Break | Post the return time. | Break. | – |
+
+**The catch-up card**, for the re-entry to Part 3:
+
+> Just back? You have missed nothing that you cannot recover: (1) if Task 2 is unfinished, run its cells as they stand; (2) Task 3 is the reproduction – choose one analyst in the browser lab or in your report, complete the code, and compare your value with the table; (3) if you finish, reproduce a second analyst. Put up a red note and I will come to you.
+
+### Part 4 – The report and its record (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Talk: the report (15′) | The anatomy of the report; numbers in the text; the four steps from the folder to the record. | Listen; open `index.qmd`. | – |
+| 0:15 | Hands-on 4: the reproduction in the report (25′) | Write the inline sentence on the shared screen first, then circulate. | Write the sentence; render. | The usual error is a typo inside the backticks; read the message. Participants without the workspace write the sentence in their notes. |
+| 0:40 | Hands-on 5: a clean run (15′) | "Restart R and render again from nothing." | Restart, render, compare. | Collect what broke, aloud: it is the debrief. |
+| 0:55 | Demonstration: git (12′) | Turn the workspace folder into a repository on the shared screen, commit the report, show the history. | Watch. | No one installs git today; the companion module is the follow-up. |
+| 1:07 | The curve (6′) | What the code makes possible: 64 specifications fitted with the same code, and the analysts placed on them. | Watch. | One look only: the day has no menu. |
+| 1:13 | Close and feedback (8′) | What you take with you; the feedback form; the methods day as the next step. | Feedback. | End on time; the last minutes are for questions. |
+
+### Cutting order and what is never cut {#cutting-data-tools}
+
+- **Part 1** – at 0:25, take languages and editors in one sentence each, and the licences slide only if asked.
+- **Part 2** – at 0:26, skip the slides on model formulas and on causal graphs in R.
+- **Part 3** – at 1:04, Hands-on 3b drops.
+- **Part 4** – at 0:55, the git demonstration becomes a pointer to the companion module. At 1:07, the curve goes to one sentence.
+
+**Never cut:** the setup check; the R tutorial up to the verbs of datawizard; Hands-on 2; the three kinds of missing value; the reproduction and its held answer; numbers in the text; the clean run.
+
+---
+
+## Run sheet – one day, methods {#run-methods}
+
+The day runs on `slides/housing-one-day-methods.qmd`, mainly in the browser lab, with the workspace as an option. It is the format with the robustness exercise at its centre: the menu, the class chart with its two waves of submissions, the curve of the claim and the declared analysis.
+
+::: {.callout-warning}
+**Draft clock times for CM to adjust.** Newcastle on Friday 6 November 2026 is on GMT, because British Summer Time ends on 25 October. The default below starts at 10:00 and keeps the breaks of the slides (thirty minutes, an hour, thirty minutes), so the day ends at 18:00. A 09:30 start ends at 17:30. Shorter breaks need the text of the break slides changed as well (`slides/_segments/shared/_break1.qmd`, `_lunch.qmd`, `_break2.qmd`).
+:::
+
+| Segment | Elapsed | Clock (GMT) |
+|---|---|---|
+| Part 1 – Credibility and tools | 0:00–1:30 | 10:00–11:30 |
+| Break | 1:30–2:00 | 11:30–12:00 |
+| Part 2 – The claim and its estimand | 2:00–3:30 | 12:00–13:30 |
+| Lunch | 3:30–4:30 | 13:30–14:30 |
+| Part 3 – Reproduction and exploration | 4:30–6:00 | 14:30–16:00 |
+| Break | 6:00–6:30 | 16:00–16:30 |
+| Part 4 – Multiverse, replication and preregistration | 6:30–8:00 | 16:30–18:00 |
+
+**Four stretches of the deck are optional**, marked on screen and switched in one keystroke: the five tools slides of Part 1, the R tutorial of Part 2 (nine slides), the methods tutorial of Part 3 (six slides) and the multiverse background of Part 4 (two slides). The timings below assume that you walk about half of each. Walking all of them in full costs about fifteen minutes that the day does not have, and skipping them all leaves the hands-on tasks more room than they need.
+
+### Part 1 – Credibility and tools (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Welcome, the two kinds of aim, what you do not need (6′) | The premise in two sentences: *Nature* asked three times whether social science holds up, I was inside one of the papers, and today you sit where I sat. Walk the aims slide. "Open the browser lab now." | Open the lab, or the workspace in their IDE (Positron, RStudio, VS Code, etc.). | Late arrivals: a nod and the address on the screen, never a restart. |
+| 0:06 | Talk: what social science is for, and why it is called a crisis (10′) | Claims and checking; false positives and forking paths; the evidence from replications; incentives and questionable research practices, and why the problem is structural rather than fraud. | Listen. | – |
+| 0:16 | Talk: the red-card study (4′) | The question, the design, and the twenty-nine estimates. | Watch. | The study returns in Part 2 as a single row, so tell it in full only here. |
+| 0:20 | Talk: the vocabulary and open research (10′) | Replication crises; the data × analysis matrix; repeatability and credibility; the quick check, two slides, answered aloud; open-research practices. | Answer the quick check. | The matrix is the slide to copy down. If the segment runs long, the open-research table compresses to one sentence a row. |
+| 0:30 | Talk: SCORE and its three studies (20′) | The programme; the three studies, each with its result; the three Rs across SCORE and why they do not travel together. | Listen. | If behind, cut the data-availability slide of Miske et al. to one line. |
+| 0:50 | Talk: Multi100 from the inside (8′) | What an analyst received, the two tasks, results on a common scale. | Listen. | The paper of the case and its five analysts come in Part 2; this segment presents Multi100 as a study. |
+| 0:58 | Talk: the tools (18′) | Open source; the toolchain; plain-text formats and rendering; archives; the browser lab and the workspace; what the tools cannot do. Optional: languages, editors, packages, version control, licences. | Note what they might switch to. | The two slides to cover in full are plain-text formats and what the tools cannot do, which leads into Part 2. |
+| 1:16 | Task 1 and the break (14′) | "Get to the point where a line of R runs and the data are in front of you; take the break for it if you need to." Circulate. Stay in the room through the break for red notes. | The setup cell of the lab, or `source("R/check_setup.R")`, every line OK, the last at −19.97 points. | Anyone whose workspace is still stuck at the end of the break moves to the browser lab, or to the zip on the USB stick. |
+
+### Part 2 – The claim and its estimand (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Talk: the paper (16′) | Define the original authors (OAs) here. The question, the design, the email, what came back by name, four outcomes, the claim with its two ellipses. | Listen; ask. | The two ellipses decide the comparison group later, so read both aloud. |
+| 0:16 | Talk: the five analysts (6′) | The five placed by their gaps, then the table: five questions behind two verdicts. | Watch. | Never rush this pair: it sets up the rest of the day. |
+| 0:22 | Talk: estimands (12′) | Two studies beside our five; four estimands in the red-card study; the spread with and without a fixed estimand; under-specified questions; the steps of Lundberg and colleagues. | Listen. | The figure with and without a fixed estimand is the point of the segment. |
+| 0:34 | Talk: the causal-graph crash course (14′) | Confounder, mediator, collider; the stories behind one correlation; open and closed paths; total and direct effects; selection and feedback. | Listen. | If running long, selection and feedback drops to one sentence. |
+| 0:48 | Talk: the claim (14′) | The estimand statement and the first held answer: "write your statement, hold it, go"; read three or four aloud. Then the graph, the box around the reply, and every delivered email. | Write the statement; send on "go". | The held answer is never compressed. A split between the replies and every delivered email is the same split as among the five analysts; say so. |
+| 1:02 | R tutorial, optional (10′) | Walk as much as the least confident half of the class needs. | Follow. | The first thing to cut if the morning has overrun. |
+| 1:12 | Hands-on 2: Task 2 (18′) | Counting the emails, the estimand statement written out, then the graph cell of the lab or `R/dag_starter.R`: the arrow from the name to the greeting, the adjustment sets, the paths with `Z = "reply"`. | Count, write, finish the graph, two sentences. | At 1:22, if the class is behind, switch to demonstration: run it on the shared screen, and they finish over lunch. |
+| 1:30 | Lunch | Post the return time. | Lunch. | A hard stop. |
+
+### Part 3 – Reproduction and exploration (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Re-entry and the instruction (10′) | A visual sweep; the catch-up card on screen. The Task 2 instruction of Multi100 word for word, what it left open, and analyst no. 6 with the choice of analyst. | Rejoin; choose an analyst. | Do not wait past 0:05. Encourage a spread across the five. |
+| 0:10 | Hands-on 3: Task 3, the reproduction (20′) | Drive one analyst in the lab on the shared screen beside them; circulate. Then the second held answer: "type the analyst and the value, hold it, go". | Complete one cell; send on "go". | The matching values, analyst by analyst, are the point of the beat, so wait until most of the class has one. A failing machine goes to the browser lab. |
+| 0:30 | The continuity correction, reproducibility and choice (7′) | Why every value matches its record to the third decimal (the defaults of `chisq.test()` and `prop.test()`, the base group of EWFMI), and why five analysts writing their own code did not agree. | Early finishers reproduce a second analyst. | Leave the question of the choices open for the menu. |
+| 0:37 | The menu (13′) | The eleven decisions at three levels, the five that vary on the curve, the curve of 64, the ground rules. | Start choosing which decision interests them. | Present the options off the curve as decisions to think through, each answering another question or this one less well; the decision map gives the reason for each. |
+| 0:50 | The methods (15′, part optional) | A difference in proportions; the linear probability model and the logit. Optional: odds ratios, standard errors, four tests, the randomisation test, covariates, subgroups. | Listen; ask. | The compressible segment: if Task 3 overran, take time from here, not from Task 4. |
+| 1:05 | Hands-on 4: Task 4, exploring the menu (25′) | "Try several, read what each does, then submit the one you would defend." Suggest `try_spec(model = "three_group")` so that people read a refusal. Keep the Multiverse page on screen and press *Run Code* as the open circles land. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits a mark, because Part 4 opens on them. Say twice that this is exploration and that Task 5 is the preregistered analysis. |
+| 1:30 | Break | Leave the Multiverse page open. | Break. | – |
+
+**The catch-up card**, for the re-entry to Part 3:
+
+> Just back? You have missed nothing that you cannot recover: (1) if Task 2 is unfinished, run the graph cell as it stands and come back to the wording later; (2) Task 3 is the reproduction – choose one analyst, complete the cell, and compare your value with the table above the cells; (3) Task 4 is exploration, so try two specifications and submit one. Put up a red note and I will come to you during Task 4.
+
+### Part 4 – Multiverse, replication and preregistration (90′)
+
+| Rel. | Segment | What I do | What participants do | Watch out for |
+|---|---|---|---|---|
+| 0:00 | Your own small multiverse and the curve (10′) | Name what Task 4 was; optionally the origins and the garden of forking paths; then the curve of the claim and the published results placed on it. | Watch. | – |
+| 0:10 | The class multiverse and the placement (10′) | Refresh the class chart; the question bank (below). Then the third held answer: "rerun your submitted specification, read your placement, hold it, go". | Find their mark; read and send their placement. | Participants without a submission use the reference specification, whose placement is `r placement_ref`. |
+| 0:20 | What moved the estimate (6′) | The shifts by option, then the curve coloured by the emails counted. | Connect the step to their own choice. | – |
+| 0:26 | The SCORE replication (14′) | The design, the result, the two studies compared, power, the three Rs on this paper, robustness against replicability. | Listen; argue. | The robustness and replicability slide is the lesson of the day; never compress it. |
+| 0:40 | Critics and preregistration (10′) | The critics; one correct analysis and how to identify it; what preregistration settles; exploration against declaration. | Listen; ask. | If the clock is tight, the identification slide goes to one sentence. |
+| 0:50 | Archiving and the public record (10′) | Archiving and registering; the Multi100 preregistration; the two templates; the records slide with the three-minute search of the replication report; the eight AsPredicted questions. | Search the report; read. | The target of the search: not significant "approximately 93 percent of the time". If time is short, show it on the shared screen. |
+| 1:00 | Hands-on 5: preregistration, run and report (22′) | Called from the front: complete fields 1–5, copy the cell or render the report, then the fourth held answer, "declared". Count aloud. Move on at about 80% declared or at eight minutes. Then `run_spec()` and `report_result()`; press *Run Code* as the filled circles land. | Declare, run, submit. | Never cut the declaration. Re-declaring a specification already explored is allowed, and the block must say so. |
+| 1:22 | Close and feedback (8′) | Two points from the literature; the single analytical path; what you take with you; the feedback form, with the chart on screen. | Feedback. | End on time. |
+
+### Cutting order and what is never cut {#cutting-methods}
+
+When time runs short, cut from the optional runs before anything else, so that the time comes out of a tutorial before it comes out of a task.
+
+- **Part 1** – at 0:30, cut the data-availability slide of Miske et al. to one line and the open-research table to one sentence a row. At 0:58, leave the optional tools run switched off.
+- **Part 2** – at 0:34, drop selection and feedback to one sentence. At 1:02, skip the R tutorial. At 1:22, Task 2 becomes a demonstration, finished over lunch.
+- **Part 3** – at 0:50, the methods run stays off. At 1:05, Task 4 shortens to two calls of `try_spec()` and a submission, but everybody still submits.
+- **Part 4** – at 0:10, skip the multiverse background. At 0:50, show the three-minute search on the shared screen instead of setting it.
+
+**Never cut:** the five analysts and their table; the held estimand statement; the box around the reply; the reproduction and its held answer; the Task 4 submission; robustness against replicability; the preregistration moment.
 
 ---
 
 ## The held answers {#held-answers}
 
-Four times in the day, and three times in the short session, the class writes an answer, holds it and releases it together: the estimand statement (Part 2), the reproduced $\chi^2$ (Part 3), the placement (Part 4) and "declared" before the preregistered run (Part 4, one-day only). Holding the answers keeps each one independent of the others, and releasing them together is what produces the wall of identical values after the reproduction. The slides say "type in chat"; the cue sheet below says what that means in the room.
+The class writes an answer, holds it and releases it together: the estimand statement (every format), the reproduced value of Task 3 (every format), the placement (the short session and the methods day) and "declared" before the preregistered run (the methods day only). Holding the answers keeps each one independent of the others, and releasing them together is what produces the matching values after the reproduction. The slides say "type in chat"; the cue sheet below says what that means in the room.
 
-**The reproduction moment.** Everyone runs the Task 3 code, in the workspace or in the lab. When most of the class has a number: "Type your X-squared, hold it … go." The target is **$\chi^2$ = `r fmt(chi_yates, 3)`**, the value recorded for 8PTRZ. A participant with `r fmt(chi_plain, 2)` has passed `correct = FALSE`, which is the opening line of the next slide. A participant with another number has kept the uncoded replies or filtered on a different column; check that the filter is `!is.na(ProperName)`.
-
-**The catch-up card**, for the re-entry to Part 3:
-
-> Just back? You have missed nothing that you cannot recover: (1) if Task 2 is unfinished, run the graph chunk as it stands and come back to the wording later; (2) Task 3 is the reproduction – the target is chi-square = 14.265, and the full code is on the slide and in the browser lab; (3) Task 4 is exploration, so try two specifications and submit one. Put up a red note and I will come to you during Task 4.
+**The reproduction moment.** Each participant chooses one of the five analysts and runs that cell of Task 3, in the lab or in the workspace. When most of the class has a value: "Type the analyst and the value, hold it … go." Everyone who chose the same analyst should show the same value, and each value should match its record: $\chi^2$ = `r fmt(an("8PTRZ", "statistic_recorded"), 3)` for 8PTRZ, z = `r fmt(an("UYV3F", "statistic_recorded"), 3)` for UYV3F, z = `r fmt(an("EWFMI", "statistic_recorded"), 3)` for EWFMI and $\chi^2$ = `r fmt(an("25N5D", "statistic_recorded"), 3)` for 25N5D, with `r fmt(an("P9W8Y", "statistic_refit"), 3)` on 2 degrees of freedom for P9W8Y, which has nothing on record. A participant with `r fmt(chi_plain, 2)` for 8PTRZ or `r fmt(prop_plain, 2)` for 25N5D has passed `correct = FALSE`, which is the opening line of the next slide. A z of `r fmt(-an("EWFMI", "statistic_recorded"), 3)` for EWFMI means that the Hispanic names are not the base group. A participant with another number has usually kept a different set of rows; check the filter against the table above the cells.
 
 ---
 
@@ -262,22 +462,9 @@ The materials are the same in both settings. What changes is how people answer, 
 | Held answers | the response tool of the room if it has one; otherwise written on a card and held up on "go" | typed in chat, sent on "go" |
 | Working or stuck | green and red sticky notes on the laptop lid | a green circle or "STUCK" in chat |
 | Rescues | the facilitator circulates | the problem shown on the shared screen |
-| The live chart | on the projector, and on the laptops | everyone opens the Multiverse page |
-| Form links | on the screen | pasted in chat |
+| The live chart (methods day) | on the projector, and on the laptops | everyone opens the Multiverse page |
+| Form links (methods day) | on the screen | pasted in chat |
 | Breaks | the countdown slide and the time aloud | the countdown slide and "back at :xx" in chat |
-
----
-
-## The cutting order {#cutting-order}
-
-When time runs short, cut from the optional runs before anything else, so that the time comes out of a tutorial before it comes out of a task.
-
-- **Part 1** – at 0:30, cut the data-availability slide of Miske et al. to one line and the open-research table to one sentence a row. At 0:58, leave the optional tools run switched off.
-- **Part 2** – at 0:34, drop selection and feedback to one sentence. At 1:02, skip the R tutorial. At 1:22, Task 2 becomes a demonstration, finished over lunch.
-- **Part 3** – at 0:50, the methods run stays off. At 1:05, Task 4 shortens to two calls of `try_spec()` and a submission, but everybody still submits.
-- **Part 4** – at 0:10, skip the multiverse background. At 0:50, show the three-minute search on the shared screen instead of setting it.
-
-**Never cut:** the five analysts and their table · the held estimand statement · the box around the reply · the reproduction and its held answer · the Task 4 submission · robustness against replicability · the preregistration moment.
 
 ---
 
@@ -287,21 +474,21 @@ Each row names the first move, not the only one, and every ladder ends at a poin
 
 | Situation | What to do |
 |---|---|
+| **The browser lab stalls** | The ladder of the [cheatsheet](../cases/housing/cheatsheet.qmd): a hard reload and the cells above run again, then a second browser, then the shared screen. On the methods day the last rung is the by-hand lookup, in which the facilitator reads the five choices off `spec_curve.csv` and submits the row through the Form, so that everyone still gets a mark. |
 | **An installation fails on the day** | The browser lab holds the whole exercise and gives the same numbers; the participant carries on there, and the workspace survives for later. |
 | **The workspace download fails in the room** | The zip on the USB stick. |
-| **The browser lab stalls** | The ladder of the [cheatsheet](../cases/housing/cheatsheet.qmd): a hard reload and the cells above run again, then a second browser, then the shared screen, then the by-hand lookup, in which the facilitator reads the five choices off `spec_curve.csv` and submits the row through the Form. Everyone still gets a mark. |
-| **The wifi fails** | The workspace runs offline once its packages are installed, so Tasks 1–5 continue; only the submissions wait. Collect the printed results (the tag, the label, `b`, `se`, `t`, `df`, `n`, `r`) and submit them through the Form when the network returns. The browser lab needs the network for its first load. |
-| **The live chart fails** (Form, Worker, CORS) | The chart falls back to the committed `cases/housing/data/class_results.csv`, which holds only its header. Pull the Sheet as CSV, put it in place of that file, render the Multiverse page locally and share the screen. The static curve and the reference marks at the top of the page are enough for the debrief. Submissions are safe in the Sheet whatever happens to the chart. |
+| **The wifi fails** | The workspace runs offline once its packages are installed, so the tasks continue for anyone who has it; the others follow the shared screen. On the methods day, collect the printed results (the tag, the label, `b`, `se`, `t`, `df`, `n`, `r`) and submit them through the Form when the network returns. The browser lab needs the network for its first load. |
+| **The live chart fails** (methods day: Form, Worker, CORS) | The chart falls back to the committed `cases/housing/data/class_results.csv`, which holds only its header. Pull the Sheet as CSV, put it in place of that file, render the Multiverse page locally and share the screen. The static curve and the reference marks at the top of the page are enough for the debrief. Submissions are safe in the Sheet whatever happens to the chart. |
 | **The OSF is slow during the three-minute search** | Show the report of the replication on the shared screen; the beat still works. Nothing in the tasks depends on the OSF. |
-| **A participant has lost their tag** | It is in `.class-tag` at the root of the workspace; in the lab, `report_result(nickname = "their-tag")` reuses it. |
+| **A participant has lost their tag** (methods day) | It is in `.class-tag` at the root of the workspace; in the lab, `report_result(nickname = "their-tag")` reuses it. |
 
 ---
 
 ## Expected numbers {#expected-numbers}
 
-- **Task 1.** The last check of `R/check_setup.R`: the reference specification reproduces at `r fmt(ref$b_pp, 2)` percentage points.
-- **Task 2.** `r format(n_emails, big.mark = ",")` emails, 23 bounced, 991 delivered, 563 replies, 5 without a greeting code, 558 coded. Greeted by name among the coded replies: white 61.1%, Black 56.1%, Hispanic 41.2%; Santiago lowest at 37.1%. The graph: with every delivered email counted, `adjustmentSets()` returns the empty set, because the name was assigned at random; `paths(dag, Z = "reply")` reports the paths through the official and through the community as open. Adding the community to `Z` closes the second, and nothing can close the first, because nobody observed the official.
-- **Task 3.** $\chi^2$ = `r fmt(chi_yates, 3)` on `r an("8PTRZ", "n_recorded")` coded replies with the continuity correction, the value recorded for 8PTRZ; `r fmt(chi_plain, 3)` without it. The optional logit of UYV3F: z = `r fmt(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` replies to Hispanic and white names.
+- **Task 1.** The setup cell of the lab: 1,014 rows and −19.97 percentage points. The last check of `R/check_setup.R`: the reference specification reproduces at `r fmt(ref$b_pp, 2)` percentage points.
+- **Task 2.** `r format(n_emails, big.mark = ",")` emails, 23 bounced, 991 delivered, 563 replies, 5 without a greeting code, 558 coded. Greeted by name among the coded replies: white 61.1%, Black 56.1%, Hispanic 41.2%; Santiago lowest at 37.1%. The graph: with every delivered email counted, the adjustment set is empty, because the name was assigned at random; the paths with `Z = "reply"` report the paths through the official and through the community as open. Adding the community to `Z` closes the second, and nothing can close the first, because nobody observed the official.
+- **Task 3**, on the public file `audit_original.csv`. 8PTRZ: $\chi^2$ = `r fmt(chi_yates, 3)` on `r an("8PTRZ", "n_recorded")` coded replies with the continuity correction, `r fmt(chi_plain, 3)` without it. UYV3F: z = `r fmt(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` coded replies to Hispanic and white names. EWFMI: z = `r fmt(an("EWFMI", "statistic_recorded"), 3)` on `r an("EWFMI", "n_recorded")` coded replies, the row of the white names against the Hispanic base group. 25N5D: $\chi^2$ = `r fmt(prop_yates, 3)` on `r an("25N5D", "n_recorded")` delivered emails with the continuity correction of `prop.test()`, `r fmt(prop_plain, 3)` without it. P9W8Y: no recorded statistic; the likelihood-ratio test of the three groups gives $\chi^2$ = `r fmt(an("P9W8Y", "statistic_refit"), 3)` on 2 degrees of freedom for `r an("P9W8Y", "n_refit")` coded replies, the value in the text of the report of the analyst.
 - **The reference specification** (white names, replies, uncoded dropped, linear model, no covariates): `r fmt(ref$b_pp, 2)` points (`r fmt(ref$rate_hisp)`% against `r fmt(ref$rate_comp)`%), t = `r fmt(ref$stat, 2)` on `r ref$df` df, n = `r ref$n`. Its twin on every delivered email: `r fmt(ref_all$b_pp, 2)` points (`r fmt(ref_all$rate_hisp)`% against `r fmt(ref_all$rate_comp)`%), n = `r ref_all$n`.
 - **The curve.** `r nrow(curve)` specifications, all below zero and all significant at 5% under the test of the model, from `r fmt(min(curve$b_pp))` to `r fmt(max(curve$b_pp))` points; the largest p is `r fmt(max(curve$p), 4)`, and the largest randomisation p is `r fmt(max(curve$p_ri), 4)`. Counting every delivered email moves the estimate by `r fmt(shift("population", "all"), 2)` points on average (from `r fmt(shift("population", "all", "shift_min"), 2)` to `r fmt(shift("population", "all", "shift_max"), 2)`); every other decision by at most `r fmt(other_max, 2)`. No pair changes its sign or its significance.
 - **Placement.** The reference specification is placed at `r placement_ref`: no specification of the curve lies further below zero, and the logit without covariates ties with it. A placement of 32 or more comes from counting every delivered email, because all 32 specifications that count the replies lie further below zero.
@@ -309,20 +496,20 @@ Each row names the first move, not the only one, and every ladder ends at a poin
 - **Replies.** The gap in any reply between Hispanic and white names is `r fmt(reply_gap$b_pp)` points, two-sided p = `r fmt(reply_gap$p, 2)`; the paper reports p = .11 with a one-tailed test.
 - **Randomisation.** Reshuffling the names among the coded replies gives gaps between `r fmt(quantile(ri$b_pp, 0.025))` and `r fmt(quantile(ri$b_pp, 0.975))` points in 95% of `r format(nrow(ri), big.mark = ",")` reshuffles.
 - **Power.** The original comparison, about 181 replies a group at a white share of 61%: `r fmt(pw("original", 20), 2)` for a gap of 20 points, `r fmt(pw("original", 13), 2)` for 13, `r fmt(pw("original", 10), 2)` for 10. The replication, 369 a group: `r fmt(pw("replication", 10), 2)` for 10 points.
-- **The replication** (from its final report, osf.io/2ug8x): 3,050 authorities emailed, 1,811 replies; on the 1,243 replies of the authorities matched to census data, logit with the demographic covariates of the paper from the 2018 ACS (no Hard Email), b = 0.098 (SE 0.149), z = 0.66, p = 0.511 on a random draw of 738, and z = 0.44, p = 0.657 on all 1,243. The preregistered linear model was not significant "approximately 93 percent of the time". At most +2.45 points in favour of the Hispanic names. The de-identified data are public at osf.io/xseqg (folder "Public Data": `Audit_Deidentified.dta`, the analysis do-file and a dictionary, licence unstated, so the course links to them and does not copy them). On the scale of the course (`cases/housing/data/display_replication.csv`), the gap is `r sgn(rep_val("replies", "all", "b_pp"))` points among all `r format(rep_val("replies", "all", "n"), big.mark = ",")` replies (`r fmt(rep_val("replies", "all", "rate_hisp"))`% against `r fmt(rep_val("replies", "all", "rate_comp"))`%), `r sgn(rep_val("replies", "sub-county", "b_pp"))` among the `r format(rep_val("replies", "sub-county", "n"), big.mark = ",")` replies of sub-county authorities, and `r sgn(rep_val("all", "all", "b_pp"))` points among all `r format(rep_val("all", "all", "n"), big.mark = ",")` emails in the de-identified file, none of them significant (smallest p = `r fmt(min(replication$p), 2)`). The logit with covariates in thirds on the 1,243 sub-county replies that carry every covariate (one of the 1,244 lacks the poverty third) gives b = 0.051, z = 0.45, column 4 of the report.
+- **The replication** (from its final report, osf.io/2ug8x): 3,050 authorities emailed, 1,811 replies; on the 1,243 replies of the authorities matched to census data, logit with the demographic covariates of the paper from the 2018 ACS (no Hard Email), b = 0.098 (SE 0.149), z = 0.66, p = 0.511 on a random draw of 738, and z = 0.44, p = 0.657 on all 1,243. The preregistered linear model was not significant "approximately 93 percent of the time". At most +2.45 points in favour of the Hispanic names. The plan was registered on 14 May 2020 (osf.io/v6wd8); the report lists the logit with covariates and the exclusion of the county authorities as deviations from it. The de-identified data are public at osf.io/xseqg (folder "Public Data": `Audit_Deidentified.dta`, the analysis do-file and a dictionary, licence unstated, so the course links to them and does not copy them). On the scale of the course (`cases/housing/data/display_replication.csv`), the gap is `r sgn(rep_val("replies", "all", "b_pp"))` points among all `r format(rep_val("replies", "all", "n"), big.mark = ",")` replies (`r fmt(rep_val("replies", "all", "rate_hisp"))`% against `r fmt(rep_val("replies", "all", "rate_comp"))`%), `r sgn(rep_val("replies", "sub-county", "b_pp"))` among the `r format(rep_val("replies", "sub-county", "n"), big.mark = ",")` replies of sub-county authorities, and `r sgn(rep_val("all", "all", "b_pp"))` points among all `r format(rep_val("all", "all", "n"), big.mark = ",")` emails in the de-identified file, none of them significant (smallest p = `r fmt(min(replication$p), 2)`). The logit with covariates in thirds on the 1,243 sub-county replies that carry every covariate (one of the 1,244 lacks the poverty third) gives b = 0.051, z = 0.45, column 4 of the report.
 - **The five analysts.** Three concluded "evidence for the claim" in Task 1 of Multi100 (8PTRZ, UYV3F, EWFMI) and two "no evidence either way" (25N5D, judging the claim by the twenty points of the abstract; P9W8Y, whose Task 1 model tested the female names only).
 
 ---
 
 ## Debrief questions {#debrief}
 
-Choose by what the class chart shows, not by the order below.
+Choose by what the class shows, not by the order below. Questions 1 to 3 and 8 need the class chart of the methods day; the others work in every format.
 
 1. **The step in the curve.** "Who counted every delivered email? What question does your estimate answer that the estimate of the paper does not, and which one is the claim?"
 2. **The decision that did nothing.** "Who changed the model from the linear probability model to the logit and found that the estimate barely moved? Why does it barely move here, when the coefficients look so different?"
-3. **Justification.** "Whose causal graph settled their choice of emails? Whose graph could have justified both choices equally well?"
+3. **Placement.** "Your placement puts you among 64 justifiable alternatives. What does an analyst at the end of the curve owe the reader that an analyst in the middle does not?"
 4. **The two verdicts of no evidence.** "Two analysts ticked 'no evidence', although the work of each shows a significant gap. What were they judging the claim by?"
-5. **Placement.** "Your placement puts you among 64 justifiable alternatives. What does an analyst at the end of the curve owe the reader that an analyst in the middle does not?"
+5. **The reproduction.** "Everyone who chose the same analyst got the same value. What would have had to be missing for that to fail: the data, the code, or a default?"
 6. **Robustness against replication.** "Every specification on these data finds the gap; the replication did not. Which result should a housing authority act on, and what would you want to know first?"
 7. **The names.** "Santiago and Gabriela against Joe Garcia and Michael Hernandez. What does a name manipulate besides ethnicity?"
 8. **How preregistration felt.** "Did writing the block before running change how the result felt when it landed? Would you have chosen differently after the exploration?"
@@ -331,6 +518,6 @@ Choose by what the class chart shows, not by the order below.
 
 ## After the session
 
-- [ ] Run the reset of the delivery lifecycle at the top of this guide: export the Sheet as a dated snapshot and clear its rows.
+- [ ] On the methods day, run the reset of the delivery lifecycle at the top of this guide: export the Sheet as a dated snapshot and clear its rows.
 - [ ] Export the responses of the feedback form.
-- [ ] Note for the next delivery: which segment ran longest; whether the estimand statement landed (could people write one, and did the held answers split on the emails counted); how many declarations came before the proceed rule; whether every participant submitted a mark, and which rungs of the fallback ladder were used; whether webR held on the venue wifi.
+- [ ] Note for the next delivery: which segment ran longest; whether the estimand statement landed (could people write one, and did the held answers split on the emails counted); how the class spread across the five analysts in Task 3; on the methods day, how many declarations came before the proceed rule and whether every participant submitted a mark; which rungs of the fallback ladder were used; whether webR held on the venue wifi.

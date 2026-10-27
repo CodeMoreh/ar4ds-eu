@@ -1,0 +1,22 @@
+---
+title: "Stage 2 – R and Quarto"
+case: housing
+bibliography: [../../references.bib, ../../references-new.bib]
+---
+The second stage is a first working session in R, on the data of the first case: one public file of 1,014 emails sent to housing authorities in the United States, each signed with a name chosen to indicate a white, a Black or a Hispanic sender. The R module works on that file from its first section to its first call of `try_spec()`, and every block of code in that stretch was run when the page was built, so you can compare each result on the page with your own. The Quarto module explains the document format in which each of your four case reports is written. The stage ends with the paper of the original authors (OAs) and the first sections of the case study, and takes about five hours.
+
+| Work through | What you do | Timing |
+|---|---|---|
+| [Getting started with R](../../companion/intro-r.qmd), from [Reading the data](../../companion/intro-r.qmd#sec-reading) to [A first look at `try_spec()`](../../companion/intro-r.qmd#sec-try-spec) | Reading the housing-audit data and looking at them; the pipe and the datawizard verbs; a share and a difference in shares, the quantity on which the claim of the case rests; a first table, and a first figure with tinyplot and with ggplot2; and a first call to `try_spec()`, the helper with which Task 4 explores the menu. Type each block into the workspace rather than pasting it. | 120 minutes |
+| [Quarto and reproducible documents](../../companion/quarto.qmd), from [Source and output](../../companion/quarto.qmd#sec-what) to [Citations](../../companion/quarto.qmd#sec-citations) | The `.qmd` file and the render step, the YAML header, code chunks and their options, inline code, captions and cross-references, Markdown, and citations drawn from a `.bib` file. Then render the report of the workspace, `index.qmd`, once, and read through the five tasks that you will fill in. | 75 minutes |
+| The paper of the OAs [@EinsteinGlick2017DoesRaceAffect] | Read the whole article: the argument about the discretion of street-level officials, the design of the experiment, the email word for word, the four outcomes that were coded, the third model of Table 1, and the sentence of the abstract from which the claim was taken. | 60 minutes |
+| [Case study](../../cases/housing/index.qmd), sections 1 to 3 | [The original study](../../cases/housing/index.qmd#sec-study) and its design, [SCORE and Multi100](../../cases/housing/index.qmd#sec-score) with the claim as it reached the analysts, and [the five reanalyses](../../cases/housing/index.qmd#sec-reanalysts) and the question that each of them answered. | 45 minutes |
+
+**Shortcuts.** If you already write R with the tidyverse, read the section on the datawizard verbs, which the course uses wherever they do the job, and the section on `try_spec()`, and run the rest only where its output surprises you. If you already write Quarto, render the report of the workspace and move on.
+
+**By the end of the stage** you have a script of your own that reads `housing_audit.csv`, counts the replies with a greeting code and the greetings by name for each group of names, and draws one figure from them; a rendered Quarto document holding that figure, a cross-reference to it and a citation; and the claim of the case written in your own words.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

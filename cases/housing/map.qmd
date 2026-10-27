@@ -222,7 +222,7 @@ decisionMap = {
   const isOn = (s, a) => opt(a, s[a]).on_curve === true;
   const offAxes = s => ALL_AXES.filter(a => !isOn(s, a));
   const curveRowOf = s => { const k = curveIndex.get(curveKey(s)); return k === undefined ? null : curve[k]; };
-  const recipe = d => VARY.map(a => opt(a, d[a]).label).join(" · ");
+  const recipe = d => VARY.map(a => opt(a, d[a]).label).join("; ");
 
   // ---- the estimand statement, as segments that can be compared with the last one
   function statement(s) {

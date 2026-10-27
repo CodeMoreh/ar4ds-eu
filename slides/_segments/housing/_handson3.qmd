@@ -1,26 +1,25 @@
-## Hands-on 3 – Reproducing the recorded result {#hands-on-3-reproduce-the-recorded-result .smaller}
+## Hands-on 3 – The reproduction {#hands-on-3-reproduce-the-recorded-result .smaller}
 
 ::: {.small}
-**Task 3**, in your workspace or in the browser lab: the public file `audit_original.csv`, the replies with a greeting code, Hispanic against all other names, by `ProperName`.
+**Task 3**, in the browser lab[ or in your workspace]{.content-visible unless-meta="deck.short"}: choose one of the five analysts, complete their cell on the public file `audit_original.csv`, and compare your value with the record.
 :::
 
-```{.r}
-original <- readr::read_csv("data/audit_original.csv")
-
-coded_replies <- original |>
-  datawizard::data_filter(!is.na(ProperName)) |>
-  datawizard::data_modify(hispanic_name = grepl("^Hispanic", TreatmentGroup))
-
-tab_8ptrz <- xtabs(~ hispanic_name + ProperName, data = coded_replies)
-chisq.test(tab_8ptrz)
-```
+::: {.fs-60}
+| Analyst | Emails | Test | Recorded |
+|:--|:--|:--|--:|
+| 8PTRZ | coded replies, Hispanic against all other names | `chisq.test()` of the 2 × 2 table | $\chi^2$ = `r fmt_num(an("8PTRZ", "statistic_recorded"), 3)` |
+| UYV3F | coded replies, Hispanic against white names | logistic regression, `glm(..., family = binomial())` | *z* = `r fmt_num(an("UYV3F", "statistic_recorded"), 3)` |
+| EWFMI | coded replies, three groups, Hispanic names as the base | logistic regression with the sex of the name, the poverty third and the hard-to-find address | *z* = `r fmt_num(an("EWFMI", "statistic_recorded"), 3)` |
+| 25N5D | delivered emails, Hispanic against white names | `prop.test()` of two proportions | $\chi^2$ = `r fmt_num(an("25N5D", "statistic_recorded"), 3)` |
+| P9W8Y | coded replies, three groups | likelihood-ratio test, `anova(..., test = "LRT")` | none |
+:::
 
 ::: {.fragment}
-Target: **$\chi^2$ = `r fmt_num(an("8PTRZ", "statistic_recorded"), 3)`**, the value that Multi100 recorded for 8PTRZ. When you have it, type your `X-squared` in chat and hold it until I say "go".
+When you have it, type **the analyst and your value** in chat, for example `UYV3F z = -3.771`, and hold it until I say "go".
 :::
 
 ::: notes
-Now you work. Open the working script in your workspace and go to Task 3, or the Task 3 cell of the browser lab. The code is written out for you, so read it line by line as you run it: read the public file, keep the replies that carry a greeting code, mark the Hispanic names, build the two-by-two table, and test it. This task is about the number at the end rather than the typing, so copying the code is not cheating. You should land on a chi-square of fourteen point two six five, the value recorded for 8PTRZ in the Multi100 dataset. When you have it, type the X-squared into chat, but do not send it: when I say go, everyone sends at once. Ten minutes. [wait for the numbers in chat]
+Now you work. Open Task 3 in the browser lab[, or in your workspace if you have one]{.content-visible unless-meta="deck.short"}. There is a cell for each of the five analysts, so choose the one whose analysis you would most like to understand: the test of a table, the logistic regression, the model with covariates, the two-proportion test on every delivered email, or the test of three groups. Each cell has one blank to fill in, with a hint and the solution under it. Read the code line by line as you run it. This task is about the number at the end rather than the typing, so using the solution is not cheating. When you have your value, type the analyst and the value into chat, but do not send it: when I say go, everyone sends at once. P9W8Y has no recorded value, so if you choose it, there is nothing to match, which is a lesson of its own. Fifteen minutes. [wait for the numbers in chat]
 :::
 
 ## The continuity correction {#the-continuity-correction .smaller}
@@ -28,7 +27,9 @@ Now you work. Open the working script in your workspace and go to Task 3, or the
 :::: {.columns}
 ::: {.column width="45%"}
 ::: {.small}
-| Replies with a code | Not greeted by name | Greeted by name |
+8PTRZ, the replies with a code:
+
+| | Not greeted by name | Greeted by name |
 |:--|--:|--:|
 | Hispanic names | `r tab_8ptrz["TRUE", "0"]` | `r tab_8ptrz["TRUE", "1"]` |
 | All other names | `r tab_8ptrz["FALSE", "0"]` | `r tab_8ptrz["FALSE", "1"]` |
@@ -47,13 +48,13 @@ With the correction, $\chi^2$ = **`r fmt_num(chi_yates, 3)`**; without it, $\chi
 ::::
 
 ::: {.fragment .small}
-For a two-by-two table, `chisq.test()` applies the **continuity correction** unless told otherwise: it shrinks each gap between an observed and an expected count by half a count before squaring, which makes the test a little more conservative. 8PTRZ kept the default, and so did you.
+For a two-by-two table, `chisq.test()` and `prop.test()` both apply the **continuity correction** unless told otherwise: it shrinks each gap between an observed and an expected count by half a count before squaring. 8PTRZ and 25N5D kept the default, and so did you. For 25N5D the test gives `r fmt_num(prop_yates, 3)` with it and `r fmt_num(prop_plain, 3)` without it.
 :::
 
 ::: {.fragment .small}
-A reproduction depends on the **defaults of the software** as well as on the data and the model. Optional extension: the logit of UYV3F, *z* = `r fmt_num(an("UYV3F", "statistic_recorded"), 3)` on `r an("UYV3F", "n_recorded")` replies, Hispanic against white names only.
+A reproduction depends on the **defaults and the codings of the software** as well as on the data and the model. The *z* of EWFMI is positive because its model takes the Hispanic names as the base group.
 :::
 
 ::: notes
-Here is the table that everyone just tested: replies to Hispanic names and to all other names, greeted by name or not. The printout of chisq dot test has a first line that most people skip: Pearson's chi-square test with Yates' continuity correction. [advance] For a two-by-two table, R applies that correction by default. It shrinks each gap between an observed and an expected count by half a count before squaring, which makes the test a little more cautious. Tell it correct equals false and you get fourteen point nine five instead. 8PTRZ kept the default, you kept the default, and that is why the class agrees to the third decimal. [advance] So a reproduction depends on the defaults of the software as well as on the data and the model, and a script that relies on a default is reproducible only for as long as that default stays put. If you finish early, try the logit of UYV3F.
+Here is the table of 8PTRZ: replies to Hispanic names and to all other names, greeted by name or not. The printout of chisq dot test has a first line that most people skip: Pearson's chi-square test with Yates' continuity correction. [advance] For a two-by-two table, R applies that correction by default, in chisq dot test and in prop dot test alike. It shrinks each gap between an observed and an expected count by half a count before squaring, which makes the test a little more cautious. Turn it off and 8PTRZ gets fourteen point nine five, 25N5D fourteen point three three. Both analysts kept the default, you kept the default, and that is why your values match the record to the third decimal. [advance] The coding matters in the same way: EWFMI took the Hispanic names as the base group, so its z is positive. A script that relies on a default is reproducible only for as long as that default stays put.
 :::

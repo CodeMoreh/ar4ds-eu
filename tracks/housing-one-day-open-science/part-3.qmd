@@ -1,0 +1,18 @@
+---
+title: "Part 3 – Reproduction"
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at this part](../../slides/housing-one-day-open-science.html#/part-3-reproduction){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+Part 3 is about the first of the three Rs. You choose one of the five analysts and reproduce the value that Multi100 recorded for them, from the public file of the original study, then find out why your number is exactly that number, what a reproduction needs besides the data and the code, and where the reproduction of this paper reaches its limit.
+
+| Work through | What you do | Timing |
+|---|---|---|
+| Slides, Part 3 | The instruction of Task 2 of Multi100 read word for word, what it left open, and the aim of the reproduction: one of the five reanalyses, whichever you choose, from the public file of the original authors (OAs). | 10 minutes |
+| [Browser lab](../../cases/housing/lab.qmd#task-3-reproduction) Task 3 | Choose one of the five analysts and complete their cell on the public file `audit_original.csv`. Four of them have a value that Multi100 recorded: $\chi^2$ = 14.265 for 8PTRZ, z = −3.771 for UYV3F, z = 3.645 for EWFMI and $\chi^2$ = 13.683 for 25N5D. P9W8Y has none, so its test of three groups, $\chi^2$ = 15.951 on 2 degrees of freedom, can be run again but not matched. Everyone types the analyst and the value without sending them, and sends them when the facilitator says go. | 25 minutes |
+| Slides, the defaults of the software | The continuity correction, which `chisq.test()` and `prop.test()` apply to a two-by-two table unless they are told otherwise, so that `correct = FALSE` gives 14.95 for 8PTRZ and 14.33 for 25N5D; the base group that sets the sign of the z of EWFMI; and why everyone who chose the same analyst got the same value while the five analysts, each writing their own code, did not. | 10 minutes |
+| Slides, the record of a reproduction | What a reproduction needs: the data under a licence that allows reuse, the code, the defaults of the software, and someone who tries. Then the limit of this one: the public file holds the communities in thirds, so the model of the paper with community covariates can only be approximated. | 12 minutes |
+| [Browser lab](../../cases/housing/lab.qmd#task-3-reproduction) Task 3, a second time | Reproduce a second analyst whose analysis differs from your first in one decision: the comparison (8PTRZ and UYV3F), the emails counted (UYV3F and 25N5D) or the test (UYV3F and P9W8Y). Compare the two as gaps in percentage points, and write one sentence on which of them answers the claim as SCORE selected it. | 25 minutes |
+
+**By the end of the part** you have reproduced one or two of the five reanalyses yourself, you know on which defaults of the software their values depend, and you can say what open data and open code make possible and where a reproduction of this paper reaches its limit.

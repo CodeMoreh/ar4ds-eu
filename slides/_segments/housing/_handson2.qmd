@@ -1,11 +1,14 @@
 ## Hands-on 2 – The data, the estimand and the graph {#hands-on-2-meet-the-emails-draw-the-graph .smaller}
 
+<!-- Lines that differ by format are shown by Quarto conditional content,
+     keyed on the deck map in the YAML of each deck. -->
+
 ::: {.small}
-**Task 2** has three pieces:
+**Task 2** has three pieces, in the browser lab or in your workspace:
 
 1. **Look at the data.** `r fmt_n(nrow(audit))` emails, one row each. Count the emails that bounced, the replies, the replies with a greeting code and the greetings by name, for each name
 2. **Write the estimand statement.** Fill every bracket of the template for *this* claim, and say which emails you count
-3. **Finish the graph.** Take the `#` off `"name -> greeting"` if you believe it, then run `adjustmentSets(dag)` and `paths(dag, Z = "reply")`, and read which paths open among the replies
+3. **Finish the graph**[, if there is time]{.content-visible when-meta="deck.open-science"}. Take the `#` off `"name -> greeting"` if you believe it, then run `adjustmentSets()` and `paths()` with `Z = "reply"`, and read which paths open among the replies
 :::
 
 ::: {.fragment .small}
@@ -13,9 +16,9 @@ Two sentences for your notes: **what does a comparison among the replies conditi
 :::
 
 ::: {.fragment .small}
-Whatever you decide here is your starting point on the menu in Task 4, and field 4 of the preregistration in Task 5.
+[Whatever you decide here is your starting point on the menu in Task 4, and field 4 of the preregistration in Task 5.]{.content-visible when-meta="deck.methods"}[Whatever you decide here goes into field 4 of the preregistration block that you fill in this afternoon.]{.content-visible unless-meta="deck.methods"}
 :::
 
 ::: notes
-Your turn, with three pieces. First, the data: a thousand and fourteen emails, one row each. Count what came back for each name, and notice the emails that bounced, which never reached anyone. Second, the estimand statement, every bracket filled for this claim, and in particular which emails you count. Third, the graph. Switch on the arrow from the name to the greeting if you believe it, then ask dagitty what has to be adjusted for, and which paths between the name and the greeting are open once you compare among the replies. If paths reports a path through the official as open, that is a finding about the design, not a bug in your code. Then the two sentences for your notes. [state the time] Shout if you get stuck.
+Your turn, with three pieces. First, the data: a thousand and fourteen emails, one row each. Count what came back for each name, and notice the emails that bounced, which never reached anyone. Second, the estimand statement, every bracket filled for this claim, and in particular which emails you count. Third, the graph.[ It is optional today, so take it if the first two are done.]{.content-visible when-meta="deck.open-science"} Switch on the arrow from the name to the greeting if you believe it, then ask what has to be adjusted for, and which paths between the name and the greeting are open once you compare among the replies. If a path through the official comes back as open, that is a finding about the design, not a bug in your code. Then the two sentences for your notes. [state the time] Shout if you get stuck.
 :::

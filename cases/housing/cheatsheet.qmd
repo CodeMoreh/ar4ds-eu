@@ -49,6 +49,22 @@ Both submission functions take `nickname = "..."`, which replaces the tag that t
 
 ------------------------------------------------------------------------
 
+## The reproductions of Task 3 {#reproductions}
+
+Choose one analyst. Each reproduction reads the public file of the original authors (OAs), `audit_original.csv`, and the four recorded values come out exactly. The full code is in Task 3 of the browser lab and of your workspace, and `prep/reproduce_reanalyses.R` in the workspace holds all five.
+
+| Analyst | Rows of `audit_original.csv` | The call | Recorded by Multi100 |
+|---|---|---|---|
+| 8PTRZ | `!is.na(ProperName)`: the 558 coded replies | `chisq.test(xtabs(~ hispanic_name + ProperName, ...))` | $\chi^2$ = 14.265 |
+| UYV3F | the coded replies to Hispanic and white names, 362 | `glm(ProperName ~ hispanic_name, family = binomial(), ...)` | z = −3.771 |
+| EWFMI | the coded replies with a poverty third, 549 | `glm(ProperName ~ ethnicity + name_sex + poverty_pop_third + HardEmail, ...)`, Hispanic names as the base | z = 3.645 |
+| 25N5D | `!is.na(Response_Dichotomous)`: the delivered emails to Hispanic and white names, 665 | `prop.test(greetings, emails)` | $\chi^2$ = 13.683 |
+| P9W8Y | the 558 coded replies | `anova(update(m, . ~ 1), m, test = "LRT")` on the three groups | none; the test gives 15.951 on 2 df |
+
+When the facilitator says so, type the analyst and the value into the chat, for example `UYV3F z = -3.771`, and send it on "go".
+
+------------------------------------------------------------------------
+
 ## The options of each argument {#options}
 
 Every argument of `try_spec()` is one decision of the menu, and the preregistration block of Task 5 names the same decision with `my_` in front (`comparison` becomes `my_comparison`). The first option of each row is the reference specification, which `try_spec()` fits when it is called with no arguments: the raw gap of the paper, −19.97 percentage points. An option off the curve is refused with the reason why and the page of the course site that teaches it.
@@ -81,7 +97,7 @@ The [specification menu](menu.qmd) explains every option, and the [decision map]
 
 ## Submitting to the chart {#submitting}
 
-You submit twice, and the two submissions are different in kind.
+Only the one-day course with the methods focus sends results to the class chart. The short session and the one-day courses on open science and on data tools send nothing, and their participants can skip this section. On the methods day you submit twice, and the two submissions are different in kind.
 
 **Task 4 – the exploratory mark (open circle).** Nothing in this task is preregistered.
 
@@ -110,7 +126,10 @@ If any of that stalls, work down the list under [A stalled browser lab](#a-stall
 - `# ...`: everything after `#` on a line is a comment, which R ignores. A `#` in front of an arrow of the graph switches it off.
 - `xtabs(~ a + b, data = d)` cross-tabulates two columns.
 - `chisq.test(tab)` is the chi-square test of a table; `correct = FALSE` turns off the continuity correction that R applies to a 2 × 2 table.
-- `glm(y ~ x, family = binomial(), data = d)` fits a logistic regression.
+- `prop.test(x, n)` tests two proportions, `x` successes out of `n` in each group, with the same correction by default.
+- `glm(y ~ x, family = binomial(), data = d)` fits a logistic regression, and `parameters::model_parameters(m)` prints its coefficients with their z.
+- `anova(m0, m1, test = "LRT")` compares two nested models with a likelihood-ratio test.
+- `datawizard::data_separate(d, select = "TreatmentGroup", new_columns = c("ethnicity", "name_sex"), separator = " ")` splits one text column into two.
 - `?chisq.test` opens the help page of a function.
 - Ctrl+Enter (Cmd+Enter on a Mac) runs the current line, or the selected lines, in the console.
 - `quarto preview`, typed in the terminal, renders the report and opens it in a browser.

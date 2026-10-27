@@ -402,7 +402,7 @@ decisionMap = {
   }
 
   // ---- charts
-  const recipe = d => VARY.map(a => opt(a, d[a]).label).join(" · ");
+  const recipe = d => VARY.map(a => opt(a, d[a]).label).join("; ");
   function curveChart(width, v) {
     const onAxes = VARY.filter(a => isOn(sel, a));
     const match = curve.filter(d => onAxes.every(a => d[a] === sel[a]));

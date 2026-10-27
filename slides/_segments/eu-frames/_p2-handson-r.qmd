@@ -1,0 +1,30 @@
+<!-- The id is the one that the skip link of the R tutorial (_p2-rtutorial.qmd)
+     points to; no deck includes this segment together with _p2-handson2.qmd. -->
+
+## Hands-on 2 – R on the panel {#hands-on-2-meet-the-panel-draw-the-graph .smaller}
+
+::: {.small}
+In an editable cell of Task 2 in the browser lab, or in the working script of the workspace, where `euframes` is already loaded:
+:::
+
+```{.r}
+datawizard::data_peek(euframes)                       # 1. the columns and their types
+
+euframes |>                                           # 2. one country, three columns
+  datawizard::data_filter(cntry == "GR") |>
+  datawizard::data_select(c("year", "mcosmo", "unemp"))
+
+euframes |>                                           # 3. one row per year
+  datawizard::data_summary(mean_cosmo = mean(mcosmo), mean_unemp = mean(unemp),
+                           by = "year")
+
+tinyplot::tinyplot(mcosmo ~ unemp, data = euframes)   # 4. one figure
+```
+
+::: {.fragment .small}
+Then change one thing in each step, another country, another column, another summary, and read what comes back. Green circle in the chat when all four run.
+:::
+
+::: notes
+Your turn with R itself. Use an editable cell of Task 2 in the browser lab, or the working script if you are in the workspace; in both, the panel is already loaded as euframes. Four steps, each one of the verbs that we have just met. Peek at the columns and their types. Keep one country and three columns, with filter and select joined by the pipe. Collapse the panel to one row per year with data summary, which is the same operation that turned three hundred and ninety thousand respondents into this panel. And draw one figure with tinyplot. [advance] Then change one thing in each step and read what comes back: another country, another column, the median instead of the mean. Breaking a line and reading the error message is part of the exercise. Green circle in the chat when all four run. [state the time]
+:::

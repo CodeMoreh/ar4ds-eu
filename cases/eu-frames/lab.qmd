@@ -16,6 +16,8 @@ format:
         - htmltools
 resources:
   - data/EUframes_cy.csv
+  - data/analyst_KQXUE.csv
+  - data/analyst_018OL.csv
   - data/spec_curve.csv
   - data/menu_options.csv
   - data/dag_answers.csv
@@ -38,7 +40,7 @@ curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 ref <- datawizard::data_filter(curve, is_reference)
 ```
 
-This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. It is the page that the facilitator drives on the shared screen, a place to try the analysis and the data before you have installed anything, and the fallback for a machine that will not cooperate on the day. Everyone taking the course works in the downloadable workspace described on the [Setup](../../setup.qmd) page. Nothing you do here is wasted, since both give the same numbers.
+This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. The one-day formats of the course are taught mainly on this page, which the facilitator drives on the shared screen, with the downloadable workspace described on the [Setup](../../setup.qmd) page as the option for those who have installed R and an IDE (Positron, RStudio, VS Code, etc.). In the three-day course everyone works in the workspace, and this page is the fallback for a machine that will not cooperate. Nothing you do here is wasted, since both give the same numbers.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
@@ -69,7 +71,8 @@ euframes <- utils::read.csv("data/EUframes_cy.csv") # r-style: keep – readr wo
 # not on the curve is refused with the reason recorded in data/menu_options.csv;
 # both files arrive with the page through its `resources:` list. These helpers
 # fit no model in the browser, so the only estimation package on the page is
-# fixest, which Task 3 uses for the reproduction. The workspace fits the same
+# fixest, which Task 3 uses for two of its reproductions; the third, of
+# 018OL, installs lme4 and lmerTest when it is first run. The workspace fits the same
 # specifications live, with their CR2 test (clubSandwich), and returns the same
 # numbers.
 .curve   <- utils::read.csv("data/spec_curve.csv", stringsAsFactors = FALSE) # r-style: keep – readr would add 4 MB to the download
@@ -636,7 +639,7 @@ tinyplot::tinyplot(
 tinyplot::tinyplot_add(type = "p", col = "black", pch = 16, cex = 0.6)
 ```
 
-In most countries the framing changes little over the decade, while in a few it moves sharply around the 2009 crisis. This variation within a country over time is what the fixed-effects model in Task 3 uses.
+In most countries the framing changes little over the decade, while in a few it moves sharply around the 2009 crisis. This variation within a country over time is what the fixed-effects models in Task 3 use.
 
 ## Task 2, continued – the estimand and the graph {#task-4-estimand-and-dag}
 
@@ -828,24 +831,34 @@ my_dag <- dagify( # r-style: keep – the dagify() of this page; the workspace c
 adjustmentSets(my_dag) # r-style: keep – the function of this page, which reads the answers of dagitty
 ```
 
-With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the model that you will fit in Task 3 makes the same identification claim as the graph you have just written.
+With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the two-way fixed-effects model of analyst C6HJR, one of the three that you can reproduce in Task 3, makes the same identification claim as the graph you have just written. The model of KQXUE adjusts for the country alone, and the random intercepts of 018OL adjust for neither in this sense, because a random intercept, unlike a fixed effect, does not remove the part of unemployment that is constant within a country or common to a year.
 
-Now uncomment the growth pair and run the cell again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The Task 3 model does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
+Now uncomment the growth pair and run the cell again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The two-way fixed-effects model of C6HJR does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
 
 Write two sentences for your own notes. What do two-way fixed effects adjust for, and what can they **not** fix? (Hint: anything time-varying within a country that you have not measured.)
 
 
-## Task 3 – Reproduce the recorded result
+## Task 3 – Reproduce a recorded result {#task-3-reproduction}
 
-This is the **reproducibility** check. Fit the two-way fixed-effects model that analyst C6HJR chose under the constraints that Multi100 set for its second task:
+This is the **reproducibility** check. Five analysts reanalysed the claim for Multi100, each with code of their own. Three of them fitted their models on aggregate data, and their recorded results reproduce exactly on this page; choose one of the three. The other two, KEVF1 and PRL47, fitted theirs on several hundred thousand respondents, whose files GESIS does not allow the course to publish. Their reproduction belongs to the three-day course, in which participants build the respondent file from their own GESIS downloads.
+
+| Analyst | Data on this page | Model | Recorded by Multi100 |
+|:--|:--|:--|:--|
+| [C6HJR](#task-3-c6hjr) | `EUframes_cy.csv`, 270 country-years | two-way fixed effects (country and year), conventional standard errors | t = −3.804 on 233 df |
+| [KQXUE](#task-3-kqxue) | `analyst_KQXUE.csv`, 270 country-years | country fixed effects, conventional standard errors | t = −7.169 on 242 df |
+| [018OL](#task-3-018ol) | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
+
+Each analyst has a cell of their own below, and each cell is an exercise: replace the blanks (`______`) with the missing code, then press "Run Code". A hint and the full solution sit under every cell, and using them is not cheating. When you have your value, type the analyst and the value into the chat, for example `KQXUE t = -7.169`, hold it, and send it on the facilitator's word. The two files of KQXUE and 018OL were rebuilt by the course from the GESIS waves, following the code that each analyst deposited on the OSF step by step, slips included; their [codebook](data/analyst_panels_codebook.md) says how.
+
+### C6HJR – two-way fixed effects {#task-3-c6hjr}
+
+Analyst C6HJR averaged the respondents of each country-year into the course panel and fitted the cosmopolitan scale on unemployment centred on its grand mean, with fixed effects for country and year:
 
 ```
 mcosmo ~ unemp_c   with fixed effects for country and year
 ```
 
-where `unemp_c` is the unemployment rate centred on its grand mean. The target is **t = −3.804** (df = 233, N = 270) – the value on record for analyst C6HJR in the Multi100 dataset.
-
-The cell below is an exercise. Replace the blanks (`______`) with the missing code, then press "Run Code". If you get stuck, open the hints below; the solution has the full code.
+Multi100 recorded **t = −3.804** (df = 233, N = 270).
 
 ```{webr}
 #| setup: true
@@ -862,7 +875,8 @@ euframes <- datawizard::data_modify(euframes, unemp_c = unemp - ______)
 #    the part after the | adds the fixed effects
 m1 <- fixest::feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
 
-parameters::model_parameters(m1)
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m1), digits = 5)
 ```
 
 :::: {.hint exercise="reproduce"}
@@ -898,19 +912,112 @@ fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 ``` r
 euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
 m1 <- fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
-parameters::model_parameters(m1)
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m1), digits = 5)
 ```
 
-You should get a coefficient of about −0.00347, a standard error of about 0.00091 and t(233) ≈ −3.80 – the recorded value reproduces from the published data and the published model. `parameters::model_parameters()` reports the estimate, its standard error, its confidence interval, the t with its degrees of freedom and the p-value of any model in one table. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals. Conventional errors treat the 270 country-years as independent; the case study and Part 4 show what changes when they do not.
+You should get a coefficient of −0.00347, a standard error of 0.00091 and t(233) = −3.80372, which is the −3.804 on record to the third decimal: the recorded value reproduces from the published data and the published model. `parameters::model_parameters()` reports the estimate, its standard error, its confidence interval, the t with its degrees of freedom and the p-value of any model in one table. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals. Conventional errors treat the 270 country-years as independent; the case study and Part 4 show what changes when they do not.
+:::
+::::
+
+### KQXUE – country fixed effects {#task-3-kqxue}
+
+Analyst KQXUE built a country-year panel of its own in Stata. Its outcome, `cosmo`, is the cosmopolitan share of each respondent's mentions averaged over the country-year, leaving out the respondents who mention nothing, and its predictor, `unemp`, is unemployment as a percentage of the whole population aged 20–64 rather than of the labour force. The model, `xtreg cosmo unemployment, fe` in Stata, has a fixed effect for each country and none for the year, with conventional standard errors. Multi100 recorded **t = −7.169** (df = 242, N = 270).
+
+```{webr}
+#| setup: true
+#| exercise: reproduce-kqxue
+kqxue <- utils::read.csv("data/analyst_KQXUE.csv") # r-style: keep – readr would add 4 MB to the download
+```
+
+```{webr}
+#| exercise: reproduce-kqxue
+# the panel of KQXUE: one row per country-year
+datawizard::data_peek(kqxue)
+
+# country fixed effects only, as xtreg ..., fe fits them in Stata
+m2 <- fixest::feols(cosmo ~ unemp | ______, data = kqxue, vcov = "iid")
+
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m2), digits = 5)
+```
+
+:::: {.hint exercise="reproduce-kqxue"}
+::: {.callout-note collapse="false"}
+## Hint – one set of fixed effects
+
+`xtreg, fe` removes the average of each country and nothing else, so the bar is followed by the country alone: `| cntry`.
+:::
+::::
+
+:::: {.solution exercise="reproduce-kqxue"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+datawizard::data_peek(kqxue)
+m2 <- fixest::feols(cosmo ~ unemp | cntry, data = kqxue, vcov = "iid")
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m2), digits = 5)
+```
+
+You should get a coefficient of −0.00736, a standard error of 0.00103 and t(242) = −7.16867, the −7.169 on record. The 242 degrees of freedom are the 270 country-years less the 27 country effects and the slope. The Stata code of KQXUE appended the wave EB 62.0 twice, so the respondents of autumn 2004 count twice in the 2004 means of the fifteen older member states. The column `cosmo_once` holds the means with that wave counted once; replace `cosmo` with `cosmo_once` and run the cell again to see how little the slip moves the result.
+:::
+::::
+
+### 018OL – random intercepts {#task-3-018ol}
+
+Analyst 018OL averaged its outcome, `pos`, the mean of the five cosmopolitan items of each respondent, in cells of country, year and wave, and fitted it on the unemployment rate of those aged 15–74 with a linear mixed model that has random intercepts for country, year and wave. The analyst rescaled the outcome to run from 0 to 1 before fitting, which changes the coefficient but neither t nor its degrees of freedom. Multi100 recorded **t = −1.206** (df = 396.9, N = 420).
+
+The model needs two packages that the page does not load at the start, `lme4` and `lmerTest`, so the first run of this cell downloads them into your browser, about 32 MB, which can take a minute on a slow connection. Later runs start at once.
+
+```{webr}
+#| setup: true
+#| exercise: reproduce-018ol
+o18ol <- utils::read.csv("data/analyst_018OL.csv") # r-style: keep – readr would add 4 MB to the download
+if (!requireNamespace("lmerTest", quietly = TRUE)) webr::install(c("lme4", "lmerTest"), quiet = TRUE)
+```
+
+```{webr}
+#| exercise: reproduce-018ol
+# 1. rescale the cell means to run from 0 to 1, as the analyst did
+o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
+
+# 2. random intercepts for country, year and wave; lmerTest adds the
+#    Satterthwaite degrees of freedom
+m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | ______) + (1 | wave), data = o18ol)
+
+print(parameters::model_parameters(m3, effects = "fixed", ci_method = "______"), digits = 5)
+```
+
+:::: {.hint exercise="reproduce-018ol"}
+::: {.callout-note collapse="false"}
+## Hint – the random intercepts and the degrees of freedom
+
+Each `(1 | x)` gives the cells that share a value of `x` an intercept of their own, so the missing one is `(1 | year)`. `parameters::model_parameters()` reports the degrees of freedom that `ci_method` names, and `lmerTest` provides the Satterthwaite approximation, `ci_method = "satterthwaite"`.
+:::
+::::
+
+:::: {.solution exercise="reproduce-018ol"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
+m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | year) + (1 | wave), data = o18ol)
+print(parameters::model_parameters(m3, effects = "fixed", ci_method = "satterthwaite"), digits = 5)
+```
+
+You should get a coefficient of −0.00203, a standard error of 0.00169 and t = −1.20627 on 396.92 degrees of freedom, the −1.206 on record. The year in the file is the one that 018OL took from the names of its data files, which put the wave EB 79.3, fielded in 2013, in 2012; the column `year_fieldwork` holds the true year. A rebuild that dates every wave by its fieldwork, and so merges the unemployment of 2013 onto those cells, gives t = −1.606 instead, so a rebuild that dates the waves correctly does not recover the recorded value.
 :::
 ::::
 
 ::: {.callout-note collapse="true"}
 ## Reproduction and the five analysts
 
-You reproduced the recorded value, and so did everyone else in the class, because everyone ran the same code on the same file. This is why reproducibility is the cheapest of the three Rs to establish.
+You reproduced the recorded value, and so did everyone else in the class who chose the same analyst, because each of you ran the same code on the same file. Once the data and the code are in hand, this is why reproducibility is the cheapest of the three Rs to establish; for KQXUE and 018OL, putting the data in hand meant rebuilding their files from the code that they deposited.
 
-The five Multi100 analysts each wrote their own code for the same claim, and came back with five different numbers, one of them not significant under the analyst's own test. Part of the spread comes from the questions that each analyst chose to answer, part from errors that only a reading of the code shows, and most of the spread in the recorded correlations from the conversion that put them on one scale, as the [case study](index.qmd) sets out.
+The three numbers that the class sent are far apart, although all three analysts worked on the same claim, and the two analysts on respondents add two more. Part of the spread comes from the questions that each analyst chose to answer, part from errors that only a reading of the code shows, and most of the spread in the recorded correlations from the conversion that put them on one scale, as the [case study](index.qmd) sets out.
 
 In Task 2 you named the quantity you are after and drew the graph from which your adjustment set follows. In Task 4 you find out how far the answer moves when the other choices change.
 :::
@@ -919,11 +1026,11 @@ In Task 2 you named the quantity you are after and drew the graph from which you
 
 This task is **exploratory**. You try several specifications, look at what each one does, and get a feel for which choices move the estimate and which barely touch it. Nothing in this task is preregistered; the preregistration comes in Task 5.
 
-`try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and every argument defaults to the specification that you have just reproduced. So changing one thing means changing one argument, and everything you do not name stays as it was in Task 3. Each result is one of the 864 specifications on the curve of the claim, which the page loaded with the data, so it prints at once.
+`try_spec()` takes one argument per decision of the [specification menu](menu.qmd), and every argument defaults to the reproduced specification, the model of analyst C6HJR from Task 3, on which the menu and the curve are built. So changing one thing means changing one argument, and everything you do not name stays as it was in that model. Each result is one of the 864 specifications on the curve of the claim, which the page loaded with the data, so it prints at once.
 
 ```{webr}
 #| autorun: false
-# Nothing changed – this is the specification that you reproduced in Task 3.
+# Nothing changed – this is the reproduced specification, the model of C6HJR in Task 3.
 try_spec()
 ```
 
@@ -1067,7 +1174,7 @@ my_model <- build_model(______ ~ ______, estimator = "______")
 ::: {.callout-note collapse="true"}
 ## Hint – from menu speak to model syntax
 
-The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and Task 3 showed what it expands to. Apart from the log form, the Level 2 and Level 3 choices never appear in the formula. They select which version of the panel the result was computed on.
+The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and the cells of C6HJR and KQXUE in Task 3 showed what it expands to. Apart from the log form, the Level 2 and Level 3 choices never appear in the formula. They select which version of the panel the result was computed on.
 :::
 
 When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration. These are the numbers that the downloadable workspace gives when it fits the model and computes its CR2 test on your own machine, and here you get them without downloading the estimation packages into your browser:
@@ -1077,7 +1184,7 @@ When the model is accepted, run it. Every specification on the curve is pre-comp
 run_spec(my_model)
 ```
 
-The output has the same lines as in Task 4. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero is in the direction of the claim. Whether it is significant is decided by the CR2 p, and the class line says which of the four cases your result falls in. The placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, `r round(100 * mean(curve$r_ca < ref$r_ca))`% for the specification that you reproduced in Task 3.
+The output has the same lines as in Task 4. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero is in the direction of the claim. Whether it is significant is decided by the CR2 p, and the class line says which of the four cases your result falls in. The placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, `r round(100 * mean(curve$r_ca < ref$r_ca))`% for the reproduced specification, the model of C6HJR in Task 3.
 
 Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
 

@@ -35,21 +35,21 @@ The instruction fixed one detail of the model, and left open the two decisions t
 :::
 
 ::: notes
-So what did the instruction leave open? Almost everything that matters. The comparison: the ellipsis in the claim points to white names, but the abstract compares Hispanic names with Black and white names together, and an analyst could defend either. The emails counted: the replies, as the paper counts them, or every email that arrived, which is the remedy for the problem that the causal graph showed us. The test, the covariates other than ethnic composition, and even five replies whose greeting nobody coded. [advance] The instruction pinned down one detail of the model, and left open the two decisions that define the question itself. That is exactly where the five analysts parted company, as their table showed earlier.
+So what did the instruction leave open? Almost everything that matters. The comparison: the ellipsis in the claim points to white names, but the abstract compares Hispanic names with Black and white names together, and an analyst could defend either. The emails counted: the replies, as the paper counts them, or every email that arrived, which is the remedy for the problem [that the causal graph showed us]{.content-visible unless-meta="deck.data-tools"}[of comparing only the officials who chose to reply]{.content-visible when-meta="deck.data-tools"}. The test, the covariates other than ethnic composition, and even five replies whose greeting nobody coded. [advance] The instruction pinned down one detail of the model, and left open the two decisions that define the question itself. That is exactly where the five analysts parted company, as their table showed earlier.
 :::
 
 ## Analyst no. 6 {#you-are-analyst-no.-6}
 
 ::: {.big}
-- Aim 1: **reproduce** the constrained result of analyst **8PTRZ**
+- Aim 1: **reproduce** the constrained result of **one of the five analysts**, whichever you choose
 :::
 
-  - **What 8PTRZ did:** Hispanic names against all other names, among the replies with a greeting code – a $\chi^2$ test of the two-by-two table, in R
+  - **What you choose from:** four results that Multi100 recorded, from the $\chi^2$ test of a table to a logistic regression with covariates, and one analysis, that of P9W8Y, with nothing on record
 
-  - **What Multi100 recorded:** $\chi^2$ = `r fmt_num(an("8PTRZ", "statistic_recorded"), 3)` on `r an("8PTRZ", "n_recorded")` replies (partial *r* = `r fmt_num(an("8PTRZ", "r_recorded"), 3)`)
+  - **What you match:** the recorded statistic, to the third decimal, on the same number of emails
 
   - **What you have:** the public file of the OAs, `audit_original.csv`, and R
 
 ::: notes
-So here is your first job as the sixth analyst. Analyst 8PTRZ, who described their discipline as computer science, statistics and data science, compared Hispanic names with all other names together, white and Black, among the replies that carry a greeting code, and tested the two-by-two table with a chi-square test in R. Multi100 recorded a chi-square of fourteen point two six five on five hundred and fifty-eight replies. You have the same public file of the original authors that 8PTRZ had, published on the Harvard Dataverse, and you have R. The whole of reproducibility is the question of whether that is enough for you to get the recorded number back, to the third decimal. Let us find out.
+So here is your first job as the sixth analyst. Each of the five analysts of this claim answered the instruction in their own way, and Multi100 recorded a test statistic for four of them: a chi-square test of a table for 8PTRZ, a logistic regression without covariates for UYV3F, a logistic regression of all three groups with covariates for EWFMI, and a two-proportion test on every delivered email for 25N5D. For the fifth, P9W8Y, nothing was recorded. You choose one of the five. You have the same public file of the original authors that they had, published on the Harvard Dataverse, and you have R. The whole of reproducibility is the question of whether that is enough for you to get the recorded number back, to the third decimal. Let us find out.
 :::

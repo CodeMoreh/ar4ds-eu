@@ -1,46 +1,34 @@
-<!-- The track that a visitor chose on the opening page, shown as a navbar item
-     on every page of the site. The choice lives in this browser only
-     (localStorage key "ar-track"); with no choice, or with storage blocked,
-     nothing is shown. Links use the quarto:offset meta tag, so they work from
-     pages at any depth. Inline rather than a separate file for that reason. -->
+<!-- The track that a visitor last opened, shown as a navbar item on every page
+     of the site, so that someone who follows a link out of a track can find it
+     again. A page under tracks/<slug>/ records its slug in this browser only
+     (localStorage key "ar-track"); with no track opened yet, or with storage
+     blocked, nothing is shown. The facilitator chooses the track of a delivery
+     (_planning/formats-2026-10-27.md), so there is no button that chooses one.
+     Links use the quarto:offset meta tag, so they work from pages at any depth.
+     Inline rather than a separate file for that reason. -->
 <script>
 (function () {
-  // Slugs carry the case, as the folders under tracks/ do: <slug>-<format>.
-  // The one exception is "semester", the track that takes the four cases in
-  // turn (tracks/semester/). The same slugs are known to the cards of the
-  // opening page (_includes/home-script.html reads them from data-slug) and to
-  // _includes/next-delivery.qmd.
+  // The folders under tracks/, which _includes/next-delivery.qmd and the
+  // delivery block of _variables.yml name in the same way.
   var TRACKS = {
     "housing-short": "Short session – housing audit",
-    "housing-one-day": "One day – housing audit",
-    "trust-one-day": "One day – immigration and trust",
-    "cohabitation-one-day": "One day – cohabitation",
-    "eu-frames-one-day-replication": "One day – open science and replication – EU frames",
-    "eu-frames-one-day-tools": "One day – social data science tools – EU frames",
-    "eu-frames-one-day-methods": "One day – the statistical methods – EU frames",
+    "housing-one-day-open-science": "One day, open science – housing audit",
+    "housing-one-day-data-tools": "One day, data tools – housing audit",
+    "housing-one-day-methods": "One day, methods – housing audit",
+    "eu-frames-one-day-open-science": "One day, open science – EU frames",
+    "eu-frames-one-day-data-tools": "One day, data tools – EU frames",
+    "eu-frames-one-day-methods": "One day, methods – EU frames",
+    "trust-three-days": "Three days – immigration and trust",
+    "cohabitation-three-days": "Three days – cohabitation",
     "eu-frames-three-days": "Three days – EU frames",
-    "eu-frames-semester": "Semester – EU frames",
-    "eu-frames-self-study": "Self-study – EU frames",
-    "semester": "Semester – four cases"
+    "self-study": "Self-study – four cases"
   };
-  // A choice stored under one of the slugs that the EU-frames tracks had
-  // before they carried the case is read as the slug that replaced it, and
-  // written back once. "semester" is not among them: it names the semester
-  // track across the four cases, not the semester track of the EU-frames case.
-  var FORMER = {
-    "one-day-replication": "eu-frames-one-day-replication",
-    "one-day-tools": "eu-frames-one-day-tools",
-    "one-day-methods": "eu-frames-one-day-methods",
-    "three-days": "eu-frames-three-days",
-    "self-study": "eu-frames-self-study"
-  };
+  var KEY = "ar-track";
   var slug = null;
   try {
-    slug = window.localStorage.getItem("ar-track");
-    if (slug && FORMER[slug]) {
-      slug = FORMER[slug];
-      window.localStorage.setItem("ar-track", slug);
-    }
+    var here = window.location.pathname.match(/\/tracks\/([a-z0-9-]+)\//);
+    if (here && TRACKS[here[1]]) window.localStorage.setItem(KEY, here[1]);
+    slug = window.localStorage.getItem(KEY);
   } catch (e) { return; }
   if (!slug || !TRACKS[slug]) return;
   var meta = document.querySelector('meta[name="quarto:offset"]');
@@ -52,7 +40,7 @@
   var a = document.createElement("a");
   a.className = "nav-link";
   a.href = base + "tracks/" + slug + "/index.html";
-  a.title = "The track you chose on the opening page";
+  a.title = "The track you opened last";
   a.innerHTML = '<i class="bi bi-signpost-split" aria-hidden="true"></i> <span class="menu-text">Your track: ' + TRACKS[slug] + "</span>";
   li.appendChild(a);
   nav.appendChild(li);

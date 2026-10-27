@@ -1,20 +1,26 @@
 ## Hands-on 1 – The setup check {#hands-on-1-get-yourself-running .smaller}
 
+<!-- Lines that differ by format are shown by Quarto conditional content,
+     keyed on the deck map in the YAML of each deck. -->
+
 ::: {.small}
 **Task 1 – the setup check.** Get to the point where a line of R runs and the data are in front of you.
 
-- **Workspace:** your IDE opens the workspace folder, and `source("R/check_setup.R")` prints an `[OK]` line for every check; the last one recomputes a number that you will meet again later, `r fmt_num(curve_ref$b_pp, 2)` percentage points
-- **Browser lab:** the page has finished loading, the setup cell runs, and `audit` has `r fmt_n(nrow(audit))` rows, one per email
+- **Browser lab:** the page has finished loading, the setup cell runs, and `audit` has `r fmt_n(nrow(audit))` rows, one per email. The warm-up on the three Rs gives you something to do while the engine downloads
+:::
+
+::: {.small .content-visible unless-meta="deck.short"}
+**Workspace**, if you have installed it: your IDE opens the workspace folder, and `source("R/check_setup.R")` prints an `[OK]` line for every check. The last one recomputes a number that you will meet again later, `r fmt_num(curve_ref$b_pp, 2)` percentage points.
 :::
 
 ::: {.fragment .small}
-Take the time you need, **into the break** if necessary. Type a green circle in chat when you are through; type **STUCK** and I will come to you.
+Type a green circle in chat when you are through; type **STUCK** and I will come to you.[ Take the time you need, **into the break** if necessary.]{.content-visible unless-meta="deck.short"}
 :::
 
-::: {.fragment .small}
-If your installation will not cooperate, do not fight it – open the browser lab and carry on. Nothing in the tasks depends on which one you use.
+::: {.fragment .small .content-visible unless-meta="deck.short"}
+If your installation will not cooperate, do not fight it – carry on in the browser lab. Nothing in the tasks depends on which one you use.
 :::
 
 ::: notes
-Your turn, and this first task is deliberately not intellectual. The job is to reach the point where a line of R runs and the data are in front of you. In the workspace, open the folder in your IDE and source the check script: it prints one OK line for each thing that the course needs, the packages, Quarto and the data files, and the last check fits a small model and prints a number that you will meet again later. In the browser lab, wait for the page to finish loading, run the setup cell, and check that the data have one row for each of the emails. Take the time you need, into the break if you have to, because getting this right now saves an hour of misery later. A green circle in chat when you are through, STUCK if you need me. And if the workspace will not cooperate, switch to the browser lab and carry on.
+Your turn, and this first task is deliberately not intellectual. The job is to reach the point where a line of R runs and the data are in front of you. In the browser lab, wait for the page to finish loading, run the setup cell, and check that the data have one row for each of the emails; the warm-up below it, on the three Rs, gives you something to do while the engine downloads.[ If you have installed the workspace, open the folder in your IDE and source the check script, which prints one OK line for each thing that the course needs and ends by fitting a small model. Take the time you need, into the break if you have to. And if the workspace will not cooperate, switch to the browser lab and carry on.]{.content-visible unless-meta="deck.short"}[ Five minutes, and nothing to install.]{.content-visible when-meta="deck.short"} A green circle in chat when you are through, STUCK if you need me.
 :::

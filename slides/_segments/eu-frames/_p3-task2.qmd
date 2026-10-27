@@ -39,7 +39,7 @@ Now take the instructions apart, because each rests on an assumption. Asking for
 ## The EU-frames panel {#the-panel-you-will-work-on .smaller}
 
 ::: {.small}
-`EUframes_cy.csv` – **270 rows**, one per country-year · 27 countries · 2004–2013
+`EUframes_cy.csv` – **270 rows**, one per country-year, for 27 countries over 2004–2013
 
 | Column | What it is |
 |---|---|
@@ -57,20 +57,26 @@ Now take the instructions apart, because each rests on an assumption. Asking for
 :::
 
 ::: notes
-Here is the panel that you looked at in Hands-on 2, now column by column, because everything from now on works from it. Two hundred and seventy rows, one per country-year, twenty-seven countries over ten years. Country and year identify the cell. Mcosmo is the mean cosmopolitan framing in that cell, on a nought-to-one scale, and the other framing scales sit beside it. Unemployment and growth are the national macro indicators. And then n underscore cy, which counts how many survey respondents are behind each cell – and that is the interesting column, because those counts differ a great deal between cells. A country-year built from two thousand respondents and one built from five hundred are not equally precise, which is why whether to weight by n is a live choice on the specification menu. It is the one data file that you will load yourself.
+Here is the panel that you looked at in Hands-on 2, now column by column, because everything from now on works from it. Two hundred and seventy rows, one per country-year, twenty-seven countries over ten years. Country and year identify the cell. Mcosmo is the mean cosmopolitan framing in that cell, on a nought-to-one scale, and the other framing scales sit beside it. Unemployment and growth are the national macro indicators. And then n underscore cy, which counts how many survey respondents are behind each cell – and that is the interesting column, because those counts differ a great deal between cells. A country-year built from two thousand respondents and one built from five hundred are not equally precise, which is why whether to weight by n is a live choice on the specification menu. It is the file behind the reproduction of my own analysis, and two of the other analysts have files of their own, built in the same way from the same waves.
 :::
-## Analyst no. 6 {#you-are-analyst-no.-6}
+## Analyst no. 6 {#you-are-analyst-no.-6 .smaller}
 
 ::: {.big}
-- Aim 1: **reproduce** analyst **C6HJR**'s constrained result
+- Aim 1: **reproduce** one of the recorded results
 :::
 
-  - **What Multi100 asked:** one main test result for the positive non-materialist (cosmopolitan) framing and the unemployment rate, without the contextual variables of EU policy and party positions
+::: {.small}
+| Analyst | Data | Model | Recorded by Multi100 |
+|:--|:--|:--|:--|
+| C6HJR | the course panel, 270 country-years | fixed effects for country and year | t = −3.804 on 233 df |
+| KQXUE | a panel of its own, 270 country-years | a fixed effect for each country | t = −7.169 on 242 df |
+| 018OL | 420 cells of country, year and wave | random intercepts for country, year and wave | t = −1.206 on 396.9 df |
+:::
 
-  - **What I submitted:** a two-way fixed-effects model, `mcosmo ~ unemp_c | cntry + year`
-
-  - **What Multi100 recorded:** t ≈ −3.80 (df = 233, N = 270, partial *r* ≈ −0.242)
+::: {.fragment .small}
+KEVF1 and PRL47 fitted their models on respondents, so their reproduction needs the respondent file built from your own GESIS downloads.
+:::
 
 ::: notes
-So here is your first job as the sixth analyst, and it is the same job I had. Multi100 asked for one main result on the cosmopolitan framing and the unemployment rate, without the contextual variables of EU policy and party positions. What I submitted was a two-way fixed-effects model – cosmopolitan framing on centred unemployment, with country and year absorbed – and what Multi100 recorded for me is a t of minus three point eight zero, on two hundred and thirty-three degrees of freedom, which standardises to a partial correlation of minus point two four. Now, you have my code. You have my data. The whole of reproducibility is the question of whether that is enough for you to get my number back. Let us find out.
+So here is your first job as the sixth analyst. Multi100 recorded a result for each of the five of us, and three of those results rest on means of countries or of cells, which may be published, so they reproduce from files that you already have. Mine is on the course panel, with fixed effects for country and year. KQXUE built a panel of its own and gave each country a fixed effect. 018OL averaged cells of a country in one wave and fitted random intercepts. Choose one of the three. [advance] The other two analysts worked on several hundred thousand respondents, and their reproduction needs the respondent file, which only your own GESIS download can give you. Whichever you choose, the question is the one at the heart of reproducibility: given the data and the model, does the recorded number come back?
 :::

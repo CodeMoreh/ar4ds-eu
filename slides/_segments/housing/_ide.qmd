@@ -1,0 +1,47 @@
+## The IDE {#the-ide .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**Four places to know**
+
+- **The editor** – scripts and reports, the files that you keep
+- **The console** – where R runs a line and prints the answer
+- **The variables** – every object that the session holds, such as `audit`
+- **Files, plots and help** – the folder, the last figure, and the help page of a function
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**One habit**
+
+- Open the **folder** of the workspace, never a single file. The folder is the place from which R reads `data/housing_audit.csv`, so the same code runs on every machine
+- Positron, RStudio and VS Code arrange the four places differently, and all three have them
+:::
+:::
+::::
+
+::: {.src}
+The companion module on IDEs compares the three: companion/ide.qmd on the course site.
+:::
+
+::: notes
+An IDE, an integrated development environment, is the program in which you write and run R, and for today's purposes it has four places worth knowing. The editor, where scripts and reports live: these are the files that you keep. The console, where R runs a line and prints the answer. The list of variables, which shows every object that the session holds, so that you can check that the data are there and how many rows they have. And a pane for files, plots and help pages. Positron, RStudio and VS Code put these in different corners, but all three have them. One habit matters more than any layout: open the folder of the workspace, never a single file, because the folder is the place from which every path in the code starts, and that is what lets the same code run on your machine and on mine.
+:::
+
+## Scripts and the console {#scripts-and-the-console .smaller}
+
+::: {.small}
+- **The console** is for trying things, and whatever you type there is gone when the session ends
+- **The script** is for keeping them. `working_script.R` holds Tasks 1 to 5, and Ctrl+Enter (Cmd+Enter on a Mac) sends the current line, or the selected lines, to the console
+- **A clean session** is the test of a script: restart R, run it from the top, and every result should come back
+- **In the browser lab** each cell is a small script, and the page keeps nothing once it is reloaded
+:::
+
+::: {.fragment .small}
+An object that exists only because you typed it in the console is not part of the analysis, and nobody else can make it again.
+:::
+
+::: notes
+The console and the script do different jobs. The console is for trying things: type a line, read the answer, and when the session ends it is gone. The script is for keeping them. Your workspace has one, working underscore script dot R, which holds the five tasks in order, and Control and Enter sends the line under the cursor, or the lines that you have selected, to the console. The test of a script is a clean session: restart R, run the script from the top, and check that every result comes back. In the browser lab each cell is a small script of the same kind, and the page keeps nothing when you reload it. [advance] So anything that exists only because you typed it into the console is not part of your analysis, because nobody else, including you next week, can make it again.
+:::
