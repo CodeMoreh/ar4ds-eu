@@ -6,7 +6,7 @@ Each case is a claim that five independent analysts reanalysed for the Multi100 
 
 ## Website
 
-The site deploys to GitHub Pages at <https://codemoreh.github.io/applied-replication/>.
+The site deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>.
 
 ## The four cases
 
