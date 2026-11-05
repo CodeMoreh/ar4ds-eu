@@ -1,0 +1,99 @@
+---
+title: "Stage 4 – Few clusters and the multiverse"
+case: eu-frames
+---
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at the menu](../../slides/eu-frames-full.html#/the-specification-menu){target="_blank"}, in Part 3, in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+The fourth stage works the menu of the case, fourteen decisions and a curve of 864 specifications, and asks two questions of it. The first is how much certainty a panel of twenty-seven countries can give, when every result is tested by standard errors clustered by country with the CR2 correction. The second is what hundreds of estimates on the same data can establish when the estimates are not independent tests. The stage ends with the case report and the choice of your project, and takes about six and a half hours.
+
+## 1. The specification menu and the decision map
+
+[40 minutes]{.text-muted}
+
+[Open the specification menu](../../cases/eu-frames/menu.qmd){.btn .btn-primary target="_blank"} [Open the decision map](../../cases/eu-frames/map.qmd){.btn .btn-outline-primary target="_blank"}
+
+The menu sets out the fourteen decisions and the three levels into which they sort, the options that the curve of 864 keeps, and the alignment of every result with the direction of the claim. The map then lays out every decision in the order in which an analyst meets it, with what each option does to the estimand statement and to the results.
+
+## 2. Task 4 – The menu
+
+[40 minutes]{.text-muted}
+
+**On the slides, then in your report** or your working script, or in the browser lab.
+
+[Open the browser lab at Task 4](../../cases/eu-frames/lab.qmd#task-4-explore){.btn .btn-outline-primary target="_blank"}
+
+The slides of Part 3 from the menu onwards present the menu and the methods behind each of its decisions. Then call `try_spec()` one argument at a time and compare the tries with `my_experiments()`. Ask once for pooled OLS (`estimator = "pooled_cl"`) to read why it is refused, and send the try that you would defend with `submit_exploration()` if you want it on the [class chart](../../cases/eu-frames/multiverse.qmd#class-results).
+
+## 3. Multiverse and preregistration
+
+[40 minutes]{.text-muted}
+
+**On the slides**, at [Part 4](../../slides/eu-frames-full.html#/part-4-multiverse-and-preregistration){target="_blank"}. The slides take the multiverse tutorial, then set the class chart, which holds the results of earlier cohorts, against the curve of 864. The slides go on to the decision that carries the largest share of the variation across specifications, to where the five reanalyses and the original study sit and to your own placement on the curve, and they end on the inference that a curve does and does not support.
+
+## 4. Task 5 – The preregistration
+
+[30 minutes]{.text-muted}
+
+**In the preregistration block of your report**, or in the browser lab.
+
+[Open the browser lab at Task 5](../../cases/eu-frames/lab.qmd#task-5-my-preregistration){.btn .btn-outline-primary target="_blank"}
+
+Complete the block before you run anything, with one option for each of the fourteen decisions, and run `prereg()`. Then translate the declaration into model syntax yourself, run it, and send it with `report_result()` if you want it on the chart.
+
+## 5. Within and between, and few clusters on the curve
+
+[45 minutes]{.text-muted}
+
+[Open Within and between](../../companion/stats-methods.qmd#sec-re){.btn .btn-primary target="_blank"}
+
+Read [Within and between](../../companion/stats-methods.qmd#sec-re), on the within–between model that gives each kind of variation its own slope. Then read [Standard errors with few clusters](../../companion/stats-methods.qmd#sec-inference) again with the curve in mind, because the CR2 correction with its Satterthwaite degrees of freedom is the rule by which every point of the curve is classed. Under that rule the reproduced specification, the model of C6HJR on which the menu is built, has a p of 0.0504 on 9.8 degrees of freedom, so it is not significant at 5% under the test of the curve, although its conventional p is 0.0002.
+
+## 6. Reading a specification curve
+
+[35 minutes]{.text-muted}
+
+[Open Reading a specification curve](../../cases/eu-frames/reading-inference.qmd){.btn .btn-primary target="_blank"}
+
+The page separates description from inference, explains why 864 estimates on the same data are not 864 independent tests, sets out what a permutation test of the whole curve would have to do, and says what can be said without one.
+
+## 7. The multiverse and its critics
+
+[95 minutes]{.text-muted}
+
+[Open The multiverse and its critics](../../companion/multiverse.qmd#sec-origins){.btn .btn-primary target="_blank"}
+
+Work from [Origins](../../companion/multiverse.qmd#sec-origins) to [The EU-frames curve](../../companion/multiverse.qmd#sec-eu-frames). The first seven sections cover where multiverse analysis came from, the three purposes that a multiverse can serve, the critique of pruning, the argument for one correct analysis, frequency against probability, robustness against replicability, and the multiverse in teaching. The last section reads that debate on the curve of 864, through the pruning of a menu of fourteen decisions, one correct analysis on the curve of the claim, the fork chart, the strength of the evidence, and heterogeneity and influence.
+
+## 8. Missing answers
+
+[30 minutes]{.text-muted}
+
+[Open Missing answers](../../companion/missingness.qmd){.btn .btn-primary target="_blank"}
+
+The module shows what a respondent who mentions no frame at all does to a share built from mentions, sets out the rules that the menu offers for such respondents and what each rule assumes, and sets multiple imputation against the rules set by fiat.
+
+## 9. The case report
+
+[20 minutes]{.text-muted}
+
+**In your workspace.** Render the report with all five tasks complete, the preregistration as it stood before the run and the result beneath it. This is your case report.
+
+## 10. The choice of a project
+
+[20 minutes]{.text-muted}
+
+[Read the projects](stage-5.qmd#the-projects){.btn .btn-primary}
+
+Read the list of projects on the page of stage 5, and choose one question beyond the claim. Stage 5 sets up version control before you write the preregistration, so that a dated commit fixes the declaration before anything runs.
+
+## 11. Further modules (optional)
+
+[As long as you like]{.text-muted}
+
+[The items behind the scales](../../companion/measurement.qmd) takes the battery of items behind the outcomes of the case, its dimensions and its reliability, and [Weights](../../companion/weighting.qmd) sets out the weights of the cells and the population weight as another estimand. [The individual level](../../companion/individual-level.qmd) fits the claim at the level of the respondents, where the OA fitted it, on the simulated person-level dataset of the course, which is validated against the real respondents. [Simulation as a method](../../companion/simulation.qmd) builds data with a known recipe, in which a method can be checked against an answer known in advance. Each of the four modules supports a project on this case.
+
+**Shortcuts.** If stage 3 left fixed effects and few clusters clear, skip the second reading of the section on standard errors with few clusters and read only [Within and between](../../companion/stats-methods.qmd#sec-re). If time is short, read only [Robustness and replicability](../../companion/multiverse.qmd#sec-replicability) and [The EU-frames curve](../../companion/multiverse.qmd#sec-eu-frames) in the multiverse module now, and come back to the rest of it when your project in stage 5 needs it.
+
+**By the end of the stage** you have your declared result placed among the 864 specifications of the curve, the case report rendered, a sentence on what the CR2 test by country changes for the reproduced specification, and the question of your project chosen.
