@@ -7,13 +7,34 @@ aliases:
 **Slides.** [Open the deck at this part](../../slides/eu-frames-one-day-methods.html#/part-2-the-claim-and-its-estimand){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
 :::
 
-Part 2 is the conceptual centre of the day. It reads the paper in full, argues that analysts who look as though they disagree are often answering different questions, and gives you the vocabulary for saying which question you are answering. The causal-graph crash course follows in full, and then your own estimand and graph.
+Part 2 is the conceptual centre of the day. It reads the paper in full, argues that analysts who look as though they disagree are often answering different questions, and gives you the vocabulary for saying which question you are answering. The short course on causal graphs follows in full, and then your own estimand and graph. The part takes ninety minutes.
 
-| Work through | What you do | Timing |
-|---|---|---|
-| Slides, the paper in full | The four framing scales, the model that the original author (OA) fitted, Model 1 and Model 2, which put the robustness question inside the paper, the attempts to reproduce and replicate the paper in the SCORE programme, and the five questions that the Multi100 analysts asked in the free phase. | 15 minutes |
-| Slides, the estimands run | The red-card estimates again as a single row, four estimands drawn out of one football question, and the spread that collapses once the estimand is fixed; Lundberg's three steps from a theoretical quantity to an empirical one. | 21 minutes |
-| Slides, the causal-graph crash course, with [Causal graphs](../../companion/dags.qmd) as the companion | Confounders, mediators and colliders; causal stories behind a correlation; open and closed paths; total against direct effects; selection and feedback. Then our own claim: everyone writes a one-sentence estimand, holds it and sends it together; why a graph is worth drawing when identification is out of reach; and the half-built graph. | 36 minutes |
-| [Browser lab](../../cases/eu-frames/lab.qmd) Task 2, or `R/dag_starter.R` in the workspace | Look at the panel; write the estimand in words; take the `#` off the arrows you are willing to defend, run `adjustmentSets()` again, and write two sentences on what two-way fixed effects adjust for and what they cannot fix. | 18 minutes |
+## 1. The paper
 
-**By the end of the part** you have the estimand behind the claim in one sentence, a graph that includes only the arrows you are willing to defend, and the adjustment set that follows from it.
+**On the slides.** The slides present the paper of the original author (OA): the claim as the analysts received it, the four framing scales, the model that the OA fitted, and Model 1 and Model 2, which put the robustness question inside the paper. The slides go on to the attempts to reproduce and to replicate the paper in the SCORE programme, and end on the five questions that the Multi100 analysts asked in the free phase of the project.
+
+## 2. Estimands
+
+**On the slides.** The red-card estimates return as a single row, with four estimands drawn out of one football question and the spread that collapses once the estimand is fixed. The slides then present the three steps from a theoretical to an empirical estimand that Lundberg and colleagues set out.
+
+## 3. Causal graphs
+
+**On the slides.** A short course on causal graphs covers confounders, mediators and colliders, and the causal stories that can lie behind one correlation. It goes on to open and closed paths, total against direct effects, and selection and feedback.
+
+To go further: [Causal graphs and adjustment sets](../../companion/dags.qmd).
+
+## 4. The estimand and the graph of the claim
+
+**On the slides.** The course returns to the claim of the day. You write the estimand in one sentence in the chat, hold it, and send it with the rest of the class when the facilitator says go. The slides then say why a causal graph is worth drawing in a design that cannot identify a causal effect, and present the graph of the claim, half built.
+
+## 5. The R tutorial (optional)
+
+**On the slides**, if the class wants it. The tutorial puts R in one slide, then covers getting data in, inspecting the data, working with rows and columns, model formulas and fixed effects with fixest. It ends on reading what comes back, plotting with tinyplot, causal graphs in R, and the error messages that you are most likely to meet.
+
+## 6. Task 2 – The panel, the estimand and the graph
+
+[Open the browser lab at Task 2](../../cases/eu-frames/lab.qmd#task-2-get-the-data-and-look-at-it){.btn .btn-primary target="_blank"}
+
+Look at the panel and write the estimand in words. Then go to the [graph cell](../../cases/eu-frames/lab.qmd#task-4-estimand-and-dag), or open `R/dag_starter.R` in the workspace, take the `#` off the arrows that you are willing to defend, and run `adjustmentSets()` again. Finish with two sentences on what two-way fixed effects adjust for and what they cannot fix.
+
+**By the end of the part** you have the estimand behind the claim in one sentence, a graph that includes only the arrows that you are willing to defend, and the adjustment set that follows from it.
