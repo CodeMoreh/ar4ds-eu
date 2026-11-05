@@ -42,344 +42,13 @@ c6hjr <- dplyr::bind_rows(
 cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]
 ```
 
-This module of the [companion curriculum](index.qmd) works on three cases, each of which weights a different kind of data. The immigration-and-trust case fits its claim on respondents of the European Social Survey (ESS), whose files carry a design weight, a post-stratification weight and a population weight, and shows what each makes a regression describe. The cohabitation case fits its claim on women of the National Survey of Family Growth (NSFG), a survey that samples some groups at higher rates than others and its women in clusters within strata, and shows both the weights and the errors that follow the design. The EU-frames case fits its claim on country-year means of Eurobarometer respondents, where weights enter at two levels, inside each cell and across the cells, and separates the three arguments that the word 'weighting' covers there.
+This module of the [companion curriculum](index.qmd) is about the weights of the EU-frames case, which fits its claim on country-year means of Eurobarometer respondents, so that weights enter at two levels, inside each cell and across the cells. The specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this module gives the reasons.
 
-## The immigration-and-trust case {#sec-trust}
+The module takes the three questions apart on the course panel, and it is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
 
-```{r}
-#| label: setup-trust
-#| include: false
-# the section on the immigration-and-trust case, computed when the page is built
-# from the extract of the European Social Survey that the course ships and from
-# the files of its curve; the objects of the section carry the prefix tr_
-source("../R/trust/_tools.R")
-tr_ess <- readr::read_csv("../cases/trust/data/trust_ess.csv", show_col_types = FALSE)
-tr_curve <- readr::read_csv("../cases/trust/data/spec_curve.csv", show_col_types = FALSE,
-                            col_types = readr::cols(stat_type = readr::col_character()))
-tr_opts <- readr::read_csv("../cases/trust/data/display_options.csv", show_col_types = FALSE) |> datawizard::data_filter(axis == "weights")
-tr_devs <- readr::read_csv("../cases/trust/data/menu_deviations.csv", show_col_types = FALSE) |> datawizard::data_filter(axis == "weights")
-tr_menu <- readr::read_csv("../cases/trust/data/menu_options.csv", show_col_types = FALSE) |> datawizard::data_filter(axis == "weights")
-tr_marks <- readr::read_csv("../cases/trust/data/reference_marks.csv", show_col_types = FALSE)
-tr_country <- c(AT = "Austria", BE = "Belgium", CH = "Switzerland", DE = "Germany",
-                DK = "Denmark", ES = "Spain", FI = "Finland", FR = "France",
-                GB = "the United Kingdom", GR = "Greece", IE = "Ireland", IT = "Italy",
-                NL = "the Netherlands", NO = "Norway", PT = "Portugal", SE = "Sweden")
-tr_country_short <- sub("^the ", "", tr_country)
-tr_names <- \(codes) {
-  n <- unname(tr_country[codes])
-  if (length(n) == 1) n else paste(paste(n[-length(n)], collapse = ", "), "and", n[length(n)])
-}
-tr_sgn <- \(x, d = 3) paste0(dplyr::if_else(x > 0, "+", ""), num(x, d))
-tr_dv <- \(option, col) tr_devs[[col]][tr_devs$option == option]
+The EU-frames claim is about national means, so a weight inside a cell improves the estimate of a quantity that is already defined, the mean of the country-year. In a regression on respondents the same kind of weight decides whose association the coefficient describes, and the difference between the two uses of a weight lies in what the unit of the analysis is.
 
-# the respondents of the paper: citizens who do not belong to an ethnic minority
-tr_paper <- tr_ess |> datawizard::data_filter(citizen %in% 1, minority %in% 0)
-
-# the weights by country: Kish design effects among the respondents of the
-# paper, and the adult population that the population weight stands for,
-# pweight x the respondents of the country-round in the data file x 10,000
-tr_kish <- \(w) length(w) * sum(w^2) / sum(w)^2  # r-style: PENDING – Kish design effect; no package found
-tr_deff <- tr_paper |>
-  dplyr::summarise(design = tr_kish(dweight), post = tr_kish(pspwght), .by = cntry)
-tr_flat <- tr_deff |> datawizard::data_filter(round(design, 2) == 1) |> datawizard::data_arrange("cntry") |> dplyr::pull(cntry)
-tr_dw_mean <- tr_ess |> dplyr::summarise(m = mean(dweight), .by = c(cntry, essround)) |> dplyr::pull(m)
-stopifnot(all(abs(tr_dw_mean - 1) < 5e-4))
-tr_adults <- tr_ess |>
-  dplyr::summarise(adults = dplyr::first(pweight) * dplyr::n() * 1e4, .by = c(cntry, essround)) |>
-  dplyr::summarise(adults = mean(adults), rounds = dplyr::n(), .by = cntry)
-ad <- \(c) tr_adults$adults[tr_adults$cntry == c] / 1e6
-tr_big5 <- tr_adults |> dplyr::slice_max(adults, n = 5) |> dplyr::pull(cntry)
-
-# the reference specification under the five ways of using the weights
-tr_five <- tr_curve |>
-  datawizard::data_filter(outcome == "parliament", controls == "paper", items == "complete", fe == "country_round") |>
-  dplyr::select(option = weights, b, se, stat) |>
-  dplyr::bind_rows(tr_opts |> datawizard::data_select(select = c("option", "b", "se", "stat"))) |>
-  dplyr::left_join(tr_menu |> datawizard::data_select(select = c("option", "label", "on_curve")), by = "option")
-tw <- \(o, col) tr_five[[col]][tr_five$option == o]
-
-# The fixed-effects coefficient as a weighted average of one slope per country.
-# With concern and distrust taken net of the country-round intercepts and of the
-# controls, a country adds sum(w * x^2) to the denominator of the coefficient
-# and sum(w * x * y) to its numerator, so its share is the first sum over the
-# total and its slope the ratio of its two sums.
-tr_decompose <- \(weights) {
-  frame <- spec_frame(tr_ess, weights = weights)
-  # concern net of the controls and of the country-round intercepts, as the
-  # residual of the weighted fit, and distrust net of the intercepts, both by
-  # fixest (Bergé, Butts and McDermott 2026, arXiv:2601.21749)
-  x_form <- stats::as.formula(paste("x ~", paste(CONTROL_TERMS$paper, collapse = " + "), "| cr"))
-  tibble::tibble(cntry = frame$cntry, w = frame$w,
-                 x = stats::resid(fixest::feols(x_form, data = frame, weights = ~w)),
-                 y = as.vector(fixest::demean(frame$y, frame$cr, weights = frame$w))) |>
-    dplyr::summarise(sxx = sum(w * x^2), sxy = sum(w * x * y), .by = cntry) |>
-    dplyr::mutate(share = sxx / sum(sxx), slope = sxy / sxx, weights = weights)
-}
-tr_shares <- purrr::map(c("none", "design", "population"), tr_decompose) |> dplyr::bind_rows()
-tr_sums <- tr_shares |> dplyr::summarise(b = sum(share * slope), .by = weights)
-stopifnot(all(abs(tr_sums$b - purrr::map_dbl(tr_sums$weights, tw, col = "b")) < 1e-10))
-sh <- \(c, w, col = "share") tr_shares[[col]][tr_shares$cntry == c & tr_shares$weights == w]
-tr_group <- \(codes, w) sum(tr_shares$share[tr_shares$cntry %in% codes & tr_shares$weights == w])
-tr_moved <- tr_shares |>
-  datawizard::data_filter(weights != "population") |>
-  datawizard::data_select(select = c("cntry", "weights", "share")) |>
-  tidyr::pivot_wider(names_from = weights, values_from = share) |>
-  dplyr::summarise(m = max(abs(design - none))) |>
-  dplyr::pull(m)
-tr_slopes <- tr_shares |> datawizard::data_filter(weights == "none") |> datawizard::data_arrange("slope")
-# the prose names the steepest and two of the three flattest slopes, and the
-# countries with fewer than four rounds
-stopifnot(tr_slopes$cntry[nrow(tr_slopes)] == "GB", all(c("IT", "ES") %in% tr_slopes$cntry[1:3]),
-          setequal(tr_adults$cntry[tr_adults$rounds < 4], c("AT", "GR", "IT")),
-          tr_adults$rounds[tr_adults$cntry == "IT"] == 2)
-
-# the share of the variance of the curve that each decision carries, from the
-# sums of squares of a main-effects model, as on the Multiverse page of the case
-tr_var <- anova(lm(b ~ outcome + controls + weights + items + fe, data = tr_curve))
-tr_share <- setNames(tr_var$`Sum Sq` / sum(tr_var$`Sum Sq`), trimws(rownames(tr_var)))
-```
-
-The immigration-and-trust case takes its claim from a study by the original author (OA) of that case, and in this section OA refers to that author. The study relates concern about immigration to distrust of national politics among about 110,000 respondents of the first four rounds of the ESS in 16 Western European countries [@McLaren2012CulturalDivideEurope], and the paper says nothing about weights. The model is a regression on respondents, so a weight enters it directly. In a weighted least-squares fit each respondent counts in proportion to their weight, because the fit chooses the coefficients that minimise the sum of the squared residuals with each residual multiplied by the weight of its respondent, and the fit compares respondents only with others from their own country and round. Every number in this section is computed when the page is built from the extract that the course ships, `cases/trust/data/trust_ess.csv`, and from the files of the curve of the case, among the `r format(nrow(tr_paper), big.mark = ",")` respondents whom the paper analyses: the citizens of the 16 countries who do not belong to an ethnic minority. The [specification menu](../cases/trust/menu.qmd#weights) of the case sets out the weighting decision in brief.
-
-### The three weights of the ESS {#sec-trust-ess-weights}
-
-Every file of the ESS carries three weights, and the extract keeps all three. The **design weight** (`dweight`) corrects for sample designs that do not give every adult of a country the same chance of being selected, which leaves some kinds of people, such as those in larger households, under-represented in the unweighted sample. It is the inverse of the probability of selection, scaled so that it averages 1 in every country-round (to three decimals in the extract), and it makes each national sample stand for the adult population of its country. Where every adult had the same chance, the design weight is the same for everyone, and its design effect is 1.00 to two decimals in `r tr_names(tr_flat)`, and elsewhere it runs up to `r num(max(tr_deff$design), 2)` in `r tr_names(tr_deff$cntry[which.max(tr_deff$design)])`. Kish's design effect of a set of weights is the factor by which unequal weights inflate the variance of a weighted mean compared with an unweighted sample of the same size, $n \sum_i w_i^2 / \left(\sum_i w_i\right)^2$, so that a design effect of 1.25 leaves the precision of a sample four-fifths as large.
-
-The **post-stratification weight** (`pspwght`) starts from the design weight and adjusts it further, so that the weighted sample of each country-round matches the population on age, sex, education and region. It also corrects part of what the design weight cannot reach, the imbalance that remains when some kinds of selected people take part less often than others. It describes the same national adult populations as the design weight, at a higher cost in precision, with design effects from `r num(min(tr_deff$post), 2)` to `r num(max(tr_deff$post), 2)`.
-
-The **population size weight** (`pweight`) is constant within each country-round. The ESS defines it as the population aged 15 and over divided by the number of respondents in the data file times 10,000, so multiplying it back gives the adult population that a country-round stands for: about `r num(ad("DE"), 1)` million in Germany and `r num(ad("IE"), 1)` million in Ireland, on average over their rounds. On its own it changes nothing within a country-round. Multiplied by the design weight or by the post-stratification weight, it makes each country-round count in proportion to its adult population rather than its number of interviews.
-
-### Weights and estimands {#sec-trust-describe}
-
-@tbl-trust-five fits the reference specification of the curve (distrust of parliament, the controls of the paper, every item answered and an intercept for every country-round) under the five ways of using the weights that the menu offers.
-
-```{r}
-#| label: tbl-trust-five
-#| echo: false
-#| tbl-cap: "The reference specification of the immigration-and-trust case under each use of the weights, with errors clustered by country (t on 15 df). The shift is the change from the fit without weights. Sources: `cases/trust/data/spec_curve.csv` for the three options on the curve and `cases/trust/data/display_options.csv` for the two off it."
-tr_five |>
-  datawizard::data_modify(option = factor(option, c("none", "design", "population", "post", "post_population"))) |>
-  datawizard::data_arrange("option") |>
-  dplyr::transmute(
-    Weights = label,
-    Variable = c(none = "–", design = "dweight", population = "dweight × pweight",
-                 post = "pspwght", post_population = "pspwght × pweight")[as.character(option)],
-    `Population described` = c(
-      none = "the respondents as interviewed",
-      design = "the adult population of each country",
-      population = "the adults of the 16 countries as one population",
-      post = "the adult population of each country, matched to its population margins",
-      post_population = "the adults of the 16 countries as one population, matched to population margins"
-    )[as.character(option)],
-    `On the curve` = dplyr::if_else(on_curve, "yes", "no, a check"),
-    Coefficient = num(b),
-    Shift = dplyr::if_else(option == "none", "–", tr_sgn(b - tw("none", "b"))),
-    `Clustered SE` = num(se, 4),
-    t = num(stat, 1)
-  ) |>
-  tinytable::tt() |>
-  tinytable::style_tt(j = 5:8, align = "r") |>
-  tinytable::style_tt(fontsize = 0.8)
-```
-
-The coefficient moves by little, from `r num(min(tr_five$b))` to `r num(max(tr_five$b))`, and the reason why it moves at all shows what each weight does. With an intercept for every country-round, the coefficient compares respondents only within their own country and round, and it can be written exactly as a weighted average of 16 slopes, one for each country. The slope of a country is the association between concern and distrust among its respondents once the controls are held constant. Its weight is the share of the variation in concern, net of the controls and of the intercepts, that the respondents of the country contribute, so a country counts for more when it has more respondents and when they differ more in their concern. @tbl-trust-shares gives the shares and the slopes without weights and with design and population weights, and in each column the shares multiplied by the slopes add up to the coefficient of @tbl-trust-five.
-
-```{r}
-#| label: tbl-trust-shares
-#| echo: false
-#| tbl-cap: "The reference specification as a weighted average of one slope per country: the share of each country in the estimate and the slope among its respondents, without weights and with design and population weights, beside the adult population that the population weight assigns to the country (the mean over its rounds). Within each pair of columns, the sum of share × slope is the coefficient. Source: `cases/trust/data/trust_ess.csv`."
-tr_shares |>
-  datawizard::data_filter(weights != "design") |>
-  datawizard::data_select(select = c("cntry", "weights", "share", "slope")) |>
-  tidyr::pivot_wider(names_from = weights, values_from = c(share, slope)) |>
-  dplyr::left_join(tr_adults, by = "cntry") |>
-  datawizard::data_arrange("-share_population") |>
-  dplyr::transmute(
-    Country = unname(tr_country_short[cntry]),
-    Rounds = as.character(rounds),
-    `Adults (millions)` = num(adults / 1e6, 1),
-    `Share, no weights` = pct(share_none),
-    `Slope, no weights` = num(slope_none),
-    `Share, design and population` = pct(share_population),
-    `Slope, design and population` = num(slope_population)
-  ) |>
-  tinytable::tt() |>
-  tinytable::style_tt(j = 2:7, align = "r") |>
-  tinytable::style_tt(fontsize = 0.8)
-```
-
-Without weights every respondent counts once, so the shares follow the numbers of respondents and the spread of their concern. `r tr_names(tr_shares$cntry[tr_shares$weights == "none"][which.max(tr_shares$share[tr_shares$weights == "none"])])` carries the largest share, `r pct(max(tr_shares$share[tr_shares$weights == "none"]))`, and Italy, which took part in only two rounds, the smallest, `r pct(sh("IT", "none"))`. The coefficient then describes the respondents as they were interviewed, the people whom the survey happened to reach in each country.
-
-The design weight averages 1 in every country-round, so it rearranges respondents within each country and leaves the countries almost where they were: no share moves by more than `r num(100 * tr_moved, 1)` percentage points, and the coefficient goes from `r num(tw("none", "b"))` to `r num(tw("design", "b"))`. Each slope now describes the adult population of its country rather than its sample, and the coefficient averages the national populations with weights that still follow the sizes of the samples.
-
-Multiplied by the population weight, the design weight hands `r pct(tr_group(tr_big5, "population"))` of the estimate to the five largest countries, `r tr_names(tr_big5)`, which hold `r pct(tr_group(tr_big5, "none"))` of it without weights. The slopes of those five differ widely. The United Kingdom has the steepest slope of all 16, `r num(sh("GB", "none", "slope"))`, while Italy and Spain have two of the three flattest, `r num(sh("IT", "none", "slope"))` and `r num(sh("ES", "none", "slope"))`, so the balance of the estimate shifts towards countries in which concern and distrust go together less, and the coefficient falls to `r num(tw("population", "b"))`. It now describes the adults of the 16 countries taken together as one population, Western Europeans rather than Western European countries or their samples. That population is pooled over the rounds of the survey, so a country counts once for every round in which it took part, and Italy, with two rounds, and Austria and Greece, with three, count for less than their populations alone would give them. The precision falls as well. With errors clustered by country the standard error rises from `r num(tw("none", "se"), 4)` to `r num(tw("population", "se"), 4)`, because most of the evidence now comes from five of the 16 clusters.
-
-### The weights on the curve {#sec-trust-curve}
-
-The curve keeps three of the five options: no weights, design weights, and design weights multiplied by the population weight. Swapped into the `r tr_dv("design", "n_pairs")` pairs of twin specifications, which agree on every other decision, design weights move the estimate by `r tr_sgn(tr_dv("design", "shift_mean"))` on average (from `r tr_sgn(tr_dv("design", "shift_min"))` to `r tr_sgn(tr_dv("design", "shift_max"))`) and population weights by `r tr_sgn(tr_dv("population", "shift_mean"))` (from `r tr_sgn(tr_dv("population", "shift_min"))` to `r tr_sgn(tr_dv("population", "shift_max"))`). No pair changes the verdict at the 5% level, and the weights carry `r pct(tr_share[["weights"]])` of the variance of the `r nrow(tr_curve)` estimates.
-
-All three stay on the curve because the claim does not say which average it means. In the EU-frames case, as the section on [the average European](#the-average-european) below explains, the population weight answers another question, because that claim concerns national economies and its unit is the member state. The claim of this case is about individuals, as the first proposition of the paper puts it: "individuals expressing most concern about the impact of immigration on the national community will be most distrusting of politicians and political institutions" [@McLaren2012CulturalDivideEurope, p. 205]. Whether the average is to be taken over the respondents, over each national population or over Western Europeans as one population is left open, so each weight answers a defensible reading of the claim, and the curve holds them as three estimands rather than as three estimates of one.
-
-The two post-stratification options stay off the curve as checks. The post-stratification weight describes the same national populations as the design weight, with a further correction for who took part, so it checks an answer that the curve already holds: at the reference settings it gives `r num(tw("post", "b"), 4)` against `r num(tw("design", "b"), 4)`, and with the population weight `r num(tw("post_population", "b"), 4)` against `r num(tw("population", "b"), 4)`. The SCORE replication of the claim on round 5 of the ESS weighted its respondents in this way and found `r num(tr_marks$b[tr_marks$id == "SCORE_1634"])`, against 0.190 without the weights, a difference of the same order as those of @tbl-trust-five.
-
-### Exercise {#sec-trust-exercise}
-
-1. In @tbl-trust-shares, multiply each share by the slope beside it and add the products for each pair of columns. Which three countries contribute most to the fall from `r num(tw("none", "b"))` to `r num(tw("population", "b"))`, and is it their slopes or their shares that changed?
-2. In the workspace of the case, `try_spec(weights = "post")` is refused with a reason. Write the estimand statement of the reference specification with design weights and with post-stratification weights. Do the two statements differ, and if they do not, what makes one of them a check on the other?
-3. Write one sentence for each of the three weights on the curve, stating whose association the coefficient averages, and compare them with the sentences that the first exercise of the section on the EU-frames case asks for.
-
-## The cohabitation case {#sec-cohabitation}
-
-```{r}
-#| label: setup-cohabitation
-#| include: false
-# the section on the cohabitation case, computed when the page is built from
-# the union file of the course rebuild and the files of the curve of the case;
-# the objects of the section carry the prefix co_. The case numbers, strata
-# and clusters are codes, so readr reads them as text.
-co_unions <- readr::read_csv("../cases/cohabitation/data/cohab_unions.csv", show_col_types = FALSE,
-                             col_types = readr::cols(caseid = readr::col_character(),
-                                                     stratum = readr::col_character(),
-                                                     psu = readr::col_character()))
-co_curve <- readr::read_csv("../cases/cohabitation/data/spec_curve.csv", show_col_types = FALSE)
-co_devs <- readr::read_csv("../cases/cohabitation/data/menu_deviations.csv", show_col_types = FALSE) |>
-  datawizard::data_filter(axis == "weights", option == "unweighted")
-co_inference <- readr::read_csv("../cases/cohabitation/data/display_inference.csv", show_col_types = FALSE)
-co_groups <- readr::read_csv("../cases/cohabitation/data/display_subgroups.csv", show_col_types = FALSE) |>
-  datawizard::data_filter(model == "race_period")
-# the reference settings of the curve with the weights left free
-co_ref <- co_curve |>
-  datawizard::data_filter(cohorts == "paper", horizon == "five_years", adjust == "composition",
-                          time == "linear", model == "mlogit")
-co_w <- stats::setNames(co_ref$b, co_ref$weights)
-co_se <- stats::setNames(co_inference$se, co_inference$errors)
-co_g <- stats::setNames(co_groups$b, co_groups$group)
-```
-
-The cohabitation case takes its claim from a study in *Demography* by the original authors (OAs) of that case, and in this section OAs refers to them: American "cohabitors have increasingly become less likely to progress to marriage" [@KuoRaley2016DivergingPatternsUnion]. The study compares the first cohabitations that came before any marriage, begun in 1990–1995 among the women interviewed by the National Survey of Family Growth (NSFG) in 1995 and begun in 2005–2010 among the women interviewed in 2006–2010, and the [case study](../cases/cohabitation/index.qmd) describes it. The NSFG is a survey with a complex design. Its women were sampled in clusters within strata, some groups were sampled at higher rates than others, and every public-use file carries a final weight and the two variables that describe the design, the stratum and the cluster of each woman. The paper reports weighted results, and the course rebuild of its Table 2 matches its standard errors with errors that follow the design of the surveys. This section shows what the weights and the design do to the comparison of the two cohorts, with the survey package [@Lumley2004AnalysisComplexSurvey], on the union file of the course rebuild, `cases/cohabitation/data/cohab_unions.csv`, and the files of the curve of the case.
-
-### The weights and the design of the NSFG {#sec-nsfg-design}
-
-The User's Guide of the 2006–2010 survey states why the weights exist: "In the NSFG, Hispanics, blacks, teens, and women were selected at higher rates than others in the 15-44 age group. 'Sampling weights' adjust for these different sampling rates, as well as for response rates and coverage rates, so that accurate national estimates can be made from the sample" (National Center for Health Statistics, *Public Use Data File Documentation, 2006–2010 National Survey of Family Growth: User's Guide*, October 2011, p. 13). Its first piece of advice is to "Use sample weights (e.g., WGTQ1Q16) and design variables (SECU & SEST) to make valid estimates" (p. 5). The union file keeps the final weight of each survey as `weight`, and the variance stratum and cluster, the primary sampling unit, as `stratum` and `psu`. The design is declared once, and every estimate of the survey package then takes it into account.
-
-```{r}
-#| label: nsfg-design
-# the women of the two surveys of the paper, and the unions that the paper
-# analyses: begun in the five years before the interview and lasting at least
-# a month, and in 2006-2010 begun from 2005
-co_women <- co_unions |>
-  datawizard::data_filter(cycle %in% c("1995", "2006-10")) |>
-  datawizard::data_modify(paper = in_window %in% TRUE & (cycle == "1995" | from_2005),
-                          cohort = dplyr::if_else(cycle == "1995", "1990–1995", "2005–2010"))
-co_design <- survey::svydesign(ids = ~psu, strata = ~stratum, weights = ~weight, nest = TRUE,
-                               data = co_women)
-co_paper <- subset(co_design, paper)  # r-style: keep – the subset method of a survey design keeps the strata of the full design
-co_race <- survey::svyby(~race, ~cohort, co_paper, survey::svymean, deff = TRUE)
-```
-
-`ids` names the clusters and `strata` the strata, and `nest = TRUE` tells the package that a cluster number is unique only within its stratum. `svyby()` computes the weighted share of each race-ethnic group in each cohort, its standard error and its design effect, the factor by which the variance of the share exceeds the variance that a simple random sample of the same number of unions would give. @tbl-nsfg-race sets them beside the unweighted shares.
-
-```{r}
-#| label: tbl-nsfg-race
-#| echo: false
-#| tbl-cap: "The first premarital cohabitations of the two cohorts by race-ethnicity: the shares in the sample, the weighted shares with their design-based standard errors in percentage points, and the design effect of each weighted share. Source: `cases/cohabitation/data/cohab_unions.csv`."
-co_unweighted <- co_women |>
-  datawizard::data_filter(paper) |>
-  dplyr::summarise(unions = dplyr::n(), .by = c(cohort, race)) |>
-  dplyr::mutate(sample_share = unions / sum(unions), .by = cohort)
-# SE() and deff() return a table of cohorts by groups, which as.vector() reads
-# column by column, the order of coef()
-co_shares <- tibble::tibble(key = names(stats::coef(co_race)), share = unname(stats::coef(co_race)),
-                            se = as.vector(as.matrix(survey::SE(co_race))),
-                            deff = as.vector(as.matrix(survey::deff(co_race)))) |>
-  tidyr::separate_wider_delim(key, ":", names = c("cohort", "race")) |>
-  datawizard::data_modify(race = sub("^race", "", race)) |>
-  dplyr::left_join(co_unweighted, by = c("cohort", "race"))
-co_shares |>
-  datawizard::data_modify(race = factor(race, c("white", "black", "hispanic", "other"))) |>
-  datawizard::data_arrange(c("cohort", "race")) |>
-  dplyr::transmute(
-    Cohort = cohort,
-    `Race-ethnicity` = c(white = "Non-Hispanic white", black = "Non-Hispanic Black", hispanic = "Hispanic",
-                         other = "Non-Hispanic other")[as.character(race)],
-    Unions = format(unions, big.mark = ","),
-    `Share of the sample` = pct(sample_share),
-    `Weighted share` = pct(share),
-    SE = num(100 * se, 2),
-    `Design effect` = num(deff, 2)
-  ) |>
-  tinytable::tt() |>
-  tinytable::style_tt(j = 3:7, align = "r")
-```
-
-```{r}
-#| label: nsfg-shares
-#| include: false
-co_sh <- stats::setNames(co_shares$share, paste(co_shares$cohort, co_shares$race))
-co_sample <- stats::setNames(co_shares$sample_share, paste(co_shares$cohort, co_shares$race))
-co_deff <- stats::setNames(co_shares$deff, paste(co_shares$cohort, co_shares$race))
-```
-
-The unweighted shares show the higher sampling rates. Black women made up `r pct(co_sample[["1990–1995 black"]])` of the unions of 1990–1995 in the sample and `r pct(co_sh[["1990–1995 black"]])` of the population of unions that the sample stands for, and `r pct(co_sample[["2005–2010 black"]])` and `r pct(co_sh[["2005–2010 black"]])` of those of 2005–2010; Hispanic women made up `r pct(co_sample[["1990–1995 hispanic"]])` and `r pct(co_sh[["1990–1995 hispanic"]])` of the earlier cohort. The weighted shares are the shares of Table 1 of the paper, which reports them to two decimals. The design effects are small in the 1995 survey, from `r num(min(co_deff[grepl("^1990", names(co_deff))]), 2)` to `r num(max(co_deff[grepl("^1990", names(co_deff))]), 2)`, and large in the 2006–2010 survey, from `r num(min(co_deff[grepl("^2005", names(co_deff))]), 2)` to `r num(max(co_deff[grepl("^2005", names(co_deff))]), 2)`, whose User's Guide warns that its "weights vary widely" (p. 13): a share of the later cohort has the precision of a simple random sample of about a third of its size or less. The design effect of an estimate combines the unequal weights with the clustering of the women, and the package computes it for each estimate rather than for the weights alone.
-
-### A subpopulation of the survey {#sec-nsfg-domain}
-
-The unions of the paper are a subpopulation of each survey, which survey statisticians call a domain, and the design was declared on every woman of the file before `subset()` kept them. The order matters. The User's Guide advises: "When estimating variances for population subgroups (such as those who have ever had sexual intercourse or those 30-44 years of age), it is important to use the full dataset to set up your analytic variables, and define your subgroup of interest within your procedure" (p. 16). The union file holds every woman of each survey whose first cohabitation came before any marriage, and every stratum and cluster of each survey has at least one of them, as its [codebook](../cases/cohabitation/data/cohab_unions_codebook.md) records, so the design declared on it carries every cluster of the two surveys, whereas a design declared on the 2,071 unions of the paper alone fails.
-
-```{r}
-#| label: nsfg-domain
-#| error: true
-co_wrong <- survey::svydesign(ids = ~psu, strata = ~stratum, weights = ~weight, nest = TRUE,
-                              data = datawizard::data_filter(co_women, paper))
-survey::svymean(~race, co_wrong)
-```
-
-Some strata hold only one cluster with a union of the paper, and a stratum with a single cluster gives the package no way to estimate the variation between clusters within it. The option `options(survey.lonely.psu = "adjust")` makes the error go away by borrowing the variation from the other strata, but the standard errors that it gives are those of a different design. Declaring the design on the full file and keeping the domain with `subset()` lets the clusters without a union of the paper count in their strata with a contribution of zero, which is how the domain was sampled. The estimator of the case does the same on the person-months: it declares the design on every cluster of the two surveys, adds the months of the analysed unions and keeps them with `subset()`, as the [binary-outcomes module](binary-outcomes.qmd#sec-discrete-logit) shows.
-
-### The weights in the model {#sec-nsfg-weights-model}
-
-The curve of the case keeps the weighted and the unweighted fit as two estimands. At the reference settings, the multinomial logit of the paper with the age at the start, race-ethnicity and education held constant, the coefficient of the later cohort is `r num(co_w[["weighted"]])` with the weights and `r num(co_w[["unweighted"]])` without them. Across the `r co_devs$n_pairs` pairs of twin specifications of the curve, which agree on every other decision, leaving out the weights moves the estimate by `r num(co_devs$shift_mean)` on average, from `r num(co_devs$shift_min)` to `r num(co_devs$shift_max)`, and changes no verdict.
-
-The weights move the estimate because the change differed between the groups that the NSFG sampled at different rates. With an interaction of race-ethnicity and the period, as in Model 2 of the paper, the coefficient of the later cohort is `r num(co_g[["white"]], 2)` for non-Hispanic white women, `r num(co_g[["black"]], 2)` for Black women and `r num(co_g[["hispanic"]], 2)` for Hispanic women. A model without that interaction averages the three, and without weights each group counts by its number in the sample rather than by its number in the population. The weighted coefficient describes the change in the population of cohabiting women aged 15–44 that each survey represents, and the unweighted one describes the change in the women whom the two surveys interviewed. In the immigration-and-trust case each weight changed whose association the coefficient averages, and the survey weight does the same here, because a regression on respondents describes the people who count in it. The [specification menu](../cases/cohabitation/menu.qmd) keeps both: the weighted fit as the estimand of the paper, the unweighted fit as the estimand of every analysis that used the file which Multi100 gave the analysts, since that file carried no weights.
-
-### Errors that follow the design {#sec-nsfg-errors}
-
-The person-months of one union belong to one couple, and the women were sampled in clusters, so neither the months nor the women are independent draws. @tbl-nsfg-errors sets the standard error of the reference specification under three rules: errors that follow the strata and clusters of both surveys, the rule that classes every point of the curve; errors clustered by woman, which treat the months of each union as a cluster and ignore the design of the survey; and the conventional errors of the fit, which treat every person-month as an independent observation.
-
-```{r}
-#| label: tbl-nsfg-errors
-#| echo: false
-#| tbl-cap: "The reference specification of the cohabitation case under three rules for its standard error: the coefficient of the later cohort, its standard error, the test statistic and its degrees of freedom. Source: `cases/cohabitation/data/display_inference.csv`."
-co_inference |>
-  dplyr::transmute(
-    Errors = c(design = "Strata and clusters of both surveys", woman = "Clustered by woman",
-               model = "Conventional")[errors],
-    Coefficient = num(b),
-    SE = num(se),
-    Statistic = paste(stat_type, "=", num(stat, 2)),
-    df = dplyr::if_else(is.finite(df), format(df, big.mark = ","), "–")
-  ) |>
-  tinytable::tt() |>
-  tinytable::style_tt(j = 2:5, align = "r")
-```
-
-The conventional standard error, `r num(co_se[["model"]])`, is about a quarter smaller than the design-based one, `r num(co_se[["design"]])`, which makes every test look stronger than the data allow. Clustering by woman, `r num(co_se[["woman"]])`, comes close to it, because it allows for the months of a union belonging together, but it leaves out the strata and the clusters within which the women were sampled. The design-based test also takes its degrees of freedom from the design: `r co_inference$df[co_inference$errors == "design"]`, which the survey package counts from the clusters and strata of the two surveys, less the coefficients of the model, rather than from the `r format(co_inference$n[1], big.mark = ",")` person-months. Here every rule finds a clear decline, but on a smaller sample or a weaker effect the choice between them can decide the verdict, which is why the curve classes every specification by the design-based errors and the menu keeps the other two off it.
-
-### Exercise {#sec-cohabitation-exercise}
-
-1. With `co_paper`, compute the weighted shares of the four groups of education in each cohort with `svyby()`, and the unweighted shares from the data. Did the NSFG sample by education at different rates, as it did by race-ethnicity, and what do the design effects say?
-2. Write the estimand statement of the reference specification with and without the weights. Which population does each describe, and which of the two does the claim of the paper speak of?
-3. Set `options(survey.lonely.psu = "adjust")`, declare the design on the unions of the paper alone as `co_wrong` does, and compare the standard errors of the weighted shares with those of @tbl-nsfg-race. Then set the option back to its default, `"fail"`.
-
-## The EU-frames case {#sec-eu-frames}
-
-In the EU-frames case, the specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this section gives the reasons.
-
-This section takes the three questions apart on the course panel, and it is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
-
-The EU-frames claim is about national means, so a weight inside a cell improves the estimate of a quantity that is already defined, the mean of the country-year. In a regression on respondents, as in the two cases above, the same kind of weight decides whose association the coefficient describes, and the difference between the cases lies in what the unit of the analysis is.
-
-### The three decisions {#the-three-decisions}
+## The three decisions {#the-three-decisions}
 
 | | Level | The argument for it | Does it change the estimand? |
 |:--|:--|:--|:--|
@@ -391,7 +60,7 @@ The EU-frames claim is about national means, so a weight inside a cell improves 
 
 The first is a *measurement* decision, because it changes how well the number in the cell estimates the thing it names. The second is an *estimation* decision, which changes the efficiency of the fit and leaves the target alone. The third is an *estimand* decision: it changes whose average the coefficient describes, and two analysts who resolve it differently are answering different questions.
 
-### Survey weights within the cell {#survey-weights-within-the-cell}
+## Survey weights within the cell {#survey-weights-within-the-cell}
 
 Every Eurobarometer wave is released with survey weights, because the people who complete an interview never quite match the population. Some groups are easier to reach than others, some refuse more often, and the achieved sample tilts accordingly. The **W1 national weight** reverses that tilt so that the weighted sample matches the known distribution of the national population by sex, age, region and size of locality.
 
@@ -403,9 +72,9 @@ A Eurobarometer file contains several weight variables, and they are not interch
 Choosing the wrong one changes the question being answered, and no warning appears in the output. Using a European weight and then averaging countries double-counts population size; using a national weight and then pooling respondents across countries gives you an average over *respondents*, which is an artefact of how many interviews each country happened to get. Whenever a survey provides more than one weight, read the codebook before choosing, because the choice among them is, in effect, the choice between a country-level and a person-level estimand.
 :::
 
-### Effective sample size {#effective-sample-size}
+## Effective sample size {#effective-sample-size}
 
-Weighting improves representativeness at a cost in precision. When respondents have unequal weights, the weighted mean is less precise than an unweighted mean of the same number of interviews, because a few heavily weighted cases contribute a disproportionate share of the estimate. Kish's **effective sample size**, the number of interviews divided by the design effect that the section on the immigration-and-trust case defines, is the standard way of saying how much precision is left:
+Weighting improves representativeness at a cost in precision. When respondents have unequal weights, the weighted mean is less precise than an unweighted mean of the same number of interviews, because a few heavily weighted cases contribute a disproportionate share of the estimate. Kish's **effective sample size**, the number of interviews divided by the design effect of the weights, is the standard way of saying how much precision is left:
 
 $$n_\text{eff} = \frac{\left(\sum_i w_i\right)^2}{\sum_i w_i^2}$$
 
@@ -413,7 +82,7 @@ For a cell where every weight is equal, $n_\text{eff} = n$. As the weights sprea
 
 The practical consequence is that if you are going to weight cells by their precision, $n_\text{eff}$ is the right variable and $n$ is an approximation to it.
 
-### Regression weights across cells {#regression-weights-across-cells}
+## Regression weights across cells {#regression-weights-across-cells}
 
 Once you have `r nrow(pw)` country-year means, you have to decide how much each one counts in the regression. There are four candidate answers, and each makes a different claim.
 
@@ -437,11 +106,11 @@ tinytable::tt(
   tinytable::style_tt(fontsize = 0.8)
 ```
 
-#### The precision argument {#the-precision-argument}
+### The precision argument {#the-precision-argument}
 
 The precision weights rest on an assumption about why the cell means scatter around the fitted line. If they scattered mainly because each is measured with sampling error, the cells built on more interviews would be the more reliable evidence, and weighting by their sample size would estimate the same slope more efficiently. On these data the assumption fails. Across the 270 cells the sampling variance of a cell mean of the cosmopolitan share averages 0.000103, against a residual variance of 0.00141 in the reproduced model, so that about 7% of the variation that the model leaves unexplained is sampling noise, and the rest is genuine variation between country-years that a larger sample would not have reduced. Under those conditions efficient weights are close to equal. Weights that run from `r format(min(pw$n_cy), big.mark = ",")` to `r format(max(pw$n_cy), big.mark = ",")` respondents therefore buy little precision, and what they mostly do is shift weight towards the years in which two survey waves were fielded and towards the countries with the largest samples.
 
-#### Sample size and population size {#sample-size-and-population-size}
+### Sample size and population size {#sample-size-and-population-size}
 
 It is tempting to treat the respondent count (`n_cy` in the panel, `n_cell` on the menu) as a size variable, on the reasoning that bigger countries get bigger samples. They do not, or not by much. Eurobarometer fields roughly a thousand interviews in each member state whatever its size, with smaller allocations for the smallest states and a larger one for Germany. So across this panel:
 
@@ -451,7 +120,7 @@ It is tempting to treat the respondent count (`n_cy` in the panel, `n_cell` on t
 
 Weighting by `n_cell` therefore does *not* make the analysis representative of the European population. It gives better-measured cells more say in the fit, which is a different and much weaker claim. If you want the average European, you have to weight by population and state that you have done so.
 
-### The reproduced specification under each weight {#the-reproduced-specification-under-each-weight}
+## The reproduced specification under each weight {#the-reproduced-specification-under-each-weight}
 
 The table below shows the reproduced specification (cosmopolitan framing on raw World Bank unemployment, two-way fixed effects, all years, no adjustment, respondents who mention nothing scored zero) fitted under all eight combinations of the two ways of building the cell means and the four regression weights.
 
@@ -476,13 +145,13 @@ Kish's correction changes almost nothing. With cells as interviewed, `n_eff` and
 
 The same holds across the curve. Swapped into every one of its `r nrow(curve)` specifications, the respondent weight leaves `r pc(dv("n_cell", "below_zero_sig"))` of them below zero with CR2 p < 0.05 and the effective sample size `r pc(dv("n_eff", "below_zero_sig"))`, against `r pc(below_sig(curve))` on the curve itself, and each changes the class of `r pc(dv("n_cell", "class_changes"))` of the pairs. The curve keeps only the unweighted fit, because the precision weights rest on an argument that the error structure of these data does not support, and the population weight, which the next section takes up, answers another question.
 
-### The average European {#the-average-european}
+## The average European {#the-average-european}
 
 Weighting by adult population changes the quantity to the average European, in which the largest member state counts `r round(max(pw$pop_15plus) / min(pw$pop_15plus))` times as much as the smallest. That is a defensible estimand, the one that a reader interested in the climate of opinion in the Union as a whole would want, but it is not the estimand of the claim. The claim concerns how a national economy shapes the framing of its citizens, so its unit is the member state, and the unweighted fit, in which Malta counts as much as Germany, is what a claim about national economies asks for. A result about the average European can therefore neither confirm nor undermine a result about the average member state, and it belongs in an analysis with its own estimand statement rather than among the robustness checks of the claim.
 
 Across the curve the population weight leaves `r pc(dv("pop", "below_zero"))` of the specifications below zero, slightly more than the curve itself, but only `r pc(dv("pop", "below_zero_sig"))` below zero with CR2 p < 0.05, and it changes the class of `r pc(dv("pop", "class_changes"))` of the pairs. The fall in significance most probably reflects the weight itself, which lets a few large countries dominate the fit and leaves fewer countries to carry the evidence, while at the reproduced specification, as the table above shows, the same weight strengthens the result. The two estimands diverge in ways that a single specification does not reveal, which is a further reason for reporting the population-weighted analysis on its own terms.
 
-### The denominator {#the-denominator}
+## The denominator {#the-denominator}
 
 When asked what the EU means to them, `r format(sum(pw$n_noop), big.mark = ",")` respondents, `r pct(sum(pw$n_noop) / sum(pw$n_cy))` of the sample, mentioned nothing at all. How they are scored is a decision that no weight can change. The code of the original paper dropped those respondents, as the [missing answers module](missingness.qmd) explains, and so did two of the five Multi100 reanalyses, KQXUE and the reported model of PRL47. C6HJR, whose build produced the recorded t of −3.804, scored them 0, and the count and the mean of the five cosmopolitan items that KEVF1 and 018OL used score them 0 by construction. The course panel follows C6HJR, scoring those respondents **0** on all four framing scales, so a person with no opinion enters the data as a person with no cosmopolitan framing.
 
@@ -502,7 +171,7 @@ tinytable::tt(
 
 An eight-fold difference in the rate of a response that is coded as a substantive zero is a measurement problem that no weight will fix, because the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the no-opinion respondents should be dropped rather than scored zero is an argument about what the outcome variable *is*, and it belongs with the measurement decisions at Level 2 of the [specification menu](../cases/eu-frames/menu.qmd). The curve keeps both rules, and the missing answers module sets out what each of them assumes.
 
-### Weights in estimation {#sec-estimation}
+## Weights in estimation {#sec-estimation}
 
 Every respondent in a Eurobarometer file comes with a **survey weight**. This section explains what those weights are, how estimation uses them, and why they fit awkwardly into multilevel models, where the choice of software can change the results. It sets out the mechanics behind the design-weight decision discussed above, and every fit shown here was run on the respondent file that is produced by the build script in the workspace.
 
@@ -516,7 +185,7 @@ The weighting scheme of the Eurobarometer itself, documented in the weighting ov
 
 Of the other weights in the file, W3 ("WEIGHT GERMANY") and W4 ("WEIGHT UNITED KINGDOM") combine the separately drawn East/West German and Great Britain/Northern Ireland samples into united national totals, the same splits that are merged by the DE and GB recodes in the course codebook. The long W5–W30 series ("WEIGHT EU6" through "WEIGHT EU27", euro zone in and out) add the population-size scaling needed when similarly sized national samples must stand for populations as different as those of Malta and Germany, and **WEX** ("WEIGHT EXTRA POPULATION 15+") extrapolates results to the actual population aged fifteen and over. The same routine applies to any survey: find the weighting documentation, identify the weight that matches the population that *your* question is about, and report in the methods which one you used. For a question about the within-country association between framing and unemployment, W1 is the natural choice, and it is the natural weight to offer in any person-level universe of specifications built from this menu.
 
-In R, design-based estimation is the job of the survey package [@Lumley2004AnalysisComplexSurvey]. You declare the design once – weights, and where the data supply them, clusters and strata, as the section on the cohabitation case does for the NSFG – and then every estimator in the package takes it into account:
+In R, design-based estimation is the job of the survey package [@Lumley2004AnalysisComplexSurvey]. You declare the design once – weights and, where the data supply them, clusters and strata – and then every estimator in the package takes it into account:
 
 ```r
 des <- survey::svydesign(ids = ~1, weights = ~w1, data = person)   # weights only; the file has no primary sampling unit (PSU) ids
@@ -585,7 +254,7 @@ xtreg cosmo unemployment, fe           // = the within estimator of section 4 of
 
 The `collapse` command averages every respondent equally, so the survey weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option on the menu switches on and off. (The Stata–R correspondence continues here too: `xtreg, fe` after `xtset cntry_num year` is the within estimator in `plm`.) On the curve of the claim, where every cell counts once, the only weighting decision that varies is the cell weighting, and it carries `r pc_small(fk("cell_weight"))` of the variance.
 
-### What to take away {#what-to-take-away}
+## What to take away {#what-to-take-away}
 
 - Say which of the three decisions you are making, and give the argument that goes with it. The word 'weighted' on its own does not specify a model.
 - Survey weighting and precision weighting leave the estimand alone. Population weighting changes it, and a paper that switches to population weights in a robustness section has changed its question without saying so.
@@ -593,7 +262,7 @@ The `collapse` command averages every respondent equally, so the survey weights 
 - When a survey provides several weights, the choice among them usually encodes the country-versus-person decision. Read the codebook first.
 - Look at what your weight variable actually varies over before trusting it as a proxy for anything. Here the respondent count spans a factor of `r round(max(pw$n_cy) / min(pw$n_cy), 1)` and the population it is standing in for spans a factor of `r round(max(pw$pop_15plus) / min(pw$pop_15plus))`.
 
-### Exercise {#exercise}
+## Exercise {#exercise}
 
 1. Pick any specification from the curve (`cases/eu-frames/data/spec_curve.csv`) and look up its twins under the three regression weights in `cases/eu-frames/data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
 2. Three of those four sentences describe the same quantity, and two of them give the same number. Which, and why?
