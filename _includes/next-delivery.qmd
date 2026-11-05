@@ -46,25 +46,17 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
       vals[!is.na(vals)]
     }
 
-    # The tracks, keyed by the slug that names the folder of each under
-    # tracks/ (<slug>-<format>, and self-study for the track across the four
-    # cases). Anything else in delivery.track – a typo, a retired name, an
-    # empty string – matches nothing here, so no line is printed and no link is
+    # The formats of the case, keyed by the folder of each under tracks/.
+    # Anything else in delivery.track – a typo, a retired name, an empty
+    # string – matches nothing here, so no line is printed and no link is
     # written to a page that does not exist. The link is relative to the
-    # including page, and index.qmd at the site root is the only one; an
-    # include from a subdirectory would need a ../ in front of tracks/.
+    # including page, and index.qmd at the site root is the only one.
     track_labels <- c(
-      "housing-short"                  = "short session on the housing-audit case",
-      "housing-one-day-open-science"   = "one-day course on the housing-audit case, with open science in focus",
-      "housing-one-day-data-tools"     = "one-day course on the housing-audit case, with data tools in focus",
-      "housing-one-day-methods"        = "one-day course on the housing-audit case, with methods in focus",
-      "eu-frames-one-day-open-science" = "one-day course on the EU-frames case, with open science in focus",
-      "eu-frames-one-day-data-tools"   = "one-day course on the EU-frames case, with data tools in focus",
-      "eu-frames-one-day-methods"      = "one-day course on the EU-frames case, with methods in focus",
-      "trust-three-days"               = "three-day course on the immigration-and-trust case",
-      "cohabitation-three-days"        = "three-day course on the cohabitation case",
-      "eu-frames-three-days"           = "three-day course on the EU-frames case",
-      "self-study"                     = "self-study track across the four cases"
+      "eu-frames-one-day-open-science" = "one-day course with open science in focus",
+      "eu-frames-one-day-data-tools"   = "one-day course with data tools in focus",
+      "eu-frames-one-day-methods"      = "one-day course with methods in focus",
+      "eu-frames-three-days"           = "three-day course",
+      "self-study"                     = "self-study route"
     )
 
     date <- field(delivery[["date"]])

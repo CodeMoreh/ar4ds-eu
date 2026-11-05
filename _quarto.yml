@@ -19,24 +19,24 @@ project:
     - "!_planning/**"
     - "!_planning_data/**"
     - "!_workspaces/**"
-    # Rendered but left out of the navbar: the run sheets of the cases and the
-    # notes on the formats and their decks
+    # Rendered but left out of the navbar: the run sheet of the facilitator and
+    # the notes on the formats
     - "facilitator/eu-frames-guide.qmd"
-    - "facilitator/housing-guide.qmd"
-    - "facilitator/trust-guide.qmd"
-    - "facilitator/cohabitation-guide.qmd"
     - "facilitator/tracks.qmd"
 
-# The docked sidebars of the delivery tracks live in their own file.
+# The docked sidebars of the formats live in their own file.
 metadata-files:
   - _sidebar.yml
 
 website:
-  title: "Applied Replication for Data Skills"
+  title: "AR4DS – EU frames"
   site-url: "https://codemoreh.github.io/ar4ds-eu/"
   repo-url: "https://github.com/CodeMoreh/ar4ds-eu"
   repo-actions: [issue]
   favicon: assets/logo.png
+  # The previous and next links at the foot of each page of a format, in the
+  # order of its sidebar
+  page-navigation: true
   # Shown at the top of every page while the materials are being revised;
   # delete the block once they are stable. Not dismissable, so that it
   # appears on every page a visitor opens. It does not reach the reveal.js
@@ -49,71 +49,11 @@ website:
     content: "**Under active development.** These course materials are being revised and may change at any time, so please do not rely on them as they currently stand."
 
   navbar:
-    logo: assets/logo.png
-    logo-alt: "CM logo"
     left:
       - href: index.qmd
         text: Home
-      - text: Setup
+      - text: The case
         menu:
-          - href: setup.qmd
-            text: "Install and check"
-          - href: help.qmd
-            text: "Setup help"
-      # The cases in the order of the ladder, each a header followed by its
-      # pages. An entry with text and no href is drawn as a header of the menu,
-      # and "---" as a divider.
-      - text: Cases
-        menu:
-          - text: "The housing-audit case"
-          - href: cases/housing/index.qmd
-            text: "Case study"
-          - href: cases/housing/exercise.qmd
-            text: "Exercise"
-          - href: cases/housing/lab.qmd
-            text: "Browser lab"
-          - href: cases/housing/menu.qmd
-            text: "Specification menu"
-          - href: cases/housing/map.qmd
-            text: "Decision map"
-          - href: cases/housing/multiverse.qmd
-            text: "Multiverse"
-          - href: cases/housing/cheatsheet.qmd
-            text: "Cheatsheet"
-          - text: "---"
-          - text: "The immigration-and-trust case"
-          - href: cases/trust/index.qmd
-            text: "Case study"
-          - href: cases/trust/exercise.qmd
-            text: "Exercise"
-          - href: cases/trust/lab.qmd
-            text: "Browser lab"
-          - href: cases/trust/menu.qmd
-            text: "Specification menu"
-          - href: cases/trust/map.qmd
-            text: "Decision map"
-          - href: cases/trust/multiverse.qmd
-            text: "Multiverse"
-          - href: cases/trust/cheatsheet.qmd
-            text: "Cheatsheet"
-          - text: "---"
-          - text: "The cohabitation case"
-          - href: cases/cohabitation/index.qmd
-            text: "Case study"
-          - href: cases/cohabitation/exercise.qmd
-            text: "Exercise"
-          - href: cases/cohabitation/lab.qmd
-            text: "Browser lab"
-          - href: cases/cohabitation/menu.qmd
-            text: "Specification menu"
-          - href: cases/cohabitation/map.qmd
-            text: "Decision map"
-          - href: cases/cohabitation/multiverse.qmd
-            text: "Multiverse"
-          - href: cases/cohabitation/cheatsheet.qmd
-            text: "Cheatsheet"
-          - text: "---"
-          - text: "The EU-frames case"
           - href: cases/eu-frames/index.qmd
             text: "Case study"
           - href: cases/eu-frames/exercise.qmd
@@ -128,83 +68,52 @@ website:
             text: "Multiverse"
           - href: cases/eu-frames/cheatsheet.qmd
             text: "Cheatsheet"
-      # The delivery tracks, grouped by format (_planning/formats-2026-10-27.md).
-      # The facilitator chooses the track of a delivery; the menu is there to
-      # find it again. Each is a folder of participant-facing pages with a
-      # docked sidebar (_sidebar.yml) and a slides page embedding the deck or
-      # decks that it runs on; the decks themselves are not in the navbar.
+      # Each format has a docked sidebar (_sidebar.yml) and a slides page that
+      # embeds its deck; the decks themselves are not in the navbar.
       - text: Formats
         menu:
-          - text: "Short session"
-          - href: tracks/housing-short/index.qmd
-            text: "Housing audit, in the browser"
-          - text: "---"
-          - text: "One day"
-          - href: tracks/housing-one-day-open-science/index.qmd
-            text: "Housing audit – open science"
-          - href: tracks/housing-one-day-data-tools/index.qmd
-            text: "Housing audit – data tools"
-          - href: tracks/housing-one-day-methods/index.qmd
-            text: "Housing audit – methods"
           - href: tracks/eu-frames-one-day-open-science/index.qmd
-            text: "EU frames – open science"
+            text: "One day – open science"
           - href: tracks/eu-frames-one-day-data-tools/index.qmd
-            text: "EU frames – data tools"
+            text: "One day – data tools"
           - href: tracks/eu-frames-one-day-methods/index.qmd
-            text: "EU frames – methods"
+            text: "One day – methods"
           - text: "---"
-          - text: "Three days"
-          - href: tracks/trust-three-days/index.qmd
-            text: "Immigration and trust"
-          - href: tracks/cohabitation-three-days/index.qmd
-            text: "Cohabitation"
           - href: tracks/eu-frames-three-days/index.qmd
-            text: "EU frames"
+            text: "Three days"
           - text: "---"
-          - text: "Self-study"
           - href: tracks/self-study/index.qmd
-            text: "The four cases"
-      # Grouped by the three strands of the curriculum – computational tools,
-      # data management and sharing, statistical methods – with the
-      # "---" entries drawing the dividers between them.
+            text: "Self-study"
       - text: Companion
         menu:
           - href: companion/index.qmd
-            text: "Curriculum overview"
+            text: "Overview"
           - text: "---"
-          - text: "Computational tools"
+          - text: "Tools"
           - href: companion/intro-r.qmd
             text: "Getting started with R"
           - href: companion/ide.qmd
             text: "Positron, RStudio and VS Code"
-          - href: companion/quarto.qmd
-            text: "Quarto and reproducible documents"
           - text: "---"
-          - text: "Data management and sharing"
+          - text: "Data and sharing"
           - href: companion/data-sources.qmd
             text: "Social science data sources"
           - href: companion/data-management.qmd
             text: "Building the analysis file"
           - href: companion/repositories.qmd
             text: "Reproducibility repositories"
-          - href: companion/git-github.qmd
-            text: "Git & GitHub"
           - text: "---"
-          - text: "Statistical methods"
-          - href: companion/experiments.qmd
-            text: "Audit experiments"
+          - text: "Methods"
           - href: companion/binary-outcomes.qmd
             text: "Binary outcomes"
           - href: companion/dags.qmd
-            text: "Causal graphs & adjustment sets"
+            text: "Causal graphs and adjustment sets"
           - href: companion/measurement.qmd
             text: "The items behind the scales"
           - href: companion/weighting.qmd
             text: "Weights"
           - href: companion/missingness.qmd
             text: "Missing answers"
-          - href: companion/event-history.qmd
-            text: "Event-history analysis"
           - href: companion/stats-methods.qmd
             text: "The statistical methods behind the course"
           - href: companion/individual-level.qmd
@@ -215,35 +124,32 @@ website:
             text: "The multiverse and its critics"
       - href: resources.qmd
         text: Resources
+    right:
+      # The pages that every case shares live on the umbrella site
+      - href: "https://codemoreh.github.io/ar4ds/setup.html"
+        text: Setup
+      - href: "https://codemoreh.github.io/ar4ds/"
+        text: AR4DS
 
-  # The licence of the pages, then the terms of the data of each case.
   page-footer:
     left: |
       Content licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-      Data: housing audit, [CC0](https://doi.org/10.7910/DVN/1HOVTU);
-      immigration and trust, derived from the European Social Survey,
-      [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/);
-      cohabitation, derived from the National Survey of Family Growth,
-      [public domain](https://www.cdc.gov/nchs/data_access/restrictions.htm);
-      EU frames, aggregates only, the Eurobarometer files under the
+      Data: aggregates only, the Eurobarometer files under the
       [GESIS terms of use](https://www.gesis.org/en/institute/data-usage-terms).
       [GitHub repository](https://github.com/CodeMoreh/ar4ds-eu)
     right: |
-      Built with [Quarto](https://quarto.org/)
+      Part of [AR4DS](https://codemoreh.github.io/ar4ds/). Built with [Quarto](https://quarto.org/)
 
 filters:
   - highlight-text
   - more-fragments
-  # The line "Case: ..." at the top of every page under cases/<slug>/, of the
-  # companion modules, and of any page that names its case in its front matter
-  - style/case-label.lua
 
 format:
   html:
     theme: cosmo
     css: styles.css
     toc: true
-    # shows the track chosen on the opening page as a navbar item on every page
+    # The format that a visitor last opened, as a navbar item on every page
     include-after-body: _includes/track-choice.html
 
 execute:

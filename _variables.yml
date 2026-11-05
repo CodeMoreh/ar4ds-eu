@@ -1,86 +1,53 @@
-# Applied Replication for Data Skills – site variables.
+# AR4DS, the EU-frames case – site variables.
 #
-# This is the ONE file to edit for site-wide facts and for scheduling a
-# delivery. Four parts:
-#   1. Course-wide variables – stable across deliveries; used in prose via the
-#      Quarto shortcode {{< var name.subname >}}.
-#   2. The cases – the addresses of each case under cases.<slug>, read as
-#      {{< var cases.housing.template-repo >}} and so on, by the case-label
-#      filter (style/case-label.lua) and by the setup chunks of the decks.
+# The one file to edit for site-wide facts and for scheduling a delivery. Pages
+# read it through the Quarto shortcode {{< var name.subname >}}. Four parts:
+#   1. Site-wide variables.
+#   2. The case – the addresses of the workspace and of the class chart, which
+#      the frozen class-results pipeline reads.
 #   3. The delivery block – set delivery.active to 'true' to switch the
-#      next-delivery callout on the opening page on; set it back to 'false'
-#      for the evergreen (no-date) site. Nothing else needs touching.
+#      next-delivery callout on the home page on; set it back to 'false' for
+#      the evergreen (no-date) site.
 #   4. The last-delivery block – a record of the most recent delivery, kept
 #      for the organiser and for the README. No page renders it.
 
-# --- Course-wide variables ------------------------------------------------
-# `workshop` is the historical key for the course-wide variables; pages read
-# it through {{< var workshop.name >}} and {{< var workshop.format >}}, so the
-# key stays even though the site is a course (CM, 2026-09-06).
+# --- Site-wide variables ----------------------------------------------------
+# `workshop` is the historical key; pages read it through
+# {{< var workshop.name >}} and {{< var workshop.format >}}. The format string
+# is rendered inside the eyebrow of the home page, so keep any replacement
+# short.
 workshop:
   name: "Applied Replication for Data Skills"
-  # The scale at which the course is deliverable, rather than the length of any
-  # one delivery: the track folders under tracks/ are what this string refers
-  # to. It is rendered inside the eyebrow of the opening page, so keep any
-  # replacement short.
-  format: "a short session, one day, three days or self-study"
+  format: "one day, three days or self-study"
   organiser: "Chris Moreh"
   # Add a public contact address here if you want one shown on the site.
   contact: ""
 
 site-url: "https://codemoreh.github.io/ar4ds-eu/"
 org: "https://github.com/CodeMoreh"
+# The umbrella site, which holds the pages that every case shares: setup, the
+# setup help, Git and GitHub, and the background on SCORE and Multi100.
+umbrella: "https://codemoreh.github.io/ar4ds/"
 
-# --- Frozen live-results pipeline of the EU-frames case ---------------------
-# (see facilitator/live-results-setup.md). Do not rename or reformat these
-# three keys: template-repo, live-results-url and results-form-url wire a
-# working results pipeline end to end, and the pages, decks and workspace of
-# the EU-frames case read them under these names. The same addresses are
-# repeated under cases.eu-frames for pages that loop over the cases.
+# --- The case -----------------------------------------------------------------
+# The frozen live-results pipeline (facilitator/live-results-setup.md). Do not
+# rename or reformat these three keys: template-repo, live-results-url and
+# results-form-url wire a working results pipeline end to end, and the pages,
+# decks and workspace of the case read them under these names.
 template-repo: "https://github.com/CodeMoreh/replication-lab"
-# The Multiverse page where submissions of the EU-frames case appear live:
+# The multiverse page on which the class submissions appear live
 live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/multiverse.html"
-# The Google Form that every case submits to until CM creates a Form per case
-# (facilitator/live-results-setup.md):
+# The Google Form that every case submits to (frozen)
 results-form-url: "https://forms.gle/MWhimagFDmGtprAPA"
 
-# --- The cases ----------------------------------------------------------------
-# One entry per case, in the order of the ladder. For each:
-#   label             the line "Case: ..." printed at the top of every page of
-#                     the case (style/case-label.lua)
-#   name              the case in running prose
+# The same addresses under the slug of the case:
 #   template-repo     the GitHub repository of the downloadable workspace
 #   workspace-zip     the zip of that repository that participants download
 #   live-results-url  the multiverse page that draws the class submissions
 #   results-word      the word that follows the tag in every class-results
-#                     label of the case, so that the chart of the case reads
-#                     only its own rows of the shared Form. The EU-frames labels
-#                     carry no case word (the frozen format), hence none here.
-# The workspaces of the trust and cohabitation cases do not exist yet; their
-# addresses are the names that the brief reserves for them.
+#                     label of the case; the EU-frames labels carry no case
+#                     word (the frozen format), hence none here
 cases:
-  housing:
-    label: "housing audit"
-    name: "the housing-audit case"
-    # PLACEHOLDER until CM creates the repository on GitHub
-    template-repo: "https://github.com/CodeMoreh/replication-lab-housing"
-    workspace-zip: "https://github.com/CodeMoreh/replication-lab-housing/archive/refs/heads/main.zip"
-    live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/housing/multiverse.html"
-    results-word: "housing"
-  trust:
-    label: "immigration and trust"
-    name: "the immigration-and-trust case"
-    template-repo: "https://github.com/CodeMoreh/replication-lab-trust"
-    workspace-zip: "https://github.com/CodeMoreh/replication-lab-trust/archive/refs/heads/main.zip"
-    live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/trust/multiverse.html"
-    results-word: "trust"
-  cohabitation:
-    label: "cohabitation"
-    name: "the cohabitation case"
-    template-repo: "https://github.com/CodeMoreh/replication-lab-cohabitation"
-    workspace-zip: "https://github.com/CodeMoreh/replication-lab-cohabitation/archive/refs/heads/main.zip"
-    live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/cohabitation/multiverse.html"
-    results-word: "cohabitation"
   eu-frames:
     label: "EU frames"
     name: "the EU-frames case"
@@ -89,49 +56,23 @@ cases:
     live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/multiverse.html"
     results-word: ""
 
-# The cases on which each companion module works, by the name of its file,
-# printed at the top of the module by style/case-label.lua as "Case: ..." or
-# "Cases: ...", each linked to its case study. A module that is not listed
-# (the overview) gets no line.
-companion-cases:
-  intro-r: [housing, eu-frames]
-  ide: [housing, eu-frames]
-  quarto: [housing]
-  data-sources: [housing, trust, cohabitation, eu-frames]
-  data-management: [trust, cohabitation, eu-frames]
-  repositories: [housing, trust, cohabitation, eu-frames]
-  git-github: [housing, eu-frames]
-  experiments: [housing]
-  binary-outcomes: [housing, cohabitation, eu-frames]
-  dags: [housing, trust, cohabitation, eu-frames]
-  measurement: [trust, eu-frames]
-  weighting: [trust, cohabitation, eu-frames]
-  missingness: [eu-frames, trust]
-  event-history: [cohabitation]
-  stats-methods: [eu-frames, trust]
-  individual-level: [trust, eu-frames]
-  simulation: [housing, eu-frames]
-  multiverse: [housing, trust, cohabitation, eu-frames]
-
 # --- Next-delivery block --------------------------------------------------
 # Set active to 'true' to schedule a delivery; fill in the fields below.
 # Set active back to 'false' to return the site to its evergreen state.
 delivery:
   active: 'false'
-  # Which track this delivery follows, named by its folder under tracks/:
-  # housing-short; housing-one-day-open-science, housing-one-day-data-tools,
-  # housing-one-day-methods; eu-frames-one-day-open-science,
-  # eu-frames-one-day-data-tools, eu-frames-one-day-methods; trust-three-days,
-  # cohabitation-three-days, eu-frames-three-days; or self-study. An empty
-  # value prints no track line in the callout, and so does a value that
-  # matches no track.
+  # Which format this delivery follows, named by its folder under tracks/:
+  # eu-frames-one-day-open-science, eu-frames-one-day-data-tools,
+  # eu-frames-one-day-methods, eu-frames-three-days or self-study. An empty
+  # value prints no format line in the callout, and so does a value that
+  # matches no folder.
   track: ""
   date: "Monday 3 August 2026, 10:00–18:00 EEST"
   venue: "Online"
   event: "Făgăraș Summer School"
   mode: "Online, free, open to all"
   registration_url: ""
-  note: "Four 90-minute sessions – 10:00–11:30, 12:00–13:30, 14:30–16:00, 16:30–18:00, Romanian time (EEST, UTC+3). Install R and an IDE before the day – the [Setup](setup.qmd) page has the steps – and open the browser lab once, in case your machine will not cooperate on the day."
+  note: "Four 90-minute sessions – 10:00–11:30, 12:00–13:30, 14:30–16:00, 16:30–18:00, Romanian time (EEST, UTC+3). Install R and an IDE before the day – the [Setup](https://codemoreh.github.io/ar4ds/setup.html) page has the steps – and open the browser lab once, in case your machine will not cooperate on the day."
 
 # --- Last delivery ---------------------------------------------------------
 # A record of the most recent delivery, kept for the organiser and for the

@@ -37,7 +37,7 @@
 // TEST
 //   Open the Worker URL in a browser: you should see the sheet as raw CSV.
 //   Then open it from the deployed site's origin (DevTools console on
-//   https://codemoreh.github.io/applied-replication/):
+//   https://codemoreh.github.io/ar4ds-eu/, or the site of any other case):
 //     fetch("https://class-results.you.workers.dev").then(r=>r.text()).then(console.log)
 //   No CORS error + CSV text printed = working.
 // =============================================================================

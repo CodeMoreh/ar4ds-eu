@@ -145,7 +145,7 @@ wrangler deploy
 
   [**ACTUAL: IT DOES DOWNLOAD A CSV FILE WITH THE EXPECTED HEADERS, BUT IT DOES NOT OPEN IT IN THE BROWSER ON MY MACHINE**]{.underline}
 
-- Test it as the page will, **from the deploy origin**. Open <https://codemoreh.github.io/applied-replication/cases/eu-frames/multiverse.html>, open the browser DevTools console (F12), and run:
+- Test it as the page will, **from the deploy origin**. Open <https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/multiverse.html>, open the browser DevTools console (F12), and run:
 
   ``` js
   fetch("https://class-results.YOUR-SUBDOMAIN.workers.dev")
@@ -223,7 +223,7 @@ Google has changed its anonymous-form and sharing behaviour before, so verify on
 - [ ] **Worker serves it:** open the Worker URL → the test row is in the CSV.
 - [ ] **Chart shows it:** open the live Multiverse page, press **Run Code** on the Class-results chart → a test dot appears. Do this in incognito too (CORS can differ by login state).
 - [ ] **Clear test rows** from the Sheet so the class starts with an empty chart (delete the test data rows; keep the header row).
-- [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklists of the run sheets, `eu-frames-guide.qmd` and `housing-guide.qmd`).
+- [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklists of the run sheets of the cases, `facilitator/eu-frames-guide.qmd` here and `facilitator/housing-guide.qmd` on the site of the housing-audit case).
 
 If the morning test fails, you still have two fallbacks (section 8) and the static "The class multiverse" slide in the deck always works.
 
@@ -289,7 +289,7 @@ The cost falls on the EU-frames chart, which reads every row of the Sheet, becau
 
 ### 11.2 A Form of its own for a case
 
-About twenty minutes, once per case. It keeps the classes of different cases apart for good. The steps use the housing-audit case; for another case, replace `housing` by its slug.
+About twenty minutes, once per case. It keeps the classes of different cases apart for good. The steps use the housing-audit case, whose files are in its own repository, `CodeMoreh/ar4ds-housing`; for another case, replace `housing` by its slug and the repository by the repository of that case.
 
 1. **Copy the Form.** Open the results Form of section 2 in the Forms editor → ⋮ → **Make a copy**, and title it "Class results – housing audit". The copy keeps the seven questions (`spec`, `b`, `se`, `t`, `df`, `n`, `r`) with their exact titles, which the chart reads as column names.
 2. **Settings.** Responses → Collect email addresses → Do not collect; Limit to 1 response → off (otherwise Google asks participants to sign in).
