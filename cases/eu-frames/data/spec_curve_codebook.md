@@ -71,7 +71,7 @@ One row per curve and axis that varies on it, plus a row `interactions` per curv
 | `crossing_rate` | The percentage of pairs whose two members fall in different classes, the class being "below zero with CR2 p < 0.05" or not |
 | `crossing_rate_conv` | The same under conventional inference |
 
-On the positive curve the estimator carries 41.5% of the variance and the predictor 16.9%, the outcome 9.0%, the adjustment 4.3% and the item set 3.1%; the no-opinion rule, the series, the form and the cell weighting together carry about 1%, and the interactions 24.1%. Moving the estimator alone changes the class of 42.4% of pairs, moving the predictor 56.3%, the outcome 31.9% and the adjustment 19.7%; the series changes 3.7%, the form 9.1%, the no-opinion rule 8.6%, the item set 13.7% and the cell weighting 2.1%.
+On the positive curve the estimator carries 41.5% of the variance and the predictor 16.9%, the outcome 9.0%, the adjustment 4.3% and the item set 3.1%; the no-opinion rule, the series, the form and the cell weighting together carry about 1%, and the interactions 24.1%. Moving the comparison alone changes the class of 42.4% of pairs, moving the predictor 56.3%, the outcome 31.9% and the adjustment 19.7%; the series changes 3.7%, the form 9.1%, the no-opinion rule 8.6%, the item set 13.7% and the cell weighting 2.1%.
 
 ## `menu_deviations.csv` and `menu_deviations_rows.csv.gz`
 
