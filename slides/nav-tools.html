@@ -13,7 +13,7 @@
    2. A POSITION READOUT THAT NAMES WHERE YOU ARE. "72/146" tells a
       facilitator nothing. This prints the part, the position inside it, the
       position overall, and a badge saying which version of the deck is on
-      the projector - extended, lean, or extended-and-inside-an-optional-run.
+      the projector - full, lean, or full-and-inside-an-optional-run.
       In lean mode a burgundy dot appears on the two slides an optional run
       sits between, so hidden material announces itself rather than having to
       be remembered.
@@ -230,7 +230,7 @@
       var rp = runPosition(cur);
       if (rp) runTxt = '<span class="nrun">' + rp.n + "/" + rp.of + "</span>";
     } else {
-      mode = "extended";
+      mode = "full";
     }
 
     /* An uncounted slide has no position, so it shows the totals alone rather
@@ -317,7 +317,7 @@
     if (e.key === "d") {
       depthOn = !depthOn;
       applyDepth();
-      flash(depthOn ? "extended deck" : "lean deck");
+      flash(depthOn ? "full deck" : "lean deck");
     } else if (e.key === "g") {
       openJump();
       e.preventDefault();

@@ -1,6 +1,6 @@
 ---
-title: "Getting started with R"
-subtitle: "Foundation – R on the country-year panel"
+title: "R on the country-year panel"
+subtitle: "Foundation – the files of the case, the grammar of graphics and the specification curve"
 bibliography: [../references.bib, ../references-new.bib]
 ---
 
@@ -16,81 +16,31 @@ knitr::opts_knit$set(root.dir = "../cases/eu-frames")
 ```{r}
 #| label: page-numbers
 #| include: false
-# The numbers quoted in section 5, computed from the curve of the case; the
-# code shown in sections 4 and 5 does not run.
+# The numbers quoted in section 3, computed from the curve of the case; the
+# code shown in sections 2 and 3 does not run.
 eu_curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 eu_ref   <- eu_curve |> datawizard::data_filter(is_reference)
 num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
 pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
 ```
 
-This module of the [companion curriculum](index.qmd) is about R, the language in which the analysis of the course is written, as the EU-frames case uses it. The first steps in R, from objects and data frames to the pipe, the datawizard verbs, a first table and a first figure, are taught in the module of the same name on the housing-audit site, [Getting started with R](https://codemoreh.github.io/ar4ds-housing/companion/intro-r.html), which assumes no programming at all and works on a file small enough to look at whole, with an outcome that is either yes or no. This page assumes those steps. After a short description of R, the IDE and the three surfaces into which R is typed, it takes the tools to the country-year panel of the EU-frames case, a table of 270 rows built from Eurobarometer surveys: the formats in which data arrive and the packages that fetch them, the grammar of graphics in depth, and the specification curve of the case.
+This module of the [companion curriculum](index.qmd) is about R, the language in which the analysis of the course is written, as the EU-frames case uses it. The first steps in R, from the console and the script to objects, data frames, the pipe, the datawizard verbs, a first table and a first figure, are taught in [Getting started with R](https://codemoreh.github.io/ar4ds/tools/r.html) on the umbrella site of the course, a module that assumes no programming at all and works on the data of the housing-audit case, a file small enough to look at whole, with an outcome that is either yes or no. This page assumes those steps and takes the tools to the country-year panel of the EU-frames case, a table of 270 rows built from Eurobarometer surveys: the files of the case and the routes by which they arrive, the grammar of graphics in depth, and the specification curve of the case.
 
 The panel is the material for two things that a file of yes-or-no outcomes cannot show. A scatterplot with a fitted line needs measures that vary continuously, and the panel holds them, among them the unemployment rate and the mean score with which the respondents of a country-year framed the EU in cosmopolitan terms. The curve of the case mixes predictors whose results point in opposite directions, so it has to be aligned with the claim before it can be read.
 
-The code of sections 4 and 5 is shown without being run, because it reads the panel of the case, which is on your machine once you have the workspace, and the numbers quoted in section 5 are computed from the curve of the case when the page is built. The way to learn is still to type. Copy each block into the workspace that you downloaded from the [setup page](https://codemoreh.github.io/ar4ds/setup.html#the-workspace) and run it there.
+The code of sections 2 and 3 is shown without being run, because it reads the panel of the case, which is on your machine once you have the workspace, and the numbers quoted in section 3 are computed from the curve of the case when the page is built. The way to learn is still to type. Copy each block into the workspace that you downloaded from the [setup page](https://codemoreh.github.io/ar4ds/setup.html#the-workspace) and run it there.
 
 The courses use the module at several points. It is the companion of the R tutorial in Part 2 of the [one-day course on data tools](../tracks/eu-frames-one-day-data-tools/part-2.qmd) and of the first session of [day 2](../tracks/eu-frames-three-days/day-2.qmd) of the three-day course.
 
-## 1. R and the IDE {#sec-what}
+## 1. Other formats, and fetching data {#sec-formats}
 
-**R** is a programming language built for working with data: reading it, reshaping it, fitting statistical models to it and drawing figures from it. It is free and open source, and it is one of the common languages of quantitative social science, which is why the analysis of the course is written in it. On its own, R is a program that reads instructions and returns answers.
+The panel and the curve of the case are CSV files, read as [section 6 of Getting started with R](https://codemoreh.github.io/ar4ds/tools/r.html#sec-reading) reads the housing-audit file. The Eurobarometer waves from which the panel was built arrive from the GESIS archive in another format, as files in the format of Stata, a statistical package, with value labels on their answer codes. [Section 13](https://codemoreh.github.io/ar4ds/tools/r-further.html#sec-formats) of the second part of that module reads a file of this kind in the browser, with its labels, and covers the other formats in which data arrive, from Excel workbooks to Parquet files. The [data management module](data-management.qmd#sec-build) builds the respondent file of this case from the Stata files of the waves.
 
-**The IDE** is the program from which you drive R. An IDE (Positron, RStudio, VS Code, etc.), short for integrated development environment, is a window with your files on one side, a place to write and run code, and panels that show results, figures and the objects you have made. Newcomers often run the language and the environment together, although each is installed separately. You install R once, so that the language is on your machine, and you install an IDE once, as the place where you work. When the IDE first opens, it finds the R that you installed and connects to it. The [setup page](https://codemoreh.github.io/ar4ds/setup.html) walks through both installations, and the [IDE module](ide.qmd) sets the three common IDEs side by side, pane by pane.
+The data of the case arrive by three routes, and the [subsection on fetching data](https://codemoreh.github.io/ar4ds/tools/r-further.html#sec-fetching) in the same part introduces the package for each. The panel is fetched from the Open Science Framework by the script `R/get_data.R` in the workspace of the case, which uses the osfr package. The macro variables of the panel were obtained from the World Bank with the WDI package, which queries the indicators of the World Bank by their codes, as [section 3.2](data-sources.qmd#sec-worldbank) of the data sources module sets out. The Eurobarometer waves come from the GESIS archive, which offers no interface through which a program could download them, so the course downloads the waves by hand, as [section 3.1](data-sources.qmd#sec-gesis) of the same module shows step by step.
 
-## 2. The console, the script and the report {#sec-surfaces}
+## 2. The grammar of graphics {#sec-grammar}
 
-There are three surfaces into which you type R, and knowing which is for what saves a great deal of confusion later.
-
-The **console** is the interactive prompt. You type one line, press Enter, and R answers immediately. It is the place to try something out, check a value or do a quick sum. Its weakness is that everything typed there is lost when the session closes, with no record of how you reached a result.
-
-A **script** is a plain text file with the extension `.R` that holds a sequence of commands you want to keep. You write the commands in the script and send them to the console from there, all at once or line by line. A script runs the same way tomorrow and on someone else's machine, and it shows step by step how a result was produced. The course follows a simple rule: try things in the console, and move anything that matters into a script.
-
-A **Quarto document**, with the extension `.qmd`, is a script and a written report in one file. It holds ordinary prose with blocks of R code, called chunks, between the paragraphs. When the document is rendered, R runs every chunk and places its results, whether tables, figures or numbers, into the finished report at the point where they belong. The workspace of the course holds the same exercise in both forms: `working_script.R` takes you through Tasks 1 to 5 as a plain script, and `index.qmd` is the report that you fill in and render. The [Quarto module](https://codemoreh.github.io/ar4ds-housing/companion/quarto.html) of the housing-audit site shows how such a document is written.
-
-## 3. Other formats, and fetching data {#sec-formats}
-
-Survey archives distribute their files in the formats of Stata (`.dta`) and SPSS (`.sav`), and R reads both through the haven package, one function for each format, `haven::read_dta()` and `haven::read_sav()`. These formats differ from a CSV in storing **labelled data**. Each column can carry a variable label, a short description of what it holds, and a column of numeric codes can carry value labels, the words for which the codes stand. haven keeps both. `as_label()` from the sjlabelled package turns the codes into their labels, which gives a factor, and leaves out the labels of codes that no row holds, which `as_factor()` from haven would keep as empty levels. Labels are metadata that somebody typed, and they can be wrong, so read them as a first guide and the codebook as the authority. The Eurobarometer waves of the EU-frames case arrive from the GESIS archive as Stata files, with value labels on their answer codes, and the [data management module](data-management.qmd#sec-build) builds the respondent file from them.
-
-Many organisations keep their data in **Excel** files, and the `readxl` package reads them one sheet at a time, since a workbook is really a stack of tables. The file names in this block and the next are illustrative, since the course ships no workbook and no Parquet file:
-
-```r
-rates <- readxl::read_excel("unemployment_rates.xlsx", sheet = "annual")
-```
-
-Treat what arrives from a spreadsheet with mild suspicion. Excel displays one thing and stores another often enough – dates especially – that column types should be checked with `summary()` straight after every import.
-
-Finally, **Parquet** and **Feather** are the newer columnar formats, which store a table column by column, and you will increasingly meet them where datasets are large or move between programming languages. They are compressed and fast, and unlike a CSV they store the type of each column inside the file, so nothing has to be re-inferred on reading. The `arrow` package reads both, and the small `nanoparquet` package reads and writes Parquet without needing any other package:
-
-```r
-panel <- arrow::read_parquet("EUframes_cy.parquet")   # arrow::read_feather() for Feather
-```
-
-Whatever the source format, what you end up with in R is the same data frame, and everything downstream – the data verbs, the models fitted in later modules – proceeds identically. Every `read_` function here also has a `write_` counterpart (`write_csv()`, `write_dta()`, `write_parquet()`, and `write_xlsx()` from the `writexl` package), so R also serves as the converter between all of these formats. The course ships its data as CSV all the same, because for tables of a few hundred or a thousand rows the efficiency of the binary formats buys nothing, while plain text can be opened in anything, compared line by line or read in an email.
-
-### Fetching data from a repository or an API {#sec-fetching}
-
-Most data come from an archive, a statistical office or a repository, and for many of those sources an R package fetches the data straight into a data frame. The query is then written down in your script instead of being clicked through on a website, and that is what makes the download repeatable. The [data sources module](data-sources.qmd) maps the sources and works through the routes of the case step by step, while this subsection covers the packages that query them, which fall into three groups.
-
-**Repositories of deposited work**, which need no account for a public file. The `dataverse` package downloads a file from any Dataverse installation by the DOI of its record. `osfr` reads and writes the Open Science Framework through its API, which is how the script `R/get_data.R` in the workspace of the EU-frames case fetches its panel, and `zen4R` does the same for Zenodo, and deposits there as well. For a source with no package, `httr2` sends the request and `jsonlite` parses the answer, and `rvest` reads a table out of a web page, with the caution that scraping a site is subject to its terms and to the courtesy of not hammering it.
-
-**Indicators from the international organisations and statistical offices**, which are open and need no account. The `WDI` package (and `wbstats`, which covers more of the World Bank databases) queries the World Bank indicators by their codes, which is how the macro variables of the EU-frames panel were obtained, as [section 3.2](data-sources.qmd#sec-worldbank) of the data sources module sets out:
-
-```r
-macro <- WDI::WDI(country = c("DE", "FR", "GB"),
-                  indicator = c(unemp = "SL.UEM.TOTL.NE.ZS", growth = "NY.GDP.MKTP.KD.ZG"),
-                  start = 2004, end = 2013)
-```
-
-The `eurostat` package does the same for the Eurostat tables (`get_eurostat("une_rt_a")` fetches the annual unemployment table, with `restatapi` as an alternative that uses the newer API, the interface through which programs request data from Eurostat); `OECD` and the general-purpose `rsdmx` query the OECD and any other service that publishes in SDMX, the standard format in which many statistical agencies exchange data; `Rilostat` reaches ILOSTAT; `onsr` the Office for National Statistics; `wid` the World Inequality Database. Each returns a long, tidy table, one row per country and period, that pivots into whatever shape a model needs.
-
-**Survey and census microdata behind a registration.** Packages are fewer here, and less dependable, because an archive that asks for an account and a statement of purpose seldom offers programs a way in. Where one does, the credentials belong in an environment variable or a keyring, never in the script. `ipumsr` builds and downloads IPUMS extracts through the IPUMS API and reads them with their labels. The GESIS archive, which distributes the Eurobarometer waves behind the EU-frames case, offers no such interface. The `gesisdata` package scripts the clicks of a download by driving a web browser, but it has not been updated since July 2023, and a report of a failed download, opened on its issue tracker in February 2025, has had no answer. The course therefore downloads the waves by hand, as [section 3.1](data-sources.qmd#sec-gesis) of the same module shows step by step. `rdhs` serves the Demographic and Health Surveys, `pewdata` the files of the Pew Research Center, and `manifestoR` the coded programmes of the Manifesto Project with an API key, and any such package is worth testing on one file before a project is built on it. Whatever the package, the file that arrives is usually Stata or SPSS, and haven reads it with its labels, as the first part of this section described.
-
-Two habits keep a fetched dataset reproducible. Write the fetch as a function or a script of its own, save what it returns as a dated file, and read that file in the analysis, so that the analysis does not depend on the network being up or the source being unchanged. And record the version or the download date in the file name or the README, because the World Bank and Eurostat revise past years without renaming the series.
-
-## 4. The grammar of graphics {#sec-grammar}
-
-[Section 12 of the module on the housing-audit site](https://codemoreh.github.io/ar4ds-housing/companion/intro-r.html#sec-ggplot) draws a first figure, and this section takes the grammar further on the panel of the EU-frames case, read as `euframes <- readr::read_csv("data/EUframes_cy.csv")` in the workspace of the case. Its 270 rows are 27 countries in each of ten years, and its columns include the unemployment rate (`unemp`), the mean score of cosmopolitan framing of the EU among the respondents of each country-year (`mcosmo`, from 0 to 1) and whether an EU or IMF assistance programme was running (`bailout`), so it has the continuous measures that a scatterplot, a fitted line and a panel for each country need. **ggplot2**, a member of the tidyverse family of packages, is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart on the pages and slides of the course is built with it, so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The figures that you draw yourself, in the workspaces and the browser labs, and the live class chart on the multiverse page of the case, are drawn with tinyplot ([section 12 of the module on the housing-audit site](https://codemoreh.github.io/ar4ds-housing/companion/intro-r.html#sec-tinyplot)), which is light enough to run in a browser. The other exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd) of the EU-frames case, which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and a few figures in the methods modules that packages with plotting functions of their own draw.
+[Section 12 of Getting started with R](https://codemoreh.github.io/ar4ds/tools/r.html#sec-figure) draws a first figure, and this section takes the grammar further on the panel of the EU-frames case, read as `euframes <- readr::read_csv("data/EUframes_cy.csv")` in the workspace of the case. Its 270 rows are 27 countries in each of ten years, and its columns include the unemployment rate (`unemp`), the mean score of cosmopolitan framing of the EU among the respondents of each country-year (`mcosmo`, from 0 to 1) and whether an EU or IMF assistance programme was running (`bailout`), so it has the continuous measures that a scatterplot, a fitted line and a panel for each country need. **ggplot2**, a member of the tidyverse family of packages, is the one that draws [@WickhamEtAl2019WelcomeTidyverse]. Almost every chart on the pages and slides of the course is built with it, so reading ggplot2 code is how you satisfy yourself that a figure shows what its caption says it shows. The figures that you draw yourself, in the workspaces and the browser labs, and the live class chart on the multiverse page of the case, are drawn with tinyplot ([section 12 of Getting started with R](https://codemoreh.github.io/ar4ds/tools/r.html#sec-figure)), which is light enough to run in a browser. The other exceptions are the main chart of the [Multiverse page](../cases/eu-frames/multiverse.qmd) of the EU-frames case, which a script of the course draws in the browser, the charts of the [decision map](../cases/eu-frames/map.qmd), which Observable Plot draws, and a few figures in the methods modules that packages with plotting functions of their own draw.
 
 The name abbreviates 'the grammar of graphics', the idea that any chart can be described as a combination of a few standard parts, much as a grammar describes how words combine into sentences. ggplot2 therefore has no separate function for each chart type. It splits a figure into parts that recombine freely: the data, the mapping from columns to visual properties, the geometric shapes drawn, the scales that decide what those shapes look like, the panels that the plot is divided into, and last the labels and the styling. A scatterplot and a bar chart are two fillings of the same slots, and once you know the slots you can read the figures on this site, including kinds you have not met yet.
 
@@ -135,7 +85,7 @@ ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
   ggplot2::geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15)
 ```
 
-The grey points are drawn first and the trend line over them. `geom_smooth()` fits a line through the cloud and draws it with a band showing the uncertainty around it, and `method = "lm"` asks for a straight line from the same least-squares method that the statistical methods module uses to fit models. R then prints the message `` `geom_smooth()` using formula = 'y ~ x' ``, which only reports the relationship that was fitted and needs no action. Reference layers behave the same way: `geom_hline(yintercept = 0)` rules a horizontal line at zero, and section 5 uses one to split a figure into results that support a claim and results that do not.
+The grey points are drawn first and the trend line over them. `geom_smooth()` fits a line through the cloud and draws it with a band showing the uncertainty around it, and `method = "lm"` asks for a straight line from the same least-squares method that the statistical methods module uses to fit models. R then prints the message `` `geom_smooth()` using formula = 'y ~ x' ``, which only reports the relationship that was fitted and needs no action. Reference layers behave the same way: `geom_hline(yintercept = 0)` rules a horizontal line at zero, and section 3 uses one to split a figure into results that support a claim and results that do not.
 
 Line thickness is set with `linewidth`, whereas point size and type size are set with `size`, and mixing the two up is behind a great many warnings.
 
@@ -259,7 +209,7 @@ Where two figures belong side by side, the **patchwork** package composes whole 
 Build a chain that keeps the crisis years, groups by `year`, and reports the mean of `mcosmo` and the mean of `mneg` per year, then pipe it into a plot with two `geom_line()` layers in different colours. You will find yourself wanting a legend and not getting one, because both colours were set rather than mapped. The remedy is to reshape the data into long form, with one row per year and outcome, using `data_to_long()` from datawizard (or `pivot_longer()` from tidyr), and then to map `colour` to the column that names the outcome.
 :::
 
-## 5. Reading the specification curve {#sec-speccurve}
+## 3. Reading the specification curve {#sec-speccurve}
 
 The central figure of the course is a **specification curve**, and you now have every part needed to build one yourself. A hypothesis about a dataset admits many defensible analyses, and if you fit all of them and line the results up in order, you can see the range of answers that the data supports instead of the single answer that one analyst happened to report.
 
@@ -316,12 +266,7 @@ Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first
 
 This module was written for the course and adapts no existing lesson, so there is no borrowed text to attribute. It teaches only the part of R that the materials of the course use, in the order in which the course needs it.
 
-For a fuller, self-paced grounding in R, these open resources are recommended:
-
-- **The Carpentries, "R for Reproducible Scientific Analysis" and "Programming with R".** <https://swcarpentry.github.io/r-novice-gapminder/> and <https://swcarpentry.github.io/r-novice-inflammation/>. Licensed CC BY 4.0, and the standard hands-on introductions to R for researchers, covering objects, vectors and data frames in far more depth than this page.
-- **The Turing Way, "Guide for Reproducible Research".** <https://book.the-turing-way.org/>. Licensed CC BY 4.0. Not an R tutorial as such, but the best short statement of why the habits that this module practises – scripts over console history, relative paths, one file for analysis and report – are worth building from the first day.
-- **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>. Its chapters on data transformation and on visualisation cover the dplyr counterparts of the datawizard verbs and the grammar of ggplot2 in full.
-- **The documentation of the packages**, which is readable as an introduction as well as a reference: [easystats.github.io/datawizard](https://easystats.github.io/datawizard/), [grantmcdermott.com/tinyplot](https://grantmcdermott.com/tinyplot/), [dplyr.tidyverse.org](https://dplyr.tidyverse.org/), [readr.tidyverse.org](https://readr.tidyverse.org/), [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), [vincentarelbundock.github.io/tinytable](https://vincentarelbundock.github.io/tinytable/), [easystats.github.io/easystats](https://easystats.github.io/easystats/), [haven.tidyverse.org](https://haven.tidyverse.org/), [readxl.tidyverse.org](https://readxl.tidyverse.org/), and the arrow R package site at [arrow.apache.org/docs/r](https://arrow.apache.org/docs/r/).
+The open resources for a fuller grounding in R are listed under [further study](https://codemoreh.github.io/ar4ds/tools/r.html#sec-sources) in Getting started with R. For the grammar of graphics, the chapters on visualisation in **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>, cover ggplot2 in full, and the documentation of the package, at [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), is readable as an introduction as well as a reference.
 
 When you are ready for a first statistical model, the module on [the statistical methods behind the course](stats-methods.qmd) takes the linear model on to the panel models that the EU-frames case requires.
 
