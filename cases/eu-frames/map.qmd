@@ -153,8 +153,8 @@ DM = {
     ],
     colour: {outcome: "#0e3b6a", construction: "#1f4c7c", predictor: "#2a5d8f", copredictor: "#4a78ab", sample: "#0f6b6b", weights: "#2b8585", estimator: "#8c5a10",
              noop: "#4a7a3f", item_set: "#4a7a3f", cell_weight: "#4a7a3f", measure: "#4a7a3f", pred_form: "#7b6a8f", family: "#7b6a8f", se: "#7b6a8f"},
-    levelName: {estimand: "Level 1 – Estimands", measurement: "Level 2 – Measurement", estimation: "Level 3 – Estimation"},
-    levelShort: {estimand: "Level 1", measurement: "Level 2", estimation: "Level 3"},
+    levelName: {estimand: "The question", measurement: "Measurement", estimation: "The model"},
+    levelShort: {estimand: "Question", measurement: "Measurement", estimation: "Model"},
     judgement: {kept: "On the curve", other_question: "Another question", weaker_answer: "A weaker answer", check: "A check"},
     ruleLabel: {cr2: "CR2 errors with Satterthwaite df", re_conventional: "model-based errors", re_cr1_g1: "errors clustered by country (CR1, 26 df)",
                 rewb_satterthwaite: "Satterthwaite df", rewb_cr2: "CR2 errors with Satterthwaite df", beta_cr1_g1: "errors clustered by country (CR1, 26 df)",
@@ -615,8 +615,8 @@ decisionMap = {
     for (const p of [...st.question, ...st.method]) if (typeof p !== "string") nowText[p.key] = p.text;
     const anyChanged = prevText !== null && Object.keys(nowText).some(k => prevText[k] !== nowText[k]);
     changedNote.textContent = anyChanged
-      ? "The marked phrases are the ones that the latest choice changed. Bold phrases state the question (Level 1), green phrases say how its variables are measured (Level 2), and the second sentence says how the answer is reached (Level 3)."
-      : "Bold phrases state the question (Level 1), green phrases say how its variables are measured (Level 2), and the second sentence says how the answer is reached (Level 3).";
+      ? "The marked phrases are the ones that the latest choice changed. Bold phrases state the question, green phrases say how its variables are measured, and the second sentence says how the answer is reached."
+      : "Bold phrases state the question, green phrases say how its variables are measured, and the second sentence says how the answer is reached.";
     prevText = nowText;
     const v = verdictOf(sel);
     verdictBox.textContent = v.kind === "curve"
@@ -641,4 +641,4 @@ decisionMap = {
 }
 ```
 
-The three levels of the map are those of the [specification menu](menu.qmd#level-estimand): a Level 1 choice changes the question, a Level 2 choice changes how its variables are measured, and a Level 3 choice changes how the answer is reached. Two of the measurement choices change more than their place on the map suggests, and the estimand statement records it. The rule for respondents who mention nothing is set where the outcome is built, yet scoring them zero lets the rate of saying nothing enter every scale, so that the outcome becomes a mixture of framing and of the willingness to name any meaning at all. A published series that covers only part of the panel is chosen where the predictor is measured, yet it changes the population of the question as well, which is why selecting the Eurostat table tipsun20 marks the sample phrase of the statement too.
+The three groups of the map are those of the [specification menu](menu.qmd#level-estimand): a decision about the question changes what is asked, a measurement decision changes how the variables of the question are measured, and a decision about the model changes how the answer is reached. Two of the measurement choices change more than their place on the map suggests, and the estimand statement records it. The rule for respondents who mention nothing is set where the outcome is built, yet scoring them zero lets the rate of saying nothing enter every scale, so that the outcome becomes a mixture of framing and of the willingness to name any meaning at all. A published series that covers only part of the panel is chosen where the predictor is measured, yet it changes the population of the question as well, which is why selecting the Eurostat table tipsun20 marks the sample phrase of the statement too.

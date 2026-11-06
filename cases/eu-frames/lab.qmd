@@ -87,11 +87,11 @@ euframes <- utils::read.csv("data/EUframes_cy.csv") # r-style: keep – readr wo
                  "family")
 .neg_framings <- c("mcomm", "mlib", "mneg")
 
-# The options that the curve keeps, grouped as the course groups the menu.
-# Level 1 changes the question, Level 2 the measurement, Level 3 the
-# estimation. Every other option of the menu is listed in menu_options.csv.
+# The options that the curve keeps, in the three groups of the menu: the
+# question, its measurement and the model. Every other option of the menu is
+# listed in menu_options.csv.
 .menu <- list(
-  # Level 1 – Estimands
+  # The question
   my_outcome      = c("mcosmo", "mutil", "mpos"),
   my_predictor    = c("unemp", "growth"),
   my_copredictor  = c("none", "other"),
@@ -99,12 +99,12 @@ euframes <- utils::read.csv("data/EUframes_cy.csv") # r-style: keep – readr wo
   my_sample       = "all",
   my_weights      = "none",
   my_construction = "share",
-  # Level 2 – Measurement
+  # Measurement
   my_noop         = c("zero", "drop"),
   my_item_set     = c("all", "un"),
   my_cell_weight  = c("unweighted", "design"),
   my_measure      = c("wb_nat", "es_1574_act", "es_2064_pop", "es_2564_lfs", "wb_growth"),
-  # Level 3 – Estimation
+  # The model
   my_pred_form    = c("raw", "log"),
   my_family       = "gaussian",
   my_se           = "cr2"
@@ -253,9 +253,10 @@ if (nrow(.curve) != 864 ||
   (if (ch$my_outcome %in% .neg_framings) -1 else 1) *
   (if (ch$my_predictor == "growth") -1 else 1)
 
-# The one-line spec label that the class chart reads: six of the seven Level 1
-# choices, then in brackets the scoring rule and the measurement and estimation
-# choices, the inference rule last.
+# The one-line spec label that the class chart reads: six of the seven
+# decisions about the question, then in brackets the scoring rule, the
+# measurement decisions and the decisions about the model, with the inference
+# rule last.
 .spec_line <- function(ch) {
   neg <- ch$my_outcome %in% .neg_framings
   paste0(ch$my_outcome, if (neg) "_ca" else "", " ~ ", ch$my_predictor, "(", ch$my_pred_form, ")",
@@ -366,24 +367,24 @@ prereg <- function() {
   writeLines(c(
     "DECLARED – your preregistered specification, fixed before you run it:",
     "",
-    "  The question (Level 1)",
+    "  The question",
     paste("    outcome    :", ch$my_outcome),
     paste0("    predictor  : ", ch$my_predictor,
            if (ch$my_predictor == "growth") " (claim-expected sign flipped automatically)"),
     paste("    adjusted   :", if (ch$my_copredictor == "other") .copred_term(ch) else "nothing"),
-    paste("    estimator  :", .est_lab(ch$my_estimator)),
+    paste("    comparison :", .est_lab(ch$my_estimator)),
     paste("    sample     :", ch$my_sample, "   whose average:", ch$my_weights),
     paste("    scored as  :", ch$my_construction),
-    "  The measurement (Level 2)",
+    "  Measurement",
     paste("    no-opinion rule:", ch$my_noop, "  items:", ch$my_item_set),
     paste("    cells:", ch$my_cell_weight, "  series:", ch$my_measure),
-    "  The estimation (Level 3)",
+    "  The model",
     paste("    form:", ch$my_pred_form, "  family:", ch$my_family, "  inference:", .se_lab),
     paste("  claim_align:", isTRUE(claim_align)),
     "",
     "These choices are now fixed for the rest of the session – the later",
-    "cells read them from here. Copy this cell into your notes: it is your",
-    "preregistration record, made before you see the result."))
+    "cells read them from the preregistration cell. Copy that cell into your",
+    "notes: it is your preregistration record, made before you see the result."))
   invisible(ch)
 }
 
@@ -1141,7 +1142,7 @@ Then try your own combinations. The full set of arguments, each with the reprodu
 ```{webr}
 #| autorun: false
 try_spec(
-  # Level 1 – Estimands
+  # The question
   outcome      = "mcosmo",       # mcosmo | mutil | mpos          off the curve: mcomm | mlib | mneg
   predictor    = "unemp",        # unemp | growth
   copredictor  = "none",         # none | other   (the other economic measure, adjusted for)
@@ -1149,13 +1150,13 @@ try_spec(
   sample       = "all",          # all       off the curve: y2004_2008 | y2009_2013 | no_bailout | no_GR_ES
   weights      = "none",         # none      off the curve: n_cell | n_eff | pop
   construction = "share",        # share     off the curve: count | rate
-  # Level 2 – Measurement
+  # Measurement
   noop         = "zero",         # zero | drop                    off the curve: split | mi_mice | mi_amelia
   item_set     = "all",          # all | un   (with or without the "unemployment" item)
   cell_weight  = "unweighted",   # unweighted | design
   measure      = "wb_nat",       # unemp:  wb_nat | es_1574_act | es_2064_pop | es_2564_lfs   off: es_1574_tips
                                  # growth: wb_growth                                          off: es_growth
-  # Level 3 – Estimation
+  # The model
   pred_form    = "raw",          # raw | log   (growth: raw only)
   family       = "gaussian",     # gaussian  off the curve: beta
   se           = "cr2"           # cr2, fixed: CR2 errors clustered by country test every result
@@ -1192,7 +1193,7 @@ Preregistration means setting out your choice in a plan **before** you see what 
 *Each numbered comment maps to a question in the OSF "Preregistration Template from AsPredicted.org" (the eight-question short form). Because you are reanalysing data that already exist, field 2 also stands in for the prior-knowledge section of the secondary-data template (van den Akker et al. 2021) – the part that AsPredicted leaves out.*
 :::
 
-Make one choice on each decision of the [specification menu](menu.qmd), complete the dotted lines, then run the cell. The menu has fourteen decisions. The seven at Level 1 fix the question you are asking, the four at Level 2 fix how that question is measured, and the three at Level 3 fix how it is estimated. The curve of 864 specifications keeps two or more options on nine of these decisions and a single option on the other five, which are the sample, the weighting, the scoring rule, the model family and the inference. An option that is not on the curve stops `prereg()` with the reason why, as it stops `try_spec()`. `claim_align <- TRUE` is the course convention, applied automatically: the claim expects framing to rise with GDP growth, so the sign of a growth slope is flipped, and 'supports the claim' reads as a negative sign for everyone.
+Make one choice on each decision of the [specification menu](menu.qmd), complete the dotted lines, then run the cell. The menu has fourteen decisions in three groups. The seven decisions about the question fix what you are asking, the four measurement decisions fix how that question is measured, and the three decisions about the model fix how it is estimated. The curve of 864 specifications keeps two or more options on nine of these decisions and a single option on the other five, which are the sample, the weighting, the scoring rule, the model family and the inference. An option that is not on the curve stops `prereg()` with the reason why, as it stops `try_spec()`. `claim_align <- TRUE` is the course convention, applied automatically: the claim expects framing to rise with GDP growth, so the sign of a growth slope is flipped, and 'supports the claim' reads as a negative sign for everyone.
 
 ```{webr}
 #| autorun: false
@@ -1206,23 +1207,23 @@ Make one choice on each decision of the [specification menu](menu.qmd), complete
 # 3. My one specification – one choice on each decision. An option that is
 #    not on the curve of 864 stops prereg() with the reason why.
 
-# Level 1 – Estimands (each of these changes what is being estimated)
+# The question (each of these changes what is being estimated)
 my_outcome      <- "mcosmo"       # mcosmo | mutil | mpos   (the positive framings)
 my_predictor    <- "unemp"        # unemp | growth    (the measure whose coefficient tests the claim)
 my_copredictor  <- "none"         # none | other      (the other economic measure, adjusted for)
-my_estimator    <- "fe_twoway"    # fe_twoway | fe_country
+my_estimator    <- "fe_twoway"    # fe_twoway | fe_country   (the comparison)
 my_sample       <- "all"          # all    (the 27 member states, 2004–2013)
 my_weights      <- "none"         # none   (every country-year counts once)
 my_construction <- "share"        # share  (the share of a respondent's own mentions)
 
-# Level 2 – Measurement (the same question, put to the data differently)
+# Measurement (the same question, put to the data differently)
 my_noop         <- "zero"         # zero | drop   (respondents who mentioned no frame at all)
 my_item_set     <- "all"          # all | un   (with or without the "unemployment" item)
 my_cell_weight  <- "unweighted"   # unweighted | design   (cells as interviewed, or weighted)
 my_measure      <- "wb_nat"       # unemp:  wb_nat | es_1574_act | es_2064_pop | es_2564_lfs
                                   # growth: wb_growth
 
-# Level 3 – Estimation (the same question and measures, another fit)
+# The model (the same question and measures, another fit)
 my_pred_form    <- "raw"          # raw | log   (growth: raw only; centring or z-scaling
                                   #              would leave t, r and p unchanged)
 my_family       <- "gaussian"     # gaussian   (a linear model of the cell means)
@@ -1259,7 +1260,7 @@ my_model <- build_model(______ ~ ______, estimator = "______")
 ::: {.callout-note collapse="true"}
 ## Hint – from menu speak to model syntax
 
-The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and the cells of C6HJR and KQXUE in Task 3 showed what it expands to. Apart from the log form, the Level 2 and Level 3 choices never appear in the formula. They select which version of the panel the result was computed on.
+The formula uses the column names of `euframes`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and the cells of C6HJR and KQXUE in Task 3 showed what it expands to. Apart from the log form, the measurement decisions and the decisions about the model never appear in the formula. They select which version of the panel the result was computed on.
 :::
 
 When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration. These are the numbers that the downloadable workspace gives when it fits the model and computes its CR2 test on your own machine, and here you get them without downloading the estimation packages into your browser:

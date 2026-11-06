@@ -13,8 +13,8 @@ Three parts of the course read it. The decision map (`cases/eu-frames/map.qmd`) 
 
 | Column | Meaning |
 |:--|:--|
-| `axis` | The decision, as a code: `outcome`, `construction`, `predictor`, `copredictor`, `sample`, `weights`, `estimator` (Level 1); `noop`, `item_set`, `cell_weight`, `measure` (Level 2); `pred_form`, `family`, `se` (Level 3). The codes are those of the curve files and the helpers |
-| `level` | `estimand`, `measurement` or `estimation`, the level of the menu at which the decision sits. Inference (`se`) sits inside Level 3 |
+| `axis` | The decision, as a code. The decisions about the question are `outcome`, `construction`, `predictor`, `copredictor`, `sample`, `weights` and `estimator` (the comparison), the measurement decisions `noop`, `item_set`, `cell_weight` and `measure`, and the decisions about the model `pred_form`, `family` and `se`. The codes are those of the curve files and the helpers |
+| `level` | The group of the menu to which the decision belongs: `estimand` for the question, `measurement` for measurement and `estimation` for the model. Inference (`se`) belongs to the model |
 | `option` | The option code, as the curve files, the deviation files and the helpers write it |
 | `label` | A short label for the option, used on the decision map and in messages |
 | `on_curve` | `TRUE` for an option that the curve of 864 keeps, `FALSE` for one that the course teaches off the curve |
@@ -29,7 +29,7 @@ Three parts of the course read it. The decision map (`cases/eu-frames/map.qmd`) 
 
 ## The phrases of the estimand statement
 
-The decision map assembles the statement from the `phrase` column in a fixed order: "Among [sample], with [whose average], the association between [predictor] ([series]) and [frame set and scoring rule] ([item set], [respondents who mention nothing], [cell means]), comparing [estimator], [adjustment]." A second sentence carries the Level 3 decisions: "Answered with [outcome family], [predictor form], and tested by [inference]." Four placeholders are filled by the page:
+The decision map assembles the statement from the `phrase` column in a fixed order: "Among [sample], with [whose average], the association between [predictor] ([series]) and [frame set and scoring rule] ([item set], [respondents who mention nothing], [cell means]), comparing [comparison], [adjustment]." A second sentence carries the decisions about the model: "Answered with [outcome family], [predictor form], and tested by [inference]." Four placeholders are filled by the page:
 
 - `{frames}` in the phrases of the scoring rule takes the phrase of the frame set (for example "cosmopolitan");
 - `{k}` in the phrase of the rate takes the number of items in the scale as a word, which depends on the frame set and the item set;
