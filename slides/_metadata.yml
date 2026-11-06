@@ -77,7 +77,10 @@ format:
     transition: fade
     background-transition: none
     transition-speed: slow
-    html-q-tags: true
+    # Off: with q tags the browser draws every quotation with double marks,
+    # which loses the single marks of scare quotes; without them Pandoc keeps
+    # single and double marks as the source has them.
+    html-q-tags: false
     reference-location: document
     smaller: false
     scrollable: false
