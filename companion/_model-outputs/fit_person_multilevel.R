@@ -1,9 +1,9 @@
 ###############################################################################
 # Title:        Multilevel reference numbers from the real respondents
 # Purpose:      Capture what the licensed file gives for the models the
-#               individual-level companion page runs live on the twin, so the
+#               module on multilevel models runs live on the twin, so the
 #               page can show both and the reader can see whether they agree.
-#               The statistics module already displays these fits as captured
+#               The same module displays these fits as captured
 #               text; what is written here is the numbers behind them, in a
 #               form a page can read and compare against.
 #

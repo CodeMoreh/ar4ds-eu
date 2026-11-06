@@ -1,0 +1,303 @@
+---
+title: "Meta-analysis"
+subtitle: "The five analysts on a common scale"
+bibliography: [../references.bib, ../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+analysts <- readr::read_csv("../cases/eu-frames/data/analysts5.csv", show_col_types = FALSE)
+marks <- readr::read_csv("../cases/eu-frames/data/reference_marks.csv", show_col_types = FALSE)
+curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive")
+inference <- readr::read_csv("../cases/eu-frames/data/display_inference.csv", show_col_types = FALSE)
+influence <- readr::read_csv("../cases/eu-frames/data/display_loo.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(estimator == "fe_twoway", outcome == "mcosmo", predictor == "unemp", left_out != "none")
+teams <- readr::read_csv("../data/silberzahn29.csv", show_col_types = FALSE)
+ref <- datawizard::data_filter(curve, is_reference)
+cr2 <- datawizard::data_filter(inference, estimator == "fe_twoway", inference == "cr2_satterthwaite")
+
+# The recorded values of each analyst, and the shares of the decomposition of
+# the curve, as vectors named by analyst and by decision
+r_of <- setNames(analysts$r, analysts$analyst_id)
+d_of <- setNames(analysts$d, analysts$analyst_id)
+n_of <- setNames(analysts$n, analysts$analyst_id)
+df_of <- setNames(analysts$df1, analysts$analyst_id)
+stat_of <- setNames(analysts$statistic, analysts$analyst_id)
+share_of <- setNames(forks$share, forks$axis)
+```
+
+This module of the [companion curriculum](index.qmd) is about putting results on one scale and combining them, and it works through the two kinds of comparison that the EU-frames case raises. The case is a claim from a study of Eurobarometer surveys by the original author (OA), that poor national economic performance lowers the positive framing of the European Union [@Teney2016DoesEUEconomic], and five analysts reanalysed the claim in the Multi100 project, each of them rebuilding the data from the same archived surveys, as the [case study](../cases/eu-frames/index.qmd#sec-reanalysts) relates. The first comparison sets these five analyses of one body of data side by side, and the second sets the `r dplyr::n_distinct(euframes$cntry)` countries of the panel side by side, each of which holds evidence of its own about the claim in its ten years. Meta-analysis has tools for the second comparison, and the module argues that the first needs a summary of a different kind. The page on [the Multi100 article](https://codemoreh.github.io/ar4ds/multi100-article.html) on the AR4DS site holds the general discussion of the scale that the project used, of what its conversion assumes and of what the project found, and this module takes that discussion to the five analysts of this case. Every number on the page is computed when the page is built, from the files of the case in `cases/eu-frames/data/`.
+
+## 1. What a meta-analysis combines {#sec-what}
+
+A meta-analysis combines estimates of one quantity from several studies into a summary, weighting each estimate by its precision, so that a study with a small standard error counts for more than a noisy one. It starts from $K$ estimates $\hat\theta_k$, each with a sampling variance $v_k$ taken from its standard error. The **equal-effects** model assumes one true value behind all the estimates and pools them by the inverse of their variances,
+
+$$ \hat\theta_{\text{EE}} = \frac{\sum_k \hat\theta_k / v_k}{\sum_k 1 / v_k}, $$
+
+while the **random-effects** model lets the true effects differ from study to study around an average $\mu$,
+
+$$ \hat\theta_k = \mu + u_k + e_k, \qquad u_k \sim N(0, \tau^2), \quad e_k \sim N(0, v_k). $$
+
+The variance $\tau^2$ is the heterogeneity between the studies, the spread of their true effects, and three statistics describe it: $\tau$ itself, on the scale of the effect, Cochran's $Q$, which tests whether the estimates differ by more than their sampling errors allow, and $I^2$, the share of the variability among the estimates that is attributable to real differences between studies rather than to sampling error. In the terms of the [multilevel module](multilevel.qmd#sec-multilevel), a random-effects meta-analysis is a two-level model with the studies as the units of the second level and a random intercept $u_k$ for each study. It differs from the multilevel models fitted to respondents in that the variances $v_k$ of the first level are not estimated but taken as known, from the standard error that each study reports, and the metafor package fits it, the equal-effects model and the tests and statistics of heterogeneity that go with both [@Viechtbauer2010ConductingMetaanalysesMetafor].
+
+Which of the two models suits a set of studies depends on what the studies are taken to be. *Bayesian Data Analysis* sets out the choice from "the overarching assumption that the studies are comparable in some broad sense", within which the studies may be "identical replications of each other, in the sense we regard the individuals in all the studies as independent samples from a common population", may be "so different that the results of any one study provide no information about the results of any of the others", or may be exchangeable, differing in ways that "are not expected a priori to have predictable effects favoring one study over another" [@GelmanEtAl2014BayesianDataAnalysis, pp. 125–126]. The first of these possibilities is the equal-effects model and the third the random-effects model. All three treat each study as a sample of its own, whose sampling error is independent of the errors of the others, and it is on this point that the two comparisons of this module part company.
+
+## 2. A common scale {#sec-onescale}
+
+The five analysts fitted different models, in different software and at different levels of analysis, so their coefficients are not comparable as they stand. The coefficients are slopes of a share, of a count and of a rescaled mean, tested by t and z statistics on bases that run from `r insight::format_value(min(analysts$df1, na.rm = TRUE), digits = 1)` degrees of freedom to `r format(max(analysts$n), big.mark = ",")` respondents. Multi100 faced the same problem for all of its reanalyses, and it converted each reported statistic into a correlation and each correlation into Cohen's $d$, by the rules that the page on the Multi100 article sets out in [its section on the common scale](https://codemoreh.github.io/ar4ds/multi100-article.html#sec-scale). For a t statistic the rule is
+
+$$ r = \frac{t}{\sqrt{t^{2} + \mathit{df}}}, $$
+
+which returns the partial correlation between the outcome and the predictor, net of everything else in the model, provided that the degrees of freedom count the units that carry the evidence. A z statistic carries no degrees of freedom, and the code of Multi100 converts it on the sample size $N$, as $r = \tanh\left(\lvert z \rvert / \sqrt{N - 3}\right)$ with the sign of $z$, which treats every row of the data as an independent unit. Cohen's $d$ then follows as $d = 2r / \sqrt{1 - r^{2}}$. The chunk below applies the rules to the five statistics in `analysts5.csv` and returns the five recorded correlations.
+
+```{r}
+#| label: conversion
+# The t rule of Multi100 (standard_correlation_coefficient.R in
+# marton-balazs-kovacs/multi100 on GitHub) is the formula of effectsize::t_to_r();
+# the z rule is quoted from the same script:
+# tanh(abs(test_statistic)*sqrt(1/(sample_size-3)))*sign(test_statistic)
+converted <- analysts |>
+  dplyr::mutate(
+    r_rule = dplyr::if_else(statistic_type == "t",
+                            effectsize::t_to_r(statistic, df1, ci = NULL)$r,
+                            tanh(abs(statistic) * sqrt(1 / (n - 3))) * sign(statistic)),
+    d_rule = effectsize::r_to_d(r_rule)
+  ) |>
+  datawizard::data_select(c("analyst_id", "statistic_type", "statistic", "df1", "n", "r", "r_rule", "d", "d_rule"))
+converted |> dplyr::mutate(dplyr::across(c("r", "r_rule", "d", "d_rule"), \(x) round(x, 3)))
+```
+
+The rules reproduce every recorded correlation, sign included, and every recorded $d$ up to its sign, which Multi100 set by a convention of its own. The effect sizes of the reanalyses are negative "only when they indicate an opposite effect compared with the original study" [@AczelEtAl2026InvestigatingAnalyticalRobustness, Methods], and the direction was read from the box that each analyst ticked rather than from the estimate. Four analysts marked their negative estimates as running in the direction of the claim and carry positive values of $d$, while 018OL ticked the box for a result opposite to the claim, so that its negative estimate entered the record as d = `r insight::format_value(d_of[["018OL"]], digits = 3, style_negative = "minus")`.
+
+### The five analysts {#sec-analysts}
+
+The five reanalyses answered a constrained brief. The instruction of Task 2 fixed both ends of the question, the positive non-materialist (cosmopolitan) dimension of EU framing as the outcome and the unemployment rate as the measure of poor economic performance, it set aside the variables on EU policies and party positions of the paper, and it left everything between the outcome and the predictor to the analysts. @tbl-analysts records what each analyst chose, as the public code of each analysis shows the choices.
+
+```{r}
+#| label: tbl-analysts
+#| tbl-cap: "What the five analysts did in Task 2, as read from their public code. The counts of units and the degrees of freedom are those of the Multi100 record. Sources: `cases/eu-frames/data/analysts5.csv` and the [case study](../cases/eu-frames/index.qmd#sec-reanalysts)."
+#| echo: false
+design <- tibble::tribble(
+  ~analyst_id, ~unit, ~outcome, ~silent, ~predictor, ~controls, ~estimator,
+  "018OL", "country-wave cell means", "mean of the five items, rescaled to 0–1", "0 by construction",
+  "unemployment, ages 15–74", "none", "crossed random intercepts for country, year and wave",
+  "C6HJR", "country-years", "cosmopolitan share", "scored 0",
+  "unemployment, World Bank, centred", "none", "country and year fixed effects",
+  "KEVF1", "respondents", "count of the five items, 0–5", "0 by construction",
+  "unemployment, Eurostat tipsun20", "none", "random intercepts for years within countries",
+  "KQXUE", "country-years", "cosmopolitan share", "left out",
+  "unemployment, ages 20–64, as a share of the population", "none", "country fixed effects",
+  "PRL47", "respondents", "cosmopolitan share", "left out in the reported model",
+  "quarterly unemployment, ages 25–64, and its change",
+  "sex, age, education, occupation, community type, crisis years, GDP per capita, growth",
+  "respondents in country-quarters in countries, random slopes for the individual variables"
+)
+analysts |>
+  dplyr::left_join(design, by = "analyst_id") |>
+  dplyr::transmute(
+    Analyst = analyst_id,
+    `Data as analysed` = paste(format(n, big.mark = ","), unit),
+    Outcome = outcome,
+    `Respondents who mention nothing` = silent,
+    Predictor = predictor,
+    Controls = controls,
+    Estimator = estimator,
+    `Test and df` = dplyr::case_when(
+      statistic_type == "z" ~ "z, no df",
+      df1 == round(df1) ~ paste("conventional t,", df1),
+      .default = paste("Satterthwaite t,", insight::format_value(df1, digits = 1))
+    )
+  ) |>
+  tinytable::tt(width = 1) |>
+  tinytable::style_tt(fontsize = 0.75)
+```
+
+PRL47 built the outcome in two versions, one with the respondents who mention nothing scored 0 and one without them, and reported the model without them. The brief of Task 2, though, belonged to the second of the two phases of the Multi100 design. In Task 1, months earlier, the analysts "could conduct and report as many analyses as they wished, but they had to draw a single conclusion from their analysis" [@AczelEtAl2026InvestigatingAnalyticalRobustness, Methods]. KEVF1, PRL47 and 018OL did not use the unemployment rate until the instruction named it, and C6HJR, KEVF1 and 018OL combined all seven positive items in Task 1 rather than the five of the cosmopolitan dimension that the instruction fixed, yet all five recorded the same verdict in Task 1, evidence for the claim, because Task 1 asked for a conclusion and not for a number. The instruction therefore created the common question that the standardised results answer. Read together, the two phases separate two claims of robustness that are easily conflated, since the five free analyses agreed in words while the five standardised estimates spread over a wide range once Multi100 had made them comparable. The course runs the sequence in reverse, starting from the reproduced specification and opening one decision at a time, so that the freedom of the class is structured as a menu of choices.
+
+The table also explains the numbers that puzzle first-time readers. The counts differ because the units differ. KQXUE and C6HJR collapsed the respondents to `r n_of[["C6HJR"]]` country-year means, 018OL kept the survey wave as a level of its own, which gives `r n_of[["018OL"]]` cells of one country in one wave, and KEVF1 and PRL47 modelled the respondents themselves. Even the two respondent counts disagree. KEVF1 merged an unemployment series that has no rows for the United Kingdom and none before 2009 for any country but France, so that fitting the complete cases left `r format(n_of[["KEVF1"]], big.mark = ",")` of the stacked respondents, while the filter of PRL47 to the member states of the EU-27 and its respondent-level controls left `r format(n_of[["PRL47"]], big.mark = ",")`. The degrees of freedom then differ because each model counts the information about a predictor measured for a country and a year in its own way. Fixed-effects least squares counts observations minus parameters, the Satterthwaite approximation estimates an effective number, `r insight::format_value(df_of[["018OL"]], digits = 1)` on `r n_of[["018OL"]]` cells but `r insight::format_value(df_of[["KEVF1"]], digits = 1)` on `r format(n_of[["KEVF1"]], big.mark = ",")` respondents, because the predictor varies only between country-years and the approximation allows for that, and the `mixed` command of Stata reports an asymptotic z with no degrees of freedom at all.
+
+```{r}
+#| label: tbl-p-and-r
+#| tbl-cap: "The five results as two-sided p-values and as the partial correlations that Multi100 recorded, from the same statistic and degrees of freedom. Source: `cases/eu-frames/data/analysts5.csv`."
+#| echo: false
+analysts |>
+  dplyr::mutate(p = dplyr::if_else(statistic_type == "t", 2 * pt(-abs(statistic), df1), 2 * pnorm(-abs(statistic)))) |>
+  dplyr::transmute(
+    Analyst = analyst_id,
+    Tool = tool,
+    Statistic = paste(statistic_type, "=", insight::format_value(statistic, digits = 2, style_negative = "minus")),
+    df = dplyr::if_else(is.na(df1), "–", insight::format_value(df1, digits = 1, protect_integers = TRUE)),
+    p = insight::format_p(p, name = NULL, digits = 3),
+    N = format(n, big.mark = ","),
+    `Partial r, as recorded` = insight::format_value(r, digits = 3, style_negative = "minus")
+  ) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:7, align = "r")
+```
+
+The same pair of numbers gives a verdict on significance, and the two conversions run in opposite directions. The two-sided p-value of a t statistic is the probability of a result at least as extreme when the true slope is zero, `2 * pt(-abs(t), df)` in R, and a z statistic takes the same computation on the standard normal distribution, `2 * pnorm(-abs(z))`, which is the t distribution with its degrees of freedom sent to infinity. The degrees of freedom matter for the p-value only at the margins, since the threshold of 5% lies at |t| = `r insight::format_value(qt(0.975, 20), digits = 2)` on 20 degrees of freedom and has nearly reached the normal value of `r insight::format_value(qnorm(0.975), digits = 2)` by a hundred. What matters far more is what each conversion does with the amount of data. At any fixed underlying association the p-value shrinks as the sample grows, while the partial correlation divides the sample size back out. All five analysts found a negative association, and every result but that of 018OL clears the conventional bar of significance, yet PRL47, with z = `r insight::format_value(stat_of[["PRL47"]], digits = 2, style_negative = "minus")` and p < .001, converts to a partial correlation of `r insight::format_value(r_of[["PRL47"]], digits = 3, style_negative = "minus")`, a significance that comes from `r format(n_of[["PRL47"]], big.mark = ",")` respondents rather than from the size of the association, while 018OL, the one result that is not significant, converts to a correlation `r insight::format_value(r_of[["018OL"]] / r_of[["PRL47"]], digits = 0)` times larger. The recorded correlations run from `r insight::format_value(max(analysts$r), digits = 3, style_negative = "minus")` to `r insight::format_value(min(analysts$r), digits = 3, style_negative = "minus")`, a ratio of `r insight::format_value(min(analysts$r) / max(analysts$r), digits = 0)`, and the two respondent-level analyses sit at its two ends. The conversion of KEVF1 divides by Satterthwaite degrees of freedom that count cells, while that of PRL47 runs the count of respondents through the denominator, so the same negative association becomes either a substantial correlation or almost none, as the person-level fits of the [multilevel module](multilevel.qmd#sec-levels) show for the error structures that produce each count. The course therefore reads the degrees of freedom before the effect size and places each result on the degrees of freedom of its own inference, as the [case study](../cases/eu-frames/index.qmd#sec-recorded) explains, and the [panel-data module](panel-data.qmd#sec-inference) shows why the conversion must not be fed a clustered t either.
+
+## 3. Five analyses of one dataset {#sec-one-dataset}
+
+The five analyses are not five studies. All five rest on the same surveys, the same respondents interviewed in the same waves, so whatever sampling error the surveys carry is carried by all five at once, and had the respondents of 2004 to 2013 answered a little differently, all five estimates would have moved together. What separates the five is what each analyst decided, which units to analyse, how to build the outcome, which series of unemployment to merge and which model to fit. Their spread measures the effect of analytical choices on one body of data, which is what Multi100 set out to measure, and it says nothing about sampling error. The metafor package will nonetheless pool the five results without complaint. The chunk below takes the recorded correlations to Fisher's $z$, whose sampling variance $1/(N - 3)$ depends only on the number of units, and fits both models.
+
+```{r}
+#| label: pool-five
+five <- metafor::escalc(measure = "ZCOR", ri = r, ni = n, data = analysts, slab = analyst_id)
+pool_re <- metafor::rma(yi, vi, data = five, method = "REML")
+pool_ee <- metafor::rma(yi, vi, data = five, method = "EE")
+pool_re
+```
+
+In a genuine meta-analysis an $I^2$ of `r insight::format_value(pool_re$I2, digits = 2)`% would mean that the studies barely share a phenomenon, but here all five results are known to come from the same data and the same claim, so the statistic says that sampling error explains almost none of the spread and that the spread is analytic variation, the subject of a multiverse expressed as a statistic of heterogeneity. The pooled estimates should not be believed even as arithmetic, because meta-analysis assumes that the studies carry independent sampling errors, whereas five reanalyses of one dataset share theirs entirely. The weights add a distortion of their own. The two respondent-level analyses enter with variances computed from six-figure counts of respondents, so that PRL47 takes `r insight::format_value(stats::weights(pool_ee)[["PRL47"]], digits = 1)`% of the weight in the equal-effects model and KEVF1 `r insight::format_value(stats::weights(pool_ee)[["KEVF1"]], digits = 1)`%, and the equal-effects pool of r = `r insight::format_value(predict(pool_ee, transf = tanh)$pred, digits = 3, style_negative = "minus")` inherits the conventions of the two analyses on degrees of freedom. Multi100 borrowed the standardisation step of meta-analysis but not its pooling step, and it reported the distribution of the results rather than an average that would assume independence. @fig-forest-five draws the five as a forest plot, the standard graphic of meta-analysis.
+
+```{r}
+#| label: fig-forest-five
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 3
+#| fig-cap: "The five Multi100 analyses as a forest plot: the recorded partial correlation of each with its 95% interval, back-transformed from Fisher's z, and the random-effects pool. The intervals of the two respondent-level analyses are barely visible, because their sampling variances are computed from six-figure counts of respondents. Source: `cases/eu-frames/data/analysts5.csv`."
+#| fig-alt: "Forest plot. KQXUE and KEVF1 lie near −0.42 and −0.45, C6HJR near −0.24, 018OL near −0.06 and PRL47 near zero; the intervals of KEVF1 and PRL47 are pinpoints, the others wide. The random-effects pool lies near −0.24 with an interval from about −0.42 to −0.05."
+forest_five <- dplyr::bind_rows(
+  summary(five, transf = tanh) |>
+    tibble::as_tibble() |>
+    dplyr::transmute(label = analyst_id, r = yi, low = ci.lb, high = ci.ub, kind = "analysis"),
+  predict(pool_re, transf = tanh) |>
+    tibble::as_tibble() |>
+    dplyr::transmute(label = "Pooled, random effects", r = pred, low = ci.lb, high = ci.ub, kind = "pooled")
+) |>
+  dplyr::mutate(label = factor(label, levels = rev(label)))
+ggplot2::ggplot(forest_five, ggplot2::aes(x = r, y = label)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_errorbar(ggplot2::aes(xmin = low, xmax = high), width = 0.15, orientation = "y", colour = "#1d2733") +
+  ggplot2::geom_point(data = \(d) datawizard::data_filter(d, kind == "analysis"), shape = 15, size = 2.6,
+                      colour = "#0e3b6a") +
+  ggplot2::geom_point(data = \(d) datawizard::data_filter(d, kind == "pooled"), shape = 18, size = 4.5,
+                      colour = "#8b1538") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::labs(x = "partial correlation r", y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+```
+
+The same holds for the curve of the case, whose `r nrow(curve)` specifications are all fitted to the same `r ref$n_cells` country-years. The function `escalc()` turns the t of each specification and its residual degrees of freedom into Fisher's $z$ of the partial correlation aligned with the claim, which returns the claim-aligned correlation `r_ca` of the curve file, and the equal-effects model pools the `r nrow(curve)` correlations.
+
+```{r}
+#| label: pool-curve
+# mi counts the predictors besides the intercept, so that ni - mi - 1 is the
+# residual df of each fit; the sign of r_ca aligns each t with the claim
+curve_z <- metafor::escalc(measure = "ZPCOR", ti = sign(r_ca) * abs(t), ni = n_cells, mi = n_cells - df - 1,
+                           data = curve)
+pool_curve <- metafor::rma(yi, vi, data = curve_z, method = "EE")
+c(pooled_r = tanh(pool_curve$beta[[1]]), se_pooled = pool_curve$se, se_reference = sqrt(curve_z$vi[curve_z$is_reference]))
+```
+
+The pooled correlation has a standard error of `r insight::format_value(pool_curve$se, digits = 4)` on the scale of Fisher's $z$, as if `r nrow(curve)` independent panels of `r ref$n_cells` country-years had been surveyed, when there is one panel, on which the reproduced specification has a standard error of `r insight::format_value(sqrt(curve_z$vi[curve_z$is_reference]), digits = 3)` on the same scale. The estimate is an average over a menu of specifications whose composition the course chose, so even its centre depends on how many options each decision was given, and its standard error belongs to no sampling process.
+
+Analyses of one dataset are better summarised by their spread and by what drives it. All five analysts and `r insight::format_value(100 * mean(curve$supports), digits = 1)`% of the specifications of the curve put the association below zero, the direction of the claim, and `r insight::format_value(100 * mean(curve$supports & curve$sig), digits = 1)`% of the specifications lie below zero with a CR2 p-value under 0.05, the rule set out in the [panel-data module](panel-data.qmd#sec-inference), with a median claim-aligned correlation of `r insight::format_value(stats::median(curve$r_ca), digits = 3, style_negative = "minus")`. The common axis is what makes the curve legible as a whole, since decomposing the variance of the claim-aligned correlation across the `r nrow(curve)` specifications by decision shows which decisions move the result. The estimator carries `r insight::format_value(share_of[["estimator"]], digits = 1)`% of the variance, the predictor `r insight::format_value(share_of[["predictor"]], digits = 1)`%, the choice among the three positive scales `r insight::format_value(share_of[["outcome"]], digits = 1)`% and the adjustment for the other economic measure `r insight::format_value(share_of[["copredictor"]], digits = 1)`%, while the item set carries `r insight::format_value(share_of[["item_set"]], digits = 1)`%, the other decisions of measurement with the form of the predictor together about `r insight::format_value(sum(share_of[["noop"]], share_of[["measure"]], share_of[["cell_weight"]], share_of[["pred_form"]]), digits = 0)`%, and `r insight::format_value(share_of[["interactions"]], digits = 1)`% lies in the interactions between decisions. The decisions that set what a model compares, change within a country net of the common European path or including it, and which measure of the economy carries the claim, therefore move the curve most, and the [specification menu](../cases/eu-frames/menu.qmd#the-curve) tabulates the decomposition beside the share of pairs of specifications whose class changes when one decision is moved alone. A spread of this kind is the counterpart of what @GelmanLoken2014StatisticalCrisisScience call the 'garden of forking paths', the many analyses that the same data allow, and the [reading on the specification curve](../cases/eu-frames/reading-inference.qmd) takes up what such a spread can and cannot establish.
+
+## 4. The countries of the panel {#sec-countries}
+
+The panel holds a comparison that meta-analysis does fit. The two-way slope of the reproduced specification is a weighted average of `r dplyr::n_distinct(euframes$cntry)` country slopes. Once the mean of each country and the mean of each year are removed from the cosmopolitan share and from unemployment, the slope of what remains of the share on what remains of unemployment can be fitted within each country, and the average of these slopes, each weighted by the share of the remaining variation in unemployment that its country holds, is the two-way slope exactly. The shares are those of the [display of influence](../cases/eu-frames/data/displays_codebook.md) of the case, in which Greece holds `r insight::format_value(influence$variation_share[influence$left_out == "GR"], digits = 1)`% of the variation, Spain `r insight::format_value(influence$variation_share[influence$left_out == "ES"], digits = 1)`% and Poland `r insight::format_value(influence$variation_share[influence$left_out == "PL"], digits = 1)`%.
+
+```{r}
+#| label: country-slopes
+# fixest::demean() removes the country and the year means at once
+demeaned <- fixest::demean(X = datawizard::data_select(euframes, c("mcosmo", "unemp")),
+                           f = datawizard::data_select(euframes, c("cntry", "year")))
+country_slopes <- euframes |>
+  dplyr::mutate(share_dm = demeaned$mcosmo, unemp_dm = demeaned$unemp) |>
+  dplyr::group_by(cntry) |>
+  dplyr::group_modify(\(d, key) {
+    lm(share_dm ~ 0 + unemp_dm, data = d) |>
+      parameters::model_parameters() |>
+      tibble::as_tibble() |>
+      dplyr::transmute(b = Coefficient, se = SE)
+  }) |>
+  dplyr::ungroup() |>
+  dplyr::left_join(datawizard::data_select(influence, c(cntry = "left_out", "variation_share")), by = "cntry")
+c(weighted_average = weighted.mean(country_slopes$b, country_slopes$variation_share), two_way = ref$b)
+```
+
+Unlike the five analyses, the `r dplyr::n_distinct(euframes$cntry)` country slopes rest on separate samples, since the respondents interviewed in Greece are not those interviewed in Spain, and the sampling error of the Greek slope is independent of that of the Spanish one, apart from the year means that every country shares. The country slopes can therefore be combined by meta-analysis, and the question that *Bayesian Data Analysis* puts, whether the countries are exchangeable, becomes a question about the claim. The chunk below fits a random-effects meta-analysis to the country slopes, expressed in points of the cosmopolitan share for each point of unemployment.
+
+```{r}
+#| label: country-meta
+countries <- metafor::escalc(measure = "GEN", yi = 100 * b, sei = 100 * se, data = country_slopes, slab = cntry)
+countries_re <- metafor::rma(yi, vi, data = countries, method = "REML")
+countries_re
+predict(countries_re)
+```
+
+```{r}
+#| label: country-values
+#| include: false
+pred_re <- predict(countries_re)
+cr2_ci <- clubSandwich::conf_int(lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes),
+                                 vcov = "CR2", cluster = euframes$cntry, coefs = "unemp", level = 0.95)
+```
+
+The country slopes differ by more than their standard errors allow, with Q = `r insight::format_value(countries_re$QE, digits = 1)` on `r countries_re$k - 1` degrees of freedom (`r insight::format_p(countries_re$QEp, stars = FALSE)`), and the random-effects model puts the standard deviation of the true slopes at $\tau$ = `r insight::format_value(sqrt(countries_re$tau2), digits = 2)` points, larger than the size of the average slope, `r insight::format_value(countries_re$beta[[1]], digits = 2, style_negative = "minus")` points, itself. Its 95% prediction interval, the range in which the slope of a further country of the same kind would be expected to lie, runs from `r insight::format_value(pred_re$pi.lb, digits = 2, style_negative = "minus")` to +`r insight::format_value(pred_re$pi.ub, digits = 2)` points, so the model allows that in some countries the share rose with unemployment. The confidence interval of the average slope, from `r insight::format_value(pred_re$ci.lb, digits = 2, style_negative = "minus")` to `r insight::format_value(pred_re$ci.ub, digits = 2, style_negative = "minus")` points, comes close to the interval of the two-way slope under CR2 errors clustered by country, which runs from `r insight::format_value(100 * cr2_ci$CI_L, digits = 2, style_negative = "minus")` to +`r sprintf("%.4f", 100 * cr2_ci$CI_U)` points. Both intervals are wide because neither treats the `r nrow(euframes)` country-years as independent pieces of evidence about a slope common to all, the clustered errors allowing any pattern of dependence among the years of a country and the random-effects model letting the slopes of the countries differ, and in this sense the clustered errors of the panel-data module and a random-effects meta-analysis of the countries are two routes to one conclusion about the evidence. @fig-forest-countries draws the `r dplyr::n_distinct(euframes$cntry)` slopes.
+
+```{r}
+#| label: fig-forest-countries
+#| echo: false
+#| fig-width: 7
+#| fig-height: 6.6
+#| fig-cap: "The slope of the cosmopolitan share on unemployment within each country, once country and year means are removed, with its 95% confidence interval, in the order of the share of the variation in unemployment that each country holds (the size of the square). The dark line is the two-way slope, which is the average of the country slopes weighted by those shares; the diamond is the random-effects average, and the band its 95% prediction interval. Sources: `cases/eu-frames/data/EUframes_cy.csv`, `cases/eu-frames/data/display_loo.csv`."
+#| fig-alt: "Forest plot of 27 countries. Greece, Spain, Poland and Ireland have the largest squares and narrow intervals, Greece and Spain below zero, Poland slightly above. The small countries have wide intervals on both sides of zero. The random-effects average lies near −0.34 points, close to the two-way slope, and the prediction band runs from about −1.7 to +1.0."
+forest_countries <- dplyr::bind_rows(
+  summary(countries) |>
+    tibble::as_tibble() |>
+    dplyr::transmute(label = cntry, estimate = yi, low = ci.lb, high = ci.ub, weight = variation_share, kind = "country"),
+  tibble::tibble(label = "Random effects", estimate = pred_re$pred, low = pred_re$ci.lb, high = pred_re$ci.ub,
+                 weight = NA_real_, kind = "pooled")
+) |>
+  dplyr::mutate(label = factor(label, levels = rev(c(country_slopes$cntry[order(-country_slopes$variation_share)],
+                                                     "Random effects"))))
+ggplot2::ggplot(forest_countries, ggplot2::aes(x = estimate, y = label)) +
+  ggplot2::annotate("rect", xmin = pred_re$pi.lb, xmax = pred_re$pi.ub, ymin = -Inf, ymax = Inf,
+                    fill = "#8b1538", alpha = 0.06) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_vline(xintercept = 100 * ref$b, colour = "#0e3b6a", linewidth = 0.6) +
+  ggplot2::geom_errorbar(ggplot2::aes(xmin = low, xmax = high), width = 0.2, orientation = "y", colour = "#1d2733") +
+  ggplot2::geom_point(data = \(d) datawizard::data_filter(d, kind == "country"), ggplot2::aes(size = weight),
+                      shape = 15, colour = "#0e3b6a") +
+  ggplot2::geom_point(data = \(d) datawizard::data_filter(d, kind == "pooled"), shape = 18, size = 4.5,
+                      colour = "#8b1538") +
+  ggplot2::scale_size_area(max_size = 5, guide = "none") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::coord_cartesian(xlim = c(-6, 4)) +
+  ggplot2::labs(x = "points of cosmopolitan share per point of unemployment", y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+```
+
+Three cautions qualify the reading. The standard error of each country slope treats the ten years of a country as ten independent observations, whereas the residuals of a country persist from one year to the next, as the [panel-data module](panel-data.qmd#sec-inference) shows, so the standard errors of the countries are probably too small, and part of what the model counts as heterogeneity may be persistence within countries rather than differences between their slopes. The [Bayesian estimation module](bayesian.qmd#sec-pooling) fits the country slopes and that persistence in one model, in which the spread of the slopes shrinks once the persistence is allowed for. The countries are also not exchangeable in the sense of *Bayesian Data Analysis* if their differences have predictable sources, and the `r dplyr::n_distinct(euframes$cntry[euframes$bailout == 1])` countries that went through an EU or IMF programme of financial assistance in the decade are one candidate, which a meta-regression with that programme as a moderator can test. And the year means are computed from all the countries at once, which ties the slopes of the countries together a little.
+
+::: {.callout-tip}
+## Try it
+
+Add the programmes of financial assistance to the meta-analysis of the countries as a moderator. Build an indicator for each country that is 1 if its `bailout` column in `EUframes_cy.csv` is 1 in any year (`dplyr::summarise(bailout = as.integer(any(bailout == 1)), .by = cntry)`), join it to `country_slopes`, and refit with `metafor::rma(yi, vi, mods = ~ bailout, data = countries, method = "REML")`. Compare $\tau$ with the value above and read the coefficient of the moderator. Then refit the meta-analysis of the five analysts with the statistic of PRL47 placed on the `r insight::format_value(marks$df_placement[marks$id == "PRL47"], digits = 1)` Satterthwaite degrees of freedom of the course refit of its design, which `reference_marks.csv` gives, and write two sentences on what changes in the weights and in the equal-effects pool.
+:::
+
+## 5. Other studies of many analysts {#sec-crowds}
+
+Multi100 was not the first study to give one dataset to many analysts, and the earlier studies faced the same question of how to summarise their results. In the study of @SilberzahnEtAl2018ManyAnalystsOne, `r nrow(teams)` teams asked whether football referees give red cards to dark-skinned players more often than to light-skinned ones, all of them on one dataset of players and referees, and reported odds ratios that "ranged from 0.89 (slightly negative) to 2.93 (moderately positive) in odds-ratio (OR) units; the median estimate was 1.31" (p. 344). The authors pooled nothing, and summarised the crowd by its spread and its median and by the `r sum(teams$significant)` teams of `r nrow(teams)` whose intervals excluded an odds ratio of 1, a summary that they turned into a statement about a single analysis: "If a single team, selected randomly from the present teams, had conducted the study using the same data set, there would have been a 69% probability of a positive estimated effect size and a 31% probability of a null effect" (p. 351). In sociology, @BreznauEtAl2022ObservingManyResearchers gave one cross-national survey and one hypothesis, that immigration reduces public support for social policies, to 73 teams and coded every identifiable decision of each team, and found that "[m]ore than 95% of the total variance in numerical results remains unexplained even after qualitative coding of all identifiable decisions in each team's workflow" (p. 1). The curve of this case sits at the other extreme, because it is a grid designed from the decisions of the menu, so that its decisions explain all of its variance by construction, and the interactions between decisions hold the part that no single decision explains.
+
+## 6. Multi100 as a whole {#sec-multi100}
+
+The problems of this page belong to one claim and its five analysts. The [discussion of the Multi100 article](https://codemoreh.github.io/ar4ds/multi100-article.html) on the AR4DS site takes up the project as a whole: the conversion to a common scale and what it assumes, the tolerance region within which a reanalysis counted as agreeing with the original study, what the project found about the robustness of the social and behavioural sciences, and the questions that a reader can put to any converted effect size. This claim counts among the claims whose conclusions held, since all five analysts reported evidence for it in Task 1, while it enters no comparison of effect sizes with the original study, for which Multi100 could compute no effect size, as the [case study](../cases/eu-frames/index.qmd#sec-tolerance) explains.
+
+## Sources and further reading {#sec-sources}
+
+The models on this page are fitted with metafor [@Viechtbauer2010ConductingMetaanalysesMetafor], whose article is a full introduction to the package, from the effect sizes computed by `escalc()` to meta-regression. The three possibilities of a meta-analysis and the hierarchical model behind the random-effects model are set out in chapter 5 of *Bayesian Data Analysis* [@GelmanEtAl2014BayesianDataAnalysis], and the [Bayesian estimation module](bayesian.qmd) fits the same kind of hierarchy to the countries of the panel. The conversion rules and the convention on signs are those of the Multi100 article and its code [@AczelEtAl2026InvestigatingAnalyticalRobustness], and the two earlier studies of many analysts are @SilberzahnEtAl2018ManyAnalystsOne and @BreznauEtAl2022ObservingManyResearchers. The files behind the numbers are `analysts5.csv`, `reference_marks.csv`, `spec_curve.csv`, `spec_curve_forks.csv`, `display_inference.csv`, `display_loo.csv` and `EUframes_cy.csv` in `cases/eu-frames/data/`, each with a codebook, and `data/silberzahn29.csv` with its codebook for the teams of Silberzahn and colleagues.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

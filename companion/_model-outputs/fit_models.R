@@ -1,8 +1,8 @@
 ###############################################################################
-# Title:        The exhibit models of the statistics and weights modules
+# Title:        The exhibit models of the multilevel, Bayesian and weights modules
 # Purpose:      Fit the person-level and Bayesian exhibit models whose printed
-#               summaries companion/stats-methods.qmd and
-#               companion/weighting.qmd display verbatim, and capture each
+#               summaries companion/multilevel.qmd, companion/bayesian.qmd
+#               and companion/weighting.qmd display verbatim, and capture each
 #               summary in a text file of this folder. These are illustrative
 #               single fits for teaching.
 # Reads:        the respondent file, through _load_respondents.R (the

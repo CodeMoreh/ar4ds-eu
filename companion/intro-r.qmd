@@ -85,7 +85,7 @@ ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo)) +
   ggplot2::geom_smooth(method = "lm", colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15)
 ```
 
-The grey points are drawn first and the trend line over them. `geom_smooth()` fits a line through the cloud and draws it with a band showing the uncertainty around it, and `method = "lm"` asks for a straight line from the same least-squares method that the statistical methods module uses to fit models. R then prints the message `` `geom_smooth()` using formula = 'y ~ x' ``, which only reports the relationship that was fitted and needs no action. Reference layers behave the same way: `geom_hline(yintercept = 0)` rules a horizontal line at zero, and section 3 uses one to split a figure into results that support a claim and results that do not.
+The grey points are drawn first and the trend line over them. `geom_smooth()` fits a line through the cloud and draws it with a band showing the uncertainty around it, and `method = "lm"` asks for a straight line from the same least-squares method that the module on panel data uses to fit models. R then prints the message `` `geom_smooth()` using formula = 'y ~ x' ``, which only reports the relationship that was fitted and needs no action. Reference layers behave the same way: `geom_hline(yintercept = 0)` rules a horizontal line at zero, and section 3 uses one to split a figure into results that support a claim and results that do not.
 
 Line thickness is set with `linewidth`, whereas point size and type size are set with `size`, and mixing the two up is behind a great many warnings.
 
@@ -213,7 +213,7 @@ Build a chain that keeps the crisis years, groups by `year`, and reports the mea
 
 The central figure of the course is a **specification curve**, and you now have every part needed to build one yourself. A hypothesis about a dataset admits many defensible analyses, and if you fit all of them and line the results up in order, you can see the range of answers that the data supports instead of the single answer that one analyst happened to report.
 
-`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [statistics module](stats-methods.qmd#sec-inference) explains it), and `is_reference` marks the reference specification of the course, the analysis that analyst C6HJR submitted to Multi100, which is one of the three analyses that the one-day workshop on the EU-frames case lets you choose to reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
+`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [module on panel data](panel-data.qmd#sec-inference) explains it), and `is_reference` marks the reference specification of the course, the analysis that analyst C6HJR submitted to Multi100, which is one of the three analyses that the one-day workshop on the EU-frames case lets you choose to reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
 
 ```r
 curve <- readr::read_csv("data/spec_curve.csv") |>
@@ -268,7 +268,7 @@ This module was written for the course and adapts no existing lesson, so there i
 
 The open resources for a fuller grounding in R are listed under [further study](https://codemoreh.github.io/ar4ds/tools/r.html#sec-sources) in Getting started with R. For the grammar of graphics, the chapters on visualisation in **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>, cover ggplot2 in full, and the documentation of the package, at [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), is readable as an introduction as well as a reference.
 
-When you are ready for a first statistical model, the module on [the statistical methods behind the course](stats-methods.qmd) takes the linear model on to the panel models that the EU-frames case requires.
+When you are ready for a first statistical model, the module on [panel data](panel-data.qmd) takes the linear model on to the panel models that the EU-frames case requires.
 
 ## References {.unnumbered}
 

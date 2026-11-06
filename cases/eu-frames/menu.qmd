@@ -138,7 +138,7 @@ Each of these decisions rewrites the estimand statement, so that two analysts wh
 | **Adjustment set** | none `none`, the other measure `other` | – | `r pct(fk("copredictor"))` | `r pct(fk("copredictor", "crossing_rate"))` |
 | **Sample** | all 270 country-years `all` | 2004–2008 `y2004_2008`, 2009–2013 `y2009_2013`, without the bailout countries `no_bailout`, without Greece and Spain `no_GR_ES`, on [The multiverse and its critics](../../companion/multiverse.qmd) | fixed | – |
 | **Whose average** | each country-year once `none` | respondents `n_cell`, effective sample size `n_eff`, adult population `pop`, on [Weights](../../companion/weighting.qmd) | fixed | – |
-| **Estimator** | two-way fixed effects `fe_twoway`, country fixed effects `fe_country` | random effects `re`, pooled OLS `pooled_cl`, within–between model `rewb`, on [the statistical methods page](../../companion/stats-methods.qmd) | `r pct(fk("estimator"))` | `r pct(fk("estimator", "crossing_rate"))` |
+| **Estimator** | two-way fixed effects `fe_twoway`, country fixed effects `fe_country` | random effects `re`, pooled OLS `pooled_cl`, within–between model `rewb`, in [the module on panel data](../../companion/panel-data.qmd#sec-re) | `r pct(fk("estimator"))` | `r pct(fk("estimator", "crossing_rate"))` |
 
 : The seven decisions about the question. The last two columns describe the curve, as in @tbl-forks; "fixed" marks a decision with a single option on the curve. {#tbl-level1}
 
@@ -189,7 +189,7 @@ The estimator decides which country-years are compared with which, and it is the
 
 **Random effects** fits one slope that is a weighted blend of the within-country and the between-country associations, and it is consistent only if the stable differences between countries are unrelated to the predictor. That assumption fails here: on the course panel the within and the between slopes have opposite signs in `r sum(sign(bw$b_within) != sign(bw$b_between))` of the `r nrow(bw)` combinations of positive scale and predictor, and the test of their difference rejects at the 5% level in `r sum(bw$p_difference < 0.05)` of them. Because each country is observed ten times, the blend lies close to the within slope (in the audit of the menu, a median of 4% of the way towards the between slope), so the estimator weakens the within-country slope a little and imports a little of the opposite association between countries; and since it has no year effects, it resembles the country design more than the two-way one. Swapped into the specifications of the curve, it leaves `r pct(dv("re", "below_zero_sig", "re_cr1_g1"))` below zero with p < 0.05 under errors clustered by country, a figure that owes as much to the comparison it makes as to the evidence.
 
-**The within–between model** of @BellJones2015ExplainingFixedEffects separates what random effects blend: the deviation of the predictor from its country mean carries the within slope, the country mean carries the between slope, and a random intercept for country keeps the multilevel structure. Its within slope equals the fixed-effects slope exactly, so as a point on the curve it would repeat existing points with other errors, and its place is in the teaching, where it shows the two associations side by side; for the cosmopolitan scale the test of their difference gives `r pe(bwv("mcosmo", "unemp", "p_difference"))`. The model is set out on [the statistical methods page](../../companion/stats-methods.qmd).
+**The within–between model** of @BellJones2015ExplainingFixedEffects separates what random effects blend: the deviation of the predictor from its country mean carries the within slope, the country mean carries the between slope, and a random intercept for country keeps the multilevel structure. Its within slope equals the fixed-effects slope exactly, so as a point on the curve it would repeat existing points with other errors, and its place is in the teaching, where it shows the two associations side by side; for the cosmopolitan scale the test of their difference gives `r pe(bwv("mcosmo", "unemp", "p_difference"))`. The model is set out in [the module on panel data](../../companion/panel-data.qmd#sec-within-between).
 
 ## Measurement {#level-measurement}
 
@@ -229,8 +229,8 @@ With the question and the measures fixed, these decisions change the model that 
 | Decision | On the curve | Off the curve, and where it is taught | Share of the variance | Class changes |
 |:--|:--|:--|--:|--:|
 | **Predictor form** | raw `raw`, logged `log` (unemployment only) | – | `r pct(fk("pred_form"), 2)` | `r pct(fk("pred_form", "crossing_rate"))` |
-| **Outcome family** | linear `gaussian` | beta regression `beta`, on [the statistical methods page](../../companion/stats-methods.qmd) | fixed | – |
-| **Inference** | CR2 with Satterthwaite df `cr2` | clustered, CR1 `cr1`, conventional `conventional`, on [the statistical methods page](../../companion/stats-methods.qmd) | nil | – |
+| **Outcome family** | linear `gaussian` | beta regression `beta`, in [the module on multilevel models](../../companion/multilevel.qmd#sec-glm) | fixed | – |
+| **Inference** | CR2 with Satterthwaite df `cr2` | clustered, CR1 `cr1`, conventional `conventional`, in [the module on panel data](../../companion/panel-data.qmd#sec-inference) | nil | – |
 
 : The three decisions about the model: two about the fit, one about the inference. The inference cannot change the partial correlation, so its share of the variance is nil. {#tbl-level3}
 

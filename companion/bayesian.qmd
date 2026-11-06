@@ -1,0 +1,416 @@
+---
+title: "Bayesian estimation"
+subtitle: "Partial pooling and persistent errors in the country-year panel"
+bibliography: [../references.bib, ../references-new.bib]
+---
+
+```{r}
+#| label: setup
+#| include: false
+# The brms fits run once, in companion/_model-outputs/bayes_panel.R; the page
+# reads their summaries and thinned draws, and runs the frequentist twins live
+options(width = 88)
+euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+summ <- readr::read_csv("_model-outputs/bayes_panel_summary.csv", show_col_types = FALSE)
+dx <- readr::read_csv("_model-outputs/bayes_panel_diagnostics.csv", show_col_types = FALSE)
+sens <- readr::read_csv("_model-outputs/bayes_panel_sensitivity.csv", show_col_types = FALSE)
+ppc <- readr::read_csv("_model-outputs/bayes_panel_ppc.csv", show_col_types = FALSE)
+ppc_draws <- readr::read_csv("_model-outputs/bayes_panel_ppc_draws.csv", show_col_types = FALSE)
+prior_draws <- readr::read_csv("_model-outputs/bayes_panel_prior_draws.csv", show_col_types = FALSE)
+country_slopes <- readr::read_csv("_model-outputs/bayes_panel_countries.csv", show_col_types = FALSE)
+inference <- readr::read_csv("../cases/eu-frames/data/display_inference.csv", show_col_types = FALSE)
+influence <- readr::read_csv("../cases/eu-frames/data/display_loo.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(estimator == "fe_twoway", outcome == "mcosmo", predictor == "unemp", left_out != "none")
+
+# One row of the summaries for each quantity quoted on the page
+ri_slope <- datawizard::data_filter(summ, model == "ri", variable == "b_unemp")
+ri_year <- datawizard::data_filter(summ, model == "ri", variable == "sd_year__Intercept")
+prior_slope <- datawizard::data_filter(summ, model == "prior", variable == "b_unemp_within")
+common <- datawizard::data_filter(summ, model == "common", variable == "b_unemp_within")
+ar1 <- datawizard::data_filter(summ, model == "ar1", variable == "b_unemp_within")
+ar1_phi <- datawizard::data_filter(summ, model == "ar1", variable == "ar[1]")
+slopes <- datawizard::data_filter(summ, model == "slopes", variable == "b_unemp_within")
+slopes_sd <- datawizard::data_filter(summ, model == "slopes", variable == "sd_cntry__unemp_within")
+both <- datawizard::data_filter(summ, model == "both", variable == "b_unemp_within")
+both_sd <- datawizard::data_filter(summ, model == "both", variable == "sd_cntry__unemp_within")
+both_phi <- datawizard::data_filter(summ, model == "both", variable == "ar[1]")
+persistence <- datawizard::data_filter(ppc, statistic == "persistence")
+bounds_both <- datawizard::data_filter(ppc, model == "both")
+conventional <- datawizard::data_filter(inference, estimator == "fe_twoway", inference == "conventional")
+cr2 <- datawizard::data_filter(inference, estimator == "fe_twoway", inference == "cr2_satterthwaite")
+cell_prior <- datawizard::data_filter(prior_draws, quantity == "cell_mean")
+rise_prior <- datawizard::data_filter(prior_draws, quantity == "rise_10")
+sens_ar1 <- datawizard::data_filter(sens, model == "ar1")
+sens_both <- datawizard::data_filter(sens, model == "both")
+n_countries <- dplyr::n_distinct(euframes$cntry)
+n_years <- dplyr::n_distinct(euframes$year)
+n_draws <- dx$draws[dx$model == "both"]
+# the rise in unemployment between the lowest and the highest year of a country
+rise_es <- diff(range(euframes$unemp[euframes$cntry == "ES"]))
+rise_gr <- diff(range(euframes$unemp[euframes$cntry == "GR"]))
+```
+
+This module of the [companion curriculum](index.qmd) estimates the slope of the EU-frames claim by Bayesian methods, and it asks what Bayesian estimation adds in a case of this kind. The claim comes from a study of Eurobarometer surveys by the original author (OA), who reported that poor national economic performance lowers the positive framing of the European Union [@Teney2016DoesEUEconomic], and the course examines it on a panel of `r nrow(euframes)` country-years, `r n_countries` member states observed in each of `r n_years` years, as the [case study](../cases/eu-frames/index.qmd) explains. The reproduced specification of the course, the cosmopolitan share regressed on unemployment with country and year fixed effects, gives a slope of `r insight::format_value(conventional$b, digits = 5, style_negative = "minus")` with a conventional p-value of `r insight::format_value(conventional$p, digits = 4)`. Under the CR2 correction for errors clustered by country, which the [panel-data module](panel-data.qmd#sec-inference) sets out, the same slope has p = `r insight::format_value(cr2$p, digits = 4)` on `r insight::format_value(cr2$df, digits = 1)` degrees of freedom, so that the verdict on significance depends on how the dependence of the ten years of a country is treated, and the result lies just above the threshold of 5%. A result of this kind, resting on countries of very unequal weight, is one in which the habits of Bayesian estimation are useful. The estimate becomes a distribution about which direct statements of probability can be made, with no line that divides the results into two classes, and the dependence that the clustered errors repair after the fit has to be written into the model itself, where a posterior predictive check can test it. The countries can also be given slopes of their own, each estimated partly from the other countries, which is the idea of partial pooling at the centre of the multilevel and Bayesian work of Andrew Gelman and of Richard McElreath that this module follows.
+
+The models are fitted with brms, which fits Bayesian regression models in R through the Stan language [@Burkner2017BrmsPackageBayesian]. They were fitted once, in the script `companion/_model-outputs/bayes_panel.R`, because a Bayesian fit takes longer than a page should take to build, and the page shows the code of each model and reads the summaries and the thinned draws that the script wrote, while the frequentist twins of the models, fitted by restricted maximum likelihood (REML), run live on the page. Day 3 of the [Extended course](../tracks/eu-frames-extended/index.qmd) teaches Bayesian estimation on the data of the case as one of its sessions.
+
+## 1. Prior, likelihood and posterior {#sec-bayes}
+
+Frequentist estimation asks which values of the parameters make the observed data most probable, and it attaches uncertainty to its estimates through imagined repetitions of the sampling. **Bayesian** estimation treats the parameters themselves as uncertain quantities. It starts from a **prior** distribution $p(\theta)$, which says what values are plausible before the data enter, and it updates the prior through the **likelihood** $p(y \mid \theta)$, the model read as a statement of how probable the data are under each value of the parameters, into a **posterior** distribution,
+
+$$ p(\theta \mid y) \;\propto\; p(y \mid \theta)\; p(\theta). $$
+
+The posterior is a probability distribution over all the parameters jointly, of which any table of coefficients is only a summary. For the models of this course it has no closed form, so it is explored by sampling. **Markov chain Monte Carlo** (MCMC) draws thousands of values of the parameters whose long-run frequencies match the posterior, and the sampler of Stan, a form of Hamiltonian Monte Carlo, has made this routine for the multilevel models of the [multilevel module](multilevel.qmd#sec-multilevel). Inference then consists of summarising the draws: a posterior median, an interval that holds 95% of them, the share of them below zero.
+
+brms accepts the formula syntax of `lmer()`, so the first model is a familiar one, the panel with a random intercept for each country and one for each year, in which the country and the year departures are drawn from distributions whose spreads the model estimates:
+
+$$ \bar{y}_{ct} \sim N\!\left( \gamma_0 + \beta x_{ct} + v_c + w_t,\; \sigma^2 \right), \qquad v_c \sim N(0, \sigma_v^2), \quad w_t \sim N(0, \sigma_w^2). $$
+
+```{r}
+#| label: brms-ri
+#| eval: false
+m_bayes <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
+                     backend = "cmdstanr", chains = 4, iter = 4000, seed = 2026)
+summary(m_bayes)
+```
+
+```{r}
+#| label: brms-ri-output
+#| echo: false
+writeLines(readLines(file.path("_model-outputs", "brms_panel.txt")))
+```
+
+The vocabulary of the output maps onto that of a frequentist fit, although the meanings shift. **Estimate** is the posterior mean and **Est.Error** the posterior standard deviation, the counterparts of a coefficient and its standard error. The columns **l-95% CI** and **u-95% CI** bound a **credible interval**, which says that, given the model, the prior and the data, the parameter lies within it with a probability of 95%, the statement that a confidence interval is often misread as making. The remaining columns are computational checks. **Rhat** compares the four chains of draws with one another and is 1.00 when they agree, and **Bulk_ESS** and **Tail_ESS** are effective sample sizes, the number of independent draws that the correlated draws of the chains are worth in the centre and in the tails of the posterior. The block of multilevel hyperparameters shows what the Bayesian fit adds. The standard deviation of the year intercepts has a posterior mean of `r insight::format_value(ri_year$mean, digits = 4)`, with a credible interval from `r insight::format_value(ri_year$q2.5, digits = 4)` to `r insight::format_value(ri_year$q97.5, digits = 4)`, a statement of how little `r n_years` years can establish about a variance between years.
+
+The slope, `r insight::format_value(ri_slope$mean, digits = 4, style_negative = "minus")`, is a property of the model rather than of the Bayesian machinery, and the direct check is the frequentist twin of the model, fitted by REML on the committed panel:
+
+```{r}
+#| label: reml-ri
+m_freq_twin <- lmerTest::lmer(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes)
+summary(m_freq_twin)$coefficients
+lme4::VarCorr(m_freq_twin)
+```
+
+The two fits agree within the error of the draws, because `r nrow(euframes)` country-years and weak priors leave the data in charge, and the two fits differ where the data are thin, since REML returns a bare point estimate for the spread of the years where the posterior gives a full distribution. The priors behind the posterior can be inspected, and inspecting them is a habit worth building:
+
+```{r}
+#| label: brms-ri-priors
+#| eval: false
+brms::prior_summary(m_bayes)
+```
+
+```{r}
+#| label: brms-ri-priors-output
+#| echo: false
+writeLines(readLines(file.path("_model-outputs", "brms_priors.txt")))
+```
+
+The defaults of brms are mild, a Student-t prior centred on the median of the outcome for the intercept, half Student-t priors that keep the standard deviations positive, and a flat prior on the slope, which gives every value from minus to plus infinity the same weight. A flat prior is improper, a density that does not integrate to one, so the model cannot be simulated from before the data enter, and the rest of the module states its priors.
+
+## 2. Priors for the two-way design {#sec-priors}
+
+The random intercepts of section 1 are partially pooled, each country drawn towards the average country, and they do not absorb the association between the level of unemployment of a country and its level of framing, which the [panel-data module](panel-data.qmd#sec-within-between) sets apart from the association within countries. The claim is read on the curve of the course as a claim about change within countries, so the models from here on take the two-way design of the reproduced specification, with a level for each country and a departure for each year, left to the data:
+
+$$ \bar{y}_{ct} \sim N\!\left( \alpha_c + \gamma_t + \beta\,(x_{ct} - \bar{x}_{c\cdot}),\; \sigma^2 \right). $$
+
+The predictor is the departure of each year from the decade mean of unemployment in its country, the within part of the within–between model, which leaves the two-way slope unchanged and keeps the slopes of the countries in section 5 from standing in for differences of level. Gelman and Hill describe what such intercepts are in a multilevel vocabulary. "Fixed effects are usually defined as varying coefficients that are not themselves modeled", and classical regressions with group indicators correspond to multilevel models "with hierarchical variance parameters set to zero or infinity", the cases of complete pooling and of no pooling [@GelmanHill2007DataAnalysisUsing, pp. 245, 247]. The country levels here are close to no pooling, each under a prior wide enough to leave it to the data of its country.
+
+A Bayesian model needs a prior for every parameter, and here the priors can be stated on scales that every member of the class can read, that of a share running from 0 to 1 and that of a rate of unemployment in percentage points. The level of each country, its share in 2004 at its own average unemployment, takes normal(0.5, 0.15), which places a share between about 0.2 and 0.8 with 95% probability, and the departure of each later year from 2004 takes normal(0, 0.1). The slope takes normal(0, 0.01), which allows a rise of ten points of unemployment, about half of the rises of `r insight::format_value(rise_es, digits = 1)` points in Spain and `r insight::format_value(rise_gr, digits = 1)` points in Greece between their lowest and their highest year, to move the share by up to about 0.2 either way, and the residual standard deviation takes exponential(20), whose mean of 0.05 is a few points of share. McElreath sets out the principle behind such choices: "Using scientific knowledge to build priors is not cheating. The important thing is that your prior not be based on the values in the data, but only on what you know about the data before you see it" [@McElreath2020StatisticalRethinkingBayesian, p. 84].
+
+What the priors imply together is seldom obvious from the priors one by one, and the way to find out is to simulate the outcome from them before the data enter, since "[t]he prior predictive simulation is an essential part of your modeling" (p. 82). brms fits the model with the likelihood switched off when `sample_prior = "only"` is set, and `posterior_predict()` then draws cell means from the priors alone.
+
+```{r}
+#| label: brms-prior
+#| eval: false
+euframes <- euframes |>
+  datawizard::demean(select = "unemp", by = "cntry") |>
+  dplyr::mutate(year_f = factor(year))
+priors <- c(brms::prior(normal(0, 0.1), class = "b"),
+            brms::set_prior("normal(0.5, 0.15)", class = "b",
+                            coef = paste0("cntry", sort(unique(euframes$cntry)))),
+            brms::prior(normal(0, 0.01), class = "b", coef = "unemp_within"),
+            brms::prior(exponential(20), class = "sigma"))
+fit_prior <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within, data = euframes, prior = priors,
+                       sample_prior = "only", chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr")
+yrep_prior <- brms::posterior_predict(fit_prior)
+```
+
+```{r}
+#| label: fig-prior
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 3
+#| fig-cap: "The prior predictive distributions of the two-way model: the cell means that the priors alone imply (left), with the bounds of a share marked, and the change in the cosmopolitan share for a rise of ten points of unemployment within a country (right). Source: `companion/_model-outputs/bayes_panel_prior_draws.csv`."
+#| fig-alt: "Left: a broad hump of simulated cell means centred near 0.5, almost all of it between 0 and 1, with thin tails beyond the bounds. Right: a symmetric hump of changes centred on zero, most of it between about −20 and +20 points of share."
+prior_draws |>
+  datawizard::data_modify(panel = dplyr::if_else(quantity == "cell_mean", "cell mean, from the priors alone",
+                                                 "change in share for a rise of ten points (points)")) |>
+  ggplot2::ggplot(ggplot2::aes(value)) +
+  ggplot2::geom_vline(data = tibble::tibble(panel = "cell mean, from the priors alone", bound = c(0, 1)),
+                      ggplot2::aes(xintercept = bound), colour = "#8c5a10", linetype = "dashed") +
+  ggplot2::geom_density(colour = "#0e3b6a", fill = "#0e3b6a", alpha = 0.15, linewidth = 0.7) +
+  ggplot2::facet_wrap(ggplot2::vars(panel), scales = "free") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::labs(x = NULL, y = "prior density") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+```
+
+Before the data, the model expects 95% of cell means between `r insight::format_value(quantile(cell_prior$value, 0.025), digits = 2)` and `r insight::format_value(quantile(cell_prior$value, 0.975), digits = 2)`, and it places `r insight::format_value(100 * mean(cell_prior$value < 0 | cell_prior$value > 1), digits = 1)`% of them outside the bounds of a share, which a Gaussian model cannot avoid entirely and which is small enough to leave the model sensible. For a rise of ten points of unemployment within a country it expects a change in the share of between `r insight::format_value(quantile(rise_prior$value, 0.025), digits = 0, style_negative = "minus")` and +`r insight::format_value(quantile(rise_prior$value, 0.975), digits = 0)` points, a range that rules out nothing that a crisis could plausibly do to the framing of the EU and keeps the slope away from values that no survey could produce.
+
+## 3. The posterior of the two-way slope {#sec-posterior}
+
+With the likelihood switched on and the errors of the country-years treated as independent, the model is the Bayesian form of the reproduced specification.
+
+```{r}
+#| label: brms-common
+#| eval: false
+fit_common <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within, data = euframes, prior = priors,
+                        chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
+                        control = list(adapt_delta = 0.95))
+bayestestR::describe_posterior(fit_common, parameters = "b_unemp_within", ci = 0.95, ci_method = "ETI")
+```
+
+The posterior median of the slope is `r insight::format_value(common$median, digits = 5, style_negative = "minus")`, with a 95% credible interval from `r insight::format_value(common$q2.5, digits = 5, style_negative = "minus")` to `r insight::format_value(common$q97.5, digits = 5, style_negative = "minus")`, against the least-squares slope of `r insight::format_value(conventional$b, digits = 5, style_negative = "minus")` with a conventional standard error of `r insight::format_value(conventional$se, digits = 5)`. The two agree closely, because priors this weak are outweighed by `r nrow(euframes)` country-years, and the posterior answers questions that a confidence interval cannot, among them the probability that the slope is negative, which here is `r dplyr::if_else(common$pd == 1, "1 to the precision of the draws, since every draw lies below zero", insight::format_value(common$pd, digits = 4))`. That agreement is also the limitation of the model, whose likelihood treats the `r nrow(euframes)` country-years as independent pieces of evidence, as the conventional standard error does, so that its posterior inherits the assumption that the clustered errors of the panel-data module correct.
+
+Every number of this kind also assumes that the computation worked. Stan draws from the posterior by Markov chain Monte Carlo, and the standard checks ask whether the four chains agree (the R-hat statistic, which should be below 1.01), whether the chains carry enough independent information (the effective sample sizes, which should exceed about 400) and whether the sampler met regions of the posterior that it could not explore (divergent transitions, which should be zero). @tbl-diagnostics gives the checks for every model of the page.
+
+```{r}
+#| label: tbl-diagnostics
+#| tbl-cap: "Computational checks of the six models: the largest R-hat and the smallest bulk and tail effective sample sizes over every parameter, the divergent transitions and the deepest tree of the sampler, from four chains. Source: `companion/_model-outputs/bayes_panel_diagnostics.csv`."
+#| echo: false
+dx |>
+  datawizard::data_modify(
+    Model = unname(c(ri = "Random intercepts, default priors",
+                     prior = "Two-way, priors only",
+                     common = "Two-way, one slope",
+                     ar1 = "Two-way, persistent errors",
+                     slopes = "Two-way, a slope for each country",
+                     both = "Two-way, country slopes and persistent errors")[model]),
+    Draws = format(draws, big.mark = ","),
+    `R-hat` = sprintf("%.3f", max_rhat),
+    `Bulk ESS` = format(round(min_ess_bulk), big.mark = ","),
+    `Tail ESS` = format(round(min_ess_tail), big.mark = ",")
+  ) |>
+  datawizard::data_select(c("Model", "Draws", "R-hat", "Bulk ESS", "Tail ESS", Divergences = "divergences",
+                            `Tree depth` = "max_treedepth")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:7, align = "r")
+```
+
+## 4. Persistence within countries {#sec-persistence}
+
+A model that passes its computational checks may still fail to describe the data. *Bayesian Data Analysis* states the principle of the check that comes next: "If the model fits, then replicated data generated under the model should look similar to observed data", and "[a]ny systematic differences between the simulations and the data indicate potential failings of the model" [@GelmanEtAl2014BayesianDataAnalysis, p. 143]. The *Bayesian Workflow* book adds that the most direct checks compare simulations with "a summary statistic computed from the data or subgroups of the data, especially for groupings not included in the model" [@GelmanEtAl2026BayesianWorkflow, p. 142], and the grouping that the model of section 3 leaves out is the country, whose ten years it treats as ten independent draws. The summary chosen here is the persistence of the residuals, the correlation between the residual of a country-year in the two-way least-squares fit and the residual of the same country in the year before. The statistic is computed on the data, where the [panel-data module](panel-data.qmd#sec-inference) found it to be `r insight::format_value(persistence$observed[1], digits = 2)`, and on each of the `r format(n_draws, big.mark = ",")` datasets that the model replicates.
+
+```{r}
+#| label: brms-ppc
+#| eval: false
+yrep <- brms::posterior_predict(fit_common)
+# one lm() with the replicated datasets as the columns of its outcome
+resid_rep <- resid(lm(t(yrep) ~ unemp + cntry + year_f, data = euframes))
+```
+
+```{r}
+#| label: fig-ppc
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 4.2
+#| fig-cap: "Posterior predictive check of persistence: the correlation within countries between the residual of a country-year and that of the year before, in datasets replicated from each of the four two-way models (histograms), against its value in the data (vertical line). Source: `companion/_model-outputs/bayes_panel_ppc_draws.csv`."
+#| fig-alt: "Four histograms. For the model with one slope the replicated values cluster around −0.1 and the observed 0.53 lies far to the right; for the model with country slopes they cluster around 0 and the observed value again lies far to the right. For the two models with persistent errors the replicated values cluster around 0.5 and the observed value lies in the middle."
+ppc_draws |>
+  datawizard::data_modify(model = factor(model, levels = c("common", "slopes", "ar1", "both"),
+                                         labels = c("one slope", "a slope for each country", "persistent errors",
+                                                    "country slopes and persistent errors"))) |>
+  ggplot2::ggplot(ggplot2::aes(persistence)) +
+  ggplot2::geom_histogram(binwidth = 0.025, fill = "#0e3b6a", alpha = 0.7) +
+  ggplot2::geom_vline(xintercept = persistence$observed[1], colour = "#8b1538", linewidth = 0.8) +
+  ggplot2::facet_wrap(ggplot2::vars(model), ncol = 2) +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::labs(x = "correlation of a residual with the residual of the year before", y = "replicated datasets") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+```
+
+In the datasets replicated by the model with one slope, the persistence has a median of `r insight::format_value(persistence$rep_median[persistence$model == "common"], digits = 2, style_negative = "minus")`, with 90% of its values between `r insight::format_value(persistence$rep_q05[persistence$model == "common"], digits = 2, style_negative = "minus")` and `r insight::format_value(persistence$rep_q95[persistence$model == "common"], digits = 3, style_negative = "minus")`, a little below zero because removing the mean of a country from its ten residuals makes neighbouring residuals slightly negatively correlated, and no replicated dataset reaches the observed `r insight::format_value(persistence$observed[1], digits = 2)`, so the model fails the check. A country that framed the EU more positively than the model expects in one year tends to do so in the next, and a model with independent errors has no way to produce that persistence. The failed check names the next model, which lets the departures of a country follow a first-order autoregressive process, so that the error of each year carries a fraction $\phi$ of the error of the year before:
+
+$$ \bar{y}_{ct} = \alpha_c + \gamma_t + \beta\,(x_{ct} - \bar{x}_{c\cdot}) + e_{ct}, \qquad e_{ct} = \phi\, e_{c,t-1} + \varepsilon_{ct}, \quad \varepsilon_{ct} \sim N(0, \sigma^2). $$
+
+```{r}
+#| label: brms-ar1
+#| eval: false
+fit_ar1 <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within + ar(time = year, gr = cntry, p = 1, cov = TRUE),
+                     data = euframes, prior = c(priors, brms::prior(normal(0, 0.5), class = "ar")),
+                     chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
+                     control = list(adapt_delta = 0.95))
+```
+
+The argument `cov = TRUE` gives the errors of each country an autoregressive covariance matrix, which keeps the process stationary and lets `posterior_predict()` replicate the ten years of a country as one series, and the prior normal(0, 0.5) on $\phi$, which brms confines to the interval from −1 to 1, is centred on no persistence. The posterior puts $\phi$ at `r insight::format_value(ar1_phi$median, digits = 2)`, with a 95% credible interval from `r insight::format_value(ar1_phi$q2.5, digits = 2)` to `r insight::format_value(ar1_phi$q97.5, digits = 2)`, and the model passes the check, since its replicated persistence has a median of `r insight::format_value(persistence$rep_median[persistence$model == "ar1"], digits = 2)` and `r insight::format_value(100 * persistence$p_ppc[persistence$model == "ar1"], digits = 0)`% of its replicated values lie above the observed one. The slope moves as well as widening, to a posterior median of `r insight::format_value(ar1$median, digits = 4, style_negative = "minus")` with a 95% credible interval from `r insight::format_value(ar1$q2.5, digits = 4, style_negative = "minus")` to `r insight::format_value(ar1$q97.5, digits = 4, style_negative = "minus")`. When the departures of a country persist, the likelihood compares each year with what the year before predicts, so the information about the slope comes more from the change in the share from one year to the next, set against the change in unemployment, and less from the level of a year against the decade mean of its country, which the least-squares fit uses. The frequentist twin of the model, generalised least squares with the same autoregressive errors, fitted by REML, gives a similar answer:
+
+```{r}
+#| label: gls-ar1
+gls_ar1 <- nlme::gls(mcosmo ~ unemp + cntry + factor(year), data = euframes,
+                     correlation = nlme::corAR1(form = ~ year | cntry), method = "REML")
+summary(gls_ar1)$tTable["unemp", ]
+nlme::intervals(gls_ar1, which = "var-cov")$corStruct
+```
+
+REML returns a single value of $\phi$, at which it estimates the slope, while the posterior averages the slope over the whole distribution of $\phi$, so the two need not agree exactly, and the posterior carries the uncertainty about the persistence into the interval of the slope.
+
+## 5. Partial pooling of the country slopes {#sec-pooling}
+
+Persistent errors are one reading of the failed check, and slopes that differ between countries are another, since a country whose own slope is steeper than the average leaves residuals that follow its unemployment from year to year. A model with a slope for each country lets the slopes depart from the average by amounts drawn from a distribution, $\beta_c = \beta + u_c$ with $u_c \sim N(0, \sigma_b^2)$, whose spread $\sigma_b$ the model estimates and which here takes the prior normal(0, 0.01), so that a country slope may depart from the average by about as much as the average may depart from zero.
+
+```{r}
+#| label: brms-slopes
+#| eval: false
+fit_slopes <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within + (0 + unemp_within | cntry),
+                        data = euframes, prior = c(priors, brms::prior(normal(0, 0.01), class = "sd")),
+                        chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
+                        control = list(adapt_delta = 0.95))
+coef(fit_slopes, robust = TRUE, probs = c(0.05, 0.95))$cntry[, , "unemp_within"]
+```
+
+McElreath calls the alternative to such a model a model with 'amnesia', in which "nothing learned about any one category informs estimates for the other categories", whereas multilevel models "remember features of each cluster in the data as they learn about all of the clusters. Depending upon the variation among clusters, which is learned from the data as well, the model pools information across clusters" [@McElreath2020StatisticalRethinkingBayesian, pp. 399–400]. The slope of each country is then a compromise between its own ten years and the average of all the countries, and the compromise leans towards the average where a country holds little information, since "small ponds are prone to overfitting, and so they receive a bigger dose of the underfit grand mean", while "the larger ponds shrink much less, because they contain more information" (p. 414). In this panel the information about a slope is the variation in unemployment that remains within a country once the year effects are removed, of which Greece holds `r insight::format_value(influence$variation_share[influence$left_out == "GR"], digits = 1)`%, Spain `r insight::format_value(influence$variation_share[influence$left_out == "ES"], digits = 1)`% and Poland `r insight::format_value(influence$variation_share[influence$left_out == "PL"], digits = 1)`%, the unequal weights behind the few effective clusters of the CR2 test. @fig-countries sets the slope that each country gives on its own beside its partially pooled slope.
+
+```{r}
+#| label: fig-countries
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 6.6
+#| fig-cap: "The slope of the cosmopolitan share on unemployment in each country, ordered by the share of the variation in unemployment within countries that each holds: from its own ten years by least squares, with year effects shared and a 90% confidence interval (open circles), and partially pooled, with a 90% credible interval (filled circles), in the model with country slopes (left) and in the model that adds persistent errors (right). The vertical line marks the posterior median of the average slope in each model. Sources: `companion/_model-outputs/bayes_panel_countries.csv`, `cases/eu-frames/data/display_loo.csv`."
+#| fig-alt: "Two panels of 27 countries. On the left the open circles of the small countries scatter widely on both sides of zero and the filled circles are drawn towards the average, much less so for Greece and Spain, which sit below it, and Poland, which sits near zero. On the right every filled circle lies close to the average slope near −0.003."
+order_countries <- influence$left_out[order(-influence$variation_share)]
+pooled <- country_slopes |>
+  datawizard::data_filter(model %in% c("slopes", "both")) |>
+  datawizard::data_rename(select = c(panel = "model"))
+unpooled <- country_slopes |>
+  datawizard::data_filter(model == "no_pooling") |>
+  datawizard::data_select(-"model") |>
+  dplyr::cross_join(tibble::tibble(panel = c("slopes", "both")))
+averages <- tibble::tibble(panel = c("slopes", "both"), slope = c(slopes$median, both$median))
+dplyr::bind_rows(dplyr::mutate(unpooled, estimate_kind = "own ten years"),
+                 dplyr::mutate(pooled, estimate_kind = "partially pooled")) |>
+  dplyr::bind_rows() |>
+  dplyr::mutate(cntry = factor(cntry, levels = rev(order_countries))) |>
+  dplyr::left_join(averages, by = "panel") |>
+  dplyr::mutate(panel = factor(panel, levels = c("slopes", "both"),
+                               labels = c("a slope for each country", "country slopes and persistent errors"))) |>
+  ggplot2::ggplot(ggplot2::aes(x = 100 * estimate, y = cntry, colour = estimate_kind, shape = estimate_kind)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_vline(ggplot2::aes(xintercept = 100 * slope), colour = "#8b1538", linewidth = 0.5) +
+  ggplot2::geom_errorbar(ggplot2::aes(xmin = 100 * low, xmax = 100 * high), width = 0, orientation = "y",
+                         position = ggplot2::position_dodge(width = 0.6)) +
+  ggplot2::geom_point(size = 1.8, position = ggplot2::position_dodge(width = 0.6)) +
+  ggplot2::facet_wrap(ggplot2::vars(panel)) +
+  ggplot2::scale_colour_manual(values = c(`own ten years` = "#8c8c8c", `partially pooled` = "#0e3b6a"), name = NULL) +
+  ggplot2::scale_shape_manual(values = c(`own ten years` = 1, `partially pooled` = 16), name = NULL) +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::coord_cartesian(xlim = c(-3, 3)) +
+  ggplot2::labs(x = "points of cosmopolitan share per point of unemployment", y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(legend.position = "bottom", panel.grid.minor = ggplot2::element_blank())
+```
+
+In the model with a slope for each country, the slopes of the countries with little variation in unemployment are drawn most of the way towards the average, while Greece and Spain keep slopes steeper than the average and Poland a slope near zero, and the spread of the slopes has a posterior median of `r insight::format_value(slopes_sd$median, digits = 4)`, with a 95% credible interval from `r insight::format_value(slopes_sd$q2.5, digits = 4)` to `r insight::format_value(slopes_sd$q97.5, digits = 4)`, larger than the size of the average slope, `r insight::format_value(slopes$median, digits = 4, style_negative = "minus")`, itself. The frequentist twin, fitted by REML with `lmerTest`, gives a point estimate of the spread and none of its uncertainty:
+
+```{r}
+#| label: reml-slopes
+panel <- datawizard::demean(euframes, select = "unemp", by = "cntry")
+lmer_slopes <- lmerTest::lmer(mcosmo ~ 0 + cntry + factor(year) + unemp_within + (0 + unemp_within | cntry),
+                              data = panel)
+summary(lmer_slopes)$coefficients["unemp_within", ]
+lme4::VarCorr(lmer_slopes)
+```
+
+Slopes that differ between countries do not, however, reproduce the persistence of the residuals. The replicated persistence of this model has a median of `r insight::format_value(persistence$rep_median[persistence$model == "slopes"], digits = 2)`, and again no replicated dataset reaches the observed value, so the check names persistence rather than slope differences as what the model of section 3 lacked. With both terms in the model, $\phi$ stays at `r insight::format_value(both_phi$median, digits = 2)` (95% credible interval `r insight::format_value(both_phi$q2.5, digits = 2)` to `r insight::format_value(both_phi$q97.5, digits = 2)`), the check is passed again, and the spread of the country slopes shrinks to a posterior median of `r insight::format_value(both_sd$median, digits = 4)`, with a 95% credible interval from `r insight::format_value(both_sd$q2.5, digits = 5)` to `r insight::format_value(both_sd$q97.5, digits = 4)`, so that the right panel of @fig-countries pools the countries almost completely. With ten years for each country, the data distinguish only poorly between slopes that differ from country to country and departures that persist within a country, and once the persistence is in the model they leave little room for differences between the slopes. The [multilevel module](multilevel.qmd#sec-slopes) fits the same kind of varying slopes to the respondents. The slopes of each country on its own in the figure are not quite those of the [meta-analysis module](meta-analysis.qmd#sec-countries), which removes the year means before fitting each country, because here the year effects are estimated together with a slope for every country.
+
+## 6. Sensitivity to the priors {#sec-sensitivity}
+
+Comparing fits under different priors answers the question of sensitivity for the priors that are compared. The priorsense package asks it for every prior near the one that was chosen, without refitting, by reweighting the draws as if the prior, or the likelihood, had been raised to a power slightly above or below 1, which is "a way to check how sensitive the posterior is to perturbations of the prior and likelihood and diagnose the cause of sensitivity" [@KallioinenEtAl2026PriorsenseEfficientPrior, p. 1]. A posterior that moves with the prior but not with the likelihood is driven by the prior, and one that moves with both shows that the prior and the data pull in different directions.
+
+```{r}
+#| label: priorsense
+#| eval: false
+priorsense::powerscale_sensitivity(fit_both, variable = c("b_unemp_within", "sd_cntry__unemp_within", "ar[1]", "sigma"))
+```
+
+```{r}
+#| label: tbl-sensitivity
+#| tbl-cap: "Sensitivity of the posterior of each parameter to power-scaling of the prior and of the likelihood, with the diagnosis of priorsense, whose threshold is 0.05. For the two models with persistent errors brms supplies the log-likelihood of each country-year given the other years of its country, which the likelihood column scales. Source: `companion/_model-outputs/bayes_panel_sensitivity.csv`."
+#| echo: false
+sens |>
+  datawizard::data_modify(
+    Model = unname(c(common = "One slope", ar1 = "Persistent errors", slopes = "A slope for each country",
+                     both = "Country slopes and persistent errors")[model]),
+    Parameter = unname(c(b_unemp_within = "Slope", sd_cntry__unemp_within = "Spread of the country slopes",
+                         `ar[1]` = "Persistence", sigma = "Residual sd")[variable]),
+    Prior = sprintf("%.3f", prior),
+    Likelihood = sprintf("%.3f", likelihood),
+    Diagnosis = dplyr::if_else(diagnosis == "-", "–", diagnosis)
+  ) |>
+  datawizard::data_select(c("Model", "Parameter", "Prior", "Likelihood", "Diagnosis")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:4, align = "r")
+```
+
+The slope is insensitive to its prior in every model, with values of sensitivity to the prior between `r insight::format_value(min(sens$prior[sens$variable == "b_unemp_within"]), digits = 3)` and `r insight::format_value(max(sens$prior[sens$variable == "b_unemp_within"]), digits = 3)`, well below the threshold of 0.05 that the package uses by default, and so is the spread of the country slopes, while the persistence is sensitive to its prior, at `r insight::format_value(sens_ar1$prior[sens_ar1$variable == "ar[1]"], digits = 3)` in the model with persistent errors and `r insight::format_value(sens_both$prior[sens_both$variable == "ar[1]"], digits = 3)` in the model with both terms, for which priorsense reports a "`r sens_both$diagnosis[sens_both$variable == "ar[1]"]`". The prior on $\phi$ is centred on no persistence and the data hold a good deal of it, which is the conflict that the diagnosis names, so the posterior of $\phi$ is a compromise between the two, and a reader who doubted that framing persists from year to year would end up with a somewhat lower $\phi$ than the data alone suggest. The conflict leaves the slope untouched, which is the quantity that the claim is about, and it tells the analyst that the persistence, if it were reported for its own sake, would need its prior defended as well as its data.
+
+## 7. The slope across the models {#sec-threshold}
+
+@fig-slopes sets the slope of the reproduced specification under its two frequentist kinds of inference beside its posterior under the four two-way models.
+
+```{r}
+#| label: slope-intervals
+#| include: false
+lm_twoway <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
+ci_conventional <- confint(lm_twoway)["unemp", ]
+ci_cr2 <- clubSandwich::conf_int(lm_twoway, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp")
+```
+
+```{r}
+#| label: fig-slopes
+#| echo: false
+#| fig-width: 7.5
+#| fig-height: 3.4
+#| fig-cap: "The slope of the cosmopolitan share on unemployment within countries: least squares with a 95% confidence interval under conventional and under CR2 errors clustered by country (squares), and the posterior median with a 95% credible interval under each of the four two-way models (circles). Sources: `companion/_model-outputs/bayes_panel_summary.csv`, `cases/eu-frames/data/EUframes_cy.csv`."
+#| fig-alt: "Six intervals. The conventional interval and the posterior of the model with one slope lie clearly below zero, between about −0.53 and −0.17 points. The CR2 interval runs from about −0.70 to zero. The three models with persistence or country slopes centre near −0.28 points, with intervals that end near zero or just above it."
+tibble::tibble(
+  label = c("Least squares, conventional errors", "Least squares, CR2 errors",
+            "Posterior, one slope", "Posterior, persistent errors", "Posterior, a slope for each country",
+            "Posterior, country slopes and persistent errors"),
+  estimate = c(rep(conventional$b, 2), common$median, ar1$median, slopes$median, both$median),
+  low = c(ci_conventional[[1]], ci_cr2$CI_L, common$q2.5, ar1$q2.5, slopes$q2.5, both$q2.5),
+  high = c(ci_conventional[[2]], ci_cr2$CI_U, common$q97.5, ar1$q97.5, slopes$q97.5, both$q97.5),
+  kind = c("frequentist", "frequentist", rep("Bayesian", 4))
+) |>
+  dplyr::mutate(label = factor(label, levels = rev(label))) |>
+  ggplot2::ggplot(ggplot2::aes(x = 100 * estimate, y = label, shape = kind)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_errorbar(ggplot2::aes(xmin = 100 * low, xmax = 100 * high), width = 0.2, orientation = "y",
+                         colour = "#1d2733") +
+  ggplot2::geom_point(size = 2.6, colour = "#0e3b6a") +
+  ggplot2::scale_shape_manual(values = c(frequentist = 15, Bayesian = 16), guide = "none") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::labs(x = "points of cosmopolitan share per point of unemployment", y = NULL) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+```
+
+The model that passes the posterior predictive check, with persistent errors and a slope for each country, puts the average slope at `r insight::format_value(both$median, digits = 4, style_negative = "minus")`, with a 95% credible interval from `r insight::format_value(both$q2.5, digits = 4, style_negative = "minus")` to `r insight::format_value(both$q97.5, digits = 5, style_negative = "minus")`. Its posterior probability that the slope is negative is `r insight::format_value(both$pd, digits = 3)`, and its probability that the slope is steeper than −0.001, a fall of at least one point of share for a rise of ten points of unemployment, is `r insight::format_value(both$p_beyond, digits = 3)`. The CR2 interval of the least-squares slope also ends almost exactly at zero, and the two approaches agree on the main point, that once the dependence of the years of a country enters the analysis the evidence for a negative slope is much weaker than the conventional fit suggests, while differing in what each makes of that evidence. The test classes the reproduced specification as not significant at the 5% level, by a margin of `r insight::format_value(100 * (cr2$p - 0.05), digits = 2)` of a percentage point, a margin of the kind that Gelman and Stern had in mind when they noted that "only a small change is required to move an estimate from a 5.1% significance level to 4.9%, thus moving it into statistical significance" [@GelmanStern2006DifferenceSignificantNot, p. 328]. The posterior states the same evidence as a probability that the slope is negative, with a central value smaller than the least-squares slope, and it leaves to the reader the judgement of whether a probability of that size is enough for the claim.
+
+The same model answers the question of the bounds that the outcome raises, since a share cannot leave the interval from 0 to 1 and a Gaussian likelihood does not respect that limit. Across its `r format(n_draws, big.mark = ",")` replicated datasets the smallest cell mean has a median of `r insight::format_value(bounds_both$rep_median[bounds_both$statistic == "min"], digits = 2)` and the largest one of `r insight::format_value(bounds_both$rep_median[bounds_both$statistic == "max"], digits = 2)`, against an observed `r insight::format_value(bounds_both$observed[bounds_both$statistic == "min"], digits = 2)` and `r insight::format_value(bounds_both$observed[bounds_both$statistic == "max"], digits = 2)`, and `r dplyr::if_else(bounds_both$rep_mean[bounds_both$statistic == "outside"] == 0, "not one replicated cell mean", "almost no replicated cell mean")` falls outside the unit interval, because the cell means lie in the middle of the scale, several residual standard deviations from either bound. For this outcome the Gaussian likelihood is a safe working approximation, and the beta family, which the [specification menu](../cases/eu-frames/menu.qmd#level-estimation) offers among the decisions about the model, would matter more for a scale whose cell means come close to 0.
+
+::: {.callout-tip}
+## Try it
+
+The frequentist twin of the model with persistent errors runs in a second. Fit `nlme::gls()` as in section 4 with the autoregressive coefficient held at a value of your choice, `correlation = nlme::corAR1(0.5, form = ~ year | cntry, fixed = TRUE)`, for the values 0, 0.5, 0.8 and 0.95, and note the slope and its standard error at each. At 0 the fit is the least-squares slope of the reproduced specification, and the slopes for the other values show how the estimate moves as the comparison shifts from levels against the decade mean of a country towards changes from one year to the next. Then write two sentences on which of these comparisons the claim, as the paper states it, is about, and on what the posterior of $\phi$ in section 4 says about the choice between them.
+:::
+
+## Further reading {#sec-further}
+
+For learning Bayesian estimation from the start, *Statistical Rethinking* builds it from counting and simulation, with priors chosen by prior predictive simulation throughout and a chapter on the multilevel models that it calls models with memory [@McElreath2020StatisticalRethinkingBayesian]. *Data Analysis Using Regression and Multilevel/Hierarchical Models* leads from single-level regression to partial pooling and varying slopes [@GelmanHill2007DataAnalysisUsing], and its statistical chapters have aged well, although its software examples predate Stan; *Regression and Other Stories* treats regression with the same habits and with weakly informative priors as the default [@GelmanEtAl2020RegressionOtherStories]. *Bayesian Data Analysis* is the reference text, including posterior predictive checking and the hierarchical models that combine several groups [@GelmanEtAl2014BayesianDataAnalysis], and the *Bayesian Workflow* book sets out the cycle of building, checking and revising a model that this page follows in miniature, from the prior predictive check to the posterior predictive check that names the next model [@GelmanEtAl2026BayesianWorkflow]. Kurz has translated the examples of *Statistical Rethinking* into brms and the tidyverse [@Kurz2023StatisticalRethinkingBrms]. The models are fitted with brms [@Burkner2017BrmsPackageBayesian] and the sensitivity checks come from priorsense [@KallioinenEtAl2026PriorsenseEfficientPrior]. The script `companion/_model-outputs/bayes_panel.R` fits every model on the page, and the printed summary and priors of the first model are those saved by `companion/_model-outputs/fit_models.R`, whose call and seed the script repeats.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::
