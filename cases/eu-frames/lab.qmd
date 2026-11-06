@@ -5,7 +5,6 @@ engine: knitr
 format:
   live-html:
     toc: true
-    include-after-body: ../../_includes/track-choice.html
     webr:
       packages:
         - datawizard
@@ -14,6 +13,7 @@ format:
         - fixest
         - parameters
         - htmltools
+        - gt
 resources:
   - data/EUframes_cy.csv
   - data/analyst_KQXUE.csv
@@ -45,7 +45,7 @@ This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that ru
 ::: {.callout-important icon="false"}
 ## While the R engine loads
 
-The R engine downloads into your browser the first time you open this page (10–30 seconds on a slow connection). Read Task 1 while it loads. You will see the first code cell switch from a loading spinner to a "Run Code" button when it is ready.
+The R engine downloads into your browser the first time you open this page (a minute or so, longer on a slow connection). Read Task 1 while it loads. You will see the first code cell switch from a loading spinner to a "Run Code" button when it is ready.
 
 Keep this tab open. Your work stays in this page until you refresh – there is nothing to install, nothing to save to disk, and no account needed.
 :::
@@ -636,6 +636,8 @@ c(countries = insight::n_unique(euframes$cntry), years = insight::n_unique(eufra
 ```
 
 You should see **270 rows**, **27 countries**, **10 years** (2004–2013), and 13 columns. The outcome we care about first is `mcosmo`, the mean 'cosmopolitan' framing of the EU in each country-year, on a 0–1 scale. The predictor is `unemp`, the annual unemployment rate. `growth` is annual GDP growth, and `n_cy` is the number of survey respondents in each country-year. The [codebook](data/EUframes_cy_codebook.md) describes the other framings and every remaining column.
+
+Tables print in this lab as plain text, as they would in the console of your IDE. To read one as a formatted table, add `|> gt::gt()` to the end of a cell that prints a data frame and run it again. For the tables of coefficients in Task 3, `|> parameters::print_html()` does the same and also rounds the numbers. In your own IDE and in the report of the workspace, `tinytable::tt()` does this job, but it cannot display its tables on this page.
 
 Now look at the outcome over time, one small panel per country:
 
