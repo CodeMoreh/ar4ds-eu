@@ -1,0 +1,44 @@
+```{r}
+#| label: setup-bayesian
+#| include: false
+# The outputs of the Bayesian models of the panel, which
+# companion/_model-outputs/bayes_panel.R fitted once with brms and wrote as
+# small CSV files; the deck reads them and fits no Bayesian model. Comes after
+# the setup chunk of the case, whose disp_inference and loo_twoway it uses.
+euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+bayes_summ <- readr::read_csv("../companion/_model-outputs/bayes_panel_summary.csv", show_col_types = FALSE)
+bayes_dx <- readr::read_csv("../companion/_model-outputs/bayes_panel_diagnostics.csv", show_col_types = FALSE)
+bayes_sens <- readr::read_csv("../companion/_model-outputs/bayes_panel_sensitivity.csv", show_col_types = FALSE)
+bayes_ppc <- readr::read_csv("../companion/_model-outputs/bayes_panel_ppc.csv", show_col_types = FALSE)
+bayes_ppc_draws <- readr::read_csv("../companion/_model-outputs/bayes_panel_ppc_draws.csv", show_col_types = FALSE)
+bayes_prior <- readr::read_csv("../companion/_model-outputs/bayes_panel_prior_draws.csv", show_col_types = FALSE)
+bayes_countries <- readr::read_csv("../companion/_model-outputs/bayes_panel_countries.csv", show_col_types = FALSE)
+
+# One row of the summaries for each quantity quoted on the slides
+ri_year <- datawizard::data_filter(bayes_summ, model == "ri", variable == "sd_year__Intercept")
+common <- datawizard::data_filter(bayes_summ, model == "common", variable == "b_unemp_within")
+ar1 <- datawizard::data_filter(bayes_summ, model == "ar1", variable == "b_unemp_within")
+ar1_phi <- datawizard::data_filter(bayes_summ, model == "ar1", variable == "ar[1]")
+slopes <- datawizard::data_filter(bayes_summ, model == "slopes", variable == "b_unemp_within")
+slopes_sd <- datawizard::data_filter(bayes_summ, model == "slopes", variable == "sd_cntry__unemp_within")
+both <- datawizard::data_filter(bayes_summ, model == "both", variable == "b_unemp_within")
+both_sd <- datawizard::data_filter(bayes_summ, model == "both", variable == "sd_cntry__unemp_within")
+both_phi <- datawizard::data_filter(bayes_summ, model == "both", variable == "ar[1]")
+persistence <- datawizard::data_filter(bayes_ppc, statistic == "persistence")
+bounds_both <- datawizard::data_filter(bayes_ppc, model == "both")
+cell_prior <- datawizard::data_filter(bayes_prior, quantity == "cell_mean")
+rise_prior <- datawizard::data_filter(bayes_prior, quantity == "rise_10")
+sens_slope <- datawizard::data_filter(bayes_sens, variable == "b_unemp_within")
+sens_phi <- datawizard::data_filter(bayes_sens, variable == "ar[1]")
+
+# The rise in unemployment between the lowest and the highest year of Spain
+# and of Greece, against which the prior of the slope is set
+rise_es <- diff(range(euframes$unemp[euframes$cntry == "ES"]))
+rise_gr <- diff(range(euframes$unemp[euframes$cntry == "GR"]))
+
+# The least-squares slope of the reproduced specification with its 95%
+# confidence intervals under conventional and under CR2 errors
+lm_twoway <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
+ci_conventional <- confint(lm_twoway)["unemp", ]
+ci_cr2 <- clubSandwich::conf_int(lm_twoway, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp")
+```

@@ -1,0 +1,117 @@
+# PART 2 – Fixed effects {#part-2-fixed-effects .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2
+:::
+
+::: notes
+Part two goes after the estimate itself. Fixed effects give every country an intercept of its own, and in the two-way design every year as well, so that the slope comes only from how a country changes against itself. We look at what the effects absorb and at what they cannot reach, and then at the two designs that the menu offered you yesterday under the Estimator decision, which divide the curve of the claim more than any other decision does. The part ends with your first run of the session.
+:::
+
+## Two-way fixed effects {#two-way-fixed-effects .smaller}
+
+$$ \bar{y}_{ct} = \beta\, x_{ct} + \alpha_c + \gamma_t + \varepsilon_{ct} $$
+
+::: {.small}
+- $\alpha_c$, an intercept for each country, absorbs everything constant about a country over the decade: its language, its institutions, its size, its standing enthusiasm for the EU
+- $\gamma_t$, an intercept for each year, absorbs everything common to the 27 countries in that year, including the shared path of the crisis
+- 26 country dummies and 9 year dummies in `lm()`, or the within transformation, which subtracts the country and the year means, give the same $\hat\beta$; `fixest::feols(mcosmo ~ unemp | cntry + year)` takes the second route
+- Slope `r fmt_num(inference_of("conventional", "b"), 5)`, t = `r fmt_num(inference_of("conventional", "t"), 3)` on `r inference_of("conventional", "df")` df, the value recorded for C6HJR. The within R^2^ of `r fmt_num(fixest::r2(m_twfe, "wr2")[[1]], 3)` is the share of the variation within countries that the slope explains
+:::
+
+::: {.src}
+companion/panel-data.qmd, section 4.
+:::
+
+::: notes
+This is the model that C6HJR fitted and that some of you reproduced yesterday: an intercept for each country and one for each year. The country intercepts take up everything that stays the same about a country across the decade, whether anyone measured it or not, so the slope never compares Denmark with Greece. The year intercepts take up whatever moved all of Europe together in a given year. What remains is each country compared with itself, net of the common movement of that year. Two routes give the same number: thirty-five dummies in lm, or the within transformation, which subtracts the country and year means from both sides and which fixest uses. The slope is minus point zero zero three five, with a t of minus three point eight. Of the two R-squared lines that fixest prints, only the within one bears on the question, and it is about six per cent.
+:::
+
+## What the fixed effects absorb {#what-the-fixed-effects-absorb .smaller}
+
+:::: {.columns}
+::: {.column width="48%"}
+::: {.small}
+**Absorbed**
+
+- Any variable that is constant within a country, or within a year, measured or not
+- The part of unemployment that is common to all countries in a year: `r fmt_pct(year_share[["unemp"]])` of its variation within countries, and `r fmt_pct(year_share[["growth"]])` of the variation of GDP growth, above all the recession of 2009
+:::
+:::
+::: {.column width="52%"}
+::: {.small}
+**Not absorbed**
+
+- A confounder that changes within a country over the decade: a scandal, a programme of austerity, a swing in the stance of the governing party on Europe
+- Feedback from framing to the economy [@LeszczenskyWolbring2022HowDealReverse]
+- No predictor is absorbed by a random intercept, and clustering changes only the standard errors
+:::
+:::
+::::
+
+::: {.fragment .small}
+"there is widespread, though not well articulated, opinion that in panel analysis the usual obstacles to inference and estimation are suspended for the benefit of the analyst", the warning of Otis Dudley Duncan with which @Halaby2004PanelModelsSociological [p. 507] opens a review of panel models in sociology.
+:::
+
+::: notes
+A fixed effect absorbs every variable that is constant within its group, measured or not, and that is its great strength. The national unemployment rate is constant neither within a country nor within a year, so both sets of effects leave it in the model and use only the part of it that is specific to a country-year. The year effects take away more than you might expect: almost a third of the movement of unemployment within countries, and well over half of the movement of growth, much of it the recession of 2009, which reached every member state at once. On the right, what fixed effects cannot reach: anything that changes within a country over the decade and moves both unemployment and framing, and feedback from framing to the economy. [advance] The warning of Duncan is still worth reading aloud: panel data do not suspend the usual obstacles to inference.
+:::
+
+## The two designs {#the-two-designs .smaller}
+
+```{r}
+#| label: d3-curve-by-design
+#| fig-width: 9.5
+#| fig-height: 2.6
+# The curve of the claim, each specification coloured by its design of fixed
+# effects (cases/eu-frames/data/spec_curve.csv)
+spec_curve |>
+  datawizard::data_modify(design = dplyr::if_else(estimator == "fe_twoway", "two-way", "country effects only")) |>
+  ggplot2::ggplot(ggplot2::aes(rank, r_ca, colour = design)) +
+  ggplot2::geom_hline(yintercept = 0, colour = grey_mid) +
+  ggplot2::geom_point(size = 1.3, alpha = 0.55) +
+  ggplot2::scale_colour_manual(values = c(`two-way` = ncl_blue, `country effects only` = orange), name = NULL) +
+  ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(size = 3.2, alpha = 1))) +
+  ggplot2::scale_y_continuous(labels = \(x) fmt_num(x, 1)) +
+  ggplot2::labs(x = sprintf("specification, ranked by claim-aligned partial r (%s)", nrow(spec_curve)),
+                y = "claim-aligned r") +
+  theme_slide(14) +
+  ggplot2::theme(legend.position = "top", legend.justification = "left")
+```
+
+::: {.small}
+- With country effects alone, the design of KQXUE, the slope is `r fmt_num(coef(m_country)[["unemp"]], 5)` against `r fmt_num(coef(m_twfe)[["unemp"]], 5)`, because the comparison keeps the change that every member state went through in the same year
+- Two questions: did framing fall in the years in which unemployment rose by more than the European movement of that year, or in the years in which unemployment was high, whatever happened elsewhere?
+- The Estimator decision carries `r fmt_pct(fork_of("estimator"))` of the variance of the claim-aligned r across the curve, more than any other decision. Below zero with CR2 p < 0.05 are `r fmt_pct(share_sig(datawizard::data_filter(spec_curve, estimator == "fe_country")))` of the specifications with country effects alone and `r fmt_pct(share_sig(datawizard::data_filter(spec_curve, estimator == "fe_twoway")))` of the two-way ones
+:::
+
+::: notes
+The design that KQXUE fitted has an intercept for each country and none for the year, and on the course panel its slope is larger by more than half. Without year effects, the comparison of a country with itself keeps the change that every member state went through in the same year. So the two slopes answer two questions. The two-way design asks whether framing fell in the years in which a country's unemployment rose by more than the European movement of that year. The country design asks whether it fell in the years in which unemployment was high, whatever happened elsewhere, which leaves it open to any shift in framing across Europe that coincided with the crisis. Both are defensible readings of the claim, and the curve keeps both. The chart shows what the choice does: the orange specifications, with country effects alone, sit further below zero, and this one decision carries more of the variance of the curve than any other.
+:::
+
+## Hands-on 1 – The two designs {#hands-on-1-the-two-designs .smaller}
+
+::: {.small}
+**In the workspace**, in the console or in a chunk of your own:
+
+1. Read the panel, fit the pooled model and the two designs, and set them side by side:
+
+   ```{.r}
+   euframes <- readr::read_csv("data/EUframes_cy.csv", show_col_types = FALSE)
+   pooled  <- fixest::feols(mcosmo ~ unemp, data = euframes, cluster = ~cntry)
+   two_way <- fixest::feols(mcosmo ~ unemp | cntry + year, data = euframes, vcov = "iid")
+   country <- fixest::feols(mcosmo ~ unemp | cntry, data = euframes, vcov = "iid")
+   fixest::etable(pooled, two_way, country)
+   ```
+2. Add the mean unemployment of each country to the two-way model, and read what fixest does with it:
+
+   ```{.r}
+   euframes_wb <- datawizard::demean(euframes, select = "unemp", by = "cntry")
+   fixest::feols(mcosmo ~ unemp + unemp_between | cntry + year, data = euframes_wb, vcov = "iid")
+   ```
+3. **Which design does your declaration of Task 5 use, and which of the two questions does it ask?** One sentence for your notes
+:::
+
+::: notes
+Your turn, in the workspace. Read the panel in the console, fit the pooled model with errors clustered by country and the two designs with classical errors, and set the three side by side with etable. The pooled slope sits near zero, and the two designs give the slopes of the last slide. Then a test of absorption. The demean function of datawizard returns the mean unemployment of each country over the decade, and when you add that mean to the two-way model, fixest removes it for collinearity, because the country effects already hold it, and the slope of unemployment does not move by a digit. Last, look back at your preregistration block: which design did you declare, and which question does it ask? Write the sentence down, because the report of this afternoon needs it. [state the time]
+:::

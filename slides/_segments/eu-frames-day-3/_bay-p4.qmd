@@ -1,0 +1,107 @@
+# PART 4 – The checks {#part-4-the-checks .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 4
+:::
+
+::: notes
+The last part gathers the checks that a Bayesian workflow runs before anyone reads a posterior: that the computation worked, that the model can reproduce the data, and that the result does not rest on a prior that nobody would defend. You have met the second already. The first and the third complete the list, and the third holds the one finding of the module that a report would have to state.
+:::
+
+## Computational checks {#computational-checks .smaller}
+
+```{r}
+#| label: d3-diagnostics
+# The checks of the six models: the largest R-hat and the smallest bulk and
+# tail effective sample sizes over every parameter, the divergent transitions
+# and the deepest tree of the sampler, from four chains
+# (companion/_model-outputs/bayes_panel_diagnostics.csv)
+bayes_dx |>
+  datawizard::data_modify(
+    Model = unname(c(ri = "Random intercepts, default priors", prior = "Two-way, priors only",
+                     common = "Two-way, one slope", ar1 = "Two-way, persistent errors",
+                     slopes = "Two-way, a slope for each country",
+                     both = "Two-way, country slopes and persistence")[model]),
+    Draws = fmt_n(draws),
+    `R-hat` = fmt_num(max_rhat, 3),
+    `Bulk ESS` = fmt_n(round(min_ess_bulk)),
+    `Tail ESS` = fmt_n(round(min_ess_tail))
+  ) |>
+  datawizard::data_select(c("Model", "Draws", "R-hat", "Bulk ESS", "Tail ESS", Divergences = "divergences",
+                            `Tree depth` = "max_treedepth")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:7, align = "r") |>
+  tinytable::style_tt(fontsize = 0.7)
+```
+
+::: {.small}
+The chains agree when R-hat is below 1.01, they carry enough independent information when the effective sample sizes exceed about 400, and the sampler explored the whole posterior when no transition diverged.
+:::
+
+::: notes
+Every number of this session assumes that the computation worked. Stan draws from the posterior with four chains that start in different places. R-hat asks whether the four chains agree; below one point nought one is the usual standard, and every model is inside it. The effective sample sizes ask how much independent information the correlated draws carry; above about four hundred is enough for the summaries that we use, and the smallest here is about five hundred. Divergent transitions flag regions of the posterior that the sampler could not explore, and there are none. The varying slopes put a spread near zero, where the sampler needs small steps, which is why the script asked for a smaller step size in every two-way fit. These checks come first, because a posterior from a computation that failed is not worth reading.
+:::
+
+## Prior sensitivity {#prior-sensitivity .smaller}
+
+```{r}
+#| label: d3-sensitivity
+# The sensitivity of the slope and of the persistence to power-scaling of the
+# prior and of the likelihood, with the diagnosis of priorsense, whose
+# threshold is 0.05 (companion/_model-outputs/bayes_panel_sensitivity.csv)
+bayes_sens |>
+  datawizard::data_filter(variable %in% c("b_unemp_within", "ar[1]")) |>
+  datawizard::data_modify(
+    Model = unname(c(common = "One slope", ar1 = "Persistent errors", slopes = "A slope for each country",
+                     both = "Country slopes and persistence")[model]),
+    Parameter = unname(c(b_unemp_within = "Slope", `ar[1]` = "Persistence")[variable]),
+    Prior = fmt_num(prior, 3),
+    Likelihood = fmt_num(likelihood, 3),
+    Diagnosis = dplyr::if_else(diagnosis == "-", "–", diagnosis)
+  ) |>
+  datawizard::data_select(c("Model", "Parameter", "Prior", "Likelihood", "Diagnosis")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:4, align = "r") |>
+  tinytable::style_tt(fontsize = 0.7)
+```
+
+::: {.small}
+- priorsense reweights the draws as if the prior, or the likelihood, were raised to a power slightly above or below 1, "a way to check how sensitive the posterior is to perturbations of the prior and likelihood and diagnose the cause of sensitivity" [@KallioinenEtAl2026PriorsenseEfficientPrior, p. 1]
+- The slope is insensitive to its prior in every model, between `r fmt_num(min(sens_slope$prior), 3)` and `r fmt_num(max(sens_slope$prior), 3)`. The persistence is sensitive, at `r fmt_num(sens_phi$prior[sens_phi$model == "ar1"], 3)` and `r fmt_num(sens_phi$prior[sens_phi$model == "both"], 3)`: its prior is centred on no persistence, and the data hold a good deal of it
+:::
+
+::: {.fragment .small}
+The prior stays as it was set before the data, and the conflict is reported. It leaves the slope, the quantity of the claim, untouched, and a report of the persistence for its own sake would have to defend its prior as well as its data.
+:::
+
+::: notes
+Comparing fits under different priors answers the question of sensitivity for the priors that you compare. The priorsense package asks it for every prior near the one that was chosen, without fitting the model again: it reweights the draws as if the prior, or the likelihood, had been raised to a power a little above or below one, and measures how far the posterior moves. The slope barely moves with its prior in any model, well under the threshold of point nought five, so its posterior is driven by the data. The persistence is another matter. Its prior is centred on no persistence, the data hold a good deal of it, and priorsense reports a potential conflict between the two. [advance] I keep the prior as it was set before the data and report the conflict. The conflict leaves the slope untouched, and it tells us that the persistence, reported for its own sake, would need its prior defended as well as its data.
+:::
+
+## The workflow {#the-workflow .smaller}
+
+::: {.small}
+1. **Before the data**: priors on scales that can be read, and the prior predictive check
+2. **The computation**: R-hat, the effective sample sizes and the divergent transitions of every model
+3. **The fit to the data**: posterior predictive checks on a statistic for a grouping that the model leaves out, here the years of a country, and on the bounds of a share. `r if (bounds_both$rep_mean[bounds_both$statistic == "outside"] == 0) "Not one" else "Almost none"` of the replicated cell means of the final model falls outside 0 to 1, and the observed cell means run from `r fmt_num(bounds_both$observed[bounds_both$statistic == "min"], 2)` to `r fmt_num(bounds_both$observed[bounds_both$statistic == "max"], 2)`
+4. **The priors again**: power-scaling of the prior and of the likelihood, and a report of any conflict
+:::
+
+::: {.fragment .small}
+The most direct checks compare simulations with "a summary statistic computed from the data or subgroups of the data, especially for groupings not included in the model" [@GelmanEtAl2026BayesianWorkflow, p. 142].
+:::
+
+::: notes
+Here is the order in which the session ran the checks, which is the order of the workflow that Gelman and colleagues set out in their book. Before the data, priors that can be read, and a simulation of what they imply. Then the computation, model by model. Then the fit to the data, on a statistic chosen for what the model leaves out, here the grouping of the years by country. The final model also respects the bounds of a share, since not one of its replicated cell means leaves the interval from nought to one. And then the priors again, with power-scaling. [advance] The failed posterior predictive check did the most work of the four, because it named the next model. A posterior is worth reading once all four steps have passed, and a report says what each of them found.
+:::
+
+## The reading and the next session {#the-reading-and-the-next-session .smaller}
+
+::: {.small .nonincremental}
+- **The reading**: [Bayesian estimation](../companion/bayesian.html), the module of the companion curriculum behind this session, with the brms code of every model, the frequentist twins that run on the page, and the task of persistence held fixed. To learn the methods from the start: *Statistical Rethinking* [@McElreath2020StatisticalRethinkingBayesian], with its examples translated into brms [@Kurz2023StatisticalRethinkingBrms], *Regression and Other Stories* [@GelmanEtAl2020RegressionOtherStories] and *Bayesian Data Analysis* [@GelmanEtAl2014BayesianDataAnalysis]
+- **Next**: Your report. The analysis that you declared in Task 5 written up as a short report in Quarto, with the declaration as the first commit of a repository and every step after it committed with a message that says what changed
+:::
+
+::: notes
+That ends the methods of the day. The module Bayesian estimation is the reading for this session: it shows the brms code of every model that we read, runs the frequentist twins on the page, and its task is the one that you just did with gls. If you want to learn Bayesian estimation from the start, Statistical Rethinking builds it from counting and simulation, Kurz has translated its examples into brms, and Regression and Other Stories and Bayesian Data Analysis carry the same habits further. The rest of the day is yours. The analysis that you declared yesterday becomes a short report of your own, written in Quarto and kept under Git, and the three sessions of today give you the words for its result.
+:::

@@ -1,0 +1,100 @@
+# PART 1 – The panel and the linear model {#part-1-the-panel-and-the-linear-model .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 1
+:::
+
+::: notes
+Part one starts at the level at which the course works, the country-year, and with the simplest model that can be fitted there. A straight line through 270 points looks like a reasonable first try, and the reasons for its failure tell us what every later model of this session is for. Its standard errors pretend that the 270 rows are independent, and its slope mixes two comparisons that the claim keeps apart. Clustered standard errors repair the first problem and leave the second as it was.
+:::
+
+## The country-year panel {#the-country-year-panel .smaller}
+
+::: {.small}
+- The original author (OA) modelled the respondents of sixteen Eurobarometer waves directly [@Teney2016DoesEUEconomic]. The course averages the `r fmt_n(sum(euframes$n_cy))` respondents into **`r nrow(euframes)` country-years**, 27 member states in each of 10 years, 2004–2013
+- The predictor varies only at that level. Every respondent interviewed in Germany in 2010 shares one German unemployment rate, so the information about the slope comes from `r nrow(euframes)` pairings of a rate and a mean, however many people were interviewed
+- Each wave draws a new sample, so the respondents are repeated cross-sections, while the countries form a balanced panel: "insofar as societies are units of analysis ... in an important sense the data derived from such surveys are in fact panel data, since societies are each observed multiple times" [@Fairbrother2013TwoMultilevelModeling, p. 122]
+- An association among the means of country-years need not hold among people [@Robinson1950EcologicalCorrelationsBehavior], and the next session takes up the respondents
+:::
+
+::: notes
+The panel that the course ships has 270 rows, and behind them stand more than four hundred thousand people interviewed in sixteen Eurobarometer waves. The original author, the OA, modelled those people directly, whereas the course averages them into one row for each country and year. For this claim the averaging loses almost nothing, because the predictor is a national figure: everyone interviewed in Germany in 2010 shares one unemployment rate. So the evidence about the slope comes from 270 pairings, however many people stand behind each pairing. Fairbrother makes a point about vocabulary here. The people are new in every wave, but the countries are observed again and again, and in that sense the data are a panel. What the averages cannot tell us is how individuals respond, and that is the subject of the next session.
+:::
+
+## Pooled OLS {#pooled-ols .smaller}
+
+:::: {.columns}
+::: {.column width="46%"}
+```{r}
+#| label: d3-pooled-scatter
+#| fig-width: 5
+#| fig-height: 4.4
+# The 270 country-years with the least-squares line of the pooled model
+ggplot2::ggplot(euframes, ggplot2::aes(unemp, mcosmo)) +
+  ggplot2::geom_point(colour = "grey60", size = 1.6) +
+  ggplot2::geom_abline(intercept = coef(pooled_iid)[["(Intercept)"]], slope = coef(pooled_iid)[["unemp"]],
+                       colour = ncl_blue, linewidth = 1.1) +
+  ggplot2::labs(x = "unemployment rate (%)", y = "mean cosmopolitan share") +
+  theme_slide(15)
+```
+:::
+::: {.column width="54%"}
+::: {.small}
+- One line for every country and every year: $\bar{y}_{ct} = \beta_0 + \beta_1 x_{ct} + \varepsilon_{ct}$
+- `lm()`, `fixest::feols(vcov = "iid")` and `plm::plm(model = "pooling")` return the same numbers, because they fit one estimator under three names
+- Slope `r fmt_num(coef(pooled_iid)[["unemp"]], 5)`, t = `r fmt_num(fixest::tstat(pooled_iid)[["unemp"]], 2)`, R^2^ = `r fmt_pct(fixest::r2(pooled_iid, "r2")[[1]])`: no association worth reporting
+- On the same rows, the value recorded for C6HJR is t = `r fmt_num(curve_ref$t, 3)`, so the difference lies in the structure of the model
+:::
+:::
+::::
+
+::: {.src}
+companion/panel-data.qmd, sections 2 and 3; cases/eu-frames/data/EUframes_cy.csv.
+:::
+
+::: notes
+Here is the plainest model, one line through all 270 country-years. On a panel it is called pooled OLS, because it pools every country and every year into one cloud. Three functions in R fit it, lm, fixest and plm, and they agree to the last digit once fixest is asked for classical standard errors. That is a habit worth keeping: make different functions agree on a model that you understand before you change anything. Now read the result. The slope is close to zero, its t is about minus one, and the line explains almost none of the variation. Yet the value recorded for C6HJR, on exactly these rows, is a t of minus three point eight. The data are the same in both fits, so the difference comes from the structure of the model, and the rest of the session takes that structure apart.
+:::
+
+## Clustered standard errors {#clustered-standard-errors .smaller}
+
+::: {.small}
+- The ten Danish rows share everything durable about Denmark. Those shared features sit in $\varepsilon$, so the errors of one country are correlated, while classical standard errors treat the 270 rows as 270 independent pieces of evidence
+- **Cluster-robust standard errors** allow any pattern of correlation within a country. Only the standard error changes, never $\hat\beta$, and in such data "default standard errors can greatly overstate estimator precision" [@CameronMiller2015PractitionersGuideClusterrobust, p. 317]
+:::
+
+```{.r}
+fixest::feols(mcosmo ~ unemp, data = euframes, cluster = ~cntry)
+```
+
+::: {.fragment .small}
+Clustering by country multiplies the standard error of the pooled slope by `r fmt_num(fixest::se(pooled_cl)[["unemp"]] / fixest::se(pooled_iid)[["unemp"]], 1)`, and its t falls from `r fmt_num(fixest::tstat(pooled_iid)[["unemp"]], 2)` to `r fmt_num(fixest::tstat(pooled_cl)[["unemp"]], 2)`.
+:::
+
+::: {.src}
+companion/panel-data.qmd, section 3.
+:::
+
+::: notes
+The standard errors of that model assume that the 270 errors are independent, and they are not. The ten Danish rows share everything durable about Denmark, its institutions, its language, its standing view of Europe, and whatever the model leaves out about a country sits in the error, so the errors of one country move together. The first repair keeps the estimate and corrects its uncertainty. Cluster-robust standard errors let the errors inside each country be correlated in any pattern, and in fixest they take one argument. Cameron and Miller, whose guide is the standard reference, warn that default standard errors can greatly overstate precision in data of this kind. [advance] Here the standard error doubles and the t halves, because the 270 rows were never 270 independent pieces of evidence.
+:::
+
+## The pooled slope {#the-pooled-slope .smaller}
+
+::: {.small}
+- A pooled slope blends two comparisons: how framing moves when unemployment rises within a country, and how framing differs between countries with high and with low unemployment
+- The cross-section carries much of the weight: `r fmt_pct(between_share$unemp)` of the variance of unemployment and `r fmt_pct(between_share$mcosmo)` of the variance of the cosmopolitan share lie between the 27 country means
+- Swapped into each of the `r nrow(spec_curve)` specifications of the curve, pooled OLS puts `r fmt_pct(dev_of("pooled_cl", "below_zero"))` of its fits below zero, against `r fmt_pct(share_below(spec_curve))` of the curve, and a fit and its twin on the curve fall on opposite sides of zero in `r fmt_pct(dev_of("pooled_cl", "sign_changes"))` of the pairs
+:::
+
+::: {.fragment .small}
+The sign belongs to the estimate, so clustering cannot change it. Pooled OLS stays off the curve as an option of the Estimator decision, and Part 4 estimates the two comparisons one at a time.
+:::
+
+::: {.src}
+companion/panel-data.qmd, section 3; cases/eu-frames/data/menu_deviations.csv.
+:::
+
+::: notes
+Clustering repairs the uncertainty, and that leaves the estimate itself as the problem. A pooled model absorbs no differences between countries, so its slope mixes two comparisons: what happens to framing when unemployment rises within a country, and how countries with high unemployment differ from countries with low unemployment. Nearly half of the variance of unemployment lies between the country means, and about two thirds of the variance of the outcome, so the cross-section weighs heavily in the blend. Nor is the blend a quirk of one specification. Swap pooled OLS into every specification of the curve, and about half of the fits land below zero, where nearly all of the curve lies, and in half of the pairs, the two fits fall on opposite sides of zero. [advance] That is why pooled OLS stays off the curve, and why part four estimates the two comparisons one at a time.
+:::

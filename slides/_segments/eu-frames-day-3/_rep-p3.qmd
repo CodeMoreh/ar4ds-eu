@@ -1,0 +1,96 @@
+# PART 3 – The record {#part-3-the-record .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 3
+:::
+
+::: notes
+Part three makes the report into a record that someone else can trust. Two habits do most of the work. A render from a clean session shows that the report makes everything that it uses, so that it would run on anyone's machine. And a history of small commits, each with a message that says what changed, shows how the analysis reached its final form, including any step away from what you declared. Publishing the report on the web comes at the end, for those who want it.
+:::
+
+## A render from a clean session {#a-render-from-a-clean-session .smaller}
+
+::: {.small}
+- Quarto renders in a fresh R process of its own. An object that only the console made is missing there, and the render stops at the first chunk that needs it
+- Restart R with **Interpreter: Restart Active Interpreter Session** (Ctrl+Shift+0), then type `quarto render` in a terminal. It renders the codebooks in `data/` and the report, and ends with `Output created: _site\index.html`
+- When a render fails, the line that begins `Quitting from` names the lines of the chunk and its label, such as `[run-spec]`
+:::
+
+::: {.fragment .small}
+Three things break a clean render: an object made in the console and never in the report, a file read from a path that exists only on your machine, and a package attached in your session but not named in the code. Each would break the report for anyone else as well.
+:::
+
+::: {.src}
+Quarto documents, sections 3 and 11, on the AR4DS site: codemoreh.github.io/ar4ds/tools/quarto.html
+:::
+
+::: notes
+The objects in your console exist only in your session, and a render never uses them. Quarto starts a fresh R process for every render, runs every chunk from the top and throws the process away at the end, so a report that renders is a report whose chunks make everything that it uses. The test is cheap: restart R, so that the Variables pane empties, and render from a terminal. In this workspace the render takes the three codebooks in the data folder along with the report, so do not be surprised by four files in the log. If it fails, the message tells you where: the line that begins Quitting from gives the lines of the chunk and its label. [advance] In practice, almost every failure comes from one of three things: something made in the console and never in the report, a path that exists only on your machine, or a package that your session had loaded but your code never names.
+:::
+
+## A history of the analysis {#a-history-of-the-analysis .smaller}
+
+::: {.small}
+- **One change, one commit**, with a message that says what the change does, as if completing "this commit will…": `Leave out the respondents who mentioned no frame`
+- Two changes in one file can still be two commits: in the diff editor, the plus sign beside a change, **Stage Block**, stages that change alone
+- A change to the preregistration block after the first commit is a **departure from the declaration**, and the Graph records it with its date: say so in part 3 of the report
+- The **Timeline**, at the foot of the Explorer, lists the commits that changed the file open in the editor
+:::
+
+::: {.src}
+Git and GitHub for reproducible research, sections 2 and 5, on the AR4DS site: codemoreh.github.io/ar4ds/git-github.html
+:::
+
+::: notes
+A history is only as useful as its messages. A commit should hold one change, and its message should say what the change does, written as if it completed the sentence: this commit will. The example on the slide is one decision of the menu, and its message names it. When two changes end up in one file, the diff editor can stage one of them on its own, so that each commit still records one thing. Notice what the history does for your declaration. Your first commit holds the preregistration block as you declared it. If you change that block later, for any reason, the change is a commit with a date, and anyone can read it, and part three of your report is the place to say what changed and why. The Timeline gives you the history of one file at a glance.
+:::
+
+## Hands-on 3 – The clean render and the history {#hands-on-3-the-clean-render-and-the-history .smaller}
+
+::: {.small}
+1. Restart R (Ctrl+Shift+0), and check that the Variables pane is empty
+2. In a terminal, type `quarto render`. Then preview with Ctrl+Shift+K, and check every number of your section against the last render
+3. Fix whatever breaks, and commit the fix with a message that says what was wrong
+4. With `index.qmd` open, unfold the **Timeline** at the foot of the Explorer, and read your history from the declaration to the last part of the report
+:::
+
+::: {.fragment .small}
+Swap with a neighbour: could they say, from your history alone, what you declared, what you found and whether you departed from the declaration?
+:::
+
+::: notes
+Your turn. Restart R and check that the Variables pane is empty. Render from a terminal, then preview, and compare every number of your section with the last render. If something breaks, it is almost always one of the three causes on the slide about the clean render: fix it in the report, not in the console, render again, and commit the fix with a message that says what was wrong. Then open the Timeline of the report and read your own history from the top. [state the time] [advance] Last, swap with a neighbour and read each other's histories. Could your neighbour say, from the messages alone, what you declared, what you found and whether you departed from your declaration? If not, write fuller messages from now on.
+:::
+
+## Publishing the report {#publishing-the-report .smaller .deepdive run="publish"}
+
+::: {.small}
+- With every change committed and no remote, the Source Control view offers **Publish Branch**. It asks to sign in to GitHub, so that Positron can create the repository there, and pushes your history to it
+- On GitHub, **Settings → Pages → Source: GitHub Actions**. From then on every push to `main` runs the workflow of the workspace, `.github/workflows/publish.yml`, which installs R and the packages, renders the report again and publishes it at `https://<your-username>.github.io/<repository>/`
+- After each new commit, **Sync Changes** pushes it, and the published report follows
+:::
+
+::: {.fragment .small}
+A published report is public. The derived country-year data in `data/` are released under CC BY 4.0, as the `LICENSE` of the workspace states, while the Eurobarometer microdata stay under the terms of GESIS and never enter a repository.
+:::
+
+::: {.src}
+The workflow, the README and the LICENSE of the workspace; Git and GitHub for reproducible research, sections 3 to 5.
+:::
+
+::: notes
+Publishing is optional, and it is the step that turns your repository into something that other people can read. With everything committed, the button under the message box reads Publish Branch. It asks you to let Positron sign in to GitHub, creates the repository there and pushes your history. The workspace already carries a small workflow that renders the report on GitHub and publishes it as a web page. Switch it on once, in the settings of the repository under Pages, by choosing GitHub Actions as the source. From then on every push renders your report again, with your own results, and the page follows. [advance] Public means public in the strongest sense, so think before you publish. The country-year data of the workspace are released under an open licence, so they may go. The respondent file never may, and the gitignore keeps its folder out.
+:::
+
+## Hands-on 4 – Publishing {#hands-on-4-publishing .smaller .deepdive run="publish"}
+
+::: {.small}
+1. Commit everything, then press **Publish Branch** and sign in to GitHub when Positron asks
+2. On the page of the new repository: **Settings → Pages**, and choose **GitHub Actions** as the source
+3. Commit one more small change, for example a sentence in the README, and press **Sync Changes**
+4. When the workflow has run, open `https://<your-username>.github.io/<repository>/` and find your section
+:::
+
+::: notes
+For those who want to publish, here are the steps in order. Commit everything first, because Publish Branch appears only when nothing is waiting. Sign in to GitHub when Positron asks. On the page of your new repository, open the settings, then Pages, and choose GitHub Actions as the source. Then commit one more small change and sync it, which runs the workflow with Pages switched on. When it has finished, your report is at your own github dot io address, under the name of the repository. If the page does not appear, tell me, and we can read the log of the run together. [state the time]
+:::

@@ -1,0 +1,72 @@
+# PART 2 – The report {#part-2-the-report .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2
+:::
+
+::: notes
+Part two is the report itself. It is short: one section, in four parts, written around the analysis that you declared. What makes it a report rather than a page of notes is that every number in it is computed when it renders, from the same run as the output beside it, so that the text cannot fall out of step with the analysis. I show you what the four parts are and how to compute the numbers, and then you write.
+:::
+
+## What the report contains {#what-the-report-contains .smaller}
+
+::: {.small}
+A section of its own, between the paragraph **A second declared specification?** and the box *Taking it home*, in this order:
+
+1. **The result with its uncertainty**, under the errors that you declared: the slope, its conventional t on its df, and the CR2 p on its Satterthwaite df, as `run_spec()` prints them
+2. **Its place on the curve of the claim**: the share of the `r nrow(spec_curve)` specifications on the curve whose claim-aligned r is more negative, from the placement line of the printout
+3. **Any departure from the declaration**, and the reason for it, or a sentence saying that there was none
+4. **What the replication with new data adds**: SCORE replicated the claim on fourteen Standard waves fielded between 2013 and 2019, and found a positive coefficient for unemployment, not significant, so the replication was not successful by the criterion of SCORE
+:::
+
+::: {.fragment .small}
+The claim comes from the paper [@Teney2016DoesEUEconomic] as SCORE selected it for Multi100 [@AczelEtAl2026InvestigatingAnalyticalRobustness], and the reference list at the end of the report already holds both.
+:::
+
+::: {.src}
+The SCORE dossier of the paper, osf.io/h7432; the replication as Part 4 of the one-day workshop presents it.
+:::
+
+::: notes
+Here is what goes into the report, and in this order. First the result with its uncertainty, under the errors that you declared: the slope, its t, and the CR2 p-value on its Satterthwaite degrees of freedom, exactly as the helper of Task 5 prints them. Second, its place on the curve of the claim, the share of the specifications whose claim-aligned correlation is more negative than yours. Third, any departure from your declaration, with the reason, or a plain sentence that there was none, because a departure reported with its reason is part of a good report, and a hidden one is not. Fourth, what the replication adds. The new waves gave a positive coefficient, not significant. Your result says what the original panel supports under your choices, the replication what happened when the question was put to later surveys, and the report needs both.
+:::
+
+## Numbers in the report {#numbers-in-the-report .smaller}
+
+::: {.small}
+- In the chunk `run-spec`, keep what the helper returns: `result <- run_spec(my_model)` prints the same lines and stores every number of the printout
+- In the text, inline code computes each number when the report renders, and `sprintf()` sets its decimals, as the report itself does elsewhere
+:::
+
+```{.markdown}
+## The declared analysis
+
+The declared specification gives a slope of `r knitr::inline_expr('sprintf("%.5f", result$b)')`, with t = `r knitr::inline_expr('sprintf("%.2f", result$t)')`
+on `r knitr::inline_expr("result$df")` degrees of freedom under conventional errors, and a CR2 p of `r knitr::inline_expr('sprintf("%.4f", result$p_cr2)')`
+on `r knitr::inline_expr('sprintf("%.1f", result$df_cr2)')` Satterthwaite degrees of freedom.
+```
+
+::: {.fragment .small}
+`result` also holds `placement`, the share of the specifications on the curve with a more negative claim-aligned r, the claim-aligned r itself, `r_ca`, and the country-years analysed, `n`. For GDP growth the printout flips the signs of b and t, while `result$b` and `result$t` keep the signs of the fit. The header sets `date: today`, so every render carries its own date.
+:::
+
+::: notes
+The numbers come from your run of the declared specification. In the chunk labelled run-spec, write result, arrow, in front of the call. The helper prints exactly what it printed yesterday, and it also hands back every number of its printout, so you can keep them. In the text, inline code does the rest: a backtick, the letter r, and an expression, and when the report renders, the expression is replaced by its value. Use sprintf for the decimals, as the report does elsewhere, because the setup chunk of the report tells R to print four digits, and an inline slope would come out rounded to four decimal places. [advance] Result holds more than the slide uses: the placement, the claim-aligned correlation and the count of country-years. If you declared growth, mind the signs: the printout flips them for the claim, and the stored slope keeps the sign of the fit.
+:::
+
+## Hands-on 2 – Writing the report {#hands-on-2-writing-the-report .smaller}
+
+::: {.small}
+1. Line 3 of `index.qmd`, `author: "Pair: [names]"`: put your own name, save, and commit with a message such as `Name the author of the report`
+2. In the chunk `run-spec`, write `result <- run_spec(my_model)`
+3. Between the paragraph **A second declared specification?** and the box *Taking it home*, add `## The declared analysis` and write the first part, with its numbers as inline code. Render, read it, and commit
+4. Write the other three parts, and render and commit after each of them, with a message that says what the commit adds
+:::
+
+::: {.fragment .small}
+Your IDE previews the report with Ctrl+Shift+K. An inline expression that fails stops the render, with a message to read from the top.
+:::
+
+::: notes
+Your turn, and this is the longest stretch of the afternoon. Start with the smallest change, your own name in the header, and commit it, so that the loop of part one becomes a habit. Then keep the result of the helper in the chunk run-spec. Then the section: a heading after the paragraph about a second declared specification, and the first part, the result with its test, with every number as inline code. Render it, read it as a reader would, and commit. Then the other three parts, each followed by a render and a commit with a message that says what it adds. [advance] If a render fails, read the message from the top, where the first lines say where it stopped, and I will come round. [state the time]
+:::

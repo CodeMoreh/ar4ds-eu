@@ -1,0 +1,62 @@
+```{r}
+#| label: setup-multilevel
+#| include: false
+# The saved outputs of the scripts that ran once on the licensed respondent
+# file (companion/_model-outputs/: fit_models.R, fit_person_multilevel.R,
+# fit_person_years.R, validate_twin.R, fit_person_anchor.R, and the refits of
+# R/eu-frames/13_reference_marks.R), with the panel and the simulated twin
+# beside them. Nothing person-level is read except the twin. Comes after the
+# setup chunk of the case, whose analysts5 it uses.
+panel <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+twin <- readr::read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
+real_ml <- readr::read_csv("../companion/_model-outputs/person_multilevel_real.csv", show_col_types = FALSE)
+valid <- readr::read_csv("../companion/_model-outputs/twin_validation.csv", show_col_types = FALSE)
+grad <- readr::read_csv("../companion/_model-outputs/prevalence_gradient.csv", show_col_types = FALSE)
+refits <- readr::read_csv("../companion/_model-outputs/reference_refits.csv", show_col_types = FALSE)
+years_real <- readr::read_csv("../companion/_model-outputs/person_year_effects.csv", show_col_types = FALSE)
+cosmo_dist <- readr::read_csv("../companion/_model-outputs/cosmo_dist.csv", show_col_types = FALSE)
+
+# The unemployment slope under the three random structures, and the standard
+# deviations of the variance components, on the real respondents
+real_unemp <- datawizard::data_filter(real_ml, kind == "fixed", term == "unemp")
+real_sd <- datawizard::data_filter(real_ml, kind == "random")
+sd_three <- datawizard::data_filter(real_sd, model == "three_level")
+var_three <- sd_three$value^2
+share_groups <- sum(var_three[sd_three$term != "Residual: NA"]) / sum(var_three)
+
+# The random-intercept model of the panel, set beside the models of the
+# respondents
+m_panel_ri <- lmerTest::lmer(mcosmo ~ unemp + (1 | cntry), data = panel)
+panel_ri <- summary(m_panel_ri)$coefficients["unemp", ]
+
+# The two analysts who worked at the level of the respondents
+kevf1 <- datawizard::data_filter(analysts5, analyst_id == "KEVF1")
+prl47 <- datawizard::data_filter(analysts5, analyst_id == "PRL47")
+
+# The arithmetic of composition with the coefficients of the real respondents:
+# the published design without its interactions (twin_validation.csv, column
+# real) and the prevalence gradient within country and year
+b_ind <- valid$real[valid$outcome == "cosmo" & valid$term == "sesunemployed"]
+b_ctx <- valid$real[valid$outcome == "cosmo" & valid$term == "munemp"]
+grad_w <- grad$gradient[2]
+
+# The refits of the published design, with and without its interactions
+oa_published <- datawizard::data_filter(refits, refit_id == "OA_published")
+oa_no_interactions <- datawizard::data_filter(refits, refit_id == "OA_no_interactions")
+
+# The two-way design of the panel with growth as an adjustment, beside the
+# published design on the respondents with and without terms for the years
+agg_cosmo <- lm(mcosmo ~ unemp + growth + factor(year) + factor(cntry), data = panel)
+agg_lib <- lm(mlib ~ unemp + growth + factor(year) + factor(cntry), data = panel)
+designs <- dplyr::bind_rows(
+  tibble::tibble(outcome = c("cosmo", "lib"), design = "two_way",
+                 estimate = c(coef(agg_cosmo)[["unemp"]], coef(agg_lib)[["unemp"]]),
+                 t = c(summary(agg_cosmo)$coefficients["unemp", "t value"],
+                       summary(agg_lib)$coefficients["unemp", "t value"])),
+  years_real |>
+    datawizard::data_filter(kind == "fixed", term == "munemp") |>
+    datawizard::data_select(c("outcome", "design", "estimate", "t"))
+)
+n_complete <- years_real$estimate[years_real$kind == "n" & years_real$design == "published" &
+                                    years_real$outcome == "cosmo"]
+```

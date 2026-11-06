@@ -1,0 +1,118 @@
+# PART 4 – Within and between {#part-4-within-and-between .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 4
+:::
+
+::: notes
+The last part sits between the two extremes of this session, pooled OLS, which ignores the countries, and fixed effects, which give each country an intercept of its own. Random effects keep a term for each country but treat it as a draw from a distribution, and the assumption that econometrics attaches to them fails on this panel. The within–between model shows why: it estimates the comparison within countries and the comparison between them side by side, and the two point in opposite directions. This is also where the session hands over to the next one, on multilevel models.
+:::
+
+## Random effects {#random-effects .smaller}
+
+$$ \bar{y}_{ct} = \beta_0 + \beta_1 x_{ct} + u_c + \varepsilon_{ct}, \qquad u_c \sim N(0, \sigma_u^2) $$
+
+::: {.small}
+- One variance in place of 27 intercepts. Generalised least squares subtracts a fraction θ of each country mean, so that θ = 0 gives pooled OLS and θ = 1 fixed effects. On the panel θ = `r fmt_num(re_theta, 2)`, and the slope, `r fmt_num(coef(m_re)[["unemp"]], 5)`, lies near the `r fmt_num(coef(m_country)[["unemp"]], 5)` of country fixed effects
+- The assumption: "In modern econometric parlance, a random effects framework is synonymous with zero correlation between the observed explanatory variables and the unobserved effect" [@Wooldridge2010EconometricAnalysisCross, p. 286]
+- The Hausman test of the two one-way designs rejects it, p = `r fmt_num(hausman$p.value, 4)` [@Hausman1978SpecificationTestsEconometrics], although its traditional form assumes errors that are uncorrelated from year to year, which a residual correlation of `r fmt_num(rho, 2)` rules out
+:::
+
+::: {.src}
+companion/panel-data.qmd, section 5.
+:::
+
+::: notes
+Random effects keep a term for each country, but in place of twenty-seven intercepts they estimate one number, the variance of the country effects. The estimator subtracts a fraction of each country mean, theta, so it sits on a line that runs from pooled OLS, at nought, to fixed effects, at one. Here theta is about point eight, and the slope duly lands near the answer of country fixed effects. The price is an assumption, which in econometrics has become the meaning of the term: the country effects must be unrelated to the predictor. On this panel that is hard to believe, because the level of unemployment of a country is bound up with the same durable features that shape its view of Europe. The Hausman test agrees, but its classical form assumes away the persistence that part three found, so the next slide gives the comparison a form that our CR2 rule can test.
+:::
+
+## The within–between model {#the-within-between-model .smaller}
+
+$$ \bar{y}_{ct} = \beta_0 + \beta_W (x_{ct} - \bar{x}_{c\cdot}) + \beta_B\, \bar{x}_{c\cdot} + u_c + \varepsilon_{ct} $$
+
+::: {.small}
+- Unemployment is split into the mean of each country over the decade and the departure of each year from that mean, each with a slope of its own [@Mundlak1978PoolingTimeSeries; @BellJones2015ExplainingFixedEffects]
+- Within, **`r fmt_num(bw_cosmo$b_within, 5)`**, the slope with country fixed effects to the last digit. Between, **+`r fmt_num(bw_cosmo$b_between, 5)`**, positive and imprecise (p = `r fmt_num(bw_cosmo$p_between, 2)` on 25 df). The pooled slope of `r fmt_num(coef(pooled_iid)[["unemp"]], 5)` blended the two
+- The difference between the two slopes holds under CR2, p = `r fmt_num(mundlak_cr2$p_Satt, 3)` on `r fmt_num(mundlak_cr2$df_Satt, 1)` df, and under the errors of the model, p = `r fmt_num(bw_cosmo$p_difference, 3)`. The Hausman test, "[a]lthough often (mis)used as a test of whether FE or RE models 'should' be used ..., it is really a test of whether there is a contextual effect, or whether the between and within effects are different" [@BellEtAl2019FixedRandomEffects, p. 1057]
+:::
+
+::: notes
+Bell and Jones propose a more informative answer than picking a winner between fixed and random effects. Split unemployment into the average of each country over the decade and the departure of each year from that average, and give each part a slope of its own. The within slope is exactly the slope with country fixed effects, because separating out the variation between countries is what fixed effects do. The between slope is positive and imprecise. And the pooled slope of part one turns out to be a weighted blend of the two, two patterns of opposite sign averaged into something near zero. The difference between the slopes holds under our CR2 rule as well as under the errors of the model, so for this outcome the assumption of random effects fails under every test that the course applies, and Bell and colleagues read the Hausman test in exactly these terms, as a test of whether the two slopes differ.
+:::
+
+## Two associations {#two-associations .smaller}
+
+```{r}
+#| label: d3-between-within
+#| fig-width: 9.5
+#| fig-height: 3.2
+# Left: the 27 country means with the slope across them
+# (cases/eu-frames/data/display_country_means.csv). Right: each country-year
+# as a deviation from the means of its own country, with the slope within
+# countries (the course panel)
+within_pts <- datawizard::demean(euframes, select = c("unemp", "mcosmo"), by = "cntry")
+p_between <- ggplot2::ggplot(country_means, ggplot2::aes(unemp_mean, mcosmo_mean)) +
+  ggplot2::geom_abline(intercept = mean(country_means$mcosmo_mean) - bw_cosmo$b_between * mean(country_means$unemp_mean),
+                       slope = bw_cosmo$b_between, colour = ncl_blue, linewidth = 1) +
+  ggplot2::geom_point(colour = "grey45", size = 1.6) +
+  ggplot2::geom_text(ggplot2::aes(label = cntry), size = 2.9, colour = "grey30", nudge_y = 0.011) +
+  ggplot2::labs(title = "Between countries", x = "mean unemployment, 2004–2013 (%)",
+                y = "mean cosmopolitan share") +
+  theme_slide(13)
+p_within <- ggplot2::ggplot(within_pts, ggplot2::aes(unemp_within, mcosmo_within)) +
+  ggplot2::geom_hline(yintercept = 0, colour = "grey85") +
+  ggplot2::geom_vline(xintercept = 0, colour = "grey85") +
+  ggplot2::geom_point(colour = "grey60", size = 1.2) +
+  ggplot2::geom_abline(intercept = 0, slope = bw_cosmo$b_within, colour = d_red, linewidth = 1) +
+  ggplot2::scale_x_continuous(labels = \(x) fmt_num(x, 0)) +
+  ggplot2::scale_y_continuous(labels = \(x) fmt_num(x, 2)) +
+  ggplot2::labs(title = "Within countries", x = "unemployment, departure (points)",
+                y = "share, departure") +
+  theme_slide(13)
+patchwork::wrap_plots(p_between, p_within)
+```
+
+::: {.small}
+- Across the 27 countries the association is positive, with a correlation of `r fmt_num(bw_cosmo$r_between, 2)` between the two sets of means; within countries it is negative, with a CR2 p of `r fmt_num(bw_cosmo$p_within_cr2, 4)`
+- 'The effect of unemployment on EU framing' has a value within countries and a value between them, and choosing a model means choosing which of the two you ask about. The claim, as the curve reads it, is about change within countries, and the cross-national question has its answer in the regression on country means, outside the curve
+:::
+
+::: notes
+Here are the two associations. On the left each country is one point, its average unemployment over the decade against its average cosmopolitan share, and the line across them rises: the countries with more unemployment did not frame the EU in less cosmopolitan terms, if anything the reverse. On the right each country-year is a departure from the averages of its own country, and within countries the line falls. The two associations answer different questions. 'The effect of unemployment on EU framing' has a value within countries and a value between them, and choosing a model means choosing which of the two you ask about. The claim, as the curve reads it, is about change within countries. Anyone who wants the cross-national answer has it on the left, in the regression on the country means, and it lies outside the curve.
+:::
+
+## Hands-on 2 – Within and between {#hands-on-2-within-and-between .smaller}
+
+::: {.small}
+**In the workspace**, with `euframes` and `euframes_wb` from Hands-on 1:
+
+1. The CR2 test of the two-way slope, which should return the t, the df and the p of the table:
+
+   ```{.r}
+   m_lsdv <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
+   clubSandwich::coef_test(m_lsdv, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp",
+                           test = "Satterthwaite")
+   ```
+2. The within–between model, whose within slope should equal the slope of `country` in Hands-on 1:
+
+   ```{.r}
+   m_wb <- lmerTest::lmer(mcosmo ~ unemp_within + unemp_between + (1 | cntry), data = euframes_wb)
+   parameters::model_parameters(m_wb, effects = "fixed", ci_method = "satterthwaite")
+   ```
+3. Fit `lm(mcosmo ~ unemp + unemp_between + factor(year), data = euframes_wb)` and check that the coefficient on `unemp` is now the two-way slope. **What does the coefficient on `unemp_between` compare in this design?**
+:::
+
+::: notes
+Your last run of the session. First the CR2 test, one call to clubSandwich on the dummy-variable fit, which should give you the t, the degrees of freedom and the p of the table to the last digit. Then the within–between model with lmer, using the two columns that demean made for you in the first hands-on, and check that the within slope equals the slope of the country design that you fitted then. Last, the step that joins the two halves of the session: add a dummy for each year to the pooled Mundlak regression. The year dummies remove the common European path, as the year effects did, so the coefficient on unemployment becomes the two-way slope. Then say in one sentence what the coefficient on the country mean compares in that design. [state the time]
+:::
+
+## The reading and the next session {#the-reading-and-the-next-session .smaller}
+
+::: {.small .nonincremental}
+- **The reading**: [Panel data](../companion/panel-data.html), the module of the companion curriculum behind this session, with the code of every model and two tasks, one on the sign changes of pooled OLS and one on the within–between model with a dummy for each year. The same material written for sociologists is in @Allison2009FixedEffectsRegression and @Halaby2004PanelModelsSociological, and the econometric treatment in @Wooldridge2010EconometricAnalysisCross
+- **Next**: Multilevel models and the respondents. The same models in the vocabularies of four disciplines, respondents in countries, random intercepts and random slopes, individual effects against aggregate associations, and the model of the OA fitted to the respondents, from the Eurobarometer files that you downloaded
+:::
+
+::: notes
+That is the panel. The module Panel data is the reading for this session: it has the code behind every model that we fitted, and two tasks, one on the sign changes of pooled OLS and one on the within–between model with year dummies. If you want the same material written for sociologists, Allison's short book on fixed-effects regression and Halaby's review of panel models are the places to start, and Wooldridge is the reference for the econometrics. The next session leaves the country-years for the people inside them. The same models reappear in the vocabularies of four disciplines, and then we fit those models to the respondents, from the Eurobarometer files that you downloaded before the course, ending with the model of the original author.
+:::

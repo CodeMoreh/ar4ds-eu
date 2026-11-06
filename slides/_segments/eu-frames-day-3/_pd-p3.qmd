@@ -1,0 +1,132 @@
+# PART 3 – Few clusters {#part-3-few-clusters .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 3
+:::
+
+::: notes
+Part three returns to the standard errors, now of the two-way design. Yesterday you met the CR2 test as the rule that classes every point of the curve. Today we look at why the course needs it. The years of one country resemble each other, and once the fixed effects have done their work, a handful of countries hold most of the variation that identifies the slope. With few clusters of such unequal weight, even the usual clustered test overstates the evidence.
+:::
+
+## Errors that persist {#errors-that-persist .smaller}
+
+:::: {.columns}
+::: {.column width="46%"}
+```{r}
+#| label: d3-residual-persistence
+#| fig-width: 5
+#| fig-height: 4.4
+# The residual of each country-year in the two-way fit against the residual of
+# the same country in the year before, in points of share
+resid_lag |>
+  datawizard::data_filter(!is.na(e_before)) |>
+  ggplot2::ggplot(ggplot2::aes(100 * e_before, 100 * e)) +
+  ggplot2::geom_hline(yintercept = 0, colour = "grey85") +
+  ggplot2::geom_vline(xintercept = 0, colour = "grey85") +
+  ggplot2::geom_point(colour = ncl_blue, alpha = 0.6, size = 1.6) +
+  ggplot2::scale_x_continuous(labels = \(x) fmt_num(x, 0)) +
+  ggplot2::scale_y_continuous(labels = \(x) fmt_num(x, 0)) +
+  ggplot2::labs(x = "residual in the year before (points)", y = "residual (points)") +
+  theme_slide(15)
+```
+:::
+::: {.column width="54%"}
+::: {.small}
+- The residual of a country in one year correlates with its residual in the year before at **`r fmt_num(rho, 2)`**
+- A country that framed the EU more positively than the model expects in one year tends to do so in the next, so ten years of one country carry less information than ten independent observations
+- Clustering by country allows any pattern of correlation within a country, and with G = 27 countries the clustered t is referred to G − 1 = 26 degrees of freedom
+:::
+:::
+::::
+
+::: {.src}
+companion/panel-data.qmd, section 4.
+:::
+
+::: notes
+Here are the residuals of the two-way model, each country-year against the same country in the year before, and they line up. The correlation is about a half, so a country that framed the EU more positively than the model expects in one year tends to do so in the next year as well. Ten years of one country therefore carry less information than ten independent observations would, and the classical standard errors, which treat them as independent, are too small. Clustering by country is the repair that you met in part one. It allows any pattern of correlation within a country, and with twenty-seven countries the clustered t is referred to twenty-six degrees of freedom. That gives the second row of the table that you met yesterday, and it is not yet the rule of the curve.
+:::
+
+## Countries of unequal weight {#countries-of-unequal-weight .smaller}
+
+```{r}
+#| label: d3-variation-share
+#| fig-width: 9.5
+#| fig-height: 2.6
+# The share of the variation in unemployment left after the country and year
+# effects that each country holds (cases/eu-frames/data/display_loo.csv)
+loo_twoway |>
+  datawizard::data_modify(top = left_out %in% c("GR", "ES", "PL"),
+                          left_out = reorder(left_out, -variation_share)) |>
+  ggplot2::ggplot(ggplot2::aes(left_out, variation_share, fill = top)) +
+  ggplot2::geom_col(width = 0.75) +
+  ggplot2::scale_fill_manual(values = c(`TRUE` = orange, `FALSE` = "#b6bcc3")) +
+  ggplot2::labs(x = NULL, y = "share of the variation (%)") +
+  theme_slide(14)
+```
+
+::: {.small}
+- Once the country and year effects are removed, the variation in unemployment that identifies the slope sits mostly in a few countries: Greece holds `r fmt_num(loo_twoway$variation_share[loo_twoway$left_out == "GR"], 1)`%, Spain `r fmt_num(loo_twoway$variation_share[loo_twoway$left_out == "ES"], 1)`% and Poland `r fmt_num(loo_twoway$variation_share[loo_twoway$left_out == "PL"], 1)`%
+- With few clusters of such unequal weight, even the clustered test overstates the evidence. Few clusters are "the most difficult complication to deal with", and "[t]here is no clear-cut definition of 'few'; depending on the situation, 'few' may range from less than 20 to less than 50 clusters in the balanced case" [@CameronMiller2015PractitionersGuideClusterrobust, p. 319]
+:::
+
+::: notes
+Clustering assumes that the countries bring similar amounts of information, and here they do not. Once the country and year effects have taken their share, the variation in unemployment that is left, which is all that identifies the slope, sits mostly in a few countries. Greece holds about a sixth of it, Spain nearly as much and Poland about a tenth, while the smallest countries hold almost nothing. A slope estimated mostly from three countries has, in effect, few clusters behind it, whatever the count says. Cameron and Miller call few clusters the most difficult complication of the whole subject, and they decline to say how few is few: anything from fewer than twenty to fewer than fifty, depending on the design. Twenty-seven countries of this unequal weight sit well inside that range.
+:::
+
+## The CR2 test {#the-cr2-test .smaller}
+
+::: {.small}
+- **CR2** [@BellMcCaffrey2002BiasReductionStandard] enlarges the residuals of each country by the amount by which that country pulled the fit towards itself, since the residuals of a country that carries much of the variation come out too small
+- Its t is referred to **Satterthwaite degrees of freedom** [@PustejovskyTipton2018SmallsampleMethodsClusterrobust], which say how many clusters effectively carry the information: close to G − 1 when the clusters weigh alike, far fewer when a few of them dominate
+- The combination keeps the share of false rejections close to the 5% that the test promises [@ImbensKolesar2016RobustStandardErrors]. The wild cluster bootstrap is the resampling answer [@MacKinnonWebb2017WildBootstrapInference], and the course leaves it aside because its only implementation in R is no longer maintained
+:::
+
+```{.r}
+m_lsdv <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
+clubSandwich::coef_test(m_lsdv, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp",
+                        test = "Satterthwaite")
+```
+
+::: {.src}
+companion/panel-data.qmd, section 4. The test needs the dummy-variable fit, because the correction works on the full design matrix.
+:::
+
+::: notes
+The remedy that the course uses is the CR2 correction of Bell and McCaffrey. The ordinary clustered formula takes the residuals of each country as they come out of the fit. But when one country carries much of the variation, the fit has already been pulled towards that country, so its residuals are too small, and the standard error with them. CR2 enlarges the residuals of each country by the amount by which that country pulled the fit. Its test then uses Satterthwaite degrees of freedom, which say how many countries effectively carry the information. Imbens and Kolesár recommend this combination for few and unequal clusters, because it keeps the false rejections near the promised five per cent. It takes one call to clubSandwich, on the dummy-variable fit, and it returns the p-value stored on the curve exactly, since nothing in it is random.
+:::
+
+## Three kinds of inference {#three-kinds-of-inference .smaller}
+
+```{r}
+#| label: d3-inference-table
+# The reproduced specification and its twin with country effects alone under
+# three rules of inference (cases/eu-frames/data/display_inference.csv)
+disp_inference |>
+  datawizard::data_modify(
+    Design = dplyr::if_else(estimator == "fe_twoway", "Two-way", "Country effects only"),
+    Inference = unname(c(conventional = "Conventional",
+                         cr1_g1 = "Clustered by country (CR1), G − 1 df",
+                         cr2_satterthwaite = "CR2, Satterthwaite df")[inference]),
+    t = fmt_num(t, 2),
+    df = dplyr::if_else(df == round(df), fmt_num(df, 0), fmt_num(df, 2)),
+    p = dplyr::if_else(p < 0.001, "< 0.001", fmt_num(p, 4)),
+    `r from the formula` = fmt_num(r_formula, 3)
+  ) |>
+  datawizard::data_select(c("Design", "Inference", "t", "df", "p", "r from the formula")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 3:6, align = "r") |>
+  tinytable::style_tt(fontsize = 0.7)
+```
+
+::: {.small}
+- The estimate is the same in every row of a design, and only the verdict changes. The reproduced specification has p = `r fmt_num(inference_of("conventional", "p"), 5)` under conventional errors, `r fmt_num(inference_of("cr1_g1", "p"), 3)` clustered with G − 1 df, and **`r fmt_num(inference_of("cr2_satterthwaite", "p"), 4)` under CR2 on `r fmt_num(inference_of("cr2_satterthwaite", "df"), 2)` df**, not significant at 5% under the rule that classes the curve. The country design stays significant under every rule
+:::
+
+::: {.fragment .small}
+$r = t / \sqrt{t^2 + df}$ recovers the partial correlation of the data only from the conventional t on the residual df. Fed a clustered t, it returns a larger number although the association has not changed, so the curve places each specification by its conventional r and takes the CR2 test for its class alone.
+:::
+
+::: notes
+Here is the table of yesterday again, with one more column. Read along the rows of the reproduced specification. The estimate is the same in every row, and only the test changes. Under conventional errors the p-value is two in ten thousand. Clustered on twenty-six degrees of freedom, it is about three in a hundred. Under CR2 it is just above point zero five, on fewer than ten degrees of freedom, which say that the twenty-seven countries carry about as much information as ten would. So, under the rule that classes the curve, the reproduced result is not significant at five per cent, and whenever you report it you say under which errors. The country design stays significant under every rule. [advance] And the last column is a trap: feed a weaker test into the conversion formula, and out comes a larger correlation, though nothing in the data has changed.
+:::

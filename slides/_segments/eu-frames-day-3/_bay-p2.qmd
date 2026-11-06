@@ -1,0 +1,82 @@
+# PART 2 – Partial pooling {#part-2-partial-pooling .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2
+:::
+
+::: notes
+Part two gives every country a slope of its own. A separate slope for each country, estimated from its ten years alone, learns nothing from the other countries, and one slope for all ignores how they differ. Partial pooling lies between the two. Each country slope is a compromise between its own years and the average of all the countries, and the data decide how far each country leans towards the average.
+:::
+
+## A slope for each country {#a-slope-for-each-country .smaller}
+
+$$ \beta_c = \beta + u_c, \qquad u_c \sim N(0, \sigma_b^2) $$
+
+::: {.small}
+- The slope of each country departs from the average by an amount drawn from a distribution, whose spread $\sigma_b$ the model estimates under the prior normal(0, 0.01)
+- A model without pooling has 'amnesia': "nothing learned about any one category informs estimates for the other categories", whereas multilevel models "remember features of each cluster in the data as they learn about all of the clusters. Depending upon the variation among clusters, which is learned from the data as well, the model pools information across clusters" [@McElreath2020StatisticalRethinkingBayesian, pp. 399–400]
+- "small ponds are prone to overfitting, and so they receive a bigger dose of the underfit grand mean", while "the larger ponds shrink much less, because they contain more information" (p. 414)
+:::
+
+```{.r}
+# the formula of the model with a slope for each country, in brms
+mcosmo ~ 0 + cntry + year_f + unemp_within + (0 + unemp_within | cntry)
+```
+
+::: notes
+A model with a slope for each country lets the slopes depart from the average by amounts drawn from a distribution, whose spread the model estimates along with everything else. McElreath calls the alternative, a separate slope for each country estimated from its own data alone, a model with amnesia: nothing learnt about one country informs the estimate for another. A multilevel model remembers. Each country slope becomes a compromise between the ten years of that country and the average of all the countries, and the compromise leans towards the average where a country holds little information. In McElreath's example, the small ponds get a bigger dose of the grand mean, and the large ponds shrink much less. In our panel, the information about a slope is the variation in unemployment that remains within a country once the year effects are removed, the unequal weights of the first session.
+:::
+
+## The country slopes {#the-country-slopes .smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+```{r}
+#| label: d3-country-slopes
+#| fig-width: 5.6
+#| fig-height: 5.6
+# The slope of each country from its own ten years by least squares, with
+# year effects shared and a 90% confidence interval (open circles), and
+# partially pooled in the model with a slope for each country, with a 90%
+# credible interval (filled circles), ordered by the share of the variation
+# in unemployment within countries that each holds
+# (companion/_model-outputs/bayes_panel_countries.csv, cases/eu-frames/data/display_loo.csv)
+order_countries <- datawizard::data_arrange(loo_twoway, "-variation_share")$left_out
+bayes_countries |>
+  datawizard::data_filter(model %in% c("no_pooling", "slopes")) |>
+  datawizard::data_modify(
+    kind = dplyr::if_else(model == "no_pooling", "own ten years", "partially pooled"),
+    cntry = factor(cntry, levels = rev(order_countries))
+  ) |>
+  ggplot2::ggplot(ggplot2::aes(x = 100 * estimate, y = cntry, colour = kind, shape = kind)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_vline(xintercept = 100 * slopes$median, colour = d_red, linewidth = 0.5) +
+  ggplot2::geom_errorbar(ggplot2::aes(xmin = 100 * low, xmax = 100 * high), width = 0, orientation = "y",
+                         position = ggplot2::position_dodge(width = 0.6)) +
+  ggplot2::geom_point(size = 1.9, position = ggplot2::position_dodge(width = 0.6)) +
+  ggplot2::scale_colour_manual(values = c(`own ten years` = "#8c8c8c", `partially pooled` = ncl_blue), name = NULL) +
+  ggplot2::scale_shape_manual(values = c(`own ten years` = 1, `partially pooled` = 16), name = NULL) +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::coord_cartesian(xlim = c(-3, 3)) +
+  ggplot2::labs(x = "points of share per point of unemployment", y = NULL) +
+  theme_slide(13) +
+  ggplot2::theme(legend.position = "top", legend.justification = "left",
+                 axis.text.y = ggplot2::element_text(size = 9))
+```
+:::
+::: {.column width="48%"}
+::: {.small}
+- The countries with little variation in unemployment are drawn most of the way to the average; Greece and Spain keep slopes steeper than the average, and Poland a slope near zero
+- The spread of the slopes has a posterior median of `r fmt_num(slopes_sd$median, 4)` (95% credible interval `r fmt_num(slopes_sd$q2.5, 4)` to `r fmt_num(slopes_sd$q97.5, 4)`), larger than the size of the average slope, `r fmt_num(slopes$median, 4)`
+- The same model fitted by REML returns a point estimate of the spread, with none of its uncertainty
+:::
+:::
+::::
+
+::: {.src}
+companion/bayesian.qmd, section 5. The vertical line marks the posterior median of the average slope.
+:::
+
+::: notes
+Here are the country slopes. The open grey circles are what each country gives on its own ten years, with the year effects shared, and the filled blue circles are the partially pooled slopes, with the countries ordered from the top by how much of the variation in unemployment each holds. Towards the bottom, the small countries scatter widely on their own, and the model draws them most of the way to the average. At the top, Greece and Spain hold most of the information, so they keep slopes steeper than the average, and Poland keeps a slope near zero. The spread of the slopes is larger than the average slope itself, so on this model the countries do not share one slope. A frequentist fit by REML returns a single number for that spread, where the posterior gives its whole distribution.
+:::

@@ -1,0 +1,60 @@
+# PART 1 – The vocabularies {#part-1-the-vocabularies .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 1
+:::
+
+::: notes
+Part one is about words. The models of this session go by different names in different disciplines, and someone who learnt the models in one discipline can fail to recognise them in another. Worse, two terms, fixed effects and random effects, change their meaning from one field to the next, and in this case the paper and two of the reanalyses use the first of the two terms in opposite senses. So this part sets the terms side by side before any model is fitted.
+:::
+
+## Four vocabularies {#four-vocabularies .smaller}
+
+::: {.fs-60}
+| | Sociology and education | Political science | Econometrics | Psychology and biostatistics |
+|:--|:--|:--|:--|:--|
+| The model | multilevel model, hierarchical linear model | multilevel model of TSCS data or of comparative longitudinal survey data | random-effects model, unobserved effects model | mixed model, linear mixed-effects model |
+| An intercept for each group, drawn from a distribution | random intercept, level-2 residual | random intercept | random effect, an unobserved effect assumed to be uncorrelated with the predictors | random intercept, random effect |
+| An intercept for each group, estimated as a parameter | fixed effects, country dummies | unit fixed effects, country dummies | fixed effects, the within estimator, least squares dummy variables | fixed-effects model for clustered data |
+| A slope that varies across groups | random slope, random coefficient, modelled by a cross-level interaction | random coefficients | random coefficient model | random slope |
+| The predictor split into the group mean and the departure from it | group-mean centring, within-group and between-group effects, contextual effect | within and between effects, cross-sectional and longitudinal relationships | the between and the within estimator, the Mundlak device, correlated random effects | person-mean or cluster-mean centring, within-person and between-person effects |
+| The share of the variance between groups | intraclass correlation, variance partition coefficient | intraclass correlation | the share of the unit effect in the variance of the composite error | intraclass correlation |
+:::
+
+::: {.src}
+Six of the eight rows of the table of section 1 of companion/multilevel.qmd. TSCS: time-series cross-section data, a few countries observed over many years. Sources: @RaudenbushBryk2002HierarchicalLinearModels; @SnijdersBosker2012MultilevelAnalysisIntroduction; @BeckKatz1995WhatNotTimeseries; @Fairbrother2013TwoMultilevelModeling; @Schmidt-CatranFairbrother2016RandomEffectsMultilevel; @Wooldridge2010EconometricAnalysisCross; @PinheiroBates2000MixedEffectsModelsSPLUS; @DeBruineBarr2021UnderstandingMixedeffectsModels.
+:::
+
+::: notes
+Read the table row by row, and find the column of your own training first. Sociologists and education researchers speak of multilevel or hierarchical linear models, with pupils in schools or respondents in countries. Political scientists meet the same models through time-series cross-section data, a few countries observed over many years, and through comparative surveys repeated over time, which is our case. Econometricians speak of panel data, of fixed and random effects, and of the within and between estimators that you met this morning. Psychologists and biostatisticians speak of mixed models, with random intercepts and random slopes for subjects. The second and third rows are the ones to hold on to. An intercept for each group can be drawn from a distribution or estimated as a parameter, and the next slide shows that the word 'fixed' points at different things in different columns.
+:::
+
+## Two meanings of 'fixed' {#two-meanings-of-fixed .smaller}
+
+::: {.small}
+- In econometrics a **fixed effect** is an intercept for each group, estimated as a parameter: the country dummies of the last session. In the multilevel tradition the fixed effects are the coefficients shared by all groups, the fixed part of the model as against its random part. "[F]ixed effects are usually defined as varying coefficients that are not themselves modeled", while "'fixed-effects models' sometimes refer to regressions in which coefficients do not vary by group (so that they are fixed, not random)" [@GelmanHill2007DataAnalysisUsing, p. 245]
+- The OA writes of the national indicators that they "are, therefore, included as fixed effects at Level 2 in the models" [@Teney2016DoesEUEconomic, p. 625], in the multilevel sense, in a model with random intercepts and no country dummies, while KQXUE and C6HJR used fixed effects in the econometric sense
+- A **random effect** is a group intercept or slope drawn from a distribution, or, in econometrics, above all an assumption that such effects are uncorrelated with the predictors. The two concerns "are actually addressing the same underlying issue" [@HamakerMuthen2020FixedRandomEffects, p. 365]
+:::
+
+::: notes
+The first term that changes its meaning is 'fixed effects'. For an econometrician, and for the sociologists who follow econometrics, a fixed effect is an intercept for each group, estimated as a parameter: the country dummies of this morning. In the multilevel and mixed-model traditions, the fixed effects are the coefficients shared by all groups, the fixed part of the model. Gelman and Hill collect the conflicting definitions. Both senses meet in this case. The OA writes that the national indicators enter the models as fixed effects at level two, in the multilevel sense, in a model without a single country dummy. Two of the Multi100 analysts used fixed effects in the econometric sense. Anyone who took the paper and those two reanalyses to share a design, because all three mention fixed effects, would misread all three. 'Random effects' shifts in the same way, and Hamaker and Muthén show that the two concerns are one issue.
+:::
+
+## The syntax of R {#the-syntax-of-r .smaller}
+
+```{.r}
+fixest::feols(y ~ x | cntry)                        # an intercept for each country, estimated as a parameter
+lme4::lmer(y ~ x + (1 | cntry))                     # country intercepts drawn from a distribution
+lme4::lmer(y ~ x + (1 + x | cntry))                 # the slope of x varies by country as well
+lme4::lmer(y ~ x + (1 | cntry) + (1 | cntry:year))  # country-years nested in countries
+lme4::lmer(y ~ x + (1 | cntry) + (1 | year))        # countries crossed with years
+```
+
+::: {.fragment .small}
+The advice of @GelmanHill2007DataAnalysisUsing [p. 246] is to "avoid the terms 'fixed' and 'random' entirely, and focus on the description of the model itself (for example, varying intercepts and constant slopes)". The syntax of R does that already: a bar inside brackets declares a varying term, and fixest puts the estimated intercepts after a bar of its own.
+:::
+
+::: notes
+In R the distinction is written into the syntax, which makes it easier to keep straight than the words. In fixest, the bar separates the regression from the groups that get an intercept of their own, estimated as parameters. In lme4, a term in brackets with a bar inside declares something that varies by group and is drawn from a distribution: one in front of the bar for an intercept, the predictor as well for a slope. Two brackets can nest country-years inside countries, or cross countries with years, and the difference matters for this case, as the last part shows. [advance] Gelman and Hill suggest dropping the words 'fixed' and 'random' altogether and describing the model instead: varying intercepts, constant slopes. The formula already does that, and I will follow their advice for the rest of the session wherever I can.
+:::

@@ -1,0 +1,74 @@
+# PART 4 – The published model {#part-4-the-published-model .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 4
+:::
+
+::: notes
+The last part fits the model of the original author to the respondents. Its structure is the multilevel structure of part two, with the characteristics of the respondents and the two national rates added. The question is how it relates to the two-way design of the panel that the reproduced specification uses, and the answer depends on the years.
+:::
+
+## The published model {#the-published-model .smaller}
+
+::: {.small}
+- "citizens (Level 1; N: 390,373) are sampled within 16 EB waves (Level 2) that repeatedly took place within the 27 EU countries (Level 3)" [@Teney2016DoesEUEconomic, p. 623]
+- The score of each respondent on sex, age, education, occupation and the type of community, with the national rates of growth and unemployment, and random intercepts for countries and for the country-waves of the surveys
+- Model 1 of the paper adds interactions of the two rates with education, so its unemployment coefficient, −0.00340 in Table 3, is the slope of the lowest education band
+- On the rebuilt respondents the course refit gives `r fmt_num(oa_published$b, 5)` for the lowest band (t = `r fmt_num(oa_published$t, 2)` on `r fmt_num(oa_published$df_satterthwaite, 1)` Satterthwaite df), and without the interactions `r fmt_num(oa_no_interactions$b, 5)` (t = `r fmt_num(oa_no_interactions$t, 2)` on `r fmt_num(oa_no_interactions$df_satterthwaite, 1)` df), the mark "OA design" of the class chart at r = `r fmt_num(oa_no_interactions$r_on_df, 3)`
+:::
+
+::: {.src}
+companion/multilevel.qmd, section 6; companion/_model-outputs/reference_refits.csv.
+:::
+
+::: notes
+The OA describes the structure in one sentence: citizens sampled within sixteen waves within twenty-seven countries. The model regresses the framing score of each respondent on sex, age, education, occupation and the type of community, with the national rates of growth and unemployment, and with random intercepts for the countries and for the waves in which the respondents were surveyed. Model one of the paper also carries interactions of the two rates with education, so the unemployment coefficient that it prints is the slope for the lowest education band, not an average over the bands. The course refitted the design on the rebuilt respondents both ways. Without the interactions, the slope is the average over the bands, and that refit is the mark labelled OA design on the class chart, so that it answers the same question as the five reanalyses.
+:::
+
+## Two designs {#two-designs .smaller}
+
+```{r}
+#| label: d3-designs-table
+# The unemployment coefficient, with t, under the two-way design of the panel
+# (growth adjusted for, conventional t) and under the published design without
+# its interactions on the real respondents (Satterthwaite t), with and without
+# terms for the years (companion/_model-outputs/person_year_effects.csv)
+designs |>
+  datawizard::data_modify(value = paste0(fmt_num(estimate, 5), " (", fmt_num(t, 2), ")")) |>
+  datawizard::data_select(c("design", "outcome", "value")) |>
+  datawizard::data_to_wide(id_cols = "design", names_from = "outcome", values_from = "value") |>
+  datawizard::data_modify(
+    Design = unname(c(two_way = "Two-way fixed effects, the panel",
+                      published = "Published design, the respondents",
+                      year_random = "Published, with random intercepts for years",
+                      year_dummy = "Published, with a dummy for each year")[design])
+  ) |>
+  datawizard::data_select(c("Design", Cosmopolitan = "cosmo", Libertarian = "lib")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:3, align = "r") |>
+  tinytable::style_tt(fontsize = 0.75)
+```
+
+::: {.small}
+- The published design has no year effects, model D in the typology of @Schmidt-CatranFairbrother2016RandomEffectsMultilevel, so a shock that hit every country at once, such as 2009, stays in its estimate. Their advice is "to include random effects at all potentially relevant levels" (p. 23)
+- A term for the years brings the published estimate close to the slope of the panel, and on the libertarian scale it removes the association altogether
+:::
+
+::: {.fragment .small}
+When an effect appears under one defensible design and not under another, the design belongs in the preregistration, fixed before any model is fitted.
+:::
+
+::: notes
+Here the course panel and the model of the OA disagree, and the reason lies in the years. The published design has random intercepts for countries and for the waves within them, but nothing for the years, so nothing in it removes a shock that hit every country at once. 2009 brought such a shock: unemployment rose everywhere and framing moved everywhere, for reasons that include unemployment but are not limited to it. Add a random intercept for each year, or a dummy, and the published estimate on the respondents comes close to the two-way slope of the panel. On the libertarian scale the published design finds a clear positive association, the panel finds almost none, and a term for the years removes the association from the respondents as well. [advance] When a result appears under one defensible design and vanishes under another, that is the strongest argument for fixing the design before any model is fitted.
+:::
+
+## The reading and the next session {#the-reading-and-the-next-session .smaller}
+
+::: {.small .nonincremental}
+- **The reading**: [Multilevel models](../companion/multilevel.html), the module of the companion curriculum behind this session, with the saved output of every model fitted to the respondents, the same models on the twin, sections on survey weights, bounded outcomes and the education gap of the second hypothesis, and a task that takes the within–between split to the respondents. For learning the models from the start: @SnijdersBosker2012MultilevelAnalysisIntroduction and @GelmanHill2007DataAnalysisUsing
+- **Next**: Bayesian estimation. The slope of the claim on the panel as a posterior distribution: priors and what they imply, partial pooling across countries, the uncertainty of a result with few clusters, and the checks that a Bayesian workflow runs before a posterior is read
+:::
+
+::: notes
+That is the respondents. The module Multilevel models is the reading: it shows the saved output of every model that was fitted to the respondents, runs the same models on the twin, and adds what this session could only mention, survey weights, bounded outcomes and the education gap, the second hypothesis of the paper, which only the respondents can test. Its task takes the within–between split of this morning to the respondents, as Fairbrother proposes. Snijders and Bosker, and Gelman and Hill, are the textbooks to learn the models from. The next session goes back to the panel and states the slope of the claim as a posterior distribution. Partial pooling across countries returns there, from the Bayesian side, and so does the problem of few clusters.
+:::

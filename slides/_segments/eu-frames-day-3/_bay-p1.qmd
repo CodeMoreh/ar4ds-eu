@@ -1,0 +1,129 @@
+# PART 1 – Priors {#part-1-priors .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 1
+:::
+
+::: notes
+Part one builds the model and reads its first result. We start with the three pieces of any Bayesian analysis, the prior, the likelihood and the posterior, on a model that you know from the last session. Then the priors of the two-way design, stated on scales that everyone can read, and a simulation of what they imply before the data enter. The part ends with the posterior of the two-way slope, and with your first run of the session, a prior simulated by hand.
+:::
+
+## Prior, likelihood and posterior {#prior-likelihood-and-posterior .smaller}
+
+$$ p(\theta \mid y) \;\propto\; p(y \mid \theta)\; p(\theta) $$
+
+::: {.small}
+- The **prior** says which values of the parameters are plausible before the data enter, the **likelihood** how probable the data are under each value, and the **posterior** is a distribution over all the parameters at once
+- Markov chain Monte Carlo draws thousands of values whose frequencies match the posterior, and inference summarises the draws: a median, an interval that holds 95% of them, the share of them below zero
+- brms fits Bayesian regressions through Stan, with the formula syntax of `lmer()` [@Burkner2017BrmsPackageBayesian]
+:::
+
+```{.r}
+brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
+          backend = "cmdstanr", chains = 4, iter = 4000, seed = 2026)
+```
+
+::: {.fragment .small}
+With the default priors of brms, the standard deviation of the year intercepts has a posterior mean of `r fmt_num(ri_year$mean, 4)` and a 95% credible interval from `r fmt_num(ri_year$q2.5, 4)` to `r fmt_num(ri_year$q97.5, 4)`, a statement of how little ten years can establish about a variance between years.
+:::
+
+::: {.src}
+companion/bayesian.qmd, section 1; companion/_model-outputs/bayes_panel.R and bayes_panel_summary.csv.
+:::
+
+::: notes
+A Bayesian analysis starts from a prior, a distribution that says which values of the parameters are plausible before the data enter. The likelihood, the model read as a statement of how probable the data are under each value, updates the prior into a posterior, a distribution over all the parameters at once. For models like ours the posterior has no closed form, so Stan explores it by Markov chain Monte Carlo, drawing thousands of values whose frequencies match it. Inference is then a summary of the draws: a median, an interval that holds ninety-five per cent of them, the share of them below zero. brms speaks the formula language of lmer, so the first model is a familiar one, with random intercepts for countries and years. [advance] Its output adds what a Bayesian fit can say about a variance: ten years leave the spread of the years uncertain, anywhere between about one and three points of share.
+:::
+
+## Priors on readable scales {#priors-on-readable-scales .smaller}
+
+$$ \bar{y}_{ct} \sim N\!\left( \alpha_c + \gamma_t + \beta\,(x_{ct} - \bar{x}_{c\cdot}),\; \sigma^2 \right) $$
+
+::: {.small}
+- The two-way design of the reproduced specification, with unemployment as the departure of each year from the mean of its country over the decade
+- The level of each country takes normal(0.5, 0.15), a share between about 0.2 and 0.8 with 95% probability; the departure of each later year normal(0, 0.1); the residual standard deviation exponential(20), whose mean of 0.05 is a few points of share
+- The slope takes normal(0, 0.01): a rise of ten points of unemployment, about half of the rises of `r fmt_num(rise_es, 1)` points in Spain and `r fmt_num(rise_gr, 1)` points in Greece, may move the share by up to about 0.2 either way
+- "Using scientific knowledge to build priors is not cheating. The important thing is that your prior not be based on the values in the data, but only on what you know about the data before you see it" [@McElreath2020StatisticalRethinkingBayesian, p. 84]
+:::
+
+::: notes
+From here on the models take the two-way design of the reproduced specification, so that the Bayesian slope answers the same question as the curve. A Bayesian model needs a prior for every parameter, and here the priors can be stated on scales that everyone can read: a share between nought and one, and a rate of unemployment in points. Each country gets a level of its own, centred on a half and allowed to range from about a fifth to four fifths. Each later year may depart from the first by a few points. The slope is centred on no effect, with room for a rise of ten points of unemployment, about half of what Spain and Greece went through, to move the share by up to about twenty points either way. McElreath states the principle behind such choices: using what you know before the data is not cheating, as long as the prior is not built from the values in the data.
+:::
+
+## What the priors imply {#what-the-priors-imply .smaller}
+
+```{r}
+#| label: d3-prior-predictive
+#| fig-width: 9.5
+#| fig-height: 2.7
+# The prior predictive distributions of the two-way model: cell means from 50
+# of the draws of the prior-only fit, with the bounds of a share, and the
+# change in the share for a rise of ten points of unemployment, from every draw
+# (companion/_model-outputs/bayes_panel_prior_draws.csv)
+panels <- c(cell_mean = "cell mean, from the priors alone",
+            rise_10 = "change for a rise of ten points (points of share)")
+prior_pred <- bayes_prior |>
+  datawizard::data_modify(panel = factor(panels[quantity], levels = panels))
+ggplot2::ggplot(prior_pred, ggplot2::aes(value)) +
+  ggplot2::geom_vline(data = tibble::tibble(panel = factor(panels[["cell_mean"]], levels = panels), bound = c(0, 1)),
+                      ggplot2::aes(xintercept = bound), colour = d_red, linetype = "22") +
+  ggplot2::geom_density(fill = "#d6dde5", colour = ncl_blue, linewidth = 0.9) +
+  ggplot2::facet_wrap(ggplot2::vars(panel), scales = "free") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::labs(x = NULL, y = "prior density") +
+  theme_slide(14) +
+  ggplot2::theme(strip.text = ggplot2::element_text(face = "bold", colour = ncl_blue, size = 13),
+                 axis.text.y = ggplot2::element_blank())
+```
+
+::: {.small}
+- brms fits the model with the likelihood switched off when `sample_prior = "only"` is set, and `posterior_predict()` then draws cell means from the priors alone: "[t]he prior predictive simulation is an essential part of your modeling" [@McElreath2020StatisticalRethinkingBayesian, p. 82]
+- Before the data, 95% of the cell means lie between `r fmt_num(quantile(cell_prior$value, 0.025), 2)` and `r fmt_num(quantile(cell_prior$value, 0.975), 2)`, and `r fmt_pct(mean(cell_prior$value < 0 | cell_prior$value > 1))` fall outside the bounds of a share; a rise of ten points of unemployment changes the share by between `r fmt_num(quantile(rise_prior$value, 0.025), 0)` and +`r fmt_num(quantile(rise_prior$value, 0.975), 0)` points
+:::
+
+::: notes
+What priors imply together is seldom obvious from the priors one by one, so the workflow simulates the outcome from the priors alone, before the data enter. brms does this when you ask it to sample from the prior only, and McElreath calls the prior predictive simulation an essential part of modelling. On the left are the cell means that the priors allow: a broad hump around a half, with about one per cent of the simulated means outside the bounds of a share, which a model with normal errors cannot avoid entirely and which is small enough to leave the model sensible. On the right is the change in the share that a rise of ten points of unemployment could bring, anything within about twenty points either way. That rules out nothing that a crisis could plausibly do to framing, and it keeps the slope away from values that no survey could produce.
+:::
+
+## The posterior of the two-way slope {#the-posterior-of-the-two-way-slope .smaller}
+
+::: {.small}
+- With one slope and independent errors, the model is the Bayesian form of the reproduced specification: posterior median **`r fmt_num(common$median, 5)`**, 95% credible interval `r fmt_num(common$q2.5, 5)` to `r fmt_num(common$q97.5, 5)`
+- The least-squares slope is `r fmt_num(inference_of("conventional", "b"), 5)` with a conventional standard error of `r fmt_num(inference_of("conventional", "se"), 5)`, so priors this weak are outweighed by 270 country-years
+- The probability that the slope is negative is `r if (common$pd == 1) "1 to the precision of the draws, since every draw lies below zero" else fmt_num(common$pd, 4)`
+- A credible interval says that, given the model, the prior and the data, the slope lies within it with a probability of 95%, the statement that a confidence interval is often misread as making
+:::
+
+::: {.fragment .small}
+The likelihood treats the 270 country-years as independent, as the conventional standard error does, so the posterior inherits the assumption that the clustered errors of the first session correct.
+:::
+
+::: {.src}
+companion/bayesian.qmd, section 3; cases/eu-frames/data/display_inference.csv.
+:::
+
+::: notes
+With the data switched on and the errors of the country-years treated as independent, the model is the Bayesian form of the reproduced specification. The posterior median of the slope agrees closely with least squares, because priors this weak are outweighed by two hundred and seventy country-years. The credible interval makes the statement that a confidence interval is so often misread as making: given the model, the prior and the data, the slope lies inside it with a probability of ninety-five per cent. And every one of the draws lies below zero. [advance] That agreement is also the limitation of the model. Its likelihood treats the 270 rows as independent pieces of evidence, exactly as the conventional standard error did this morning, so the posterior inherits the assumption that the clustered errors were there to correct.
+:::
+
+## Hands-on 1 – Simulating a prior {#hands-on-1-simulating-a-prior .smaller}
+
+::: {.small}
+**In the workspace**, in the console:
+
+1. Draw from the prior of the slope, and turn each draw into the change in the share, in points, for a rise of ten points of unemployment:
+
+   ```{.r}
+   set.seed(20261106)
+   prior_draws <- tibble::tibble(slope = rnorm(4000, 0, 0.01)) |>
+     datawizard::data_modify(rise_10 = 10 * 100 * slope)
+   quantile(prior_draws$rise_10, c(0.025, 0.975))
+   tinyplot::tinyplot(~ rise_10, data = prior_draws, type = "histogram")
+   ```
+2. Compare the interval with the right panel of the prior predictive check, then set the standard deviation of the slope to 0.001, and to 0.05
+3. **Which standard deviation describes what you believed about the slope before you read the paper?** One sentence for your notes
+:::
+
+::: notes
+This is a prior predictive check done by hand, with base R and two packages from the workspace. Draw four thousand values of the slope from the normal prior with a standard deviation of point nought one, and turn each into the change in the cosmopolitan share, in points, that a rise of ten points of unemployment would bring. The interval should come close to the right panel of the last slide, about twenty points either way. Then narrow the prior to point nought nought one, which allows only about two points either way, and widen it to point nought five, which allows changes of almost the whole range of a share. The last question has no right answer, but answering it is what choosing a prior means. [state the time]
+:::

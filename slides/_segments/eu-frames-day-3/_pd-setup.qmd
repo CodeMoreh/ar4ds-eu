@@ -1,0 +1,55 @@
+```{r}
+#| label: setup-panel
+#| include: false
+# The fits of the panel-data module that the slides quote, refitted with the
+# calls of companion/panel-data.qmd on the committed panel. Comes after the
+# setup chunk of the case, whose curve and display files (spec_curve,
+# disp_inference, bw_cosmo, loo_twoway and their helpers) it uses as well.
+euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+country_means <- readr::read_csv("../cases/eu-frames/data/display_country_means.csv", show_col_types = FALSE)
+
+# Pooled OLS under classical errors and under errors clustered by country
+pooled_iid <- fixest::feols(mcosmo ~ unemp, data = euframes, vcov = "iid")
+pooled_cl <- fixest::feols(mcosmo ~ unemp, data = euframes, cluster = ~cntry)
+
+# The share of the variance of unemployment and of the cosmopolitan share that
+# lies between the 27 country means
+between_share <- datawizard::demean(euframes, select = c("unemp", "mcosmo"), by = "cntry") |>
+  datawizard::data_summary(unemp = var(unemp_between) / var(unemp),
+                           mcosmo = var(mcosmo_between) / var(mcosmo))
+
+# The two designs of fixed effects, and the share of the variation of each
+# predictor within countries that is common to all countries in a year
+m_twfe <- fixest::feols(mcosmo ~ unemp | cntry + year, data = euframes, vcov = "iid")
+m_country <- fixest::feols(mcosmo ~ unemp | cntry, data = euframes, vcov = "iid")
+within_country <- datawizard::demean(euframes, select = c("unemp", "growth"), by = "cntry")
+year_share <- c(
+  unemp  = summary(lm(unemp_within ~ factor(year), data = within_country))$r.squared,
+  growth = summary(lm(growth_within ~ factor(year), data = within_country))$r.squared
+)
+
+# The residual of each country-year in the two-way fit beside the residual of
+# the same country in the year before
+resid_lag <- euframes |>
+  datawizard::data_modify(e = resid(m_twfe)) |>
+  datawizard::data_arrange(c("cntry", "year")) |>
+  dplyr::mutate(e_before = dplyr::lag(e), .by = cntry)
+rho <- cor(resid_lag$e, resid_lag$e_before, use = "complete.obs")
+
+# Random effects with country effects only, and the Hausman test that sets
+# the one-way random-effects fit against the one-way fixed-effects fit
+m_re <- plm::plm(mcosmo ~ unemp, data = euframes, index = c("cntry", "year"), model = "random")
+re_theta <- plm::ercomp(m_re)$theta[["id"]]
+fe_one <- plm::plm(mcosmo ~ unemp, data = euframes, index = c("cntry", "year"),
+                   effect = "individual", model = "within")
+re_one <- plm::plm(mcosmo ~ unemp, data = euframes, index = c("cntry", "year"),
+                   effect = "individual", model = "random")
+hausman <- plm::phtest(fe_one, re_one)
+
+# The Mundlak form fitted by least squares: its coefficient on the country
+# mean is the difference between the two slopes, tested under CR2 errors
+euframes_wb <- datawizard::demean(euframes, select = "unemp", by = "cntry")
+m_mundlak <- lm(mcosmo ~ unemp + unemp_between, data = euframes_wb)
+mundlak_cr2 <- clubSandwich::coef_test(m_mundlak, vcov = "CR2", cluster = euframes_wb$cntry,
+                                       coefs = "unemp_between", test = "Satterthwaite")
+```

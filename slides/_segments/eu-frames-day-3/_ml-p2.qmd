@@ -1,0 +1,180 @@
+# PART 2 – Respondents in countries {#part-2-respondents-in-countries .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2
+:::
+
+::: notes
+Part two puts the respondents into the model. First the question of level: what a claim about countries can say about people. Then the respondent file, which you build now from your own downloads, and the simulated twin, which the course ships for anyone without the files. Then three random structures fitted to the same four hundred thousand people. The three give the same slope and very different evidence for it, and the variance components explain why.
+:::
+
+## The level of analysis {#the-level-of-analysis .smaller}
+
+::: {.small}
+- **Contextual**: living through high unemployment changes how everyone in a country frames the EU
+- **Compositional**: unemployed people frame the EU differently, so a country with more of them shows a lower average, although nothing has changed for anyone else
+- The panel contains no people, so it cannot separate the two readings. An analysis of aggregated survey data "risks committing an ecological fallacy in which aggregate-level relationships are erroneously assumed also to hold for the individual units on which the pre-aggregated data were collected" [@Fairbrother2013TwoMultilevelModeling, p. 122]
+- A multilevel model keeps both levels in one analysis: the respondents enter it as individuals, and the country-years and the countries as the contexts in which the respondents answered
+:::
+
+::: notes
+A claim about the effect of a context can be read at two levels. The claim of this case is about countries: do the people of a country frame the EU less positively when their national economy does badly? The same words allow a second reading. Perhaps unemployed people frame the EU differently, so that a country with more of them shows a lower average while nothing has changed for anyone else. The first reading is contextual, the second compositional, and the panel of this morning cannot tell them apart, because it contains no people. Fairbrother puts the risk plainly: reading an aggregate relationship as if it held for the individuals behind it is the ecological fallacy. The multilevel model is the standard way of keeping both levels in one analysis, and part three uses it to ask how much of the national association composition could explain.
+:::
+
+## The respondent file and the twin {#the-respondent-file-and-the-twin .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**The respondent file**
+
+- `data_private/eb_respondents.rds`, `r fmt_n(sum(panel$n_cy))` respondents in sixteen waves, built on your machine by `prep/01_build_respondents.R` from the files that you downloaded
+- The terms of GESIS allow no redistribution, no publication of individual cases and no processing by AI systems
+- The slides show the saved outputs of scripts that ran once on the licensed file
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**The simulated twin**
+
+- `EUframes_person_full.csv`, `r fmt_n(nrow(twin))` simulated respondents in the real 270 country-years, built from committed aggregates; no real respondent appears in it
+- The same model fitted to both: `r sum(abs(valid$z) < 2)` of `r nrow(valid)` coefficients agree within two standard errors of the difference
+- Not validated for survey waves, for the interactions of the published model, or for single items
+:::
+:::
+::::
+
+::: {.src}
+cases/eu-frames/data/eb_respondents_codebook.md and EUframes_person_full_codebook.md; companion/_model-outputs/twin_validation.csv.
+:::
+
+::: notes
+Two files stand behind this session. The respondent file is the real thing: sixteen Eurobarometer waves, more than four hundred thousand people, built on your own machine from the files that you downloaded under your own GESIS account. The terms of GESIS forbid passing it on, publishing individual cases, or processing it with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs that were saved from scripts run once on the licensed file. The simulated twin is what the course can ship: about forty thousand invented respondents in the real country-years, built from published aggregates, with no real person in it. Its licence to be used is a validation: the same model fitted to both files agrees on sixty of sixty-four coefficients. It is not validated for waves, for the interactions of the paper, or for single items.
+:::
+
+## Hands-on 1 – The respondent file {#hands-on-1-the-respondent-file .smaller}
+
+::: {.small}
+**In the workspace**, with the Eurobarometer files that you downloaded:
+
+1. Put the sixteen `.dta` files in one folder outside the workspace. `prep/01_build_respondents.R` looks in `../eurobarometer_raw`, a folder beside the workspace, unless you name another folder in `raw_dir` at its top
+2. Source `prep/01_build_respondents.R`. It checks every file against the version and the checksum of the copy behind the course panel, and when every check passes it ends with "Every check passed: your file is the one from which the course panel was built."
+3. Run `prep/02_scales_and_panel.R` section by section. It scores the items into the scales, as `scored`, and checks the panel rebuilt from your file against `data/EUframes_cy.csv`
+4. Join the unemployment rate to the respondents:
+
+   ```{.r}
+   person <- dplyr::left_join(scored, macro, by = c("cntry", "year"))
+   ```
+:::
+
+::: {.fragment .small}
+The file stays in `data_private/`, which the workspace keeps out of git. No files on your machine? The next hands-on reads the twin instead.
+:::
+
+::: notes
+Start this now, because the build takes a while, and let it run while I take the next slides. Put the sixteen files in one folder outside the workspace; if you call that folder eurobarometer raw and put it beside the workspace, the script finds it without any edit, and otherwise you name your folder at the top of the script. Then source the build. It checks each file against the version and checksum of the copy from which the course panel was built, and it says so when every check passes. Then the second script, section by section, which scores the items into the scales and rebuilds the panel from your file. Last, one join adds the unemployment rate to every respondent. If you work in RStudio, switch its assistant off first, as the README of the workspace explains. [advance] Without the files, wait for the next hands-on, which reads the twin.
+:::
+
+## Levels and evidence {#levels-and-evidence .smaller}
+
+```{r}
+#| label: d3-levels-table
+# The unemployment slope under three random structures, fitted once on the
+# real respondents (companion/_model-outputs/person_multilevel_real.csv)
+real_unemp |>
+  datawizard::data_modify(
+    `Random part` = unname(c(two_level = "(1 | cntry)",
+                             three_level = "(1 | cntry) + (1 | cntry:year)",
+                             slopes = "(1 + unemp | cntry) + (1 | cntry:year)")[model]),
+    Slope = fmt_num(value, 5),
+    `Standard error` = fmt_num(se, 5),
+    t = fmt_num(statistic, 2),
+    `Satterthwaite df` = fmt_n(round(df))
+  ) |>
+  datawizard::data_select(c("Random part", "Slope", "Standard error", "t", "Satterthwaite df")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:5, align = "r") |>
+  tinytable::style_tt(fontsize = 0.75)
+```
+
+::: {.small}
+- With countries alone, every respondent counts as fresh information about unemployment, although the predictor takes only 270 values: country-year variables "are implicitly taken as individual-level variables, inflating the degrees of freedom and deflating the SEs" [@Schmidt-CatranFairbrother2016RandomEffectsMultilevel, p. 25]
+- With the country-years declared, the slope barely moves, its standard error grows `r fmt_num(real_unemp$se[real_unemp$model == "three_level"] / real_unemp$se[real_unemp$model == "two_level"], 1)`-fold, and the df fall to the scale of the 270 cells. The random-intercept model of the panel gives `r fmt_num(panel_ri[["Estimate"]], 5)`, t = `r fmt_num(panel_ri[["t value"]], 2)`
+:::
+
+::: notes
+Here are three fits to the same four hundred thousand people. With a random intercept for countries alone, the slope has a t of about minus twenty-five on almost four hundred thousand degrees of freedom, which looks like overwhelming evidence. But every respondent in a country-year shares one unemployment rate, so the model has counted people as if they were countries. Schmidt-Catran and Fairbrother describe exactly this: a variable of the country-year treated as a variable of the individual, with the degrees of freedom inflated and the standard errors deflated. Declare the country-year level as well, and the slope barely moves, but its standard error grows about four-fold and the degrees of freedom collapse to about two hundred and fifty, the scale of the cells. Once the error structure matches the data, modelling the people and modelling their cell means give much the same answer, which is why the course can teach the case from the panel.
+:::
+
+## Random slopes {#random-slopes .smaller}
+
+$$ y_{ict} = \gamma_0 + (\beta + b_c)\, x_{ct} + v_c + r_{ct} + \varepsilon_{ict}, \qquad b_c \sim N(0, \sigma_b^2) $$
+
+::: {.small}
+- The standard deviation of the country slopes, `r fmt_num(real_sd$value[real_sd$model == "slopes" & real_sd$term == "cntry: unemp"], 5)`, is larger than the size of the average slope, `r fmt_num(real_unemp$value[real_unemp$model == "slopes"], 5)`: the countries do not share one slope
+- The df of the average slope fall to about `r round(real_unemp$df[real_unemp$model == "slopes"])`, because the evidence for the average is the 27 countries
+- Two Multi100 analysts worked at this level. KEVF1 reported t = `r fmt_num(kevf1$statistic, 3)` on about `r round(kevf1$df1)` Satterthwaite df, converted to r = `r fmt_num(kevf1$r, 3)`; PRL47 reported z = `r fmt_num(prl47$statistic, 3)`, with the `r fmt_n(prl47$n)` respondents standing in for the df, converted to r = `r fmt_num(prl47$r, 4)`
+:::
+
+::: {.fragment .small}
+The same data, the same family of models and the same direction, with converted results `r round(kevf1$r / prl47$r)`-fold apart, almost entirely because of the convention for the degrees of freedom: the unit of analysis and the error structure declared around it are a choice of estimand.
+:::
+
+::: notes
+A random slope lets each country have its own unemployment slope, drawn from a distribution whose spread the model estimates. The spread turns out to be larger than the average slope itself, so the slopes range from clearly negative in some countries to positive in others, with the average where the earlier fits put it. And the degrees of freedom fall once more, to about nineteen, because once each country contributes mainly to its own slope, the evidence for the average is the twenty-seven countries. Two of the five Multi100 analysts worked at this level. Their converted correlations differ about eighty-fold. [advance] Same data, same family of models, same direction, and nearly all of the difference comes from the convention for the degrees of freedom. The error structure that you declare decides which question about 'the effect' you are answering.
+:::
+
+## Variance components {#variance-components .smaller}
+
+:::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| label: d3-cosmo-scores
+#| fig-width: 5
+#| fig-height: 4.2
+# The cosmopolitan score of the respondents, from the aggregate counts saved
+# by fit_models.R (companion/_model-outputs/cosmo_dist.csv)
+ggplot2::ggplot(cosmo_dist, ggplot2::aes(cosmo, 100 * n_respondents / sum(n_respondents))) +
+  ggplot2::geom_col(width = 0.022, fill = ncl_blue) +
+  ggplot2::labs(x = "cosmopolitan score of a respondent", y = "share of respondents (%)") +
+  theme_slide(15)
+```
+:::
+::: {.column width="52%"}
+::: {.small}
+- Standard deviations on the real respondents: `r fmt_num(sd_three$value[sd_three$term == "cntry: (Intercept)"], 4)` between countries, `r fmt_num(sd_three$value[sd_three$term == "cy: (Intercept)"], 4)` between country-years, `r fmt_num(sd_three$value[sd_three$term == "Residual: NA"], 3)` between people. The countries and country-years hold `r fmt_pct(share_groups)` of the variance
+- A score is the share of the mentions of a respondent that are cosmopolitan: `r fmt_pct(cosmo_dist$n_respondents[cosmo_dist$cosmo == 0] / sum(cosmo_dist$n_respondents), 0)` of the respondents score exactly 0 and `r fmt_pct(cosmo_dist$n_respondents[cosmo_dist$cosmo == 1] / sum(cosmo_dist$n_respondents), 0)` exactly 1
+- "[E]stimates of parameters summarizing country effects are likely to be unreliable" with few countries [@BryanJenkins2016MultilevelModellingCountry, p. 3]
+:::
+:::
+::::
+
+::: notes
+The variance components say where the variation in framing lies. Almost all of it lies between people: countries and country-years together hold less than four per cent of the variance. The figure shows why. A respondent who mentions two meanings of the EU and finds one of them cosmopolitan scores exactly one half, so the score is bounded and takes only a few values, and about a quarter of all respondents score exactly nought. Inside any cell, the scatter of such scores is enormous next to the differences between cells. That is also why so many respondents add so little precision to a slope for a predictor of the country-year. And whatever the count of people, the number of countries sets the limit: with few countries, as Bryan and Jenkins found in their simulations, the estimates of country effects are likely to be unreliable.
+:::
+
+## Hands-on 2 – Three random structures {#hands-on-2-three-random-structures .smaller}
+
+::: {.small}
+**In the workspace**, with `person` from Hands-on 1:
+
+1. Fit the slope with countries alone, then with the country-years declared as well, and read the `df` column of each against the table of levels and evidence:
+
+   ```{.r}
+   m_two <- lmerTest::lmer(s_cosmo ~ unemp + (1 | cntry), data = person)
+   m_three <- lmerTest::lmer(s_cosmo ~ unemp + (1 | cntry) + (1 | cntry:year), data = person)
+   summary(m_two)
+   summary(m_three)
+   ```
+2. **No respondent file?** Read the twin from the course site, and write `cosmo` in place of `s_cosmo`:
+
+   ```{.r}
+   person <- readr::read_csv("https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/data/EUframes_person_full.csv",
+                             show_col_types = FALSE)
+   ```
+3. With time to spare, replace `(1 | cntry)` by `(1 + unemp | cntry)` in `m_three`, and read the df once more
+:::
+
+::: notes
+Your turn. If your build finished, fit the two models on your own respondent file: the slope with a random intercept for countries alone, then with the country-years declared as well. On the full file the second fit takes a little while. Read the summaries against the table: on your file the numbers should be those of the slide, because your file is the one from which the saved outputs came, if every check passed. On the twin, read from the course site, the slopes are close and the degrees of freedom tell the same story at a tenth of the size: tens of thousands with countries alone, the scale of the cells once the country-years are declared. If you have time, add the random slope, and read the degrees of freedom once more, now at the scale of the countries. [state the time]
+:::
