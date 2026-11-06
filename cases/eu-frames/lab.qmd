@@ -546,20 +546,31 @@ The five tasks take you from a setup check to two dots on the live class chart, 
 
 ## Task 1 – Get yourself running {#task-1-setup}
 
-The aim of this task is only to reach the point where a line of R runs and the data are in front of you. Press **Run Code** on the cell below. If it prints the three results it should, you are set up and everything else on this page will work.
+The aim of this task is only to reach the point where a line of R runs and the data are in front of you. The three cells below are the setup check. They use only what the page preloads, so if all three run, everything else on this page will work. Press **Run Code** on each in turn.
+
+The first prints the version of R that runs in your browser.
 
 ```{webr}
 #| autorun: false
-# The setup check. It uses only what the page preloads, so if this runs, the
-# rest of the lab runs: the version of R in the browser, the size of the
-# panel, and whether fixest is installed.
 R.version.string
+```
+
+The second gives the size of the panel. You should see **270 rows**, **27 countries** and **10 years**.
+
+```{webr}
+#| autorun: false
 c(rows = nrow(euframes), countries = insight::n_unique(euframes$cntry),
   years = insight::n_unique(euframes$year))
+```
+
+The third checks whether fixest is installed, and it should print `TRUE`.
+
+```{webr}
+#| autorun: false
 print(requireNamespace("fixest", quietly = TRUE))  # print(): the value comes back invisibly
 ```
 
-You should see **270 rows**, **27 countries** and **10 years**, and `TRUE` on the last line. If any of that is missing, reload the page and wait for the engine to finish downloading before pressing Run Code again. If it still fails, say **STUCK** in the chat.
+If any of the three results is missing, reload the page and wait for the engine to finish downloading before pressing Run Code again. If a cell still fails, say **STUCK** in the chat.
 
 
 
@@ -608,13 +619,17 @@ writeLines(c(
 
 The **EU-frames dataset** (`EUframes_cy.csv`) is already loaded for you as `euframes`. It is the country-year panel behind the whole exercise. The copy that this page loads is byte-identical to the one published in the analyst's fork on OSF (osf.io/6zqct – "Multi100 \| Teney_EurSocioRev_2016 \| Analyst_C6HJR", main folder), and the official Multi100 archival record is at osf.io/8rtwe. The downloadable workspace contains the same file.
 
-Run the cell below to inspect the panel. Edit it freely – this is your environment.
+Run the two cells below to inspect the panel. Edit them freely – this is your environment. The first lists the columns of the panel, with the type and the first values of each.
 
 ```{webr}
 #| autorun: false
-# How many countries, how many years, how big is the panel?
 datawizard::data_peek(euframes)
+```
 
+The second counts the countries, the years and the rows.
+
+```{webr}
+#| autorun: false
 c(countries = insight::n_unique(euframes$cntry), years = insight::n_unique(euframes$year),
   rows = nrow(euframes))
 ```
@@ -791,7 +806,7 @@ print.simple_dag_sets <- function(x, ...) {
 registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
 ```
 
-Now specify the graph. The five committed arrows are live; the arguable ones are commented out, one substantive claim per line. Uncomment any you believe, then run the cell.
+Now specify the graph. The five committed arrows are live; the arguable ones are commented out, one substantive claim per line. Uncomment any you believe, then run the cell, which stores the graph as `my_dag`.
 
 ```{webr}
 #| autorun: false
@@ -827,13 +842,18 @@ my_dag <- dagify( # r-style: keep – the dagify() of this page; the workspace c
           growth = 0.9, bailout = 1.5, politicisation = 3),
     y = c(unemployment = 0, framing = 0, country = 1.4, year = 1.4,
           growth = -1.0, bailout = -1.2, politicisation = -0.95)))
+```
 
+Then ask for the adjustment set of the graph that you have just written.
+
+```{webr}
+#| autorun: false
 adjustmentSets(my_dag) # r-style: keep – the function of this page, which reads the answers of dagitty
 ```
 
 With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the two-way fixed-effects model of analyst C6HJR, one of the three that you can reproduce in Task 3, makes the same identification claim as the graph you have just written. The model of KQXUE adjusts for the country alone, and the random intercepts of 018OL adjust for neither in this sense, because a random intercept, unlike a fixed effect, does not remove the part of unemployment that is constant within a country or common to a year.
 
-Now uncomment the growth pair and run the cell again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The two-way fixed-effects model of C6HJR does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
+Now uncomment the growth pair and run the two cells again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The two-way fixed-effects model of C6HJR does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
 
 Write two sentences for your own notes. What do two-way fixed effects adjust for, and what can they **not** fix? (Hint: anything time-varying within a country that you have not measured.)
 
@@ -848,7 +868,7 @@ This is the **reproducibility** check. Five analysts reanalysed the claim for Mu
 | [KQXUE](#task-3-kqxue) | `analyst_KQXUE.csv`, 270 country-years | country fixed effects, conventional standard errors | t = −7.169 on 242 df |
 | [018OL](#task-3-018ol) | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
 
-Each analyst has a cell of their own below, and each cell is an exercise: replace the blanks (`______`) with the missing code, then press "Run Code". A hint and the full solution sit under every cell, and using them is not cheating. When you have your value, type the analyst and the value into the chat, for example `KQXUE t = -7.169`, hold it, and send it on the facilitator's word. The two files of KQXUE and 018OL were rebuilt by the course from the GESIS waves, following the code that each analyst deposited on the OSF step by step, slips included; their [codebook](data/analyst_panels_codebook.md) says how.
+Each analyst has a short run of cells below, one step to a cell, and the cells with blanks (`______`) are exercises: replace the blanks with the missing code, then press "Run Code". A hint and the full solution sit under every exercise, and using the hints and the solutions is not cheating. Run the cells of your analyst in order, because each step uses what the step before it made. When you have your value, type the analyst and the value into the chat, for example `KQXUE t = -7.169`, hold it, and send it on the facilitator's word. The two files of KQXUE and 018OL were rebuilt by the course from the GESIS waves, following the code that each analyst deposited on the OSF step by step, slips included; their [codebook](data/analyst_panels_codebook.md) says how.
 
 ### C6HJR – two-way fixed effects {#task-3-c6hjr}
 
@@ -866,22 +886,17 @@ Multi100 recorded **t = −3.804** (df = 233, N = 270).
 euframes <- utils::read.csv("data/EUframes_cy.csv") # r-style: keep – readr would add 4 MB to the download
 ```
 
+The first step centres the unemployment rate on its grand mean. The cell prints nothing, since it only adds the column `unemp_c` to `euframes`.
+
 ```{webr}
 #| exercise: reproduce
-# 1. centre the unemployment rate on its grand mean
+#| envir: global
 euframes <- datawizard::data_modify(euframes, unemp_c = unemp - ______)
-
-# 2. fit two-way fixed effects with fixest::feols
-#    the part after the | adds the fixed effects
-m1 <- fixest::feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
-
-# digits = 5 prints enough decimals to compare t with the value on record
-print(parameters::model_parameters(m1), digits = 5)
 ```
 
 :::: {.hint exercise="reproduce"}
 ::: {.callout-note collapse="false"}
-## Hint 1 – centring
+## Hint – centring
 
 To centre a variable on its grand mean, subtract the mean of the whole column:
 
@@ -893,9 +908,31 @@ With fixed effects present this does not change the t-statistic, but the specifi
 :::
 ::::
 
-:::: {.hint exercise="reproduce"}
+:::: {.solution exercise="reproduce"}
+::: {.callout-tip collapse="false"}
+## Solution
+
+``` r
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
+```
+:::
+::::
+
+The second step fits two-way fixed effects with `fixest::feols()` on the centred rate and prints the estimate.
+
+```{webr}
+#| exercise: reproduce-fe
+#| envir: global
+# the part after the | adds the fixed effects
+m1 <- fixest::feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
+
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m1), digits = 5)
+```
+
+:::: {.hint exercise="reproduce-fe"}
 ::: {.callout-note collapse="false"}
-## Hint 2 – the fixed-effects syntax
+## Hint – the fixed-effects syntax
 
 In `fixest::feols`, the bar `|` separates the regression from the fixed effects. To add country and year fixed effects, list them after the bar separated by `+`:
 
@@ -905,12 +942,11 @@ fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 :::
 ::::
 
-:::: {.solution exercise="reproduce"}
+:::: {.solution exercise="reproduce-fe"}
 ::: {.callout-tip collapse="false"}
 ## Fully worked solution
 
 ``` r
-euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
 m1 <- fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
 # digits = 5 prints enough decimals to compare t with the value on record
 print(parameters::model_parameters(m1), digits = 5)
@@ -924,17 +960,19 @@ You should get a coefficient of −0.00347, a standard error of 0.00091 and t(23
 
 Analyst KQXUE built a country-year panel of its own in Stata. Its outcome, `cosmo`, is the cosmopolitan share of each respondent's mentions averaged over the country-year, leaving out the respondents who mention nothing, and its predictor, `unemp`, is unemployment as a percentage of the whole population aged 20–64 rather than of the labour force. The model, `xtreg cosmo unemployment, fe` in Stata, has a fixed effect for each country and none for the year, with conventional standard errors. Multi100 recorded **t = −7.169** (df = 242, N = 270).
 
+Run this cell first. It loads the panel of KQXUE as `kqxue`, one row per country-year, and lists its columns.
+
 ```{webr}
-#| setup: true
-#| exercise: reproduce-kqxue
+#| autorun: false
 kqxue <- utils::read.csv("data/analyst_KQXUE.csv") # r-style: keep – readr would add 4 MB to the download
+datawizard::data_peek(kqxue)
 ```
 
+Then fit the model of KQXUE and print the estimate.
+
 ```{webr}
 #| exercise: reproduce-kqxue
-# the panel of KQXUE: one row per country-year
-datawizard::data_peek(kqxue)
-
+#| envir: global
 # country fixed effects only, as xtreg ..., fe fits them in Stata
 m2 <- fixest::feols(cosmo ~ unemp | ______, data = kqxue, vcov = "iid")
 
@@ -955,7 +993,6 @@ print(parameters::model_parameters(m2), digits = 5)
 ## Fully worked solution
 
 ``` r
-datawizard::data_peek(kqxue)
 m2 <- fixest::feols(cosmo ~ unemp | cntry, data = kqxue, vcov = "iid")
 # digits = 5 prints enough decimals to compare t with the value on record
 print(parameters::model_parameters(m2), digits = 5)
@@ -969,22 +1006,34 @@ You should get a coefficient of −0.00736, a standard error of 0.00103 and t(24
 
 Analyst 018OL averaged its outcome, `pos`, the mean of the five cosmopolitan items of each respondent, in cells of country, year and wave, and fitted it on the unemployment rate of those aged 15–74 with a linear mixed model that has random intercepts for country, year and wave. The analyst rescaled the outcome to run from 0 to 1 before fitting, which changes the coefficient but neither t nor its degrees of freedom. Multi100 recorded **t = −1.206** (df = 396.9, N = 420).
 
-The model needs two packages that the page does not load at the start, `lme4` and `lmerTest`, so the first run of this cell downloads them into your browser, about 32 MB, which can take a minute on a slow connection. Later runs start at once.
+Run the first two cells below before the model. The first loads the file of 018OL as `o18ol`, one row per cell of country, year and wave.
 
 ```{webr}
-#| setup: true
-#| exercise: reproduce-018ol
+#| autorun: false
 o18ol <- utils::read.csv("data/analyst_018OL.csv") # r-style: keep – readr would add 4 MB to the download
+```
+
+The model needs two packages that the page does not load at the start, `lme4` and `lmerTest`, so the second cell downloads them into your browser, about 32 MB, which can take a minute on a slow connection. Later runs start at once.
+
+```{webr}
+#| autorun: false
 if (!requireNamespace("lmerTest", quietly = TRUE)) webr::install(c("lme4", "lmerTest"), quiet = TRUE)
 ```
 
+The next step rescales the cell means to run from 0 to 1, as the analyst did.
+
+```{webr}
+#| autorun: false
+o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
+```
+
+Then fit the model of 018OL and print its fixed effects.
+
 ```{webr}
 #| exercise: reproduce-018ol
-# 1. rescale the cell means to run from 0 to 1, as the analyst did
-o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
-
-# 2. random intercepts for country, year and wave; lmerTest adds the
-#    Satterthwaite degrees of freedom
+#| envir: global
+# random intercepts for country, year and wave; lmerTest adds the
+# Satterthwaite degrees of freedom
 m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | ______) + (1 | wave), data = o18ol)
 
 print(parameters::model_parameters(m3, effects = "fixed", ci_method = "______"), digits = 5)
@@ -1003,7 +1052,6 @@ Each `(1 | x)` gives the cells that share a value of `x` an intercept of their o
 ## Fully worked solution
 
 ``` r
-o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
 m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | year) + (1 | wave), data = o18ol)
 print(parameters::model_parameters(m3, effects = "fixed", ci_method = "satterthwaite"), digits = 5)
 ```
@@ -1036,16 +1084,48 @@ try_spec()
 
 The printout gives the slope `b` with its conventional standard error and *t*, the claim-aligned partial *r*, the p-value of the test that classes every point on the curve, the class of the result and its placement among the 864. That test allows the years of one country to be correlated with one another, which the conventional *t* does not. It clusters the standard errors by country with the CR2 correction, which suits a small number of countries of unequal weight, and it judges the *t* against Satterthwaite degrees of freedom, which count how many countries effectively carry the information. For the reproduced specification that count is `r sprintf("%.1f", ref$df_cr2)` rather than the 27 countries of the panel. The specification lies below zero, but with a CR2 p of `r sprintf("%.4f", ref$p_cr2)` it is not significant at 5%, and `r round(100 * mean(curve$r_ca < ref$r_ca))`% of the 864 specifications lie further in the direction of the claim.
 
-Each of the six calls below changes a single decision. The first four change the question that is being asked of the data; the last two keep the question and change only how it is measured. Run them and compare the results.
+Each of the six cells below changes a single decision. The first four change the question that is being asked of the data; the last two keep the question and change only how it is measured. Run them in turn and compare the results.
+
+The first changes the outcome from the cosmopolitan scale to the composite of both positive framings.
 
 ```{webr}
 #| autorun: false
-try_spec(outcome     = "mpos")         # the composite of both positive framings
-try_spec(estimator   = "fe_country")   # country effects only: changes common to all of Europe stay in
-try_spec(predictor   = "growth")       # GDP growth instead of unemployment, in the World Bank series
-try_spec(copredictor = "other")        # adjusted for the other economic measure, here GDP growth
-try_spec(noop        = "drop")         # leave out the respondents who mentioned no frame
-try_spec(measure     = "es_2064_pop")  # a Eurostat unemployment series instead of the World Bank one
+try_spec(outcome = "mpos")  # the composite of both positive framings
+```
+
+The second keeps the country effects and drops the year effects.
+
+```{webr}
+#| autorun: false
+try_spec(estimator = "fe_country")  # country effects only: changes common to all of Europe stay in
+```
+
+The third measures the economy by GDP growth instead of unemployment.
+
+```{webr}
+#| autorun: false
+try_spec(predictor = "growth")  # GDP growth instead of unemployment, in the World Bank series
+```
+
+The fourth holds GDP growth fixed, the other economic measure beside unemployment.
+
+```{webr}
+#| autorun: false
+try_spec(copredictor = "other")  # adjusted for the other economic measure, here GDP growth
+```
+
+The fifth leaves out the respondents who mentioned no frame, instead of scoring them zero.
+
+```{webr}
+#| autorun: false
+try_spec(noop = "drop")  # leave out the respondents who mentioned no frame
+```
+
+The sixth replaces the World Bank series of unemployment with a Eurostat series, the unemployed as a share of the whole population aged 20–64.
+
+```{webr}
+#| autorun: false
+try_spec(measure = "es_2064_pop")  # a Eurostat unemployment series instead of the World Bank one
 ```
 
 The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. Every other option is still an argument of `try_spec()`, so trying one is part of the exercise. The helper refuses it, gives the reason why it is not on the curve and names the page of the course that teaches it, and the [decision map](map.qmd) sets out every decision and its options on one page. Run the cell, then edit it to try others, such as `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`.
@@ -1154,11 +1234,16 @@ claim_align     <- TRUE           # the course convention, applied automatically
 # 5. Supported if the claim-aligned coefficient is negative with CR2
 #    p < .05; undermined if it is not significant or positive. I will
 #    report what I get.
-
-prereg()   # checks every choice against the menu and prints your preregistration
 ```
 
-An optional mirror form collects preregistrations from the class, and its link is shared in the session. It is not required. The cell above, copied into your notes, is your preregistration record.
+Then run `prereg()`, which checks every choice against the menu and prints your preregistration.
+
+```{webr}
+#| autorun: false
+prereg()
+```
+
+An optional mirror form collects preregistrations from the class, and its link is shared in the session. It is not required. The preregistration cell, copied into your notes, is your preregistration record.
 
 
 
