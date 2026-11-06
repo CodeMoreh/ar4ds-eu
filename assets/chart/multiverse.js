@@ -355,7 +355,7 @@
       line("Predictor", pred);
       line("Series", lab("ms", i));
       line("Adjustment", D.code.c[i] === 0 ? lab("c", i) : D.adjOther[D.code.x[i]]);
-      line("Comparison", lab("e", i));
+      line("Estimator", lab("e", i));
       line("", D.gloss[D.code.e[i]], "n");
       line("No-opinion rule", lab("nr", i));
       line("Item set", lab("it", i));

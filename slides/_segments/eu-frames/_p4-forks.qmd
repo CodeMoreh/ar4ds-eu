@@ -1,7 +1,7 @@
 ## A bet on the decisions {#place-your-bet}
 
 ::: {.none}
-Nine decisions vary on the curve: outcome, predictor, series, predictor form, adjustment, comparison, no-opinion rule, item set and cell weighting
+Nine decisions vary on the curve: outcome, predictor, series, predictor form, adjustment, estimator, no-opinion rule, item set and cell weighting
 
 **Which decision moves the estimates most across the `r fmt_n(nrow(spec_curve))` specifications?**
 
@@ -22,7 +22,7 @@ Before I show you the answer, commit to a guess. You have made these choices you
 # share of the variance of the claim-aligned partial r that its main effect
 # carries, and the share of pairs, differing only in that decision, whose two
 # members fall in different classes under CR2. Ordered by the share
-# of the variance; the comparison in orange, the interactions in grey.
+# of the variance; the estimator in orange, the interactions in grey.
 fk <- curve_forks |>
   dplyr::mutate(
     name     = axis_names[axis],
@@ -58,7 +58,7 @@ p_share + p_cross
 ```
 
 ::: {.small}
-- The **comparison** carries **`r fmt_pct(fork_of("estimator"))`** of the variance, the predictor `r fmt_pct(fork_of("predictor"))` and the outcome `r fmt_pct(fork_of("outcome"))`; the no-opinion rule, the series, the form and the cell weighting together carry `r fmt_pct(sum(purrr::map_dbl(c("noop", "measure", "pred_form", "cell_weight"), fork_of)))`
+- The **estimator** carries **`r fmt_pct(fork_of("estimator"))`** of the variance, the predictor `r fmt_pct(fork_of("predictor"))` and the outcome `r fmt_pct(fork_of("outcome"))`; the no-opinion rule, the series, the form and the cell weighting together carry `r fmt_pct(sum(purrr::map_dbl(c("noop", "measure", "pred_form", "cell_weight"), fork_of)))`
 - The no-opinion rule carries almost none of the variance and still changes the class of `r fmt_pct(fork_of("noop", "crossing_rate"))` of its pairs
 :::
 
@@ -67,7 +67,7 @@ cases/eu-frames/data/spec_curve_forks.csv: main-effect shares of the variance ov
 :::
 
 ::: notes
-The comparison, made by the choice of estimator, accounts for the largest share of the variation on the curve, about forty-one per cent, and the predictor comes next at seventeen. The outcome scale, which many people bet on, carries nine. The choice here is between two estimands, with or without the year effects that remove what all member states went through together, which is why it does so much. The decisions about measurement that occupy so much of the methods literature – how to treat respondents who mention nothing, which published series, whether cells are weighted – carry about one per cent between them, and the interactions, combinations of decisions that matter beyond any single one, about a quarter. Now the right-hand panel, which asks a different question: how often does moving one decision, with everything else held, change whether a specification clears the CR2 test? The predictor leads by far, with the outcome and the comparison behind it. But the no-opinion rule, with almost no share of the variance, still changes the class of about one pair in twenty-five. A decision can matter little across the curve and still decide whether your own result is significant. Whoever guessed the comparison in the chat: take the point.
+The estimator accounts for the largest share of the variation on the curve, about forty-one per cent, and the predictor comes next at seventeen. The outcome scale, which many people bet on, carries nine. The estimator here is the choice between two estimands, with or without the year effects that remove what all member states went through together, which is why it does so much. The decisions about measurement that occupy so much of the methods literature – how to treat respondents who mention nothing, which published series, whether cells are weighted – carry about one per cent between them, and the interactions, combinations of decisions that matter beyond any single one, about a quarter. Now the right-hand panel, which asks a different question: how often does moving one decision, with everything else held, change whether a specification clears the CR2 test? The predictor leads by far, with the outcome and the estimator behind it. But the no-opinion rule, with almost no share of the variance, still changes the class of about one pair in twenty-five. A decision can matter little across the curve and still decide whether your own result is significant. Whoever guessed the estimator in the chat: take the point.
 :::
 
 ## The reference results in the curve {#the-unit-of-analysis-does-the-work}
@@ -177,5 +177,5 @@ cases/eu-frames/data/spec_curve_forks.csv and cases/eu-frames/data/menu_deviatio
 :::
 
 ::: notes
-The curve can also be read for where the signs change. On the curve itself there is little to read: sixteen of the eight hundred and sixty-four specifications lie above zero, all of them growth on the cosmopolitan scale, and none of them clears the CR2 test. The comparison, which moves the estimates most, changes no signs at all. The sign changes come from options that the audit moved off the curve, and they are patterned. Swap pooled OLS into every specification and half of them change sign, because pooled OLS lets in the comparison between countries, where the association runs the other way. Leave out the bailout countries, or keep only the years before the crisis, and about a quarter change sign, because those samples remove the cases that the claim is most about. So when this claim flips, it flips for reasons that can be named, and each of those options answers another question, which is why it is taught beside the curve rather than on it.
+The curve can also be read for where the signs change. On the curve itself there is little to read: sixteen of the eight hundred and sixty-four specifications lie above zero, all of them growth on the cosmopolitan scale, and none of them clears the CR2 test. The estimator, which moves the estimates most, changes no signs at all. The sign changes come from options that the audit moved off the curve, and they are patterned. Swap pooled OLS into every specification and half of them change sign, because pooled OLS lets in the comparison between countries, where the association runs the other way. Leave out the bailout countries, or keep only the years before the crisis, and about a quarter change sign, because those samples remove the cases that the claim is most about. So when this claim flips, it flips for reasons that can be named, and each of those options answers another question, which is why it is taught beside the curve rather than on it.
 :::

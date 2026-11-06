@@ -372,7 +372,7 @@ prereg <- function() {
     paste0("    predictor  : ", ch$my_predictor,
            if (ch$my_predictor == "growth") " (claim-expected sign flipped automatically)"),
     paste("    adjusted   :", if (ch$my_copredictor == "other") .copred_term(ch) else "nothing"),
-    paste("    comparison :", .est_lab(ch$my_estimator)),
+    paste("    estimator  :", .est_lab(ch$my_estimator)),
     paste("    sample     :", ch$my_sample, "   whose average:", ch$my_weights),
     paste("    scored as  :", ch$my_construction),
     "  Measurement",
@@ -1211,7 +1211,7 @@ Make one choice on each decision of the [specification menu](menu.qmd), complete
 my_outcome      <- "mcosmo"       # mcosmo | mutil | mpos   (the positive framings)
 my_predictor    <- "unemp"        # unemp | growth    (the measure whose coefficient tests the claim)
 my_copredictor  <- "none"         # none | other      (the other economic measure, adjusted for)
-my_estimator    <- "fe_twoway"    # fe_twoway | fe_country   (the comparison)
+my_estimator    <- "fe_twoway"    # fe_twoway | fe_country
 my_sample       <- "all"          # all    (the 27 member states, 2004–2013)
 my_weights      <- "none"         # none   (every country-year counts once)
 my_construction <- "share"        # share  (the share of a respondent's own mentions)

@@ -24,7 +24,7 @@ mv_axes <- tibble::tribble(
   "o",  "outcome",     "Outcome",
   "x",  "predictor",   "Predictor",
   "c",  "copredictor", "Adjustment",
-  "e",  "estimator",   "Comparison",
+  "e",  "estimator",   "Estimator",
   "nr", "noop",        "No-opinion rule",
   "it", "item_set",    "Item set",
   "cw", "cell_weight", "Cell weighting",
