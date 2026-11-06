@@ -1,0 +1,56 @@
+---
+title: "Part 3 – The reproduction"
+aliases:
+  - ../eu-frames-one-day-methods/part-3.html
+  - ../eu-frames-one-day-open-science/part-3.html
+  - ../eu-frames-one-day-data-tools/part-3.html
+  - /tracks/one-day-methods/part-3.html
+  - /tracks/one-day-replication/part-3.html
+  - /tracks/one-day-tools/part-3.html
+---
+
+::: {.callout-note appearance="simple" icon=false}
+**Slides.** [Open the deck at this part](../../slides/eu-frames-one-day.html#/part-3-the-reproduction){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+:::
+
+Part 3 is the reproduction. Three of the five Multi100 analysts fitted their models on means of countries or of cells, and the results recorded for the three come back to the third decimal from files that the browser lab already holds. You choose one of the three. The other two worked on respondents, whose files only a GESIS account can give, so their analyses lie outside the day. The three reproduced models are three estimators, and they lead into what a panel of 27 countries needs from its methods. The part ends on what the reproduction took and on the code that your analyst deposited.
+
+## 1. The instruction of Multi100
+
+**On the slides.** The slides read the four instructions of the second Multi100 task word for word and say what each of them assumes. The slides then show the columns of the panel and the three analyses that can be reproduced on aggregate data, and make you analyst no. 6.
+
+## 2. Task 3 – The reproduction
+
+[Open the browser lab at Task 3](../../cases/eu-frames/lab.qmd#task-3-reproduction){.btn .btn-primary target="_blank"}
+
+Choose one analyst and run its cells in order; each cell with gaps to fill has a hint and a full solution under it. For 018OL, one cell installs two packages, a download of about 32 MB. Type the analyst and the value in the chat, for example `018OL t = -1.206`, hold it, and send it when the facilitator says go. If you work in the workspace, use the working script instead.
+
+| Analyst | Data | Model | Recorded by Multi100 |
+|:--|:--|:--|:--|
+| C6HJR | the course panel, `EUframes_cy.csv`, 270 country-years | fixed effects for country and year, conventional standard errors | t = −3.804 on 233 df |
+| KQXUE | `analyst_KQXUE.csv`, 270 country-years | a fixed effect for each country, conventional standard errors | t = −7.169 on 242 df |
+| 018OL | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
+
+The two files of KQXUE and 018OL were rebuilt by the course from the GESIS waves, following the code that each analyst deposited, and the [codebook](../../cases/eu-frames/data/analyst_panels_codebook.md) of the two files says how.
+
+## 3. Reproducibility and analytical choice
+
+**On the slides.** The slides explain why everyone who chose the same analyst got the same t, and why the three analysts did not get the same t as one another.
+
+## 4. The three models and few clusters
+
+**On the slides.** The slides set the three reproduced models side by side: two-way and country fixed effects against random intercepts. They then present conventional, clustered and CR2 errors with Satterthwaite degrees of freedom on the same estimate, because twenty-seven countries make a small number of clusters.
+
+To go further: [The statistical methods behind the course](../../companion/stats-methods.qmd#sec-pooled), sections 3 to 5.
+
+## 5. What a reproduction needs
+
+**On the slides.** A reproduction needs the data, the code and the right versions of both, and the slides give the example of a value of a Eurostat series that was revised after the analyst used it. The slides then set out the slips that three of the five pipelines carry, and what each slip does to the t.
+
+## 6. Hands-on 3b – Reading deposited code
+
+[KQXUE, `task2.do`](https://osf.io/vycgd/){.btn .btn-outline-primary target="_blank"} [018OL, the R Markdown file of Task 2](https://osf.io/nz7ka/){.btn .btn-outline-primary target="_blank"} [C6HJR, the folder of April 2025](https://osf.io/6zqct/){.btn .btn-outline-primary target="_blank"}
+
+Open the OSF deposit of the analyst whom you reproduced and find the line that carries the slip. Then write one check that would have caught it, hold it, and send it when the facilitator says go. Before the break, copy your Task 3 cells and their output into your notes, because the browser lab forgets everything when it reloads.
+
+**By the end of the part** you have reproduced a recorded result to the third decimal, you can say what fixed effects, random intercepts and the CR2 test each do on this panel, and you have written a check that would have caught the slip in the pipeline of your analyst.

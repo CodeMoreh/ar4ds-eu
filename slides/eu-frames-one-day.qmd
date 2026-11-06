@@ -1,0 +1,155 @@
+---
+title: "Applied replication for data skills"
+subtitle: "One-day workshop – the EU-frames case"
+format: revealjs
+# Optional runs that this deck includes in its main flow (core-runs.lua
+# strips their .deepdive mark); the others stay on the d toggle. The runs of
+# this deck are "methods" and "multiverse", both in Part 4.
+core-runs: []
+# The decks of the three one-day focuses of October 2026, and their earlier
+# addresses on the course site, forward here.
+aliases:
+  - eu-frames-one-day-methods.html
+  - eu-frames-one-day-open-science.html
+  - eu-frames-one-day-data-tools.html
+  - /slides/one-day-methods.html
+  - /slides/one-day-replication.html
+  - /slides/one-day-tools.html
+  - eu-frames-three-days.html
+  - /slides/three-days.html
+---
+
+{{< include _segments/eu-frames/_setup.qmd >}}
+## {#today .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.todaymeta}
+A one-day workshop in four parts, on the EU-frames case
+:::
+
+:::: {.todaybox}
+::: {.nonincremental}
+1. The claim and credibility – the credibility debate, the three Rs, Multi100, and the paper with its record in SCORE
+2. The estimand and the causal graph – what a claim asks, and what a graph commits you to
+3. The reproduction – one of three recorded results, three models and few clusters
+4. Robustness – the menu, the class chart, the curve, a replication and the declared analysis
+:::
+::::
+
+::: {.todaytake}
+You leave with a reproduced result, an estimand and a causal graph, and two dots on the class chart
+:::
+
+::: {.todaymeta}
+Work along in the browser lab, solo or in pairs, or in your IDE (Positron, RStudio, VS Code, etc.) if you have installed the workspace
+:::
+
+::: notes
+Welcome. A full day in four parts. The first part sets out why social science is argued about at all, what 'replication' names, the Multi100 project, and the paper that we work on all day, with what SCORE found when it tried to reproduce and to replicate it. The second goes inside the claim of that paper and asks the question underneath the models: what quantity the claim is about, and what a causal graph commits you to. In the third you reproduce one of three recorded results, and the three models behind them lead straight into the problem of few clusters. The fourth part is robustness: the menu of decisions taken apart one by one, the multiverse that those decisions generate, read on the class chart, and the single analysis that you declare before you run it.
+:::
+
+## Two kinds of aim {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**What I want you to understand**
+
+- Why 'replication' names three operations, and what each one tests
+- What an estimand is, and why analysts who disagree are often answering different questions
+- What a causal graph commits you to, and what fixed effects and random intercepts each adjust for
+- Why 27 countries are few clusters, and what the CR2 test does about it
+- What a specification curve establishes, why hundreds of estimates are not hundreds of tests, and what preregistration settles
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**What I want you to be able to do**
+
+- Reproduce a recorded result to the third decimal
+- Write an estimand in one sentence, and a graph whose adjustment set you derived
+- Read fixed-effects and random-intercept models of the same claim side by side
+- Vary one decision at a time and say what changed and why
+- Preregister one analysis before you run it, and place it among the alternatives
+:::
+:::
+::::
+
+::: notes
+Two columns, and today the left-hand one is the heavier. The conceptual aims are the ones that a course on robustness is for: the estimand, the graph, what fixed effects and random intercepts each do to a comparison, why twenty-seven countries make a small number of clusters, and what a set of results together can and cannot establish. The right-hand column keeps every aim tied to something you do with your own hands: a reproduction, a graph, three models read side by side, a round of exploration and a preregistration.
+:::
+
+{{< include _segments/eu-frames/_opening-lab.qmd >}}
+# PART 1 – The claim and credibility {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 1
+:::
+
+::: notes
+Part one. First, briefly, why social science is argued about at all, including the red-card study, in which twenty-nine teams analysed one dataset and disagreed. Then the matrix that separates reproducing from replicating, and Multi100, the study of robustness in which five analysts reanalysed the claim that we work on today. Then the paper itself, its claim, and what SCORE found when it tried to reproduce and to replicate it. We end on the browser lab and the workspace, and on getting everybody running before the break.
+:::
+
+{{< include _segments/eu-frames/_p1-credibility.qmd >}}
+{{< include _segments/eu-frames/_p1-matrix.qmd >}}
+{{< include _segments/eu-frames/_p1-multi100.qmd >}}
+{{< include _segments/eu-frames/_p2-paper.qmd >}}
+{{< include _segments/eu-frames/_p1-today-lab.qmd >}}
+{{< include _segments/eu-frames/_p1-handson1-lab.qmd >}}
+{{< include _segments/eu-frames/_break1.qmd >}}
+# PART 2 – The estimand and the causal graph {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 2
+:::
+
+::: notes
+Part two is the conceptual centre of the day: the argument that analysts who look as though they disagree are answering different questions, Lundberg's three steps from a theoretical quantity to an empirical one, and the causal-graph crash course in full – confounders, mediators, colliders, paths, and what fixed effects adjust for. Then our own claim, your estimand in one sentence, and the half-built graph that you finish in the hands-on.
+:::
+
+{{< include _segments/eu-frames/_p2-estimands.qmd >}}
+{{< include _segments/eu-frames/_p2-lundberg.qmd >}}
+{{< include _segments/eu-frames/_p2-dags.qmd >}}
+{{< include _segments/eu-frames/_p2-ourclaim.qmd >}}
+{{< include _segments/eu-frames/_p2-handson2.qmd >}}
+{{< include _segments/eu-frames/_lunch.qmd >}}
+# PART 3 – The reproduction {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 3
+:::
+
+::: notes
+Part three is the reproduction, to the third decimal, of one of three recorded results. The three models that the class reproduces are three estimators, so we read them side by side, and then ask what conventional errors hide when twenty-seven countries carry all the evidence. We end on what a reproduction needs besides the data and the code, on the slips that the pipelines of the analysts carry, and, if there is time, on reading the code that your analyst deposited.
+:::
+
+{{< include _segments/eu-frames/_p3-task2.qmd >}}
+{{< include _segments/eu-frames/_p3-handson3.qmd >}}
+{{< include _segments/eu-frames/_p3-onenumber.qmd >}}
+{{< include _segments/eu-frames/_p3-three-models.qmd >}}
+{{< include _segments/eu-frames/_p3-repro-conditions.qmd >}}
+{{< include _segments/eu-frames/_break2.qmd >}}
+# PART 4 – Robustness {.darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Part 4
+:::
+
+::: notes
+Part four is robustness. First the menu, decision by decision: what the outcome scale and its construction do, why claim alignment is needed, what the predictor and its form change, what fixed effects absorb, the copredictor, the sample and the weights. Then you work the menu yourself and send the analysis that you would defend to the class chart. We read what the class built against the five analysts, ask which decision moves the estimate most and why hundreds of estimates on one dataset are not hundreds of tests, and look at what a replication of this claim would have to fix in advance. We end on the critics, on what preregistration settles, and on the one analysis that you preregister before it runs.
+:::
+
+{{< include _segments/eu-frames/_p3-menu.qmd >}}
+{{< include _segments/eu-frames/_p3-methods.qmd >}}
+{{< include _segments/eu-frames/_p3-handson4.qmd >}}
+{{< include _segments/eu-frames/_p4-built.qmd >}}
+{{< include _segments/eu-frames/_p4-multiverse-tutorial.qmd >}}
+{{< include _segments/eu-frames/_p4-classchart.qmd >}}
+{{< include _segments/eu-frames/_p4-forks.qmd >}}
+{{< include _segments/eu-frames/_p4-percentile.qmd >}}
+{{< include _segments/eu-frames/_p4-inference.qmd >}}
+{{< include _segments/eu-frames/_p4-replication.qmd >}}
+{{< include _segments/eu-frames/_p4-critics-prereg.qmd >}}
+{{< include _segments/eu-frames/_p4-archiving.qmd >}}
+{{< include _segments/eu-frames/_p4-moment.qmd >}}
+{{< include _segments/eu-frames/_p4-close.qmd >}}
+{{< include _segments/eu-frames/_references.qmd >}}

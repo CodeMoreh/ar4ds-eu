@@ -30,7 +30,7 @@ The panel is the material for two things that a file of yes-or-no outcomes canno
 
 The code of sections 2 and 3 is shown without being run, because it reads the panel of the case, which is on your machine once you have the workspace, and the numbers quoted in section 3 are computed from the curve of the case when the page is built. The way to learn is still to type. Copy each block into the workspace that you downloaded from the [setup page](https://codemoreh.github.io/ar4ds/setup.html#the-workspace) and run it there.
 
-The courses use the module at several points. It is the companion of the R tutorial in Part 2 of the [one-day course on data tools](../tracks/eu-frames-one-day-data-tools/part-2.qmd) and of the first session of [day 2](../tracks/eu-frames-three-days/day-2.qmd) of the three-day course.
+The courses use the module beside the session on R on the first day of the [Extended course](../tracks/eu-frames-extended/day-1.qmd), and the self-study track reads it in [stage 2](../tracks/self-study/stage-2.qmd).
 
 ## 1. Other formats, and fetching data {#sec-formats}
 
@@ -213,7 +213,7 @@ Build a chain that keeps the crisis years, groups by `year`, and reports the mea
 
 The central figure of the course is a **specification curve**, and you now have every part needed to build one yourself. A hypothesis about a dataset admits many defensible analyses, and if you fit all of them and line the results up in order, you can see the range of answers that the data supports instead of the single answer that one analyst happened to report.
 
-`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [statistics module](stats-methods.qmd#sec-inference) explains it), and `is_reference` marks the reference specification of the course, the analysis that analyst C6HJR submitted to Multi100, which is one of the three analyses that the one-day courses on the EU-frames case let you choose to reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
+`data/spec_curve.csv` holds that curve for the EU-frames case: `r nrow(eu_curve)` rows, one per specification that the course judges a justifiable way of answering the claim, each recording the decisions that distinguish it from its neighbours, the partial correlation that it produced, and its p-values under several kinds of inference. The column `sig` records whether its p-value under standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom lies below 0.05, the test that the course uses to class every point (the [statistics module](stats-methods.qmd#sec-inference) explains it), and `is_reference` marks the reference specification of the course, the analysis that analyst C6HJR submitted to Multi100, which is one of the three analyses that the one-day workshop on the EU-frames case lets you choose to reproduce in Task 3. Reading the file needs one preparatory step, which the paragraph after the code explains.
 
 ```r
 curve <- readr::read_csv("data/spec_curve.csv") |>

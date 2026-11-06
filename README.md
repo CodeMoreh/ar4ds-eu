@@ -8,10 +8,8 @@ The case is a claim from a study of how Europeans frame the European Union (Tene
 
 | Format | Folder | Taught in |
 |---|---|---|
-| One day with open science in focus | `tracks/eu-frames-one-day-open-science/` | the browser lab, the workspace as an option |
-| One day with data tools in focus | `tracks/eu-frames-one-day-data-tools/` | the browser lab, the workspace as an option |
-| One day with methods in focus | `tracks/eu-frames-one-day-methods/` | the browser lab, the workspace as an option |
-| Three days, from the raw data | `tracks/eu-frames-three-days/` | the workspace |
+| One-day workshop, in four parts | `tracks/eu-frames-one-day/` | the browser lab, the workspace as an option |
+| Extended course, three days built around the workshop | `tracks/eu-frames-extended/` | the workspace, with the browser lab on the day of the workshop |
 | Self-study | `tracks/self-study/` | the workspace |
 
 Each format has a docked sidebar (`_sidebar.yml`), a page for each of its parts, and a slides page that embeds its deck (`slides/eu-frames-*.qmd`, assembled from `slides/_segments/eu-frames/`). The run sheet of the facilitator, with the timings, is `facilitator/eu-frames-guide.qmd`.
