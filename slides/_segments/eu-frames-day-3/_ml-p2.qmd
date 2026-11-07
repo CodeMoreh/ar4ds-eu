@@ -5,7 +5,7 @@ Part 2
 :::
 
 ::: notes
-Part two puts the respondents into the model. First the question of level: what a claim about countries can say about people. Then the respondent file, which you build now from your own downloads, and the simulated twin, which the course ships for anyone without the files. Then three random structures fitted to the same four hundred thousand people. The three give the same slope and very different evidence for it, and the variance components explain why.
+Part two puts the respondents into the model. First the question of level: what a claim about countries can say about people. Then the respondent file, which you built from your own downloads after the workshop, and the step that turns it into the data of a model. Then three random structures fitted to the same four hundred thousand people. The three give the same slope and very different evidence for it, and the variance components explain why.
 :::
 
 ## The level of analysis {#the-level-of-analysis .smaller}
@@ -21,46 +21,31 @@ Part two puts the respondents into the model. First the question of level: what 
 A claim about the effect of a context can be read at two levels. The claim of this case is about countries: do the people of a country frame the EU less positively when their national economy does badly? The same words allow a second reading. Perhaps unemployed people frame the EU differently, so that a country with more of them shows a lower average while nothing has changed for anyone else. The first reading is contextual, the second compositional, and the panel of this morning cannot tell them apart, because it contains no people. Fairbrother puts the risk plainly: reading an aggregate relationship as if it held for the individuals behind it is the ecological fallacy. The multilevel model is the standard way of keeping both levels in one analysis, and part three uses it to ask how much of the national association composition could explain.
 :::
 
-## The respondent file and the twin {#the-respondent-file-and-the-twin .smaller}
+## The respondent file {#the-respondent-file .smaller}
 
-:::: {.columns}
-::: {.column width="50%"}
 ::: {.small}
-**The respondent file**
-
-- `data_private/eb_respondents.rds`, `r fmt_n(sum(panel$n_cy))` respondents in sixteen waves, built on your machine by `prep/01_build_respondents.R` from the files that you downloaded
-- The terms of GESIS allow no redistribution, no publication of individual cases and no processing by AI systems
-- The slides show the saved outputs of scripts that ran once on the licensed file
+- `data_private/eb_respondents.rds`: `r fmt_n(sum(panel$n_cy))` respondents in sixteen waves, built after day 2 by `prep/01_build_respondents.R` from the files that you downloaded, and checked against the copy behind the course panel
+- One row for each respondent: the fourteen items of the question on what the EU means, the post-stratification weight `w1`, and the characteristics that the published model uses, sex, age, education, occupation and the type of community
+- `prep/02_scales_and_panel.R` scores the items into the six scales, with the zero rule for respondents who named nothing, and rebuilds the course panel from the scored respondents
+- The terms of GESIS allow no redistribution, no publication of individual cases and no processing by AI systems, so the slides show only the saved outputs of scripts that ran once on the licensed file
 :::
-:::
-::: {.column width="50%"}
-::: {.small}
-**The simulated twin**
-
-- `EUframes_person_full.csv`, `r fmt_n(nrow(twin))` simulated respondents in the real 270 country-years, built from committed aggregates; no real respondent appears in it
-- The same model fitted to both: `r sum(abs(valid$z) < 2)` of `r nrow(valid)` coefficients agree within two standard errors of the difference
-- Not validated for survey waves, for the interactions of the published model, or for single items
-:::
-:::
-::::
 
 ::: {.src}
-cases/eu-frames/data/eb_respondents_codebook.md and EUframes_person_full_codebook.md; companion/_model-outputs/twin_validation.csv.
+cases/eu-frames/data/eb_respondents_codebook.md; prep/01_build_respondents.R and prep/02_scales_and_panel.R in the workspace.
 :::
 
 ::: notes
-Two files stand behind this session. The respondent file is the real thing: sixteen Eurobarometer waves, more than four hundred thousand people, built on your own machine from the files that you downloaded under your own GESIS account. The terms of GESIS forbid passing it on, publishing individual cases, or processing it with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs that were saved from scripts run once on the licensed file. The simulated twin is what the course can ship: about forty thousand invented respondents in the real country-years, built from published aggregates, with no real person in it. Its licence to be used is a validation: the same model fitted to both files agrees on sixty of sixty-four coefficients. It is not validated for waves, for the interactions of the paper, or for single items.
+This is the file behind the session. You built it yesterday evening from the sixteen Eurobarometer files that you downloaded under your own GESIS account, and the build checked every file against the copy from which the course panel was made. More than four hundred thousand people, one row each, with the fourteen items of the question on what the EU means to a respondent, the weight that GESIS supplies, and the characteristics that the published model uses. The second script of the workspace turns the items into the six scales and rebuilds the panel from your respondents, which is the first thing that we do in the hands-on. The terms of GESIS forbid passing the file on, publishing individual cases or processing the file with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs saved from scripts run once on the licensed file.
 :::
 
 ## Hands-on 1 – The respondent file {#hands-on-1-the-respondent-file .smaller}
 
 ::: {.small}
-**In the workspace**, with the Eurobarometer files that you downloaded:
+**In the workspace**, with the file that you built after day 2:
 
-1. Put the sixteen `.dta` files in one folder outside the workspace. `prep/01_build_respondents.R` looks in `../eurobarometer_raw`, a folder beside the workspace, unless you name another folder in `raw_dir` at its top
-2. Source `prep/01_build_respondents.R`. It checks every file against the version and the checksum of the copy behind the course panel, and when every check passes it ends with "Every check passed: your file is the one from which the course panel was built."
-3. Run `prep/02_scales_and_panel.R` section by section. It scores the items into the scales, as `scored`, and checks the panel rebuilt from your file against `data/EUframes_cy.csv`
-4. Join the unemployment rate to the respondents:
+1. Open the workspace in your IDE. The build left `data_private/eb_respondents.rds` and the report of its checks, `data_private/build_report.csv`
+2. Run `prep/02_scales_and_panel.R` section by section. It scores the items into the scales, as `scored`, and checks the panel rebuilt from your file against `data/EUframes_cy.csv`
+3. Join the unemployment rate to the respondents:
 
    ```{.r}
    person <- dplyr::left_join(scored, macro, by = c("cntry", "year"))
@@ -68,11 +53,11 @@ Two files stand behind this session. The respondent file is the real thing: sixt
 :::
 
 ::: {.fragment .small}
-The file stays in `data_private/`, which the workspace keeps out of git. No files on your machine? The next hands-on reads the twin instead.
+The file stays in `data_private/`, which the workspace keeps out of Git. Without the file, follow this hands-on and the next one on the slides.
 :::
 
 ::: notes
-Start this now, because the build takes a while, and let it run while I take the next slides. Put the sixteen files in one folder outside the workspace; if you call that folder eurobarometer raw and put it beside the workspace, the script finds it without any edit, and otherwise you name your folder at the top of the script. Then source the build. It checks each file against the version and checksum of the copy from which the course panel was built, and it says so when every check passes. Then the second script, section by section, which scores the items into the scales and rebuilds the panel from your file. Last, one join adds the unemployment rate to every respondent. If you work in RStudio, switch its assistant off first, as the README of the workspace explains. [advance] Without the files, wait for the next hands-on, which reads the twin.
+Open the workspace. The file that you built yesterday evening is in data private, with the report of its checks beside it, and if a check failed and you have not told me yet, tell me now. Then run the second script section by section. It reads your file, scores the items into the scales under the zero rule, and rebuilds the panel from your respondents, and its comparison with the course panel should show no difference beyond machine precision. Last, one join adds the unemployment rate to every respondent, and the result, person, is the data for the rest of the session. If you work in RStudio, check that its assistant is switched off, as the README of the workspace explains. [advance] Without the file, follow this hands-on and the next one on the slides: every number on the slides comes from the same file, fitted once on my machine.
 :::
 
 ## Levels and evidence {#levels-and-evidence .smaller}
@@ -166,15 +151,9 @@ The variance components say where the variation in framing lies. Almost all of i
    summary(m_two)
    summary(m_three)
    ```
-2. **No respondent file?** Read the twin from the course site, and write `cosmo` in place of `s_cosmo`:
-
-   ```{.r}
-   person <- readr::read_csv("https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/data/EUframes_person_full.csv",
-                             show_col_types = FALSE)
-   ```
-3. With time to spare, replace `(1 | cntry)` by `(1 + unemp | cntry)` in `m_three`, and read the df once more
+2. With time to spare, replace `(1 | cntry)` by `(1 + unemp | cntry)` in `m_three`, and read the df once more
 :::
 
 ::: notes
-Your turn. If your build finished, fit the two models on your own respondent file: the slope with a random intercept for countries alone, then with the country-years declared as well. On the full file the second fit takes a little while. Read the summaries against the table: on your file the numbers should be those of the slide, because your file is the one from which the saved outputs came, if every check passed. On the twin, read from the course site, the slopes are close and the degrees of freedom tell the same story at a tenth of the size: tens of thousands with countries alone, the scale of the cells once the country-years are declared. If you have time, add the random slope, and read the degrees of freedom once more, now at the scale of the countries. [state the time]
+Your turn. Fit the two models on your own respondent file: the slope with a random intercept for countries alone, then with the country-years declared as well. On the full file the second fit takes a little while. Read the summaries against the table: on your file the numbers should be those of the slide, because your file is the one from which the saved outputs came, if every check passed, and only the name of the scale differs, s cosmo in your formula where my scripts wrote cosmo. If you have time, add the random slope, and read the degrees of freedom once more, now at the scale of the countries. If you are following on the slides, read the degrees of freedom in the table from the top row down, and say for each row what the model counts as a piece of evidence. [state the time]
 :::

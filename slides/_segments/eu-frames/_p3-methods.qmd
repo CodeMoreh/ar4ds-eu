@@ -51,11 +51,13 @@ How do you turn five binary items into one number? There are three summaries, al
 
 ## Claim alignment {#claim-alignment-and-why-the-room-needs-it .smaller .deepdive run="methods"}
 
+::: {.fs-95}
 ```{.r code-line-numbers="|1|3"}
 d <- d |> datawizard::data_modify(mcomm_ca = 1 - mcomm)   # reverse-code a negative framing
 
 # now: negative coefficient = supports the claim, whatever the outcome
 ```
+:::
 
 ::: {.small}
 Reverse-coding a bounded scale **flips the sign** of *b*, *t* and *r*, and leaves the magnitude, the standard error, the |t| and the p-value untouched. The same holds exactly for the beta family, since logit(1 − μ) = −logit(μ).

@@ -150,11 +150,13 @@ And what comes back. Model parameters, from the parameters package, turns the mo
 
 ## Plotting with tinyplot {#one-line-of-ggplot .smaller .deepdive run="r"}
 
+::: {.fs-85}
 ```{.r code-line-numbers="|1|2|3"}
 tinyplot::tinyplot(mcosmo ~ year, facet = ~cntry,              # a formula, one panel per country
                    data = euframes, type = "l", col = "grey55")  # the data, drawn as lines
 tinyplot::tinyplot_add(type = "p", pch = 16, cex = 0.6)          # then points on top
 ```
+:::
 
 ::: {.small}
 A plot takes a **formula**, as a model does: the vertical axis on the left of the tilde, the horizontal axis on the right. `type` says what to draw, and `tinyplot_add()` draws another layer on the plot just made. tinyplot builds on the graphics that come with R and needs no other package.

@@ -10,10 +10,10 @@
 #               cluster identifiers. A script that needs a different scoring
 #               rule builds it from the items itself.
 # Author:       Chris Moreh
-# Last updated: 2026-09-09
-# Sourced by:   fit_measurement.R, calibrate_items.R, calibrate_joint.R,
-#               fit_person_anchor.R, fit_person_multilevel.R, validate_twin.R,
-#               fit_models.R, fit_items_glm.R
+# Last updated: 2026-11-07
+# Sourced by:   fit_measurement.R, fit_person_anchor.R, fit_person_multilevel.R,
+#               fit_person_years.R, fit_models.R, fit_claim2.R and
+#               R/eu-frames/13_reference_marks.R
 ###############################################################################
 # The file lives outside every repository. The default is the private folder
 # of the workspace on the facilitator's machine; a participant running these

@@ -1,16 +1,16 @@
 ###############################################################################
 # Title:        Year effects in the published design, on the real respondents
 # Purpose:      Fit the published specification of the EU-frames case without
-#               its cross-level interactions, as validate_twin.R fits it
-#               (respondents in country-years in countries, the zero rule,
-#               maximum likelihood), and the same specification with the
+#               its cross-level interactions, with respondents in country-years
+#               in countries (the 270 cells of the panel as the middle level,
+#               where the paper has its country-waves), the zero rule and
+#               maximum likelihood, and the same specification with the
 #               common pattern of the years added: once as a random intercept
 #               for each year, the structure that Schmidt-Catran and
 #               Fairbrother (2016) recommend for comparative longitudinal
 #               survey data, and once as a dummy for each year. The
-#               multilevel module sets the unemployment slopes beside the same
-#               fits on the simulated twin, which it runs live, and beside the
-#               two-way fixed-effects slope of the panel.
+#               multilevel module and its deck set the unemployment slopes
+#               beside the two-way fixed-effects slope of the panel.
 # Reads:        the respondent file, through _load_respondents.R (licensed,
 #               local only; EB_RESPONDENTS gives its path)
 # Writes:       companion/_model-outputs/person_year_effects.csv
@@ -19,12 +19,13 @@
 #               deviations of the random intercepts and the respondent count:
 #               aggregate, and committed.
 # Author:       Chris Moreh
-# Last updated: 2026-11-06
+# Last updated: 2026-11-07
 ###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 
-# Reference categories and centring as in validate_twin.R, so that the first
-# design reproduces the real column of twin_validation.csv
+# The reference categories of the paper (manual workers, large towns, the
+# lowest education band), and age and the two national rates centred on their
+# means over the respondents
 person <- ind |>
   dplyr::mutate(
     edu3    = factor(edu3, levels = c("low", "mid", "high")),

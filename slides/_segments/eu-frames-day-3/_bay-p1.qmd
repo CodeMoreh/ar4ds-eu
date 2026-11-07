@@ -1,11 +1,11 @@
-# PART 1 – Priors {#part-1-priors .darkslide background-color="rgba(0,0,0,0)"}
+# PART 1 – Priors and the posterior {#part-1-priors .darkslide background-color="rgba(0,0,0,0)"}
 
 ::: {.partlabel}
 Part 1
 :::
 
 ::: notes
-Part one builds the model and reads its first result. We start with the three pieces of any Bayesian analysis, the prior, the likelihood and the posterior, on a model that you know from the last session. Then the priors of the two-way design, stated on scales that everyone can read, and a simulation of what they imply before the data enter. The part ends with the posterior of the two-way slope, and with your first run of the session, a prior simulated by hand.
+Part one builds the model and reads its first result. We start with the three pieces of any Bayesian analysis, the prior, the likelihood and the posterior, on a model that you know from the last session. Then the priors of the two-way design, stated on scales that everyone can read, a simulation of what the priors imply before the data enter, and your first run of the session, a prior simulated by hand. The part ends with the posterior of the two-way slope and the checks that the computation behind it worked.
 :::
 
 ## Prior, likelihood and posterior {#prior-likelihood-and-posterior .smaller}
@@ -85,6 +85,28 @@ ggplot2::ggplot(prior_pred, ggplot2::aes(value)) +
 What priors imply together is seldom obvious from the priors one by one, so the workflow simulates the outcome from the priors alone, before the data enter. brms does this when you ask it to sample from the prior only, and McElreath calls the prior predictive simulation an essential part of modelling. On the left are the cell means that the priors allow: a broad hump around a half, with about one per cent of the simulated means outside the bounds of a share, which a model with normal errors cannot avoid entirely and which is small enough to leave the model sensible. On the right is the change in the share that a rise of ten points of unemployment could bring, anything within about twenty points either way. That rules out nothing that a crisis could plausibly do to framing, and it keeps the slope away from values that no survey could produce.
 :::
 
+## Hands-on 1 – Simulating a prior {#hands-on-1-simulating-a-prior .smaller}
+
+::: {.small}
+**In the workspace**, in the console:
+
+1. Draw from the prior of the slope, and turn each draw into the change in the share, in points, for a rise of ten points of unemployment:
+
+   ```{.r}
+   set.seed(20261106)
+   prior_draws <- tibble::tibble(slope = rnorm(4000, 0, 0.01)) |>
+     datawizard::data_modify(rise_10 = 10 * 100 * slope)
+   quantile(prior_draws$rise_10, c(0.025, 0.975))
+   tinyplot::tinyplot(~ rise_10, data = prior_draws, type = "histogram")
+   ```
+2. Compare the interval with the right panel of the prior predictive check, then set the standard deviation of the slope to 0.001, and to 0.05
+3. **Which standard deviation describes what you believed about the slope before you read the paper?** One sentence for your notes
+:::
+
+::: notes
+This is a prior predictive check done by hand, with base R and two packages from the workspace. Draw four thousand values of the slope from the normal prior with a standard deviation of point nought one, and turn each into the change in the cosmopolitan share, in points, that a rise of ten points of unemployment would bring. The interval should come close to the right panel of the last slide, about twenty points either way. Then narrow the prior to point nought nought one, which allows only about two points either way, and widen it to point nought five, which allows changes of almost the whole range of a share. The last question has no right answer, but answering it is what choosing a prior means. [state the time]
+:::
+
 ## The posterior of the two-way slope {#the-posterior-of-the-two-way-slope .smaller}
 
 ::: {.small}
@@ -106,24 +128,36 @@ companion/bayesian.qmd, section 3; cases/eu-frames/data/display_inference.csv.
 With the data switched on and the errors of the country-years treated as independent, the model is the Bayesian form of the reproduced specification. The posterior median of the slope agrees closely with least squares, because priors this weak are outweighed by two hundred and seventy country-years. The credible interval makes the statement that a confidence interval is so often misread as making: given the model, the prior and the data, the slope lies inside it with a probability of ninety-five per cent. And every one of the draws lies below zero. [advance] That agreement is also the limitation of the model. Its likelihood treats the 270 rows as independent pieces of evidence, exactly as the conventional standard error did this morning, so the posterior inherits the assumption that the clustered errors were there to correct.
 :::
 
-## Hands-on 1 – Simulating a prior {#hands-on-1-simulating-a-prior .smaller}
+## Computational checks {#computational-checks .smaller}
+
+```{r}
+#| label: d3-diagnostics
+# The checks of the six models: the largest R-hat and the smallest bulk and
+# tail effective sample sizes over every parameter, the divergent transitions
+# and the deepest tree of the sampler, from four chains
+# (companion/_model-outputs/bayes_panel_diagnostics.csv)
+bayes_dx |>
+  datawizard::data_modify(
+    Model = unname(c(ri = "Random intercepts, default priors", prior = "Two-way, priors only",
+                     common = "Two-way, one slope", ar1 = "Two-way, persistent errors",
+                     slopes = "Two-way, a slope for each country",
+                     both = "Two-way, country slopes and persistence")[model]),
+    Draws = fmt_n(draws),
+    `R-hat` = fmt_num(max_rhat, 3),
+    `Bulk ESS` = fmt_n(round(min_ess_bulk)),
+    `Tail ESS` = fmt_n(round(min_ess_tail))
+  ) |>
+  datawizard::data_select(c("Model", "Draws", "R-hat", "Bulk ESS", "Tail ESS", Divergences = "divergences",
+                            `Tree depth` = "max_treedepth")) |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = 2:7, align = "r") |>
+  tinytable::style_tt(fontsize = 0.7)
+```
 
 ::: {.small}
-**In the workspace**, in the console:
-
-1. Draw from the prior of the slope, and turn each draw into the change in the share, in points, for a rise of ten points of unemployment:
-
-   ```{.r}
-   set.seed(20261106)
-   prior_draws <- tibble::tibble(slope = rnorm(4000, 0, 0.01)) |>
-     datawizard::data_modify(rise_10 = 10 * 100 * slope)
-   quantile(prior_draws$rise_10, c(0.025, 0.975))
-   tinyplot::tinyplot(~ rise_10, data = prior_draws, type = "histogram")
-   ```
-2. Compare the interval with the right panel of the prior predictive check, then set the standard deviation of the slope to 0.001, and to 0.05
-3. **Which standard deviation describes what you believed about the slope before you read the paper?** One sentence for your notes
+The chains agree when R-hat is below 1.01, they carry enough independent information when the effective sample sizes exceed about 400, and the sampler explored the whole posterior when no transition diverged.
 :::
 
 ::: notes
-This is a prior predictive check done by hand, with base R and two packages from the workspace. Draw four thousand values of the slope from the normal prior with a standard deviation of point nought one, and turn each into the change in the cosmopolitan share, in points, that a rise of ten points of unemployment would bring. The interval should come close to the right panel of the last slide, about twenty points either way. Then narrow the prior to point nought nought one, which allows only about two points either way, and widen it to point nought five, which allows changes of almost the whole range of a share. The last question has no right answer, but answering it is what choosing a prior means. [state the time]
+Every number of this session assumes that the computation worked. Stan draws from the posterior with four chains that start in different places. R-hat asks whether the four chains agree; below one point nought one is the usual standard, and every model is inside it. The effective sample sizes ask how much independent information the correlated draws carry; above about four hundred is enough for the summaries that we use, and the smallest here is about five hundred. Divergent transitions flag regions of the posterior that the sampler could not explore, and there are none. The table already holds the three models of the next two parts. In the two with a slope for each country, the spread of those slopes can lie near zero, where the sampler needs small steps, which is why the script asked for a smaller step size in every two-way fit. The slope on the last slide counts only once these checks have passed, because a posterior from a computation that failed is not worth reading.
 :::

@@ -1,82 +1,84 @@
-# PART 2 – Partial pooling {#part-2-partial-pooling .darkslide background-color="rgba(0,0,0,0)"}
+# PART 2 – Persistence within countries {#part-2-persistence .darkslide background-color="rgba(0,0,0,0)"}
 
 ::: {.partlabel}
 Part 2
 :::
 
 ::: notes
-Part two gives every country a slope of its own. A separate slope for each country, estimated from its ten years alone, learns nothing from the other countries, and one slope for all ignores how they differ. Partial pooling lies between the two. Each country slope is a compromise between its own years and the average of all the countries, and the data decide how far each country leans towards the average.
+Part two takes the problem of the first session, few clusters of unequal weight, and asks what a Bayesian model does about it. The CR2 test repairs the standard errors after the fit. A Bayesian model has no such repair: the dependence of the years of a country has to be written into the model, and a posterior predictive check tells us whether it has been. The model of the first part fails that check. The part ends with a model whose errors persist from year to year, and with your second run, which fits the frequentist twin of that model.
 :::
 
-## A slope for each country {#a-slope-for-each-country .smaller}
-
-$$ \beta_c = \beta + u_c, \qquad u_c \sim N(0, \sigma_b^2) $$
-
-::: {.small}
-- The slope of each country departs from the average by an amount drawn from a distribution, whose spread $\sigma_b$ the model estimates under the prior normal(0, 0.01)
-- A model without pooling has 'amnesia': "nothing learned about any one category informs estimates for the other categories", whereas multilevel models "remember features of each cluster in the data as they learn about all of the clusters. Depending upon the variation among clusters, which is learned from the data as well, the model pools information across clusters" [@McElreath2020StatisticalRethinkingBayesian, pp. 399–400]
-- "small ponds are prone to overfitting, and so they receive a bigger dose of the underfit grand mean", while "the larger ponds shrink much less, because they contain more information" (p. 414)
-:::
-
-```{.r}
-# the formula of the model with a slope for each country, in brms
-mcosmo ~ 0 + cntry + year_f + unemp_within + (0 + unemp_within | cntry)
-```
-
-::: notes
-A model with a slope for each country lets the slopes depart from the average by amounts drawn from a distribution, whose spread the model estimates along with everything else. McElreath calls the alternative, a separate slope for each country estimated from its own data alone, a model with amnesia: nothing learnt about one country informs the estimate for another. A multilevel model remembers. Each country slope becomes a compromise between the ten years of that country and the average of all the countries, and the compromise leans towards the average where a country holds little information. In McElreath's example, the small ponds get a bigger dose of the grand mean, and the large ponds shrink much less. In our panel, the information about a slope is the variation in unemployment that remains within a country once the year effects are removed, the unequal weights of the first session.
-:::
-
-## The country slopes {#the-country-slopes .smaller}
+## The dependence of the years {#the-dependence-of-the-years .smaller}
 
 :::: {.columns}
 ::: {.column width="52%"}
 ```{r}
-#| label: d3-country-slopes
+#| label: d3-persistence-check
 #| fig-width: 5.6
-#| fig-height: 5.6
-# The slope of each country from its own ten years by least squares, with
-# year effects shared and a 90% confidence interval (open circles), and
-# partially pooled in the model with a slope for each country, with a 90%
-# credible interval (filled circles), ordered by the share of the variation
-# in unemployment within countries that each holds
-# (companion/_model-outputs/bayes_panel_countries.csv, cases/eu-frames/data/display_loo.csv)
-order_countries <- datawizard::data_arrange(loo_twoway, "-variation_share")$left_out
-bayes_countries |>
-  datawizard::data_filter(model %in% c("no_pooling", "slopes")) |>
-  datawizard::data_modify(
-    kind = dplyr::if_else(model == "no_pooling", "own ten years", "partially pooled"),
-    cntry = factor(cntry, levels = rev(order_countries))
-  ) |>
-  ggplot2::ggplot(ggplot2::aes(x = 100 * estimate, y = cntry, colour = kind, shape = kind)) +
-  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
-  ggplot2::geom_vline(xintercept = 100 * slopes$median, colour = d_red, linewidth = 0.5) +
-  ggplot2::geom_errorbar(ggplot2::aes(xmin = 100 * low, xmax = 100 * high), width = 0, orientation = "y",
-                         position = ggplot2::position_dodge(width = 0.6)) +
-  ggplot2::geom_point(size = 1.9, position = ggplot2::position_dodge(width = 0.6)) +
-  ggplot2::scale_colour_manual(values = c(`own ten years` = "#8c8c8c", `partially pooled` = ncl_blue), name = NULL) +
-  ggplot2::scale_shape_manual(values = c(`own ten years` = 1, `partially pooled` = 16), name = NULL) +
+#| fig-height: 4.6
+# The posterior predictive check of persistence: the correlation within
+# countries between the residual of a country-year and that of the year
+# before, in 1,000 datasets replicated from each of the four two-way models,
+# against its value in the data (companion/_model-outputs/bayes_panel_ppc_draws.csv)
+bayes_ppc_draws |>
+  datawizard::data_modify(model = factor(model, levels = c("common", "slopes", "ar1", "both"),
+                                         labels = c("one slope", "a slope for each country", "persistent errors",
+                                                    "country slopes and persistence"))) |>
+  ggplot2::ggplot(ggplot2::aes(persistence)) +
+  ggplot2::geom_histogram(binwidth = 0.025, fill = ncl_blue, alpha = 0.7) +
+  ggplot2::geom_vline(xintercept = persistence$observed[1], colour = d_red, linewidth = 0.9) +
+  ggplot2::facet_wrap(ggplot2::vars(model), ncol = 2) +
   ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
-  ggplot2::coord_cartesian(xlim = c(-3, 3)) +
-  ggplot2::labs(x = "points of share per point of unemployment", y = NULL) +
-  theme_slide(13) +
-  ggplot2::theme(legend.position = "top", legend.justification = "left",
-                 axis.text.y = ggplot2::element_text(size = 9))
+  ggplot2::labs(x = "correlation of a residual with that of the year before", y = "replicated datasets") +
+  theme_slide(12) +
+  ggplot2::theme(strip.text = ggplot2::element_text(face = "bold", colour = ncl_blue, size = 11))
 ```
 :::
 ::: {.column width="48%"}
 ::: {.small}
-- The countries with little variation in unemployment are drawn most of the way to the average; Greece and Spain keep slopes steeper than the average, and Poland a slope near zero
-- The spread of the slopes has a posterior median of `r fmt_num(slopes_sd$median, 4)` (95% credible interval `r fmt_num(slopes_sd$q2.5, 4)` to `r fmt_num(slopes_sd$q97.5, 4)`), larger than the size of the average slope, `r fmt_num(slopes$median, 4)`
-- The same model fitted by REML returns a point estimate of the spread, with none of its uncertainty
+- "If the model fits, then replicated data generated under the model should look similar to observed data" [@GelmanEtAl2014BayesianDataAnalysis, p. 143]
+- The statistic: the persistence of the residuals, `r fmt_num(persistence$observed[1], 2)` in the data (red line)
+- With one slope, the replicated persistence has a median of `r fmt_num(persistence$rep_median[persistence$model == "common"], 2)`, and no replicated dataset reaches the observed value
+- The two models with persistent errors pass
 :::
 :::
 ::::
 
-::: {.src}
-companion/bayesian.qmd, section 5. The vertical line marks the posterior median of the average slope.
+::: notes
+A model that passes its computational checks may still fail to describe the data. The test is to let the fitted model generate new datasets and compare them with the real one on a statistic that matters, and Bayesian Data Analysis states the principle: replicated data should look like the observed data. The statistic here is the persistence of the residuals, the correlation of the first session, about a half in the data. Look at the top left. The model with one slope replicates a persistence near zero, slightly negative, and not one of its datasets reaches the observed value, because a model with independent errors cannot produce a country that stays above the expected value year after year. Only the two models in the bottom row, in which the errors persist from year to year, reproduce the persistence in the data. The two panels with a slope for each country belong to the third part, and we come back to them there.
+:::
+
+## Persistent errors {#persistent-errors .smaller}
+
+$$ e_{ct} = \phi\, e_{c,t-1} + \varepsilon_{ct}, \qquad \varepsilon_{ct} \sim N(0, \sigma^2) $$
+
+::: {.small}
+- The error of each year carries a fraction φ of the error of the year before, `ar(time = year, gr = cntry, p = 1, cov = TRUE)` in brms, under the prior normal(0, 0.5), which is centred on no persistence
+- φ has a posterior median of `r fmt_num(ar1_phi$median, 2)` (95% credible interval `r fmt_num(ar1_phi$q2.5, 2)` to `r fmt_num(ar1_phi$q97.5, 2)`), and `r fmt_pct(persistence$p_ppc[persistence$model == "ar1"], 0)` of the replicated values of persistence lie above the observed one
+- The slope moves and widens, to a median of `r fmt_num(ar1$median, 5)` (95% credible interval `r fmt_num(ar1$q2.5, 5)` to `r fmt_num(ar1$q97.5, 5)`): the likelihood compares each year with what the year before predicts, so the information comes more from the change from one year to the next
 :::
 
 ::: notes
-Here are the country slopes. The open grey circles are what each country gives on its own ten years, with the year effects shared, and the filled blue circles are the partially pooled slopes, with the countries ordered from the top by how much of the variation in unemployment each holds. Towards the bottom, the small countries scatter widely on their own, and the model draws them most of the way to the average. At the top, Greece and Spain hold most of the information, so they keep slopes steeper than the average, and Poland keeps a slope near zero. The spread of the slopes is larger than the average slope itself, so on this model the countries do not share one slope. A frequentist fit by REML returns a single number for that spread, where the posterior gives its whole distribution.
+The failed check names the next model. Let the error of each year carry a fraction phi of the error of the year before, a first-order autoregressive process within each country, with a prior on phi centred on no persistence. The posterior puts phi at about three quarters, and the model passes the check. The slope moves as well as widening, because the likelihood now compares each year with what the year before predicts, so the information comes more from changes from one year to the next than from the level of a year against the decade mean of its country.
+:::
+
+## Hands-on 2 – Persistence held fixed {#hands-on-2-persistence-held-fixed .smaller}
+
+::: {.small}
+**In the workspace**, in the console:
+
+1. Fit the two-way regression by generalised least squares, with the persistence held at a value of your choice:
+
+   ```{.r}
+   euframes <- readr::read_csv("data/EUframes_cy.csv", show_col_types = FALSE)
+   fit <- nlme::gls(mcosmo ~ unemp + cntry + factor(year), data = euframes,
+                    correlation = nlme::corAR1(0.5, form = ~ year | cntry, fixed = TRUE))
+   summary(fit)$tTable["unemp", ]
+   ```
+2. Run it with 0, 0.5, 0.8 and 0.95 in place of 0.5, and note the slope and its standard error each time. At 0 the fit is the least-squares slope of the reproduced specification
+3. **Which of these comparisons is the claim about, and what does the posterior of φ say about the choice between them?** Two sentences for your notes
+:::
+
+::: notes
+The frequentist twin of the model with persistent errors runs in a second, so you can do by hand what the posterior does by averaging. Fit the two-way regression by generalised least squares, with the persistence held at a value of your choice, and note the slope and its standard error. At nought you get the least-squares slope of the reproduced specification. As you raise the value towards one, the comparison shifts from the level of each year against the decade mean of its country towards the change from one year to the next, and the slope moves towards zero while its standard error grows. Then write two sentences: which of these comparisons is the claim, as the paper states it, about, and what does the posterior of phi, about three quarters, say about the choice between them? [state the time]
 :::

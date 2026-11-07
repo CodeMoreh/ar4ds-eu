@@ -43,6 +43,7 @@ The first term that changes its meaning is 'fixed effects'. For an econometricia
 
 ## The syntax of R {#the-syntax-of-r .smaller}
 
+::: {.fs-80}
 ```{.r}
 fixest::feols(y ~ x | cntry)                        # an intercept for each country, estimated as a parameter
 lme4::lmer(y ~ x + (1 | cntry))                     # country intercepts drawn from a distribution
@@ -50,6 +51,7 @@ lme4::lmer(y ~ x + (1 + x | cntry))                 # the slope of x varies by c
 lme4::lmer(y ~ x + (1 | cntry) + (1 | cntry:year))  # country-years nested in countries
 lme4::lmer(y ~ x + (1 | cntry) + (1 | year))        # countries crossed with years
 ```
+:::
 
 ::: {.fragment .small}
 The advice of @GelmanHill2007DataAnalysisUsing [p. 246] is to "avoid the terms 'fixed' and 'random' entirely, and focus on the description of the model itself (for example, varying intercepts and constant slopes)". The syntax of R does that already: a bar inside brackets declares a varying term, and fixest puts the estimated intercepts after a bar of its own.

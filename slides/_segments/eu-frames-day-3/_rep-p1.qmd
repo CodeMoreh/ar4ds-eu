@@ -49,7 +49,7 @@ Positron does the work of git in its Source Control view, which opens from the A
 ::: {.small}
 - The `.gitignore` of the workspace already names what git must not track: `/data_private/`, which holds the respondent file and everything built from it; `/_site/` and `/.quarto/`, the rendered report and the working files of Quarto; and `.class-tag`, your tag on the class chart
 - In Positron the Explorer shows each ignored file in a paler grey, and the list of changes in the Source Control view leaves such files out
-- The `.dta` files from GESIS belong in a folder outside the workspace. The `.gitignore` does not name them, so a file left inside the folder would be staged with everything else
+- The waves from GESIS belong in a folder outside the workspace, where the build script looks for them. As a backstop, the `.gitignore` also refuses `.dta`, `.sav` and `.por` files, zip archives and R data files anywhere in the folder
 - The report works on the aggregate files in `data/`. A chunk that read the respondent file would write its output into `_freeze/`, which git tracks
 :::
 
@@ -62,7 +62,7 @@ The `.gitignore` and the README of the workspace; Git and GitHub for reproducibl
 :::
 
 ::: notes
-Before the first commit, decide what the repository must never hold, because its history is permanent. The workspace has done most of that for you. Its gitignore file names the private folder, which holds the respondent file that you built this morning and everything built from it, then the rendered site and the working files of Quarto, and your tag for the class chart. Positron shows such files in a paler grey and leaves them out of the list of changes. Two gaps remain, and closing them is up to you. The Eurobarometer files themselves belong outside the workspace, and the gitignore does not name them, so a file left inside the folder would be committed with everything else. And the report should stay on the aggregate files, because the frozen results of every chunk are tracked, and a chunk that read the respondent file would carry its output into the repository. [advance] So read the list under Changes before you commit.
+Before the first commit, decide what the repository must never hold, because its history is permanent. The workspace has done most of that for you. Its gitignore file names the private folder, which holds the respondent file that you built after the second day and everything built from it, then the rendered site and the working files of Quarto, and your tag for the class chart. Positron shows such files in a paler grey and leaves them out of the list of changes. As a backstop, the gitignore file also refuses the formats in which GESIS distributes the waves, zip archives and R data files, wherever in the folder such files are saved, although the waves themselves belong outside the workspace, where the build script looks for them. One gap remains, and closing it is up to you. The report should stay on the aggregate files, because the frozen results of every chunk are tracked, and a chunk that read the respondent file would carry its output into the repository. [advance] So read the list under Changes before you commit.
 :::
 
 ## Hands-on 1 – The first commit {#hands-on-1-the-first-commit .smaller}

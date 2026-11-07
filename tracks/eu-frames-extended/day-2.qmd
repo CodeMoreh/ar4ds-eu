@@ -13,4 +13,14 @@ The second day is the [one-day workshop](../eu-frames-one-day/index.qmd) on the 
 - **[Part 3 – The reproduction](../eu-frames-one-day/part-3.qmd).** One of three recorded results reproduced in Task 3, the three models, and few clusters.
 - **[Part 4 – Robustness](../eu-frames-one-day/part-4.qmd).** The menu of Task 4 and the class chart, the curve, a replication, and the analysis that you declare in Task 5.
 
-**By the end of the day** you have one analysis declared in the preregistration block of your report, run and sent to the class chart, which the third day writes up.
+**By the end of the day** you have one analysis declared in the preregistration block of your report, run and sent to the class chart, which the third day writes up, and the build of your file of respondents under way.
+
+## Before day 3 {#before-day-3}
+
+The second session of the third day fits its models to the respondents of the surveys, on a file that you build in the workspace from the Eurobarometer files that you downloaded before the course. Start the build at the end of the day, while the facilitator is still there to help, and let it run to the end in the evening.
+
+1. Put the sixteen files in one folder beside the workspace, `../eurobarometer_raw`, where the build looks for them, or name another folder in `raw_dir` at the top of `prep/01_build_respondents.R`. The two files that GESIS serves as `.dta.zip` archives can stay zipped, because the script unzips them.
+2. Open `prep/01_build_respondents.R` in your IDE and source it. The script checks every file against the version and the checksum of the copy from which the course panel was built, writes `data_private/eb_respondents.rds`, and ends with "Every check passed: your file is the one from which the course panel was built."
+3. If it ends instead with "At least one check differs", tell the facilitator, and bring the report of the checks, `data_private/build_report.csv`, to the third day.
+
+The file stays in `data_private/`, which the workspace keeps out of Git, and the terms of GESIS do not allow it to be shared. The third day starts from it, and [Building the analysis file](../../companion/data-management.qmd#sec-eu-frames) explains what the build does.

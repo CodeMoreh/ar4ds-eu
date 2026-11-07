@@ -3,14 +3,13 @@
 #| include: false
 # The saved outputs of the scripts that ran once on the licensed respondent
 # file (companion/_model-outputs/: fit_models.R, fit_person_multilevel.R,
-# fit_person_years.R, validate_twin.R, fit_person_anchor.R, and the refits of
-# R/eu-frames/13_reference_marks.R), with the panel and the simulated twin
-# beside them. Nothing person-level is read except the twin. Comes after the
-# setup chunk of the case, whose analysts5 it uses.
+# fit_person_years.R, fit_person_anchor.R, and the refits of
+# R/eu-frames/13_reference_marks.R), with the panel beside them. Nothing
+# person-level is read. Comes after the setup chunk of the case, whose
+# analysts5 it uses.
 panel <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
-twin <- readr::read_csv("../cases/eu-frames/data/EUframes_person_full.csv", show_col_types = FALSE)
 real_ml <- readr::read_csv("../companion/_model-outputs/person_multilevel_real.csv", show_col_types = FALSE)
-valid <- readr::read_csv("../companion/_model-outputs/twin_validation.csv", show_col_types = FALSE)
+anchor <- readr::read_csv("../companion/_model-outputs/anchor_person_fixed.csv", show_col_types = FALSE)
 grad <- readr::read_csv("../companion/_model-outputs/prevalence_gradient.csv", show_col_types = FALSE)
 refits <- readr::read_csv("../companion/_model-outputs/reference_refits.csv", show_col_types = FALSE)
 years_real <- readr::read_csv("../companion/_model-outputs/person_year_effects.csv", show_col_types = FALSE)
@@ -34,10 +33,11 @@ kevf1 <- datawizard::data_filter(analysts5, analyst_id == "KEVF1")
 prl47 <- datawizard::data_filter(analysts5, analyst_id == "PRL47")
 
 # The arithmetic of composition with the coefficients of the real respondents:
-# the published design without its interactions (twin_validation.csv, column
-# real) and the prevalence gradient within country and year
-b_ind <- valid$real[valid$outcome == "cosmo" & valid$term == "sesunemployed"]
-b_ctx <- valid$real[valid$outcome == "cosmo" & valid$term == "munemp"]
+# the published design without its interactions, with country-waves as the
+# middle level (anchor_person_fixed.csv), and the prevalence gradient within
+# country and year
+b_ind <- anchor$estimate[anchor$outcome == "cosmo" & anchor$term == "sesunemployed"]
+b_ctx <- anchor$estimate[anchor$outcome == "cosmo" & anchor$term == "munemp"]
 grad_w <- grad$gradient[2]
 
 # The refits of the published design, with and without its interactions

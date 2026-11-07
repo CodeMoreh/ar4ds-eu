@@ -1,24 +1,21 @@
 ###############################################################################
 # Title:        Multilevel reference numbers from the real respondents
-# Purpose:      Capture what the licensed file gives for the models the
-#               module on multilevel models runs live on the twin, so the
-#               page can show both and the reader can see whether they agree.
-#               The same module displays these fits as captured
-#               text; what is written here is the numbers behind them, in a
-#               form a page can read and compare against.
+# Purpose:      Capture the numbers behind the three fits that the module on
+#               multilevel models displays as captured text, written by
+#               fit_models.R, in a form that a page or a deck can read.
 #
-#               Three models, in the order the argument needs them: country
-#               level only, which counts every respondent as fresh information
-#               about a predictor that varies 270 times; country and
-#               country-year, which does not; and a random slope, which asks
-#               whether the effect differs by country.
+#               Three models, in the order in which the argument needs them:
+#               country level only, which counts every respondent as fresh
+#               information about a predictor that varies 270 times; country
+#               and country-year, which does not; and a random slope, which
+#               asks whether the effect differs by country.
 #
 # Reads:        the respondent file, through _load_respondents.R (licensed, local only)
 # Writes:       companion/_model-outputs/person_multilevel_real.csv
 #               Coefficients, variance components and degrees of freedom.
 #               Aggregate, and committed.
 # Author:       Chris Moreh
-# Last updated: 2026-07-31
+# Last updated: 2026-11-07
 ###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 ind <- ind |>

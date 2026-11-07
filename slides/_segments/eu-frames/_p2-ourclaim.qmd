@@ -147,6 +147,7 @@ ggplot2::ggplot(dag_tidy,
 The same graph in R. Every arrow is a formula, read outcome-first – so a `#` takes an arrow out and the code still runs:
 :::
 
+::: {.fs-70}
 ```r
 ggdag::dagify(
   framing ~ unemployment,
@@ -157,6 +158,7 @@ ggdag::dagify(
   exposure = "unemployment", outcome = "framing"
 ) |> dagitty::adjustmentSets()
 ```
+:::
 :::
 
 ::: {.column width="40%"}

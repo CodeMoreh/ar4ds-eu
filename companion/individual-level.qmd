@@ -2,11 +2,19 @@
 title: "The individual level"
 search: false
 # The sections of this page live in the module on multilevel models, under the
-# same anchors, so the page forwards there with its anchor.
+# same anchors, so the page forwards there with its anchor. The module has no
+# section on the simulated twin, so the two anchors of that section and its
+# limits go to the section on the multilevel model.
 include-in-header:
   text: |
     <meta http-equiv="refresh" content="0; url=multilevel.html">
-    <script>location.replace("multilevel.html" + location.hash);</script>
+    <script>
+    (function () {
+      var to = {"#sec-twin": "#sec-multilevel", "#sec-limits": "#sec-multilevel"};
+      var h = location.hash;
+      location.replace("multilevel.html" + (to[h] || h));
+    })();
+    </script>
 ---
 
-The sections of this page are in the module [Multilevel models](multilevel.qmd): the level of analysis, the simulated twin and its limits, the published model, individual effects against aggregate associations, two designs, levels and evidence, and the second claim of the paper, on the education gap.
+The sections of this page are in the module [Multilevel models](multilevel.qmd): the level of analysis, the published model, individual effects against aggregate associations, two designs, levels and evidence, and the second claim of the paper, on the education gap.

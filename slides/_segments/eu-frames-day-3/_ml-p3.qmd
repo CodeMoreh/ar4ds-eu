@@ -11,7 +11,7 @@ Part three asks the question that the panel could not answer. When unemployment 
 ## Context and composition {#context-and-composition .smaller}
 
 ::: {.small}
-- In the published model without its interactions, fitted to the real respondents, being unemployed rather than a manual worker moves the cosmopolitan score by `r fmt_num(b_ind, 4)`, and one point of the national rate by `r fmt_num(b_ctx, 5)`, net of who the respondent is
+- In the published model without its interactions, with countries and country-waves as its levels, fitted to the real respondents, being unemployed rather than a manual worker moves the cosmopolitan score by `r fmt_num(b_ind, 4)`, and one point of the national rate by `r fmt_num(b_ctx, 5)`, net of who the respondent is
 - The two coefficients apply to different units. The individual effect applies to whoever is unemployed; the coefficient on the national rate, with the status of the respondent held constant, applies to everyone, and it is what multilevel modellers call a contextual effect
 - Contextual effects, "of enduring interest in organizational sociology", occur "when the aggregate of a person-level characteristic ... is related to the outcome ... even after controlling for the effect of the individual characteristic" [@RaudenbushBryk2002HierarchicalLinearModels, p. 139]
 :::
@@ -21,7 +21,7 @@ Composition could explain the national association only if the national rate cha
 :::
 
 ::: notes
-Here are the two coefficients side by side, from the published model without its interactions, fitted once to the real respondents. Being unemployed yourself moves your cosmopolitan score by about three and a half points of share, and one point of the national rate moves everyone's score by about half a point, net of who they are. Per unit, the individual effect is about six times the size. But the two numbers apply to different people. The first applies to whoever is unemployed. The second, with the status of each respondent held constant, applies to everyone, and Raudenbush and Bryk call such a coefficient a contextual effect. [advance] The people who lost their jobs could explain the national association only if a higher national rate puts noticeably more unemployed people into the sample, and that quantity, the prevalence gradient, can be measured.
+Here are the two coefficients side by side, from the published model without its interactions, fitted once to the real respondents. Being unemployed yourself moves your cosmopolitan score by about three and a half points of share, and one point of the national rate moves everyone's score by about half a point, net of who they are. Per unit, the individual effect is between six and seven times the size. But the two numbers apply to different people. The first applies to whoever is unemployed. The second, with the status of each respondent held constant, applies to everyone, and Raudenbush and Bryk call such a coefficient a contextual effect. [advance] The people who lost their jobs could explain the national association only if a higher national rate puts noticeably more unemployed people into the sample, and that quantity, the prevalence gradient, can be measured.
 :::
 
 ## The arithmetic of composition {#the-arithmetic-of-composition .smaller}
@@ -29,7 +29,7 @@ Here are the two coefficients side by side, from the published model without its
 ```{r}
 #| label: d3-composition-table
 # The compositional path with the coefficients of the real respondents
-# (companion/_model-outputs/twin_validation.csv, column real) and the
+# (companion/_model-outputs/anchor_person_fixed.csv) and the
 # prevalence gradient within country and year
 # (companion/_model-outputs/prevalence_gradient.csv)
 tibble::tibble(
@@ -50,9 +50,9 @@ tibble::tibble(
 :::
 
 ::: {.src}
-companion/multilevel.qmd, section 7, which computes the share from the coefficients of the twin as well; both shares are small.
+companion/multilevel.qmd, section 6; companion/_model-outputs/anchor_person_fixed.csv and prevalence_gradient.csv.
 :::
 
 ::: notes
-The arithmetic is short. A point more of national unemployment adds well under one percentage point to the share of respondents who are themselves unemployed. Multiply that by the individual effect, and the compositional path contributes a tiny amount to the national slope: less than five per cent of it. An effect several times the size, spread over a group that barely grows, moves the average hardly at all. So the national association is not a matter of who was interviewed, and the contextual reading survives. The calculation is worth asking for whenever someone explains an aggregate association by saying that it must be the people who changed. It needs two numbers, the individual effect and the prevalence gradient, and the second is usually assumed rather than measured. The simulation module builds data in which the answer is known in advance, if you want to test the arithmetic.
+The arithmetic is short. A point more of national unemployment adds well under one percentage point to the share of respondents who are themselves unemployed. Multiply that by the individual effect, and the compositional path contributes a tiny amount to the national slope: less than five per cent of it. An effect several times the size, spread over a group that barely grows, moves the average hardly at all. So the national association is not a matter of who was interviewed, and the contextual reading survives. The calculation is worth asking for whenever someone explains an aggregate association by saying that it must be the people who changed. It needs two numbers, the individual effect and the prevalence gradient, and the second is usually assumed rather than measured.
 :::

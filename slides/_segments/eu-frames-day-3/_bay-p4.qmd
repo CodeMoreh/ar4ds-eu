@@ -1,45 +1,11 @@
-# PART 4 – The checks {#part-4-the-checks .darkslide background-color="rgba(0,0,0,0)"}
+# PART 4 – The result {#part-4-the-result .darkslide background-color="rgba(0,0,0,0)"}
 
 ::: {.partlabel}
 Part 4
 :::
 
 ::: notes
-The last part gathers the checks that a Bayesian workflow runs before anyone reads a posterior: that the computation worked, that the model can reproduce the data, and that the result does not rest on a prior that nobody would defend. You have met the second already. The first and the third complete the list, and the third holds the one finding of the module that a report would have to state.
-:::
-
-## Computational checks {#computational-checks .smaller}
-
-```{r}
-#| label: d3-diagnostics
-# The checks of the six models: the largest R-hat and the smallest bulk and
-# tail effective sample sizes over every parameter, the divergent transitions
-# and the deepest tree of the sampler, from four chains
-# (companion/_model-outputs/bayes_panel_diagnostics.csv)
-bayes_dx |>
-  datawizard::data_modify(
-    Model = unname(c(ri = "Random intercepts, default priors", prior = "Two-way, priors only",
-                     common = "Two-way, one slope", ar1 = "Two-way, persistent errors",
-                     slopes = "Two-way, a slope for each country",
-                     both = "Two-way, country slopes and persistence")[model]),
-    Draws = fmt_n(draws),
-    `R-hat` = fmt_num(max_rhat, 3),
-    `Bulk ESS` = fmt_n(round(min_ess_bulk)),
-    `Tail ESS` = fmt_n(round(min_ess_tail))
-  ) |>
-  datawizard::data_select(c("Model", "Draws", "R-hat", "Bulk ESS", "Tail ESS", Divergences = "divergences",
-                            `Tree depth` = "max_treedepth")) |>
-  tinytable::tt() |>
-  tinytable::style_tt(j = 2:7, align = "r") |>
-  tinytable::style_tt(fontsize = 0.7)
-```
-
-::: {.small}
-The chains agree when R-hat is below 1.01, they carry enough independent information when the effective sample sizes exceed about 400, and the sampler explored the whole posterior when no transition diverged.
-:::
-
-::: notes
-Every number of this session assumes that the computation worked. Stan draws from the posterior with four chains that start in different places. R-hat asks whether the four chains agree; below one point nought one is the usual standard, and every model is inside it. The effective sample sizes ask how much independent information the correlated draws carry; above about four hundred is enough for the summaries that we use, and the smallest here is about five hundred. Divergent transitions flag regions of the posterior that the sampler could not explore, and there are none. The varying slopes put a spread near zero, where the sampler needs small steps, which is why the script asked for a smaller step size in every two-way fit. These checks come first, because a posterior from a computation that failed is not worth reading.
+The last part runs the final check of the workflow and then reads the result. That check, the sensitivity to the priors, asks whether the result rests on a prior that nobody would defend. Its answer holds the one finding of the module that a report would have to state. Then comes the slope under every model of the session, set beside least squares, and the difference between stating the evidence as a probability and classing it by a threshold. The part closes with the workflow as a whole, in the order in which the session ran it.
 :::
 
 ## Prior sensitivity {#prior-sensitivity .smaller}
@@ -78,6 +44,60 @@ The prior stays as it was set before the data, and the conflict is reported. It 
 Comparing fits under different priors answers the question of sensitivity for the priors that you compare. The priorsense package asks it for every prior near the one that was chosen, without fitting the model again: it reweights the draws as if the prior, or the likelihood, had been raised to a power a little above or below one, and measures how far the posterior moves. The slope barely moves with its prior in any model, well under the threshold of point nought five, so its posterior is driven by the data. The persistence is another matter. Its prior is centred on no persistence, the data hold a good deal of it, and priorsense reports a potential conflict between the two. [advance] I keep the prior as it was set before the data and report the conflict. The conflict leaves the slope untouched, and it tells us that the persistence, reported for its own sake, would need its prior defended as well as its data.
 :::
 
+## The slope across the models {#the-slope-across-the-models .smaller}
+
+```{r}
+#| label: d3-slope-intervals
+#| fig-width: 9.5
+#| fig-height: 2.9
+# The slope of the reproduced specification by least squares with 95%
+# confidence intervals under conventional and CR2 errors (squares), and its
+# posterior median with a 95% credible interval under the four two-way models
+# (circles), in points of share per point of unemployment
+# (companion/_model-outputs/bayes_panel_summary.csv, the course panel)
+tibble::tibble(
+  label = c("Least squares, conventional errors", "Least squares, CR2 errors",
+            "Posterior, one slope", "Posterior, persistent errors", "Posterior, a slope for each country",
+            "Posterior, country slopes and persistence"),
+  estimate = c(rep(inference_of("conventional", "b"), 2), common$median, ar1$median, slopes$median, both$median),
+  low = c(ci_conventional[[1]], ci_cr2$CI_L, common$q2.5, ar1$q2.5, slopes$q2.5, both$q2.5),
+  high = c(ci_conventional[[2]], ci_cr2$CI_U, common$q97.5, ar1$q97.5, slopes$q97.5, both$q97.5),
+  kind = c("frequentist", "frequentist", rep("Bayesian", 4))
+) |>
+  datawizard::data_modify(label = factor(label, levels = rev(label))) |>
+  ggplot2::ggplot(ggplot2::aes(x = 100 * estimate, y = label, shape = kind)) +
+  ggplot2::geom_vline(xintercept = 0, colour = "#9aa8b3") +
+  ggplot2::geom_errorbar(ggplot2::aes(xmin = 100 * low, xmax = 100 * high), width = 0.25, orientation = "y",
+                         colour = ink) +
+  ggplot2::geom_point(size = 2.8, colour = ncl_blue) +
+  ggplot2::scale_shape_manual(values = c(frequentist = 15, Bayesian = 16), guide = "none") +
+  ggplot2::scale_x_continuous(labels = \(x) sub("^-", "−", x)) +
+  ggplot2::labs(x = "points of share per point of unemployment", y = NULL) +
+  theme_slide(13) +
+  ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0, colour = "grey20"))
+```
+
+::: {.small}
+- The model that passes the posterior predictive check, with persistent errors and a slope for each country, puts the average slope at **`r fmt_num(both$median, 5)`**, with a 95% credible interval from `r fmt_num(both$q2.5, 5)` to +`r fmt_num(both$q97.5, 5)`
+- Its probability that the slope is negative is `r fmt_num(both$pd, 3)`, and that the slope is steeper than −0.001, a fall of at least one point of share for a rise of ten points of unemployment, `r fmt_num(both$p_beyond, 3)`
+:::
+
+::: notes
+Here is the slope under every model of the session, in points of share for each point of unemployment. The two squares at the top are least squares: the conventional interval, clearly below zero, and the CR2 interval, which ends at zero. The circles are the four posteriors. The model with one slope sits with the conventional interval, because it shares its assumption. The three models that allow for the dependence all centre a little nearer zero, and their intervals end near zero. The model with both terms, persistent errors and a slope for each country, puts the probability that the slope is negative at ninety-seven and a half per cent, and the probability of a fall of at least one point of share for ten points of unemployment at about ninety per cent. The two approaches agree on the main point: once the dependence of the years enters the analysis, the evidence for a negative slope is much weaker than the conventional fit suggests.
+:::
+
+## A probability and a threshold {#a-probability-and-a-threshold .smaller}
+
+::: {.small}
+- The CR2 test classes the reproduced specification as not significant at 5%, with p = `r fmt_num(inference_of("cr2_satterthwaite", "p"), 4)` on `r fmt_num(inference_of("cr2_satterthwaite", "df"), 2)` df, a margin of `r fmt_num(100 * (inference_of("cr2_satterthwaite", "p") - 0.05), 2)` of a percentage point
+- "only a small change is required to move an estimate from a 5.1% significance level to 4.9%, thus moving it into statistical significance" [@GelmanStern2006DifferenceSignificantNot, p. 328]
+- The posterior states the same evidence as a probability that the slope is negative, `r fmt_num(both$pd, 3)`, around a central value smaller than the least-squares slope, and it leaves to the reader the judgement of whether a probability of that size is enough for the claim
+:::
+
+::: notes
+The two approaches differ in what each makes of that evidence. The test draws a line, and the reproduced specification falls on the side of not significant at five per cent, by four hundredths of a percentage point. Gelman and Stern pointed out how little separates the two sides of such a line: a small change moves an estimate from a significance level of five point one per cent to four point nine. The posterior draws no line. It states the evidence as a probability that the slope is negative, about ninety-seven and a half per cent here, around a central value smaller than the least-squares slope, and it leaves you to judge whether a probability of that size is enough for the claim. In your report this afternoon you state your own result under the errors that you declared, and this is the language for saying what it means.
+:::
+
 ## The workflow {#the-workflow .smaller}
 
 ::: {.small}
@@ -92,7 +112,7 @@ The most direct checks compare simulations with "a summary statistic computed fr
 :::
 
 ::: notes
-Here is the order in which the session ran the checks, which is the order of the workflow that Gelman and colleagues set out in their book. Before the data, priors that can be read, and a simulation of what they imply. Then the computation, model by model. Then the fit to the data, on a statistic chosen for what the model leaves out, here the grouping of the years by country. The final model also respects the bounds of a share, since not one of its replicated cell means leaves the interval from nought to one. And then the priors again, with power-scaling. [advance] The failed posterior predictive check did the most work of the four, because it named the next model. A posterior is worth reading once all four steps have passed, and a report says what each of them found.
+Here is the order in which the session ran the checks, which is the order of the workflow that Gelman and colleagues set out in their book. Before the data, priors that can be read, and a simulation of what they imply. Then the computation, model by model. Then the fit to the data, on a statistic chosen for what the model leaves out, here the grouping of the years by country. The final model also respects the bounds of a share, since not one of its replicated cell means leaves the interval from nought to one. And then the priors again, with power-scaling. [advance] The failed posterior predictive check did the most work of the four, because both of the models that followed it, the persistent errors and the slope for each country, were readings of its failure. A posterior is worth reading once all four steps have passed, and a report says what each of them found.
 :::
 
 ## The reading and the next session {#the-reading-and-the-next-session .smaller}
@@ -103,5 +123,5 @@ Here is the order in which the session ran the checks, which is the order of the
 :::
 
 ::: notes
-That ends the methods of the day. The module Bayesian estimation is the reading for this session: it shows the brms code of every model that we read, runs the frequentist twins on the page, and its task is the one that you just did with gls. If you want to learn Bayesian estimation from the start, Statistical Rethinking builds it from counting and simulation, Kurz has translated its examples into brms, and Regression and Other Stories and Bayesian Data Analysis carry the same habits further. The rest of the day is yours. The analysis that you declared yesterday becomes a short report of your own, written in Quarto and kept under Git, and the three sessions of today give you the words for its result.
+That ends the methods of the day. The module Bayesian estimation is the reading for this session: it shows the brms code of every model that we read, runs the frequentist twins on the page, and its task is the one that you did with gls in the second part. If you want to learn Bayesian estimation from the start, Statistical Rethinking builds it from counting and simulation, Kurz has translated its examples into brms, and Regression and Other Stories and Bayesian Data Analysis carry the same habits further. The rest of the day is yours. The analysis that you declared yesterday becomes a short report of your own, written in Quarto and kept under Git, and the three sessions of today give you the words for its result.
 :::

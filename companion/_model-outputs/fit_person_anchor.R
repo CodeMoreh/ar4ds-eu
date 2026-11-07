@@ -1,18 +1,20 @@
 ###############################################################################
-# Title:        OA's published model, main effects only, at person level
-# Purpose:      Fit the specification the simulated twin has to reproduce, and
-#               write out the parameters the synthesis needs. The published
-#               models carry cross-level interactions between the macro
-#               predictors and education; a synthesis that preserves within-cell
-#               covariance and cell means cannot reproduce those, so the target
-#               here is the same specification with the interactions dropped.
-#               That is the model the twin reproduces and the one its numbers
-#               may be quoted from.
+# Title:        The published model of OA without its interactions, on the
+#               respondents
+# Purpose:      Fit the published specification of the EU-frames case with its
+#               cross-level interactions between the national rates and
+#               education dropped (respondents in country-waves in countries,
+#               the zero rule, maximum likelihood) on the four framing scales,
+#               and write out its coefficients and variance components. The
+#               multilevel module shows the fixed part of the cosmopolitan
+#               model, and the multilevel deck of day 3 reads from it the
+#               effect of being unemployed and the slope of the national rate.
 #
-#               Also measures the compositional gradient: how much a cell's
-#               share of unemployed respondents rises with its published
-#               unemployment rate. The simulation module has had to assume that
-#               quantity; here it is estimated.
+#               Also measures the prevalence gradient: how much the share of
+#               unemployed respondents in a country-year rises with its
+#               unemployment rate, the quantity that the arithmetic of
+#               composition against context needs beside those two
+#               coefficients.
 #
 # Reads:        the respondent file, through _load_respondents.R (licensed, local only)
 # Writes:       companion/_model-outputs/anchor_person_fixed.csv
@@ -22,7 +24,7 @@
 #               kind a published appendix carries. No respondent record leaves
 #               this script.
 # Author:       Chris Moreh
-# Last updated: 2026-07-30
+# Last updated: 2026-11-07
 ###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 
@@ -75,9 +77,8 @@ fixed |>
   print()
 
 # --- the compositional gradient --------------------------------------------
-# How much a country-year's share of unemployed respondents rises with its
-# published unemployment rate. This is the quantity the module's
-# composition-versus-context arithmetic has had to assume.
+# How much the share of unemployed respondents in a country-year rises with
+# its published unemployment rate
 cells <- ind |>
   dplyr::summarise(share = mean(unemployed, na.rm = TRUE),
             unemp = dplyr::first(unemp), .by = c(cntry, year))

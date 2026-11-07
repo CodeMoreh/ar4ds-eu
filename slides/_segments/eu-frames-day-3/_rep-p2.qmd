@@ -38,6 +38,7 @@ Here is what goes into the report, and in this order. First the result with its 
 - In the text, inline code computes each number when the report renders, and `sprintf()` sets its decimals, as the report itself does elsewhere
 :::
 
+::: {.fs-75}
 ```{.markdown}
 ## The declared analysis
 
@@ -45,6 +46,7 @@ The declared specification gives a slope of `r knitr::inline_expr('sprintf("%.5f
 on `r knitr::inline_expr("result$df")` degrees of freedom under conventional errors, and a CR2 p of `r knitr::inline_expr('sprintf("%.4f", result$p_cr2)')`
 on `r knitr::inline_expr('sprintf("%.1f", result$df_cr2)')` Satterthwaite degrees of freedom.
 ```
+:::
 
 ::: {.fragment .small}
 `result` also holds `placement`, the share of the specifications on the curve with a more negative claim-aligned r, the claim-aligned r itself, `r_ca`, and the country-years analysed, `n`. For GDP growth the printout flips the signs of b and t, while `result$b` and `result$t` keep the signs of the fit. The header sets `date: today`, so every render carries its own date.

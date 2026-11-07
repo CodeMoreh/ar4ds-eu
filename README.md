@@ -41,7 +41,6 @@ The case keeps its data in `cases/eu-frames/data/`, each file with a codebook be
 | `EUframes_cy.csv` | The EU-frames panel of 270 country-years, rebuilt from the raw GESIS microdata; `EUframes_cy_edu.csv` splits it by education band |
 | `teney_panel_measurement.csv`, `teney_panel_weights.csv`, `macro/` | The panel under every measurement variant, the weighting panel, and the unemployment, growth and population series |
 | `rep_data.csv` | The file that analyst C6HJR submitted to Multi100, kept for provenance and for the exercise on the case page |
-| `EUframes_person_full.csv` | A simulated person-level twin of the panel (41,660 rows), generated from committed aggregate tables; it contains no real respondent |
 
 The files around the curve of the claim are `spec_curve.csv` (one row for each specification of the curve, with its estimate on the scale of the claim, its test and the partial correlation of Multi100), `menu_options.csv` (every option of the menu, on the curve or off it, with the reason for its place and the page that teaches it; written by hand, and read by the menu, the decision map and the helpers that refuse an option off the curve), `menu_deviations.csv` (each option set beside its twins on the curve), `reference_marks.csv` (the published result and the five reanalyses placed on the scale of the curve), `analysts5.csv` (the five Multi100 analyses as recorded, with the course refit of each), the `display_*.csv` files of the teaching displays, and `class_results.csv` (the fallback of the live class chart when its feed cannot be reached).
 
