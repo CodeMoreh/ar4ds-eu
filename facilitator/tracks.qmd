@@ -18,6 +18,7 @@ The facilitator chooses the format; participants do not choose, and the home pag
 
 | Format | Track | Deck |
 |---|---|---|
+| Short session | `tracks/eu-frames-short/` | `slides/eu-frames-short.qmd`, a deck written for the session |
 | One-day workshop | `tracks/eu-frames-one-day/` | `slides/eu-frames-one-day.qmd` |
 | Extended course | `tracks/eu-frames-extended/` | the decks of day 1 on the AR4DS site, `slides/eu-frames-one-day.qmd` on day 2, and the decks of day 3 |
 | Self-study | `tracks/self-study/` | the full deck, `slides/eu-frames-full.qmd` |
@@ -37,6 +38,10 @@ The decks are assembled from the segments in `slides/_segments/eu-frames/`. A de
 **Why no segment is included twice in one deck.** The segment files contain R chunks with labels, and knitr refuses a duplicate label, so each deck includes each segment at most once.
 
 **Rebuilding a deck.** Edit the segment files for content, or the deck file for order and framing, and render the deck on its own (`quarto render slides/eu-frames-one-day.qmd`). A change to a segment needs every deck that includes it rendered again (`grep -l "eu-frames/_x.qmd" slides/*.qmd`). The project render fails at its final move step on this machine, so decks are rendered one at a time.
+
+## Short session
+
+The short session is three hours in two halves, entirely in the browser lab, with no Task 2 at the keyboard (the estimand statement is a held answer), no Task 5, and one submission to the class chart, the explored analysis of Task 4. Its deck, `slides/eu-frames-short.qmd`, is not assembled from the segments of the one-day deck: it is a custom set of slides in `slides/_segments/eu-frames-short/`, one segment for each block of the run, with the clock of the block in a comment at the head of the segment, so that an event can edit the deck block by block and set its own title and subtitle in the YAML. The reproduction offers C6HJR and KQXUE, because the packages of 018OL download 32 MB in the lab. The first delivery proposed is the ESRA–WAPOR conference of July 2027 in Paris, for an audience of survey researchers, which is why the menu is taught with its survey decisions first and two slides show the easystats code behind the course. The [run sheet](eu-frames-guide.qmd#run-sheet-short) gives the clock.
 
 ## One day
 
