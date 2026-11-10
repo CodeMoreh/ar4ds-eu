@@ -1,0 +1,130 @@
+<!-- 0:50–1:10 – Hands-on 1 of slides/_segments/eu-frames-short/_handson-reproduction.qmd, with the cells of Task 3 of the lab on two slides -->
+## Hands-on 1 – C6HJR {#hands-on-1-the-reproduction .smaller}
+
+::: {.small}
+**Task 3.** Choose one of two analysts, this slide or the next. C6HJR: the course panel, fixed effects for country and year, on record **t = −3.804 on 233 df**. The first cell centres the unemployment rate and prints nothing, the second fits the model. Write the analyst and the *t*, hold it, and send it when I say go.
+:::
+
+```{webr}
+#| setup: true
+#| exercise: reproduce
+euframes <- utils::read.csv(file.path(.data_dir, "EUframes_cy.csv")) # r-style: keep – readr would add 4 MB to the download
+```
+
+```{webr}
+#| exercise: reproduce
+#| envir: global
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - ______)
+```
+
+:::: {.hint exercise="reproduce"}
+::: {.callout-note collapse="false"}
+## Hint – centring
+
+To centre a variable on its grand mean, subtract the mean of the whole column:
+
+``` r
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
+```
+
+With fixed effects present this does not change the t-statistic, but the specification recorded for C6HJR includes it, so do it explicitly.
+:::
+::::
+
+:::: {.solution exercise="reproduce"}
+::: {.callout-tip collapse="false"}
+## Solution
+
+``` r
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
+```
+:::
+::::
+
+```{webr}
+#| exercise: reproduce-fe
+#| envir: global
+# the part after the | adds the fixed effects
+m1 <- fixest::feols(mcosmo ~ unemp_c | ______, data = euframes, vcov = "iid")
+
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m1), digits = 5)
+```
+
+:::: {.hint exercise="reproduce-fe"}
+::: {.callout-note collapse="false"}
+## Hint – the fixed-effects syntax
+
+In `fixest::feols`, the bar `|` separates the regression from the fixed effects. To add country and year fixed effects, list them after the bar separated by `+`:
+
+``` r
+fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
+```
+:::
+::::
+
+:::: {.solution exercise="reproduce-fe"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+m1 <- fixest::feols(mcosmo ~ unemp_c | cntry + year, data = euframes, vcov = "iid")
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m1), digits = 5)
+```
+
+You should get a coefficient of −0.00347, a standard error of 0.00091 and t(233) = −3.80372, which is the −3.804 on record to the third decimal: the recorded value reproduces from the published data and the published model. The argument `vcov = "iid"` asks for conventional standard errors, the kind that `plm` reported for the recorded value, which is why the two match to three decimals.
+:::
+::::
+
+::: notes
+Now you work, on the question at the heart of reproducibility: given the data and the model, does the recorded number come back? Choose one of two analysts, this slide or the next. Mine runs on the course panel, with fixed effects for country and year, in two cells: the first centres the unemployment rate, as I centred it, and prints nothing; the second fits the model and prints the table. Each gap has a hint and a solution under its cell, and using them is not cheating. A long printout scrolls inside its box, and so does the slide. When you have your value, write the analyst and the t, hold it, and send it when I say go. If you finish early, take the other analyst on the next slide. [circulate; then go]
+:::
+
+## Hands-on 1 – KQXUE {#hands-on-1-kqxue .smaller .output-8}
+
+::: {.small}
+**Task 3, the other analyst.** The panel of KQXUE, 270 country-years rebuilt from the code of the analyst, with a fixed effect for each country: on record **t = −7.169 on 242 df**. The first cell loads the panel and lists its columns; the second has one gap. Write the analyst and the *t*, hold it, and send it when I say go.
+:::
+
+```{webr}
+#| autorun: false
+kqxue <- utils::read.csv("cases/eu-frames/data/analyst_KQXUE.csv") # r-style: keep – readr would add 4 MB to the download
+datawizard::data_peek(kqxue)
+```
+
+```{webr}
+#| exercise: reproduce-kqxue
+#| envir: global
+# country fixed effects only, as xtreg ..., fe fits them in Stata
+m2 <- fixest::feols(cosmo ~ unemp | ______, data = kqxue, vcov = "iid")
+
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m2), digits = 5)
+```
+
+:::: {.hint exercise="reproduce-kqxue"}
+::: {.callout-note collapse="false"}
+## Hint – one set of fixed effects
+
+`xtreg, fe` removes the average of each country and nothing else, so the bar is followed by the country alone: `| cntry`.
+:::
+::::
+
+:::: {.solution exercise="reproduce-kqxue"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+m2 <- fixest::feols(cosmo ~ unemp | cntry, data = kqxue, vcov = "iid")
+# digits = 5 prints enough decimals to compare t with the value on record
+print(parameters::model_parameters(m2), digits = 5)
+```
+
+You should get a coefficient of −0.00736, a standard error of 0.00103 and t(242) = −7.16867, the −7.169 on record. The 242 degrees of freedom are the 270 country-years less the 27 country effects and the slope. The Stata code of KQXUE appended the wave EB 62.0 twice, so the respondents of autumn 2004 count twice in the 2004 means of the fifteen older member states. The column `cosmo_once` holds the means with that wave counted once; replace `cosmo` with `cosmo_once` and run the cell again to see how little the slip moves the result.
+:::
+::::
+
+::: notes
+KQXUE built a panel of its own, which the course rebuilt from the Stata code that the analyst deposited, and gave each country a fixed effect and no year effects. The first cell loads that panel and lists its columns: the outcome is the cosmopolitan share averaged without the respondents who mention nothing, and the unemployment rate is a share of the whole population aged twenty to sixty-four, which is one reason why this t is not mine. The second cell has one gap, the fixed effect after the bar, with a hint and a solution underneath. The browser lab offers a third analyst, 018OL, whose first cell downloads two large packages; leave that one for after the session. When you have your value, write the analyst and the t, hold it, and send it when I say go.
+:::

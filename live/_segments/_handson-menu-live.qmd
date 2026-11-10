@@ -1,0 +1,56 @@
+<!-- 1:45–2:05 – Hands-on 2 of slides/_segments/eu-frames-short/_handson-menu.qmd, with the cells of Task 4 of the lab on three slides -->
+## Hands-on 2 – The menu {#hands-on-2-the-menu .smaller}
+
+::: {.small}
+**Task 4 is exploratory.** `try_spec()` with no arguments is the reproduced specification, the model of C6HJR, and every argument defaults to it. Run it and read *b*, the claim-aligned partial *r*, the CR2 p and the placement among the `r fmt_n(nrow(spec_curve))`, the lines that every try prints.
+:::
+
+```{webr}
+#| autorun: false
+# Nothing changed – this is the reproduced specification, the model of C6HJR in Task 3.
+try_spec()
+```
+
+::: notes
+Now you work the menu, and this is exploration. The cell calls `try_spec()` with no arguments, which is the reproduced specification, my own model, and every argument defaults to it. Run it and read the printout: the slope with its conventional t, the claim-aligned partial r, the CR2 p-value, the class and the placement among the eight hundred and sixty-four, the same lines for every specification that you will try. Nothing is fitted here: the result is read from the curve, which the deck loaded with the data, and the workspace fits the same model and returns the same numbers. [run it on the projector, then advance]
+:::
+
+## Hands-on 2 – One decision at a time {#hands-on-2-one-decision-at-a-time .smaller .output-8}
+
+::: {.small}
+Change **one decision** and hold the others; then edit either cell for a decision of your own, `outcome = "mpos"`, `noop = "drop"` or `measure = "es_2064_pop"`, or one off the curve, `estimator = "pooled_cl"`, to read why it is refused.
+:::
+
+```{webr}
+#| autorun: false
+try_spec(estimator = "fe_country")  # country effects only: changes common to all of Europe stay in
+```
+
+```{webr}
+#| autorun: false
+try_spec(predictor = "growth")  # GDP growth instead of unemployment, in the World Bank series
+```
+
+::: notes
+One decision at a time, the others held, so that when a number moves you can say what moved it. The first cell keeps the country effects and drops the year effects, which is the estimator; the second measures the economy by GDP growth, which is the predictor, with the sign flipped so that below zero stays the direction of the claim. Run both and read what moved. Then edit either cell and try a decision of your own, three or four tries is plenty, and ask for one option that is off the curve as well, to read the reason that comes back and the page of the course that teaches it. [circulate; keep the Multiverse page on the other screen]
+:::
+
+## Hands-on 2 – The submission {#hands-on-2-the-submission .smaller .output-8}
+
+::: {.small}
+`my_experiments()` lists every try side by side. Rerun the one that you would defend, so that it is your last try, and **submit it**: the cell prints a tag such as `amber-otter-42`, which marks your dot on the class chart of the [Multiverse]({{< var live-results-url >}}) page, and a link to the form with every field filled in.
+:::
+
+```{webr}
+#| autorun: false
+my_experiments()
+```
+
+```{webr}
+#| autorun: false
+submit_exploration()
+```
+
+::: notes
+When you have three or four tries, print the log. `my_experiments()` lists the tries side by side, with only the decisions that you varied, the small multiverse that you have just built. Then rerun whichever one you can argue for best, so that it is your last try, and submit it. The cell prints your submission line, a link to a form with every field filled in, and a tag, which marks your dot on the class chart; press Send in the form, and the dot appears on the Multiverse page within seconds, labelled exploratory because you chose it after looking. I say it again: this is exploration, and it is the right way to learn the menu. [wait for the dots; then read the chart]
+:::

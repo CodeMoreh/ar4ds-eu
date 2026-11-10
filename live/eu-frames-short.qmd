@@ -1,0 +1,111 @@
+---
+title: "Applied replication for data skills"
+subtitle: "Short session – the EU-frames case, with the tasks on the slides"
+engine: knitr
+format:
+  live-revealjs:
+    webr:
+      # The packages that the helpers of the lab and the cells of the hands-on
+      # slides call. The runtime adds evaluate, knitr and htmltools itself; gt
+      # is left out, because no slide prints a formatted table and it adds 12
+      # to 23 seconds to the first opening of a page.
+      packages:
+        - datawizard
+        - purrr
+        - fixest
+        - parameters
+# The four files that the cells read, fetched into the browser when the deck
+# opens; the runtime drops the leading ../ of each path, so inside the browser
+# they sit under cases/eu-frames/data/, the folder that the setup cell below
+# names as .data_dir.
+resources:
+  - ../cases/eu-frames/data/EUframes_cy.csv
+  - ../cases/eu-frames/data/analyst_KQXUE.csv
+  - ../cases/eu-frames/data/spec_curve.csv
+  - ../cases/eu-frames/data/menu_options.csv
+live:
+  show-hints: true
+  show-solutions: true
+# The runs that core-runs.lua would lift into the main flow. This deck has no
+# optional run and no deck map: every slide is shown.
+core-runs: []
+---
+
+<!--
+THE LIVE DECK OF THE SHORT SESSION, AND HOW IT DIFFERS FROM THE PLAIN DECK
+
+- The same session as slides/eu-frames-short.qmd, with the tasks of the
+  browser lab on the slides themselves: R loads inside the deck through the
+  Quarto Live extension, and the hands-on slides carry the cells of Task 1,
+  Task 3 (C6HJR and KQXUE, with their hints and solutions) and Task 4, on
+  three slides, and the placement cell. The facilitator and the class work inside one deck; the
+  browser lab stays the fallback.
+- The folder. A live deck cannot share slides/ with the plain decks, because
+  the `format: revealjs` key of slides/_metadata.yml renders it twice (root
+  notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
+  shared options under `live-revealjs`, with the paths into slides/ and
+  style/ adjusted.
+- The includes below follow the order of the plain deck. The segments of the
+  plain deck are included unchanged from ../slides/_segments/eu-frames-short/,
+  except the agenda, the two hands-on blocks, the break and the placement,
+  which have live versions in _segments/ here. The helpers of the lab,
+  try_spec() and the rest, are one file, ../cases/eu-frames/_lab-helpers.qmd,
+  included after the setup cell that names the data folder.
+- The title and the subtitle in the YAML above name the course and the
+  format; an event sets its own, as the plain deck says.
+- No duration goes on any slide or into any note.
+-->
+
+{{< include ../slides/_segments/eu-frames/_setup.qmd >}}
+{{< include ../_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{webr}
+#| include: false
+#| autorun: true
+# The setup of the deck, run once the engine is ready. .data_dir is the folder
+# in which the four files of the resources list arrive inside the browser: the
+# runtime drops the leading ../ of their paths, so from the working directory
+# of R they sit under cases/eu-frames/data/. euframes is the course panel, the
+# object that the cells of the hands-on slides work from.
+.data_dir <- "cases/eu-frames/data"
+euframes <- utils::read.csv(file.path(.data_dir, "EUframes_cy.csv")) # r-style: keep – readr would add 4 MB to the download
+```
+
+{{< include ../cases/eu-frames/_lab-helpers.qmd >}}
+{{< include _segments/_agenda-live.qmd >}}
+# FIRST HALF – The claim and its reproduction {#first-half-the-claim-and-its-reproduction .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+First half
+:::
+
+::: notes
+The first half. I start with the vocabulary of three kinds of repetition, from the glossary that the SCORE programme published, and with the Multi100 project from the inside, because I was one of the five analysts who reanalysed the claim that we work on. Then the paper itself: the survey question behind it, the scales, the panel that this deck has loaded in your browser, the model and the claim, and what SCORE found when it tried to reproduce and to replicate the study. You write the question that the claim answers, in one sentence, and we read the class at once. And before the break you reproduce the result that one of two analysts recorded, to the third decimal, and find out why your number is exactly that number and why the other group has another one.
+:::
+
+{{< include ../slides/_segments/eu-frames-short/_three-rs.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_paper.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_estimands.qmd >}}
+{{< include _segments/_handson-reproduction-live.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_why-numbers-differ.qmd >}}
+{{< include _segments/_break-live.qmd >}}
+# SECOND HALF – The multiverse of the claim {#second-half-the-multiverse-of-the-claim .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.partlabel}
+Second half
+:::
+
+::: notes
+Welcome back. In the first half you reproduced a recorded number. Now you become the sixth analyst and make choices of your own. I open the menu of the fourteen decisions that any analysis of this claim has to take, with the survey decisions first, because this audience knows that part of the menu best, and show you the code behind the menu. Then you work the menu on the slides, one decision at a time, and send the analysis that you would defend to the class chart. We read the class against the curve of every justifiable analysis of these data, ask which decision moves the estimates most, and what such a curve can and cannot establish. We end with the critics, with what a preregistration would have added, and with the replication of this claim on new data.
+:::
+
+{{< include ../slides/_segments/eu-frames-short/_menu.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_easystats.qmd >}}
+{{< include _segments/_handson-menu-live.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_multiverse.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_reading-the-curve.qmd >}}
+{{< include _segments/_placement-live.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_inference.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_replication.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_close.qmd >}}
+{{< include ../slides/_segments/eu-frames-short/_references.qmd >}}

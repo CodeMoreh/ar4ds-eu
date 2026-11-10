@@ -1,0 +1,16 @@
+<!-- 2:15–2:30, the last slide of the block that _reading-the-curve.qmd opens -->
+## Your own placement {#your-placement .smaller}
+
+::: {.small}
+- Rerun `try_spec()` with the choices that you submitted in Task 4: its output includes your **placement**
+- The placement is the share of the `r fmt_n(nrow(spec_curve))` specifications on the curve with a more negative claim-aligned *r* than yours. For the reproduced specification it is `r sprintf("%.0f%%", 100 * mean(spec_curve$r_ca < curve_ref$r_ca))`
+- The same statistic that places the reference results, computed for **you**
+:::
+
+::: {.fragment}
+Read your placement, hold it, and send it when I say go. Without a submission, the reproduced specification is your number.
+:::
+
+::: notes
+Your turn to be placed. Rerun `try_spec()` with the choices that you submitted, and read the placement line in its output. It is the same statistic that places the reference results: the share of the curve that is more negative than yours. For the reproduced specification, my own model, it is sixty-seven per cent, so if you did not submit, that is your number. Read it, hold it, and send it when I say go. [go] Look at the range. The class spans a good stretch of the curve, and every one of you can now say where you stand relative to eight hundred and sixty-four justifiable alternatives. That sentence, "my estimate sits at this percentile of the specification curve", is a publishable way to report a robustness check, provided that you say how the curve was built, which is the question for the rest of this half.
+:::

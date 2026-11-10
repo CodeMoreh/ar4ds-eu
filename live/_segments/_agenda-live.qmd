@@ -1,0 +1,48 @@
+<!-- 0:00–0:05 – the agenda of slides/_segments/eu-frames-short/_agenda.qmd, with Task 1 on the second slide -->
+## {#today .darkslide background-color="rgba(0,0,0,0)"}
+
+::: {.todaymeta}
+A short session in two halves, with one break, on the EU-frames case
+:::
+
+:::: {.todaybox}
+::: {.nonincremental .fs-85}
+1. The claim and its reproduction – three kinds of repetition, Multi100 from the inside, the paper and its record, the estimand statement, and a recorded result reproduced
+2. The multiverse of the claim – the specification menu, your own tries on the class chart, the curve of 864 and how to read it, and the replication with new data
+:::
+::::
+
+::: {.todaytake .fs-85}
+You leave with an estimand statement, a reproduced result, and your own place among the 864 justifiable analyses of the claim
+:::
+
+::: {.todaymeta}
+Everything runs on these slides, nothing to install
+:::
+
+::: notes
+Welcome. Two halves, one break, and one published claim throughout: a study of what the European Union means to the people of its member states, and of whether the economic crisis changed that. In the first half I give you the vocabulary of three kinds of repetition, show you Multi100 from the inside, as one of the five analysts who reanalysed this claim, then the paper itself and what SCORE found when it checked it. You write down the question that the claim answers, and before the break you reproduce the result that one of the analysts recorded. In the second half you become the sixth analyst: you take the analysis apart into its decisions, try alternatives on the slides, put the one that you would defend on the class chart, and we read the class against every justifiable analysis of these data. Nothing needs installing.
+:::
+
+## What you do not need {#what-you-do-not-need .smaller}
+
+::: {.none}
+- No installation: R runs inside this deck, in a tab of your browser, with the data in place
+- No git, and no GitHub account
+- No OSF account – we read the OSF as readers, without logging in
+- Nothing leaves your machine except the one result that you choose to send to the class chart
+:::
+
+::: {.small}
+**Task 1, now.** R has been loading inside this deck since you opened it, and there is nothing to open. When the cell shows a Run Code button, run it: 270 rows, 27 countries and 10 years mean that the panel is there.
+:::
+
+```{webr}
+#| autorun: false
+c(rows = nrow(euframes), countries = insight::n_unique(euframes$cntry),
+  years = insight::n_unique(euframes$year))
+```
+
+::: notes
+Before anything else, what you do not need. You do not need to have installed anything: the browser lab runs R inside a tab of your browser, with the data already there. You do not need git, a GitHub account or an OSF account, because we read the OSF from the outside. The one thing that leaves your machine today is the single result that you choose to send to the class chart. [advance] Task 1 is on this slide. R has been loading inside the deck since you opened it, longer on a slow connection, and there is nothing to open. When the cell shows a Run Code button, run it: two hundred and seventy rows, twenty-seven countries and ten years mean that the panel is there and that everything that follows will run. If the button never comes, reload the deck once, try another browser, and tell me.
+:::
