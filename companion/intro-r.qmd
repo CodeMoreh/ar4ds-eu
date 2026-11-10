@@ -30,8 +30,6 @@ The panel is the material for two things that a file of yes-or-no outcomes canno
 
 The code of sections 2 and 3 is shown without being run, because it reads the panel of the case, which is on your machine once you have the workspace, and the numbers quoted in section 3 are computed from the curve of the case when the page is built. The way to learn is still to type. Copy each block into the workspace that you downloaded from the [setup page](https://codemoreh.github.io/ar4ds/setup.html#the-workspace) and run it there.
 
-The courses use the module beside the session on R on the first day of the [Extended course](../tracks/eu-frames-extended/day-1.qmd), and the self-study track reads it in [stage 2](../tracks/self-study/stage-2.qmd).
-
 ## 1. Other formats, and fetching data {#sec-formats}
 
 The panel and the curve of the case are CSV files, read as [section 6 of Getting started with R](https://codemoreh.github.io/ar4ds/tools/r.html#sec-reading) reads the housing-audit file. The Eurobarometer waves from which the panel was built arrive from the GESIS archive in another format, as files in the format of Stata, a statistical package, with value labels on their answer codes. [Section 13](https://codemoreh.github.io/ar4ds/tools/r-further.html#sec-formats) of the second part of that module reads a file of this kind in the browser, with its labels, and covers the other formats in which data arrive, from Excel workbooks to Parquet files. The [data management module](data-management.qmd#sec-build) builds the respondent file of this case from the Stata files of the waves.
@@ -112,7 +110,7 @@ ggplot2::ggplot(euframes, ggplot2::aes(x = unemp, y = mcosmo, colour = factor(ba
   ggplot2::scale_x_continuous(breaks = seq(0, 30, by = 5))
 ```
 
-`scale_colour_manual()` names a colour for each level of the variable. Giving `values` and `labels` as *named* vectors, with `"0" = …` rather than a bare pair, means the assignment cannot silently reverse itself if the data ever arrives in a different order. The colours that the course uses throughout are `#0e3b6a` (dark blue), `#E69F00` (orange), `#009E73` (green), `#a10000` (dark red) and `#848c94` (mid grey), with `#c7ccd2` reserved as the muted grey for results that are not statistically significant. The orange and green belong to a palette built to stay distinguishable under the commonest forms of colour vision deficiency, which is why the decks never rest an argument on a red-green contrast alone.
+`scale_colour_manual()` names a colour for each level of the variable. Giving `values` and `labels` as *named* vectors, with `"0" = …` rather than a bare pair, means the assignment cannot silently reverse itself if the data ever arrives in a different order. The colours of the course are defined once, in `style/cgm-slides.scss`, with an orange and a green drawn from a palette built to stay distinguishable under the commonest forms of colour vision deficiency.
 
 Position scales follow the same override logic, and one of their arguments catches people out. `scale_x_continuous(breaks = …)` decides where the tick marks fall, but the sibling argument `limits` **removes** every row outside the range before any statistic is computed, so a smoother is refitted on whatever rows remain.
 
@@ -263,8 +261,6 @@ Rebuild the curve, then add `colour = estimator` inside the `aes()` of the first
 :::
 
 ## Sources and further study {#sec-sources}
-
-This module was written for the course and adapts no existing lesson, so there is no borrowed text to attribute. It teaches only the part of R that the materials of the course use, in the order in which the course needs it.
 
 The open resources for a fuller grounding in R are listed under [further study](https://codemoreh.github.io/ar4ds/tools/r.html#sec-sources) in Getting started with R. For the grammar of graphics, the chapters on visualisation in **"R for Data Science"**, the free book by the authors of the tidyverse packages, at <https://r4ds.hadley.nz/>, cover ggplot2 in full, and the documentation of the package, at [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/), is readable as an introduction as well as a reference.
 

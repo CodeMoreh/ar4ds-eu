@@ -36,29 +36,6 @@ None of these is wrong. Each one is a **decision**, made for you, that a differe
 Now take the instructions apart, because each rests on an assumption. Asking for a single main result assumes that one test statistic can stand for the claim, and it leaves the degrees of freedom to whatever the software of each analyst reports, which is where the conversion went wrong for one of us. The positive non-materialist form is the cosmopolitan scale, and it takes for granted that the five items – peace, democracy, freedom of movement, cultural diversity, a stronger voice in the world – form one scale, summarised as each respondent's share of mentions. A mean would be defensible, and so would a sum or a factor score. 'The unemployment rate' assumes that the claim is about unemployment, but the abstract says "poor economic performances", which just as clearly names GDP growth – and in the free task all five of us used a GDP measure, and three of us used nothing else. The last instruction removes the EU-policy and party variables of Model 2. Read literally, it leaves individual controls, growth and the education interactions to us, and four of the five dropped them all. None of these is wrong. Each is a decision, made for you, that another study could reasonably have made differently.
 :::
 
-## The EU-frames panel {#the-panel-you-will-work-on .smaller}
-
-::: {.small}
-`EUframes_cy.csv` – **270 rows**, one per country-year, for 27 countries over 2004–2013
-
-| Column | What it is |
-|---|---|
-| `cntry`, `year` | the cell |
-| `mcosmo` | mean cosmopolitan framing in that country-year, 0–1 |
-| `mutil`, `mcomm`, `mlib` | the other three framing scales |
-| `mpos`, `mneg` | the two composites – all positive items, all negative items |
-| `unemp`, `growth` | national unemployment rate and GDP growth |
-| `n_cy` | how many survey respondents are behind the cell |
-| `bailout` | 1 if an EU/IMF assistance programme was running |
-:::
-
-::: {.fragment .small}
-`n_cy` is the interesting one: cells are built from very different numbers of people, which is why **weighting** is a live choice on the menu.
-:::
-
-::: notes
-Here is the panel that you looked at in Hands-on 2, now column by column, because everything from now on works from it. Two hundred and seventy rows, one per country-year, twenty-seven countries over ten years. Country and year identify the cell. Mcosmo is the mean cosmopolitan framing in that cell, on a nought-to-one scale, and the other framing scales sit beside it. Unemployment and growth are the national macro indicators. And then n underscore cy, which counts how many survey respondents are behind each cell – and that is the interesting column, because those counts differ a great deal between cells. A country-year built from two thousand respondents and one built from five hundred are not equally precise, which is why whether to weight by n is a live choice on the specification menu. It is the file behind the reproduction of my own analysis, and two of the other analysts have files of their own, built in the same way from the same waves.
-:::
 ## Analyst no. 6 {#you-are-analyst-no.-6 .smaller}
 
 ::: {.big}
@@ -66,6 +43,8 @@ Here is the panel that you looked at in Hands-on 2, now column by column, becaus
 :::
 
 ::: {.small}
+The first row rests on the panel of Hands-on 2, `EUframes_cy.csv`: 270 country-years, the framing scales as cell means, `unemp`, `growth`, the respondent count `n_cy` and `bailout`.
+
 | Analyst | Data | Model | Recorded by Multi100 |
 |:--|:--|:--|:--|
 | C6HJR | the course panel, 270 country-years | fixed effects for country and year | t = −3.804 on 233 df |
@@ -78,5 +57,5 @@ KEVF1 and PRL47 fitted their models on respondents, so their reproduction needs 
 :::
 
 ::: notes
-So here is your first job as the sixth analyst. Multi100 recorded a result for each of the five of us, and three of those results rest on means of countries or of cells, which may be published, so they reproduce from files that you already have. Mine is on the course panel, with fixed effects for country and year. KQXUE built a panel of its own and gave each country a fixed effect. 018OL averaged cells of a country in one wave and fitted random intercepts. Choose one of the three. [advance] The other two analysts worked on several hundred thousand respondents, and their reproduction needs the respondent file, which only your own GESIS download can give you. Whichever you choose, the question is the one at the heart of reproducibility: given the data and the model, does the recorded number come back?
+So here is your first job as the sixth analyst. Multi100 recorded a result for each of the five of us, and three of those results rest on means of countries or of cells, which may be published, so they reproduce from files that you already have. Mine is on the course panel, the file you looked at in Hands-on 2, two hundred and seventy country-years with the framing scales as cell means, the two macro indicators, the respondent count behind each cell and the bailout marker, with fixed effects for country and year. KQXUE built a panel of its own and gave each country a fixed effect. 018OL averaged cells of a country in one wave and fitted random intercepts. Choose one of the three. [advance] The other two analysts worked on several hundred thousand respondents, and their reproduction needs the respondent file, which only your own GESIS download can give you. Whichever you choose, the question is the one at the heart of reproducibility: given the data and the model, does the recorded number come back?
 :::

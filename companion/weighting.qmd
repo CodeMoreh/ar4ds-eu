@@ -46,8 +46,6 @@ This module of the [companion curriculum](index.qmd) is about the weights of the
 
 The module takes the three questions apart on the course panel, and it is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
 
-The EU-frames claim is about national means, so a weight inside a cell improves the estimate of a quantity that is already defined, the mean of the country-year. In a regression on respondents the same kind of weight decides whose association the coefficient describes, and the difference between the two uses of a weight lies in what the unit of the analysis is.
-
 ## The three decisions {#the-three-decisions}
 
 | | Level | The argument for it | Does it change the estimand? |
@@ -153,7 +151,7 @@ Across the curve the population weight leaves `r pc(dv("pop", "below_zero"))` of
 
 ## The denominator {#the-denominator}
 
-When asked what the EU means to them, `r format(sum(pw$n_noop), big.mark = ",")` respondents, `r pct(sum(pw$n_noop) / sum(pw$n_cy))` of the sample, mentioned nothing at all. How they are scored is a decision that no weight can change. The code of the original paper dropped those respondents, as the [missing answers module](missingness.qmd) explains, and so did two of the five Multi100 reanalyses, KQXUE and the reported model of PRL47. C6HJR, whose build produced the recorded t of −3.804, scored them 0, and the count and the mean of the five cosmopolitan items that KEVF1 and 018OL used score them 0 by construction. The course panel follows C6HJR, scoring those respondents **0** on all four framing scales, so a person with no opinion enters the data as a person with no cosmopolitan framing.
+When asked what the EU means to them, `r format(sum(pw$n_noop), big.mark = ",")` respondents, `r pct(sum(pw$n_noop) / sum(pw$n_cy))` of the sample, mentioned nothing at all, and how they are scored is a decision that no weight can change. The course panel follows the reanalyst C6HJR in scoring them **0** on all four framing scales, so that a person with no opinion enters the data as a person with no cosmopolitan framing, while the code of the original paper dropped those respondents; the [missing answers module](missingness.qmd) sets out what each rule assumes and which analysts took it.
 
 That would be a defensible convention if the no-opinion rate were the same everywhere, but it differs widely between countries.
 
@@ -169,7 +167,7 @@ tinytable::tt(
   tinytable::style_tt(fontsize = 0.8)
 ```
 
-An eight-fold difference in the rate of a response that is coded as a substantive zero is a measurement problem that no weight will fix, because the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the no-opinion respondents should be dropped rather than scored zero is an argument about what the outcome variable *is*, and it belongs with the measurement decisions of the [specification menu](../cases/eu-frames/menu.qmd). The curve keeps both rules, and the missing answers module sets out what each of them assumes.
+An eight-fold difference in the rate of a response coded as a substantive zero is a measurement problem that no weight will fix, since the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the silent respondents are dropped or scored zero belongs with the measurement decisions of the [specification menu](../cases/eu-frames/menu.qmd), and the curve keeps both rules.
 
 ## Weights in estimation {#sec-estimation}
 
@@ -200,35 +198,11 @@ writeLines(readLines(file.path("_model-outputs", "svyglm.txt")))
 
 The W1-weighted pooled slope is +0.0001 with t = 0.8, which is no association at all, and its sign is the opposite of the one that the claim predicts. The weights have corrected the *representation* of the sample, but they cannot correct a mis-specified model, and this is the pooled estimator of [section 3 of Panel data](panel-data.qmd#sec-pooled) again, blending within-country and between-country variation across 27 countries. The output also shows that `svyglm()` reports design-robust (linearised) standard errors by default. There is no classical standard-error option to forget, which is one reason that survey statisticians like the package.
 
-Combining weights with a multilevel model is harder, and the first difficulty is conceptual. A multilevel model needs to know the selection probability *at each level* – the probability that the country is included, then the probability that the respondent is included given the country – but surveys typically publish one all-in weight per person, and there is no unique way to split it. The standard answer is **pseudo-maximum-likelihood**, which weights the contribution of each level to the likelihood [@Rabe-HeskethSkrondal2006MultilevelModellingComplex], and it leaves a further choice open: level-1 weights can be scaled in more than one defensible way, the choice can move variance estimates noticeably, and the recommendation in the literature is to report sensitivity across scalings rather than trust any one [@Carle2009FittingMultilevelModels].
+Combining weights with a multilevel model is harder, because the model needs the selection probability at each level, the country and then the respondent within the country, while surveys publish one all-in weight per person, and there is no unique way to split it. The standard answer is **pseudo-maximum-likelihood**, which weights the contribution of each level to the likelihood [@Rabe-HeskethSkrondal2006MultilevelModellingComplex], and it leaves open how the level-1 weights are scaled, a choice that can move the variance estimates noticeably, so that the literature recommends reporting sensitivity across scalings rather than trusting any one [@Carle2009FittingMultilevelModels].
 
 Because implementations differ in those choices, **the same weighted multilevel model can return different numbers in different software**, and knowing which convention you are running is part of reporting the model. Three practical points follow. First, the `weights` argument of `lmer()` is *not* a survey-weights argument. It treats weights as precision weights, a different quantity entirely, and if you pass it `w1` it returns answers that are inconsistent with the sample design, without any warning. Second, the `mixed` command in Stata accepts probability weights (`[pw = ...]`) and implements pseudo-maximum-likelihood with its own scaling options (`pwscale()`); many of the weighted multilevel results in the applied literature were produced under its conventions. Third, the R package that follows the Stata conventions is **WeMix** [@BaileyEtAl2023WeMixWeightedMixed], which takes one weight column per level and fits by pseudo-maximum-likelihood. In our own comparative survey work it has reproduced to three decimals the fixed-effect estimates (in the multilevel sense, the coefficients that do not vary across groups) of weighted `mixed` models in Stata, which makes it the tool of choice when a published Stata result needs re-implementing in R.
 
-Two of the five Multi100 analysts worked in Stata, and their public code shows these choices being made in practice. Analyst PRL47, the person-level multilevel analyst of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel), builds the level-2 cell identifier and fits three-level random intercepts with `mixed`. These lines are from their Multi100 upload:
-
-```stata
-egen cquarter=concat(country quarter)    // the country-by-quarter cell id
-mixed cosmo || country: || cquarter:     // three-level random intercepts
-```
-
-The weight is missing from that second line. The script of PRL47 carefully assembles a survey weight for every wave (`gen weight=w3a4a`), then uses it only in descriptive checks (`sum cosmo cosmo2 [w=weight]`). It never enters the model, because including it there would mean committing to `[pw = ...]` and to a defensible `pwscale()` setting, which is the pseudo-maximum-likelihood decision described above. Building the weight is easy; using it inside a multilevel model requires a decision that has to be defended, and the code of PRL47 stops short of making it. A bare `mixed`, with no estimation options, estimates by maximum likelihood with model-based standard errors, whereas `lmer()` in R defaults to REML (restricted maximum likelihood), so a line-for-line port disagrees with the original for no substantive reason unless the default on one side is overridden. The correspondence for Stata users is as follows:
-
-```stata
-* Stata – the estimator of PRL47 (maximum likelihood, the Stata default)
-mixed cosmo || country: || cquarter:
-* what a design-weighted version would have needed
-mixed cosmo [pw = weight] || country: || cquarter:, pwscale(size)
-```
-
-```r
-# the R equivalent – lmer() defaults to REML, so request maximum likelihood to match Stata
-lme4::lmer(cosmo ~ 1 + (1 | country) + (1 | cquarter), data = d, REML = FALSE)
-
-# the design-weighted equivalent – WeMix, pseudo-maximum-likelihood, one weight per level
-WeMix::mix(cosmo ~ 1 + (1 | country), data = d, weights = c("weight", "w_country"))
-```
-
-On the data of this case, supplying a constant weight of 1 at the country level reproduces the common 'weights at level 1 only' scenario:
+On the data of this case, the two-level model of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel) fitted with WeMix, with the W1 weights at the respondent level and a constant weight of 1 at the country level, reproduces the common 'weights at level 1 only' scenario:
 
 ```r
 person <- person |>
@@ -243,16 +217,16 @@ summary(m_wemix)
 writeLines(readLines(file.path("_model-outputs", "wemix_2lvl.txt")))
 ```
 
-Compare this with the unweighted two-level fit of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule from section 3 of the statistics module applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
+Compare this with the unweighted two-level fit of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule of the specification menu, one decision at a time, applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
 
-The weighting decisions of the course are simpler than any of this. The specification menu offers three regression weights – the number of respondents behind each country-year average (`n_cell`), the effective sample size that remains once the survey weights have been applied to those respondents (`n_eff`), and the adult population of the country (`pop`) – and, separately, a choice of whether the cell means themselves are built with or without the post-stratification weights of the Eurobarometer (`cell_weight`). The first two regression weights are precision arguments about aggregated cells: a mean built from 3,000 people is measured more precisely than one built from 300. The population weight is a different kind of object, because it changes whose average the estimate describes. The survey weights belong to the respondent-level data, and the cell weighting applies them there, when the cell means are built, producing a second version of the panel. The earlier parts of this section discuss each of these in turn. The second Stata analyst in this case, KQXUE, works with the aggregated cells, and in their code two lines settle the whole weighting question by default:
+Two of the five Multi100 analysts worked in Stata, and one of them, KQXUE, works with the aggregated cells, so that in their code two lines settle the whole weighting question by default:
 
 ```stata
 collapse cosmo util, by(cntry year)    // unweighted country-year means
 xtreg cosmo unemployment, fe           // = the within estimator of section 4 of Panel data
 ```
 
-The `collapse` command averages every respondent equally, so the survey weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option on the menu switches on and off. (The Stata–R correspondence continues here too: `xtreg, fe` after `xtset cntry_num year` is the within estimator in `plm`.) On the curve of the claim, where every cell counts once, the only weighting decision that varies is the cell weighting, and it carries `r pc_small(fk("cell_weight"))` of the variance.
+The `collapse` command averages every respondent equally, so the survey weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option on the menu switches on and off. (For Stata users: `xtreg, fe` after `xtset cntry_num year` is the within estimator of `plm` in R.) On the curve of the claim, where every cell counts once, the only weighting decision that varies is the cell weighting, and it carries `r pc_small(fk("cell_weight"))` of the variance.
 
 ## What to take away {#what-to-take-away}
 

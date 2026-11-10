@@ -135,7 +135,7 @@ ame_items |>
   tinytable::tt()
 ```
 
-On the probability scale the two links agree to the second decimal, which settles the logit-or-probit question for practical purposes. The differences are those of the prevalence table with the other characteristics taken into account: a high-educated respondent is `r num(100 * abs(am("it9", "logit", "high - low")), 1)` percentage points less likely to name unemployment than a low-educated one of the same age, sex, occupation and community, and `r num(100 * am("it1", "logit", "high - low"), 1)` points more likely to name peace. The [quantitative writing register](../resources.qmd) of the course asks for binary models to be reported this way, in points of probability with the uncertainty estimated by the model, because a difference in points of probability is one that a reader can weigh.
+On the probability scale the two links agree to the second decimal, which settles the logit-or-probit question for practical purposes. The differences are those of the prevalence table with the other characteristics taken into account: a high-educated respondent is `r num(100 * abs(am("it9", "logit", "high - low")), 1)` percentage points less likely to name unemployment than a low-educated one of the same age, sex, occupation and community, and `r num(100 * am("it1", "logit", "high - low"), 1)` points more likely to name peace.
 
 ## 5. The national unemployment rate on a single item {#sec-macro}
 
@@ -192,7 +192,7 @@ if (is.null(rnd)) {
 }
 ```
 
-The variance components show how much of the variation in naming unemployment lies between countries and between country-years once the respondent characteristics are in the model. The fixed part of the model, the coefficients that are common to all country-years, gives much the same result as the models with country and year fixed effects in sections 5 and 6, with the cluster modelled instead of corrected for in the standard errors. In the lowest education band the log-odds of naming unemployment rise by `r num(rnd$estimate[rnd$term == "unemp_c"], 3)` per point of the national rate, against `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("fixed", inter$model)], 3)` with the fixed effects, and neither education × unemployment term reaches conventional significance. Which of the two treatments to prefer is taken up in the multilevel section of the statistics module, and the answer does not depend on the link.
+The variance components show how much of the variation in naming unemployment lies between countries and between country-years once the respondent characteristics are in the model. The fixed part of the model, the coefficients that are common to all country-years, gives much the same result as the models with country and year fixed effects in sections 5 and 6, with the cluster modelled instead of corrected for in the standard errors. In the lowest education band the log-odds of naming unemployment rise by `r num(rnd$estimate[rnd$term == "unemp_c"], 3)` per point of the national rate, against `r num(inter$estimate[inter$item == "it9" & inter$term == "unemp_c" & grepl("fixed", inter$model)], 3)` with the fixed effects, and neither education × unemployment term reaches conventional significance. Which of the two treatments to prefer is taken up in the section on bounded outcomes of [Multilevel models](multilevel.qmd#sec-glm), and the answer does not depend on the link.
 
 ::: {.callout-tip}
 ## Try it

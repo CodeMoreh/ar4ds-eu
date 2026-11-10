@@ -11,22 +11,25 @@ execute:
   echo: false
 aliases:
   - /facilitator/guide.html
+  - tracks.html
 ---
 
 ::: {.callout-note}
-**This document is for the facilitator's eyes only.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. It holds the run sheets, the answer keys, the crib facts and the contingency ladders of the one-day workshop of the EU-frames case (`slides/eu-frames-one-day.qmd`), which works on aggregate data only and is taught mainly in the browser lab, and the sessions of the Extended course, whose second day is the workshop. The pages of a format give the participants no times, and every time is here. The decks, the sidebars and the other notes on the formats are on [Running the formats](tracks.qmd).
+**This document is for the facilitator's eyes only.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. It holds the run sheets, the answer keys, the crib facts and the contingency ladders of the one-day workshop of the EU-frames case (`slides/eu-frames-one-day.qmd`), which works on aggregate data only and is taught mainly in the browser lab, and the sessions of the Extended course, whose second day is the workshop. The pages of a format give the participants no times, and every time is here. The decks, the browser lab, the class chart and the other notes on the formats are in the section on [the decks and the pipeline](#decks-and-pipeline).
 :::
 
 ---
 
 ## The formats {#the-three-formats}
 
-| Format | What it holds | Deck |
-|---|---|---|
-| Short session | Two halves of eighty and ninety minutes in the browser lab: the three Rs and Multi100, the paper and its record, the estimand statement, the reproduction of C6HJR or KQXUE, the three models and few clusters; then the menu with its survey decisions first, the code behind the menu, Task 4 and the class chart, the multiverse and the curve of 864, reading a curve, the critics and preregistration, and the replication by its verdict | `eu-frames-short`, a deck written for the session |
-| One-day workshop | Part 1 the claim and credibility: the credibility debate, the three Rs, Multi100 from the inside, the paper and its record in SCORE; Part 2 the estimand and the causal graph; Part 3 the reproduction of one of three analysts, the three reproduced models, few clusters and CR2, and the slips in the deposits; Part 4 robustness: the menu and its tutorial, the class chart with both submissions, the curve, its inference, a replication and the declared analysis | `eu-frames-one-day` |
-| Extended course | Day 1 open research and the tools, the same for every case; day 2 the workshop; day 3 panel data, multilevel models with the respondents, Bayesian estimation, and the report of each participant | the decks of day 1 on the AR4DS site, `eu-frames-one-day` on day 2, and the decks of day 3 |
-| Self-study | Five stages, from credibility and the three Rs to a project of your own | `eu-frames-full` |
+The facilitator chooses the format; participants do not choose, and the home page describes the formats without offering a choice. Each track is an ordered route through pages that already exist on the site, with a docked sidebar of its own (`_sidebar.yml`) and a slides page embedding the deck it runs on. Name the track of a delivery in `delivery.track` of `_variables.yml`, and the callout of the home page links it. The decisions behind the formats, and the order in which their material was built, are in `_planning/formats-2026-10-27.md` of the course repository, and the old addresses of the three one-day focuses of October 2026 and of the three-day course forward to the pages of the formats through `aliases:`.
+
+| Format | Track | What it holds | Deck |
+|---|---|---|---|
+| Short session | `tracks/eu-frames-short/` | Two halves of eighty and ninety minutes in the browser lab: the three Rs and Multi100, the paper and its record, the estimand statement, the reproduction of C6HJR or KQXUE, the three models and few clusters; then the menu with its survey decisions first, the code behind the menu, Task 4 and the class chart, the multiverse and the curve of 864, reading a curve, the critics and preregistration, and the replication by its verdict | `slides/eu-frames-short.qmd`, a deck written for the session |
+| One-day workshop | `tracks/eu-frames-one-day/` | Four parts: the claim and credibility, the estimand and the causal graph, the reproduction, and robustness with Tasks 4 and 5 | `slides/eu-frames-one-day.qmd` |
+| Extended course | `tracks/eu-frames-extended/` | Day 1 open research and the tools, the same for every case; day 2 the workshop; day 3 the methods of the case and the report of each participant | the decks of day 1 on the AR4DS site, `slides/eu-frames-one-day.qmd` on day 2, and the decks of day 3 |
+| Self-study | `tracks/self-study/` | Five stages, from credibility and the three Rs to a project of your own | the full deck, `slides/eu-frames-full.qmd` |
 
 The workshop works on aggregate data only and is taught mainly in the browser lab. Its parts are of unequal length: the reproduction is the shortest, and robustness the longest, because it holds the two tasks with submissions. The clock times below are drafts; set them for the delivery and paste them into the day plan and the joining instructions, because the pages of the participants give no times.
 
@@ -78,7 +81,7 @@ The page "Before the day" or "Before the course" of each format lists these step
 ## The week before
 
 - [ ] Send joining instructions: the before-the-day page of the track, the browser-lab link with the instruction to open it once, the two-window or two-device tip, and the [case study](../cases/eu-frames/index.qmd) as the pre-reading. For the workshop and the Extended course add the setup page, with the request to run `R/check_setup.R` until it reports no failure, and the module Getting started with R; for the Extended course add the download of the Eurobarometer files.
-- [ ] Confirm that the four Task 2 instructions on the Multi100 slides match your own Task 2 report (copy in `_planning/osf_source/moreh_rep_vAPR2025/`), which is the source that the slides quote.
+- [ ] Confirm that the four Task 2 instructions on the Part 3 slide "Task 2 of Multi100" match your own Task 2 report (copy in `_planning/osf_source/moreh_rep_vAPR2025/`), which is the source that the slide quotes.
 - [ ] Check that the three OSF deposits of Hands-on 3b load logged out (osf.io/vycgd, osf.io/nz7ka, osf.io/6zqct), and that osf.io/h7432 shows the five Multi100 components.
 - [ ] Click once through the tab switching of Part 4 (deck, the specification menu, the decision map, the Multiverse page and back), so that the order is familiar on the day.
 
@@ -121,7 +124,21 @@ The page "Before the day" or "Before the course" of each format lists these step
 | amber **lean** | the optional runs are switched off |
 | a burgundy **dot** before the amber badge | lean mode, and an optional run has been lifted out right here – either the slide you are on is the last before it, or the first after it. Press `d` if the class wants it |
 
-Each deck lifts some optional runs into its main flow: the data-tools deck the tools run of Part 1 and the R tutorial of Part 2, the methods deck the methodological tutorial of Part 3 and the multiverse tutorial of Part 4. The open-science deck carries no optional run in its main flow. Add `?depth=0` to the address to open a deck in lean mode. The first slide of each optional run has a small grey link at the top right, which says how many slides the run contains and where the main flow resumes.
+The one-day deck lifts no optional run into its main flow (`core-runs: []`), and the full deck lifts both runs, the methodological tutorial and the multiverse tutorial; add `?depth=0` to the address to open a deck in lean mode. The first slide of each optional run has a small grey link at the top right, which says how many slides the run contains and where the main flow resumes.
+
+---
+
+## The decks and the pipeline {#decks-and-pipeline}
+
+**The browser lab.** The browser lab is a page that runs R in the tab of the browser and holds the five tasks of the exercise beside the workspace. It is live: it loads the data of the case, which are small (a panel of 43 KB), and runs the code of the tasks on them, each fit in a fraction of a second, so the workshop is taught in it. The causal-graph task prints the answers that the pipeline computed with dagitty for the graphs that the cell offers, because dagitty cannot run in the tab; any other graph goes to the workspace.
+
+**The decks.** The decks are assembled from the segments in `slides/_segments/eu-frames/`. A deck is a list of `{{< include >}}` lines with its own agenda, aims and part dividers. In the segment files, every slide of an optional run is marked with `.deepdive` and a `run` attribute (`methods` or `multiverse`). A deck lists the runs that belong to its main flow under `core-runs:` in its YAML, and `slides/core-runs.lua` strips the `.deepdive` mark from those headings, so `nav-tools.html` neither hides them on the `d` key nor badges them as optional. A run that is not listed stays optional: it is hidden in lean mode and has the escape-hatch link on its first slide. The segment files contain R chunks with labels, and knitr refuses a duplicate label, so each deck includes each segment at most once. Edit the segment files for content, or the deck file for order and framing, and render the deck on its own (`quarto render slides/eu-frames-one-day.qmd`). A change to a segment needs every deck that includes it rendered again (`grep -l "eu-frames/_x.qmd" slides/*.qmd`). The project render fails at its final move step on this machine, so decks are rendered one at a time.
+
+**The short session.** The short session is three hours in two halves, entirely in the browser lab, with no Task 2 at the keyboard (the estimand statement is a held answer), no Task 5, and one submission to the class chart, the explored analysis of Task 4. Its deck, `slides/eu-frames-short.qmd`, is not assembled from the segments of the one-day deck: it is a custom set of slides in `slides/_segments/eu-frames-short/`, one segment for each block of the run, with the clock of the block in a comment at the head of the segment, so that an event can edit the deck block by block and set its own title and subtitle in the YAML. The reproduction offers C6HJR and KQXUE, because the packages of 018OL download 32 MB in the lab. The first delivery proposed is the ESRA–WAPOR conference of July 2027 in Paris, for an audience of survey researchers, which is why the menu is taught with its survey decisions first and two slides show the easystats code behind the course. The [run sheet](#run-sheet-short) gives the clock.
+
+**Pages that the formats share.** Every track starts from the [case study](../cases/eu-frames/index.qmd), which tells the original study, SCORE and Multi100, the five reanalysts with an assessment of their choices, and the conversion lesson on how Multi100 turned their statistics into one effect size. The specification menu is taught as the full set of fourteen decisions, on the [decision map](../cases/eu-frames/map.qmd) and the [specification menu](../cases/eu-frames/menu.qmd), with the curve of 864 specifications as the subset that an audit judged justifiable for this claim. The helpers of the browser lab and of the workspace refuse an option that is off the curve, with the one-sentence reason recorded in `data/menu_options.csv` and the page that teaches the option. Every result is classed by standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom; the specification of C6HJR (t = −3.804, r = −0.242) has a CR2 p of 0.0504 on 9.8 degrees of freedom and is not significant under that rule, which is worth saying before anyone asks. The [run sheet of the one-day workshop](#run-sheet-one-day) has its timings.
+
+**The class chart.** The chart on the Multiverse page reads the rows of the shared results Form whose labels have the frozen format of the case, `explore: [tag] <spec>` or `declared: [tag] <spec>`, with no case word after the tag. The labels of the other cases of AR4DS carry the case word, and the chart draws their rows as unclassed diamonds, so clear the Sheet between deliveries of different cases. Each workspace keeps its own tag in `.class-tag`, so ask a cohort to choose one nickname and to pass it as `nickname = "..."` throughout. A chart keeps the rows of earlier deliveries until the sheet is cleared.
 
 ---
 
@@ -180,7 +197,7 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 | 0:06 | Talk: credibility (18′) | Claims and checking; false positives and forking paths; incentives; the red-card study, with the grouping of the teams by response distribution as the thread for the day. | Listen. | Say "hold on to that grouping". |
 | 0:24 | Talk: the vocabulary (12′) | The matrix; repeatability and credibility; the quick check; open research. | Chat waterfall. | – |
 | 0:36 | Talk: Multi100 from the inside (16′) | What an analyst received, the two tasks, the common scale; the five-analyst forest one row at a time, with the open circle of PRL47. | Watch the reveal. | The open circle is where the conversion lesson starts – one sentence now. |
-| 0:52 | Talk: the paper and its record in SCORE (16′) | The claim card, the four framing scales, the model of the OA, Model 1 and Model 2; the attempts to reproduce and to replicate; the five free-phase questions. | Listen; ask. | The SCORE replication is given by its verdict only. |
+| 0:52 | Talk: the paper and its record in SCORE (16′) | The four framing scales, the model of the OA, the claim card with Model 1 and Model 2; the attempts to reproduce and to replicate; the five free-phase questions. | Listen; ask. | The SCORE replication is given by its verdict only. |
 | 1:08 | The browser lab, then Task 1 (22′ and the break) | Setup task. | Task 1. | – |
 
 ### Part 2 – The estimand and the causal graph (75′)
@@ -196,7 +213,7 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | Re-entry and the constrained task (10′) | Roll-call; paste the catch-up card. The four Task 2 instructions verbatim, what each assumes, the columns of the panel, and the three analyses that can be reproduced. | Rejoin; choose an analyst. | Do not wait past 0:05; the card lets stragglers catch up. |
+| 0:00 | Re-entry and the constrained task (10′) | Roll-call; paste the catch-up card. The four Task 2 instructions verbatim, what each assumes, and the three analyses that can be reproduced, with one line on the panel of Hands-on 2. | Rejoin; choose an analyst. | Do not wait past 0:05; the card lets stragglers catch up. |
 | 0:10 | Hands-on 3: Task 3 (20′) | Drive the cells of one analyst on the shared screen; buddy-chunk any STUCK. Then the waterfall: "type the analyst and the value, hold, go". | Choose C6HJR, KQXUE or 018OL; fill the gaps; reach the value on record. | The first run of 018OL downloads 32 MB; say so before people start. Wait until most have a number before "go". |
 | 0:30 | Reproducibility, analytical choice and the three models (12′) | The same t within an analyst, different t between them; fixed effects for country and year, for country alone, random intercepts; the table of conventional, CR1 and CR2 tests. | Listen; ask. | The point to land: the estimate never moves, only the test. |
 | 0:42 | What a reproduction needs (10′) | Data, code and versions; the revised Eurostat value of Portugal 2013; the slips in three pipelines and what each does to the t. | Listen; ask. | Say plainly that one of the three slips is mine. |
@@ -207,18 +224,18 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | The specification menu (10′) | The fourteen decisions; what Task 2 left open; the ground rules, starting from the reproduced specification, the model of C6HJR; claim alignment. | Listen. | Participants who reproduced KQXUE or 018OL also start the menu from the model of C6HJR: say so. |
+| 0:00 | The specification menu (10′) | The fourteen decisions; the ground rules, starting from the reproduced specification, the model of C6HJR; claim alignment; what Task 2 left open, on the last fragment. | Listen. | Participants who reproduced KQXUE or 018OL also start the menu from the model of C6HJR: say so. |
 | 0:10 | The methodological tutorial (10′, optional) | The core: outcome, claim alignment, estimators and fixed effects; the rest as time allows. | Listen; ask. | The compressible segment. |
 | 0:20 | Hands-on 4: Task 4 (18′) | Keep the Multiverse page shared; press *Run Code* as the exploratory dots land. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits an exploratory dot. Say twice that this is exploration. |
 | 0:38 | Your own small multiverse and the multiverse tutorial (8′, part optional) | Where the idea comes from; the garden; filters; enumeration and curation; purposes; decomposition; reading a curve. | Listen. | – |
 | 0:46 | Class chart, the bet, the decomposition, the reference results (14′) | The bet waterfall FIRST; then the fork importance; the reference results under three conversions; the sign changes. | Bet; watch the reveals. | The bet must come before the reveal. |
 | 1:00 | Your own percentile (5′) | Waterfall of placements. | Read the placement; hold; send. | Without a submission, use the reproduced specification: 67%. |
 | 1:05 | What the curve leaves out and inference literacy (12′) | The four points; description and inference; dependence; the permutation design; the discussion beat. | Think; argue in the chat. | The target answer: "we cannot say until we know what chance produces on these dependent data". |
-| 1:17 | Replication with new data (5′) | The verdict of the SCORE replication again, the question after 2013, and the decisions that a replication fixes in advance. | Listen. | The verdict only; the figures of the replication stay off the slides. |
-| 1:22 | Critics, one correct analysis, what preregistration settles (6′) | The three positions; the Lakens argument; the two columns of preregistration. | Listen. | – |
-| 1:28 | Archiving and the public record (4′) | Archiving and registering; the three OSF addresses; the SCORE dossier; the Multi100 preregistration; the templates; the eight AsPredicted questions. | Listen. | If time is short, one slide. |
+| 1:17 | Replication with new data (5′) | The verdict of the SCORE replication again, and the decisions that a replication fixes in advance, the fifteenth answer category among them. | Listen. | The verdict only; the figures of the replication stay off the slides. |
+| 1:22 | Critics, one correct analysis, what preregistration settles (6′) | The three positions; the one correct analysis and how anyone would identify it; the two columns of preregistration. | Listen. | – |
+| 1:28 | Archiving and the public record (4′) | Archiving and registering, with the Multi100 preregistration; the three OSF addresses; the templates; the eight AsPredicted questions. | Listen. | If time is short, one slide. |
 | 1:32 | Hands-on 5: the preregistration and the declared run (15′) | Synchronous: complete the block, run `prereg()`, type "declared"; count aloud; move on at about 80% or at 8′. Then build, run, `report_result()`. | Declare, build, run, submit. | Never cut the declaration. |
-| 1:47 | Close and feedback (3′) | Two points from the literature; the single analytical path; what you take with you. | Feedback. | End on time. |
+| 1:47 | Close and feedback (3′) | Two points from the literature; what you take with you. | Feedback. | End on time. |
 
 ### Cutting order and never cut {#cuts-one-day}
 
@@ -269,7 +286,7 @@ In the session on the report, each participant opens the workspace, turns its fo
 
 ## The self-study route {#run-self-study}
 
-The self-study track runs without a facilitator, and each stage page gives the total of its stage and nothing finer, because the time that a stage takes depends on the reader. The stages use the full deck of the case, `slides/eu-frames-full.qmd`.
+The self-study track runs without a facilitator, and each stage page gives the total of its stage and nothing finer, because the time that a stage takes depends on the reader. The stages use the full deck of the case, `slides/eu-frames-full.qmd`, and a semester course can follow the same route in class. What the facilitator can still do for a self-study cohort is keep the live results pipeline running between deliveries, so that a result submitted alone appears on the Multiverse page of the case (`facilitator/live-results-setup.md`).
 
 ---
 
@@ -317,6 +334,7 @@ The materials are identical online and in person. What changes is how people ans
 | **A participant's installation breaks** | Switch them to the browser lab, which holds every task; the workspace survives for later. |
 | **The live chart fails** | Rung 1: `cases/eu-frames/multiverse.qmd` falls back to the committed `cases/eu-frames/data/class_results.csv`. Rung 2: pull the Sheet CSV, commit, re-render locally and share my screen. Rung 3: the static curve of 864 and the reference results are enough for the debrief. |
 | **The OSF is slow or unreachable** | Show the dossier and the deposits on my screen. The data never depend on the OSF, because they ship with the browser lab and the workspace. |
+| **"How long should this take?"** | Every fit on the 270-row panel is effectively instantaneous: `feols` with two-way or country fixed effects under 0.01 s; `try_spec()` in the workspace, CR2 test included, about 1 s for the first call, which loads the packages, and under 0.1 s after it; `try_spec()` in the browser lab instant, since it reads the curve that ships with the page. A participant who is waiting is waiting for a package download: the browser lab fetches its packages, about 24 MB, once when the page opens, a long moment on poor wifi, and nothing after that, because the Task 2 graph reads its adjustment sets from a table that ships with the page; the first run in the workspace installs the whole package set once. Ask what it is stuck on before assuming that the model is the problem. |
 | **My connection drops** | The standing order in the chat. |
 | **Recording objections** | Recording is optional, so stop it. |
 
