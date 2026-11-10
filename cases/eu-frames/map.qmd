@@ -72,6 +72,10 @@ ojs_define(menu_raw = menu, curve_raw = curve_js, neg_raw = neg_js, dev_raw = de
 .dm-legend .sw { display:inline-block; width:0.8rem; height:0.8rem; border-radius:2px; vertical-align:-0.1rem; margin-right:0.3rem; }
 .dm-legend .chip-sample { display:inline-block; padding:0 0.5rem; border-radius:99px; border:1.5px solid #5b6b78; font-size:0.75rem; margin-right:0.3rem; }
 .dm-legend .chip-sample.off { border-style:dashed; }
+/* Quarto wraps the OJS output in a cell-output-display div with overflow:auto,
+   and a sticky element cannot stick past an ancestor with an overflow rule, so
+   the wrapper of the map is made visible for the side panel to hold. */
+.cell-output-display:has(.dm-layout) { overflow:visible !important; }
 .dm-layout { display:grid; grid-template-columns:minmax(0, 1fr); gap:1.25rem; }
 @media (min-width: 1100px) {
   .dm-layout { grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); align-items:start; }
