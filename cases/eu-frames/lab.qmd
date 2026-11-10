@@ -40,7 +40,7 @@ curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 ref <- datawizard::data_filter(curve, is_reference)
 ```
 
-This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace. The one-day formats of the course are taught mainly on this page, which the facilitator drives on the shared screen, with the downloadable workspace described on the [Setup](https://codemoreh.github.io/ar4ds/setup.html) page as the option for those who have installed R and an IDE (Positron, RStudio, VS Code, etc.). In the Extended course everyone works in the workspace, and this page is the fallback for a machine that will not cooperate. Nothing you do here is wasted, since both give the same numbers.
+This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace, which the [Setup](https://codemoreh.github.io/ar4ds/setup.html) page describes for those who have installed R and an IDE (Positron, RStudio, VS Code, etc.) and which gives the same numbers, so that nothing you do here is wasted.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
@@ -666,7 +666,7 @@ Before fitting anything, say what you are trying to estimate, in words. A templa
 
 > The **unit-specific quantity** is the change in mean cosmopolitan EU framing within a country from one year to another associated with a one-point change in that country's unemployment rate. The **target population** is EU member states over 2004–2013. The **aggregation** is a weighted average of those unit-specific effects, in which the country-years whose unemployment departs most from their country and year means count most, holding fixed each country's time-invariant traits and each year's EU-wide shocks.
 
-That last clause is a causal claim, and a directed acyclic graph makes it checkable. A DAG is a diagram of what causes what: variables are nodes, arrows run from cause to effect, and the rules for reading the graph then identify which variables have to be adjusted for if the arrow you care about is to be read cleanly. The graph below draws the five arrows that this exercise takes as given, which the rest of this page calls the committed arrows. Further down you decide which of the arguable arrows to add to them.
+That last clause is a causal claim, and a directed acyclic graph (DAG), a diagram in which arrows run from cause to effect, makes it checkable, as the [module on causal graphs](../../companion/dags.qmd#sec-arrows) explains. The graph below draws the five arrows that this exercise takes as given, which the rest of this page calls the committed arrows, and further down you decide which of the arguable arrows to add to them.
 
 ```{r}
 #| label: dag-reference
@@ -740,7 +740,7 @@ Five arrows are drawn. `unemployment -> framing` is the path of interest. Above 
 
 You build the graph yourself in the cells below, in ordinary R. `dagify()` takes one formula per arrow, written the way you write a model, so `framing ~ unemployment` is the arrow that runs *into* `framing`. Read the tilde as 'is caused by' rather than 'is regressed on' and the direction comes out right every time. Because each arrow is its own line of R, an arrow you are unsure about can stay in the cell commented out, and adopting it means deleting a `#`.
 
-`dagify()` and `adjustmentSets()` are already available on this page, so you can go straight to the next cell. In the downloadable workspace they come from `ggdag` and `dagitty`, the R packages for causal graphs, which cannot run on this page. Here `adjustmentSets()` prints the answer that dagitty gives, read from a table that the course computed with dagitty for every combination of the arrows in the cell ([codebook](data/dag_answers_codebook.md)). Any other graph gets a pointer to the workspace, which also draws the graph that you finish.
+`dagify()` and `adjustmentSets()` are already available on this page. In the downloadable workspace they come from `ggdag` and `dagitty`, the R packages for causal graphs, which cannot run here, so `adjustmentSets()` prints the answer that dagitty gave for every combination of the arrows in the cell ([codebook](data/dag_answers_codebook.md)), and any other graph gets a pointer to the workspace.
 
 ```{webr}
 #| include: false
@@ -855,16 +855,16 @@ Then ask for the adjustment set of the graph that you have just written.
 adjustmentSets(my_dag) # r-style: keep – the function of this page, which reads the answers of dagitty
 ```
 
-With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. Country fixed effects adjust for `country` and year fixed effects adjust for `year`, so the two-way fixed-effects model of analyst C6HJR, one of the three that you can reproduce in Task 3, makes the same identification claim as the graph you have just written. The model of KQXUE adjusts for the country alone, and the random intercepts of 018OL adjust for neither in this sense, because a random intercept, unlike a fixed effect, does not remove the part of unemployment that is constant within a country or common to a year.
+With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. The two-way fixed-effects model of analyst C6HJR, one of the three that you can reproduce in Task 3, therefore makes the same identification claim as the graph you have just written, while the model of KQXUE adjusts for the country alone and the random intercepts of 018OL adjust for neither in this sense.
 
-Now uncomment the growth pair and run the two cells again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects only remove country-constant and year-common variation. The two-way fixed-effects model of C6HJR does not adjust for it, and your specification would need `growth` as a co-predictor to match your beliefs – a choice offered by the co-predictor decision of the menu in Task 5. The bailout arrows behave differently. A mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one; adjusting for it would remove part of the effect that you are trying to estimate.
+Now uncomment the growth pair and run the two cells again. The set becomes `{ country, growth, year }`, because a slump varies within a country over time and fixed effects remove only country-constant and year-common variation, so a specification that matches your beliefs would need `growth` as a co-predictor, a choice that the adjustment-set decision of the menu offers in Task 5. The bailout arrows behave differently: a mediator lies on the path you are trying to measure, so the adjustment set does not grow when you add one, and adjusting for it would remove part of the effect that you are trying to estimate.
 
 Write two sentences for your own notes. What do two-way fixed effects adjust for, and what can they **not** fix? (Hint: anything time-varying within a country that you have not measured.)
 
 
 ## Task 3 – Reproduce a recorded result {#task-3-reproduction}
 
-This is the **reproducibility** check. Five analysts reanalysed the claim for Multi100, each with code of their own. Three of them fitted their models on aggregate data, and their recorded results reproduce exactly on this page; choose one of the three. The other two, KEVF1 and PRL47, fitted theirs on several hundred thousand respondents, whose files GESIS does not allow the course to publish. Their analyses lie outside the one-day workshop; the third day of the Extended course works on the respondents, from a file that each participant builds from their own GESIS downloads.
+This is the **reproducibility** check. Five analysts reanalysed the claim for Multi100, each with code of their own. Three of them fitted their models on aggregate data, and their recorded results reproduce exactly on this page; choose one of the three. The short session offers the first two, C6HJR and KQXUE, and the one-day workshop and the Extended course the third as well, 018OL, whose packages for mixed models download about 32 MB on the first run of its cell, which is why a participant of the short session is not sent to it. The other two, KEVF1 and PRL47, fitted theirs on several hundred thousand respondents, whose files GESIS does not allow the course to publish. Their analyses lie outside the one-day workshop; the third day of the Extended course works on the respondents, from a file that each participant builds from their own GESIS downloads.
 
 | Analyst | Data on this page | Model | Recorded by Multi100 |
 |:--|:--|:--|:--|
@@ -1068,10 +1068,6 @@ You should get a coefficient of −0.00203, a standard error of 0.00169 and t = 
 ## Reproduction and the five analysts
 
 You reproduced the recorded value, and so did everyone else in the class who chose the same analyst, because each of you ran the same code on the same file. Once the data and the code are in hand, this is why reproducibility is the cheapest of the three Rs to establish; for KQXUE and 018OL, putting the data in hand meant rebuilding their files from the code that they deposited.
-
-The three numbers that the class sent are far apart, although all three analysts worked on the same claim, and the two analysts on respondents add two more. Part of the spread comes from the questions that each analyst chose to answer, part from errors that only a reading of the code shows, and most of the spread in the recorded correlations from the conversion that put them on one scale, as the [case study](index.qmd) sets out.
-
-In Task 2 you named the quantity you are after and drew the graph from which your adjustment set follows. In Task 4 you find out how far the answer moves when the other choices change.
 :::
 
 ## Task 4 – Work the menu {#task-4-explore}
@@ -1086,7 +1082,7 @@ This task is **exploratory**. You try several specifications, look at what each 
 try_spec()
 ```
 
-The printout gives the slope `b` with its conventional standard error and *t*, the claim-aligned partial *r*, the p-value of the test that classes every point on the curve, the class of the result and its placement among the 864. That test allows the years of one country to be correlated with one another, which the conventional *t* does not. It clusters the standard errors by country with the CR2 correction, which suits a small number of countries of unequal weight, and it judges the *t* against Satterthwaite degrees of freedom, which count how many countries effectively carry the information. For the reproduced specification that count is `r sprintf("%.1f", ref$df_cr2)` rather than the 27 countries of the panel. The specification lies below zero, but with a CR2 p of `r sprintf("%.4f", ref$p_cr2)` it is not significant at 5%, and `r round(100 * mean(curve$r_ca < ref$r_ca))`% of the 864 specifications lie further in the direction of the claim.
+The printout gives the slope `b` with its conventional standard error and *t*, the claim-aligned partial *r*, the p-value of the test that classes every point on the curve, the class of the result and its placement among the 864. The test clusters the standard errors by country with the CR2 correction and judges the *t* against Satterthwaite degrees of freedom, which count how many countries effectively carry the information, `r sprintf("%.1f", ref$df_cr2)` for the reproduced specification rather than the 27 countries of the panel, as the [module on panel data](../../companion/panel-data.qmd#sec-inference) explains; the specification lies below zero, but with a CR2 p of `r sprintf("%.4f", ref$p_cr2)` it is not significant at 5%, and `r round(100 * mean(curve$r_ca < ref$r_ca))`% of the 864 specifications lie further in the direction of the claim.
 
 Each of the six cells below changes a single decision. The first four change the question that is being asked of the data; the last two keep the question and change only how it is measured. Run them in turn and compare the results.
 
@@ -1183,7 +1179,7 @@ submit_exploration()
 ::: {.callout-note collapse="true"}
 ## Why 'exploratory'?
 
-Because you chose this specification after seeing what several specifications do, it lacks the guarantee that comes with a choice declared in a preregistration before its result is known – no one can rule out that it might have been chosen *because* of its result. This is something we almost never know in the case of published papers, unless their analysis has been preregistered and departures from the preregistration documented. In this course exploration is a natural step, and you also practise preregistering the analysis that you choose, so you submit twice, once here and once in Task 5.
+Because you chose this specification after seeing what several specifications do, it lacks the guarantee that comes with a choice declared in a preregistration before its result is known – no one can rule out that it might have been chosen *because* of its result. In this course exploration is a natural step, and you also practise preregistering the analysis that you choose, so you submit twice, once here and once in Task 5.
 :::
 
 ## Task 5 – Preregistration {#task-5-my-preregistration}
@@ -1273,7 +1269,7 @@ When the model is accepted, run it. Every specification on the curve is pre-comp
 run_spec(my_model)
 ```
 
-The output has the same lines as in Task 4. The partial *r* is the correlation between predictor and outcome once the rest of the model is taken into account, and a value below zero is in the direction of the claim. Whether it is significant is decided by the CR2 p, and the class line says which of the four cases your result falls in. The placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, `r round(100 * mean(curve$r_ca < ref$r_ca))`% for the reproduced specification, the model of C6HJR in Task 3.
+The output has the same lines as in Task 4, and the placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, `r round(100 * mean(curve$r_ca < ref$r_ca))`% for the reproduced specification, the model of C6HJR in Task 3.
 
 Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
 
@@ -1295,5 +1291,5 @@ This page keeps nothing once you refresh it, so work you want to keep belongs in
 ::: {.callout-tip icon="false"}
 ## The downloadable workspace
 
-The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE, edit and render offline, and in which everyone taking the course works. The same folder holds `R/get_data.R`, an optional script that fetches the panel from the OSF with `osfr`, and a GitHub Actions workflow that renders the report and publishes it to GitHub Pages once the folder is pushed to a GitHub repository whose Pages source is set to GitHub Actions. The folder is maintained in the [`replication-lab`](https://github.com/CodeMoreh/replication-lab) repository, and it is yours to reuse.
+The exercise on this page, Tasks 1 to 5, also exists in the downloadable workspace, the folder that you open in your IDE, edit and render offline, which is maintained in the [`replication-lab`](https://github.com/CodeMoreh/replication-lab) repository and is yours to reuse.
 :::

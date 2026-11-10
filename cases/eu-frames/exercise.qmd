@@ -5,7 +5,7 @@ aliases:
   - /exercise/index.html
 ---
 
-This page sets out the whole exercise. The [case study](index.qmd) presents the original study, the Multi100 project and the five reanalyses in full, and it is the place to start if you have not read it. The one-day formats of the course work mainly in the [Browser lab](lab.qmd), which runs the exercise in a browser tab with the data in place, and the workspace that you download and open in your IDE (Positron, RStudio, VS Code, etc.) is the option for those who have installed R; the Extended course works in the workspace. Both give the same numbers. Come back here whenever you want the overview again.
+This page sets out the whole exercise, task by task. The [case study](index.qmd) presents the original study, the Multi100 project and the five reanalyses in full, and it is the place to start if you have not read it; the [Browser lab](lab.qmd) runs the exercise in a browser tab with the data in place, and the workspace that you download and open in your IDE (Positron, RStudio, VS Code, etc.) gives the same numbers.
 
 ---
 
@@ -27,7 +27,7 @@ This comes from a three-level random-intercept model using pooled Eurobarometer 
 
 The claim on the card is one of several that the paper makes. The SCORE programme selected claims from published abstracts, and the sentence it took from this paper is the first half of a two-part hypothesis. In the paper itself, that hypothesis reads: "Poor national economic performances significantly increase the negative and decrease the positive EU-framing dimensions. The effect is stronger on the materialist dimensions of EU framing" (p. 621). The second sentence, which compares two of the four framing scales with the other two, was not part of the claim given to the analysts, and neither was the second hypothesis of the paper, about the gap between high- and low-educated citizens, which the [module on multilevel models](../../companion/multilevel.qmd#sec-claim2) takes up. The Multi100 project then narrowed the card further in its constrained phase, fixing the cosmopolitan scale as the outcome and the unemployment rate as the predictor, which is why the coefficient above is the one with which the five results were to be compared.
 
-Each of those steps was a decision that someone other than you made, and each one shaped what "replicating the claim" could mean. Testing the first sentence needs one outcome and one predictor. Testing the second needs a grouping of the scales, and the [measurement module](../../companion/measurement.qmd#sec-theory) shows that the data only half support that grouping. The education hypothesis needs the respondents rather than the country-years. Choosing which sentence to replicate is the first specification decision of any replication, and it is made before the estimand, the graph or the menu, usually by the people who wrote the card. The course keeps to the card, so that its results can be set beside those of the five analysts.
+Choosing which sentence to replicate is the first specification decision of any replication, made before the estimand, the graph or the menu, usually by the people who wrote the card; the second sentence of the hypothesis needs a grouping of the scales that the data only half support, as the [measurement module](../../companion/measurement.qmd#sec-theory) shows. The course keeps to the card, so that its results can be set beside those of the five analysts.
 
 ## The five Multi100 analysts {#the-five-published-analysts}
 
@@ -41,7 +41,7 @@ Before you begin, here is what the five Multi100 analysts found when they reanal
 | KQXUE | Stata | t = −7.17 | 270 | −0.419 | yes, on its 270 country-years |
 | PRL47 | Stata | z = −3.59 | 394,575 | −0.006 | no – needs the respondent files |
 
-All five reported a negative effect, in the direction of the original. The recorded partial correlations range from −0.006 to −0.452, a factor of nearly 80, but most of that spread comes from the conversion of each test statistic into a correlation rather than from the analyses themselves. PRL47 and C6HJR report almost the same statistic, yet the z of PRL47 was converted on the number of respondents, which pulls any correlation towards zero. Section 4 of the [case study](index.qmd#sec-recorded) shows how the conversion works, and the [Multiverse page](multiverse.qmd#reference-marks) places each result on the degrees of freedom of its own inference. The last column says which results the browser lab and the workspace reproduce: the three that rest on means of countries or of cells. The other two fitted their models on respondents, whose files only a GESIS account can give, so their analyses lie outside the exercise.
+All five reported a negative effect, in the direction of the original. The recorded partial correlations range from −0.006 to −0.452, a factor of nearly 80, but most of that spread comes from the conversion of each test statistic into a correlation rather than from the analyses themselves. PRL47 and C6HJR report almost the same statistic, yet the z of PRL47 was converted on the number of respondents, which pulls any correlation towards zero. Section 4 of the [case study](index.qmd#sec-recorded) shows how the conversion works, and the [Multiverse page](multiverse.qmd#reference-marks) places each result on the degrees of freedom of its own inference.
 
 ---
 
@@ -59,21 +59,15 @@ The task has three parts, taken in order. First, look at the data. The **EU-fram
 
 Second, write the **estimand statement**: the unit-specific quantity, the target population, the aggregation. The template gives you the structure, and filling it in makes you say precisely what this claim is about.
 
-Third, complete the **causal graph**. Take the `#` off the arrows you are willing to defend, run the graph and `adjustmentSets()` again, and check which adjustment set the graph now implies; then write two sentences for your notes on what two-way fixed effects adjust for and what they cannot fix. *Browser lab:* the graph is built with `dagify()`, and `adjustmentSets()` prints the answer that dagitty gives for each combination of the arrows in the graph cell, read from a table that the course computed with dagitty. *Workspace:* edit `R/dag_starter.R`, where dagitty answers for any graph. The [causal-graphs companion module](../../companion/dags.qmd) works the material through slowly.
+Third, complete the **causal graph**. Take the `#` off the arrows you are willing to defend, run the graph and `adjustmentSets()` again, and check which adjustment set the graph now implies; then write two sentences for your notes on what two-way fixed effects adjust for and what they cannot fix. In the lab the graph cell builds the graph with `dagify()` and prints the adjustment set for each combination of the arrows, in the workspace `R/dag_starter.R` does the same for any graph, and the [causal-graphs companion module](../../companion/dags.qmd) works the material through slowly.
 
 ### Task 3 – Reproduce a recorded result
 
-Choose one of the three analysts whose results rest on aggregate data, and refit the analysis until the value on record comes back to the third decimal. This is the reproduction step, in which the same data and the same model give the same number.
-
-| Analyst | Data | Model | On record |
-|:--|:--|:--|:--|
-| C6HJR | `EUframes_cy.csv`, 270 country-years | fixed effects for country and year, conventional standard errors | t = −3.804 on 233 df |
-| KQXUE | `analyst_KQXUE.csv`, 270 country-years | a fixed effect for each country, conventional standard errors | t = −7.169 on 242 df |
-| 018OL | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
+Choose one of the three analysts whose results rest on aggregate data, and refit the analysis until the value on record comes back to the third decimal. This is the reproduction step, in which the same data and the same model give the same number, and the Task 3 table of the [Browser lab](lab.qmd#task-3-reproduction) gives the data, the model and the value on record for each of the three.
 
 The panel of C6HJR is the course panel. The files of KQXUE and 018OL were rebuilt by the course from the sixteen GESIS waves, following the code that each analyst deposited on the OSF (osf.io/vycgd and osf.io/nz7ka) step by step, slips included, and their [codebook](data/analyst_panels_codebook.md) says how. The Stata code of KQXUE appended the wave EB 62.0 twice, and the files of 018OL put the wave EB 79.3, fielded in 2013, in 2012. *Browser lab:* each analyst has an exercise cell of its own, with gaps to fill, a hint and a full solution, and the first run of the cell of 018OL downloads the packages for mixed models, about 32 MB. *Workspace:* the three reproductions are written out in the working script and in Task 3 of the report. In class, type the analyst and the value into the chat, for example `KQXUE t = -7.169`, hold it, and send it when the facilitator says go.
 
-The two analysts who worked on respondents, KEVF1 and PRL47, need the respondent files, which only a GESIS account can give; their analyses lie outside the one-day workshop, and the third day of the Extended course works on the respondents, from the downloads of the participants. The paper itself was also put through attempts at reproduction and replication in the SCORE programme, which section 2 of the [case study](index.qmd#sec-repetition) describes.
+The two analysts who worked on respondents, KEVF1 and PRL47, need the respondent files, which only a GESIS account can give; their analyses lie outside the one-day workshop, and the third day of the Extended course works on the respondents, from the downloads of the participants.
 
 ### Task 4 – Work the menu
 
@@ -87,7 +81,7 @@ The class first reads its exploratory results on the class chart, laid over the 
 
 Then pick ONE specification from the curve, one option for each of the fourteen decisions on the menu, and complete the preregistration block **before you run that specification**. It is a shortened but real preregistration template: what you are testing, what you already know about the data, your one specification, why those controls (grounded in your Task 2 graph), and the rule by which you will judge the result. `claim_align <- TRUE` is the convention of the course and is applied for you. The claim expects framing to rise with growth, so the sign of a growth slope is flipped, and 'supports the claim' then reads as a negative sign for every specification.
 
-Run `prereg()` once the block is complete and before you write the model code below it. On the browser lab page, copy the block into your notes; in the workspace, the rendered report, which carries the date on which it was rendered, keeps the declaration above the cells that fit the specification. Then translate the declaration into model syntax yourself – `build_model()` accepts only code that matches what you declared – run it, and `report_result()` prints a one-click, pre-filled form link. Your submission appears on the chart as a **declared** result beside the exploratory ones.
+Run `prereg()` once the block is complete and before you write the model code below it, then translate the declaration into model syntax yourself, since `build_model()` accepts only code that matches what you declared, run it, and let `report_result()` print the one-click, pre-filled form link that puts your submission on the chart as a **declared** result beside the exploratory ones.
 
 Task 4 and Task 5 run identical code. What separates them is that an exploratory specification can have been chosen because of its result and a declared one cannot, and you submit twice so that the two sets of results can be compared side by side.
 
@@ -107,13 +101,8 @@ The whole exercise depends on the justification. Auspurg & Brüderl (2021) argue
 
 ## Links
 
-- [Browser lab](lab.qmd) – the whole exercise and its data in a browser tab, for demonstrations and for trying it without an installation.
-- [Specification menu](menu.qmd) – the fourteen decisions from which you choose one option each, in the three groups to which they belong, with the options that the curve keeps, the reasons for the ones that it does not, and a worked example.
-- [Decision map](map.qmd) – every decision of an analysis of the claim, in the order in which an analyst meets it, with each option on and off the curve; selecting an option rewrites the estimand statement and shows what the option does to the results.
-- [Reading a specification curve](reading-inference.qmd) – the companion reading for Task 5: what a large set of results can and cannot establish.
-- [Cheatsheet](cheatsheet.qmd) – the one-page card to keep open on the day, with the session links and what to do if something stalls.
-
-Two of the [companion modules](../../companion/index.qmd) pick up skills that a day sets aside and take them further, at your own pace:
-
-- [Git and GitHub for reproducible research](https://codemoreh.github.io/ar4ds/git-github.html) – version control and publishing your report.
-- [Reproducibility repositories](../../companion/repositories.qmd) – archives, OSF, and preregistration templates in more depth.
+- [Browser lab](lab.qmd) – the whole exercise and its data in a browser tab.
+- [Specification menu](menu.qmd) – the fourteen decisions and the options of each.
+- [Decision map](map.qmd) – the same decisions as a path from the data to a verdict.
+- [Reading a specification curve](reading-inference.qmd) – the companion reading for Task 5.
+- [Cheatsheet](cheatsheet.qmd) – the one-page card for the day.
