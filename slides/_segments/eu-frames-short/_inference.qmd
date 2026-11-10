@@ -1,0 +1,95 @@
+<!-- 2:30–2:45 -->
+## Description and inference {#description-and-inference .smaller}
+
+::: {.small}
+Two jobs that a curve can do:
+
+- **Description** – map how the estimate moves across every defensible choice. That is what the curve of `r fmt_n(nrow(spec_curve))` does, and what Multi100 did for its 504 reanalyses, with no inferential statistics anywhere in its paper
+- **Inference** – ask whether the curve *as a whole* is surprising if there were no association at all. A different and harder job, which most published curves never attempt
+:::
+
+::: {.fragment .small}
+And what the curve leaves out: the options that the audit moved off it and the specifications that nobody ran, such as a person-level model and a lagged predictor; the dependence of its points, which all use the same 270 country-years; some drift of estimand among them; and everything upstream of the panel that the menu does not offer, which is fixed for everyone here. **A curve is a map of the menu written for it**, and it cannot show whether that menu was the right one.
+:::
+
+::: {.src}
+@SteegenEtAl2016IncreasingTransparencyMultiverse; @SimonsohnEtAl2020SpecificationCurveAnalysis; @AczelEtAl2026InvestigatingAnalyticalRobustness.
+:::
+
+::: notes
+A curve does two jobs, and they detach cleanly. The first is description: showing how the estimate moves as the choices move. That is what we built, and it is all that Multi100 did for its five hundred and four reanalyses, whose paper carries no inferential statistics. The second is inference: asking whether the curve, taken as a whole, is more extreme than you would expect if there were no association. Most published curves stop before it. [advance] Four things are missing from so tidy a chart. The options that the audit left off, and the specifications that nobody ran, such as a person-level model. The dependence of the points, which all use the same two hundred and seventy country-years. Some drift of estimand among them. And everything upstream of the panel, which the menu does not offer. A curve is a map of the menu that was written for it.
+:::
+
+## Dependence among the estimates {#not-864-tests .smaller}
+
+::: {.small}
+- Every specification reuses the **same 270 country-years**, so the estimates share their noise: '`r fmt_pct(share_sig(spec_curve))` below zero with CR2 p < 0.05' **describes** the curve and is not a p-value for the claim. Clustered errors allow for the years of one country within each fit, and clustering does not make the fits independent of one another
+- A test of the whole curve has to build its own null: **shuffle the unemployment and growth series of each country in time**, jointly, refit all `r fmt_n(nrow(spec_curve))` specifications, repeat **B = 500** times, and set the observed curve among the 500 null curves
+- With B = 500 the smallest reportable p is 2/(B + 1) ≈ 0.004, a floor set by the number of draws, and near p = 0.05 the Monte Carlo error is about ±0.01, so p = 0.04 and p = 0.06 are the same finding
+- [A DESIGN, NOT YET RUN]{.highlight bg-colour="#ffe3b3"}, fixed before it runs, which is the position that a preregistration puts you in
+:::
+
+::: {.fragment .small}
+**Discussion.** The cosmopolitan scale alone, the outcome that Multi100 instructed, has `r nrow(dplyr::filter(spec_curve, outcome == "mcosmo"))` specifications on the curve: **`r fmt_pct(share_below(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero, `r fmt_pct(share_sig(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero with CR2 p < 0.05.** Strong evidence? *Against what null?*
+:::
+
+::: {.src}
+@SimonsohnEtAl2020SpecificationCurveAnalysis; @PhipsonSmyth2010PermutationPValues; the [reading on the specification curve]({{< var site-url >}}cases/eu-frames/reading-inference.html), which sets out the design in full.
+:::
+
+::: notes
+Seventy-seven per cent lie below zero with a CR2 p under point zero five. But all of them use the same two hundred and seventy country-years, so they share their noise: sampling luck that pushed a few country-years the way of the claim pushed hundreds of specifications with them. The percentage describes the curve; it is not a test of the claim. A test of the whole curve needs a null, built by hand: shuffle the economic series of each country in time, refit the whole curve, five hundred times. The smallest reportable p is then about point zero zero four, and near the threshold the Monte Carlo error is a point either way. The badge says that this test is designed and not run. [advance] Now argue: the cosmopolitan scale alone, strong evidence, and against what null? [harvest; the target answer: we cannot say until we know what chance produces on these dependent data]
+:::
+
+## Critics of the multiverse {#the-critics .smaller}
+
+::: {.small}
+- **The pruning critique.** "Multiverse analyses are only informative when all included models represent equally plausible strategies for estimating the same estimand" [@Auspurg2025RobustnessBetterAssessed, p. 1], written in reply to a study of 3.6 billion estimates [@GanslmeierVlandas2025EstimatingExtentSources]; in the red-card study, Auspurg and Brüderl had traced most of the disagreement among the 29 teams to four different estimands [@AuspurgBruderl2021HasCredibilitySocial]
+- **One correct analysis.** Once the auxiliary assumptions are fixed, "there is a fact of the matter about which analysis correctly implements that test" [@LakensEtAl2026ThereOnlyOne, p. 7], and "Scientists should not compute the percentage of agreement across different data-analytic strategies, because we do not resolve scientific disagreement by majority vote" (p. 16)
+- **What is it for?** "as a tool for reflection and critique, as a persuasive tool, as a serious inferential tool" [@RohrerEtAl2026WhatsMultiverseGood, p. 1], each needing a differently built set
+:::
+
+::: {.fragment .small}
+The curve of the claim is built as the first critic asks, pruned to one claim with a published reason for every option, and it stops short of the second: it keeps **two estimators as two estimands**, because the claim as written does not say whether the change shared by all of Europe belongs to the comparison. The decomposition by decision is the one use that every party endorses, since it shows where the argument has to happen.
+:::
+
+::: {.src}
+Quotations from the preprints, by their own pagination, as in the [module on the multiverse and its critics]({{< var site-url >}}companion/multiverse.html).
+:::
+
+::: notes
+Katrin Auspurg, who with Josef Brüderl traced the red-card spread to four different questions, replied to a study of three point six billion estimates with the sentence at the top of the slide: a multiverse is informative only when every model in it is an equally plausible way of estimating the same estimand. Lakens and colleagues go further: once the assumptions are fixed, one analysis implements the test, so a wide spread is evidence that most of the specifications estimate something else, and counting the share that agree settles nothing. Rohrer, Hullman and Gelman ask what a multiverse is for and name three uses. [advance] Our curve follows the first critic, pruned to one claim with a reason beside every option, and stops short of the second, because it keeps two estimators as two estimands. Every party endorses the decomposition, which shows where the argument has to happen.
+:::
+
+## What preregistration settles {#what-preregistration-settles .smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+**It does settle**
+
+- That your specification was not chosen *because of* its result
+- That your rule for what counts as support was fixed before you had a result
+- That a reader can tell what you intended from what you changed
+:::
+:::
+::: {.column width="50%"}
+::: {.small}
+**It does not settle**
+
+- Whether the specification was any good
+- Whether it estimates the quantity that your question implies
+- Whether the assumptions behind it hold
+
+A badly reasoned analysis that is preregistered is still badly reasoned; the preregistration adds a timestamp
+:::
+:::
+::::
+
+::: {.fragment .small}
+Today you explored and said so: the chart labels every dot of the class **exploratory**. Task 5 of the one-day workshop on this case adds the declaration, one specification fixed before it runs, with a reason that a causal graph supports, because "in the absence of preregistration, researchers may as well determine what is equivalent based on whether or not it supports their result" [@RohrerEtAl2026WhatsMultiverseGood, p. 5]
+:::
+
+::: notes
+So where does preregistration fit? It settles a limited set of things, and the two columns matter equally. On the left: that your specification was not chosen because of its result, that your rule for support was fixed before you had a result, and that a reader can tell what you intended from what you changed. No other device provides those guarantees. On the right, what it does not settle: whether the specification was any good, whether it estimates the quantity that your question implies, or whether its assumptions hold. A badly reasoned analysis that is preregistered is still badly reasoned, with a timestamp on it. [advance] Today you explored, and the chart says so on every dot. The one-day workshop adds the other half, a specification declared before it runs, with a reason from a causal graph: the declaration protects the choice, and the reasoning justifies it.
+:::

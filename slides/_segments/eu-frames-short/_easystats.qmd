@@ -1,0 +1,84 @@
+<!-- 1:40–1:45 -->
+```{r}
+#| label: easystats-data
+#| include: false
+# The course panel under the name that the lab and the modules give it, for
+# the two slides of code behind the menu
+euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+```
+
+## The data work {#the-data-work .smaller}
+
+::: {.small}
+The code behind the menu is the data half of **easystats**, the verbs of datawizard. Each line below runs in the lab, in the pipeline or in a module of the course, and its comment says where:
+:::
+
+::: {.fs-75}
+```r
+# a sample: the country-years without an assistance programme (module Causal graphs)
+datawizard::data_filter(euframes, bailout == 0)
+# the predictor centred, as C6HJR centred it (lab, Task 3)
+euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
+# the scale variant of 018OL, the cell means rescaled to 0–1 (lab, Task 3)
+o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
+# cell means from the respondents (pipeline, R/eu-frames/15_analyst_panels.R)
+kqxue_resp |>
+  datawizard::data_summary(cosmo = mean(cosmo), n = length(cosmo), by = c("cntry", "year"))
+# claim alignment, the sign of a growth slope reversed (module R on the country-year panel)
+curve |> datawizard::data_modify(r_ca = dplyr::if_else(predictor == "growth", -r, r))
+# the country mean of unemployment and the departure of each year from it (module Panel data)
+euframes_wb <- datawizard::demean(euframes, select = "unemp", by = "cntry")
+```
+:::
+
+::: {.small}
+- One framework from the data to the models: the frame that `demean()` returns goes straight into `lmer()`, and `parameters::model_parameters()` reads the fit
+- The verbs keep the variable labels of a survey file as it arrives from the archive, so a labelled Eurobarometer file stays labelled through the chain
+- The help page of a verb names the methods behind it: `demean()` cites Bell and Jones (2015) and Bell, Fairbrother and Jones (2019) for the within–between split
+:::
+
+::: {.src}
+@LudeckeEtAl2022EasystatsFrameworkEasy; @BellJones2015ExplainingFixedEffects; @BellEtAl2019FixedRandomEffects.
+:::
+
+::: notes
+Two slides of code, and this is not a lesson in R. The course does its data work with datawizard, the data half of the easystats framework, and these six lines are copied from where they run. A filter for a sample. A new column for the centred predictor, as I centred it, and another for the rescaled outcome of 018OL. Cell means from the respondents, grouped by country and year, as the panel of KQXUE was rebuilt. Claim alignment, which flips the sign of a growth slope. And demean, which gives the country mean of unemployment and the departure of each year from it in one call, the two columns of the within–between model. Three reasons for these verbs rather than dplyr: one framework from the data to the models, labels that survive the chain, and a help page that names the methods papers behind each verb.
+:::
+
+## Reading a model {#reading-a-model .smaller}
+
+::: {.fs-70}
+```{r}
+#| label: reading-a-model-fit
+#| echo: true
+#| message: false
+# the reproduced specification (module Panel data), read as Task 3 of the lab prints it
+m_twfe <- fixest::feols(mcosmo ~ unemp | cntry + year, data = euframes, vcov = "iid")
+print(parameters::model_parameters(m_twfe), digits = 5)
+```
+
+```{r}
+#| label: reading-a-model-cr2
+#| echo: true
+#| message: false
+# the CR2 test that classes every point of the curve, on the dummy-variable fit (module Panel data)
+m_lsdv <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
+clubSandwich::coef_test(m_lsdv, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp",
+                        test = "Satterthwaite")
+```
+
+```{r}
+#| label: reading-a-model-r
+#| echo: true
+# the conversion rule of Multi100, r = t / sqrt(t^2 + df), as one call (case page, section 4)
+effectsize::t_to_r(-3.804, 233)
+```
+:::
+
+::: {.src}
+@LudeckeEtAl2020ExtractingComputingExploring; @BellMcCaffrey2002BiasReductionStandard; @PustejovskyTipton2018SmallsampleMethodsClusterrobust; the conversion rule of Multi100 (`standard_correlation_coefficient.R` in marton-balazs-kovacs/multi100 on GitHub).
+:::
+
+::: notes
+Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the lab prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the course calls clubSandwich directly. And the conversion of Multi100 is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
+:::

@@ -1,0 +1,111 @@
+<!-- 0:25–0:40 -->
+```{r}
+#| label: panel-facts
+#| include: false
+# The course panel, 270 country-years rebuilt from the GESIS waves; n_cy counts
+# the respondents behind each cell, those who mentioned nothing included
+panel_short <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+```
+
+## The question and the items {#the-question-and-the-items .smaller}
+
+::: {.small}
+- The **Standard Eurobarometer**: face-to-face interviews in every member state, about a thousand per country in each wave, a new sample every time, archived by GESIS
+- One question, **"What does the European Union mean to you personally?"**, with a card of fourteen meanings; every item that the respondent picks is recorded
+- The original author (OA) set the 'Euro' aside and sorted the other thirteen into four framing scales, which cross the valence of a meaning with its content:
+:::
+
+::: {.fs-70}
+| Dimension | Items, with the pooled share of respondents who mentioned each |
+|:--|:--|
+| Cosmopolitan (positive, non-materialist) | Peace (28.54%), Democracy (21.86%), Freedom to travel, study and work anywhere in the EU (50.99%), Cultural diversity (22.12%), Stronger say in the world (23.14%) |
+| Utilitarian (positive, materialist) | Economic prosperity (18.66%), Social protection (11.93%) |
+| Communitarian (negative, non-materialist) | Loss of our cultural identity (12.06%), More crime (17.50%), Not enough control at external borders (16.61%), Unemployment (16.64%) |
+| Libertarian (negative, materialist) | Bureaucracy (21.51%), Waste of money (21.64%) |
+:::
+
+::: {.fragment .small}
+A scale is a **share of mentions**: "the sum of the mentioned items belonging to the specific framing dimension, divided by the total number of items mentioned by the respondent" [@Teney2016DoesEUEconomic, p. 623]
+:::
+
+::: notes
+The data are the Standard Eurobarometer, the survey of the European Commission: face-to-face interviews, about a thousand per country in each wave, and a fresh sample every time, so that we read change in populations and never in persons. The outcome of the paper comes from one question with a card: what does the European Union mean to you personally? The interviewer reads out fourteen meanings, and every one that the respondent picks is recorded. The original author, whom I call OA from here on, set the euro aside and sorted the other thirteen into four scales that cross the valence of a meaning with its content; the cosmopolitan scale is the one that Multi100 named. [advance] And a scale is a share: the items of a dimension that you mention, divided by everything that you mention. Hold on to that definition, because several decisions of the second half are about it.
+:::
+
+## The scales and the panel {#the-scales-and-the-panel .smaller}
+
+::: {.small}
+- **16 waves, 2004–2013**, the crisis decade, in the **27** member states of the time; OA modelled about **390,000** respondents in three levels, respondents in country-waves in countries
+- The course works on the **country-year panel**: the four scales averaged within each country and year, **`r nrow(panel_short)` country-years** built from **`r fmt_n(sum(panel_short$n_cy))`** respondents, with the national **unemployment rate** and **GDP growth** beside them
+:::
+
+::: {.fs-70}
+| Column | What it is |
+|:--|:--|
+| `cntry`, `year` | the cell |
+| `mcosmo`, `mutil`, `mcomm`, `mlib` | the four framing scales, averaged in the cell, 0–1 |
+| `mpos`, `mneg` | the two composites: all positive items, all negative items |
+| `unemp`, `growth` | national unemployment rate and GDP growth, World Bank series |
+| `n_cy` | the respondents behind the cell, from `r fmt_n(min(panel_short$n_cy))` to `r fmt_n(max(panel_short$n_cy))` |
+| `bailout` | 1 if an EU/IMF assistance programme was running |
+:::
+
+::: {.fragment .small}
+The panel addresses the **contextual** question, whether the framing of a country moves with its unemployment; the **compositional** one, whether the same people changed or the mix of people did, needs the respondents.
+:::
+
+::: {.src}
+@Teney2016DoesEUEconomic [pp. 622–625]; `cases/eu-frames/data/EUframes_cy.csv`, with its codebook.
+:::
+
+::: notes
+Sixteen waves between 2004 and 2013, in the twenty-seven member states of the time, and about three hundred and ninety thousand respondents, whom OA modelled in three levels. The Eurobarometer files are licensed by GESIS and may not be passed on, so the course works on an aggregate that I built from them and may share: the four scales averaged within each country and year, two hundred and seventy country-years from more than four hundred thousand interviews, with the national unemployment rate and GDP growth beside them. This is the file that the browser lab has loaded for you. Note the column `n_cy`, the respondents behind each cell, because whether a cell should count by its people is one of the decisions of the second half. [advance] One limit to say plainly: a panel of country means answers the contextual question, and cannot tell whether the same people changed or the mix of people did.
+:::
+
+## The model and the claim {#the-model-and-the-claim .smaller}
+
+::: {.claimcard}
+"… poor economic performances … decrease positive dimensions of EU framing"
+
+<span class="src">Teney (2016: 619), the claim as Multi100 gave it to the analysts</span>
+:::
+
+::: {.small}
+- The hypothesis of the paper reads differently: "Poor national economic performances significantly increase the negative and decrease the positive EU-framing dimensions. The effect is stronger on the materialist dimensions of EU framing" [@Teney2016DoesEUEconomic, p. 621]
+- **Model 1** of Table 3: unemployment on the cosmopolitan scale, **b = −0.00340, t = −4.03, p < .001**, in a three-level model with sex, age, education, occupation, type of community, GDP growth, and the interactions of each economic indicator with education
+- **Model 2** adds the variables on EU policies and party positions, and the same coefficient falls to **−0.00138, t = −1.54**
+:::
+
+::: {.fragment .small}
+Within one paper, support for the claim depends on which of the two models you read, and the paper reports both.
+:::
+
+::: {.src}
+@Teney2016DoesEUEconomic [pp. 619, 621, 626–627].
+:::
+
+::: notes
+This is the claim as every Multi100 analyst received it, cut from the abstract. The hypothesis of the paper itself reads differently, in two parts, and the second part, about the materialist dimensions, never reached us. Which sentence of a paper gets tested is a decision that somebody makes before any analyst opens the data. The number behind the claim is one coefficient from Model 1 of Table 3: unemployment on the cosmopolitan scale, minus point zero zero three four, with a t of minus four, inside a three-level model with individual controls, GDP growth and education interactions. Model 2 adds the variables on EU policies and party positions, and the same coefficient falls to less than half and loses significance. [advance] So inside the original study the claim already rests on a choice between two models, and the paper reports both.
+:::
+
+## The record in SCORE {#the-record-in-score .smaller}
+
+::: {.small}
+SCORE put the paper through every kind of repetition on the grid:
+
+- **Reproduction**, with the Stata code that OA supplied on request: the push-button attempt failed before it produced a number, because the file names in the code did not match the files available for download, and the attempt that rebuilt the data from source was recorded as **'not reproduced'**
+- **Robustness**: the five Multi100 reanalyses that you have just met, unanimous on direction and more than sevenfold apart in size
+- **Replication**, on fourteen later Standard Eurobarometer waves fielded between 2013 and 2019: verdict **'not successful'** by the criterion that SCORE set in advance, a negative coefficient significant at 5%
+:::
+
+::: {.fragment .small}
+Three verdicts on one paper, one for each cell of the grid. The one that five careful people disagreed about is the one that we can work on today.
+:::
+
+::: {.src}
+The SCORE dossier on the paper, [osf.io/h7432](https://osf.io/h7432); @MiskeEtAl2026InvestigatingReproducibilitySocial; @AczelEtAl2026InvestigatingAnalyticalRobustness; @TynerEtAl2026InvestigatingReplicabilitySocial.
+:::
+
+::: notes
+SCORE put this paper through every cell of the grid, all of it public at the address on the slide. The reproduction first. OA supplied the two Stata do-files when asked, but could not share the data, because the GESIS terms forbid it. The push-button attempt failed before it produced a number, because the file names in the code did not match the files that you can download, and the attempt that rebuilt the data from source could not recover the published effect size, so it was recorded as not reproduced. Robustness is the Multi100 study: one sign, sizes more than sevenfold apart. And a replication on fourteen later Standard Eurobarometer waves was judged not successful by the criterion that SCORE had set in advance. [advance] Three verdicts on one paper. The middle one is where five careful people disagreed, and it is the one that we can work on.
+:::

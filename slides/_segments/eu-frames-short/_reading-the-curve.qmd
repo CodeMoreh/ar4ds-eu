@@ -1,0 +1,121 @@
+<!-- 2:15–2:30 -->
+## A bet on the decisions {#the-bet}
+
+::: {.none}
+Nine decisions vary on the curve: outcome, predictor, series, predictor form, adjustment, estimator, no-opinion rule, item set and cell weighting
+
+**Which decision moves the estimates most across the `r fmt_n(nrow(spec_curve))` specifications?**
+
+Write your guess, hold it, and send it when I say go.
+:::
+
+::: notes
+Before I show you the answer, commit to a guess. You have made these choices yourselves in the hands-on, so you have instincts now. Nine decisions vary on the curve, from the outcome scale and the predictor to the way in which respondents who mention nothing are scored. Which one moves the estimates most across all eight hundred and sixty-four? The outcome is a popular pick, because what 'EU framing' means sounds like the deepest choice. The measurement decisions are another, since everyone in this audience has a story about missing answers or about which unemployment series to trust. Write your guess, hold it, and send it when I say go. [go; read the spread aloud] Let us look.
+:::
+
+## The decomposition by decision {#what-moved-the-estimates}
+
+```{r}
+#| label: fork-importance
+#| fig-width: 10
+#| fig-height: 4
+# Copied from _segments/eu-frames/_p4-forks.qmd (chunk fork-importance); the
+# last line calls patchwork::wrap_plots(), because this deck includes no
+# segment that loads patchwork, whose + method the original relies on.
+# Two readings of each decision on the curve (cases/eu-frames/data/spec_curve_forks.csv): the
+# share of the variance of the claim-aligned partial r that its main effect
+# carries, and the share of pairs, differing only in that decision, whose two
+# members fall in different classes under CR2. Ordered by the share
+# of the variance; the estimator in orange, the interactions in grey.
+fk <- curve_forks |>
+  dplyr::mutate(
+    name     = axis_names[axis],
+    share    = share / 100,
+    crossing = crossing_rate / 100,
+    fill     = dplyr::case_when(axis == "estimator" ~ "lead",
+                                axis == "interactions" ~ "rest",
+                                .default = "axis")
+  ) |>
+  dplyr::arrange(dplyr::if_else(axis == "interactions", -Inf, share)) |>
+  dplyr::mutate(name = factor(name, levels = name))
+fk_fill <- ggplot2::scale_fill_manual(values = c(lead = orange, axis = ncl_blue, rest = grey_mid),
+                             guide = "none")
+p_share <- ggplot2::ggplot(fk, ggplot2::aes(share, name, fill = fill)) +
+  ggplot2::geom_col(width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_pct(share)), hjust = -0.15, colour = ncl_blue,
+            fontface = "bold", size = 4.4) +
+  fk_fill +
+  ggplot2::scale_x_continuous(limits = c(0, 0.55), labels = NULL) +
+  ggplot2::labs(x = "share of the variance", y = NULL) +
+  theme_slide(15)
+p_cross <- ggplot2::ggplot(dplyr::filter(fk, axis != "interactions"), ggplot2::aes(crossing, name, fill = fill)) +
+  ggplot2::geom_col(width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = fmt_pct(crossing)), hjust = -0.15, colour = ncl_blue,
+            fontface = "bold", size = 4.4) +
+  fk_fill +
+  ggplot2::scale_y_discrete(drop = FALSE) +
+  ggplot2::scale_x_continuous(limits = c(0, 0.85), labels = NULL) +
+  ggplot2::labs(x = "pairs that change class when it moves alone", y = NULL) +
+  theme_slide(15) +
+  ggplot2::theme(axis.text.y = ggplot2::element_blank())
+patchwork::wrap_plots(p_share, p_cross, nrow = 1)
+```
+
+::: {.small}
+- The **estimator** carries **`r fmt_pct(fork_of("estimator"))`** of the variance, the predictor `r fmt_pct(fork_of("predictor"))` and the outcome `r fmt_pct(fork_of("outcome"))`; the no-opinion rule, the series, the form and the cell weighting together carry `r fmt_pct(sum(purrr::map_dbl(c("noop", "measure", "pred_form", "cell_weight"), fork_of)))`
+- The no-opinion rule carries almost none of the variance and still changes the class of `r fmt_pct(fork_of("noop", "crossing_rate"))` of its pairs
+:::
+
+::: {.src}
+cases/eu-frames/data/spec_curve_forks.csv: main-effect shares of the variance over the curve, and class changes under CR2 errors clustered by country. The [decision map]({{< var site-url >}}cases/eu-frames/map.html) shows where each decision is made.
+:::
+
+::: notes
+The estimator carries the largest share of the variation on the curve, about forty-one per cent, and the predictor comes next at seventeen. The outcome scale, which many people bet on, carries nine. The estimator here is the choice between two estimands, with or without the year effects, which is why it does so much. The measurement decisions carry about one per cent between them, and the interactions about a quarter. The right-hand panel asks how often moving one decision, with everything else held, changes whether a specification clears the CR2 test. The predictor leads by far, but the no-opinion rule, with almost no share of the variance, still changes the class of about one pair in twenty-five. A decision can matter little across the curve and still decide whether your own result is significant. Whoever guessed the estimator: take the point.
+:::
+
+## The five analysts on the curve {#the-five-analysts-on-the-curve}
+
+```{r}
+#| label: spec-overlay
+#| fig-width: 9.5
+#| fig-height: 4.3
+# Copied from _segments/eu-frames/_p4-classchart.qmd (chunk spec-overlay).
+# The panel of the class-chart slide, with the six reference results
+# (cases/eu-frames/data/reference_marks.csv) placed as the chart at the top of the Multiverse
+# page places them: each on the degrees of freedom of its own inference, in
+# ink, its shape from the CR2 check where the design can be refitted on
+# the country-year cells and from the p-value as reported where it cannot.
+# The C6HJR mark is the reproduced specification itself.
+spec_base() +
+  mark_layer(dplyr::transmute(ref_marks, rank, r = r_placement, sig, label = tag))
+```
+
+::: {.small}
+- Each result sits on the degrees of freedom of its own inference, the original study by a refit of its design without its education interactions, tagged OA design; four of the six come from outside the menu, and nobody was wrong
+- On the curve `r sum(spec_curve$r_ca > 0)` of the `r fmt_n(nrow(spec_curve))` specifications lie above zero, all of them GDP growth on the cosmopolitan scale and `r if (any(spec_curve$r_ca > 0 & spec_curve$sig)) "some" else "none"` with CR2 p < 0.05; off the curve, pooled OLS changes the sign in `r fmt_pct(dev_of("pooled_cl", "sign_changes"))` of its pairs and the sample without the bailout countries in `r fmt_pct(dev_of("no_bailout", "sign_changes"))`
+:::
+
+::: {.src}
+cases/eu-frames/data/reference_marks.csv, spec_curve_forks.csv and menu_deviations.csv; OA and PRL47 on the Satterthwaite df of a course refit of each design.
+:::
+
+::: notes
+The same curve, with the six reference results dropped onto it: the five Multi100 analysts and the design of the original author, tagged OA design, each on the degrees of freedom of its own inference. The published coefficient of the original study belongs to the low-education band of a model with education interactions, so its mark is a refit without them. KEVF1, KQXUE and the original study sit to the left. My own result is the reproduced specification. PRL47 sits further right once its z is converted on proper degrees of freedom, and 018OL near the right-hand end. Four of the six come from outside the menu, and nobody was wrong. [advance] When this claim flips sign, it flips for reasons that can be named: on the curve only growth on the cosmopolitan scale, never significantly, and off it the options that change the question.
+:::
+
+## Your own placement {#your-placement .smaller}
+
+::: {.small}
+- Rerun `try_spec()` with the choices that you submitted in Task 4: its output includes your **placement**
+- The placement is the share of the `r fmt_n(nrow(spec_curve))` specifications on the curve with a more negative claim-aligned *r* than yours. For the reproduced specification it is `r sprintf("%.0f%%", 100 * mean(spec_curve$r_ca < curve_ref$r_ca))`
+- The same statistic that places the reference results, computed for **you**
+:::
+
+::: {.fragment}
+Read your placement, hold it, and send it when I say go. Without a submission, the reproduced specification is your number.
+:::
+
+::: notes
+Your turn to be placed. Rerun `try_spec()` with the choices that you submitted, and read the placement line in its output. It is the same statistic that places the reference results: the share of the curve that is more negative than yours. For the reproduced specification, my own model, it is sixty-seven per cent, so if you did not submit, that is your number. Read it, hold it, and send it when I say go. [go] Look at the range. The class spans a good stretch of the curve, and every one of you can now say where you stand relative to eight hundred and sixty-four justifiable alternatives. That sentence, "my estimate sits at this percentile of the specification curve", is a publishable way to report a robustness check, provided that you say how the curve was built, which is the question for the rest of this half.
+:::

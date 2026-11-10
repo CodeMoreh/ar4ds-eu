@@ -1,0 +1,72 @@
+<!-- 2:45–2:50 -->
+## Replication with new data {#replication-with-new-data .smaller}
+
+::: {.small}
+- A replication asks **the same question of new data**. The Standard Eurobarometer kept asking what the EU means to people after 2013, and SCORE commissioned a replication on fourteen Standard waves fielded between 2013 and 2019, with a model close to that of the original study
+- Its verdict: **not successful**, by the criterion that SCORE fixed in advance. A failed replication says that the claim did not hold in those data with that analysis; on its own it cannot say whether the data, the analysis or the world had changed
+:::
+
+::: {.fragment .fs-75}
+| Decision | Fixed before anyone opens the new data |
+|:--|:--|
+| **The claim and its test** | which coefficient, which sign, which threshold counts as success |
+| **The data** | which waves, which countries, which unemployment series |
+| **The measurement** | the fifteenth meaning on the answer card since the end of 2019; the respondents who mention nothing |
+| **The analysis** | the model of your analyst, as you reproduced it, unchanged |
+| **The report** | what you will say if the result differs, and what if it agrees |
+:::
+
+::: {.src}
+The SCORE dossier on the paper, [osf.io/h7432](https://osf.io/h7432); @TynerEtAl2026InvestigatingReplicabilitySocial.
+:::
+
+::: notes
+The last of the three Rs is replication: the same question, new data. The Standard Eurobarometer kept asking people what the EU means to them after 2013, and SCORE commissioned exactly this: fourteen Standard waves fielded between 2013 and 2019, and a model like that of the original author. The verdict was not successful, by the criterion that SCORE had set before the data were opened. It says that the claim did not hold in those data with that analysis, and not which of the three moved: the data, the analysis, or the world. [advance] A replication of the analysis that you reproduced involves decisions of five kinds, and every one can be fixed before you look at the new data: the coefficient, sign and threshold; the waves, countries and series; the fifteenth answer category and the silent respondents; the model, unchanged; and what you will say either way.
+:::
+
+## The three Rs on this paper {#the-three-rs-on-this-paper}
+
+```{r}
+#| label: matrix-this-paper
+#| fig-width: 12
+#| fig-height: 7
+# The data × analysis matrix of the first half with the verdicts on this paper
+# written into its cells, drawn as repeatability_matrix() of the setup segment
+# draws the glossary, from the same repeatability_cells and palette; the cell
+# that nobody attempted is dimmed.
+this_paper <- repeatability_cells |>
+  dplyr::mutate(
+    def = c(
+      Reproducibility  = "SCORE, twice: the push-button attempt\nfailed on the file names, and the rebuild\nfrom the source data was 'not reproduced'",
+      Robustness       = "Multi100: five analysts, one sign,\nsizes more than sevenfold apart;\nthe class today, on the curve of 864",
+      Replicability    = "SCORE, on fourteen later Standard\nEurobarometer waves: 'not successful'",
+      Generalisability = "not attempted"
+    )[term],
+    data = factor(data, levels = c("SAME DATA", "DIFFERENT DATA")),
+    analysis = factor(analysis, levels = c("DIFFERENT METHODS", "SAME METHODS")),
+    fill = dplyr::if_else(term == "Generalisability", "#b6bcc3", fill)
+  )
+ggplot2::ggplot(this_paper, ggplot2::aes(data, analysis)) +
+  ggplot2::geom_tile(ggplot2::aes(fill = fill), colour = "white", linewidth = 4, width = 1, height = 1) +
+  ggplot2::geom_text(ggplot2::aes(label = term), colour = "white", fontface = "bold", size = 9,
+                     nudge_y = 0.25) +
+  ggplot2::geom_text(ggplot2::aes(label = def), colour = "white", size = 5.2, nudge_y = -0.1,
+                     lineheight = 0.95) +
+  ggplot2::scale_fill_identity() +
+  ggplot2::scale_x_discrete(position = "top") +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_void(20) +
+  ggplot2::theme(panel.grid = ggplot2::element_blank(),
+                 axis.text = ggplot2::element_text(face = "bold", colour = ncl_blue),
+                 axis.text.x.top = ggplot2::element_text(size = 17),
+                 axis.text.y = ggplot2::element_text(size = 15, angle = 90, hjust = 0.5),
+                 plot.margin = ggplot2::margin(2, 8, 2, 2))
+```
+
+::: {.src}
+The SCORE dossier on the paper, [osf.io/h7432](https://osf.io/h7432); the grid after @NosekEtAl2025BriefGlossaryTerms.
+:::
+
+::: notes
+The grid of the first half, with this paper written into its cells. Reproduction, the same data under the same analysis, failed twice before any question of the finding arose. Robustness, the same data under different justifiable analyses, is the Multi100 study, five analysts with one sign and sizes more than sevenfold apart, and since today it is also the class, on the curve of eight hundred and sixty-four. Replication, new data under the analysis of the original study, was not successful. Read the two lower cells against each other. Robustness asks whether the finding survives other defensible analyses of the data in hand, and here almost every justifiable analysis points the way of the claim, with the strength of the evidence depending on the estimator. Replicability asks whether the finding holds in new data under the original analysis, and here it did not. The two verdicts answer different questions, and neither settles the other.
+:::

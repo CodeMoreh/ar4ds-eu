@@ -1,0 +1,90 @@
+<!-- 1:30–1:40 -->
+```{r}
+#| label: menu-facts
+#| include: false
+# The respondent counts, the share who mentioned nothing and the adult
+# population of each country-year, from the weights file of the case
+pw_short <- readr::read_csv("../cases/eu-frames/data/teney_panel_weights.csv", show_col_types = FALSE)
+```
+
+## The specification menu {#the-specification-menu .smaller}
+
+::: {.small}
+Fourteen decisions stand between the panel and a verdict on the claim, in three groups. One test sorts them: **would two analysts who chose differently accept each other's number as an answer to the same question?**
+
+| Group | Decisions | A different choice |
+|:--|:--|:--|
+| **The question** | frame set, scoring rule, predictor, adjustment set, sample, whose average, estimator | changes what is estimated, so that two analysts answer different questions |
+| **Measurement** | respondents who mention nothing, item set, cell weighting, published series | changes how a named quantity is measured, and leaves the question as it is |
+| **The model** | predictor form, outcome family, inference | changes how the model is fitted and how sure its answer is said to be |
+:::
+
+::: {.fragment .small}
+Every option of every decision was asked whether it is a justifiable way of answering *this* claim. The options that are cross into the **`r fmt_n(nrow(spec_curve))` specifications** of the curve of the claim, and the [specification menu]({{< var site-url >}}cases/eu-frames/menu.html) gives the reason for each option that is not.
+:::
+
+::: {.src}
+@LundbergEtAl2021WhatYourEstimand; the specification menu and the [decision map]({{< var site-url >}}cases/eu-frames/map.html) of the course site.
+:::
+
+::: notes
+Here is the menu. Fourteen decisions stand between the panel and a verdict on the claim. One test sorts them into three groups: would two analysts who chose differently accept each other's number as an answer to the same question? If not, the decision belongs to the question, and it rewrites the estimand statement that you wrote before the break. If they would, and the decision concerns how a named construct becomes a column of numbers, it is a measurement decision; everything else belongs to the model, which changes how the fit is made and how sure its answer is said to be. [advance] Every option was asked whether it is a justifiable way of answering this claim, and the options that passed cross into the eight hundred and sixty-four specifications of the curve. The menu page gives the reason for each option left off.
+:::
+
+## The survey decisions {#the-survey-decisions .smaller}
+
+::: {.small}
+Six of the fourteen belong to survey methodology:
+
+- **Which items form a scale** – all 13, or the 12 without 'Unemployment', the item that ties the outcome to the predictor by its content. Both on the curve
+- **Share or count** – the paper divides the items of a dimension by everything that the respondent mentioned; a count measures how much a person says about the EU, which is another quantity. The curve keeps the share
+- **The respondent who named nothing** – `r fmt_pct(sum(pw_short$n_noop) / sum(pw_short$n_cy))` of respondents; scored zero (the course panel) or left out (the code of OA), both on the curve; a split rule and two imputation rules off it
+- **Weights within a cell** – the respondents as interviewed, or under the post-stratification weight of GESIS. Both on the curve
+- **Weights across cells** – every country-year once, the average member state; or by respondents, by effective sample size, or by adult population, the average European, in which the largest state counts `r round(max(pw_short$pop_15plus) / min(pw_short$pop_15plus))` times the smallest. Only the first is on the curve
+- **The published series of the predictor** – four unemployment series that cover every cell and move together within countries, all on the curve; a fifth, the Eurostat table tipsun20, has no row for the United Kingdom and almost none before 2009, so it changes the population under the name of a measure
+:::
+
+::: {.src}
+The [specification menu]({{< var site-url >}}cases/eu-frames/menu.html), sections The question and Measurement; `cases/eu-frames/data/teney_panel_weights.csv`.
+:::
+
+::: notes
+Six of the fourteen belong to survey methodology. Which items form a scale, with or without the item 'unemployment', which names the predictor inside the outcome. Whether a scale is a share of what a person mentioned, as the paper has it, or a count of items. What to do with the six per cent who named nothing: the course panel scores them zero, the code of the original study dropped them, and the imputation rules are on the menu but off the curve, computed at one set of settings only. Whether the cell mean takes the post-stratification weight of GESIS. Whether a country-year counts once, as the average member state, or by its people, as the average European. And which published series of unemployment, where four move together and a fifth, with no British row and almost nothing before 2009, changes the population while looking like a measure.
+:::
+
+## Estimator and inference {#estimator-and-inference .smaller}
+
+::: {.fs-80}
+| Estimator | What it compares | Curve |
+|:--|:--|:--|
+| **Two-way fixed effects** | each country with itself, net of the change shared by all member states in a year | on |
+| **Country fixed effects** | each country with itself, the shared change included | on |
+| **Random effects** | a blend of the two comparisons, assuming country effects unrelated to the predictor | off – the assumption fails on this panel |
+| **Pooled OLS** | countries with each other *and* over time | off – another question |
+| **Within–between model** | the two comparisons, separately | off – a check, taught beside the curve |
+:::
+
+::: {.fragment .small}
+The two designs on the curve are two estimands: below zero with CR2 p < 0.05 are `r fmt_pct(share_sig(dplyr::filter(spec_curve, estimator == "fe_country")))` of the specifications with country effects and `r fmt_pct(share_sig(dplyr::filter(spec_curve, estimator == "fe_twoway")))` of the two-way ones. **Inference is fixed on the curve**: every point is classed by errors clustered by country with the CR2 correction, on Satterthwaite degrees of freedom, the test of the slide before the break.
+:::
+
+::: {.src}
+@BellJones2015ExplainingFixedEffects; @BellMcCaffrey2002BiasReductionStandard; @PustejovskyTipton2018SmallsampleMethodsClusterrobust; the [module on panel data]({{< var site-url >}}companion/panel-data.html).
+:::
+
+::: notes
+The Estimator moves the results most, and you met it before the break. Two-way fixed effects compare each country with itself and remove whatever all member states went through in a given year. Country fixed effects compare each country with itself and keep that shared change in. Both are defensible readings of the claim, so both stay on the curve, as two estimands rather than two ways of estimating one. Random effects blend the within and the between comparison and assume that stable country differences are unrelated to unemployment, which the test of the two slopes rejected. Pooled OLS mixes the two comparisons, which run in opposite directions here, and the within–between model separates them, as a check beside the curve. [advance] Note how far the two designs on the curve differ in the share that clears the test, and that inference is not a choice on the curve.
+:::
+
+## Ground rules for the menu {#the-ground-rules .smaller}
+
+::: {.small}
+- **Every try starts from the reproduced specification**, the model of C6HJR, whichever analyst you reproduced: `mcosmo`; share of mentions; World Bank unemployment, raw; no adjustment; two-way fixed effects; all 270 country-years, each counted once; no mention scored zero; all 13 items; cells as interviewed; a linear model; CR2 errors clustered by country
+- **One decision at a time**, the others held, so that when a dot moves you can say what moved it. An option that is off the curve is refused by `try_spec()`, with the reason and the page that teaches it
+- **Claim alignment**: every scale on the curve is a positive framing, so below zero is the direction of the claim for unemployment; for GDP growth the sign is reversed, because the claim expects framing to rise with growth. The helpers do it for you
+- **The curve of `r fmt_n(nrow(spec_curve))`** keeps the options that answer the same question in a justifiable way, and the options that answer another question are taught beside it
+:::
+
+::: notes
+Four ground rules before you touch the menu. First, every try starts from the reproduced specification, my own model, whichever analyst you reproduced: the cosmopolitan share on World Bank unemployment, raw, with no adjustment, two-way fixed effects, every country-year counted once, respondents who mention nothing scored zero, all thirteen items, cells as interviewed, a linear model, and the CR2 test. Second, change one decision at a time and hold the others, which keeps the class chart readable: when a dot sits somewhere surprising, we can say what put it there. An option off the curve is refused with its reason, and trying one is part of the exercise. Third, claim alignment: a negative sign supports the claim for unemployment, and for growth the helpers reverse the sign. Fourth, the curve holds the options that answer the same question; the others are taught beside it.
+:::

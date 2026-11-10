@@ -1,0 +1,67 @@
+<!-- 2:05–2:15 -->
+## Where the idea comes from {#where-the-idea-comes-from .smaller}
+
+::: {.small}
+- **Multiverse analysis** [@SteegenEtAl2016IncreasingTransparencyMultiverse] began with the choices made before any model is fitted, how to code, exclude and combine: build every dataset that a reasonable set of choices could have produced and run the analysis on all of them. The founding paper asks that "it should become standard practice to go beyond a single data set analysis and to acknowledge the multiverse of statistical results", and concedes that doing so "will often be difficult, and to a large extent subjective" (p. 710)
+- **Specification curve analysis** [@SimonsohnEtAl2020SpecificationCurveAnalysis] makes the same move for the choices of the model and adds a display, the estimates in order with the choices beneath each one, and a test of the curve as a whole against a null distribution built by permutation
+- Behind both stands the **garden of forking paths** [@GelmanLoken2014StatisticalCrisisScience]: one test chosen after looking at the data already has the wrong p-value, and a single path through the garden keeps no record of its branches
+:::
+
+::: {.fragment .small}
+What you did in Task 4 was to walk three or four paths of that garden and write them down, which every published analysis could do and almost none reports.
+:::
+
+::: notes
+A brief history, because the vocabulary is a mess and knowing which word came from where helps. Multiverse analysis is Steegen and colleagues in 2016, and it grew out of the choices made before any model is fitted, with the proposal that you build every dataset that a reasonable set of choices could have produced and report the whole set of results. The founding paper asks for that to become standard practice, and concedes in the same breath that it is difficult and to a large extent subjective, which the critics would later press. Specification curve analysis is Simonsohn, Simmons and Nelson, the same move for the choices of the model, with a display and, in its full form, a test of the whole curve. Behind both stands the garden of forking paths of Gelman and Loken. [advance] In Task 4 you walked three or four paths of that garden and wrote them down.
+:::
+
+## Enumeration and curation {#enumeration-and-curation .smaller}
+
+::: {.small}
+Rohrer, Hullman and Gelman ask what a multiverse is *for*, and name three uses, "as a tool for reflection and critique, as a persuasive tool, as a serious inferential tool"; it "fails as a persuasive tool when researchers disagree about which variations should be included in the analysis", and "fails as a serious inferential tool when the included analyses do not target a coherent estimand" [@RohrerEtAl2026WhatsMultiverseGood, p. 1]
+
+- **Enumerate**: cross every option of every decision. Complete and mechanical, and the set fills with specifications that nobody would defend, so that the spread stops meaning anything. Our fourteen decisions multiplied out give about **`r fmt_n(n_full_menu)`** specifications, each testable under several inference rules
+- **Curate**: keep only what you would defend in print, for an estimand that you have named. The set becomes a claim of its own, which a sceptic can attack option by option, so the reasons go beside the curve
+:::
+
+::: {.fragment .small}
+The curve of the claim is a curated **`r fmt_n(nrow(spec_curve))`**: every option was asked whether it answers *this* claim in a justifiable way, because "there is nothing in the distribution of estimates per se that tells us which is the true effect" [@YoungCumberworth2025MultiverseAnalysisComputational, p. 119]
+:::
+
+::: notes
+The question that organises the current debate is the one that Rohrer, Hullman and Gelman ask: what is a multiverse for? Reflection and critique, persuasion, or inference, and each purpose needs a differently built set. Enumerate, and you cross every option of every decision: complete, mechanical, and the set fills with specifications that nobody would defend, so that of course the answer varies; our fourteen decisions multiplied out give about one point seven million specifications. Or curate, and keep only what you would defend in print for the estimand that you have named, which makes the set a claim of its own that a sceptic can attack option by option. [advance] The curve of this claim is a curated eight hundred and sixty-four, with a reason for every option, because the distribution of estimates on its own tells you nothing about which is right.
+:::
+
+## The class chart and the curve {#the-class-chart-and-the-curve}
+
+```{r}
+#| label: spec-curve
+#| fig-width: 9.5
+#| fig-height: 4.3
+# Copied from _segments/eu-frames/_p4-classchart.qmd (chunk spec-curve).
+# The curve of the claim, the chart that the Multiverse page draws, minus the
+# hover: the specifications ranked by the claim-aligned partial r and classed
+# by CR2 errors clustered by country, with the reproduced specification
+# (the model of C6HJR) tagged in ink. Built on spec_base() (setup chunk), the
+# panel that the slide of the reference results reuses.
+spec_base() +
+  mark_layer(dplyr::transmute(curve_ref, rank, r = r_ca, sig,
+                              label = paste0("reproduced specification\nCR2 p = ", fmt_num(p_cr2, 4))))
+```
+
+::: {.small}
+- The curve of the claim: **`r fmt_n(nrow(spec_curve))`** specifications of the three positive scales – unemployment or GDP growth, two fixed-effects designs, and the measurement options that the audit keeps
+- **`r fmt_pct(share_below(spec_curve))`** below zero, **`r fmt_pct(share_sig(spec_curve))`** below zero with CR2 p < 0.05, and the claim-aligned partial r runs from **`r fmt_num(min(spec_curve$r_ca))` to +`r fmt_num(max(spec_curve$r_ca))`**
+:::
+
+::: {.resultline}
+The dots of the class are on the [Multiverse]({{< var live-results-url >}}) page, drawn over this same curve
+:::
+
+::: {.src}
+cases/eu-frames/data/spec_curve.csv: the height of a mark is the partial r of the conventional fit, its shape the class under CR2 errors clustered by country, on Satterthwaite df.
+:::
+
+::: notes
+This is the curve of the claim, over which the Multiverse page on the other screen draws your dots. Eight hundred and sixty-four specifications, ranked from the strongest support for the claim on the left to the weakest on the right, every one a justifiable answer to the claim. Below zero is the direction of the claim, and almost everything is below zero, so direction is not where the disagreement lies. The shape is the test: a circle where CR2 errors clustered by country give a p under point zero five, a cross where they do not, and about three in four are circles. The reproduced specification, my own model, is a cross, with a CR2 p just above the line. Now look at the class chart beside it: where did your dots fall, and which choice moved your estimate most?
+:::
