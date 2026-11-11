@@ -6,21 +6,27 @@ format:
   live-revealjs:
     webr:
       # The packages that the helpers of the lab and the cells of the hands-on
-      # slides call. The runtime adds evaluate, knitr and htmltools itself; gt
-      # is left out, because no slide prints a formatted table and it adds 12
-      # to 23 seconds to the first opening of a page.
+      # slides call. lme4 and lmerTest serve the mixed model of 018OL and load
+      # with the deck, so that no cell downloads during the session (in the lab
+      # the cell of 018OL fetches them on its first run, about 32 MB). The
+      # runtime adds evaluate, knitr and htmltools itself; gt is left out,
+      # because no slide prints a formatted table and it adds 12 to 23 seconds
+      # to the first opening of a page.
       packages:
         - datawizard
         - purrr
         - fixest
         - parameters
-# The four files that the cells read, fetched into the browser when the deck
+        - lme4
+        - lmerTest
+# The five files that the cells read, fetched into the browser when the deck
 # opens; the runtime drops the leading ../ of each path, so inside the browser
 # they sit under cases/eu-frames/data/, the folder that the setup cell below
 # names as .data_dir.
 resources:
   - ../cases/eu-frames/data/EUframes_cy.csv
   - ../cases/eu-frames/data/analyst_KQXUE.csv
+  - ../cases/eu-frames/data/analyst_018OL.csv
   - ../cases/eu-frames/data/spec_curve.csv
   - ../cases/eu-frames/data/menu_options.csv
 live:
@@ -37,8 +43,8 @@ THE LIVE DECK OF THE SHORT SESSION, AND HOW IT DIFFERS FROM THE PLAIN DECK
 - The same session as slides/eu-frames-short.qmd, with the tasks of the
   browser lab on the slides themselves: R loads inside the deck through the
   Quarto Live extension, and the hands-on slides carry the cells of Task 1,
-  Task 3 (C6HJR and KQXUE, with their hints and solutions) and Task 4, on
-  three slides, and the placement cell. The facilitator and the class work inside one deck; the
+  Task 3 (C6HJR, KQXUE and 018OL, with their hints and solutions, one
+  slide each) and Task 4, on three slides, and the placement cell. The facilitator and the class work inside one deck; the
   browser lab stays the fallback.
 - The folder. A live deck cannot share slides/ with the plain decks, because
   the `format: revealjs` key of slides/_metadata.yml renders it twice (root

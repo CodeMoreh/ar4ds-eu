@@ -6,7 +6,7 @@ title: "First half – The claim and its reproduction"
 **Slides.** [Open the deck at this half](../../slides/eu-frames-short.html#/first-half-the-claim-and-its-reproduction){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
 :::
 
-The first half gives you the vocabulary of three kinds of repetition and the case, a study of how the citizens of the member states frame the European Union, and asks which question its claim answers. Before the break you reproduce the result that one of two independent analysts of the claim recorded, and find out why your number is exactly that number.
+The first half gives you the vocabulary of three kinds of repetition and the case, a study of how the citizens of the member states frame the European Union, and asks which question its claim answers. Before the break you reproduce the result that one of three independent analysts of the claim recorded, and find out why your number is exactly that number.
 
 ## 1. The plan of the session
 
@@ -36,15 +36,18 @@ Run the three cells of Task 1 and check that the second reports 270 rows, 27 cou
 
 [Open the browser lab at Task 3](../../cases/eu-frames/lab.qmd#task-3-reproduction){.btn .btn-primary target="_blank"}
 
-Choose one of two analysts and run their cells in order; each cell with gaps to fill has a hint and a full solution under it. Type the analyst and the value, hold them, and send them when the facilitator says go.
+Choose one of three analysts and run their cells in order; each cell with gaps to fill has a hint and a full solution under it. Type the analyst and the value, hold them, and send them when the facilitator says go.
 
 | Analyst | Data | Model | Recorded by Multi100 |
 |:--|:--|:--|:--|
 | C6HJR | the course panel, 270 country-years | fixed effects for country and year, conventional standard errors | t = −3.804 on 233 df |
 | KQXUE | `analyst_KQXUE.csv`, 270 country-years rebuilt from the code of the analyst | a fixed effect for each country, conventional standard errors | t = −7.169 on 242 df |
+| 018OL | `analyst_018OL.csv`, 420 cells of country, year and wave | random intercepts for country, year and wave, Satterthwaite degrees of freedom | t = −1.206 on 396.9 df |
+
+On the live deck the two packages of the model of 018OL load when the deck is opened; in the lab its second cell downloads them, about 32 MB, so take that analyst there on a good connection.
 
 ## 7. Why the numbers differ
 
-**On the slides.** Everyone who chose the same analyst got the same t, and the two analysts did not. The slides set the two fixed-effects models and a model with random intercepts side by side, then show what clustered standard errors and the CR2 test do to the same estimate when twenty-seven countries are the clusters.
+**On the slides.** Everyone who chose the same analyst got the same t, and the analysts did not. The slides set the two fixed-effects models and a model with random intercepts side by side, then show what clustered standard errors and the CR2 test do to the same estimate when twenty-seven countries are the clusters.
 
 **By the end of the half** you have written the estimand statement behind the claim, you have reproduced a recorded result to the third decimal, and you can say why the estimate stays where it is while the test moves.

@@ -2,7 +2,7 @@
 ## Hands-on 1 – C6HJR {#hands-on-1-the-reproduction .smaller}
 
 ::: {.small}
-**Task 3.** Choose one of two analysts, this slide or the next. C6HJR: the course panel, fixed effects for country and year, on record **t = −3.804 on 233 df**. The first cell centres the unemployment rate and prints nothing, the second fits the model. Write the analyst and the *t*, hold it, and send it when I say go.
+**Task 3.** Choose one of three analysts, this slide or the two after it. C6HJR: the course panel, fixed effects for country and year, on record **t = −3.804 on 233 df**. The first cell centres the unemployment rate and prints nothing, the second fits the model. Write the analyst and the *t*, hold it, and send it when I say go.
 :::
 
 ```{webr}
@@ -78,13 +78,13 @@ You should get a coefficient of −0.00347, a standard error of 0.00091 and t(23
 ::::
 
 ::: notes
-Now you work, on the question at the heart of reproducibility: given the data and the model, does the recorded number come back? Choose one of two analysts, this slide or the next. Mine runs on the course panel, with fixed effects for country and year, in two cells: the first centres the unemployment rate, as I centred it, and prints nothing; the second fits the model and prints the table. Each gap has a hint and a solution under its cell, and using them is not cheating. A long printout scrolls inside its box, and so does the slide. When you have your value, write the analyst and the t, hold it, and send it when I say go. If you finish early, take the other analyst on the next slide. [circulate; then go]
+Now you work, on the question at the heart of reproducibility: given the data and the model, does the recorded number come back? Choose one of three analysts, this slide or the two after it. Mine runs on the course panel, with fixed effects for country and year, in two cells: the first centres the unemployment rate, as I centred it, and prints nothing; the second fits the model and prints the table. Each gap has a hint and a solution under its cell, and using them is not cheating. A long printout scrolls inside its box, and so does the slide. When you have your value, write the analyst and the t, hold it, and send it when I say go. If you finish early, take the other analyst on the next slide. [circulate; then go]
 :::
 
 ## Hands-on 1 – KQXUE {#hands-on-1-kqxue .smaller .output-8}
 
 ::: {.small}
-**Task 3, the other analyst.** The panel of KQXUE, 270 country-years rebuilt from the code of the analyst, with a fixed effect for each country: on record **t = −7.169 on 242 df**. The first cell loads the panel and lists its columns; the second has one gap. Write the analyst and the *t*, hold it, and send it when I say go.
+**Task 3, the second analyst.** The panel of KQXUE, 270 country-years rebuilt from the code of the analyst, with a fixed effect for each country: on record **t = −7.169 on 242 df**. The first cell loads the panel and lists its columns; the second has one gap. Write the analyst and the *t*, hold it, and send it when I say go.
 :::
 
 ```{webr}
@@ -126,5 +126,53 @@ You should get a coefficient of −0.00736, a standard error of 0.00103 and t(24
 ::::
 
 ::: notes
-KQXUE built a panel of its own, which the course rebuilt from the Stata code that the analyst deposited, and gave each country a fixed effect and no year effects. The first cell loads that panel and lists its columns: the outcome is the cosmopolitan share averaged without the respondents who mention nothing, and the unemployment rate is a share of the whole population aged twenty to sixty-four, which is one reason why this t is not mine. The second cell has one gap, the fixed effect after the bar, with a hint and a solution underneath. The browser lab offers a third analyst, 018OL, whose first cell downloads two large packages; leave that one for after the session. When you have your value, write the analyst and the t, hold it, and send it when I say go.
+KQXUE built a panel of its own, which the course rebuilt from the Stata code that the analyst deposited, and gave each country a fixed effect and no year effects. The first cell loads that panel and lists its columns: the outcome is the cosmopolitan share averaged without the respondents who mention nothing, and the unemployment rate is a share of the whole population aged twenty to sixty-four, which is one reason why this t is not mine. The second cell has one gap, the fixed effect after the bar, with a hint and a solution underneath. The third analyst, 018OL, is on the next slide; the two packages of its mixed model loaded with this deck when you opened it. When you have your value, write the analyst and the t, hold it, and send it when I say go.
+:::
+
+## Hands-on 1 – 018OL {#hands-on-1-018ol .smaller .output-8}
+
+::: {.small}
+**Task 3, the third analyst.** 018OL averaged the five cosmopolitan items of each respondent in 420 cells of country, year and wave, rescaled the cell means to run from 0 to 1, and fitted them on the unemployment rate with random intercepts for country, year and wave: on record **t = −1.206 on 396.9 df**. The first cell loads the file and rescales the outcome; the second has two gaps. The two packages of the model loaded with this deck. Write the analyst and the *t*, hold it, and send it when I say go.
+:::
+
+```{webr}
+#| autorun: false
+o18ol <- utils::read.csv("cases/eu-frames/data/analyst_018OL.csv") # r-style: keep – readr would add 4 MB to the download
+o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
+datawizard::data_peek(o18ol)
+```
+
+```{webr}
+#| exercise: reproduce-018ol
+#| envir: global
+# random intercepts for country, year and wave; lmerTest adds the
+# Satterthwaite degrees of freedom
+m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | ______) + (1 | wave), data = o18ol)
+
+print(parameters::model_parameters(m3, effects = "fixed", ci_method = "______"), digits = 5)
+```
+
+:::: {.hint exercise="reproduce-018ol"}
+::: {.callout-note collapse="false"}
+## Hint – the random intercepts and the degrees of freedom
+
+Each `(1 | x)` gives the cells that share a value of `x` an intercept of their own, so the missing one is `(1 | year)`. `parameters::model_parameters()` reports the degrees of freedom that `ci_method` names, and `lmerTest` provides the Satterthwaite approximation, `ci_method = "satterthwaite"`.
+:::
+::::
+
+:::: {.solution exercise="reproduce-018ol"}
+::: {.callout-tip collapse="false"}
+## Fully worked solution
+
+``` r
+m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | year) + (1 | wave), data = o18ol)
+print(parameters::model_parameters(m3, effects = "fixed", ci_method = "satterthwaite"), digits = 5)
+```
+
+You should get a coefficient of −0.00203, a standard error of 0.00169 and t = −1.20627 on 396.92 degrees of freedom, the −1.206 on record. The year in the file is the one that 018OL took from the names of its data files, which put the wave EB 79.3, fielded in 2013, in 2012; the column `year_fieldwork` holds the true year, and a rebuild that dates every wave by its fieldwork gives t = −1.606 instead.
+:::
+::::
+
+::: notes
+018OL worked on four hundred and twenty cells of country, year and wave rather than on a panel of country-years, with the five cosmopolitan items averaged for each respondent first, the outcome rescaled to run from nought to one, and random intercepts for country, year and wave in place of fixed effects. That is why this t is small, minus one point two, and why its degrees of freedom are a Satterthwaite approximation rather than a count. The first cell loads the file and rescales the outcome; the second has two gaps, the missing intercept and the name of the approximation, with a hint and a solution underneath. The packages that fit the model loaded with this deck, so nothing downloads now. One thing to notice once you have the number: the year in this file dates the last wave a year early, and a rebuild that dates it correctly does not give the recorded value. [circulate; then go]
 :::
