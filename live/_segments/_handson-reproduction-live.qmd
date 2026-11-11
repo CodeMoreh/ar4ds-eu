@@ -132,14 +132,13 @@ KQXUE built a panel of its own, which the course rebuilt from the Stata code tha
 ## Hands-on 1 – 018OL {#hands-on-1-018ol .smaller .output-8}
 
 ::: {.small}
-**Task 3, the third analyst.** 018OL averaged the five cosmopolitan items of each respondent in 420 cells of country, year and wave, rescaled the cell means to run from 0 to 1, and fitted them on the unemployment rate with random intercepts for country, year and wave: on record **t = −1.206 on 396.9 df**. The first cell loads the file and rescales the outcome; the second has two gaps. The two packages of the model loaded with this deck. Write the analyst and the *t*, hold it, and send it when I say go.
+**Task 3, the third analyst.** 018OL averaged the five cosmopolitan items of each respondent in 420 cells of country, year and wave, rescaled the cell means to run from 0 to 1, and fitted them on the unemployment rate with random intercepts for country, year and wave: on record **t = −1.206 on 396.9 df**. The first cell loads the file, rescales the outcome and prints nothing; the second has two gaps. The two packages of the model loaded with this deck. Write the analyst and the *t*, hold it, and send it when I say go.
 :::
 
 ```{webr}
 #| autorun: false
 o18ol <- utils::read.csv("cases/eu-frames/data/analyst_018OL.csv") # r-style: keep – readr would add 4 MB to the download
 o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
-datawizard::data_peek(o18ol)
 ```
 
 ```{webr}
@@ -174,5 +173,5 @@ You should get a coefficient of −0.00203, a standard error of 0.00169 and t = 
 ::::
 
 ::: notes
-018OL worked on four hundred and twenty cells of country, year and wave rather than on a panel of country-years, with the five cosmopolitan items averaged for each respondent first, the outcome rescaled to run from nought to one, and random intercepts for country, year and wave in place of fixed effects. That is why this t is small, minus one point two, and why its degrees of freedom are a Satterthwaite approximation rather than a count. The first cell loads the file and rescales the outcome; the second has two gaps, the missing intercept and the name of the approximation, with a hint and a solution underneath. The packages that fit the model loaded with this deck, so nothing downloads now. One thing to notice once you have the number: the year in this file dates the last wave a year early, and a rebuild that dates it correctly does not give the recorded value. [circulate; then go]
+018OL worked on four hundred and twenty cells of country, year and wave rather than on a panel of country-years, with the five cosmopolitan items averaged for each respondent first, the outcome rescaled to run from nought to one, and random intercepts for country, year and wave in place of fixed effects. That is why this t is small, minus one point two, and why its degrees of freedom are a Satterthwaite approximation rather than a count. The first cell loads the file and rescales the outcome, and prints nothing; the second has two gaps, the missing intercept and the name of the approximation, with a hint and a solution underneath. The packages that fit the model loaded with this deck, so nothing downloads now. One thing to notice once you have the number: the year in this file dates the last wave a year early, and a rebuild that dates it correctly does not give the recorded value. [circulate; then go]
 :::
