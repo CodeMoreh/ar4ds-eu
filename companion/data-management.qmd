@@ -8,14 +8,14 @@ bibliography: [../references.bib, ../references-new.bib]
 #| label: setup
 #| include: false
 # The committed files that the build writes
-panel <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
-measures <- readr::read_csv("../cases/eu-frames/data/macro/predictor_measures.csv", show_col_types = FALSE)
-by_edu <- readr::read_csv("../cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE)
+panel <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
+measures <- readr::read_csv("../cases/europeanisation/data/macro/predictor_measures.csv", show_col_types = FALSE)
+by_edu <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy_edu.csv", show_col_types = FALSE)
 ```
 
 This module of the [companion curriculum](index.qmd) is about the work between a download and a model: reading the raw files of a survey, selecting the respondents or the events that a study analyses, recoding the answers into the variables that its paper describes, building the measures that the models need, turning the data into the unit on which the model is fitted, and checking the result against a target that you did not compute yourself.
 
-The code of the build is taken from the preparation scripts of the workspace and from the pipeline of the case, the numbered scripts in `R/eu-frames/` that write its data files, rearranged as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown and not run on this page, which is built without those files; what each step produces is shown from the files that the course committed, which the same steps wrote. The second script of the workspace was run on the respondent file on 27 October 2026 and printed the comparison that section 2.7 quotes. The build ends with a comparison of your file with the committed one, so that a rebuild on your own machine either reproduces the file of the course or says where it differs.
+The code of the build is taken from the preparation scripts of the workspace and from the pipeline of the case study, the numbered scripts in `R/europeanisation/` that write its data files, rearranged as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown and not run on this page, which is built without those files; what each step produces is shown from the files that the course committed, which the same steps wrote. The second script of the workspace was run on the respondent file on 27 October 2026 and printed the comparison that section 2.7 quotes. The build ends with a comparison of your file with the committed one, so that a rebuild on your own machine either reproduces the file of the course or says where it differs.
 
 ## 1. The steps of a build {#sec-steps}
 
@@ -30,7 +30,7 @@ Whatever the survey, a build from raw files goes through the same six steps, in 
 
 Three rules hold throughout. The raw files stay in a folder outside the workspace and are never edited; every change is made by the code, so that a reader can see it. The code meets the raw files in one place, a folder named at the top of the script, so that someone else can point the same code at their own copy. And files derived from licensed microdata go into a folder that git ignores, from the first day.
 
-| | EU frames |
+| | Europeanisation |
 |---|---|
 | Raw files | Sixteen Eurobarometer waves in Stata format |
 | Unit of the analysis file | Country-year |
@@ -41,9 +41,9 @@ Three rules hold throughout. The raw files stay in a folder outside the workspac
 
 : The build at a glance.
 
-## 2. The country-year panel from the Eurobarometer {#sec-eu-frames}
+## 2. The country-year panel from the Eurobarometer {#sec-europeanisation}
 
-The original author (OA) of the EU-frames case [@Teney2016DoesEUEconomic] scored the answers of the respondents of sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled them within their countries and waves, with two economic series merged by country and year. The course panel, `EUframes_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in Multi100, and every page of the one-day workshop starts from it. The workspace rebuilds it from the raw waves with two scripts: `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first rebuilds the respondent file of the course from your own GESIS downloads and checks the result against the course build. The second rebuilds the country-year panel that is distributed with the course, to machine precision, and then builds the panel by education band on which the section on the education gap of [Multilevel models](multilevel.qmd#sec-claim2) rests.
+The original author (OA) of the Europeanisation and the economy case study [@Teney2016DoesEUEconomic] scored the answers of the respondents of sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled them within their countries and waves, with two economic series merged by country and year. The course panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the robustness study of SCORE [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness], and every page of the one-day workshop starts from it. The workspace rebuilds it from the raw waves with two scripts: `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first rebuilds the respondent file of the course from your own GESIS downloads and checks the result against the course build. The second rebuilds the country-year panel that is distributed with the course, to machine precision, and then builds the panel by education band on which the section on the education gap of [Multilevel models](multilevel.qmd#sec-claim2) rests.
 
 If you have not downloaded the sixteen files, everything here can still be read, because what the scripts print is quoted on the page; nothing that reads the respondent file can be run.
 
@@ -249,7 +249,7 @@ A reproducible data pipeline, in the sense used in this course, is one in which 
 
 ### 2.8 The panel by education band {#sec-edu}
 
-The last section of the script builds a second panel, one row per country, year and education band, with the same six scales and the number of respondents behind each mean. It is the aggregate that the section on the education gap of [Multilevel models](multilevel.qmd#sec-claim2) uses to ask whether unemployment narrows the gap between the high- and the low-educated. Unlike the respondent file, it can be committed and shared, because a cell mean over at least `r min(by_edu$n)` people, and in half of the cells more than `r floor(stats::median(by_edu$n))`, reveals nothing about any of them. Its `r format(nrow(by_edu), big.mark = ",")` rows are `cases/eu-frames/data/EUframes_cy_edu.csv`, and the rebuild reproduces them to machine precision.
+The last section of the script builds a second panel, one row per country, year and education band, with the same six scales and the number of respondents behind each mean. It is the aggregate that the section on the education gap of [Multilevel models](multilevel.qmd#sec-claim2) uses to ask whether unemployment narrows the gap between the high- and the low-educated. Unlike the respondent file, it can be committed and shared, because a cell mean over at least `r min(by_edu$n)` people, and in half of the cells more than `r floor(stats::median(by_edu$n))`, reveals nothing about any of them. Its `r format(nrow(by_edu), big.mark = ",")` rows are `cases/europeanisation/data/europeanisation_cy_edu.csv`, and the rebuild reproduces them to machine precision.
 
 ::: {.callout-tip}
 ## Try it
@@ -257,6 +257,6 @@ The last section of the script builds a second panel, one row per country, year 
 Change the scoring rule in section 2.3 from the share to the count for the cosmopolitan scale, re-run the aggregation and the comparison, and read the column of differences. The as-interviewed cosmopolitan mean now differs from the course panel in every cell, and the count-built column of the cell file agrees instead. Then change the no-opinion rule so that respondents who named nothing are dropped rather than scored zero, and read the respondent counts. Each is a one-line change in the script and a decision on the specification menu.
 :::
 
-## 3. Beyond the case {#sec-beyond}
+## 3. Beyond the case study {#sec-beyond}
 
 The six steps of section 1 recur in most survey work, and the build of section 2 shows them in one of their shapes, many waves aggregated into a panel. The [section of the R module on other formats](intro-r.qmd#sec-formats) has the functions for the file formats, and the [data sources module](data-sources.qmd) the routes by which the raw files arrive. Three habits from this build apply to any project. Keep an inventory of the files that you read, with their versions and checksums, in the script itself, so that the data on which a result rests are stated where the result is computed. Check every build against a target that you did not compute, a count printed in the paper or a file that someone else built, and write the check into the script so that it runs every time. And keep the licensed and the shareable in different folders from the first day, with the ignore rule written before the first file is downloaded.

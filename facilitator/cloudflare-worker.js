@@ -3,9 +3,9 @@
 // =============================================================================
 //
 // WHAT IT DOES
-//   The live "Class results" chart on the multiverse page of every case
+//   The live "Class results" chart on the multiverse page of every case study
 //   (cases/<slug>/multiverse.qmd) runs in the browser (webR). One deployment
-//   serves the shared Form of all cases; a case with a Form of its own gets a
+//   serves the shared Form of all case studies; a case study with a Form of its own gets a
 //   second deployment of this same file with its own SHEET_ID
 //   (facilitator/live-results-setup.md, section 11).
 //   A browser can only fetch a remote file if that file is served with the right
@@ -31,13 +31,13 @@
 //   3. Deploy this file as a Worker (dashboard or `wrangler deploy`), then put
 //      the Worker's URL (e.g. https://class-results.you.workers.dev) into:
 //        - cases/<slug>/multiverse.qmd -> the `worker_url` line in the live cell,
-//          for every case that reads this Worker
+//          for every case study that reads this Worker
 //        - facilitator/live-results-setup.md notes (for your own record)
 //
 // TEST
 //   Open the Worker URL in a browser: you should see the sheet as raw CSV.
 //   Then open it from the deployed site's origin (DevTools console on
-//   https://codemoreh.github.io/ar4ds-eu/, or the site of any other case):
+//   https://codemoreh.github.io/ar4ds-eu/, or the site of any other case study):
 //     fetch("https://class-results.you.workers.dev").then(r=>r.text()).then(console.log)
 //   No CORS error + CSV text printed = working.
 // =============================================================================

@@ -21,7 +21,7 @@
 # Author:       Chris Moreh
 # Last updated: 2026-09-09
 ###############################################################################
-raw <- Sys.getenv("EB_RESPONDENTS", unset = "_workspaces/eu-frames/data_private/eb_respondents.rds")
+raw <- Sys.getenv("EB_RESPONDENTS", unset = "_workspaces/europeanisation/data_private/eb_respondents.rds")
 d <- readRDS(raw) |>
   datawizard::data_modify(cy    = paste(cntry, year, sep = "_"),
          edu3  = factor(edu3, levels = c("low", "mid", "high")),
@@ -32,7 +32,7 @@ d <- readRDS(raw) |>
   datawizard::data_filter(!is.na(edu3), !is.na(female), !is.na(age))
 
 # The macro series join by country-year from the committed panel.
-panel <- readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE) |>
+panel <- readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE) |>
   datawizard::data_select(select = c("cntry", "year", "unemp", "growth"))
 d <- d |>
   dplyr::left_join(panel, by = c("cntry", "year")) |>

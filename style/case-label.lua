@@ -1,16 +1,16 @@
--- case-label.lua – the line "Case: <label>" at the top of every page of a case,
--- and "Case: ..." or "Cases: ..." at the top of the companion modules and of
--- any other page that names its case.
+-- case-label.lua – the line "Case study: <label>" at the top of every page of a case study,
+-- and "Case study: ..." or "Case studies: ..." at the top of the companion modules and of
+-- any other page that names its case study.
 --
--- A page belongs to a case when its source sits under cases/<slug>/: the case
--- pages and the codebooks in cases/<slug>/data/. A companion module names the
--- cases that it works on in companion-cases in _variables.yml, by the name of
+-- A page belongs to a case study when its source sits under cases/<slug>/: the
+-- pages of the case study and the codebooks in cases/<slug>/data/. A companion module names the
+-- case studies that it works on in companion-cases in _variables.yml, by the name of
 -- its file. Any other page, such as a week of the semester track that works on
--- one case, names it in its front matter as `case: <slug>` (or a list of
--- slugs). The label of each case is cases.<slug>.label there, so that the
--- names of the cases are written in one place; a slug without a label gets no
--- line. Each label links to the case study of its case, except on the case
--- study itself. A one-line script moves the line into the title block, above
+-- one case study, names it in its front matter as `case: <slug>` (or a list of
+-- slugs). The label of each case study is cases.<slug>.label there, so that the
+-- names of the case studies are written in one place; a slug without a label gets no
+-- line. Each label links to the background page of its case study, except on
+-- that page itself. A one-line script moves the line into the title block, above
 -- the title; without JavaScript it stays at the top of the content. Styled as
 -- .case-label in styles.css. Applies to HTML output only, so the decks are
 -- never touched, and it runs on pages served from the freeze cache as well,
@@ -47,7 +47,7 @@ local MOVE_SCRIPT = [[
 </script>
 ]]
 
--- The label of one case, linked to its case study unless `here` is true
+-- The label of one case study, linked to its background page unless `here` is true
 local function case_inlines(vars, slug, prefix, here)
   local entry = vars.cases and vars.cases[slug]
   if not entry or not entry.label then return nil end
@@ -55,7 +55,7 @@ local function case_inlines(vars, slug, prefix, here)
   if label == "" then return nil end
   if here then return { pandoc.Str(label) } end
   return { pandoc.Link(label, prefix .. "cases/" .. slug .. "/index.qmd", "",
-                       { title = "The case study of this case" }) }
+                       { title = "The background page of this case study" }) }
 end
 
 function Pandoc(doc)
@@ -96,7 +96,7 @@ function Pandoc(doc)
   end
   if #parts == 0 then return nil end
 
-  local inlines = { pandoc.Str(#parts > 1 and "Cases:" or "Case:"), pandoc.Space() }
+  local inlines = { pandoc.Str(#parts > 1 and "Case studies:" or "Case study:"), pandoc.Space() }
   for i, inl in ipairs(parts) do
     if i > 1 then
       table.insert(inlines, pandoc.Str(","))

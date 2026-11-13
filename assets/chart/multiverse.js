@@ -1,9 +1,9 @@
 /*
-  Interactive specification curve for the multiverse page of a case.
+  Interactive specification curve for the multiverse page of a case study.
 
   mvChart(id, D) draws one curve into the element with that id, which carries
   the markup of assets/chart/multiverse.template.html. D is the payload built
-  by mv_payload() in the chart script of the case (R/<slug>/_chart_multiverse.R,
+  by mv_payload() in the chart script of the case study (R/<slug>/_chart_multiverse.R,
   for example R/housing/_chart_multiverse.R): one entry per specification,
   sorted by its value on the vertical axis, with the option of every
   decision coded as an index into its list of labels, and the reference marks
@@ -12,14 +12,14 @@
 
   The vertical value is D.r, whatever its scale. Optional fields of the payload
   adapt the chart to a curve on another scale or of another size, and each
-  falls back to the behaviour of the EU-frames curve (a partial correlation,
+  falls back to the behaviour of the Europeanisation curve (a partial correlation,
   hundreds of specifications) when it is absent:
     yLabel    the label of the vertical axis
     yDec      decimals of the tick labels (1)
     vfmt      {pre, suf, d}: how a value is printed in a pop-up ("r = " and 3 decimals)
     sl        one line of statistics per specification (t, df and the CR2 p)
     det       per specification, the [label, value, class] lines of its pop-up
-              (the lines of the EU-frames decisions)
+              (the lines of the Europeanisation decisions)
     tagGap    the height of a reference tag above its mark, in units of D.r (0.12)
     xStep     the spacing of the rank ticks (200; doubled on a narrow screen)
     xPad      an inset in pixels between the axes and the first and last marks (0)

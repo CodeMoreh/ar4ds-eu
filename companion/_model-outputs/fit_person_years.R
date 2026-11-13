@@ -1,6 +1,6 @@
 ###############################################################################
 # Title:        Year effects in the published design, on the real respondents
-# Purpose:      Fit the published specification of the EU-frames case without
+# Purpose:      Fit the published specification of the Europeanisation case study without
 #               its cross-level interactions, with respondents in country-years
 #               in countries (the 270 cells of the panel as the middle level,
 #               where the paper has its country-waves), the zero rule and

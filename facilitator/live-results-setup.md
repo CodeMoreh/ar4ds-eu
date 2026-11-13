@@ -1,10 +1,10 @@
 # Live class-results system – setup and run guide
 
-This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page of every case (`cases/<slug>/multiverse.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. The pipeline was built for the EU-frames case, and the walkthrough in sections 1 to 10 uses its files; section 11 sets out how the other cases share the same Form, Sheet and Worker, and how to give a case a Form of its own. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
+This is the facilitator's guide to the live "Class results" chart on the **Multiverse** page of every case study (`cases/<slug>/multiverse.qmd`). It explains the whole pipeline, every setup step, what to paste where, and how to run it on the day. The pipeline was built for the Europeanisation and the economy case study, and the walkthrough in sections 1 to 10 uses its files; section 11 sets out how the other case studies share the same Form, Sheet and Worker, and how to give a case study a Form of its own. Budget about **45 minutes** the first time; once the Form and Worker exist they are reusable.
 
 You do all of this; participants do nothing except open the pre-filled link that each of their two submissions prints, and press Send.
 
-**The EU-frames pipeline is frozen.** The Form and its entry codes, the Worker (`https://class-results.chris-moreh.workers.dev/`), the Sheet schema, the label format `explore: [tag] <spec>` / `declared: [tag] <spec>`, and the way in which `refresh_multiverse()` in `cases/eu-frames/multiverse.qmd` reads the submissions do not change. Every other case fits around them.
+**The pipeline of the Europeanisation case study is frozen.** The Form and its entry codes, the Worker (`https://class-results.chris-moreh.workers.dev/`), the Sheet schema, the label format `explore: [tag] <spec>` / `declared: [tag] <spec>`, and the way in which `refresh_multiverse()` in `cases/europeanisation/multiverse.qmd` reads the submissions do not change. Every other case study fits around them.
 
 ------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ You do all of this; participants do nothing except open the pre-filled link that
 
 Why the Worker exists: a browser will only read a remote file if that file is served with an `Access-Control-Allow-Origin` (CORS) header. Google Sheets does **not** reliably send that header to a third-party site like `codemoreh.github.io`, and the URL it does serve redirects across origins, which browsers block. The Worker is a tiny relay that you control: the browser talks to the Worker, the Worker fetches the Sheet server-to-server (no browser, no CORS on that hop), and hands the CSV back with the right header. This removes the single biggest live-demo risk. It is \~20 lines and runs free.
 
-**Design note (prereg + format).** This system handles the **results** submissions only. The `spec` field carries the phase and a participant tag in front of the specification, `explore: [amber-otter-42] …` or `declared: [amber-otter-42] …`, and `cases/eu-frames/multiverse.qmd` parses both, so the Form and the Sheet need no column for either. The tag is drawn by the submission helpers (or set with their `nickname` argument), is shared by both submissions of a participant, and lets participants highlight their own circles through the `my_tag` line of the live cell; rows without a tag or without a phase, from earlier deliveries, still parse. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `cases/eu-frames/multiverse.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the workspace the preregistration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a preregistration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
+**Design note (prereg + format).** This system handles the **results** submissions only. The `spec` field carries the phase and a participant tag in front of the specification, `explore: [amber-otter-42] …` or `declared: [amber-otter-42] …`, and `cases/europeanisation/multiverse.qmd` parses both, so the Form and the Sheet need no column for either. The tag is drawn by the submission helpers (or set with their `nickname` argument), is shared by both submissions of a participant, and lets participants highlight their own circles through the `my_tag` line of the live cell; rows without a tag or without a phase, from earlier deliveries, still parse. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `cases/europeanisation/multiverse.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the workspace the preregistration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a preregistration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
 
 ------------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ wrangler deploy
 
   [**ACTUAL: IT DOES DOWNLOAD A CSV FILE WITH THE EXPECTED HEADERS, BUT IT DOES NOT OPEN IT IN THE BROWSER ON MY MACHINE**]{.underline}
 
-- Test it as the page will, **from the deploy origin**. Open <https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/multiverse.html>, open the browser DevTools console (F12), and run:
+- Test it as the page will, **from the deploy origin**. Open <https://codemoreh.github.io/ar4ds-eu/cases/europeanisation/multiverse.html>, open the browser DevTools console (F12), and run:
 
   ``` js
   fetch("https://class-results.YOUR-SUBDOMAIN.workers.dev")
@@ -160,15 +160,15 @@ wrangler deploy
 
 ## 4. Step 3 – wire the IDs into the repo
 
-There are four edits. All four places already hold the live values – the Worker URL in `cases/eu-frames/multiverse.qmd`, the Form ID and entry codes in the `.submit()` helper of the browser lab and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
+There are four edits. All four places already hold the live values – the Worker URL in `cases/europeanisation/multiverse.qmd`, the Form ID and entry codes in the `.submit()` helper of the browser lab and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
 
-1.  **`cases/eu-frames/multiverse.qmd`** – in the `live-multiverse-setup` cell, set:
+1.  **`cases/europeanisation/multiverse.qmd`** – in the `live-multiverse-setup` cell, set:
 
     ``` r
     worker_url <- "https://class-results.YOUR-SUBDOMAIN.workers.dev"
     ```
 
-2.  **`cases/eu-frames/lab.qmd`** – in the `.submit()` helper, which `submit_exploration()` and `report_result()` both call, set the Form ID and the seven entry codes:
+2.  **`cases/europeanisation/lab.qmd`** – in the `.submit()` helper, which `submit_exploration()` and `report_result()` both call, set the Form ID and the seven entry codes:
 
     ``` r
     FORM_ID <- "1FAIpQLSxxxxxxxx"
@@ -177,7 +177,7 @@ There are four edits. All four places already hold the live values – the Worke
                r = "entry.777777")
     ```
 
-3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, which sits in this project as the nested folder `_workspaces/eu-frames/`.)
+3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, which sits in this project as the nested folder `_workspaces/europeanisation/`.)
 
     [**ACTUAL: I CAN'T LOCATE THAT !!!**]{.underline}
 
@@ -190,9 +190,9 @@ There are four edits. All four places already hold the live values – the Worke
 Then **render and push**:
 
 ``` bash
-quarto render cases/eu-frames/multiverse.qmd
-quarto render cases/eu-frames/lab.qmd
-quarto render cases/eu-frames/menu.qmd cases/eu-frames/exercise.qmd cases/eu-frames/cheatsheet.qmd
+quarto render cases/europeanisation/multiverse.qmd
+quarto render cases/europeanisation/lab.qmd
+quarto render cases/europeanisation/menu.qmd cases/europeanisation/exercise.qmd cases/europeanisation/cheatsheet.qmd
 # (or just `quarto render` for the whole site)
 git add -A
 git commit -m "Wire live class-results Form + Worker"
@@ -210,7 +210,7 @@ git push
 The chart reads a column literally named **`r`** (case/space-tolerant). The other columns are kept for the record, but only `r` positions the dot.
 
 - Live path: the Worker serves the header row of the Sheet as CSV headers, which come from your Form question titles – so titling the question `r` (step 2.1) is what makes this work.
-- Archive path (section 9): the committed `cases/eu-frames/data/class_results.csv` must also have a column named `r`.
+- Archive path (section 9): the committed `cases/europeanisation/data/class_results.csv` must also have a column named `r`.
 
 ------------------------------------------------------------------------
 
@@ -223,7 +223,7 @@ Google has changed its anonymous-form and sharing behaviour before, so verify on
 - [ ] **Worker serves it:** open the Worker URL → the test row is in the CSV.
 - [ ] **Chart shows it:** open the live Multiverse page, press **Run Code** on the Class-results chart → a test dot appears. Do this in incognito too (CORS can differ by login state).
 - [ ] **Clear test rows** from the Sheet so the class starts with an empty chart (delete the test data rows; keep the header row).
-- [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklists of the run sheets of the cases, `facilitator/eu-frames-guide.qmd` here and `facilitator/housing-guide.qmd` on the site of the housing-audit case).
+- [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklists of the run sheets of the case studies, `facilitator/europeanisation-guide.qmd` here and `facilitator/housing-guide.qmd` on the site of the Housing and racial bias case study).
 
 If the morning test fails, you still have two fallbacks (section 8) and the static "The class multiverse" slide in the deck always works.
 
@@ -242,14 +242,14 @@ If the live fetch ever stalls during the session, fall back to the static spec c
 ## 8. Fallbacks (if the Worker route misbehaves)
 
 - **Publish-to-web CSV instead of the Worker.** File → Share → Publish to web → the responses sheet → CSV. Point `worker_url` at that `…/pub?output=csv` URL. Simpler (no Worker) but it has a multi-minute publish cache and its cross-origin CORS is less reliable – use only if the Worker is unavailable.
-- **Facilitator local render.** Forget the browser entirely: download the Sheet as CSV to `cases/eu-frames/data/class_results.csv` on your laptop, run `quarto render cases/eu-frames/multiverse.qmd` locally (your laptop has R, so there is no CORS), and project/refresh that. This is the most reliable option and the recommended fallback if the conference wifi is poor.
+- **Facilitator local render.** Forget the browser entirely: download the Sheet as CSV to `cases/europeanisation/data/class_results.csv` on your laptop, run `quarto render cases/europeanisation/multiverse.qmd` locally (your laptop has R, so there is no CORS), and project/refresh that. This is the most reliable option and the recommended fallback if the conference wifi is poor.
 
 ------------------------------------------------------------------------
 
 ## 9. After the session
 
-- [ ] **Archive a permanent snapshot.** The live chart depends on the Sheet and Worker staying up. To preserve the result independently, export the responses Sheet (**File → Download → CSV**), keep the columns including `r`, and save it over `cases/eu-frames/data/class_results.csv` in this repo. Commit and push. The chart automatically reads this snapshot whenever the Worker is unset or unreachable, so the page keeps showing the multiverse built by the class indefinitely.
-- [ ] Optionally **set `worker_url <- ""`** in `cases/eu-frames/multiverse.qmd` and re-render, so the page serves the committed snapshot rather than calling a Worker you may later delete.
+- [ ] **Archive a permanent snapshot.** The live chart depends on the Sheet and Worker staying up. To preserve the result independently, export the responses Sheet (**File → Download → CSV**), keep the columns including `r`, and save it over `cases/europeanisation/data/class_results.csv` in this repo. Commit and push. The chart automatically reads this snapshot whenever the Worker is unset or unreachable, so the page keeps showing the multiverse built by the class indefinitely.
+- [ ] Optionally **set `worker_url <- ""`** in `cases/europeanisation/multiverse.qmd` and re-render, so the page serves the committed snapshot rather than calling a Worker you may later delete.
 - [ ] Optionally **close the Form** (Responses tab → "Accepting responses" off) to stop late submissions.
 - [ ] You can then safely delete the Worker and/or unshare the Sheet; the page runs on the committed snapshot.
 
@@ -267,31 +267,31 @@ If the live fetch ever stalls during the session, fall back to the static spec c
 | Pre-filled link 404s or is blank | Wrong `FORM_ID` or `entry.NNN` codes | Re-derive from "Get pre-filled link" (2.4); update both copies of `.submit()` (4) |
 | New rows slow to show | Using Publish-to-web CSV (cached) | Switch to the Worker (gviz, uncached) |
 | Everything dead on the day | wifi / Google outage | Facilitator local render (section 8) |
-| Diamonds on the EU-frames chart that nobody in the class sent | Rows of another case in the shared Sheet | Clear the Sheet between deliveries of different cases, or give the other case a Form of its own (11) |
+| Diamonds on the Europeanisation chart that nobody in the class sent | Rows of another case study in the shared Sheet | Clear the Sheet between deliveries of different case studies, or give the other case study a Form of its own (11) |
 
 ------------------------------------------------------------------------
 
-## 11. The other cases
+## 11. The other case studies {#the-other-cases}
 
-### 11.1 One Form for every case
+### 11.1 One Form for every case study {#one-form-for-every-case}
 
-Every case submits through the Form, Sheet and Worker of sections 2 to 4 until CM creates a Form per case, so that nothing has to be built for a delivery. The cases tell their rows apart by a word after the tag:
+Every case study submits through the Form, Sheet and Worker of sections 2 to 4 until CM creates a Form per case study, so that nothing has to be built for a delivery. The case studies tell their rows apart by a word after the tag:
 
-| Case | Label | Chart that reads it |
+| Case study | Label | Chart that reads it |
 |---|---|---|
-| EU frames | `explore: [amber-otter-42] <spec>`, the frozen format, with no case word | `cases/eu-frames/multiverse.qmd`, which reads every row |
-| housing audit | `explore: [amber-otter-42] housing comparison=white population=replies uncoded=drop model=lpm adjust=none` | `cases/housing/multiverse.qmd`, which reads only the rows with `housing` after the tag |
-| immigration and trust, cohabitation | `explore: [tag] trust <spec>`, `explore: [tag] cohabitation <spec>` | the multiverse page of each case, once it exists |
+| Europeanisation | `explore: [amber-otter-42] <spec>`, the frozen format, with no word for the case study | `cases/europeanisation/multiverse.qmd`, which reads every row |
+| Housing | `explore: [amber-otter-42] housing comparison=white population=replies uncoded=drop model=lpm adjust=none` | `cases/housing/multiverse.qmd`, which reads only the rows with `housing` after the tag |
+| Immigration, Cohabitation | `explore: [tag] immigration <spec>`, `explore: [tag] cohabitation <spec>` | the multiverse page of each case study, once it exists |
 
-The word of each case is `cases.<slug>.results-word` in `_variables.yml`, and the submission helpers of the case (its browser lab and `R/spec_tools.R` in its workspace) write it into every label. A `declared:` label has the same shape.
+The word of each case study is `cases.<slug>.results-word` in `_variables.yml`, and the submission helpers of the case study (its browser lab and `R/spec_tools.R` in its workspace) write it into every label. A `declared:` label has the same shape.
 
-The cost falls on the EU-frames chart, which reads every row of the Sheet, because its reading of the submissions is frozen, and which would draw the rows of another case as diamonds that match no specification. Before a delivery of any case, clear the Sheet of the rows of earlier deliveries (select the data rows below the header of the tab "Form Responses 1" and delete them; the Form keeps working). The archived snapshot of a delivery (section 9) goes into the `data/class_results.csv` of the case that ran it.
+The cost falls on the Europeanisation chart, which reads every row of the Sheet, because its reading of the submissions is frozen, and which would draw the rows of another case study as diamonds that match no specification. Before a delivery of any case study, clear the Sheet of the rows of earlier deliveries (select the data rows below the header of the tab "Form Responses 1" and delete them; the Form keeps working). The archived snapshot of a delivery (section 9) goes into the `data/class_results.csv` of the case study that ran it.
 
-### 11.2 A Form of its own for a case
+### 11.2 A Form of its own for a case study {#a-form-of-its-own-for-a-case}
 
-About twenty minutes, once per case. It keeps the classes of different cases apart for good. The steps use the housing-audit case, whose files are in its own repository, `CodeMoreh/ar4ds-housing`; for another case, replace `housing` by its slug and the repository by the repository of that case.
+About twenty minutes, once per case study. It keeps the classes of different case studies apart for good. The steps use the Housing case study, whose files are in its own repository, `CodeMoreh/ar4ds-housing`; for another case study, replace `housing` by its slug and the repository by the repository of that case study.
 
-1. **Copy the Form.** Open the results Form of section 2 in the Forms editor → ⋮ → **Make a copy**, and title it "Class results – housing audit". The copy keeps the seven questions (`spec`, `b`, `se`, `t`, `df`, `n`, `r`) with their exact titles, which the chart reads as column names.
+1. **Copy the Form.** Open the results Form of section 2 in the Forms editor → ⋮ → **Make a copy**, and title it "Class results – Housing". The copy keeps the seven questions (`spec`, `b`, `se`, `t`, `df`, `n`, `r`) with their exact titles, which the chart reads as column names.
 2. **Settings.** Responses → Collect email addresses → Do not collect; Limit to 1 response → off (otherwise Google asks participants to sign in).
 3. **Link a new Sheet.** Responses → Link to Sheets → create a new spreadsheet. Open it → Share → General access → Anyone with the link → Viewer. Copy the Sheet ID from its URL (between `/d/` and `/edit`).
 4. **Read the codes.** In the Form editor → ⋮ → **Get pre-filled link**, type `spec`, `b`, `se`, `t`, `df`, `n`, `r` into the seven boxes, Get link, Copy. From the link read the Form ID (between `/d/e/` and `/viewform`) and the seven `entry.NNN` codes, each followed by its recognisable value.
@@ -300,7 +300,7 @@ About twenty minutes, once per case. It keeps the classes of different cases apa
    - `_workspaces/housing/R/spec_tools.R` – the configuration block at the top: the Form ID and the seven entry codes (then commit and push the workspace repository, so that new downloads carry them);
    - `cases/housing/lab.qmd` – the same block in the helper chunk of the browser lab;
    - `cases/housing/multiverse.qmd` – the `worker_url` line of the live cell;
-   - the public short link of the new Form (Send → link → Shorten URL), in place of `{{< var results-form-url >}}` on the cheatsheet of the case, `cases/housing/cheatsheet.qmd`, which is the only page of the case that prints it. Leave `results-form-url` in `_variables.yml` as it is: it belongs to the frozen EU-frames pipeline.
+   - the public short link of the new Form (Send → link → Shorten URL), in place of `{{< var results-form-url >}}` on the cheatsheet of the case study, `cases/housing/cheatsheet.qmd`, which is the only page of the case study that prints it. Leave `results-form-url` in `_variables.yml` as it is: it belongs to the frozen pipeline of the Europeanisation case study.
 7. **Render and check.** Render the lab and the multiverse page (`quarto render cases/housing/lab.qmd`, `quarto render cases/housing/multiverse.qmd`), submit one test result from the lab, and press Run Code on the live chart: the test circle should appear. Delete the test row from the Sheet afterwards.
 
-The case word stays in the labels after the switch: it costs nothing, and it keeps the rows identifiable if two Sheets are ever merged.
+The word for the case study stays in the labels after the switch: it costs nothing, and it keeps the rows identifiable if two Sheets are ever merged.

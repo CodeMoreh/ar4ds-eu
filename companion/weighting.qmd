@@ -7,14 +7,14 @@ bibliography: [../references.bib, ../references-new.bib]
 ```{r}
 #| label: setup
 #| include: false
-pw <- datawizard::data_read("../cases/eu-frames/data/teney_panel_weights.csv", verbose = FALSE)
-cy <- datawizard::data_read("../cases/eu-frames/data/EUframes_cy.csv", verbose = FALSE)
-curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
-forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+pw <- datawizard::data_read("../cases/europeanisation/data/teney_panel_weights.csv", verbose = FALSE)
+cy <- datawizard::data_read("../cases/europeanisation/data/europeanisation_cy.csv", verbose = FALSE)
+curve <- readr::read_csv("../cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/europeanisation/data/spec_curve_forks.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive")
-devs <- readr::read_csv("../cases/eu-frames/data/menu_deviations.csv", show_col_types = FALSE) |>
+devs <- readr::read_csv("../cases/europeanisation/data/menu_deviations.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive", axis == "weights")
-dev_rows <- readr::read_csv("../cases/eu-frames/data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
+dev_rows <- readr::read_csv("../cases/europeanisation/data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive", axis == "weights")
 # percentages round halves up, as the specification menu does; pct() takes a
 # proportion and pc() a value already in per cent
@@ -42,9 +42,9 @@ c6hjr <- dplyr::bind_rows(
 cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]
 ```
 
-This module of the [companion curriculum](index.qmd) is about the weights of the EU-frames case, which fits its claim on country-year means of Eurobarometer respondents, so that weights enter at two levels, inside each cell and across the cells. The specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this module gives the reasons.
+This module of the [companion curriculum](index.qmd) is about the weights of the Europeanisation and the economy case study, which fits its claim on country-year means of Eurobarometer respondents, so that weights enter at two levels, inside each cell and across the cells. The specification menu has a **regression weight** decision with four options and a **cell weighting** decision with two, and between them the two decisions cover three different questions. The three are settled at two different levels of the analysis and are justified by different arguments, and only one of them changes what the analysis is estimating. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this module gives the reasons.
 
-The module takes the three questions apart on the course panel, and it is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/eu-frames/menu.qmd#what-each-decision-commits-you-to).
+The module takes the three questions apart on the course panel, and it is best read alongside the [causal graphs module](dags.qmd) and the section of the specification menu on [what each decision commits you to](../cases/europeanisation/menu.qmd#what-each-decision-commits-you-to).
 
 ## The three decisions {#the-three-decisions}
 
@@ -125,7 +125,7 @@ The table below shows the reproduced specification (cosmopolitan framing on raw 
 ```{r}
 #| label: tbl-c6hjr
 #| echo: false
-#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is the coefficient divided by its CR2 standard error, clustered by country, df are its Satterthwaite degrees of freedom, and p is the CR2 p-value that classes the curve. Sources: `cases/eu-frames/data/spec_curve.csv` and `cases/eu-frames/data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is the coefficient divided by its CR2 standard error, clustered by country, df are its Satterthwaite degrees of freedom, and p is the CR2 p-value that classes the curve. Sources: `cases/europeanisation/data/spec_curve.csv` and `cases/europeanisation/data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   c6hjr |>
     dplyr::arrange(factor(reg_weight, c("none", "n_cell", "n_eff", "pop")),
@@ -167,7 +167,7 @@ tinytable::tt(
   tinytable::style_tt(fontsize = 0.8)
 ```
 
-An eight-fold difference in the rate of a response coded as a substantive zero is a measurement problem that no weight will fix, since the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the silent respondents are dropped or scored zero belongs with the measurement decisions of the [specification menu](../cases/eu-frames/menu.qmd), and the curve keeps both rules.
+An eight-fold difference in the rate of a response coded as a substantive zero is a measurement problem that no weight will fix, since the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the silent respondents are dropped or scored zero belongs with the measurement decisions of the [specification menu](../cases/europeanisation/menu.qmd), and the curve keeps both rules.
 
 ## Weights in estimation {#sec-estimation}
 
@@ -202,7 +202,7 @@ Combining weights with a multilevel model is harder, because the model needs the
 
 Because implementations differ in those choices, **the same weighted multilevel model can return different numbers in different software**, and knowing which convention you are running is part of reporting the model. Three practical points follow. First, the `weights` argument of `lmer()` is *not* a survey-weights argument. It treats weights as precision weights, a different quantity entirely, and if you pass it `w1` it returns answers that are inconsistent with the sample design, without any warning. Second, the `mixed` command in Stata accepts probability weights (`[pw = ...]`) and implements pseudo-maximum-likelihood with its own scaling options (`pwscale()`); many of the weighted multilevel results in the applied literature were produced under its conventions. Third, the R package that follows the Stata conventions is **WeMix** [@BaileyEtAl2023WeMixWeightedMixed], which takes one weight column per level and fits by pseudo-maximum-likelihood. In our own comparative survey work it has reproduced to three decimals the fixed-effect estimates (in the multilevel sense, the coefficients that do not vary across groups) of weighted `mixed` models in Stata, which makes it the tool of choice when a published Stata result needs re-implementing in R.
 
-On the data of this case, the two-level model of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel) fitted with WeMix, with the W1 weights at the respondent level and a constant weight of 1 at the country level, reproduces the common 'weights at level 1 only' scenario:
+On the data of this case study, the two-level model of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel) fitted with WeMix, with the W1 weights at the respondent level and a constant weight of 1 at the country level, reproduces the common 'weights at level 1 only' scenario:
 
 ```r
 person <- person |>
@@ -219,7 +219,7 @@ writeLines(readLines(file.path("_model-outputs", "wemix_2lvl.txt")))
 
 Compare this with the unweighted two-level fit of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule of the specification menu, one decision at a time, applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
 
-Two of the five Multi100 analysts worked in Stata, and one of them, KQXUE, works with the aggregated cells, so that in their code two lines settle the whole weighting question by default:
+Two of the five analysts in the robustness study of SCORE [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness] worked in Stata, and one of them, KQXUE, works with the aggregated cells, so that in their code two lines settle the whole weighting question by default:
 
 ```stata
 collapse cosmo util, by(cntry year)    // unweighted country-year means
@@ -238,6 +238,6 @@ The `collapse` command averages every respondent equally, so the survey weights 
 
 ## Exercise {#exercise}
 
-1. Pick any specification from the curve (`cases/eu-frames/data/spec_curve.csv`) and look up its twins under the three regression weights in `cases/eu-frames/data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
+1. Pick any specification from the curve (`cases/europeanisation/data/spec_curve.csv`) and look up its twins under the three regression weights in `cases/europeanisation/data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
 2. Three of those four sentences describe the same quantity, and two of them give the same number. Which, and why?
 3. The `no_bailout` sample and the `pop` weight both change the population that the claim is about, and neither stands on the curve of the claim. One of them is conventionally reported as a robustness check and the other as a modelling choice. Should either be?

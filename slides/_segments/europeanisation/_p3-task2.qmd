@@ -1,0 +1,61 @@
+## Task 2 of the robustness study {#task-2-in-the-analysts-own-words .smaller}
+
+::: {.claimcard .small}
+- produce a single, main result in terms of statistical families of z-, t-, F-, or $\chi^2$ tests (or their alternative or non-parametric versions).
+- disregard contextual variables related to the EU policies and party EU salience and party EU positions indexes in your analysis.
+- use the **positive non-materialist form of EU framing** in your analysis.
+- use the **unemployment rate** as the measure for poor economic performance in your analysis.
+:::
+
+::: {.small}
+Four instructions, quoted from my own Task 2 report. Everything else – estimator, sample, weighting, functional form, how you build the scale – was left to us.
+:::
+
+::: {.fragment .small}
+The robustness study was designed to fix just enough to make the numbers comparable and to leave the rest free, so that what remained would be a measurement of **analytical variability itself**.
+:::
+
+::: notes
+Here, word for word, is what the robustness study asked of us in its second task, copied from the report that I filed. One main result, as a z, t, F or chi-squared test. Disregard the contextual variables that concern EU policies and the salience of the EU and its position for the parties. Use the positive non-materialist form of EU framing, which the paper calls the cosmopolitan dimension. And use the unemployment rate as the measure of poor economic performance. That is the whole brief. Everything else was left open: which estimator, which sample, whether to weight, what functional form, and even how to build the scale out of the underlying items. And that is how the design was meant to work. The robustness study fixed just enough to make five numbers comparable and left the rest free, so that what remained would be a measurement of analytical variability itself rather than of anything about the paper. Everything that the study left open is a place where five competent people could legitimately part company, and they did.
+:::
+
+## What the instructions assume {#what-those-three-instructions-assume .smaller}
+
+::: {.small}
+- **'A single, main result'** assumes that one test statistic can stand for the claim, and leaves its degrees of freedom to the software of each analyst
+- **'The positive non-materialist form'** is the cosmopolitan scale of the paper. It assumes that the five items form one scale, and that the summary used in the paper, each respondent's share of mentions, is the right one; a mean, a sum or a factor score would all be defensible
+- **'The unemployment rate'** assumes that the claim is about unemployment. The abstract of the paper says "poor economic performances" – which also names GDP growth
+- **'Disregard contextual variables'** of EU policy and party positions removes the variables of Model 2. Read literally, it leaves the rest of Model 1 to the analyst, yet four of the five fitted unemployment alone
+:::
+
+::: {.fragment .small}
+None of these is wrong. Each one is a **decision**, made for you, that a different study could reasonably have made differently.
+:::
+
+::: notes
+Now take the instructions apart, because each rests on an assumption. Asking for a single main result assumes that one test statistic can stand for the claim, and it leaves the degrees of freedom to whatever the software of each analyst reports, which is where the conversion went wrong for one of us. The positive non-materialist form is the cosmopolitan scale, and it takes for granted that the five items – peace, democracy, freedom of movement, cultural diversity, a stronger voice in the world – form one scale, summarised as each respondent's share of mentions. A mean would be defensible, and so would a sum or a factor score. 'The unemployment rate' assumes that the claim is about unemployment, but the abstract says "poor economic performances", which just as clearly names GDP growth – and in the free task all five of us used a GDP measure, and three of us used nothing else. The last instruction removes the EU-policy and party variables of Model 2. Read literally, it leaves individual controls, growth and the education interactions to us, and four of the five dropped them all. None of these is wrong. Each is a decision, made for you, that another study could reasonably have made differently.
+:::
+
+## Analyst no. 6 {#you-are-analyst-no.-6 .smaller}
+
+::: {.big}
+- Aim 1: **reproduce** one of the recorded results
+:::
+
+::: {.small}
+The first row rests on the panel of Hands-on 2, `europeanisation_cy.csv`: 270 country-years, the framing scales as cell means, `unemp`, `growth`, the respondent count `n_cy` and `bailout`.
+
+| Analyst | Data | Model | Recorded in the robustness study |
+|:--|:--|:--|:--|
+| C6HJR | the course panel, 270 country-years | fixed effects for country and year | t = −3.804 on 233 df |
+| KQXUE | a panel of its own, 270 country-years | a fixed effect for each country | t = −7.169 on 242 df |
+| 018OL | 420 cells of country, year and wave | random intercepts for country, year and wave | t = −1.206 on 396.9 df |
+:::
+
+::: {.fragment .small}
+KEVF1 and PRL47 fitted their models on respondents, so their reproduction needs the respondent file built from your own GESIS downloads.
+:::
+
+::: notes
+So here is your first job as the sixth analyst. The robustness study recorded a result for each of the five of us, and three of those results rest on means of countries or of cells, which may be published, so they reproduce from files that you already have. Mine is on the course panel, the file you looked at in Hands-on 2, two hundred and seventy country-years with the framing scales as cell means, the two macro indicators, the respondent count behind each cell and the bailout marker, with fixed effects for country and year. KQXUE built a panel of its own and gave each country a fixed effect. 018OL averaged cells of a country in one wave and fitted random intercepts. Choose one of the three. [advance] The other two analysts worked on several hundred thousand respondents, and their reproduction needs the respondent file, which only your own GESIS download can give you. Whichever you choose, the question is the one at the heart of reproducibility: given the data and the model, does the recorded number come back?
+:::

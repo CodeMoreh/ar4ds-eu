@@ -4,7 +4,7 @@
 #| include: false
 # The course panel under the name that the lab and the modules give it, for
 # the two slides of code behind the menu
-euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+europeanisation <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
 ```
 
 ## The data work {#the-data-work .smaller}
@@ -16,18 +16,18 @@ The code behind the menu is the data half of **easystats**, the verbs of datawiz
 ::: {.fs-75}
 ```r
 # a sample: the country-years without an assistance programme (module Causal graphs)
-datawizard::data_filter(euframes, bailout == 0)
+datawizard::data_filter(europeanisation, bailout == 0)
 # the predictor centred, as C6HJR centred it (lab, Task 3)
-euframes <- datawizard::data_modify(euframes, unemp_c = unemp - mean(unemp))
+europeanisation <- datawizard::data_modify(europeanisation, unemp_c = unemp - mean(unemp))
 # the scale variant of 018OL, the cell means rescaled to 0–1 (lab, Task 3)
 o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
-# cell means from the respondents (pipeline, R/eu-frames/15_analyst_panels.R)
+# cell means from the respondents (pipeline, R/europeanisation/15_analyst_panels.R)
 kqxue_resp |>
   datawizard::data_summary(cosmo = mean(cosmo), n = length(cosmo), by = c("cntry", "year"))
 # claim alignment, the sign of a growth slope reversed (module R on the country-year panel)
 curve |> datawizard::data_modify(r_ca = dplyr::if_else(predictor == "growth", -r, r))
 # the country mean of unemployment and the departure of each year from it (module Panel data)
-euframes_wb <- datawizard::demean(euframes, select = "unemp", by = "cntry")
+europeanisation_wb <- datawizard::demean(europeanisation, select = "unemp", by = "cntry")
 ```
 :::
 
@@ -53,7 +53,7 @@ Two slides of code, and this is not a lesson in R. The course does its data work
 #| echo: true
 #| message: false
 # the reproduced specification (module Panel data), read as Task 3 of the lab prints it
-m_twfe <- fixest::feols(mcosmo ~ unemp | cntry + year, data = euframes, vcov = "iid")
+m_twfe <- fixest::feols(mcosmo ~ unemp | cntry + year, data = europeanisation, vcov = "iid")
 print(parameters::model_parameters(m_twfe), digits = 5)
 ```
 
@@ -62,23 +62,23 @@ print(parameters::model_parameters(m_twfe), digits = 5)
 #| echo: true
 #| message: false
 # the CR2 test that classes every point of the curve, on the dummy-variable fit (module Panel data)
-m_lsdv <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
-clubSandwich::coef_test(m_lsdv, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp",
+m_lsdv <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = europeanisation)
+clubSandwich::coef_test(m_lsdv, vcov = "CR2", cluster = europeanisation$cntry, coefs = "unemp",
                         test = "Satterthwaite")
 ```
 
 ```{r}
 #| label: reading-a-model-r
 #| echo: true
-# the conversion rule of Multi100, r = t / sqrt(t^2 + df), as one call (case page, section 4)
+# the conversion rule of the robustness study, r = t / sqrt(t^2 + df), as one call (background page, section 4)
 effectsize::t_to_r(-3.804, 233)
 ```
 :::
 
 ::: {.src}
-@LudeckeEtAl2020ExtractingComputingExploring; @BellMcCaffrey2002BiasReductionStandard; @PustejovskyTipton2018SmallsampleMethodsClusterrobust; the conversion rule of Multi100 (`standard_correlation_coefficient.R` in marton-balazs-kovacs/multi100 on GitHub).
+@LudeckeEtAl2020ExtractingComputingExploring; @BellMcCaffrey2002BiasReductionStandard; @PustejovskyTipton2018SmallsampleMethodsClusterrobust; the conversion rule of @AczelEtAl2026InvestigatingAnalyticalRobustness (`standard_correlation_coefficient.R` in marton-balazs-kovacs/multi100 on GitHub).
 :::
 
 ::: notes
-Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the lab prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the course calls clubSandwich directly. And the conversion of Multi100 is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
+Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the lab prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the course calls clubSandwich directly. And the conversion of the robustness study is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
 :::

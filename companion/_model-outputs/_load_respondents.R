@@ -13,7 +13,7 @@
 # Last updated: 2026-11-07
 # Sourced by:   fit_measurement.R, fit_person_anchor.R, fit_person_multilevel.R,
 #               fit_person_years.R, fit_models.R, fit_claim2.R and
-#               R/eu-frames/13_reference_marks.R
+#               R/europeanisation/13_reference_marks.R
 ###############################################################################
 # The file lives outside every repository. The default is the private folder
 # of the workspace on the facilitator's machine; a participant running these
@@ -21,7 +21,7 @@
 # project root; a script run from elsewhere sets EB_COURSE_ROOT first.
 .root <- Sys.getenv("EB_COURSE_ROOT", unset = ".")
 .respondents_path <- Sys.getenv("EB_RESPONDENTS",
-                                unset = file.path(.root, "_workspaces/eu-frames/data_private/eb_respondents.rds"))
+                                unset = file.path(.root, "_workspaces/europeanisation/data_private/eb_respondents.rds"))
 if (!file.exists(.respondents_path))
   stop("respondent file not found at '", .respondents_path,
        "': build it with prep/01_build_respondents.R in the workspace, or set ",
@@ -33,7 +33,7 @@ if (!file.exists(.respondents_path))
                lib   = paste0("it", c(10, 11)))
 .items13 <- unlist(.items, use.names = FALSE)
 
-.panel <- readr::read_csv(file.path(.root, "cases/eu-frames/data/EUframes_cy.csv"), show_col_types = FALSE) |>
+.panel <- readr::read_csv(file.path(.root, "cases/europeanisation/data/europeanisation_cy.csv"), show_col_types = FALSE) |>
   datawizard::data_select(select = c("cntry", "year", "unemp", "growth", "bailout"))
 
 ind <- readRDS(.respondents_path) |>

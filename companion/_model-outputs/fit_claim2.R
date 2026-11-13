@@ -18,7 +18,7 @@
 #               aggregate summary; no respondent record leaves this script.
 # Reads:        the respondent file, through _load_respondents.R (licensed,
 #               local only)
-#               cases/eu-frames/data/EUframes_cy_edu.csv
+#               cases/europeanisation/data/europeanisation_cy_edu.csv
 # Writes:       companion/_model-outputs/claim2_fits.csv
 # Author:       Chris Moreh
 # Last updated: 2026-09-09
@@ -54,7 +54,7 @@ keep <- c("munemp", "mgrowth", "edu3mid", "edu3high",
 # Twice: once on the respondents who named at least one item, which is what the
 # published Stata code did by dividing by a mentions total with no zero guard
 # (its level-1 N of 390,373 is exactly that count), and once with the zero rule
-# that the course and the Multi100 reanalyses use. The respondents who named
+# that the course and the reanalyses of the robustness study use. The respondents who named
 # nothing are disproportionately low-educated, so the rule bears on the
 # education gap and on its interaction, and the page shows both.
 fit_published <- function(y, data, rule) {
@@ -92,7 +92,7 @@ fe_resp <- dplyr::bind_rows(
 )
 
 # --- 3. the aggregate route on the education-band panel --------------------------
-edu <- readr::read_csv("cases/eu-frames/data/EUframes_cy_edu.csv", show_col_types = FALSE) |>
+edu <- readr::read_csv("cases/europeanisation/data/europeanisation_cy_edu.csv", show_col_types = FALSE) |>
   datawizard::data_modify(edu3 = factor(edu3, levels = c("low", "mid", "high")),
          munemp  = unemp - mean(unemp),
          mgrowth = growth - mean(growth))

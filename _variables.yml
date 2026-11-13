@@ -1,9 +1,9 @@
-# AR4DS, the EU-frames case – site variables.
+# AR4DS, the Europeanisation case study – site variables.
 #
 # The one file to edit for site-wide facts and for scheduling a delivery. Pages
 # read it through the Quarto shortcode {{< var name.subname >}}. Four parts:
 #   1. Site-wide variables.
-#   2. The case – the addresses of the workspace and of the class chart, which
+#   2. The case study – the addresses of the workspace and of the class chart, which
 #      the frozen class-results pipeline reads.
 #   3. The delivery block – set delivery.active to 'true' to switch the
 #      next-delivery callout on the home page on; set it back to 'false' for
@@ -25,35 +25,35 @@ workshop:
 
 site-url: "https://codemoreh.github.io/ar4ds-eu/"
 org: "https://github.com/CodeMoreh"
-# The umbrella site, which holds the pages that every case shares: setup, the
-# setup help, Git and GitHub, and the background on SCORE and Multi100.
+# The umbrella site, which holds the pages that every case study shares: setup, the
+# setup help, Git and GitHub, and the background on SCORE and its robustness study.
 umbrella: "https://codemoreh.github.io/ar4ds/"
 
-# --- The case -----------------------------------------------------------------
+# --- The case study -----------------------------------------------------------
 # The frozen live-results pipeline (facilitator/live-results-setup.md). Do not
 # rename or reformat these three keys: template-repo, live-results-url and
 # results-form-url wire a working results pipeline end to end, and the pages,
-# decks and workspace of the case read them under these names.
+# decks and workspace of the case study read them under these names.
 template-repo: "https://github.com/CodeMoreh/replication-lab"
 # The multiverse page on which the class submissions appear live
-live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/multiverse.html"
-# The Google Form that every case submits to (frozen)
+live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/europeanisation/multiverse.html"
+# The Google Form to which every case study submits (frozen)
 results-form-url: "https://forms.gle/MWhimagFDmGtprAPA"
 
-# The same addresses under the slug of the case:
+# The same addresses under the slug of the case study:
 #   template-repo     the GitHub repository of the downloadable workspace
 #   workspace-zip     the zip of that repository that participants download
 #   live-results-url  the multiverse page that draws the class submissions
 #   results-word      the word that follows the tag in every class-results
-#                     label of the case; the EU-frames labels carry no case
+#                     label of the case study; the labels of the Europeanisation case study carry no such
 #                     word (the frozen format), hence none here
 cases:
-  eu-frames:
-    label: "EU frames"
-    name: "the EU-frames case"
+  europeanisation:
+    label: "Europeanisation"
+    name: "the Europeanisation and the economy case study"
     template-repo: "https://github.com/CodeMoreh/replication-lab"
     workspace-zip: "https://github.com/CodeMoreh/replication-lab/archive/refs/heads/main.zip"
-    live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/eu-frames/multiverse.html"
+    live-results-url: "https://codemoreh.github.io/ar4ds-eu/cases/europeanisation/multiverse.html"
     results-word: ""
 
 # --- Next-delivery block --------------------------------------------------
@@ -62,7 +62,7 @@ cases:
 delivery:
   active: 'false'
   # Which format this delivery follows, named by its folder under tracks/:
-  # eu-frames-one-day, eu-frames-extended or self-study. An empty value prints
+  # europeanisation-one-day, europeanisation-extended or self-study. An empty value prints
   # no format line in the callout, and so does a value that matches no
   # folder.
   track: ""

@@ -4,12 +4,12 @@
 ::: {.small}
 Two jobs that a curve can do:
 
-- **Description** – map how the estimate moves across every defensible choice. That is what the curve of `r fmt_n(nrow(spec_curve))` does, and what Multi100 did for its 504 reanalyses, with no inferential statistics anywhere in its paper
+- **Description** – map how the estimate moves across every defensible choice. That is what the curve of `r fmt_n(nrow(spec_curve))` does, and what the robustness study did for its 504 reanalyses, with no inferential statistics anywhere in its paper
 - **Inference** – ask whether the curve *as a whole* is surprising if there were no association at all. A different and harder job, which most published curves never attempt
 :::
 
 ::: {.fragment .small}
-And what the curve leaves out: the options that the audit moved off it and the specifications that nobody ran, such as a person-level model and a lagged predictor; the dependence of its points, which all use the same 270 country-years; some drift of estimand among them; and everything upstream of the panel that the menu does not offer, which is fixed for everyone here. **A curve is a map of the menu written for it**, and it cannot show whether that menu was the right one.
+And what the curve leaves out: the options that the review of the menu moved off it and the specifications that nobody ran, such as a person-level model and a lagged predictor; the dependence of its points, which all use the same 270 country-years; some drift of estimand among them; and everything upstream of the panel that the menu does not offer, which is fixed for everyone here. **A curve is a map of the menu written for it**, and it cannot show whether that menu was the right one.
 :::
 
 ::: {.src}
@@ -17,7 +17,7 @@ And what the curve leaves out: the options that the audit moved off it and the s
 :::
 
 ::: notes
-A curve does two jobs, and they detach cleanly. The first is description: showing how the estimate moves as the choices move. That is what we built, and it is all that Multi100 did for its five hundred and four reanalyses, whose paper carries no inferential statistics. The second is inference: asking whether the curve, taken as a whole, is more extreme than you would expect if there were no association. Most published curves stop before it. [advance] Four things are missing from so tidy a chart. The options that the audit left off, and the specifications that nobody ran, such as a person-level model. The dependence of the points, which all use the same two hundred and seventy country-years. Some drift of estimand among them. And everything upstream of the panel, which the menu does not offer. A curve is a map of the menu that was written for it.
+A curve does two jobs, and they detach cleanly. The first is description: showing how the estimate moves as the choices move. That is what we built, and it is all that the robustness study did for its five hundred and four reanalyses, and its paper carries no inferential statistics. The second is inference: asking whether the curve, taken as a whole, is more extreme than you would expect if there were no association. Most published curves stop before it. [advance] Four things are missing from so tidy a chart. The options that the review left off, and the specifications that nobody ran, such as a person-level model. The dependence of the points, which all use the same two hundred and seventy country-years. Some drift of estimand among them. And everything upstream of the panel, which the menu does not offer. A curve is a map of the menu that was written for it.
 :::
 
 ## Dependence among the estimates {#not-864-tests .smaller}
@@ -30,11 +30,11 @@ A curve does two jobs, and they detach cleanly. The first is description: showin
 :::
 
 ::: {.fragment .small}
-**Discussion.** The cosmopolitan scale alone, the outcome that Multi100 instructed, has `r nrow(dplyr::filter(spec_curve, outcome == "mcosmo"))` specifications on the curve: **`r fmt_pct(share_below(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero, `r fmt_pct(share_sig(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero with CR2 p < 0.05.** Strong evidence? *Against what null?*
+**Discussion.** The cosmopolitan scale alone, the outcome that the robustness study instructed, has `r nrow(dplyr::filter(spec_curve, outcome == "mcosmo"))` specifications on the curve: **`r fmt_pct(share_below(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero, `r fmt_pct(share_sig(dplyr::filter(spec_curve, outcome == "mcosmo")))` below zero with CR2 p < 0.05.** Strong evidence? *Against what null?*
 :::
 
 ::: {.src}
-@SimonsohnEtAl2020SpecificationCurveAnalysis; @PhipsonSmyth2010PermutationPValues; the [reading on the specification curve]({{< var site-url >}}cases/eu-frames/reading-inference.html), which sets out the design in full.
+@SimonsohnEtAl2020SpecificationCurveAnalysis; @PhipsonSmyth2010PermutationPValues; the [reading on the specification curve]({{< var site-url >}}cases/europeanisation/reading-inference.html), which sets out the design in full.
 :::
 
 ::: notes
@@ -87,7 +87,7 @@ A badly reasoned analysis that is preregistered is still badly reasoned; the pre
 ::::
 
 ::: {.fragment .small}
-Today you explored and said so: the chart labels every dot of the class **exploratory**. Task 5 of the one-day workshop on this case adds the declaration, one specification fixed before it runs, with a reason that a causal graph supports, because "in the absence of preregistration, researchers may as well determine what is equivalent based on whether or not it supports their result" [@RohrerEtAl2026WhatsMultiverseGood, p. 5]
+Today you explored and said so: the chart labels every dot of the class **exploratory**. Task 5 of the one-day workshop on this case study adds the declaration, one specification fixed before it runs, with a reason that a causal graph supports, because "in the absence of preregistration, researchers may as well determine what is equivalent based on whether or not it supports their result" [@RohrerEtAl2026WhatsMultiverseGood, p. 5]
 :::
 
 ::: notes

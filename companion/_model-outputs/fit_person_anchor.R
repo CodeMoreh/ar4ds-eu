@@ -1,7 +1,7 @@
 ###############################################################################
 # Title:        The published model of OA without its interactions, on the
 #               respondents
-# Purpose:      Fit the published specification of the EU-frames case with its
+# Purpose:      Fit the published specification of the Europeanisation case study with its
 #               cross-level interactions between the national rates and
 #               education dropped (respondents in country-waves in countries,
 #               the zero rule, maximum likelihood) on the four framing scales,

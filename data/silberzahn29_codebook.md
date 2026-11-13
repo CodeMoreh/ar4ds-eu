@@ -61,5 +61,5 @@ them with an asterisk; the version in the deck does the same and notes the trunc
 
 The median of 1.310 is not marked on either figure. It is left for the later
 discussion of how a multi-analyst study combines estimates at all, where
-Silberzahn's median is set beside the Multi100 approach as one option among
+Silberzahn's median is set beside the approach of the robustness study of SCORE (Multi100; Aczel et al. 2026) as one option among
 several.

@@ -10,7 +10,7 @@ bibliography: [../references.bib, ../references-new.bib]
 # The brms fits run once, in companion/_model-outputs/bayes_panel.R; the page
 # reads their summaries and thinned draws, and runs the frequentist twins live
 options(width = 88)
-euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+europeanisation <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
 summ <- readr::read_csv("_model-outputs/bayes_panel_summary.csv", show_col_types = FALSE)
 dx <- readr::read_csv("_model-outputs/bayes_panel_diagnostics.csv", show_col_types = FALSE)
 sens <- readr::read_csv("_model-outputs/bayes_panel_sensitivity.csv", show_col_types = FALSE)
@@ -18,8 +18,8 @@ ppc <- readr::read_csv("_model-outputs/bayes_panel_ppc.csv", show_col_types = FA
 ppc_draws <- readr::read_csv("_model-outputs/bayes_panel_ppc_draws.csv", show_col_types = FALSE)
 prior_draws <- readr::read_csv("_model-outputs/bayes_panel_prior_draws.csv", show_col_types = FALSE)
 country_slopes <- readr::read_csv("_model-outputs/bayes_panel_countries.csv", show_col_types = FALSE)
-inference <- readr::read_csv("../cases/eu-frames/data/display_inference.csv", show_col_types = FALSE)
-influence <- readr::read_csv("../cases/eu-frames/data/display_loo.csv", show_col_types = FALSE) |>
+inference <- readr::read_csv("../cases/europeanisation/data/display_inference.csv", show_col_types = FALSE)
+influence <- readr::read_csv("../cases/europeanisation/data/display_loo.csv", show_col_types = FALSE) |>
   datawizard::data_filter(estimator == "fe_twoway", outcome == "mcosmo", predictor == "unemp", left_out != "none")
 
 # One row of the summaries for each quantity quoted on the page
@@ -42,15 +42,15 @@ cell_prior <- datawizard::data_filter(prior_draws, quantity == "cell_mean")
 rise_prior <- datawizard::data_filter(prior_draws, quantity == "rise_10")
 sens_ar1 <- datawizard::data_filter(sens, model == "ar1")
 sens_both <- datawizard::data_filter(sens, model == "both")
-n_countries <- dplyr::n_distinct(euframes$cntry)
-n_years <- dplyr::n_distinct(euframes$year)
+n_countries <- dplyr::n_distinct(europeanisation$cntry)
+n_years <- dplyr::n_distinct(europeanisation$year)
 n_draws <- dx$draws[dx$model == "both"]
 # the rise in unemployment between the lowest and the highest year of a country
-rise_es <- diff(range(euframes$unemp[euframes$cntry == "ES"]))
-rise_gr <- diff(range(euframes$unemp[euframes$cntry == "GR"]))
+rise_es <- diff(range(europeanisation$unemp[europeanisation$cntry == "ES"]))
+rise_gr <- diff(range(europeanisation$unemp[europeanisation$cntry == "GR"]))
 ```
 
-This module of the [companion curriculum](index.qmd) estimates the slope of the EU-frames claim by Bayesian methods, and it asks what Bayesian estimation adds in a case of this kind. The claim comes from a study of Eurobarometer surveys by the original author (OA), who reported that poor national economic performance lowers the positive framing of the European Union [@Teney2016DoesEUEconomic], and the course examines it on a panel of `r nrow(euframes)` country-years, `r n_countries` member states observed in each of `r n_years` years, as the [case study](../cases/eu-frames/index.qmd) explains. The reproduced specification of the course, the cosmopolitan share regressed on unemployment with country and year fixed effects, gives a slope of `r insight::format_value(conventional$b, digits = 5, style_negative = "minus")` with a conventional p-value of `r insight::format_value(conventional$p, digits = 4)` and, under the CR2 correction for errors clustered by country that the [panel-data module](panel-data.qmd#sec-inference) sets out, p = `r insight::format_value(cr2$p, digits = 4)` on `r insight::format_value(cr2$df, digits = 1)` degrees of freedom, just above the threshold of 5%. A result of this kind, resting on countries of very unequal weight, is one in which the habits of Bayesian estimation are useful. The estimate becomes a distribution about which direct statements of probability can be made, with no line that divides the results into two classes, and the dependence that the clustered errors repair after the fit has to be written into the model itself, where a posterior predictive check can test it. The countries can also be given slopes of their own, each estimated partly from the other countries, which is the idea of partial pooling at the centre of the multilevel and Bayesian work of Andrew Gelman and of Richard McElreath that this module follows.
+This module of the [companion curriculum](index.qmd) estimates the slope of the claim of the Europeanisation and the economy case study by Bayesian methods, and it asks what Bayesian estimation adds in a case of this kind. The claim comes from a study of Eurobarometer surveys by the original author (OA), who reported that poor national economic performance lowers the positive framing of the European Union [@Teney2016DoesEUEconomic], and the course examines it on a panel of `r nrow(europeanisation)` country-years, `r n_countries` member states observed in each of `r n_years` years, as the [background page](../cases/europeanisation/index.qmd) explains. The reproduced specification of the course, the cosmopolitan share regressed on unemployment with country and year fixed effects, gives a slope of `r insight::format_value(conventional$b, digits = 5, style_negative = "minus")` with a conventional p-value of `r insight::format_value(conventional$p, digits = 4)` and, under the CR2 correction for errors clustered by country that the [panel-data module](panel-data.qmd#sec-inference) sets out, p = `r insight::format_value(cr2$p, digits = 4)` on `r insight::format_value(cr2$df, digits = 1)` degrees of freedom, just above the threshold of 5%. A result of this kind, resting on countries of very unequal weight, is one in which the habits of Bayesian estimation are useful. The estimate becomes a distribution about which direct statements of probability can be made, with no line that divides the results into two classes, and the dependence that the clustered errors repair after the fit has to be written into the model itself, where a posterior predictive check can test it. The countries can also be given slopes of their own, each estimated partly from the other countries, which is the idea of partial pooling at the centre of the multilevel and Bayesian work of Andrew Gelman and of Richard McElreath that this module follows.
 
 The models are fitted with brms, which fits Bayesian regression models in R through the Stan language [@Burkner2017BrmsPackageBayesian]. They were fitted once, in the script `companion/_model-outputs/bayes_panel.R`, because a Bayesian fit takes longer than a page should take to build, and the page shows the code of each model and reads the summaries and the thinned draws that the script wrote, while the frequentist twins of the models, fitted by restricted maximum likelihood (REML), run live on the page.
 
@@ -69,7 +69,7 @@ $$ \bar{y}_{ct} \sim N\!\left( \gamma_0 + \beta x_{ct} + v_c + w_t,\; \sigma^2 \
 ```{r}
 #| label: brms-ri
 #| eval: false
-m_bayes <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
+m_bayes <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = europeanisation,
                      backend = "cmdstanr", chains = 4, iter = 4000, seed = 2026)
 summary(m_bayes)
 ```
@@ -86,12 +86,12 @@ The slope, `r insight::format_value(ri_slope$mean, digits = 4, style_negative = 
 
 ```{r}
 #| label: reml-ri
-m_freq_twin <- lmerTest::lmer(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes)
+m_freq_twin <- lmerTest::lmer(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = europeanisation)
 summary(m_freq_twin)$coefficients
 lme4::VarCorr(m_freq_twin)
 ```
 
-The two fits agree within the error of the draws, because `r nrow(euframes)` country-years and weak priors leave the data in charge, and the two fits differ where the data are thin, since REML returns a bare point estimate for the spread of the years where the posterior gives a full distribution. The priors behind the posterior can be inspected, and inspecting them is a habit worth building:
+The two fits agree within the error of the draws, because `r nrow(europeanisation)` country-years and weak priors leave the data in charge, and the two fits differ where the data are thin, since REML returns a bare point estimate for the spread of the years where the posterior gives a full distribution. The priors behind the posterior can be inspected, and inspecting them is a habit worth building:
 
 ```{r}
 #| label: brms-ri-priors
@@ -122,15 +122,15 @@ What the priors imply together is seldom obvious from the priors one by one, and
 ```{r}
 #| label: brms-prior
 #| eval: false
-euframes <- euframes |>
+europeanisation <- europeanisation |>
   datawizard::demean(select = "unemp", by = "cntry") |>
   dplyr::mutate(year_f = factor(year))
 priors <- c(brms::prior(normal(0, 0.1), class = "b"),
             brms::set_prior("normal(0.5, 0.15)", class = "b",
-                            coef = paste0("cntry", sort(unique(euframes$cntry)))),
+                            coef = paste0("cntry", sort(unique(europeanisation$cntry)))),
             brms::prior(normal(0, 0.01), class = "b", coef = "unemp_within"),
             brms::prior(exponential(20), class = "sigma"))
-fit_prior <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within, data = euframes, prior = priors,
+fit_prior <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within, data = europeanisation, prior = priors,
                        sample_prior = "only", chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr")
 yrep_prior <- brms::posterior_predict(fit_prior)
 ```
@@ -165,13 +165,13 @@ With the likelihood switched on and the errors of the country-years treated as i
 ```{r}
 #| label: brms-common
 #| eval: false
-fit_common <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within, data = euframes, prior = priors,
+fit_common <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within, data = europeanisation, prior = priors,
                         chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
                         control = list(adapt_delta = 0.95))
 bayestestR::describe_posterior(fit_common, parameters = "b_unemp_within", ci = 0.95, ci_method = "ETI")
 ```
 
-The posterior median of the slope is `r insight::format_value(common$median, digits = 5, style_negative = "minus")`, with a 95% credible interval from `r insight::format_value(common$q2.5, digits = 5, style_negative = "minus")` to `r insight::format_value(common$q97.5, digits = 5, style_negative = "minus")`, against the least-squares slope of `r insight::format_value(conventional$b, digits = 5, style_negative = "minus")` with a conventional standard error of `r insight::format_value(conventional$se, digits = 5)`. The two agree closely, because priors this weak are outweighed by `r nrow(euframes)` country-years, and the posterior answers questions that a confidence interval cannot, among them the probability that the slope is negative, which here is `r dplyr::if_else(common$pd == 1, "1 to the precision of the draws, since every draw lies below zero", insight::format_value(common$pd, digits = 4))`. That agreement is also the limitation of the model, whose likelihood treats the `r nrow(euframes)` country-years as independent pieces of evidence, as the conventional standard error does, so that its posterior inherits the assumption that the clustered errors of the panel-data module correct.
+The posterior median of the slope is `r insight::format_value(common$median, digits = 5, style_negative = "minus")`, with a 95% credible interval from `r insight::format_value(common$q2.5, digits = 5, style_negative = "minus")` to `r insight::format_value(common$q97.5, digits = 5, style_negative = "minus")`, against the least-squares slope of `r insight::format_value(conventional$b, digits = 5, style_negative = "minus")` with a conventional standard error of `r insight::format_value(conventional$se, digits = 5)`. The two agree closely, because priors this weak are outweighed by `r nrow(europeanisation)` country-years, and the posterior answers questions that a confidence interval cannot, among them the probability that the slope is negative, which here is `r dplyr::if_else(common$pd == 1, "1 to the precision of the draws, since every draw lies below zero", insight::format_value(common$pd, digits = 4))`. That agreement is also the limitation of the model, whose likelihood treats the `r nrow(europeanisation)` country-years as independent pieces of evidence, as the conventional standard error does, so that its posterior inherits the assumption that the clustered errors of the panel-data module correct.
 
 Every number of this kind also assumes that the computation worked. Stan draws from the posterior by Markov chain Monte Carlo, and the standard checks ask whether the four chains agree (the R-hat statistic, which should be below 1.01), whether the chains carry enough independent information (the effective sample sizes, which should exceed about 400) and whether the sampler met regions of the posterior that it could not explore (divergent transitions, which should be zero). @tbl-diagnostics gives the checks for every model of the page.
 
@@ -207,7 +207,7 @@ A model that passes its computational checks may still fail to describe the data
 #| eval: false
 yrep <- brms::posterior_predict(fit_common)
 # one lm() with the replicated datasets as the columns of its outcome
-resid_rep <- resid(lm(t(yrep) ~ unemp + cntry + year_f, data = euframes))
+resid_rep <- resid(lm(t(yrep) ~ unemp + cntry + year_f, data = europeanisation))
 ```
 
 ```{r}
@@ -239,7 +239,7 @@ $$ \bar{y}_{ct} = \alpha_c + \gamma_t + \beta\,(x_{ct} - \bar{x}_{c\cdot}) + e_{
 #| label: brms-ar1
 #| eval: false
 fit_ar1 <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within + ar(time = year, gr = cntry, p = 1, cov = TRUE),
-                     data = euframes, prior = c(priors, brms::prior(normal(0, 0.5), class = "ar")),
+                     data = europeanisation, prior = c(priors, brms::prior(normal(0, 0.5), class = "ar")),
                      chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
                      control = list(adapt_delta = 0.95))
 ```
@@ -248,7 +248,7 @@ The argument `cov = TRUE` gives the errors of each country an autoregressive cov
 
 ```{r}
 #| label: gls-ar1
-gls_ar1 <- nlme::gls(mcosmo ~ unemp + cntry + factor(year), data = euframes,
+gls_ar1 <- nlme::gls(mcosmo ~ unemp + cntry + factor(year), data = europeanisation,
                      correlation = nlme::corAR1(form = ~ year | cntry), method = "REML")
 summary(gls_ar1)$tTable["unemp", ]
 nlme::intervals(gls_ar1, which = "var-cov")$corStruct
@@ -264,7 +264,7 @@ Persistent errors are one reading of the failed check, and slopes that differ be
 #| label: brms-slopes
 #| eval: false
 fit_slopes <- brms::brm(mcosmo ~ 0 + cntry + year_f + unemp_within + (0 + unemp_within | cntry),
-                        data = euframes, prior = c(priors, brms::prior(normal(0, 0.01), class = "sd")),
+                        data = europeanisation, prior = c(priors, brms::prior(normal(0, 0.01), class = "sd")),
                         chains = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
                         control = list(adapt_delta = 0.95))
 coef(fit_slopes, robust = TRUE, probs = c(0.05, 0.95))$cntry[, , "unemp_within"]
@@ -277,7 +277,7 @@ McElreath calls the alternative to such a model a model with 'amnesia', in which
 #| echo: false
 #| fig-width: 7.5
 #| fig-height: 6.6
-#| fig-cap: "The slope of the cosmopolitan share on unemployment in each country, ordered by the share of the variation in unemployment within countries that each holds: from its own ten years by least squares, with year effects shared and a 90% confidence interval (open circles), and partially pooled, with a 90% credible interval (filled circles), in the model with country slopes (left) and in the model that adds persistent errors (right). The vertical line marks the posterior median of the average slope in each model. Sources: `companion/_model-outputs/bayes_panel_countries.csv`, `cases/eu-frames/data/display_loo.csv`."
+#| fig-cap: "The slope of the cosmopolitan share on unemployment in each country, ordered by the share of the variation in unemployment within countries that each holds: from its own ten years by least squares, with year effects shared and a 90% confidence interval (open circles), and partially pooled, with a 90% credible interval (filled circles), in the model with country slopes (left) and in the model that adds persistent errors (right). The vertical line marks the posterior median of the average slope in each model. Sources: `companion/_model-outputs/bayes_panel_countries.csv`, `cases/europeanisation/data/display_loo.csv`."
 #| fig-alt: "Two panels of 27 countries. On the left the open circles of the small countries scatter widely on both sides of zero and the filled circles are drawn towards the average, much less so for Greece and Spain, which sit below it, and Poland, which sits near zero. On the right every filled circle lies close to the average slope near −0.003."
 order_countries <- influence$left_out[order(-influence$variation_share)]
 pooled <- country_slopes |>
@@ -315,7 +315,7 @@ In the model with a slope for each country, the slopes of the countries with lit
 
 ```{r}
 #| label: reml-slopes
-panel <- datawizard::demean(euframes, select = "unemp", by = "cntry")
+panel <- datawizard::demean(europeanisation, select = "unemp", by = "cntry")
 lmer_slopes <- lmerTest::lmer(mcosmo ~ 0 + cntry + factor(year) + unemp_within + (0 + unemp_within | cntry),
                               data = panel)
 summary(lmer_slopes)$coefficients["unemp_within", ]
@@ -362,9 +362,9 @@ The slope is insensitive to its prior in every model, with values of sensitivity
 ```{r}
 #| label: slope-intervals
 #| include: false
-lm_twoway <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = euframes)
+lm_twoway <- lm(mcosmo ~ unemp + factor(cntry) + factor(year), data = europeanisation)
 ci_conventional <- confint(lm_twoway)["unemp", ]
-ci_cr2 <- clubSandwich::conf_int(lm_twoway, vcov = "CR2", cluster = euframes$cntry, coefs = "unemp")
+ci_cr2 <- clubSandwich::conf_int(lm_twoway, vcov = "CR2", cluster = europeanisation$cntry, coefs = "unemp")
 ```
 
 ```{r}
@@ -372,7 +372,7 @@ ci_cr2 <- clubSandwich::conf_int(lm_twoway, vcov = "CR2", cluster = euframes$cnt
 #| echo: false
 #| fig-width: 7.5
 #| fig-height: 3.4
-#| fig-cap: "The slope of the cosmopolitan share on unemployment within countries: least squares with a 95% confidence interval under conventional and under CR2 errors clustered by country (squares), and the posterior median with a 95% credible interval under each of the four two-way models (circles). Sources: `companion/_model-outputs/bayes_panel_summary.csv`, `cases/eu-frames/data/EUframes_cy.csv`."
+#| fig-cap: "The slope of the cosmopolitan share on unemployment within countries: least squares with a 95% confidence interval under conventional and under CR2 errors clustered by country (squares), and the posterior median with a 95% credible interval under each of the four two-way models (circles). Sources: `companion/_model-outputs/bayes_panel_summary.csv`, `cases/europeanisation/data/europeanisation_cy.csv`."
 #| fig-alt: "Six intervals. The conventional interval and the posterior of the model with one slope lie clearly below zero, between about −0.53 and −0.17 points. The CR2 interval runs from about −0.70 to zero. The three models with persistence or country slopes centre near −0.28 points, with intervals that end near zero or just above it."
 tibble::tibble(
   label = c("Least squares, conventional errors", "Least squares, CR2 errors",
@@ -398,7 +398,7 @@ tibble::tibble(
 
 The model that passes the posterior predictive check, with persistent errors and a slope for each country, puts the average slope at `r insight::format_value(both$median, digits = 4, style_negative = "minus")`, with a 95% credible interval from `r insight::format_value(both$q2.5, digits = 4, style_negative = "minus")` to `r insight::format_value(both$q97.5, digits = 5, style_negative = "minus")`. Its posterior probability that the slope is negative is `r insight::format_value(both$pd, digits = 3)`, and its probability that the slope is steeper than −0.001, a fall of at least one point of share for a rise of ten points of unemployment, is `r insight::format_value(both$p_beyond, digits = 3)`. The CR2 interval of the least-squares slope also ends almost exactly at zero, and the two approaches agree on the main point, that once the dependence of the years of a country enters the analysis the evidence for a negative slope is much weaker than the conventional fit suggests, while differing in what each makes of that evidence. The test classes the reproduced specification as not significant at the 5% level, by a margin of `r insight::format_value(100 * (cr2$p - 0.05), digits = 2)` of a percentage point, a margin of the kind that Gelman and Stern had in mind when they noted that "only a small change is required to move an estimate from a 5.1% significance level to 4.9%, thus moving it into statistical significance" [@GelmanStern2006DifferenceSignificantNot, p. 328]. The posterior states the same evidence as a probability that the slope is negative, with a central value smaller than the least-squares slope, and it leaves to the reader the judgement of whether a probability of that size is enough for the claim.
 
-The same model answers the question of the bounds that the outcome raises, since a share cannot leave the interval from 0 to 1 and a Gaussian likelihood does not respect that limit. Across its `r format(n_draws, big.mark = ",")` replicated datasets the smallest cell mean has a median of `r insight::format_value(bounds_both$rep_median[bounds_both$statistic == "min"], digits = 2)` and the largest one of `r insight::format_value(bounds_both$rep_median[bounds_both$statistic == "max"], digits = 2)`, against an observed `r insight::format_value(bounds_both$observed[bounds_both$statistic == "min"], digits = 2)` and `r insight::format_value(bounds_both$observed[bounds_both$statistic == "max"], digits = 2)`, and `r dplyr::if_else(bounds_both$rep_mean[bounds_both$statistic == "outside"] == 0, "not one replicated cell mean", "almost no replicated cell mean")` falls outside the unit interval, because the cell means lie in the middle of the scale, several residual standard deviations from either bound. For this outcome the Gaussian likelihood is a safe working approximation, and the beta family, which the [specification menu](../cases/eu-frames/menu.qmd#level-estimation) offers among the decisions about the model, would matter more for a scale whose cell means come close to 0.
+The same model answers the question of the bounds that the outcome raises, since a share cannot leave the interval from 0 to 1 and a Gaussian likelihood does not respect that limit. Across its `r format(n_draws, big.mark = ",")` replicated datasets the smallest cell mean has a median of `r insight::format_value(bounds_both$rep_median[bounds_both$statistic == "min"], digits = 2)` and the largest one of `r insight::format_value(bounds_both$rep_median[bounds_both$statistic == "max"], digits = 2)`, against an observed `r insight::format_value(bounds_both$observed[bounds_both$statistic == "min"], digits = 2)` and `r insight::format_value(bounds_both$observed[bounds_both$statistic == "max"], digits = 2)`, and `r dplyr::if_else(bounds_both$rep_mean[bounds_both$statistic == "outside"] == 0, "not one replicated cell mean", "almost no replicated cell mean")` falls outside the unit interval, because the cell means lie in the middle of the scale, several residual standard deviations from either bound. For this outcome the Gaussian likelihood is a safe working approximation, and the beta family, which the [specification menu](../cases/europeanisation/menu.qmd#level-estimation) offers among the decisions about the model, would matter more for a scale whose cell means come close to 0.
 
 ::: {.callout-tip}
 ## Try it

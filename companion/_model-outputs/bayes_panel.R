@@ -1,5 +1,5 @@
 ################################################################################
-# Title:        Bayesian models of the EU-frames panel
+# Title:        Bayesian models of the country-year panel
 # Purpose:      The fits behind the Bayesian estimation module. The slope of
 #               the cosmopolitan share on unemployment in the 270
 #               country-years, fitted with brms: crossed random intercepts
@@ -13,7 +13,7 @@
 #               residuals and of the bounds of the share, prior sensitivity
 #               by power-scaling (priorsense) and the computational checks;
 #               only summaries and thinned draws leave the script.
-# Reads:        cases/eu-frames/data/EUframes_cy.csv
+# Reads:        cases/europeanisation/data/europeanisation_cy.csv
 # Writes:       companion/_model-outputs/bayes_panel_summary.csv
 #               companion/_model-outputs/bayes_panel_prior_draws.csv
 #               companion/_model-outputs/bayes_panel_ppc.csv
@@ -34,7 +34,7 @@ out <- "companion/_model-outputs/"
 # country (unemp_within), which leaves the slope of a model with country
 # intercepts unchanged and keeps a country slope from standing in for a
 # difference of level between countries
-euframes <- readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE) |>
+europeanisation <- readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE) |>
   datawizard::demean(select = "unemp", by = "cntry") |>
   dplyr::mutate(year_f = factor(year))
 
@@ -43,7 +43,7 @@ euframes <- readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_typ
 # priors the module displays from brms_panel.txt and brms_priors.txt; the
 # same call returns the same draws, and this fit supplies the numbers that the
 # page quotes from them
-fit_ri <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
+fit_ri <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = europeanisation,
                     chains = 4, cores = 4, iter = 4000, seed = 2026, backend = "cmdstanr",
                     refresh = 0, silent = 2, file = paste0(out, "fit_panel_ri"), file_refit = "on_change")
 
@@ -57,7 +57,7 @@ fit_ri <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
 # centred on none. brms bounds the AR coefficient to (-1, 1) when cov = TRUE.
 prior_twoway <- c(brms::prior(normal(0, 0.1), class = "b"),
                   brms::set_prior("normal(0.5, 0.15)", class = "b",
-                                  coef = paste0("cntry", sort(unique(euframes$cntry)))),
+                                  coef = paste0("cntry", sort(unique(europeanisation$cntry)))),
                   brms::prior(normal(0, 0.01), class = "b", coef = "unemp_within"),
                   brms::prior(exponential(20), class = "sigma"))
 prior_sd <- brms::prior(normal(0, 0.01), class = "sd")
@@ -77,14 +77,14 @@ formulas <- list(
 priors <- list(common = prior_twoway, ar1 = c(prior_twoway, prior_ar),
                slopes = c(prior_twoway, prior_sd), both = c(prior_twoway, prior_sd, prior_ar))
 
-fit_prior <- brms::brm(formulas$common, data = euframes, prior = prior_twoway, sample_prior = "only",
+fit_prior <- brms::brm(formulas$common, data = europeanisation, prior = prior_twoway, sample_prior = "only",
                        chains = 4, cores = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
                        refresh = 0, silent = 2, file = paste0(out, "fit_panel_prior"), file_refit = "on_change")
 
 # adapt_delta = 0.95 for every two-way fit: the varying slopes put a
 # hierarchical sd near zero, where the sampler needs smaller steps
 twoway <- purrr::imap(formulas, \(f, name) {
-  brms::brm(f, data = euframes, prior = priors[[name]],
+  brms::brm(f, data = europeanisation, prior = priors[[name]],
             chains = 4, cores = 4, iter = 2000, seed = 20261106, backend = "cmdstanr",
             control = list(adapt_delta = 0.95), refresh = 0, silent = 2,
             file = paste0(out, "fit_panel_", name), file_refit = "on_change")
@@ -142,21 +142,21 @@ readr::write_csv(prior_draws, paste0(out, "bayes_panel_prior_draws.csv"))
 # two-way least-squares fit, computed alike on the data and on every
 # replicated dataset. Bounds: the smallest and the largest cell mean of each
 # replicated dataset, and the share of replicated cell means outside 0 to 1.
-pairs <- euframes |>
+pairs <- europeanisation |>
   dplyr::mutate(row = dplyr::row_number()) |>
   datawizard::data_arrange(c("cntry", "year")) |>
   dplyr::mutate(previous = dplyr::lag(row), .by = cntry) |>
   datawizard::data_filter(!is.na(previous))
-resid_obs <- resid(lm(mcosmo ~ unemp + cntry + year_f, data = euframes))
+resid_obs <- resid(lm(mcosmo ~ unemp + cntry + year_f, data = europeanisation))
 observed <- c(persistence = cor(resid_obs[pairs$row], resid_obs[pairs$previous]),
-              min = min(euframes$mcosmo), max = max(euframes$mcosmo), outside = 0)
+              min = min(europeanisation$mcosmo), max = max(europeanisation$mcosmo), outside = 0)
 
 # One lm() with the replicated datasets as the columns of its outcome fits the
 # same two-way design to all of them at once
 set.seed(20261107)
 yrep <- purrr::map(twoway, brms::posterior_predict)
 ppc_draws <- purrr::imap(yrep, \(y, name) {
-  resid_rep <- resid(lm(t(y) ~ unemp + cntry + year_f, data = euframes))
+  resid_rep <- resid(lm(t(y) ~ unemp + cntry + year_f, data = europeanisation))
   tibble::tibble(
     model = name, draw = seq_len(nrow(y)),
     persistence = purrr::map_dbl(seq_len(nrow(y)), \(s) cor(resid_rep[pairs$row, s], resid_rep[pairs$previous, s])),
@@ -192,7 +192,7 @@ ppc_draws |>
 # shared, by least squares with a 90% confidence interval. Partial pooling:
 # the posterior median and 90% interval of each country slope (the average
 # slope plus the departure of the country) in the two varying-slope models.
-no_pooling <- lm(mcosmo ~ 0 + cntry + year_f + cntry:unemp_within, data = euframes) |>
+no_pooling <- lm(mcosmo ~ 0 + cntry + year_f + cntry:unemp_within, data = europeanisation) |>
   parameters::model_parameters(ci = 0.9) |>
   tibble::as_tibble() |>
   datawizard::data_filter(grepl(":unemp_within$", Parameter)) |>

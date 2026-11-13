@@ -1,5 +1,5 @@
 ---
-pagetitle: "AR4DS – EU frames"
+pagetitle: "AR4DS – Europeanisation and the economy"
 page-layout: custom
 toc: false
 bibliography: [references.bib, references-new.bib]
@@ -22,16 +22,16 @@ claim and the verdicts of the reproduction and the replication come from
 D:\ACADEMIC\TEACHING\2026_OR_NCL\_planning\score-teney-outcomes.md and the data
 contract of the CLAUDE.md of this site; the other numbers are read from the
 committed data files by the chunk below. The replication is given by its
-verdict alone, as on the case page and in the decks. -->
+verdict alone, as on the background page and in the decks. -->
 
 ```{r}
 #| label: numbers
 #| include: false
-# Numbers quoted on the page, read from the committed data files of the case;
+# Numbers quoted on the page, read from the committed data files of the case study;
 # negative values carry a true minus sign.
-e_curve <- readr::read_csv("cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
-e_analysts <- readr::read_csv("cases/eu-frames/data/analysts5.csv", show_col_types = FALSE)
-e_cells <- nrow(readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE))
+e_curve <- readr::read_csv("cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
+e_analysts <- readr::read_csv("cases/europeanisation/data/analysts5.csv", show_col_types = FALSE)
+e_cells <- nrow(readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE))
 e_spec <- format(nrow(e_curve), big.mark = ",")
 e_r <- sub("^-", "\u2212", formatC(c(max(e_analysts$r), min(e_analysts$r)), format = "f", digits = 3))
 ```
@@ -43,14 +43,14 @@ e_r <- sub("^-", "\u2212", formatC(c(max(e_analysts$r), min(e_analysts$r)), form
 Hands-on training in {{< var workshop.format >}}
 :::
 
-# The EU-frames case {.unnumbered .unlisted}
+# Europeanisation and the economy {#europeanisation-and-the-economy .unnumbered .unlisted}
 
 ::: {.home-lead}
-This site teaches reproduction, robustness and replication in R on one published claim, together with the reanalyses that the claim received in a many-analyst study and the replication that tested it with new data. It is part of Applied Replication for Data Skills (AR4DS), which teaches the same exercise on four cases.
+This site teaches reproduction, robustness and replication in R on one published claim, together with the reanalyses that the claim received in a many-analyst study and the replication that tested it with new data. It is part of Applied Replication for Data Skills (AR4DS), which teaches the same exercise on four case studies.
 :::
 
 ::: {.home-cta}
-[Formats](#formats) [Read the case study](cases/eu-frames/index.qmd)
+[Formats](#formats) [Read the background](cases/europeanisation/index.qmd)
 :::
 
 :::::
@@ -65,7 +65,7 @@ This site teaches reproduction, robustness and replication in R on one published
 
 :::: {.home-reveal}
 
-## The case {.unnumbered}
+## The case study {#the-case .unnumbered}
 
 ::: {.home-intro}
 A sociological paper of 2016 asked, from the Eurobarometer surveys of the years 2004 to 2013, whether the economic crisis changed how citizens of the European Union frame the Union. One sentence of its abstract became the claim that the course works on.
@@ -73,10 +73,10 @@ A sociological paper of 2016 asked, from the Eurobarometer surveys of the years 
 
 > "... poor economic performances ... decrease positive dimensions of EU framing" [@Teney2016DoesEUEconomic, p. 619]
 
-The case study tells the story in four parts: the original study, its data and the selections behind them, SCORE and Multi100, the five reanalysts, and the comparison of their results. The case teaches the aggregation of repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r e_spec` specifications, on a panel of `r e_cells` country-years built from the Eurobarometer surveys and shipped with the workspace.
+The background page tells the story in four parts: the original study, its data and the selections behind them, SCORE and its robustness study [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness], the five reanalysts, and the comparison of their results. The case study teaches the aggregation of repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r e_spec` specifications, on a panel of `r e_cells` country-years built from the Eurobarometer surveys and shipped with the workspace.
 
 ::: {.home-cta}
-[Read the case study](cases/eu-frames/index.qmd)
+[Read the background](cases/europeanisation/index.qmd)
 :::
 
 ::::
@@ -92,7 +92,7 @@ Two attempts to reproduce the published result from the original materials did n
 ::: {.home-r}
 ### Robustness {.unnumbered .unlisted}
 
-All five Multi100 analysts concluded that the data support the claim, while the partial correlations recorded for their results run from `r e_r[1]` to `r e_r[2]`.
+All five analysts of the robustness study concluded that the data support the claim, while the partial correlations recorded for their results run from `r e_r[1]` to `r e_r[2]`.
 :::
 
 ::: {.home-r}
@@ -118,7 +118,7 @@ The facilitator of a course chooses its format, and the link that you receive fo
 :::: {.home-grid}
 
 ::: {.home-track .home-reveal}
-### [Short session](tracks/eu-frames-short/index.qmd) {.unnumbered .unlisted}
+### [Short session](tracks/europeanisation-short/index.qmd) {.unnumbered .unlisted}
 
 [Two halves, with R inside the slides]{.home-meta}
 
@@ -126,7 +126,7 @@ Three hours on the claim and its five reanalyses, with nothing to install and no
 :::
 
 ::: {.home-track .home-reveal}
-### [One-day workshop](tracks/eu-frames-one-day/index.qmd) {.unnumbered .unlisted}
+### [One-day workshop](tracks/europeanisation-one-day/index.qmd) {.unnumbered .unlisted}
 
 [Four parts, mainly in the browser lab]{.home-meta}
 
@@ -134,11 +134,11 @@ The claim and the credibility of social science, with the record of the paper in
 :::
 
 ::: {.home-track .home-reveal}
-### [Extended course](tracks/eu-frames-extended/index.qmd) {.unnumbered .unlisted}
+### [Extended course](tracks/europeanisation-extended/index.qmd) {.unnumbered .unlisted}
 
 [Three days, built around the workshop]{.home-meta}
 
-A first day on open research and the tools, the same for every case, the workshop as the second day, and a third day on the methods of the case, from the panel to the respondents within it, which ends with a report of your own, written in Quarto and kept under Git.
+A first day on open research and the tools, the same for every case study, the workshop as the second day, and a third day on the methods of the case study, from the panel to the respondents within it, which ends with a report of your own, written in Quarto and kept under Git.
 :::
 
 ::: {.home-track .home-reveal}
@@ -146,7 +146,7 @@ A first day on open research and the tools, the same for every case, the worksho
 
 [At your own pace, in R]{.home-meta}
 
-The case for a reader who works alone, in R on your own machine, with the modules of the [companion](companion/index.qmd) between the tasks of the exercise and a project of your own at the end.
+The case study for a reader who works alone, in R on your own machine, with the modules of the [companion](companion/index.qmd) between the tasks of the exercise and a project of your own at the end.
 :::
 
 ::::
@@ -182,27 +182,27 @@ Meet the country-year panel, write the estimand statement behind the claim, and 
 <details>
 <summary><span class="home-n">Task 3</span>The reproduction</summary>
 
-Choose one of the five analysts and reproduce the value that Multi100 recorded for that analyst, from the data behind it. Three of the five fitted their models on means of countries or of cells, and their results come back to the third decimal from files that the browser lab already holds, which is why the one-day workshop reproduces one of these three. The other two worked on respondents, whose files only a GESIS account can give.
+Choose one of the five analysts and reproduce the value recorded in the robustness study for that analyst, from the data behind it. Three of the five fitted their models on means of countries or of cells, and their results come back to the third decimal from files that the browser lab already holds, which is why the one-day workshop reproduces one of these three. The other two worked on respondents, whose files only a GESIS account can give.
 
 </details>
 
 <details>
 <summary><span class="home-n">Task 4</span>The menu</summary>
 
-Work through the decisions that lie between the data and a result, try alternatives one change at a time, and send one exploration to the class chart. The [decision map](cases/eu-frames/map.qmd) lays every decision out.
+Work through the decisions that lie between the data and a result, try alternatives one change at a time, and send one exploration to the class chart. The [decision map](cases/europeanisation/map.qmd) lays every decision out.
 
 </details>
 
 <details>
 <summary><span class="home-n">Task 5</span>Declaration and report</summary>
 
-Declare one specification in a short preregistration, run it, report it, and find where it sits among the `r e_spec` specifications of the [curve of the claim](cases/eu-frames/multiverse.qmd).
+Declare one specification in a short preregistration, run it, report it, and find where it sits among the `r e_spec` specifications of the [curve of the claim](cases/europeanisation/multiverse.qmd).
 
 </details>
 
 ::::
 
-The [exercise overview](cases/eu-frames/exercise.qmd) sets out the five tasks in full.
+The [exercise overview](cases/europeanisation/exercise.qmd) sets out the five tasks in full.
 
 :::::
 ::::::
@@ -217,28 +217,28 @@ The [exercise overview](cases/eu-frames/exercise.qmd) sets out the five tasks in
 <details>
 <summary>What the course teaches</summary>
 
-The main aim of the course is to introduce technical skills for modern empirical data analysis: finding the data and code of a study in an online repository, working with code so that another person (or your future self) can reproduce your steps, fixing your analytical choices in a preregistration before you run the analysis, and writing a live report that combines code and text. The exercise follows the design of Multi100 on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared, and the [exercise overview](cases/eu-frames/exercise.qmd) sets out its five tasks.
+The main aim of the course is to introduce technical skills for modern empirical data analysis: finding the data and code of a study in an online repository, working with code so that another person (or your future self) can reproduce your steps, fixing your analytical choices in a preregistration before you run the analysis, and writing a live report that combines code and text. The exercise follows the design of the robustness study on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared, and the [exercise overview](cases/europeanisation/exercise.qmd) sets out its five tasks.
 
 </details>
 
 <details id="running-the-analyses">
 <summary>Running the analyses</summary>
 
-The exercise is done in R, either in the [browser lab](cases/eu-frames/lab.qmd), which runs R inside a browser tab with the data in the page and nothing installed, or in the workspace on your own machine, which the [setup page](https://codemoreh.github.io/ar4ds/setup.html) on the AR4DS site installs in plain steps. The respondent files behind the panel come from the GESIS archive, under a free account and terms that do not allow them to be passed on, so the Extended course, whose third day works on the respondents, asks each participant to download [the Eurobarometer files](https://codemoreh.github.io/ar4ds/setup.html#the-eurobarometer-files-for-the-individual-level-work) under an account of their own.
+The exercise is done in R, either in the [browser lab](cases/europeanisation/lab.qmd), which runs R inside a browser tab with the data in the page and nothing installed, or in the workspace on your own machine, which the [setup page](https://codemoreh.github.io/ar4ds/setup.html) on the AR4DS site installs in plain steps. The respondent files behind the panel come from the GESIS archive, under a free account and terms that do not allow them to be passed on, so the Extended course, whose third day works on the respondents, asks each participant to download [the Eurobarometer files](https://codemoreh.github.io/ar4ds/setup.html#the-eurobarometer-files-for-the-individual-level-work) under an account of their own.
 
 </details>
 
 <details>
 <summary>The companion</summary>
 
-The [companion](companion/index.qmd) holds the teaching material of the course on this case, in three groups: tools, data and sharing, and methods. Every module keeps its own page and stands on its own, so you can read one for the skill that it covers or take it in the place that a format gives it. A single day has room for the exercise and very little else, which is why the workshop points to the modules rather than working through them, while the Extended course teaches some of them as sessions and the self-study route is built out of them.
+The [companion](companion/index.qmd) holds the teaching material of the course on this case study, in three groups: tools, data and sharing, and methods. Every module keeps its own page and stands on its own, so you can read one for the skill that it covers or take it in the place that a format gives it. A single day has room for the exercise and very little else, which is why the workshop points to the modules rather than working through them, while the Extended course teaches some of them as sessions and the self-study route is built out of them.
 
 </details>
 
 <details>
-<summary>SCORE and Multi100</summary>
+<summary>SCORE</summary>
 
-The claim comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication, and the exercise follows the design of Multi100, its study of robustness. The AR4DS site describes [the programme and the record of the four cases of the course](https://codemoreh.github.io/ar4ds/score-multi100.html), and its page on [the Multi100 article](https://codemoreh.github.io/ar4ds/multi100-article.html) explains how the results of the analysts were placed on one scale and compared.
+The claim comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication, and the exercise follows the design of its robustness study. The AR4DS site describes [the programme and the record of the four case studies of the course](https://codemoreh.github.io/ar4ds/score.html), and its page on [the robustness article](https://codemoreh.github.io/ar4ds/robustness-article.html) explains how the results of the analysts were placed on one scale and compared.
 
 </details>
 
@@ -267,13 +267,13 @@ Install R, Quarto and an IDE (Positron, RStudio, VS Code, etc.), following the s
 ::: {.home-step}
 ### The workspace {.unnumbered .unlisted}
 
-Download the workspace of the case as a zip file, open it in your IDE and run the check script. [The workspace](https://codemoreh.github.io/ar4ds/setup.html#the-workspace)
+Download the workspace of the case study as a zip file, open it in your IDE and run the check script. [The workspace](https://codemoreh.github.io/ar4ds/setup.html#the-workspace)
 :::
 
 ::: {.home-step}
 ### The browser lab {.unnumbered .unlisted}
 
-Try the exercise in the browser, without installing anything; it is also the fallback when a machine fails on the day. [Open the browser lab](cases/eu-frames/lab.qmd)
+Try the exercise in the browser, without installing anything; it is also the fallback when a machine fails on the day. [Open the browser lab](cases/europeanisation/lab.qmd)
 :::
 
 ::::

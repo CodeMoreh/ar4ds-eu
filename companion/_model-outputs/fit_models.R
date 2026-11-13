@@ -9,7 +9,7 @@
 #               GESIS-licensed person-level rebuild of 416,698 respondents,
 #               held only on the machine of the facilitator and never in a
 #               repository)
-#               cases/eu-frames/data/EUframes_cy.csv (the committed panel)
+#               cases/europeanisation/data/europeanisation_cy.csv (the committed panel)
 # Writes:       companion/_model-outputs/*.txt (captured model summaries:
 #               aggregate statistical output only, no microdata)
 #               companion/_model-outputs/cosmo_dist.csv (counts of the
@@ -28,7 +28,7 @@ outdir <- "companion/_model-outputs"
 source("companion/_model-outputs/_load_respondents.R")
 person <- ind |>
   as.data.frame()  # r-style: keep – WeMix::mix() takes a plain data frame
-euframes <- readr::read_csv("cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+europeanisation <- readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
 
 # --- 1. logistic GLM – mentions at least one cosmopolitan meaning ----------- #
 m_logit <- glm(I(cosmo > 0) ~ unemp, family = binomial(), data = person)
@@ -80,7 +80,7 @@ writeLines(capture.output(summary(m_tmb)), file.path(outdir, "glmmtmb_ordbeta.tx
 cat("glmmTMB(ordbeta) b_unemp =", round(glmmTMB::fixef(m_tmb)$cond["unemp"], 5), "\n")
 
 # --- 8. Bayesian hierarchical model on the committed aggregate panel --------- #
-m_brm <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = euframes,
+m_brm <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = europeanisation,
              backend = "cmdstanr", chains = 4, cores = 4, iter = 4000,
              seed = 2026, refresh = 0, silent = 2)
 writeLines(capture.output(print(summary(m_brm), digits = 4)), file.path(outdir, "brms_panel.txt"))

@@ -35,7 +35,7 @@ dag_plot <- function(g, gap = 0.3) {
 }
 ```
 
-This module of the [companion curriculum](index.qmd) works on the EU-frames case, a panel of country-years in which country and year fixed effects stand for the adjustment set. Task 2 of the exercise asks you to finish the graph of the case, and section 3 builds it step by step with the R packages ggdag and dagitty, which answer the questions in the workspace; the browser lab prints the same answers from a table that the course computes with dagitty, because the package cannot run in a browser, so that the graph of this page and the graph of the task are the same. The code is shown, and every number about the case is computed from the files of the course in `cases/eu-frames/data/` when the page is built.
+This module of the [companion curriculum](index.qmd) works on the Europeanisation and the economy case study, a panel of country-years in which country and year fixed effects stand for the adjustment set. Task 2 of the exercise asks you to finish the graph of the case study, and section 3 builds it step by step with the R packages ggdag and dagitty, which answer the questions in the workspace; the browser lab prints the same answers from a table that the course computes with dagitty, because the package cannot run in a browser, so that the graph of this page and the graph of the task are the same. The code is shown, and every number about the case study is computed from the files of the course in `cases/europeanisation/data/` when the page is built.
 
 ## 1. Arrows as claims {#sec-arrows}
 
@@ -66,25 +66,25 @@ A **mediator** lies on the path from the exposure to the outcome and carries par
 
 A **collider** is a common effect of two variables. Left alone, it blocks the path between its two causes, so they stay unrelated. Holding it constant opens the path and creates an association between causes that had none. Restricting a sample to the cases in which the collider took one value does the same as putting it in the model, so that selecting on a variable is conditioning on it, a mechanism that has produced spurious findings in several literatures [@ColeEtAl2010IllustratingBiasDue; @GriffithEtAl2020ColliderBiasUndermines].
 
-## 3. The EU-frames case {#sec-eu-frames}
+## 3. The Europeanisation case study {#sec-europeanisation}
 
-The EU-frames case is observational: a panel of 270 country-years, in which countries and years differ in ways that may move both the unemployment rate and how people frame the EU. This section draws the graph of the case, derives the adjustment set from it, fits the models that the graph prescribes and the ones that it does not, and shows what country and year fixed effects can and cannot absorb. Its graphs are written with the ggdag package, as formulas, rather than as the dagitty text of section 2; both produce the same dagitty object, and the same questions can be put to either. Every chunk runs when the page is built, from the shipped `cases/eu-frames/data/EUframes_cy.csv`, and the setup chunk below loads the packages and data of the section.
+The Europeanisation case study is observational: a panel of 270 country-years, in which countries and years differ in ways that may move both the unemployment rate and how people frame the EU. This section draws the graph of the case study, derives the adjustment set from it, fits the models that the graph prescribes and the ones that it does not, and shows what country and year fixed effects can and cannot absorb. Its graphs are written with the ggdag package, as formulas, rather than as the dagitty text of section 2; both produce the same dagitty object, and the same questions can be put to either. Every chunk runs when the page is built, from the shipped `cases/europeanisation/data/europeanisation_cy.csv`, and the setup chunk below loads the packages and data of the section.
 
 ```{r}
-#| label: setup-eu-frames
+#| label: setup-europeanisation
 #| message: false
 #| warning: false
 set.seed(20260730)
 
-# Four significant figures, so C6HJR's published Multi100 statistic prints as -3.804 rather than
+# Four significant figures, so the statistic recorded for C6HJR in the robustness study prints as -3.804 rather than
 # being rounded down to three by the default settings of the tibble printer.
 options(width = 88, pillar.sigfig = 4)
 
-euframes <- readr::read_csv("../cases/eu-frames/data/EUframes_cy.csv", show_col_types = FALSE)
+europeanisation <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
 
 # the adjustment decision on the curve of the claim, for section 3.6
-eu_curve <- readr::read_csv("../cases/eu-frames/data/spec_curve.csv", show_col_types = FALSE)
-forks <- readr::read_csv("../cases/eu-frames/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+eu_curve <- readr::read_csv("../cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/europeanisation/data/spec_curve_forks.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive")
 pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
 below_sig <- \(d) 100 * mean(d$supports & d$sig)
@@ -105,7 +105,7 @@ node_box <- function() {
 In R the graph is built with `dagify()` from the **ggdag** package, and each edge is written as an ordinary formula. The outcome goes on the left of the tilde and its causes on the right, as in `lm()`, so `framing ~ unemployment` reads 'unemployment causes framing'.
 
 ```{r}
-#| label: first-dag-eu-frames
+#| label: first-dag-europeanisation
 first_formulas <- ggdag::dagify(
   framing      ~ unemployment,   # the effect we want to estimate
   framing      ~ country,        # stable national traits shape framing
@@ -124,7 +124,7 @@ There is an older way of writing the same graph, as a quoted string in the mini-
 The picture itself is an ordinary ggplot. `tidy_dagitty()` turns the object into a data frame of nodes and edge endpoints, and from there the layers are geoms and themes of the kind that the [section of the R module on the grammar of graphics](intro-r.qmd#sec-grammar) builds up. `geom_dag_edges()` draws the arrows and `theme_dag()` strips away the axes that a graph has no use for. The nodes come from `node_box()`, the small helper defined in the setup chunk, which is a labelled rectangle roomy enough for a word like `unemployment`; the stock pairing of `geom_dag_point()` and `geom_dag_text()` gives circled nodes instead. This is the point at which that module stops being optional background, because everything below assumes you can read a layered plot.
 
 ```{r}
-#| label: fig-first-eu-frames
+#| label: fig-first-europeanisation
 #| fig-width: 6
 #| fig-height: 3
 #| fig-cap: "The smallest useful graph: one effect of interest and one common cause."
@@ -141,7 +141,7 @@ first_formulas |>
 
 ### 3.2 A collider in a regression {#sec-collider-regression}
 
-The rule against conditioning on a collider has a second lesson when the outcome is continuous and the collider enters a regression as a control. The recipe below writes a real effect into the data – a one-unit rise in unemployment moves framing by exactly 0.5 – and then creates a variable caused by both. In the terms of the EU-frames case, that third variable is politicisation. A slump raises unemployment, sour public framing pushes in the same direction, and parties and media respond to both by making the EU a live political issue.
+The rule against conditioning on a collider has a second lesson when the outcome is continuous and the collider enters a regression as a control. The recipe below writes a real effect into the data – a one-unit rise in unemployment moves framing by exactly 0.5 – and then creates a variable caused by both. In the terms of the Europeanisation case study, that third variable is politicisation. A slump raises unemployment, sour public framing pushes in the same direction, and parties and media respond to both by making the EU a live political issue.
 
 ```{r}
 #| label: collider-sim-regression
@@ -179,14 +179,14 @@ Stated generally, **selecting on a variable is conditioning on it**. Restricting
 Change the recipe so that politicisation is caused only by unemployment and not by framing, making it a descendant of the exposure rather than a collider. Refit both models. Then make it a cause of both instead, so it is a confounder, and refit again. Across the three graphs, each generating its own dataset, the same second model is wrong, harmless and required in turn.
 :::
 
-### 3.3 The graph of the case {#sec-case-eu-frames}
+### 3.3 The graph of the case study {#sec-case-europeanisation}
 
-The claim of the EU-frames case comes from a 2016 study of how Europeans frame the European Union, whose author this site refers to as the original author, or OA [@Teney2016DoesEUEconomic]. OA's argument is that economic hardship shifts the terms in which people talk about the EU away from cosmopolitan ones, and the reanalysis you work on tests one version of it: whether the unemployment rate in a country-year is associated with the mean cosmopolitan framing of its respondents.
+The claim of the Europeanisation case study comes from a 2016 study of how Europeans frame the European Union, whose author this site refers to as the original author, or OA [@Teney2016DoesEUEconomic]. OA's argument is that economic hardship shifts the terms in which people talk about the EU away from cosmopolitan ones, and the reanalysis you work on tests one version of it: whether the unemployment rate in a country-year is associated with the mean cosmopolitan framing of its respondents.
 
-Here is that claim as a graph. The node names describe concepts. `unemployment` is the idea and `unemp` is the measurement of it in the EU-frames dataset, and keeping the two names apart stops the graph from becoming a picture of the regression.
+Here is that claim as a graph. The node names describe concepts. `unemployment` is the idea and `unemp` is the measurement of it in the country-year panel, and keeping the two names apart stops the graph from becoming a picture of the regression.
 
 ```{r}
-#| label: case-dag-eu-frames
+#| label: case-dag-europeanisation
 case <- ggdag::dagify(
   framing      ~ unemployment,   # the effect of interest
   framing      ~ country,        # national traits: size, EU tenure, history
@@ -208,10 +208,10 @@ dagitty::paths(case)
 Four of the five arrows in the graph are the two confounder pairs. Countries differ in ways that persist across the whole period and that plausibly move both their labour markets and how their populations talk about Europe, and years differ in ways common to the whole continent, of which 2008 and 2009 are the obvious instances. `paths()` lists every route between exposure and outcome regardless of direction, and reports that all three are open: the causal arrow you want, and one back door through each confounder, meaning a non-causal path that begins with an arrow pointing into unemployment and reaches framing through the common cause.
 
 ```{r}
-#| label: fig-case-eu-frames
+#| label: fig-case-europeanisation
 #| fig-width: 7
 #| fig-height: 3.6
-#| fig-cap: "The EU-frames claim as a graph. The two confounders are drawn above the causal arrow, each with arrows into both ends of it."
+#| fig-cap: "The claim of the Europeanisation case study as a graph. The two confounders are drawn above the causal arrow, each with arrows into both ends of it."
 case |>
   ggdag::tidy_dagitty() |>
   ggplot2::ggplot(ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
@@ -234,7 +234,7 @@ The adjustment set comes from `adjustmentSets()`, which returns the variables th
 dagitty::adjustmentSets(case)
 ```
 
-The set contains country and year. The answer is not surprising, but it is the right-hand side of a regression that has been derived from stated substantive beliefs about the case. Adjusting for country and year means letting each country have its own level and each year its own level, which is what a two-way fixed-effects model does, so the graph and the reproduced specification of the course make the same claim in two notations.
+The set contains country and year. The answer is not surprising, but it is the right-hand side of a regression that has been derived from stated substantive beliefs about the case study. Adjusting for country and year means letting each country have its own level and each year its own level, which is what a two-way fixed-effects model does, so the graph and the reproduced specification of the course make the same claim in two notations.
 
 The claim can be checked by fitting the model that the graph prescribes beside the three nearby models that it does not.
 
@@ -247,7 +247,7 @@ list(
   "country and year" = mcosmo ~ unemp + factor(cntry) + factor(year)
 ) |>
   purrr::imap(\(f, nm) {
-    p <- parameters::model_parameters(lm(f, data = euframes))
+    p <- parameters::model_parameters(lm(f, data = europeanisation))
     tibble::tibble(adjusted_for = nm,
            b = p$Coefficient[p$Parameter == "unemp"],
            t = p$t[p$Parameter == "unemp"],
@@ -257,7 +257,7 @@ list(
   dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 4)))
 ```
 
-Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 3.6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Task 3 in the EU-frames case and the value recorded for analyst C6HJR in the Multi100 project.
+Read the four rows against each other before reading the last one alone. Adjusting for nothing gives a coefficient that is small and indistinguishable from zero, because the two back doors are pulling in opposite directions and largely cancelling. Adjusting for country alone gives a coefficient roughly 60 per cent larger than the coefficient under the full adjustment set, on a *t* of about −6.9, which is the kind of number that a researcher would be delighted to report and which this graph gives no warrant to read as the effect of unemployment. Section 3.6 returns to this design, because the curve of the claim keeps it for a different reason. Adjusting for year alone gives a positive coefficient – the wrong sign for the claim entirely, and comfortably non-significant. Adjusting for both, as the adjustment set requires, gives *t* = −3.804, the reproduction target of Task 3 in the Europeanisation case study and the value recorded for analyst C6HJR in the robustness study of SCORE [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness].
 
 Of the four models, one is correct because it adjusts for the set that the graph requires, and one of the other three points the opposite way. Nothing in the data picks out the correct one. The choice comes from the graph, and so from five arrows that were drawn before any model was fitted.
 
@@ -267,7 +267,7 @@ The name `adjustmentSets()` is plural because the function returns *minimally su
 
 Country and year fixed effects are frequently described as though they adjust for everything, and the graph shows why they do not. A country fixed effect absorbs whatever is constant within a country across the whole period, and a year fixed effect absorbs whatever is common to all countries in a given year. A variable that moves *within* a country *over* time is untouched by both, and if that variable causes unemployment and framing alike, it is a back door that the reproduced specification does not close. This is the substance of the methodological warnings about reading fixed-effects coefficients as causal quantities [@KeeleEtAl2020CausalInterpretationEstimated; @BellJones2015ExplainingFixedEffects].
 
-GDP growth is such a variable, and on the [specification menu](../cases/eu-frames/menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 3.3 and run `adjustmentSets()` again.
+GDP growth is such a variable, and on the [specification menu](../cases/europeanisation/menu.qmd) it is the option of the adjustment decision, the other economic measure held fixed beside the predictor. Switch on the two arrows commented out in section 3.3 and run `adjustmentSets()` again.
 
 ```{r}
 #| label: growth-confounder
@@ -281,12 +281,12 @@ growth_confounds <- ggdag::dagify(
 dagitty::adjustmentSets(growth_confounds)
 ```
 
-Growth joins the adjustment set, and so the model gains a term. On the EU-frames dataset the consequence is modest.
+Growth joins the adjustment set, and so the model gains a term. On the country-year panel the consequence is modest.
 
 ```{r}
 #| label: growth-fit
 parameters::model_parameters(
-  lm(mcosmo ~ unemp + growth + factor(cntry) + factor(year), data = euframes)
+  lm(mcosmo ~ unemp + growth + factor(cntry) + factor(year), data = europeanisation)
 ) |>
   tibble::as_tibble() |>
   datawizard::data_filter(Parameter %in% c("unemp", "growth")) |>
@@ -347,11 +347,11 @@ list(total = "total", direct = "direct") |>
 
 Depending on which of the two defensible beliefs about growth you hold, and which quantity you want, the graphs give three different formulas. The menu axis that offers growth as a copredictor is therefore a choice between two claims about what the unemployment coefficient means, and running the model both ways as a robustness check does not make that choice. Nor will a coefficient on growth that looks 'supported by the data' settle it, because the two graphs make identical predictions about the data.
 
-### 3.6 The adjustment on the curve {#sec-adjustment-eu-frames}
+### 3.6 The adjustment on the curve {#sec-adjustment-europeanisation}
 
-The curve of the claim keeps both options of the adjustment decision, the slope with the other economic measure left out and the slope with it held fixed, for the reason that the two graphs above set out: unemployment and growth are two expressions of the same downturn rather than a cause and its confounder, so the unadjusted slope, which the reproduced specification estimates, and the adjusted slope, which the model of the original study estimates, are two estimands rather than a right and a wrong set of controls. The section [Adjustment set](../cases/eu-frames/menu.qmd#adjustment-set) of the specification menu gives the reasoning option by option. On the curve the adjustment carries `r pp(fk("copredictor"))` of the variance of the claim-aligned partial correlations, and moving it alone changes the class of `r pp(fk("copredictor", "crossing_rate"))` of the pairs of specifications that differ in nothing else; `r pp(below_sig(dplyr::filter(eu_curve, copredictor == "none")))` of the unadjusted specifications and `r pp(below_sig(dplyr::filter(eu_curve, copredictor == "other")))` of the adjusted ones lie below zero with CR2 p < 0.05.
+The curve of the claim keeps both options of the adjustment decision, the slope with the other economic measure left out and the slope with it held fixed, for the reason that the two graphs above set out: unemployment and growth are two expressions of the same downturn rather than a cause and its confounder, so the unadjusted slope, which the reproduced specification estimates, and the adjusted slope, which the model of the original study estimates, are two estimands rather than a right and a wrong set of controls. The section [Adjustment set](../cases/europeanisation/menu.qmd#adjustment-set) of the specification menu gives the reasoning option by option. On the curve the adjustment carries `r pp(fk("copredictor"))` of the variance of the claim-aligned partial correlations, and moving it alone changes the class of `r pp(fk("copredictor", "crossing_rate"))` of the pairs of specifications that differ in nothing else; `r pp(below_sig(dplyr::filter(eu_curve, copredictor == "none")))` of the unadjusted specifications and `r pp(below_sig(dplyr::filter(eu_curve, copredictor == "other")))` of the adjusted ones lie below zero with CR2 p < 0.05.
 
-The year effects of the graph are a decision on the curve as well, made with the estimator: the two-way design, which adjusts for country and year as the graph of section 3.3 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly, as the [module on panel data](panel-data.qmd#sec-two-designs) and the section [Estimator](../cases/eu-frames/menu.qmd#estimator) of the menu set out. An analyst who draws the year arrows of section 3.3 wants the two-way slope, while one who counts the shared recession of 2009 as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../cases/eu-frames/map.qmd) shows both decisions, with every option and what each does to the curve.
+The year effects of the graph are a decision on the curve as well, made with the estimator: the two-way design, which adjusts for country and year as the graph of section 3.3 requires, and the design with country effects alone are both kept, because they answer two questions rather than one question well and badly, as the [module on panel data](panel-data.qmd#sec-two-designs) and the section [Estimator](../cases/europeanisation/menu.qmd#estimator) of the menu set out. An analyst who draws the year arrows of section 3.3 wants the two-way slope, while one who counts the shared recession of 2009 as part of what the claim is about may want the other, and has to say so, since no fit statistic distinguishes the two readings. The [decision map](../cases/europeanisation/map.qmd) shows both decisions, with every option and what each does to the curve.
 
 ::: {.callout-tip}
 ## Try it
@@ -361,14 +361,14 @@ In the `fe-sim` recipe, change the coefficient of the slump on framing from −0
 
 ### 3.7 The bailout on the graph {#sec-bailout}
 
-The EU-frames dataset contains a `bailout` column, a 0/1 indicator marking the `r sum(euframes$bailout)` country-years in which the country was under a financial-assistance programme. It is a small variable that can cause a good deal of trouble, because two reasonable analysts can put it in two different places on the graph.
+The country-year panel contains a `bailout` column, a 0/1 indicator marking the `r sum(europeanisation$bailout)` country-years in which the country was under a financial-assistance programme. It is a small variable that can cause a good deal of trouble, because two reasonable analysts can put it in two different places on the graph.
 
 The first analyst believes that unemployment triggers a bailout, and that being under a programme is itself what sours how people talk about the EU. That makes the bailout a mediator on the path of interest, and the total effect of unemployment therefore requires leaving it out. The model below puts it in anyway.
 
 ```{r}
 #| label: bailout-mediator
 parameters::model_parameters(
-  lm(mcosmo ~ unemp + bailout + factor(cntry) + factor(year), data = euframes)
+  lm(mcosmo ~ unemp + bailout + factor(cntry) + factor(year), data = europeanisation)
 ) |>
   tibble::as_tibble() |>
   datawizard::data_filter(Parameter %in% c("unemp", "bailout")) |>
@@ -378,12 +378,12 @@ parameters::model_parameters(
 
 The unemployment coefficient falls by nearly half, from −0.00347 to −0.00195, and its *t* drops below conventional significance. The bailout term is itself sizeable and clearly estimated. If the bailout is a mediator, the fall should not be read as a weakening of the effect of unemployment. The adjustment has taken the part of the effect that passes through the bailout out of the total and assigned it to the bailout term.
 
-The second analyst takes a different route to what looks like the same caution. Bailout country-years are unusual, so drop them and see whether the result survives. That option is on the full [specification menu](../cases/eu-frames/menu.qmd) as a sample restriction, though not on the curve of the claim, because it asks whether the association holds where the crisis was mild, and it is the kind of check that reviewers ask for by reflex. [Section 8.5 of the multiverse module](multiverse.qmd#sec-heterogeneity) sets the two groups of countries side by side.
+The second analyst takes a different route to what looks like the same caution. Bailout country-years are unusual, so drop them and see whether the result survives. That option is on the full [specification menu](../cases/europeanisation/menu.qmd) as a sample restriction, though not on the curve of the claim, because it asks whether the association holds where the crisis was mild, and it is the kind of check that reviewers ask for by reflex. [Section 8.5 of the multiverse module](multiverse.qmd#sec-heterogeneity) sets the two groups of countries side by side.
 
 ```{r}
 #| label: bailout-dropped
 m_dropped <- lm(mcosmo ~ unemp + factor(cntry) + factor(year),
-                data = datawizard::data_filter(euframes, bailout == 0))
+                data = datawizard::data_filter(europeanisation, bailout == 0))
 
 parameters::model_parameters(m_dropped) |>
   tibble::as_tibble() |>
@@ -392,7 +392,7 @@ parameters::model_parameters(m_dropped) |>
   dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) signif(x, 3)))
 ```
 
-On `r nobs(m_dropped)` country-years instead of 270, the effect is gone. The coefficient is about an eighth of the size of C6HJR's published Multi100 coefficient, on a *t* of roughly −0.34, and no referee would accept it as evidence of an effect.
+On `r nobs(m_dropped)` country-years instead of 270, the effect is gone. The coefficient is about an eighth of the size of the coefficient recorded for C6HJR in the robustness study, on a *t* of roughly −0.34, and no referee would accept it as evidence of an effect.
 
 The rule of section 2 says that selecting on a variable is conditioning on it, so if the bailout is a common effect of unemployment and of framing, dropping bailout country-years is conditioning on a collider and the vanished effect is an artefact of the restriction. If instead the bailout is a mediator, the restriction removes the very country-years in which the mechanism operated, and the vanished effect indicates that the association was concentrated there. If it is neither, and bailout countries simply happen to account for most of the real relationship, then the restriction has thrown away the informative half of the sample. No statistic computed from these 270 rows can tell the three explanations apart. The choice between them has to be made before the restricted model is fitted, in a graph that states which one you are assuming.
 
@@ -408,7 +408,7 @@ A four-step procedure covers most first graphs. State the estimand in words – 
 
 ## 5. Your own graph {#sec-yours}
 
-The exercise for this section uses a question from your own research in place of the case, and it has two halves.
+The exercise for this section uses a question from your own research in place of the case study, and it has two halves.
 
 First, state an estimand for a question you actually care about, in one or two sentences and in the vocabulary of @LundbergEtAl2021WhatYourEstimand. Name the unit of analysis, the outcome, the contrast that defines the effect, and the population over which you want it. 'The effect of unemployment on framing' is not yet an estimand. 'The average change in a country's mean cosmopolitan framing associated with a one-point rise in its own unemployment rate, across EU member states between 2004 and 2013, holding fixed everything that persists within a country and everything common to a year' is one, and notice that the second half of it is already an adjustment set.
 
@@ -422,7 +422,7 @@ Do the exercise above on the last analysis you ran, not on a hypothetical one. T
 
 ## Sources and further reading {#sec-sources}
 
-The estimand-first framing is @LundbergEtAl2021WhatYourEstimand, and the standard treatment of causal graphs for social scientists is @HernanRobins2020CausalInferenceWhat, which is freely available online; @Huntington-Klein2021EffectIntroductionResearch is a gentler introduction to the three shapes. On colliders, @ColeEtAl2010IllustratingBiasDue give the general treatment, @ElwertWinship2014EndogenousSelectionBias the treatment for sociologists, with selection into a sample as the leading case, and @GriffithEtAl2020ColliderBiasUndermines a widely read applied example. The demonstration that no statistic chooses an adjustment set is @DAgostinoMcGowanEtAl2024CausalInferenceNot. On fixed effects in section 3, @KeeleEtAl2020CausalInterpretationEstimated is the careful statement of what a fixed-effects coefficient does and does not identify, and @BellJones2015ExplainingFixedEffects makes the same argument from the multilevel side. The software documentation is worth reading directly: the ggdag package site at <https://r-causal.github.io/ggdag/>, whose introductory vignette pictures association flowing along a path as water flows down a pipe, and the dagitty documentation at <https://dagitty.net/>, which also hosts a browser tool for sketching a graph by hand before writing it down. The numbers of the case come from `EUframes_cy.csv`, `spec_curve.csv` and `spec_curve_forks.csv` in `cases/eu-frames/data/`.
+The estimand-first framing is @LundbergEtAl2021WhatYourEstimand, and the standard treatment of causal graphs for social scientists is @HernanRobins2020CausalInferenceWhat, which is freely available online; @Huntington-Klein2021EffectIntroductionResearch is a gentler introduction to the three shapes. On colliders, @ColeEtAl2010IllustratingBiasDue give the general treatment, @ElwertWinship2014EndogenousSelectionBias the treatment for sociologists, with selection into a sample as the leading case, and @GriffithEtAl2020ColliderBiasUndermines a widely read applied example. The demonstration that no statistic chooses an adjustment set is @DAgostinoMcGowanEtAl2024CausalInferenceNot. On fixed effects in section 3, @KeeleEtAl2020CausalInterpretationEstimated is the careful statement of what a fixed-effects coefficient does and does not identify, and @BellJones2015ExplainingFixedEffects makes the same argument from the multilevel side. The software documentation is worth reading directly: the ggdag package site at <https://r-causal.github.io/ggdag/>, whose introductory vignette pictures association flowing along a path as water flows down a pipe, and the dagitty documentation at <https://dagitty.net/>, which also hosts a browser tool for sketching a graph by hand before writing it down. The numbers of the case study come from `europeanisation_cy.csv`, `spec_curve.csv` and `spec_curve_forks.csv` in `cases/europeanisation/data/`.
 
 ## References {.unnumbered}
 

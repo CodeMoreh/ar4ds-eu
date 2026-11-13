@@ -1,10 +1,10 @@
 ---
 title: "Stage 3 – From respondents to a panel"
-case: eu-frames
+case: europeanisation
 bibliography: [../../references.bib, ../../references-new.bib]
 ---
 ::: {.callout-note appearance="simple" icon=false}
-**Slides.** [Open the deck at Part 2](../../slides/eu-frames-full.html#/part-2-the-claim-and-its-estimand){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
+**Slides.** [Open the deck at Part 2](../../slides/europeanisation-full.html#/part-2-the-claim-and-its-estimand){target="_blank"} in its own tab, or follow it on the [slides page](slides.qmd).
 :::
 
 The original author (OA) asked whether the economic crisis changed how citizens frame the European Union, from sixteen Eurobarometer waves in twenty-seven member states, and the claim is about countries in years while the surveys hold respondents, so the analysis rests on a panel of country-years, built by averaging the answers of each country in each year, and on models for such a panel. This stage downloads the sixteen files and turns them into the panel with the scripts of the workspace, writes the estimand statement and the causal graph, and reproduces a recorded result with the models behind it. It takes about six and three quarter hours with the download and the build, and about five without them.
@@ -21,7 +21,7 @@ Register with GESIS, which is free and immediate, and download the Stata file of
 
 ## 2. Building the analysis file
 
-[Open Building the analysis file](../../companion/data-management.qmd#sec-eu-frames){.btn .btn-primary target="_blank"}
+[Open Building the analysis file](../../companion/data-management.qmd#sec-europeanisation){.btn .btn-primary target="_blank"}
 
 Run the first script of the workspace on your sixteen files and read the report that it prints. Then work through the second, which scores the items into scales, deals with the respondents who named nothing, averages the respondents into country-years with and without survey weights, merges the macro series, and reproduces the panel of the course.
 
@@ -39,23 +39,23 @@ The first section of the module on panel data says why the predictor is measured
 
 **In your report** or your working script, or in the browser lab.
 
-[Open the browser lab at Task 2](../../cases/eu-frames/lab.qmd#task-2-get-the-data-and-look-at-it){.btn .btn-outline-primary target="_blank"}
+[Open the browser lab at Task 2](../../cases/europeanisation/lab.qmd#task-2-get-the-data-and-look-at-it){.btn .btn-outline-primary target="_blank"}
 
-Draw the outcome of the panel country by country, and find the countries that move sharply around 2009. Write the [estimand statement](../../cases/eu-frames/lab.qmd#task-4-estimand-and-dag) with every bracket filled. Open `R/dag_starter.R`, keep the arrows that you are willing to defend, and write two sentences on what two-way fixed effects adjust for and what they cannot fix.
+Draw the outcome of the panel country by country, and find the countries that move sharply around 2009. Write the [estimand statement](../../cases/europeanisation/lab.qmd#task-4-estimand-and-dag) with every bracket filled. Open `R/dag_starter.R`, keep the arrows that you are willing to defend, and write two sentences on what two-way fixed effects adjust for and what they cannot fix.
 
 ## 6. Causal graphs on a panel
 
-[Open Causal graphs and adjustment sets at section 3](../../companion/dags.qmd#sec-eu-frames){.btn .btn-primary target="_blank"}
+[Open Causal graphs and adjustment sets at section 3](../../companion/dags.qmd#sec-europeanisation){.btn .btn-primary target="_blank"}
 
-Read [the section on the EU-frames case](../../companion/dags.qmd#sec-eu-frames) of the module on causal graphs, after [Arrows as claims](../../companion/dags.qmd#sec-arrows) and [Confounder, mediator, collider](../../companion/dags.qmd#sec-shapes) if the short course on the slides left those three shapes unclear.
+Read [the section on the Europeanisation and the economy case study](../../companion/dags.qmd#sec-europeanisation) of the module on causal graphs, after [Arrows as claims](../../companion/dags.qmd#sec-arrows) and [Confounder, mediator, collider](../../companion/dags.qmd#sec-shapes) if the short course on the slides left those three shapes unclear.
 
 ## 7. Task 3 – The reproduction
 
 **On the slides, then in your report** or in the browser lab.
 
-[Open the deck at Part 3](../../slides/eu-frames-full.html#/part-3-reproduction-and-exploration){.btn .btn-primary target="_blank"} [Open the browser lab at Task 3](../../cases/eu-frames/lab.qmd#task-3-reproduction){.btn .btn-outline-primary target="_blank"}
+[Open the deck at Part 3](../../slides/europeanisation-full.html#/part-3-reproduction-and-exploration){.btn .btn-primary target="_blank"} [Open the browser lab at Task 3](../../cases/europeanisation/lab.qmd#task-3-reproduction){.btn .btn-outline-primary target="_blank"}
 
-The opening slides of Part 3 read the instruction of Task 2 of Multi100. Then reproduce one of the three analyses that the lab and the workspace offer, and refit it until the value on record comes back to the third decimal: t = −3.804 for C6HJR, t = −7.169 for KQXUE and t = −1.206 for 018OL. The [exercise overview](../../cases/eu-frames/exercise.qmd) lists the three analyses with their data and their models, and in the lab each gap to fill has a hint and a solution, which are worth opening only after a try of your own.
+The opening slides of Part 3 read the instruction of Task 2 of the robustness study of SCORE [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness]. Then reproduce one of the three analyses that the lab and the workspace offer, and refit it until the value on record comes back to the third decimal: t = −3.804 for C6HJR, t = −7.169 for KQXUE and t = −1.206 for 018OL. The [exercise overview](../../cases/europeanisation/exercise.qmd) lists the three analyses with their data and their models, and in the lab each gap to fill has a hint and a solution, which are worth opening only after a try of your own.
 
 ## 8. The models of a panel
 
