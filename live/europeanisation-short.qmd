@@ -36,40 +36,39 @@ live:
 # The runs that core-runs.lua would lift into the main flow. This deck has no
 # optional run and no deck map: every slide is shown.
 core-runs: []
+# THE DECK OF THE SHORT SESSION, AND HOW TO ADAPT IT FOR AN EVENT
+#
+# - The deck of the short session, which replaced the plain deck
+#   slides/europeanisation-short.qmd on 11 November 2026, with the tasks of the browser lab on the slides themselves: R loads inside the deck through the
+#   Quarto Live extension, and the hands-on slides carry the cells of Task 1,
+#   Task 3 (C6HJR, KQXUE and 018OL, with their hints and solutions, one
+#   slide each) and Task 4, on three slides, and the placement cell. The facilitator and the class work inside one deck; the
+#   browser lab stays the fallback.
+# - The folder. A live deck cannot share slides/ with the plain decks, because
+#   the `format: revealjs` key of slides/_metadata.yml renders it twice (root
+#   notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
+#   shared options under `live-revealjs`, with the paths into slides/ and
+#   style/ adjusted.
+# - The includes below are the run of the session, one segment for each block
+#   of the run sheet (facilitator/europeanisation-guide.qmd, "Run sheet – the short
+#   session") in _segments/, with the clock of the block in a comment at the
+#   head of each segment; to shorten, reorder or swap a block, edit the include
+#   lines and the clock comments. The two half dividers carry the ids that the
+#   pages of the track link. The helpers of the lab,
+#   try_spec() and the rest with the graph functions of Task 2, which this deck
+#   does not call, are one file, ../cases/europeanisation/_lab-helpers.qmd,
+#   included after the setup cell that names the data folder.
+# - The title and the subtitle in the YAML above name the course and the
+#   format; an event sets its own (for the ESRA–WAPOR short course of July
+#   2027 the subtitle is "Multiverse analysis for survey data through applied
+#   replication").
+# - No duration goes on any slide or into any note.
 ---
-
-<!--
-THE DECK OF THE SHORT SESSION, AND HOW TO ADAPT IT FOR AN EVENT
-
-- The deck of the short session, which replaced the plain deck
-  slides/europeanisation-short.qmd on 11 November 2026, with the tasks of the browser lab on the slides themselves: R loads inside the deck through the
-  Quarto Live extension, and the hands-on slides carry the cells of Task 1,
-  Task 3 (C6HJR, KQXUE and 018OL, with their hints and solutions, one
-  slide each) and Task 4, on three slides, and the placement cell. The facilitator and the class work inside one deck; the
-  browser lab stays the fallback.
-- The folder. A live deck cannot share slides/ with the plain decks, because
-  the `format: revealjs` key of slides/_metadata.yml renders it twice (root
-  notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
-  shared options under `live-revealjs`, with the paths into slides/ and
-  style/ adjusted.
-- The includes below are the run of the session, one segment for each block
-  of the run sheet (facilitator/europeanisation-guide.qmd, "Run sheet – the short
-  session") in _segments/, with the clock of the block in a comment at the
-  head of each segment; to shorten, reorder or swap a block, edit the include
-  lines and the clock comments. The two half dividers carry the ids that the
-  pages of the track link. The helpers of the lab,
-  try_spec() and the rest with the graph functions of Task 2, which this deck
-  does not call, are one file, ../cases/europeanisation/_lab-helpers.qmd,
-  included after the setup cell that names the data folder.
-- The title and the subtitle in the YAML above name the course and the
-  format; an event sets its own (for the ESRA–WAPOR short course of July
-  2027 the subtitle is "Multiverse analysis for survey data through applied
-  replication").
-- No duration goes on any slide or into any note.
--->
 
 {{< include ../slides/_segments/europeanisation/_setup.qmd >}}
 {{< include ../_extensions/r-wasm/live/_knitr.qmd >}}
+
+{{< include _segments/_agenda-live.qmd >}}
 
 ```{webr}
 #| include: false
@@ -84,7 +83,6 @@ europeanisation <- utils::read.csv(file.path(.data_dir, "europeanisation_cy.csv"
 ```
 
 {{< include ../cases/europeanisation/_lab-helpers.qmd >}}
-{{< include _segments/_agenda-live.qmd >}}
 # FIRST HALF – The claim and its reproduction {#first-half-the-claim-and-its-reproduction .darkslide background-color="rgba(0,0,0,0)"}
 
 ::: {.partlabel}

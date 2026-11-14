@@ -227,7 +227,7 @@ pooled <- dplyr::bind_rows(run_engine(mice_sets, "mice_pmm"), run_engine(amelia_
 
 datawizard::data_write(pooled, out_path("spec_grid_mi.csv"), verbose = FALSE)
 
-## ---- diagnostics for the missing-answers page ---------------------------------------
+## ---- diagnostics for the imputation section of the items module ------------------
 
 diag <- dplyr::bind_rows(
   tibble::tibble(engine = "mice_pmm", quantity = "imputed respondents", value = n_miss),

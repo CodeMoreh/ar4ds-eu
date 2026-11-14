@@ -62,10 +62,11 @@ neg_js <- curve_neg |>
   dplyr::transmute(dplyr::across(dplyr::all_of(vary)), r_ca = round(r_ca, 4),
                    p_cr2 = signif(p_cr2, 3))
 
-# page titles without their Markdown emphasis, for the links to the teaching pages
+# page titles without their Markdown emphasis, for the links to the teaching pages;
+# a path that ends in the id of a section takes the title of its page
 pages <- unique(menu$taught_on) |>
   purrr::set_names() |>
-  purrr::map(\(f) gsub("*", "", rmarkdown::yaml_front_matter(file.path("../..", f))$title, fixed = TRUE))
+  purrr::map(\(f) gsub("*", "", rmarkdown::yaml_front_matter(file.path("../..", sub("#.*", "", f)))$title, fixed = TRUE))
 
 ojs_define(menu_raw = menu, curve_raw = curve_js, neg_raw = neg_js, dev_raw = deviations,
            pairs_raw = pairs, coverage_raw = coverage, pages_raw = pages)
@@ -210,7 +211,8 @@ decisionMap = {
     for (const kid of kids) if (kid !== null && kid !== undefined) n.append(kid);
     return n;
   };
-  const pageLink = file => el("a", {href: "../../" + file.replace(/\.qmd$/, ".html")}, pages_raw[file] || file);
+  // the first ".qmd" of a path, so that the id of a section after it stays in the address
+  const pageLink = file => el("a", {href: "../../" + file.replace(".qmd", ".html")}, pages_raw[file] || file);
 
   // ---- state: one option per decision, starting from the reproduced specification
   const refRow = curve.find(d => d.ref === true);
@@ -828,7 +830,7 @@ The question stays fixed, and these decisions change how a named construct becom
 
 | Decision | On the curve | Off the curve, and where it is taught | Share of the variance | Class changes |
 |:--|:--|:--|--:|--:|
-| **Respondents who mention nothing** | scored zero `zero`, left out `drop` | split rule `split`; multiple imputation `mi_mice`, `mi_amelia`, on [Missing answers](../../companion/missingness.qmd) | `r pct(fk("noop"))` | `r pct(fk("noop", "crossing_rate"))` |
+| **Respondents who mention nothing** | scored zero `zero`, left out `drop` | split rule `split`; multiple imputation `mi_mice`, `mi_amelia`, on [The items behind the scales](../../companion/measurement.qmd#sec-noop) | `r pct(fk("noop"))` | `r pct(fk("noop", "crossing_rate"))` |
 | **Item set** | all 13 items `all`, without "unemployment" `un` | – | `r pct(fk("item_set"))` | `r pct(fk("item_set", "crossing_rate"))` |
 | **Cell weighting** | as interviewed `unweighted`, weighted `design` | – | `r pct(fk("cell_weight"))` | `r pct(fk("cell_weight", "crossing_rate"))` |
 | **Published series** | unemployment: World Bank `wb_nat`, Eurostat 15–74 `es_1574_act`, Eurostat 20–64 as a share of the population `es_2064_pop`, Labour Force Survey 25–64 `es_2564_lfs`; growth: World Bank `wb_growth` | Eurostat table tipsun20 `es_1574_tips`, Eurostat growth `es_growth`, on [Social science data sources](../../companion/data-sources.qmd) | `r pct(fk("measure"))` | `r pct(fk("measure", "crossing_rate"))` |
@@ -839,7 +841,7 @@ The question stays fixed, and these decisions change how a named construct becom
 
 Of all respondents, `r pct(100 * sum(pw$n_noop) / sum(pw$n_cy))` mention none of the 13 items, and under the share rule they have no share at all, so something has to be decided about them. Scoring them zero is the rule of the course panel and of the reproduced specification, and it keeps every respondent; but it changes the construct, since the cell mean then equals the share among those who answered multiplied by the proportion who answered, so that the rate of saying nothing enters every scale. Leaving them out is consistent with the share as a measure, since a respondent with no mentions has no share, and it is what the code of the original study did; its cost is that it conditions on answering. Within countries the rate of saying nothing falls slightly as unemployment rises (b = −0.0011 per point; t = −1.25 with errors clustered by country), so the zero rule pulls the slopes a little towards zero. Both rules stay on the curve, where the drop rule gives `r pct(sig(datawizard::data_filter(curve, noop == "drop")))` of specifications below zero with CR2 p < 0.05 and the zero rule `r pct(sig(datawizard::data_filter(curve, noop == "zero")))`.
 
-The split rule, which leaves out those who said "don't know" or gave no answer and scores off-list answers as zero, has a construct no clearer than that of either rule on the curve, and its results lie close to theirs (`r pct(dv("split", "below_zero_sig"))` below zero with CR2 p < 0.05); the two imputation rules fill in the shares of the silent respondents under a missing-at-random assumption, and since they were computed only at the standard measurement settings they cannot be crossed with the rest of the menu. [Missing answers](../../companion/missingness.qmd) sets out what each rule assumes about the people who stayed silent.
+The split rule, which leaves out those who said "don't know" or gave no answer and scores off-list answers as zero, has a construct no clearer than that of either rule on the curve, and its results lie close to theirs (`r pct(dv("split", "below_zero_sig"))` below zero with CR2 p < 0.05); the two imputation rules fill in the shares of the silent respondents under a missing-at-random assumption, and since they were computed only at the standard measurement settings they cannot be crossed with the rest of the menu. The section [Respondents who mention nothing](../../companion/measurement.qmd#sec-noop) of the module on the items behind the scales sets out what each rule assumes about the people who stayed silent.
 
 ### Item set
 

@@ -38,46 +38,45 @@ live:
 # strips their .deepdive mark); the others stay on the d toggle. The runs of
 # this deck are "methods" and "multiverse", both in Part 4.
 core-runs: []
+# THE DECK OF THE ONE-DAY WORKSHOP AND OF DAY 2 OF THE EXTENDED COURSE
+#
+# - The deck of the workshop, with the tasks of the browser lab on its hands-on
+#   slides: R loads inside the deck through the Quarto Live extension, and the
+#   hands-on slides carry the cells of Task 1 and the warm-up, Task 2 (the
+#   panel, the figure by country, the estimand and the causal graph), Task 3
+#   (C6HJR, KQXUE and 018OL, one slide each, with their hints and solutions),
+#   Task 4 (the reproduced specification, the six single decisions, an option
+#   off the curve, every argument, and the submission), the placement, and
+#   Task 5 (the preregistration cell, prereg(), the model, the run and the
+#   report). The participants do the tasks in the workspace, in their IDE,
+#   while the facilitator runs each step on these slides; a participant whose
+#   installation fails works in the cells of the deck, or in the browser lab,
+#   which holds the same tasks as a page. Each hands-on slide names, in one
+#   line, the chunk or the file in which its step lives in the workspace.
+# - The folder. A live deck cannot share slides/ with the plain decks, because
+#   the `format: revealjs` key of slides/_metadata.yml renders it twice (root
+#   notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
+#   shared options under `live-revealjs`.
+# - The segments, in the order of the plain deck of the workshop. The segments
+#   that the full deck of the self-study route includes as well stay in
+#   ../slides/_segments/europeanisation/ and are included from there; the
+#   segments of this deck alone are in _segments/, among them the hands-on
+#   slides with cells (_p1-handson1-live.qmd, _p2-handson2-live.qmd,
+#   _p3-handson3-live.qmd, _p3-handson4-live.qmd, _p4-percentile-live.qmd and
+#   _p4-moment-live.qmd), whose cells are those of the browser lab,
+#   ../cases/europeanisation/lab.qmd. The helpers of the lab, try_spec() and
+#   the rest with the graph functions of Task 2, are one file,
+#   ../cases/europeanisation/_lab-helpers.qmd, included after the setup cell
+#   that names the data folder.
+# - The part dividers and the first slide of each hands-on run keep the ids of
+#   the plain deck, which the part pages of the workshop link.
+# - No duration goes on any slide or into any note.
 ---
-
-<!--
-THE DECK OF THE ONE-DAY WORKSHOP AND OF DAY 2 OF THE EXTENDED COURSE
-
-- The deck of the workshop, with the tasks of the browser lab on its hands-on
-  slides: R loads inside the deck through the Quarto Live extension, and the
-  hands-on slides carry the cells of Task 1 and the warm-up, Task 2 (the
-  panel, the figure by country, the estimand and the causal graph), Task 3
-  (C6HJR, KQXUE and 018OL, one slide each, with their hints and solutions),
-  Task 4 (the reproduced specification, the six single decisions, an option
-  off the curve, every argument, and the submission), the placement, and
-  Task 5 (the preregistration cell, prereg(), the model, the run and the
-  report). The participants do the tasks in the workspace, in their IDE,
-  while the facilitator runs each step on these slides; a participant whose
-  installation fails works in the cells of the deck, or in the browser lab,
-  which holds the same tasks as a page. Each hands-on slide names, in one
-  line, the chunk or the file in which its step lives in the workspace.
-- The folder. A live deck cannot share slides/ with the plain decks, because
-  the `format: revealjs` key of slides/_metadata.yml renders it twice (root
-  notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
-  shared options under `live-revealjs`.
-- The segments, in the order of the plain deck of the workshop. The segments
-  that the full deck of the self-study route includes as well stay in
-  ../slides/_segments/europeanisation/ and are included from there; the
-  segments of this deck alone are in _segments/, among them the hands-on
-  slides with cells (_p1-handson1-live.qmd, _p2-handson2-live.qmd,
-  _p3-handson3-live.qmd, _p3-handson4-live.qmd, _p4-percentile-live.qmd and
-  _p4-moment-live.qmd), whose cells are those of the browser lab,
-  ../cases/europeanisation/lab.qmd. The helpers of the lab, try_spec() and
-  the rest with the graph functions of Task 2, are one file,
-  ../cases/europeanisation/_lab-helpers.qmd, included after the setup cell
-  that names the data folder.
-- The part dividers and the first slide of each hands-on run keep the ids of
-  the plain deck, which the part pages of the workshop link.
-- No duration goes on any slide or into any note.
--->
 
 {{< include ../slides/_segments/europeanisation/_setup.qmd >}}
 {{< include ../_extensions/r-wasm/live/_knitr.qmd >}}
+
+## {#today .darkslide background-color="rgba(0,0,0,0)"}
 
 ```{webr}
 #| include: false
@@ -92,7 +91,6 @@ europeanisation <- utils::read.csv(file.path(.data_dir, "europeanisation_cy.csv"
 ```
 
 {{< include ../cases/europeanisation/_lab-helpers.qmd >}}
-## {#today .darkslide background-color="rgba(0,0,0,0)"}
 
 ::: {.todaymeta}
 A one-day workshop in four parts, on the Europeanisation and the economy case study

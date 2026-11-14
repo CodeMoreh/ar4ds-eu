@@ -13,7 +13,7 @@ Three parts of the course read it. The decision map, the first section of the sp
 | `option` | The option code, as the curve files, the deviation files and the helpers write it |
 | `label` | A short label for the option, used on the decision map and in messages |
 | `on_curve` | `TRUE` for an option that the curve of 864 keeps, `FALSE` for one that the course teaches off the curve |
-| `taught_on` | The page that teaches the option, as a path from the project root |
+| `taught_on` | The page that teaches the option, as a path from the project root, followed by `#` and the id of a section where one section of a longer page teaches it (`companion/measurement.qmd#sec-noop`) |
 | `reason` | One sentence on why the option is or is not on the curve, used by the helpers in their messages |
 | `decision` | The name of the decision, as the decision map and the menu print it |
 | `stage` | The stage of the decision map at which the decision is made: `data` (the data and the sample), `outcome`, `predictor`, `comparison`, `average` (whose average), `model` (the model form) or `inference` |
