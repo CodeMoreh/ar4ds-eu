@@ -30,7 +30,7 @@ Each format has a docked sidebar (`_sidebar.yml`), a page for each of its parts,
 | `resources.qmd` | Readings, records and tools |
 | `_variables.yml` | Site variables and the next-delivery block |
 
-The downloadable workspace of the case study is the repository [`CodeMoreh/replication-lab`](https://github.com/CodeMoreh/replication-lab), and the browser lab carries the same helper functions. Participants who build the panel from the raw files download the Eurobarometer waves from GESIS themselves, because the licence forbids redistribution.
+The downloadable workspace of the case study is the repository [`CodeMoreh/ar4ds-eu-workspace`](https://github.com/CodeMoreh/ar4ds-eu-workspace), and the browser lab carries the same helper functions. Participants who build the panel from the raw files download the Eurobarometer waves from GESIS themselves, because the licence forbids redistribution.
 
 ## The data
 

@@ -21,7 +21,7 @@
 # Author:       Chris Moreh
 # Last updated: 2026-09-09
 ###############################################################################
-raw <- Sys.getenv("EB_RESPONDENTS", unset = "_workspaces/europeanisation/data_private/eb_respondents.rds")
+raw <- Sys.getenv("EB_RESPONDENTS", unset = "../ar4ds-eu-workspace/data_private/eb_respondents.rds")
 d <- readRDS(raw) |>
   datawizard::data_modify(cy    = paste(cntry, year, sep = "_"),
          edu3  = factor(edu3, levels = c("low", "mid", "high")),

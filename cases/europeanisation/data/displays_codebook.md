@@ -1,8 +1,3 @@
----
-aliases:
-  - /data/displays_codebook.html
----
-
 # Codebook: the displays beside the curve
 
 The curve of the claim (`spec_curve.csv`) keeps only the specifications that answer the claim as the course reads it, change within countries over time in all 27 member states of 2004–2013. Several findings of the wider menu stay in the course as displays of their own, because each answers a related but different question. The six files below hold the numbers behind those displays. They are written by `R/europeanisation/12_displays.R` from the course panel and the aggregate measurement panels, and they contain only results computed on country-year aggregates.

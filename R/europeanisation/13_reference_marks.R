@@ -15,7 +15,7 @@
 #               unemployment), so that its slope is the average over the
 #               education bands, as in the other five results; the published
 #               coefficient belongs to the low-education band of the model with
-#               the interactions, which the individual-level module teaches.
+#               the interactions, which the module Multilevel models teaches.
 #               PRL47 is placed on its own statistic (model B8: the same share, the wave
 #               standing in for the quarter, unemployment of the 25-64
 #               population, the individual controls of the analyst, growth and
@@ -25,7 +25,7 @@
 #               p_cluster_check is, where the design can be fitted on the
 #               cells, the CR2 p-value (by country, Satterthwaite df) of the
 #               course refit of that design. Only aggregate results are written.
-# Reads:        _workspaces/europeanisation/data_private/eb_respondents.rds through
+# Reads:        ../ar4ds-eu-workspace/data_private/eb_respondents.rds through
 #               companion/_model-outputs/_load_respondents.R (GESIS-derived,
 #               local only), cases/europeanisation/data/analysts5.csv,
 #               cases/europeanisation/data/spec_curve.csv,
@@ -197,7 +197,7 @@ marks <- tibble::tribble(
     p_recorded = c("< 0.001", p_reported[c("KQXUE", "C6HJR", "KEVF1", "PRL47", "018OL")]),
     p_cluster_check = c(NA, p_kqxue, p_c6hjr, kevf1_fit$p_cr2, NA, NA),
     note = c(
-      sprintf("The paper prints b = -0.00340 and t = -4.03, with no df, for the low-education band of a model with education interactions (Table 3, model 1); the robustness study recorded no effect size for the original study. The mark is the course refit of the design without the interactions, whose slope is the average over the education bands: b = %.5f, t = %.2f on %.1f Satterthwaite df and %s respondents. The refit with the interactions gives b = %.5f, t = %.2f on %.1f df; that model is taught in the individual-level module. On the respondent count the published t would give r = %.4f.",
+      sprintf("The paper prints b = -0.00340 and t = -4.03, with no df, for the low-education band of a model with education interactions (Table 3, model 1); the robustness study recorded no effect size for the original study. The mark is the course refit of the design without the interactions, whose slope is the average over the education bands: b = %.5f, t = %.2f on %.1f Satterthwaite df and %s respondents. The refit with the interactions gives b = %.5f, t = %.2f on %.1f df; that model is taught in the module Multilevel models. On the respondent count the published t would give r = %.4f.",
               oa$b, oa$t, oa$df_satterthwaite, format(oa$respondents, big.mark = ","),
               oa_int$b, oa_int$t, oa_int$df_satterthwaite, effectsize::t_to_r(-4.03, 335566)$r),
       sprintf("Recorded t uses conventional errors. The course refit on the curve (own series es_2064_pop, drop rule, country fixed effects) has p_cr2 = %.4f; at the standard measurement settings p_cr2 = %.4f. No slope is in the record of the robustness study.",

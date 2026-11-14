@@ -21,7 +21,7 @@
 # project root; a script run from elsewhere sets EB_COURSE_ROOT first.
 .root <- Sys.getenv("EB_COURSE_ROOT", unset = ".")
 .respondents_path <- Sys.getenv("EB_RESPONDENTS",
-                                unset = file.path(.root, "_workspaces/europeanisation/data_private/eb_respondents.rds"))
+                                unset = file.path(.root, "../ar4ds-eu-workspace/data_private/eb_respondents.rds"))
 if (!file.exists(.respondents_path))
   stop("respondent file not found at '", .respondents_path,
        "': build it with prep/01_build_respondents.R in the workspace, or set ",

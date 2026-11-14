@@ -16,8 +16,10 @@
 #               who said "don't know", someone whose answer was not on the
 #               list, and someone with no tick at all. The Stata code of the
 #               original study divided by the mentions total with no zero
-#               guard, so those respondents were dropped; the reanalyses
-#               of the robustness study scored them 0. Both conventions need the split.
+#               guard, so those respondents were dropped, as they were by
+#               KQXUE and in the reported version of PRL47; C6HJR, KEVF1 and
+#               018OL of the robustness study kept them with a score of 0.
+#               Both conventions need the split.
 #               The *_un columns are the sensitivity set of the original code
 #               (eb_ml_ESR.do): every scale rebuilt without the item
 #               "unemployment", which shares content with the predictor.

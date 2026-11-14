@@ -1,8 +1,3 @@
----
-aliases:
-  - /data/eb_respondents_codebook.html
----
-
 # Codebook: `eb_respondents.rds`
 
 **This file is not distributed.** It is derived from sixteen Eurobarometer scientific-use files that GESIS licenses to each user individually, and it is built on your own machine by `prep/01_build_respondents.R` in the workspace from the files you downloaded under your own GESIS account. The [data sources module](../../../companion/data-sources.html#sec-gesis) explains the download and the terms of use, and the [data management module](../../../companion/data-management.html) explains the build. The file is stored in `data_private/`, which is excluded from version control in the workspace. This codebook is published so that the respondent-level outputs on the course site can be read by anyone, whether or not they hold the file.

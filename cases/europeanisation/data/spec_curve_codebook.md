@@ -1,8 +1,3 @@
----
-aliases:
-  - /data/spec_curve_codebook.html
----
-
 # Codebook: the curve of the claim
 
 Four files describe the specification curve of the claim under test, "poor national economic performances significantly decrease positive EU-framing dimensions" (Teney 2016, *European Sociological Review*), read as a claim about change within countries over time: in the 27 member states of 2004–2013, when the economy of a country deteriorates, do its citizens frame the EU less in positive terms than they did before? The files are built by `R/europeanisation/09_spec_curve.R`, `R/europeanisation/10_curve_forks.R` and `R/europeanisation/11_menu_deviations.R` from the course panel and from the aggregate measurement panels in this folder. They contain only results computed on country-year aggregates.

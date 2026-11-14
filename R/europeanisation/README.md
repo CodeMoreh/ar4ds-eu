@@ -14,7 +14,7 @@ The scripts in this folder build the specification grids, the curve of the claim
 | `10_curve_forks.R` | the two curves | `spec_curve_forks.csv` |
 | `11_menu_deviations.R` | the two curves, the inputs of `09`, `spec_grid_mi.csv` | `menu_deviations_rows.csv.gz`, `menu_deviations.csv` |
 | `12_displays.R` | the inputs of `09`, `spec_curve.csv` | `display_between_within.csv`, `display_country_means.csv`, `display_periods.csv`, `display_loo.csv`, `display_bailout.csv`, `display_inference.csv` |
-| `13_reference_marks.R` | `_workspaces/europeanisation/data_private/eb_respondents.rds` through `companion/_model-outputs/_load_respondents.R`, `analysts5.csv`, `spec_curve.csv`, the inputs of `09` | `companion/_model-outputs/reference_refits.csv`, `reference_marks.csv` |
+| `13_reference_marks.R` | `../ar4ds-eu-workspace/data_private/eb_respondents.rds` through `companion/_model-outputs/_load_respondents.R`, `analysts5.csv`, `spec_curve.csv`, the inputs of `09` | `companion/_model-outputs/reference_refits.csv`, `reference_marks.csv` |
 | `14_dag_answers.R` | nothing; the graphs are those of the graph cell of Task 2 in `cases/europeanisation/lab.qmd` | `dag_answers.csv` |
 | `15_analyst_panels.R` | the sixteen GESIS Eurobarometer files in `_planning_data/raw/`, `data-raw/europeanisation/eurostat/une_rt_a_h_2023-12-22.tsv.gz` and `une_rt_a_h.tsv.gz` | `analyst_KQXUE.csv`, `analyst_018OL.csv` |
 | `check_parity.R` | the committed files and a rebuild of them in another folder | nothing; prints the comparison |
@@ -33,7 +33,7 @@ The significance rule of the curve is CR2 errors clustered by country with Satte
 - `analysts5.csv` – the Task 2 results of the five analysts of the robustness study, from its public data. The effect size of 018OL carries the sign of the record of the robustness study (d = −0.121).
 - `macro/population.csv` – total and adult population by country-year, World Bank `SP.POP.TOTL` less the share aged 0–14 (`SP.POP.0014.TO.ZS`), as retrieved in September 2026. It is an input of `07`.
 - `data-raw/europeanisation/eurostat/` – the five Eurostat tables from which the analysts' unemployment series and the Eurostat growth series are cut, and the December 2023 vintage of `une_rt_a_h` from which `15` cuts the series of KQXUE and 018OL, each stored as retrieved; their provenance is in `data-raw/europeanisation/eurostat/README.md`.
-- `_workspaces/europeanisation/data_private/eb_respondents.rds` – the respondent file that the workspace builds with `prep/01_build_respondents.R` from the participant's own GESIS downloads. It carries the occupation, community type and education bands that the designs of `13` need and `person_level.rds` does not. It is licensed microdata and never committed.
+- `../ar4ds-eu-workspace/data_private/eb_respondents.rds` – the respondent file that the workspace builds with `prep/01_build_respondents.R` from the participant's own GESIS downloads. It carries the occupation, community type and education bands that the designs of `13` need and `person_level.rds` does not. It is licensed microdata and never committed.
 - `_planning/audit-2026-10/out/menu_audited_maximal.csv` – the refit of the review, against which `09` checks the partial correlations and the CR2 p-values of the curve. It is a check, not an input of any output; the environment variable `COURSE_AUDIT_FILE` can point to a copy elsewhere, and `09` skips the check with a message where the file is absent.
 
 ## Packages

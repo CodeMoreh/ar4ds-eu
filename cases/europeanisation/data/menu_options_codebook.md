@@ -1,8 +1,3 @@
----
-aliases:
-  - /data/menu_options_codebook.html
----
-
 # Codebook: `menu_options.csv`
 
 `menu_options.csv` lists every option of the fourteen-decision specification menu of the course, one row per option, 50 rows in all. It records for each option whether it is on the curve of the claim, the 864 specifications of `spec_curve.csv`, which page of the course teaches it, and the reasoning on whether it is a justifiable way of answering the claim under test, "poor national economic performances significantly decrease positive EU-framing dimensions" (Teney 2016, *European Sociological Review*), read as a claim about change within countries over time. The file is written by hand, not by a script, and the reasoning in it follows the review of the menu that settled which options the curve keeps.

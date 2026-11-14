@@ -101,3 +101,9 @@ main .quarto-figure img[src*="assets/gesis/"] {
   border-radius: 4px;
   box-shadow: 0 2px 10px rgba(14, 59, 106, 0.18);
 }
+
+/* The reference list of a page stays in the page, where the pop-up of each citation
+   reads its entry, but is not shown; references.qmd lists every work cited on the
+   site. The second rule hides the appendix when the list is all that it holds. */
+#quarto-bibliography { display: none; }
+#quarto-appendix:not(:has(> :not(#quarto-bibliography))) { display: none; }

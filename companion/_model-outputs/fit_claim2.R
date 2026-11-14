@@ -1,7 +1,7 @@
 ###############################################################################
 # Title:        Claim 2 – the education gap, on the respondents and on the
 #               education-band panel
-# Purpose:      Compute the tables the individual-level module quotes for the
+# Purpose:      Compute the tables that the module Multilevel models quotes for the
 #               second claim of the paper: that high unemployment narrows the
 #               gap between high- and low-educated citizens in the way they
 #               frame the EU. Three fits per framing dimension. The published

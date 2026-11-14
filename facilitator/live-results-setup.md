@@ -177,7 +177,7 @@ There are four edits. All four places already hold the live values – the Worke
                r = "entry.777777")
     ```
 
-3.  **The template repo** (`CodeMoreh/replication-lab`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, which sits in this project as the nested folder `_workspaces/europeanisation/`.)
+3.  **The template repo** (`CodeMoreh/ar4ds-eu-workspace`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, the folder `ar4ds-eu-workspace` beside this site.)
 
     [**ACTUAL: I CAN'T LOCATE THAT !!!**]{.underline}
 
@@ -297,7 +297,7 @@ About twenty minutes, once per case study. It keeps the classes of different cas
 4. **Read the codes.** In the Form editor → ⋮ → **Get pre-filled link**, type `spec`, `b`, `se`, `t`, `df`, `n`, `r` into the seven boxes, Get link, Copy. From the link read the Form ID (between `/d/e/` and `/viewform`) and the seven `entry.NNN` codes, each followed by its recognisable value.
 5. **Deploy a second Worker.** Cloudflare dashboard → Workers & Pages → Create Worker, name it `class-results-housing`, Edit code, paste the whole of `facilitator/cloudflare-worker.js`, set `SHEET_ID` to the new Sheet ID, Deploy. Open the Worker URL: it should return the header row as CSV.
 6. **Wire the codes in, in four places**, each a single marked block:
-   - `_workspaces/housing/R/spec_tools.R` – the configuration block at the top: the Form ID and the seven entry codes (then commit and push the workspace repository, so that new downloads carry them);
+   - `R/spec_tools.R` of the workspace (`CodeMoreh/ar4ds-housing-workspace`, checked out in the folder `ar4ds-housing-workspace` beside the site) – the configuration block at the top: the Form ID and the seven entry codes (then commit and push the workspace repository, so that new downloads carry them);
    - `cases/housing/lab.qmd` – the same block in the helper chunk of the browser lab;
    - `cases/housing/multiverse.qmd` – the `worker_url` line of the live cell;
    - the public short link of the new Form (Send → link → Shorten URL), in place of `{{< var results-form-url >}}` on the cheatsheet of the case study, `cases/housing/cheatsheet.qmd`, which is the only page of the case study that prints it. Leave `results-form-url` in `_variables.yml` as it is: it belongs to the frozen pipeline of the Europeanisation case study.
