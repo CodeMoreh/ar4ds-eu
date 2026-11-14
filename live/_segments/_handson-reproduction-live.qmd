@@ -11,11 +11,13 @@
 europeanisation <- utils::read.csv(file.path(.data_dir, "europeanisation_cy.csv")) # r-style: keep – readr would add 4 MB to the download
 ```
 
+::: {.fs-90}
 ```{webr}
 #| exercise: reproduce
 #| envir: global
 europeanisation <- datawizard::data_modify(europeanisation, unemp_c = unemp - ______)
 ```
+:::
 
 :::: {.hint exercise="reproduce"}
 ::: {.callout-note collapse="false"}
@@ -41,6 +43,7 @@ europeanisation <- datawizard::data_modify(europeanisation, unemp_c = unemp - me
 :::
 ::::
 
+::: {.fs-90}
 ```{webr}
 #| exercise: reproduce-fe
 #| envir: global
@@ -50,6 +53,7 @@ m1 <- fixest::feols(mcosmo ~ unemp_c | ______, data = europeanisation, vcov = "i
 # digits = 5 prints enough decimals to compare t with the value on record
 print(parameters::model_parameters(m1), digits = 5)
 ```
+:::
 
 :::: {.hint exercise="reproduce-fe"}
 ::: {.callout-note collapse="false"}
@@ -84,7 +88,7 @@ Now you work, on the question at the heart of reproducibility: given the data an
 ## Hands-on 1 – KQXUE {#hands-on-1-kqxue .smaller .output-8}
 
 ::: {.small}
-**Task 3, the second analyst.** The panel of KQXUE, 270 country-years rebuilt from the code of the analyst, with a fixed effect for each country: on record **t = −7.169 on 242 df**. The first cell loads the panel and lists its columns; the second has one gap. Write the analyst and the *t*, hold it, and send it when I say go.
+**Task 3, the second analyst.** KQXUE: its own panel of 270 country-years, a fixed effect for each country, on record **t = −7.169 on 242 df**.
 :::
 
 ```{webr}
@@ -132,7 +136,7 @@ KQXUE built a panel of its own, which the course rebuilt from the Stata code tha
 ## Hands-on 1 – 018OL {#hands-on-1-018ol .smaller .output-8}
 
 ::: {.small}
-**Task 3, the third analyst.** 018OL averaged the five cosmopolitan items of each respondent in 420 cells of country, year and wave, rescaled the cell means to run from 0 to 1, and fitted them on the unemployment rate with random intercepts for country, year and wave: on record **t = −1.206 on 396.9 df**. The first cell loads the file, rescales the outcome and prints nothing; the second has two gaps. The two packages of the model loaded with this deck. Write the analyst and the *t*, hold it, and send it when I say go.
+**Task 3, the third analyst.** 018OL: 420 cells of country, year and wave, the outcome rescaled from 0 to 1, random intercepts for country, year and wave, on record **t = −1.206 on 396.9 df**. The first cell loads the file and rescales the outcome; the second has two gaps.
 :::
 
 ```{webr}
@@ -141,6 +145,7 @@ o18ol <- utils::read.csv("cases/europeanisation/data/analyst_018OL.csv") # r-sty
 o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
 ```
 
+::: {.fs-80}
 ```{webr}
 #| exercise: reproduce-018ol
 #| envir: global
@@ -150,6 +155,7 @@ m3 <- lmerTest::lmer(pos01 ~ unemp + (1 | cntry) + (1 | ______) + (1 | wave), da
 
 print(parameters::model_parameters(m3, effects = "fixed", ci_method = "______"), digits = 5)
 ```
+:::
 
 :::: {.hint exercise="reproduce-018ol"}
 ::: {.callout-note collapse="false"}

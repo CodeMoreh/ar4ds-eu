@@ -1,0 +1,160 @@
+<!-- Hands-on 2 of the one-day workshop, the slide of
+../slides/_segments/europeanisation/_p2-handson2.qmd with the cells of Task 2
+of the browser lab on the four slides after it: the panel, the figure by
+country, the estimand statement and the causal graph. The graph cells call
+the dagify() and adjustmentSets() of the helpers of the lab
+(../cases/europeanisation/_lab-helpers.qmd), which read the answers of
+dagitty from dag_answers.csv. -->
+## Hands-on 2 – The panel, the estimand and the causal graph {#hands-on-2-meet-the-panel-draw-the-graph .smaller}
+
+::: {.small}
+**Task 2** has three pieces:
+
+1. **Look at the data.** 270 rows, 27 countries, 10 years. Run the country panel plot and find the ones that move
+2. **Write the estimand in words.** The template gives you the unit quantity, the target population, the aggregation – fill in each for *this* claim
+3. **Wire up the DAG.** Take the `#` off the arrows you are willing to defend, rerun `adjustmentSets()`, and check which adjustment set it now returns
+:::
+
+::: {.fs-80}
+**In the workspace:** Task 2 of `index.qmd`, from the chunk `count-data` to the chunk `adjustment-set`, with the graph in `R/dag_starter.R`.
+:::
+
+::: {.fragment .small}
+Two sentences for your notes: **what do two-way fixed effects adjust for, and what can they not fix?**
+:::
+
+::: {.fragment .small}
+Whatever you decide here becomes your starting point on the menu in Task 4, and the justification you preregister in Task 5.
+:::
+
+::: notes
+Your turn, and this is the piece that people tell me afterwards changed how they work. Three things, all in Task 2 of your report. First, look at the data, twenty-seven small panels, and find the countries that move sharply, because that is the variation that your model will use. Second, write the estimand in words, using the template: the unit-specific quantity, the population you want it over, and how you are averaging. Write it for this claim specifically, because the value of the exercise comes from having to be precise. Third, the graph in the DAG starter script: take the hash off the arrows that you actually believe, source it again, and look at what the adjustment set has become. On the next four slides I run each piece in the deck. Then those two sentences for your notes. Shout in the chat if you get stuck.
+:::
+
+## Hands-on 2 – The panel {#hands-on-2-the-panel .smaller .output-8}
+
+::: {.fs-80}
+The first cell lists the columns of `europeanisation`, with the type and the first values of each; the second counts countries, years and rows.\
+**In the workspace:** the chunk `count-data` of `index.qmd`.
+:::
+
+```{webr}
+#| autorun: false
+datawizard::data_peek(europeanisation)
+```
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+c(countries = insight::n_unique(europeanisation$cntry), years = insight::n_unique(europeanisation$year),
+  rows = nrow(europeanisation))
+```
+:::
+
+::: notes
+The panel is already loaded in the deck as europeanisation, as it is in your report. The first cell lists its thirteen columns with their types and first values: the country and the year, the six framing scales as means of each country-year, the respondent count behind each mean, GDP growth, the unemployment rate and the bailout marker. The outcome that we care about first is mcosmo, the mean cosmopolitan framing on a scale from nought to one, and the predictor is unemp, the annual unemployment rate. [run both] The second cell counts twenty-seven countries, ten years and two hundred and seventy rows. In your report the chunk count-data makes the same count, and the codebook beside the data file describes every column.
+:::
+
+## Hands-on 2 – Framing by country {#hands-on-2-framing-by-country .smaller .output-figure}
+
+::: {.fs-80}
+**In the workspace:** the chunk `fig-cosmo-trend` of `index.qmd`, which draws the same figure.
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+#| max-lines: 3
+#| fig-width: 9.5
+#| fig-height: 4
+# tinyplot draws on the graphics of base R (McDermott, Arel-Bundock and
+# Zeileis, tinyplot, CRAN, doi:10.32614/CRAN.package.tinyplot): the lines
+# first, one panel per country, then the points added on top
+tinyplot::tinyplot(
+  mcosmo ~ year, facet = ~cntry, data = europeanisation, type = "l", col = "grey55",
+  facet.args = list(ncol = 6), xaxb = c(2004, 2008, 2013), theme = "minimal",
+  main = "Cosmopolitan EU framing by country, 2004–2013",
+  xlab = "", ylab = "Mean cosmopolitan framing"
+)
+tinyplot::tinyplot_add(type = "p", col = "black", pch = 16, cex = 0.6)
+```
+:::
+
+::: notes
+Now the outcome over time, one small panel per country. tinyplot draws on the graphics of base R, the lines first and then the points on top, and the chunk fig-cosmo-trend of your report draws the same figure. [run it] In most countries the framing changes little over the decade, while in a few it moves sharply around the crisis of 2009. That variation within a country over time is what the fixed-effects models of Task 3 use, so find two or three countries that move, and note them in a comment in your report: they are the countries that carry the estimate.
+:::
+
+## Hands-on 2 – The estimand {#hands-on-2-the-estimand .smaller}
+
+::: {.small}
+Before fitting anything, say what you are trying to estimate, in words. A template that you can adapt:
+:::
+
+::: {.fs-85}
+> The **unit-specific quantity** is the change in mean cosmopolitan EU framing within a country from one year to another associated with a one-point change in that country's unemployment rate. The **target population** is EU member states over 2004–2013. The **aggregation** is a weighted average of those unit-specific effects, in which the country-years whose unemployment departs most from their country and year means count most, holding fixed each country's time-invariant traits and each year's EU-wide shocks.
+:::
+
+::: {.fs-80}
+**In the workspace:** the estimand statement in the callout "Task 2, continued" of `index.qmd`, with its gaps in brackets.
+:::
+
+::: notes
+The second piece is the estimand, which you have already written once, in the chat, on the slide with the template of Lundberg and colleagues. Here it is written out in full. The unit-specific quantity is the change in cosmopolitan framing within a country from one year to the next that goes with a one-point change in its unemployment rate. The target population is the member states over the decade. The aggregation is where fixed effects make a choice for you, because the country-years whose unemployment departs most from their country and year means count most. In your report the statement has gaps in brackets: fill them for this claim, in your own words, because the precision is the point.
+:::
+
+## Hands-on 2 – The causal graph {#hands-on-2-the-causal-graph .smaller .output-8}
+
+::: {.fs-80}
+The committed arrows are live and the arguable ones commented out: take the `#` off any that you believe, run the graph, then its adjustment set.\
+**In the workspace:** `R/dag_starter.R`, then the chunks `dag` and `adjustment-set` of `index.qmd`.
+:::
+
+::: {.fs-70}
+```{webr}
+#| autorun: false
+#| max-lines: 8
+my_dag <- dagify( # r-style: keep – the dagify() of the helpers of the deck; the workspace calls ggdag::dagify()
+  # The path of interest, and the two common causes (country and year)
+  # that two-way fixed effects absorb.
+  framing      ~ unemployment,
+  framing      ~ country,
+  unemployment ~ country,
+  framing      ~ year,
+  unemployment ~ year,
+
+  # GROWTH as a time-varying confounder: a slump raises unemployment and may
+  # sour EU sentiment in the same year.
+  # framing      ~ growth,
+  # unemployment ~ growth,
+
+  # BAILOUT as a mediator: unemployment triggers a financial-assistance
+  # programme, which then shapes framing.
+  # bailout ~ unemployment,
+  # framing ~ bailout,
+
+  # POLITICISATION of the EU by parties and elites as another cause of
+  # framing. The robustness study instructed analysts to disregard it.
+  # framing ~ politicisation,
+
+  exposure = "unemployment",
+  outcome  = "framing",
+  # Coordinates for all seven nodes; the three not currently wired up are
+  # simply ignored, so this block never needs editing.
+  coords = list(
+    x = c(unemployment = 0, framing = 3, country = 1, year = 2,
+          growth = 0.9, bailout = 1.5, politicisation = 3),
+    y = c(unemployment = 0, framing = 0, country = 1.4, year = 1.4,
+          growth = -1.0, bailout = -1.2, politicisation = -0.95)))
+```
+:::
+
+::: {.fs-90}
+```{webr}
+#| autorun: false
+adjustmentSets(my_dag) # r-style: keep – reads the answers of dagitty from a table
+```
+:::
+
+::: notes
+The third piece is the graph, the same graph as the DAG starter script of your workspace, written as one R formula per arrow: effect on the left of the tilde, cause on the right, so framing tilde unemployment is the arrow from unemployment to framing. The five committed arrows are live, and the arguable ones are commented out, one claim per line. [run both] With the committed arrows the adjustment set is country and year, which is what a two-way fixed-effects model absorbs. [uncomment the growth pair; run both] With growth as a confounder the set becomes country, growth and year, because a slump varies within a country over time and fixed effects cannot reach it. That is a real finding about the design, so do not go hunting for a bug in your code. The bailout pair is a mediator, and the set does not grow.
+:::

@@ -53,14 +53,36 @@ format:
              pre tightened, and is bounded in height, so that a long printout
              scrolls inside its slide instead of running off it; the
              extension has no cell option for this. A slide with the class
-             output-8 bounds every output to about eight lines, which lets
-             two cells show their printouts on one slide. */
+             output-8 bounds every output to about seven lines and narrows
+             the margins of its cells, which lets two cells show their
+             printouts on one slide. */
           .reveal .exercise-cell .cell-output-container {
             max-height: 10em;
             overflow-y: auto;
           }
           .reveal .output-8 .exercise-cell .cell-output-container {
-            max-height: 6em;
+            max-height: 5.5em;
+          }
+          .reveal .output-8 .exercise-cell .card.exercise-editor {
+            margin: 0.25rem 0;
+          }
+          /* A slide with the class output-figure leaves the outputs of its
+             cells unbounded, so that a figure shows whole. */
+          .reveal .output-figure .exercise-cell .cell-output-container {
+            max-height: none;
+          }
+          /* The editor of a live cell sets its type in rem, which the .fs-
+             classes of the theme, scaled in per cent, do not reach; inside an
+             .fs-90, .fs-80 or .fs-70 div the editor scales with the rest of
+             the div, for a cell whose lines are too wide for its slide. */
+          .reveal .fs-90 .card.exercise-editor {
+            --exercise-font-size: calc(1.3rem * 0.9);
+          }
+          .reveal .fs-80 .card.exercise-editor {
+            --exercise-font-size: calc(1.3rem * 0.8);
+          }
+          .reveal .fs-70 .card.exercise-editor {
+            --exercise-font-size: calc(1.3rem * 0.7);
           }
           .reveal .exercise-cell .card.exercise-editor {
             margin: 0.5rem 0;

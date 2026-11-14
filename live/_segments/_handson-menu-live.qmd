@@ -21,24 +21,28 @@ Now you work the menu, and this is exploration. The cell calls `try_spec()` with
 Change **one decision** and hold the others; then edit either cell for a decision of your own, `outcome = "mpos"`, `noop = "drop"` or `measure = "es_2064_pop"`, or one off the curve, `estimator = "pooled_cl"`, to read why it is refused.
 :::
 
+::: {.fs-80}
 ```{webr}
 #| autorun: false
 try_spec(estimator = "fe_country")  # country effects only: changes common to all of Europe stay in
 ```
+:::
 
+::: {.fs-80}
 ```{webr}
 #| autorun: false
 try_spec(predictor = "growth")  # GDP growth instead of unemployment, in the World Bank series
 ```
+:::
 
 ::: notes
-One decision at a time, the others held, so that when a number moves you can say what moved it. The first cell keeps the country effects and drops the year effects, which is the estimator; the second measures the economy by GDP growth, which is the predictor, with the sign flipped so that below zero stays the direction of the claim. Run both and read what moved. Then edit either cell and try a decision of your own, three or four tries is plenty, and ask for one option that is off the curve as well, to read the reason that comes back and the page of the course that teaches it. [circulate; keep the Multiverse page on the other screen]
+One decision at a time, the others held, so that when a number moves you can say what moved it. The first cell keeps the country effects and drops the year effects, which is the estimator; the second measures the economy by GDP growth, which is the predictor, with the sign flipped so that below zero stays the direction of the claim. Run both and read what moved. Then edit either cell and try a decision of your own, three or four tries is plenty, and ask for one option that is off the curve as well, to read the reason that comes back and the page of the course that teaches it. [circulate; keep the Class results page on the other screen]
 :::
 
 ## Hands-on 2 – The submission {#hands-on-2-the-submission .smaller .output-8}
 
 ::: {.small}
-`my_experiments()` lists every try side by side. Rerun the one that you would defend, so that it is your last try, and **submit it**: the cell prints a tag such as `amber-otter-42`, which marks your dot on the class chart of the [Class results]({{< var live-results-url >}}) page, and a link to the form with every field filled in.
+`my_experiments()` lists every try side by side. Rerun the one that you would defend and **submit it**: the cell prints your tag, such as `amber-otter-42`, and a link to the form, and your dot joins the class chart of the [Class results]({{< var live-results-url >}}) page.
 :::
 
 ```{webr}
@@ -52,5 +56,5 @@ submit_exploration()
 ```
 
 ::: notes
-When you have three or four tries, print the log. `my_experiments()` lists the tries side by side, with only the decisions that you varied, the small multiverse that you have just built. Then rerun whichever one you can argue for best, so that it is your last try, and submit it. The cell prints your submission line, a link to a form with every field filled in, and a tag, which marks your dot on the class chart; press Send in the form, and the dot appears on the Multiverse page within seconds, labelled exploratory because you chose it after looking. I say it again: this is exploration, and it is the right way to learn the menu. [wait for the dots; then read the chart]
+When you have three or four tries, print the log. `my_experiments()` lists the tries side by side, with only the decisions that you varied, the small multiverse that you have just built. Then rerun whichever one you can argue for best, so that it is your last try, and submit it. The cell prints your submission line, a link to a form with every field filled in, and a tag, which marks your dot on the class chart; press Send in the form, and the dot appears on the Class results page within seconds, labelled exploratory because you chose it after looking. I say it again: this is exploration, and it is the right way to learn the menu. [wait for the dots; then read the chart]
 :::

@@ -1,0 +1,201 @@
+<!-- Hands-on 4 of the one-day workshop, the slide of
+../slides/_segments/europeanisation/_p3-handson4.qmd with the cells of Task 4
+of the browser lab on the seven slides after it: the reproduced
+specification, the six single decisions two to a slide, an option off the
+curve, every argument, and the log with the submission. -->
+## Hands-on 4 – Exploring the menu {#hands-on-4-work-the-menu .smaller}
+
+::: {.small}
+**Task 4 is exploratory.** Try several specifications, look at what each one does, and get a feel for which decisions move the estimate.
+
+1. Start from the reproduced specification, the model of C6HJR, which every argument of `try_spec()` takes as its default
+2. Change **one decision** in `try_spec()` and read what happens to *b*, the partial *r*, the CR2 p and the placement; `my_experiments()` lists every try
+3. Do it again with a different decision. Three or four is plenty, and one option that is off the curve, to read why it is refused
+4. Then rerun the one you can argue for best with `try_spec()`, so that it is your last try, and **submit it** with `submit_exploration()`
+:::
+
+::: {.fs-80}
+**In the workspace:** Task 4 of `index.qmd`, from the chunk `try-baseline` to the chunk `submit-exploration`, or the section on Task 4 of `working_script.R`.
+:::
+
+::: {.fragment .small}
+Your dot appears on the live **Class results** page within seconds. This is **not** your preregistered analysis: you are allowed to look, change your mind and try again, which is why this phase has a name of its own.
+:::
+
+::: notes
+Right. This is where you get your hands properly dirty, and I want to be explicit about what kind of activity it is, because it differs from the preregistered analysis that comes later. Task four is exploration. Start from the reproduced specification, my own model, which every argument of try underscore spec takes as its default, whichever analyst you reproduced. Change one decision, look at what happens to the coefficient, the partial r, the CR2 p-value and the placement among the eight hundred and sixty-four, and then do it again with a different decision. Ask for one option that is off the curve as well, and read the reason that comes back. Then rerun the one that you can argue for best, and submit it. On the next slides I run each step in the deck. [advance] This is not your preregistered analysis: here you are allowed to look, change your mind and try again.
+:::
+
+## Hands-on 4 – The reproduced specification {#hands-on-4-the-reproduced-specification .smaller}
+
+::: {.small}
+`try_spec()` with no arguments is the reproduced specification, the model of C6HJR, and every argument defaults to it. Read *b*, the claim-aligned partial *r*, the CR2 p and the placement among the `r fmt_n(nrow(spec_curve))`, the lines that every try prints.
+:::
+
+::: {.fs-80}
+**In the workspace:** the chunk `try-baseline` of `index.qmd`, where each call fits the model on your machine.
+:::
+
+```{webr}
+#| autorun: false
+# Nothing changed – this is the reproduced specification, the model of C6HJR in Task 3.
+try_spec()
+```
+
+::: notes
+I start where every try starts, with the reproduced specification. The cell calls try underscore spec with no arguments, which is my own model, and every argument defaults to it, so changing one thing means changing one argument. [run it] The printout gives the slope with its conventional standard error and t, the claim-aligned partial r, the p-value of the test that classes every point on the curve, the class of the result and its placement among the eight hundred and sixty-four. The test clusters the errors by country with the CR2 correction, on nine point eight Satterthwaite degrees of freedom, and under it this specification is not significant at five per cent, with a p of point zero five zero four. In the deck the result is read from the curve, which loaded with the data; in your workspace try underscore spec fits the model and gives the same numbers.
+:::
+
+## Hands-on 4 – The question {#hands-on-4-the-question .smaller .output-8}
+
+::: {.fs-80}
+Each cell changes one decision and holds the others; the first four change the question, here the outcome scale and the estimator.\
+**In the workspace:** the chunk `try-one-at-a-time` of `index.qmd`, whose six calls are the cells of this slide and the next two.
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+try_spec(outcome = "mpos")  # the composite of both positive framings
+```
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+try_spec(estimator = "fe_country")  # country effects only: changes common to all of Europe stay in
+```
+:::
+
+::: notes
+One decision at a time, the others held, so that when a number moves you can say what moved it. The first four calls change the question that is asked of the data. The first replaces the cosmopolitan scale by the composite of both positive framings; the second keeps the country effects and drops the year effects, so the changes that every country went through in the same year stay in the comparison. [run both] Read what moved. On the composite the claim-aligned r goes from minus point two four to minus point three one, and the CR2 p falls below five per cent; without the year effects it goes to minus point four, the largest move of the six. In your report the six calls of this slide and the next two sit in one chunk, try-one-at-a-time.
+:::
+
+## Hands-on 4 – The question, continued {#hands-on-4-the-question-continued .smaller .output-8}
+
+::: {.fs-80}
+GDP growth in place of unemployment, with the signs flipped so that below zero stays the direction of the claim, and growth held fixed beside unemployment.\
+**In the workspace:** the chunk `try-one-at-a-time` of `index.qmd`.
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+try_spec(predictor = "growth")  # GDP growth instead of unemployment, in the World Bank series
+```
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+try_spec(copredictor = "other")  # adjusted for the other economic measure, here GDP growth
+```
+:::
+
+::: notes
+The next two change the measure of the economy. The first measures it by GDP growth instead of unemployment, in the World Bank series, and because the claim expects framing to rise with growth, the printout flips the signs, so that below zero stays the direction of the claim. The second keeps unemployment and adjusts for growth, the co-predictor of the menu, which is the arrow of Hands-on 2 that fixed effects cannot reach. [run both] On growth alone the claim-aligned r shrinks to minus point zero seven and is far from significant. With growth held fixed, unemployment keeps almost all of its estimate, minus point two three, and its CR2 p falls to point zero two seven.
+:::
+
+## Hands-on 4 – Measurement {#hands-on-4-measurement .smaller .output-8}
+
+::: {.fs-80}
+The same question, measured otherwise: the respondents who mentioned no frame left out instead of scored zero, and a Eurostat series of unemployment.\
+**In the workspace:** the chunk `try-one-at-a-time` of `index.qmd`.
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+try_spec(noop = "drop")  # leave out the respondents who mentioned no frame
+```
+:::
+
+::: {.fs-80}
+```{webr}
+#| autorun: false
+try_spec(measure = "es_2064_pop")  # a Eurostat unemployment series instead of the World Bank one
+```
+:::
+
+::: notes
+The last two keep the question and change only how it is measured. The first leaves out the respondents who mentioned no frame at all, where the reproduced specification scores them zero. The second replaces the World Bank series of unemployment with a Eurostat series, the unemployed as a share of the whole population aged twenty to sixty-four, the definition that KQXUE used. [run both] Leaving the silent respondents out moves the claim-aligned r to minus point three one, with a CR2 p of point zero one three; the Eurostat series moves it to minus point two three, with a p just under point zero seven. Measurement moves the estimate less than the estimator does, but it can move the test across the line.
+:::
+
+## Hands-on 4 – Options off the curve {#hands-on-4-options-off-the-curve .smaller}
+
+::: {.small}
+The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. Ask for another, and the helper refuses it, gives the reason and names the page of the course that teaches it. Edit the cell to try `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`.
+:::
+
+::: {.fs-80}
+**In the workspace:** the chunk `try-off-curve` of `index.qmd`, marked `error: true` so that the refusal does not stop the render.
+:::
+
+```{webr}
+#| autorun: false
+# An option that is not on the curve: the helper refuses it and says why.
+try_spec(estimator = "pooled_cl")
+```
+
+::: notes
+The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way, and every other option is still an argument of try underscore spec. This cell asks for pooled OLS, the estimator with no fixed effects at all. [run it] The helper refuses it: it prints the reason why the option is not on the curve, the page of the course that teaches it, and the options that stay on the curve. Edit the cell and try another, a sample without the bailout countries, a weight by population or a negative scale, and read each reason. In your report the chunk try-off-curve makes the same request, and it is marked so that the refusal does not stop the render.
+:::
+
+## Hands-on 4 – Every argument {#hands-on-4-every-argument .smaller .output-8}
+
+::: {.fs-80}
+The full set of arguments, each with the reproduced specification as its default and the options of the menu in the comment beside it.\
+**In the workspace:** calls of your own, written after the chunk `try-off-curve` of `index.qmd` or in the console.
+:::
+
+::: {.fs-70}
+```{webr}
+#| autorun: false
+#| max-lines: 12
+try_spec(
+  # The question
+  outcome      = "mcosmo",       # mcosmo | mutil | mpos          off the curve: mcomm | mlib | mneg
+  predictor    = "unemp",        # unemp | growth
+  copredictor  = "none",         # none | other   (the other economic measure, adjusted for)
+  estimator    = "fe_twoway",    # fe_twoway | fe_country         off the curve: re | pooled_cl
+  sample       = "all",          # all       off the curve: y2004_2008 | y2009_2013 | no_bailout | no_GR_ES
+  weights      = "none",         # none      off the curve: n_cell | n_eff | pop
+  construction = "share",        # share     off the curve: count | rate
+  # Measurement
+  noop         = "zero",         # zero | drop                    off the curve: split | mi_mice | mi_amelia
+  item_set     = "all",          # all | un   (with or without the "unemployment" item)
+  cell_weight  = "unweighted",   # unweighted | design
+  measure      = "wb_nat",       # unemp:  wb_nat | es_1574_act | es_2064_pop | es_2564_lfs   off: es_1574_tips
+                                 # growth: wb_growth                                          off: es_growth
+  # The model
+  pred_form    = "raw",          # raw | log   (growth: raw only)
+  family       = "gaussian",     # gaussian  off the curve: beta
+  se           = "cr2"           # cr2, fixed: CR2 errors clustered by country test every result
+)
+```
+:::
+
+::: notes
+Here is the full set of arguments in one call, each with the reproduced specification as its default and the options of the menu in the comment beside it, in the three groups of the menu: the question, measurement and the model. This is the cell to edit when you design a try of your own. Change two or three of the lines, run it, and the printout has the same lines as before. [run it] The last argument, the inference rule, is fixed: every result on the curve is tested by CR2 errors clustered by country. In your workspace you write such calls yourself, after the chunk of the refused option or in the console, and each one fits the model on your machine.
+:::
+
+## Hands-on 4 – The submission {#hands-on-4-the-submission .smaller .output-8}
+
+::: {.fs-80}
+`my_experiments()` lists every try; rerun the one that you would defend and **submit it**: the cell prints your tag, such as `amber-otter-42`, and the link to the form, and your dot joins the [Class results]({{< var live-results-url >}}) page.\
+**In the workspace:** the chunks `my-experiments` and `submit-exploration` of `index.qmd`, with the tag in the file `.class-tag`.
+:::
+
+```{webr}
+#| autorun: false
+my_experiments()
+```
+
+```{webr}
+#| autorun: false
+submit_exploration()
+```
+
+::: notes
+When you have three or four tries, print the log. my underscore experiments lists the tries side by side, with only the decisions that you varied, the small multiverse that you have just built. Then rerun whichever one you can argue for best, so that it is your last try, and submit it. [run both] The cell prints your submission line, a link to a form with every field filled in, and a tag, which marks your dot on the class chart; press Send in the form, and the dot appears on the Class results page within seconds, labelled exploratory because you chose it after looking. In your workspace the tag is kept in a file, so that both of your submissions carry it. [keep the Class results page on the shared screen and press Run Code as the dots land]
+:::

@@ -1,11 +1,15 @@
 <!--
-The helpers of the browser lab, in one file included by two documents: the lab
-itself, cases/europeanisation/lab.qmd, and the live deck of the short session,
-live/europeanisation-short.qmd, whose hands-on slides run the same cells. The
+The helpers of the browser lab, in one file included by three documents: the
+lab itself, cases/europeanisation/lab.qmd, and the two live decks,
+live/europeanisation-short.qmd and live/europeanisation-one-day.qmd, whose
+hands-on slides run the same cells. The first cell holds the menu and the
+helpers of Tasks 4 and 5, the second the graph functions of Task 2. The
 including document sets .data_dir, the folder in which the files of its
 resources list arrive inside the browser, in a setup cell placed before this
-include. The estimator of the case study is written once, in R/europeanisation/_curve_tools.R;
-these helpers fit no model and read every result from the curve.
+include, and lists among them the three files that the two cells read. The
+estimator of the case study is written once, in R/europeanisation/_curve_tools.R;
+these helpers fit no model and read every result from the curve, and the
+graph functions read the answers of dagitty from a table.
 -->
 
 ```{webr}
@@ -18,12 +22,12 @@ these helpers fit no model and read every result from the curve.
 # not on the curve is refused with the reason recorded in menu_options.csv;
 # both files arrive with the page through its `resources:` list, in the folder
 # that the setup cell of the including page names as .data_dir (data/ in the
-# lab, cases/europeanisation/data/ in the live deck of the short session). These helpers
-# fit no model in the browser, so the only estimation package on the page is
-# fixest, which Task 3 uses for two of its reproductions; the third, of
-# 018OL, installs lme4 and lmerTest when it is first run. The workspace fits the same
-# specifications live, with their CR2 test (clubSandwich), and returns the same
-# numbers.
+# lab, cases/europeanisation/data/ in the live decks). These helpers fit no
+# model in the browser: the estimation packages of a page serve the three
+# reproductions of Task 3, fixest for two of them and lme4 and lmerTest for
+# the third, of 018OL, which the lab installs when its cell first runs and the
+# live decks load when they open. The workspace fits the same specifications
+# live, with their CR2 test (clubSandwich), and returns the same numbers.
 .curve   <- utils::read.csv(file.path(.data_dir, "spec_curve.csv"), stringsAsFactors = FALSE) # r-style: keep – readr would add 4 MB to the download
 .options <- utils::read.csv(file.path(.data_dir, "menu_options.csv"), stringsAsFactors = FALSE, # r-style: keep – as above
                             encoding = "UTF-8")
@@ -488,4 +492,73 @@ report_result <- function(nickname = NULL) {
           "Your declared submission (claim-aligned, straight from your preregistration):",
           nickname)
 }
+```
+
+```{webr}
+#| include: false
+#| autorun: true
+# Graph machinery for Task 2. dagify() reads a graph from one formula per
+# arrow, written effect ~ cause as ggdag::dagify() reads it in the workspace.
+# adjustmentSets() prints the answer of dagitty from dag_answers.csv:
+# R/europeanisation/14_dag_answers.R in the course repository computes it with
+# dagitty for every combination of the arrows in the graph cell of Task 2.
+# dagitty itself cannot run in the browser, because it reaches its graph
+# algorithms through a JavaScript engine that a browser grants only to a page
+# served with cross-origin isolation headers (COOP and COEP), and the course
+# site does not send them. Any other graph goes to dagitty in the downloadable
+# workspace. The table arrives with the including page through its
+# `resources:` list, in the folder named by .data_dir.
+.dag_answers <- utils::read.csv(file.path(.data_dir, "dag_answers.csv"), stringsAsFactors = FALSE, # r-style: keep – readr would add 4 MB to the download
+                                na.strings = "NA")
+.dag_elsewhere <- c(
+  "This page holds the adjustment sets that dagitty gives for the graph of the cell",
+  "with any of its commented arrows switched on. For another graph or another",
+  "question, use the downloadable workspace, where R/dag_starter.R builds the graph",
+  "and dagitty answers whatever you ask of it.")
+
+# A graph from one formula per arrow. coords is accepted, as ggdag::dagify()
+# accepts it, and not used, because this page does not draw the graph. The
+# arrows, sorted, are the key under which data/dag_answers.csv holds the
+# answers for the graph.
+dagify <- function(..., exposure = NULL, outcome = NULL, coords = NULL) {
+  e <- purrr::map(list(...), \(f) {
+    child <- all.vars(f[[2]])
+    parent <- all.vars(f[[3]])
+    data.frame(from = parent, to = rep(child, length(parent)))
+  }) |>
+    purrr::list_rbind()
+  structure(list(edges = e, exposure = exposure, outcome = outcome,
+                 nodes = unique(c(e$from, e$to)),
+                 key = paste(sort(unique(paste(e$from, "->", e$to)), method = "radix"),
+                             collapse = "; ")),
+            class = "simple_dag")
+}
+
+# The minimal adjustment sets for the total effect of the exposure on the
+# outcome, as dagitty::adjustmentSets() returns them, read from the table
+adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect = "total", ...) {
+  rows <- .dag_answers[.dag_answers$arrows %in% x$key &
+                         .dag_answers$exposure %in% paste(exposure, collapse = ", ") &
+                         .dag_answers$outcome %in% paste(outcome, collapse = ", ") &
+                         .dag_answers$effect %in% effect, ]
+  if (nrow(rows) == 0) {
+    writeLines(.dag_elsewhere)
+    return(invisible(NULL))
+  }
+  structure(strsplit(rows$answer[rows$item > 0], ", ", fixed = TRUE), class = "simple_dag_sets")
+}
+
+print.simple_dag_sets <- function(x, ...) {
+  if (!length(x)) {
+    writeLines("(no set of these variables closes every backdoor path)")
+  } else {
+    purrr::map_chr(x, \(z) if (length(z)) paste0("{ ", paste(z, collapse = ", "), " }") else "{}") |>
+      writeLines()
+  }
+  invisible(x)
+}
+
+# Registered rather than left in the session: these cells do not evaluate in
+# the global environment, so plain S3 dispatch would not find the method.
+registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
 ```

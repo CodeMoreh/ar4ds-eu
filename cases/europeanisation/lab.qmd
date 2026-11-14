@@ -39,7 +39,7 @@ curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 ref <- datawizard::data_filter(curve, is_reference)
 ```
 
-This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place and the same helper functions as the downloadable workspace, which the [Setup](https://codemoreh.github.io/ar4ds/setup.html) page describes for those who have installed R and an IDE (Positron, RStudio, VS Code, etc.) and which gives the same numbers, so that nothing you do here is wasted.
+This page holds the exercise of the course, Tasks 1 to 5, on a copy of R that runs inside the browser, with the data already in place. It holds the same tasks as the live decks of the [short session](../../live/europeanisation-short.html) and the [one-day workshop](../../live/europeanisation-one-day.html), whose slides carry the same cells, as the fallback when a deck does not load. Its helper functions are those of the downloadable workspace, which the [Setup](https://codemoreh.github.io/ar4ds/setup.html) page describes for those who have installed R and an IDE (Positron, RStudio, VS Code, etc.) and which gives the same numbers, so that nothing you do here is wasted.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
@@ -267,74 +267,6 @@ You build the graph yourself in the cells below, in ordinary R. `dagify()` takes
 
 `dagify()` and `adjustmentSets()` are already available on this page. In the downloadable workspace they come from `ggdag` and `dagitty`, the R packages for causal graphs, which cannot run here, so `adjustmentSets()` prints the answer that dagitty gave for every combination of the arrows in the cell ([codebook](data/dag_answers_codebook.md)), and any other graph gets a pointer to the workspace.
 
-```{webr}
-#| include: false
-#| autorun: true
-# Graph machinery for Task 2. dagify() reads a graph from one formula per
-# arrow, written effect ~ cause as ggdag::dagify() reads it in the workspace.
-# adjustmentSets() prints the answer of dagitty from data/dag_answers.csv:
-# R/europeanisation/14_dag_answers.R in the course repository computes it with
-# dagitty for every combination of the arrows in the graph cell below.
-# dagitty itself cannot run on this page, because it reaches its graph
-# algorithms through a JavaScript engine that a browser grants only to a page
-# served with cross-origin isolation headers (COOP and COEP), and the course
-# site does not send them. Any other graph goes to dagitty in the downloadable
-# workspace. The table arrives with the page through its `resources:` list.
-.dag_answers <- utils::read.csv("data/dag_answers.csv", stringsAsFactors = FALSE, # r-style: keep – readr would add 4 MB to the download
-                                na.strings = "NA")
-.dag_elsewhere <- c(
-  "This page holds the adjustment sets that dagitty gives for the graph of the cell",
-  "with any of its commented arrows switched on. For another graph or another",
-  "question, use the downloadable workspace, where R/dag_starter.R builds the graph",
-  "and dagitty answers whatever you ask of it.")
-
-# A graph from one formula per arrow. coords is accepted, as ggdag::dagify()
-# accepts it, and not used, because this page does not draw the graph. The
-# arrows, sorted, are the key under which data/dag_answers.csv holds the
-# answers for the graph.
-dagify <- function(..., exposure = NULL, outcome = NULL, coords = NULL) {
-  e <- purrr::map(list(...), \(f) {
-    child <- all.vars(f[[2]])
-    parent <- all.vars(f[[3]])
-    data.frame(from = parent, to = rep(child, length(parent)))
-  }) |>
-    purrr::list_rbind()
-  structure(list(edges = e, exposure = exposure, outcome = outcome,
-                 nodes = unique(c(e$from, e$to)),
-                 key = paste(sort(unique(paste(e$from, "->", e$to)), method = "radix"),
-                             collapse = "; ")),
-            class = "simple_dag")
-}
-
-# The minimal adjustment sets for the total effect of the exposure on the
-# outcome, as dagitty::adjustmentSets() returns them, read from the table
-adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect = "total", ...) {
-  rows <- .dag_answers[.dag_answers$arrows %in% x$key &
-                         .dag_answers$exposure %in% paste(exposure, collapse = ", ") &
-                         .dag_answers$outcome %in% paste(outcome, collapse = ", ") &
-                         .dag_answers$effect %in% effect, ]
-  if (nrow(rows) == 0) {
-    writeLines(.dag_elsewhere)
-    return(invisible(NULL))
-  }
-  structure(strsplit(rows$answer[rows$item > 0], ", ", fixed = TRUE), class = "simple_dag_sets")
-}
-
-print.simple_dag_sets <- function(x, ...) {
-  if (!length(x)) {
-    writeLines("(no set of these variables closes every backdoor path)")
-  } else {
-    purrr::map_chr(x, \(z) if (length(z)) paste0("{ ", paste(z, collapse = ", "), " }") else "{}") |>
-      writeLines()
-  }
-  invisible(x)
-}
-
-# Registered rather than left in the session: these cells do not evaluate in
-# the global environment, so plain S3 dispatch would not find the method.
-registerS3method("print", "simple_dag_sets", print.simple_dag_sets)
-```
-
 Now specify the graph. The five committed arrows are live; the arguable ones are commented out, one substantive claim per line. Uncomment any you believe, then run the cell, which stores the graph as `my_dag`.
 
 ```{webr}
@@ -389,7 +321,7 @@ Write two sentences for your own notes. What do two-way fixed effects adjust for
 
 ## Task 3 – Reproduce a recorded result {#task-3-reproduction}
 
-This is the **reproducibility** check. Five analysts reanalysed the claim for the robustness study, each with code of their own. Three of them fitted their models on aggregate data, and their recorded results reproduce exactly on this page; choose one of the three. Every format offers the three. The live deck of the short session loads the two packages of the mixed model of 018OL when it is opened, while on this page they download on the first run of its cell, about 32 MB, so take that analyst here on a good connection. The other two, KEVF1 and PRL47, fitted theirs on several hundred thousand respondents, whose files GESIS does not allow the course to publish. Their analyses lie outside the one-day workshop; the third day of the Extended course works on the respondents, from a file that each participant builds from their own GESIS downloads.
+This is the **reproducibility** check. Five analysts reanalysed the claim for the robustness study, each with code of their own. Three of them fitted their models on aggregate data, and their recorded results reproduce exactly on this page; choose one of the three. Every format offers the three. The live decks load the two packages of the mixed model of 018OL when they are opened, while on this page the two packages download on the first run of its cell, about 32 MB, so take that analyst here on a good connection. The other two, KEVF1 and PRL47, fitted theirs on several hundred thousand respondents, whose files GESIS does not allow the course to publish. Their analyses lie outside the one-day workshop; the third day of the Extended course works on the respondents, from a file that each participant builds from their own GESIS downloads.
 
 | Analyst | Data on this page | Model | Recorded in the robustness study |
 |:--|:--|:--|:--|

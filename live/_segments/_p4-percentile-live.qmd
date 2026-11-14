@@ -1,0 +1,28 @@
+<!-- The placement slide of the one-day workshop, the slide of
+../slides/_segments/europeanisation/_p4-percentile.qmd with the cell that
+reruns try_spec(), as on _placement-live.qmd of the short session. -->
+## Your own percentile {#find-your-own-percentile .smaller}
+
+::: {.small}
+- Rerun `try_spec()` with the choices that you submitted in Task 4: its output includes your **placement**, the share of the `r fmt_n(nrow(spec_curve))` specifications on the curve with a more negative claim-aligned *r* than yours. For the reproduced specification it is `r sprintf("%.0f%%", 100 * mean(spec_curve$r_ca < curve_ref$r_ca))`
+- The same statistic that places the reference results, computed for **you**
+:::
+
+::: {.fs-80}
+**In the workspace:** your call of `try_spec()`, rerun in the console or in the chunk `try-one-at-a-time` of `index.qmd`.
+:::
+
+```{webr}
+#| autorun: false
+# Type the arguments of the specification that you submitted;
+# run as it stands, this is the reproduced specification
+try_spec()
+```
+
+::: {.fragment}
+Paste your percentile in chat – hold – send on "go".
+:::
+
+::: notes
+Your turn to be placed. Rerun try underscore spec with the choices that you submitted, in your workspace, or in this cell if you work in the deck. The placement line in its output is the same statistic that places the reference results: the share of the eight hundred and sixty-four specifications on the curve that are more negative than yours. For the reproduced specification, my own model, it is sixty-seven per cent, so if you did not submit, that is your number. [run the cell as it stands] Then paste your percentile in chat, hold it, and send on go. [go] Look at the range in the chat: the class spans a good stretch of the curve, and every one of you can now say where you stand among eight hundred and sixty-four justifiable alternatives. That sentence, "my estimate sits at the Nth percentile of the specification curve", is a publishable way to report a robustness check, as long as you say how the curve was built.
+:::

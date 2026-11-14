@@ -1,0 +1,91 @@
+<!-- Hands-on 1 of the one-day workshop, with the cells of Task 1 of the
+browser lab: the setup check on the first slide, then the warm-up of the
+three Rs, its four scenarios on the second slide and its cell with the
+answers on the third. -->
+## Hands-on 1 – The setup check {#hands-on-1-get-yourself-running .smaller}
+
+::: {.small}
+**Task 1 – the setup check.** A line of R runs and the data are in front of you: the three cells check R, the panel and fixest.
+:::
+
+::: {.fs-80}
+**In the workspace:** `source("R/check_setup.R")` until it reports no failure, then render `index.qmd` once.
+:::
+
+```{webr}
+#| autorun: false
+R.version.string
+```
+
+```{webr}
+#| autorun: false
+c(rows = nrow(europeanisation), countries = insight::n_unique(europeanisation$cntry),
+  years = insight::n_unique(europeanisation$year))
+```
+
+::: {.fs-90}
+```{webr}
+#| autorun: false
+print(requireNamespace("fixest", quietly = TRUE))  # print(): the value comes back invisibly
+```
+:::
+
+::: notes
+Your turn, and this first task is deliberately not intellectual. The job is to get to the point where a line of R runs and the data are in front of you. In the workspace, open the folder in your IDE, source the check script until it reports no failure, and render the report once, which tells you that Quarto works as well. On the slide I run the same check in the deck: the version of R, the size of the panel, which should be two hundred and seventy rows, twenty-seven countries and ten years, and whether fixest is installed. If the check script reports a failure that you cannot fix, do not fight it: open this deck in a tab of your own, wait for the Run Code buttons, and carry on in its cells. Take the time you need, into the break if you have to. Green circle in the chat when you are through, STUCK if you need me.
+:::
+
+## Hands-on 1 – The warm-up {#hands-on-1-the-warm-up .smaller}
+
+::: {.fs-75 .nonincremental}
+Three of the four scenarios describe one of our three Rs – reproducibility, robustness, replicability – and the fourth describes something else.
+
+1. A reviewer reruns the authors' Stata .do file on the authors' data and gets a *different* coefficient from the one printed in the paper. This is an example of \_\_\_\_\_\_ even though what they *tried* to do failed.
+2. The analyst uses the authors' submitted replication dataset, but they re-implement the model in R instead of Stata and centre the predictor. Is this a case of \_\_\_\_\_\_ or \_\_\_\_\_\_?
+3. A preregistered team tests the identical hypothesis on a *separate, much larger* dataset chosen to be theoretically equivalent, and gets results that contradict the original. Their conclusion is that the original analysis has failed to \_\_\_\_\_\_.
+4. Instead of the survey data used by the original authors, another researcher tests the same underlying idea on social-media texts using a machine-learning classifier method that the original never used. To their surprise, the authors' original findings turn out to be \_\_\_\_\_\_, and the researcher concludes that they provide a reliable middle-range theory of the phenomenon they investigate.
+:::
+
+::: {.fs-80}
+**In the workspace:** the four scenarios of Task 1 in `index.qmd`, whose gaps you fill in the prose.
+:::
+
+::: notes
+While installations finish, a warm-up that settles the vocabulary before anyone touches the data. There are four scenarios, and three of them describe one of our three Rs: reproducibility, robustness and replicability. The fourth describes something else, and part of the exercise is to notice which one. In the workspace the scenarios open Task 1 of the report, with gaps in the prose, and on the next slide the deck has the same gaps in a cell. Read all four scenarios before you label the first, because the second is a genuine grey area, on which reasonable people disagree, and the fourth is the odd one out. Then fill the gaps.
+:::
+
+## Hands-on 1 – Labelling the scenarios {#hands-on-1-labelling-the-scenarios .smaller}
+
+::: {.small}
+Fill in the gaps and run the cell to print your answers back. The solution under the cell gives the answers, each with its reason.
+:::
+
+```{webr}
+#| exercise: vocab
+#| envir: global
+#| code-overflow: wrap
+
+writeLines(c(
+  "Scenario 1: This is an example of ______.",
+  "Scenario 2: Is this a case of ______ or ______?",
+  "Scenario 3: The original analysis has failed to ______.",
+  "Scenario 4: The authors' original findings are ______."
+))
+
+```
+
+:::: {.solution exercise="vocab"}
+::: {.callout-tip collapse="false"}
+## Answers
+
+::: {.nonincremental}
+1.  **reproducibility** – rerunning the same code on the same data. Here it *failed* to match, but the activity is still reproducibility, and 'not reproduced' is the verdict.
+2.  arguably still **reproducibility**, in a grey area – re-implementing on the same data in different software is technically a re-computation – but centring the predictor nudges towards **robustness**. Two packages can also implement the same estimator differently, so make sure you know what the function you call is doing.
+3.  **replicability** – same question, independent new data chosen to be theoretically equivalent.
+4.  **generalisability** – the odd one out, with new data *and* a new method at once. It is the fourth cell of the matrix, outside the three that the exercise tests.
+:::
+:::
+::::
+
+::: notes
+Here are the same four gaps in a cell. Fill each blank with the word that you think fits, run the cell, and it prints your answers back. The solution under the cell gives the answers with a sentence of reasoning for each. The one worth arguing about is the second: rerunning an analysis in new software on the same data is technically a re-computation, but centring the predictor nudges it towards robustness, and two packages can implement one estimator differently, so you need to know what the function that you call does. The fourth is generalisability, new data and a new method at once, the cell of the matrix that the exercise leaves out.
+:::

@@ -13,7 +13,7 @@ The case study is a claim from a study of how Europeans frame the European Union
 | Extended course, three days built around the workshop | `tracks/europeanisation-extended/` | the workspace, with the deck and the browser lab as the fallback on the day of the workshop |
 | Self-study | `tracks/self-study/` | the workspace |
 
-Each format is reached from the opening page and has a docked sidebar (`_sidebar.yml`) that lists its pages in teaching order, its exercise page among them, and the tools that it uses, and a slides page that embeds its deck (`slides/europeanisation-*.qmd`, assembled from `slides/_segments/europeanisation/`, or the live deck of the short session in `live/`). The run sheet of the facilitator, with the timings, is `facilitator/europeanisation-guide.qmd`.
+Each format is reached from the opening page and has a docked sidebar (`_sidebar.yml`) that lists its pages in teaching order, its exercise page among them, and the tools that it uses, and a slides page that embeds its deck: the live decks of the short session and of the one-day workshop in `live/`, whose cells run R in the browser, or the full deck of the self-study route in `slides/`, assembled from `slides/_segments/europeanisation/`. The run sheet of the facilitator, with the timings, is `facilitator/europeanisation-guide.qmd`.
 
 ## Layout
 
@@ -22,7 +22,8 @@ Each format is reached from the opening page and has a docked sidebar (`_sidebar
 | `index.qmd` | The home page |
 | `cases/europeanisation/` | The background page, the browser lab, the specification menu with the decision map, the specification curve with the reading on inference, the class results, the cheatsheet, the parts that the exercise pages of the formats include (`_exercise-*.qmd`), and `data/` with a codebook for every file |
 | `tracks/` | The formats |
-| `slides/` | The decks and their segments |
+| `slides/` | The full deck of the self-study route and the decks of day 3 of the Extended course, with their segments, of which the live deck of the workshop shares many |
+| `live/` | The live decks of the short session and of the one-day workshop, whose slides carry the cells of the browser lab, with the segments of their own in `live/_segments/` |
 | `companion/` | The modules of the companion, written on the data of the case study; `_model-outputs/` holds the scripts and aggregate outputs behind them |
 | `R/europeanisation/` | The pipeline that builds the data files of the case study; `R/europeanisation/README.md` gives the order |
 | `data-raw/europeanisation/` | The archived Eurostat tables that the pipeline reads |

@@ -19,7 +19,7 @@ format:
         - parameters
         - lme4
         - lmerTest
-# The five files that the cells read, fetched into the browser when the deck
+# The six files that the cells and the helpers read, fetched into the browser when the deck
 # opens; the runtime drops the leading ../ of each path, so inside the browser
 # they sit under cases/europeanisation/data/, the folder that the setup cell below
 # names as .data_dir.
@@ -29,6 +29,7 @@ resources:
   - ../cases/europeanisation/data/analyst_018OL.csv
   - ../cases/europeanisation/data/spec_curve.csv
   - ../cases/europeanisation/data/menu_options.csv
+  - ../cases/europeanisation/data/dag_answers.csv
 live:
   show-hints: true
   show-solutions: true
@@ -41,8 +42,7 @@ core-runs: []
 THE DECK OF THE SHORT SESSION, AND HOW TO ADAPT IT FOR AN EVENT
 
 - The deck of the short session, which replaced the plain deck
-  slides/europeanisation-short.qmd on 11 November 2026 (that address forwards
-  here), with the tasks of the browser lab on the slides themselves: R loads inside the deck through the
+  slides/europeanisation-short.qmd on 11 November 2026, with the tasks of the browser lab on the slides themselves: R loads inside the deck through the
   Quarto Live extension, and the hands-on slides carry the cells of Task 1,
   Task 3 (C6HJR, KQXUE and 018OL, with their hints and solutions, one
   slide each) and Task 4, on three slides, and the placement cell. The facilitator and the class work inside one deck; the
@@ -58,7 +58,8 @@ THE DECK OF THE SHORT SESSION, AND HOW TO ADAPT IT FOR AN EVENT
   head of each segment; to shorten, reorder or swap a block, edit the include
   lines and the clock comments. The two half dividers carry the ids that the
   pages of the track link. The helpers of the lab,
-  try_spec() and the rest, are one file, ../cases/europeanisation/_lab-helpers.qmd,
+  try_spec() and the rest with the graph functions of Task 2, which this deck
+  does not call, are one file, ../cases/europeanisation/_lab-helpers.qmd,
   included after the setup cell that names the data folder.
 - The title and the subtitle in the YAML above name the course and the
   format; an event sets its own (for the ESRA–WAPOR short course of July
@@ -74,7 +75,7 @@ THE DECK OF THE SHORT SESSION, AND HOW TO ADAPT IT FOR AN EVENT
 #| include: false
 #| autorun: true
 # The setup of the deck, run once the engine is ready. .data_dir is the folder
-# in which the four files of the resources list arrive inside the browser: the
+# in which the files of the resources list arrive inside the browser: the
 # runtime drops the leading ../ of their paths, so from the working directory
 # of R they sit under cases/europeanisation/data/. europeanisation is the course panel, the
 # object that the cells of the hands-on slides work from.
