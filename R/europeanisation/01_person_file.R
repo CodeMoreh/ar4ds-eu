@@ -25,7 +25,7 @@
 #               "unemployment", which shares content with the predictor.
 # Reads:        <raw_dir>/ZA*.dta (GESIS scientific-use files, local only),
 #               cases/europeanisation/data/europeanisation_cy.csv
-# Writes:       _planning_data/person_level.rds (GESIS-derived microdata,
+# Writes:       ../_planning_data/person_level.rds (GESIS-derived microdata,
 #               never committed or redistributed)
 # Author:       Chris Moreh
 # Last updated: 2026-10-26

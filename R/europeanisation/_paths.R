@@ -18,7 +18,7 @@
 
 out_dir     <- Sys.getenv("COURSE_OUT_DIR", unset = "cases/europeanisation/data")
 work_dir    <- Sys.getenv("COURSE_WORK_DIR", unset = "_grid_work")
-private_dir <- Sys.getenv("COURSE_PRIVATE_DIR", unset = "_planning_data")
+private_dir <- Sys.getenv("COURSE_PRIVATE_DIR", unset = "../_planning_data")
 # the single raw seam: the sixteen GESIS scientific-use files
 raw_dir     <- Sys.getenv("EB_RAW_DIR", unset = file.path(private_dir, "raw"))
 

@@ -30,7 +30,7 @@
 #               cases/europeanisation/data/teney_panel_weights.csv,
 #               cases/europeanisation/data/macro/predictor_measures.csv,
 #               cases/europeanisation/data/europeanisation_cy.csv,
-#               _planning/audit-2026-10/out/menu_audited_maximal.csv or the
+#               ../_planning/audit-2026-10/out/menu_audited_maximal.csv or the
 #               file named by COURSE_AUDIT_FILE (the check of the partial
 #               correlations and of the CR2 p-values)
 # Writes:       cases/europeanisation/data/spec_curve.csv (864 rows),
@@ -80,7 +80,7 @@ stopifnot("the curves do not have 864 rows each" = nrow(curve_pos) == 864 && nro
 # review, a local planning file that COURSE_AUDIT_FILE can point to; the check
 # is skipped, with a message, where the file is absent
 audit_file <- Sys.getenv("COURSE_AUDIT_FILE",
-                         unset = "_planning/audit-2026-10/out/menu_audited_maximal.csv")
+                         unset = "../_planning/audit-2026-10/out/menu_audited_maximal.csv")
 if (file.exists(audit_file)) {
   audited <- datawizard::data_read(audit_file, verbose = FALSE)
   match_keys <- c("outcome", "predictor", "measure", "pred_form", "copredictor", "estimator",

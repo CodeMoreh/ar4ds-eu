@@ -30,7 +30,7 @@
 #               no-opinion respondents. The run takes about half an hour.
 #               Seed: 20260906, set once before the first engine; mice and
 #               Amelia draw from the session stream in that order.
-# Reads:        _planning_data/person_level.rds (GESIS-derived, local only);
+# Reads:        ../_planning_data/person_level.rds (GESIS-derived, local only);
 #               in cases/europeanisation/data/, europeanisation_cy.csv, teney_panel_weights.csv
 # Writes:       in cases/europeanisation/data/, spec_grid_mi.csv (pooled results,
 #               both engines, both error conventions) and mi_diagnostics.csv

@@ -14,7 +14,7 @@
 #               aggregate statistical output only, no microdata)
 #               companion/_model-outputs/cosmo_dist.csv (counts of the
 #               cosmopolitan score)
-#               _planning_data/brms_panel.rds, _planning_data/ordbetareg_sub.rds
+#               ../_planning_data/brms_panel.rds, ../_planning_data/ordbetareg_sub.rds
 #               (the fitted Bayesian objects, kept locally so that the
 #               summaries can be printed again without sampling; gitignored,
 #               since they embed data)
@@ -85,7 +85,7 @@ m_brm <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = europeanisa
              seed = 2026, refresh = 0, silent = 2)
 writeLines(capture.output(print(summary(m_brm), digits = 4)), file.path(outdir, "brms_panel.txt"))
 writeLines(capture.output(print(brms::prior_summary(m_brm))), file.path(outdir, "brms_priors.txt"))
-saveRDS(m_brm, "_planning_data/brms_panel.rds")
+saveRDS(m_brm, "../_planning_data/brms_panel.rds")
 cat("brms   b_unemp =", round(brms::fixef(m_brm)["unemp", "Estimate"], 5), "\n")
 
 # --- 9. Bayesian ordered beta regression (ordbetareg wraps brms) -------------
@@ -99,7 +99,7 @@ m_ord <- ordbetareg::ordbetareg(cosmo ~ unemp + (1 | cntry), data = person_sub,
                     chains = 4, cores = 4, iter = 2000, seed = 2026,
                     refresh = 0, silent = 2)
 writeLines(capture.output(print(summary(m_ord), digits = 4)), file.path(outdir, "ordbetareg_sub.txt"))
-saveRDS(m_ord, "_planning_data/ordbetareg_sub.rds")
+saveRDS(m_ord, "../_planning_data/ordbetareg_sub.rds")
 cat("ordbetareg b_unemp =",
     round(brms::fixef(m_ord)["unemp", "Estimate"], 5), "\n")
 

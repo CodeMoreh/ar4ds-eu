@@ -30,7 +30,7 @@
 #               population changes whose average the slope describes. Kish's
 #               effective sample size is kept because it, and not n, is the
 #               precision of a weighted mean.
-# Reads:        _planning_data/person_level.rds (GESIS-derived, local only);
+# Reads:        ../_planning_data/person_level.rds (GESIS-derived, local only);
 #               in cases/europeanisation/data/, macro/population.csv, europeanisation_cy.csv
 # Writes:       in cases/europeanisation/data/, teney_panel_weights.csv (270 rows,
 #               wide), teney_panel_measurement.csv (38,880 rows, long;
