@@ -8,18 +8,19 @@ The case study is a claim from a study of how Europeans frame the European Union
 
 | Format | Folder | Taught in |
 |---|---|---|
-| One-day workshop, in four parts | `tracks/europeanisation-one-day/` | the browser lab, the workspace as an option |
-| Extended course, three days built around the workshop | `tracks/europeanisation-extended/` | the workspace, with the browser lab on the day of the workshop |
+| Short session, in two halves | `tracks/europeanisation-short/` | the live deck, whose cells run R in the browser, with the browser lab as the fallback |
+| One-day workshop, in four parts | `tracks/europeanisation-one-day/` | the workspace, with the deck showing each step and serving, with the browser lab, as the fallback |
+| Extended course, three days built around the workshop | `tracks/europeanisation-extended/` | the workspace, with the deck and the browser lab as the fallback on the day of the workshop |
 | Self-study | `tracks/self-study/` | the workspace |
 
-Each format has a docked sidebar (`_sidebar.yml`), a page for each of its parts, and a slides page that embeds its deck (`slides/europeanisation-*.qmd`, assembled from `slides/_segments/europeanisation/`). The run sheet of the facilitator, with the timings, is `facilitator/europeanisation-guide.qmd`.
+Each format is reached from the opening page and has a docked sidebar (`_sidebar.yml`) that lists its pages in teaching order, its exercise page among them, and the tools that it uses, and a slides page that embeds its deck (`slides/europeanisation-*.qmd`, assembled from `slides/_segments/europeanisation/`, or the live deck of the short session in `live/`). The run sheet of the facilitator, with the timings, is `facilitator/europeanisation-guide.qmd`.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
 | `index.qmd` | The home page |
-| `cases/europeanisation/` | The background page, the exercise overview, the browser lab, the specification menu, the decision map, the multiverse page with the class chart, the cheatsheet, the reading on the specification curve, and `data/` with a codebook for every file |
+| `cases/europeanisation/` | The background page, the browser lab, the specification menu with the decision map, the specification curve with the reading on inference, the class results, the cheatsheet, the parts that the exercise pages of the formats include (`_exercise-*.qmd`), and `data/` with a codebook for every file |
 | `tracks/` | The formats |
 | `slides/` | The decks and their segments |
 | `companion/` | The modules of the companion, written on the data of the case study; `_model-outputs/` holds the scripts and aggregate outputs behind them |

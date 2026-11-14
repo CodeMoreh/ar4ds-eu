@@ -219,7 +219,7 @@ writeLines(readLines(file.path("_model-outputs", "wemix_2lvl.txt")))
 
 Compare this with the unweighted two-level fit of [section 4 of Multilevel models](multilevel.qmd#sec-multilevel), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule of the specification menu, one decision at a time, applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
 
-Two of the five analysts in the robustness study of SCORE [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness] worked in Stata, and one of them, KQXUE, works with the aggregated cells, so that in their code two lines settle the whole weighting question by default:
+Two of the five analysts in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness] worked in Stata, and one of them, KQXUE, works with the aggregated cells, so that in their code two lines settle the whole weighting question by default:
 
 ```stata
 collapse cosmo util, by(cntry year)    // unweighted country-year means

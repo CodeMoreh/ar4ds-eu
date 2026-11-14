@@ -5,6 +5,7 @@ engine: knitr
 format:
   live-html:
     toc: true
+    include-after-body: ../../_includes/track-choice.html
     webr:
       packages:
         - datawizard
@@ -64,7 +65,7 @@ europeanisation <- utils::read.csv("data/europeanisation_cy.csv") # r-style: kee
 
 {{< include _lab-helpers.qmd >}}
 
-Five analysts reanalysed the claim of the Europeanisation and the economy case study [@Teney2016DoesEUEconomic] for the robustness study of SCORE [Multi100; @AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. Read the full task description, the claim, and the five-analyst table of findings on the [Exercise overview](exercise.qmd) page; the [background page](index.qmd) sets out the original study, the robustness study and the five reanalyses in full.
+Five analysts reanalysed the claim of the Europeanisation and the economy case study [@Teney2016DoesEUEconomic] for the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness]; you are analyst no. 6. The exercise page of each format, for the [short session](../../tracks/europeanisation-short/exercise.qmd), the [one-day workshop](../../tracks/europeanisation-one-day/exercise.qmd), the [Extended course](../../tracks/europeanisation-extended/exercise.qmd) and the [self-study route](../../tracks/self-study/exercise.qmd), sets out the claim, the five-analyst table of findings and the tasks that the format takes; the [background page](index.qmd) sets out the original study, the robustness study and the five reanalyses in full.
 
 The five tasks take you from a setup check to two dots on the live class chart, one submitted while you explore the menu in Task 4 and one that you declare in your preregistration in Task 5 before running it.
 
@@ -652,7 +653,7 @@ The sixth replaces the World Bank series of unemployment with a Eurostat series,
 try_spec(measure = "es_2064_pop")  # a Eurostat unemployment series instead of the World Bank one
 ```
 
-The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. Every other option is still an argument of `try_spec()`, so trying one is part of the exercise. The helper refuses it, gives the reason why it is not on the curve and names the page of the course that teaches it, and the [decision map](map.qmd) sets out every decision and its options on one page. Run the cell, then edit it to try others, such as `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`.
+The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. Every other option is still an argument of `try_spec()`, so trying one is part of the exercise. The helper refuses it, gives the reason why it is not on the curve and names the page of the course that teaches it, and the [decision map](menu.qmd#map) sets out every decision and its options on one page. Run the cell, then edit it to try others, such as `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`.
 
 ```{webr}
 #| autorun: false
@@ -693,7 +694,7 @@ Everything you try is logged. Print the log to see the small multiverse that you
 my_experiments()
 ```
 
-When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [Multiverse]({{< var live-results-url >}}) chart as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same CR2 test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
+When you have tried three or four, decide which one you would defend if you had to, run it once more so it is the most recent, and submit it. It appears on the live [class chart]({{< var live-results-url >}}) as an **exploratory** result, placed by its claim-aligned partial *r* and classed by the same CR2 test that the printout reports, and marked with the tag that the cell prints, such as `amber-otter-42`. The tag is how you find your own marks on the chart, and your declared result in Task 5 carries the same one. To choose your own, write `submit_exploration(nickname = "...")` with a nickname rather than your name, because the chart is public:
 
 ```{webr}
 #| autorun: false
@@ -795,7 +796,7 @@ run_spec(my_model)
 
 The output has the same lines as in Task 4, and the placement is the share of the 864 specifications on the curve that lie further in the direction of the claim than yours, `r round(100 * mean(curve$r_ca < ref$r_ca))`% for the reproduced specification, the model of C6HJR in Task 3.
 
-Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [Multiverse]({{< var live-results-url >}}) chart within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
+Now send it to the class chart. The submission is built from your declaration, so there is nothing to fill in or transcribe. The cell prints your submission line and a pre-filled form link; click it and press **Send**. Your dot joins the live [class chart]({{< var live-results-url >}}) within seconds, this time labelled **declared** and carrying the same tag as your exploratory result. If you have reloaded this page since Task 4, the session has forgotten that tag, so pass it back with `report_result(nickname = "your-tag")`.
 
 ```{webr}
 #| autorun: false

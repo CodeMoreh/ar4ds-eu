@@ -3,8 +3,8 @@
 // =============================================================================
 //
 // WHAT IT DOES
-//   The live "Class results" chart on the multiverse page of every case study
-//   (cases/<slug>/multiverse.qmd) runs in the browser (webR). One deployment
+//   The live "Class results" chart of every case study, on its page
+//   (cases/<slug>/class-results.qmd), runs in the browser (webR). One deployment
 //   serves the shared Form of all case studies; a case study with a Form of its own gets a
 //   second deployment of this same file with its own SHEET_ID
 //   (facilitator/live-results-setup.md, section 11).
@@ -30,7 +30,7 @@
 //      and paste it into SHEET_ID below.
 //   3. Deploy this file as a Worker (dashboard or `wrangler deploy`), then put
 //      the Worker's URL (e.g. https://class-results.you.workers.dev) into:
-//        - cases/<slug>/multiverse.qmd -> the `worker_url` line in the live cell,
+//        - cases/<slug>/class-results.qmd -> the `worker_url` line in the live cell,
 //          for every case study that reads this Worker
 //        - facilitator/live-results-setup.md notes (for your own record)
 //

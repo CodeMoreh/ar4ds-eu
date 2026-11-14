@@ -19,7 +19,7 @@ execute:
 
 ## The formats {#the-three-formats}
 
-The facilitator chooses the format; participants do not choose, and the home page describes the formats without offering a choice. Each track is an ordered route through pages that already exist on the site, with a docked sidebar of its own (`_sidebar.yml`) and a slides page embedding the deck it runs on. Name the track of a delivery in `delivery.track` of `_variables.yml`, and the callout of the home page links it. The decisions behind the formats, and the order in which their material was built, are in `formats-2026-10-27.md` in the planning folder beside the AR4DS sites (`../_planning/`).
+The facilitator chooses the format; participants do not choose, and the home page describes the formats without offering a choice. Each track is an ordered route through the pages of the site, reached from the Formats section of the home page, with a docked sidebar of its own (`_sidebar.yml`) that lists its exercise page and its tools, and a slides page embedding the deck it runs on. Name the track of a delivery in `delivery.track` of `_variables.yml`, and the callout of the home page links it. The decisions behind the formats, and the order in which their material was built, are in `formats-2026-10-27.md` in the planning folder beside the AR4DS sites (`../_planning/`).
 
 | Format | Track | What it holds | Deck |
 |---|---|---|---|
@@ -70,7 +70,7 @@ The page "Before the day" or "Before the course" of each format lists these step
 | R, an IDE and the workspace, until `R/check_setup.R` reports no failure | required | required |
 | Getting started with R (`tools/r.qmd` on the AR4DS site) | required | required |
 | The Eurobarometer files, downloaded under a GESIS account of the participant | – | required |
-| The exercise overview, sections 1 to 3 of the module on panel data, and Reading a specification curve (`cases/europeanisation/reading-inference.qmd`) | recommended | – |
+| The exercise page of the format, sections 1 to 3 of the module on panel data, and the reading on inference of the Specification curve page (`cases/europeanisation/curve.qmd#inference`) | recommended | – |
 | The modules on the IDE, on Quarto and on Git and GitHub (AR4DS site) | recommended | the reading of days 1 and 3 |
 
 ---
@@ -80,13 +80,13 @@ The page "Before the day" or "Before the course" of each format lists these step
 - [ ] Send joining instructions: the before-the-day page of the track, the browser-lab link with the instruction to open it once, the two-window or two-device tip, and the [background page](../cases/europeanisation/index.qmd) as the pre-reading. For the workshop and the Extended course add the setup page, with the request to run `R/check_setup.R` until it reports no failure, and the module Getting started with R; for the Extended course add the download of the Eurobarometer files.
 - [ ] Confirm that the four Task 2 instructions on the Part 3 slide "Task 2 of the robustness study" match your own Task 2 report (copy in `../_planning/osf_source/moreh_rep_vAPR2025/`), which is the source that the slide quotes.
 - [ ] Check that the three OSF deposits of Hands-on 3b load logged out (osf.io/vycgd, osf.io/nz7ka, osf.io/6zqct), and that osf.io/h7432 shows the five components of the robustness study.
-- [ ] Click once through the tab switching of Part 4 (deck, the specification menu, the decision map, the Multiverse page and back), so that the order is familiar on the day.
+- [ ] Click once through the tab switching of Part 4 (deck, the specification menu with its decision map, the Class results page, the reading on inference of the Specification curve page, and back), so that the order is familiar on the day.
 
 ## The night before
 
 - [ ] Render the site and push; if the site is published, confirm that the Pages build completes on GitHub Actions.
 - [ ] **Browser lab cold load**: open the live page of `cases/europeanisation/lab.qmd` in a private window on the connection typical of the venue; time the load of the webR engine; run the cells of Task 1 and the cells of all three analysts in Task 3. The cell of 018OL that installs lme4 and lmerTest downloads about 32 MB, so time that too.
-- [ ] **The live results loop** (full setup and checks in `facilitator/live-results-setup.md`): submit one anonymous test row through the Form in a private window, confirm that it reaches the Sheet and that the Worker returns the sheet as CSV, press *Run Code* on the live [Multiverse]({{< var live-results-url >}}) page and find the test mark. Then delete the test row.
+- [ ] **The live results loop** (full setup and checks in `facilitator/live-results-setup.md`): submit one anonymous test row through the Form in a private window, confirm that it reaches the Sheet and that the Worker returns the sheet as CSV, press *Run Code* on the live [Class results]({{< var live-results-url >}}) page and find the test mark. Then delete the test row.
 - [ ] **The preregistration loop**: complete the preregistration cell of the browser lab with a dummy specification, run `prereg()`, `build_model()` and `run_spec()`, and check the output. If the mirror form exists, submit one dummy row and delete it.
 - [ ] Prepare the catch-up card, the help document and the day plan (texts below) as snippets ready to paste.
 - [ ] Charge everything; sign a second device in to the meeting as a participant, to check what the class sees.
@@ -96,7 +96,7 @@ The page "Before the day" or "Before the course" of each format lists these step
 - [ ] Open the meeting early; enable chat for everyone; check that breakout rooms are available (they are optional – nothing depends on them).
 - [ ] Seed the chat with the site URL, the browser-lab URL, the cheatsheet URL and the day plan with its times (the standing order if the host drops: "follow the day plan; finish the current task or take the break early; I will rejoin").
 - [ ] Post the interaction key: "green circle = working; STUCK = I need help; answers to quizzes: type but hold until I say go".
-- [ ] Share the deck; keep the browser lab ready in a second tab (also the specification menu, the decision map and the Multiverse page).
+- [ ] Share the deck; keep the browser lab ready in a second tab (also the specification menu with its decision map, and the Class results page).
 - [ ] If recording: announce it now and state what is and is not recorded.
 
 ---
@@ -133,9 +133,9 @@ The one-day deck lifts no optional run into its main flow (`core-runs: []`), and
 
 **The short session.** The short session is three hours in two halves, with no Task 2 at the keyboard (the estimand statement is a held answer), no Task 5, and one submission to the class chart, the explored analysis of Task 4. Its deck, `live/europeanisation-short.qmd`, carries the cells of Tasks 1, 3 and 4 on its slides through the Quarto Live extension, so that the class and the facilitator work inside one deck, with the browser lab as the fallback. It is not assembled from the segments of the one-day deck: it is a custom set of slides in `live/_segments/`, one segment for each block of the run, with the clock of the block in a comment at the head of the segment, so that an event can edit the deck block by block and set its own title and subtitle in the YAML. It lives in a folder of its own, with `live/_metadata.yml` keyed `live-revealjs`, because the `format: revealjs` key of the metadata of `slides/` would render it twice (root notes, Gotchas). The reproduction offers the three analysts of the lab: the deck loads the two packages of 018OL when it is opened, and on the lab route its cell downloads them, about 32 MB, which the track page says. The helpers of the lab (`try_spec()` and the rest) are one file, `cases/europeanisation/_lab-helpers.qmd`, included by the lab and by the deck. The first delivery proposed is the ESRA–WAPOR conference of July 2027 in Paris, for an audience of survey researchers, which is why the menu is taught with its survey decisions first and two slides show the easystats code behind the course. The [run sheet](#run-sheet-short) gives the clock.
 
-**Pages that the formats share.** Every track starts from the [background page](../cases/europeanisation/index.qmd), which tells the original study, SCORE and its robustness study, the five reanalysts with an assessment of their choices, and the conversion lesson on how the robustness study turned their statistics into one effect size. The specification menu is taught as the full set of fourteen decisions, on the [decision map](../cases/europeanisation/map.qmd) and the [specification menu](../cases/europeanisation/menu.qmd), with the curve of 864 specifications as the subset that a review judged justifiable for this claim. The helpers of the browser lab and of the workspace refuse an option that is off the curve, with the one-sentence reason recorded in `data/menu_options.csv` and the page that teaches the option. Every result is classed by standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom; the specification of C6HJR (t = −3.804, r = −0.242) has a CR2 p of 0.0504 on 9.8 degrees of freedom and is not significant under that rule, which is worth saying before anyone asks. The [run sheet of the one-day workshop](#run-sheet-one-day) has its timings.
+**Pages that the formats share.** Every track starts from the [background page](../cases/europeanisation/index.qmd), which tells the original study, SCORE and its robustness study, the five reanalysts with an assessment of their choices, and the conversion lesson on how the robustness study turned their statistics into one effect size. The specification menu is taught as the full set of fourteen decisions, on the page [Specification menu](../cases/europeanisation/menu.qmd), whose first section is the [decision map](../cases/europeanisation/menu.qmd#map), with the curve of 864 specifications as the subset that a review judged justifiable for this claim. The helpers of the browser lab and of the workspace refuse an option that is off the curve, with the one-sentence reason recorded in `data/menu_options.csv` and the page that teaches the option. Every result is classed by standard errors clustered by country with the CR2 correction and Satterthwaite degrees of freedom; the specification of C6HJR (t = −3.804, r = −0.242) has a CR2 p of 0.0504 on 9.8 degrees of freedom and is not significant under that rule, which is worth saying before anyone asks. The [run sheet of the one-day workshop](#run-sheet-one-day) has its timings.
 
-**The class chart.** The chart on the Multiverse page reads the rows of the shared results Form whose labels have the frozen format of the case study, `explore: [tag] <spec>` or `declared: [tag] <spec>`, with no word for the case study after the tag. The labels of the other case studies of AR4DS carry that word, and the chart draws their rows as unclassed diamonds, so clear the Sheet between deliveries of different case studies. Each workspace keeps its own tag in `.class-tag`, so ask a cohort to choose one nickname and to pass it as `nickname = "..."` throughout. A chart keeps the rows of earlier deliveries until the sheet is cleared.
+**The class chart.** The chart on the Class results page reads the rows of the shared results Form whose labels have the frozen format of the case study, `explore: [tag] <spec>` or `declared: [tag] <spec>`, with no word for the case study after the tag. The labels of the other case studies of AR4DS carry that word, and the chart draws their rows as unclassed diamonds, so clear the Sheet between deliveries of different case studies. Each workspace keeps its own tag in `.class-tag`, so ask a cohort to choose one nickname and to pass it as `nickname = "..."` throughout. A chart keeps the rows of earlier deliveries until the sheet is cleared.
 
 ---
 
@@ -171,7 +171,7 @@ The short session runs on `live/europeanisation-short.qmd`, a deck written for i
 |---|---|---|---|---|
 | 0:00 | The specification menu (10′) | Fourteen decisions in three groups; the survey decisions first; estimator and inference; the ground rules. | Listen, with the menu page open. | Everyone starts the menu from the model of C6HJR, whichever analyst they reproduced: say so. |
 | 0:10 | The code behind the menu (5′) | The datawizard verbs and `demean()`; `model_parameters()` and `t_to_r()`. | Listen. | Two slides; this is not a lesson in R. |
-| 0:15 | Hands-on 2: the menu (20′) | "Three or four tries, one decision at a time; `my_experiments()`; submit the one you would defend." Keep the Multiverse page on the projector and press Run Code as the dots land. | `try_spec()`; `my_experiments()`; `submit_exploration()`. | Say twice that this is exploration. |
+| 0:15 | Hands-on 2: the menu (20′) | "Three or four tries, one decision at a time; `my_experiments()`; submit the one you would defend." Keep the Class results page on the projector and press Run Code as the dots land. | `try_spec()`; `my_experiments()`; `submit_exploration()`. | Say twice that this is exploration. |
 | 0:35 | The multiverse and the class chart (10′) | Where the idea comes from; enumeration and curation; the dots of the class against the curve of 864. | Watch. | – |
 | 0:45 | The bet, the decomposition, the five on the curve, the placement (15′) | The bet before the reveal; the fork chart; the reference marks; the held placement: "rerun yours, read the placement, hold it, go". | Bet; read the placement; send on "go". | The bet comes before the reveal. Without a submission, the reproduced specification: 67%. |
 | 1:00 | Reading a curve, the critics, preregistration (15′) | Description and inference; not 864 tests, the permutation design; the pruning critique and one correct analysis; what preregistration settles. | Think; argue. | The target answer: "we cannot say until we know what chance produces on these dependent data". |
@@ -223,7 +223,7 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 |---|---|---|---|---|
 | 0:00 | The specification menu (10′) | The fourteen decisions; the ground rules, starting from the reproduced specification, the model of C6HJR; claim alignment; what Task 2 left open, on the last fragment. | Listen. | Participants who reproduced KQXUE or 018OL also start the menu from the model of C6HJR: say so. |
 | 0:10 | The methodological tutorial (10′, optional) | The core: outcome, claim alignment, estimators and fixed effects; the rest as time allows. | Listen; ask. | The compressible segment. |
-| 0:20 | Hands-on 4: Task 4 (18′) | Keep the Multiverse page shared; press *Run Code* as the exploratory dots land. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits an exploratory dot. Say twice that this is exploration. |
+| 0:20 | Hands-on 4: Task 4 (18′) | Keep the Class results page shared; press *Run Code* as the exploratory dots land. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits an exploratory dot. Say twice that this is exploration. |
 | 0:38 | Your own small multiverse and the multiverse tutorial (8′, part optional) | Where the idea comes from; the garden; filters; enumeration and curation; purposes; decomposition; reading a curve. | Listen. | – |
 | 0:46 | Class chart, the bet, the decomposition, the reference results (14′) | The bet waterfall FIRST; then the fork importance; the reference results under three conversions; the sign changes. | Bet; watch the reveals. | The bet must come before the reveal. |
 | 1:00 | Your own percentile (5′) | Waterfall of placements. | Read the placement; hold; send. | Without a submission, use the reproduced specification: 67%. |
@@ -283,7 +283,7 @@ In the session on the report, each participant opens the workspace, turns its fo
 
 ## The self-study route {#run-self-study}
 
-The self-study track runs without a facilitator, and each stage page gives the total of its stage and nothing finer, because the time that a stage takes depends on the reader. The stages use the full deck of the case study, `slides/europeanisation-full.qmd`, and a semester course can follow the same route in class. What the facilitator can still do for a self-study cohort is keep the live results pipeline running between deliveries, so that a result submitted alone appears on the Multiverse page of the case study (`facilitator/live-results-setup.md`).
+The self-study track runs without a facilitator, and each stage page gives the total of its stage and nothing finer, because the time that a stage takes depends on the reader. The stages use the full deck of the case study, `slides/europeanisation-full.qmd`, and a semester course can follow the same route in class. What the facilitator can still do for a self-study cohort is keep the live results pipeline running between deliveries, so that a result submitted alone appears on the Class results page of the case study (`facilitator/live-results-setup.md`).
 
 ---
 
@@ -298,7 +298,7 @@ The materials are identical online and in person. What changes is how people ans
 | Roll-call | "raise hand" | visual sweep |
 | Pair moments | breakout rooms if available; a chat variant otherwise | table pairs |
 | Rescues | buddy-chunk on the shared screen | the facilitator circulates |
-| The live chart | everyone opens the Multiverse page themselves | projector and own laptops |
+| The live chart | everyone opens the Class results page themselves | projector and own laptops |
 | Form links | pasted in the chat | QR codes on the slides |
 | Breaks | countdown slide and "back at :xx" in the chat | countdown slide and spoken |
 
@@ -326,10 +326,10 @@ The materials are identical online and in person. What changes is how people ans
 
 | Situation | What to do |
 |---|---|
-| **A participant's webR fails mid-task** | The cheatsheet ladder: hard reload and rerun the cells above, then a second browser, then buddy-chunk on my screen. Last rung: the specification is one row of `cases/europeanisation/data/spec_curve.csv`, which the download button on the Multiverse page serves; submit it by hand. |
+| **A participant's webR fails mid-task** | The cheatsheet ladder: hard reload and rerun the cells above, then a second browser, then buddy-chunk on my screen. Last rung: the specification is one row of `cases/europeanisation/data/spec_curve.csv`, which the download button of the chart on the Specification curve page serves; submit it by hand. |
 | **The cell of 018OL stalls on its download** | Let it finish on a good connection, or switch the participant to C6HJR or KQXUE, which need nothing beyond the page. |
 | **A participant's installation breaks** | Switch them to the browser lab, which holds every task; the workspace survives for later. |
-| **The live chart fails** | Rung 1: `cases/europeanisation/multiverse.qmd` falls back to the committed `cases/europeanisation/data/class_results.csv`. Rung 2: pull the Sheet CSV, commit, re-render locally and share my screen. Rung 3: the static curve of 864 and the reference results are enough for the debrief. |
+| **The live chart fails** | Rung 1: `cases/europeanisation/class-results.qmd` falls back to the committed `cases/europeanisation/data/class_results.csv`. Rung 2: pull the Sheet CSV, commit, re-render locally and share my screen. Rung 3: the static curve of 864 and the reference results are enough for the debrief. |
 | **The OSF is slow or unreachable** | Show the dossier and the deposits on my screen. The data never depend on the OSF, because they ship with the browser lab and the workspace. |
 | **"How long should this take?"** | Every fit on the 270-row panel is effectively instantaneous: `feols` with two-way or country fixed effects under 0.01 s; `try_spec()` in the workspace, CR2 test included, about 1 s for the first call, which loads the packages, and under 0.1 s after it; `try_spec()` in the browser lab instant, since it reads the curve that ships with the page. A participant who is waiting is waiting for a package download: the browser lab fetches its packages, about 24 MB, once when the page opens, a long moment on poor wifi, and nothing after that, because the Task 2 graph reads its adjustment sets from a table that ships with the page; the first run in the workspace installs the whole package set once. Ask what it is stuck on before assuming that the model is the problem. |
 | **My connection drops** | The standing order in the chat. |

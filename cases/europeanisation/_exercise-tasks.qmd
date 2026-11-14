@@ -1,0 +1,41 @@
+<!-- The five tasks of the exercise as the one-day workshop, the Extended
+course and the self-study route take them, in the workspace, included by the
+exercise pages of those three formats (tracks/<format>/exercise.qmd); the
+short session states its own tasks on its page. The links of this file are
+written from the including page, two folders below the root of the site. -->
+
+### Task 1 – Get yourself running {#task-1-get-yourself-running}
+
+The only aim is to reach the point where a line of R runs and the data are in front of you. *Workspace:* open the workspace folder in your IDE, run `source("R/check_setup.R")`, and render the report skeleton once. If your installation will not cooperate, do not fight it, because the browser lab holds every task. *Browser lab:* wait for the engine to finish downloading, then run the three cells of the setup check and confirm that the panel has 270 rows. The vocabulary warm-up on the same page – three Rs and one impostor – is there to fill the waiting.
+
+### Task 2 – Meet the panel, name the estimand, draw the graph {#task-2-meet-the-panel-name-the-estimand-draw-the-graph}
+
+The task has three parts, taken in order. First, look at the data. The **country-year panel** (`europeanisation_cy.csv`) is the dataset behind the exercise, 270 country-years with unemployment and GDP growth alongside several EU-framing measures. It is published in the main folder of the OSF fork that its analyst maintains (`osf.io/6zqct`), while the official archival record of the robustness study is at `osf.io/8rtwe`. Run the small-multiples figure and find the countries that move sharply around 2009, because the fixed-effects models use that variation within countries.
+
+Second, write the **estimand statement**: the unit-specific quantity, the target population, the aggregation. The template gives you the structure, and filling it in makes you say precisely what this claim is about.
+
+Third, complete the **causal graph**. Take the `#` off the arrows you are willing to defend, run the graph and `adjustmentSets()` again, and check which adjustment set the graph now implies; then write two sentences for your notes on what two-way fixed effects adjust for and what they cannot fix. In the workspace `R/dag_starter.R` builds any graph with `dagify()` and prints its adjustment set, in the lab the graph cell does the same for each combination of the arrows, and the [causal-graphs companion module](../../companion/dags.qmd) works the material through slowly.
+
+### Task 3 – Reproduce a recorded result {#task-3-reproduce-a-recorded-result}
+
+Choose one of the three analysts whose results rest on aggregate data, and refit the analysis until the value on record comes back to the third decimal. This is the reproduction step, in which the same data and the same model give the same number, and the Task 3 table of the [browser lab](../../cases/europeanisation/lab.qmd#task-3-reproduction) gives the data, the model and the value on record for each of the three.
+
+The panel of C6HJR is the course panel. The files of KQXUE and 018OL were rebuilt by the course from the sixteen GESIS waves, following the code that each analyst deposited on the OSF (osf.io/vycgd and osf.io/nz7ka) step by step, slips included, and their [codebook](../../cases/europeanisation/data/analyst_panels_codebook.md) says how. The Stata code of KQXUE appended the wave EB 62.0 twice, and the files of 018OL put the wave EB 79.3, fielded in 2013, in 2012. *Workspace:* the three reproductions are written out in the working script and in Task 3 of the report. *Browser lab:* each analyst has an exercise cell of its own, with gaps to fill, a hint and a full solution, and the first run of the cell of 018OL downloads the packages for mixed models, about 32 MB. In class, type the analyst and the value into the chat, for example `KQXUE t = -7.169`, hold it, and send it when the facilitator says go.
+
+The two analysts who worked on respondents, KEVF1 and PRL47, need the respondent files, which only a GESIS account can give; their analyses lie outside the one-day workshop, and the third day of the Extended course works on the respondents, from the downloads of the participants.
+
+### Task 4 – Work the menu {#task-4-work-the-menu}
+
+This task is **exploratory**. Try several specifications from the [specification menu](../../cases/europeanisation/menu.qmd), see what each one does, and get a feel for which choices move the estimate and which barely touch it. `try_spec()` takes one argument per decision, and every argument defaults to the reproduced specification, the model of C6HJR on which the menu and the curve are built, so changing one thing means changing one argument. An option that is off the curve, such as pooled OLS (`estimator = "pooled_cl"`), stops with the reason why and the page of the course that teaches it. `my_experiments()` prints everything you have tried, side by side – the small multiverse that you have just built. Then pick the one you would defend if you had to, and `submit_exploration()` puts it on the live [class chart](../../cases/europeanisation/class-results.qmd) as an **exploratory** result.
+
+Nothing in this task is preregistered. You are allowed to look, change your mind and try again, and the chart labels the result as exploratory for that reason.
+
+### Task 5 – Declare one specification, run it, report it {#task-5-declare-one-specification-run-it-report-it}
+
+The class first reads its exploratory results on the class chart, laid over the curve of 864 specifications: which decisions move the result most, where the five reanalyses and the original study sit on the main chart, and **your own placement**, the share of the 864 specifications that lie further in the direction of the claim than the estimate you submitted. The [reading on inference](../../cases/europeanisation/curve.qmd#inference) of the Specification curve page is the companion for this part.
+
+Then pick ONE specification from the curve, one option for each of the fourteen decisions on the menu, and complete the preregistration block **before you run that specification**. It is a shortened but real preregistration template: what you are testing, what you already know about the data, your one specification, why those controls (grounded in your Task 2 graph), and the rule by which you will judge the result. `claim_align <- TRUE` is the convention of the course and is applied for you. The claim expects framing to rise with growth, so the sign of a growth slope is flipped, and 'supports the claim' then reads as a negative sign for every specification.
+
+Run `prereg()` once the block is complete and before you write the model code below it, then translate the declaration into model syntax yourself, since `build_model()` accepts only code that matches what you declared, run it, and let `report_result()` print the one-click, pre-filled form link that puts your submission on the chart as a **declared** result beside the exploratory ones.
+
+Task 4 and Task 5 run identical code. What separates them is that an exploratory specification can have been chosen because of its result and a declared one cannot, and you submit twice so that the two sets of results can be compared side by side.

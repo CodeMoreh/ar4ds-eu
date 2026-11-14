@@ -1,0 +1,267 @@
+---
+title: "Class results"
+engine: knitr
+format:
+  live-html:
+    toc: true
+    include-after-body: ../../_includes/track-choice.html
+    webr:
+      packages:
+        - tinyplot
+resources:
+  - data/spec_curve.csv
+  - data/class_results.csv
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+{{< include ../../_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{r}
+#| label: setup
+#| include: false
+# The live class chart below runs in the browser through webR; the size of the
+# curve that the text quotes is read from the curve file here.
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+n_curve <- nrow(curve)
+```
+
+The live chart below shows the results that the class submits, over the curve of `r format(n_curve, big.mark = ",")` specifications. Pressing *Run Code* runs the `refresh_multiverse()` function, which downloads the latest submissions and draws them over the curve. The marks of the curve stay faint, so that the class results lead, and the reference marks are left to the chart on the [Specification curve](curve.qmd#reference-marks) page.
+
+Each submission is placed by the partial correlation that it carries, computed from its submitted t and degrees of freedom, and classed by looking its specification up on the curve: a circle if the matching specification has CR2 p < 0.05, and a cross if it has not. The colour gives the phase. A green mark is an *explored* specification, one that you tried with `try_spec()` in Task 4 and submitted after seeing its result, and a black mark is a *declared* specification, the one that you fixed in your preregistration in Task 5 before running it. A diamond marks a submission whose specification is not among the `r format(n_curve, big.mark = ",")`, which happens with labels from earlier deliveries of the course, whose menu held other options; such a submission has no class, and a line under the chart counts them. Each submission also carries the tag that `submit_exploration()` and `report_result()` print, such as `amber-otter-42`, and your two submissions share it. Each mark carries its submission number. Typing your tag into the `my_tag` line of the cell below and pressing *Run Code* draws your marks in orange, joined in the order in which you submitted them, and lists their numbers above the chart. Under the chart, one line for each submission gives its number, phase and tag, its claim-aligned r and t, its class on the curve and the specification that it names.
+
+```{webr}
+#| label: live-multiverse-setup
+#| include: false
+#| autorun: true
+# Class submissions are served as CSV by a Cloudflare Worker in front of the
+# Google Sheet; when the Worker is unreachable the chart falls back to the
+# committed data/class_results.csv, or to the backdrop alone. Base R
+# throughout, apart from tinyplot (McDermott, Arel-Bundock and Zeileis,
+# tinyplot, CRAN, doi:10.32614/CRAN.package.tinyplot), so that participants
+# download almost nothing else.
+worker_url <- "https://class-results.chris-moreh.workers.dev/"
+
+plain <- "#1f5fa8"
+ink <- "#1d2733"
+green <- "#009E73"
+orange <- "#E69F00"
+grey_mid <- "#8a929a"
+
+# The backdrop is the curve of 864, ranked by the claim-aligned partial
+# correlation and classed by CR2 errors clustered by country, as on the chart
+# of the Specification curve page (curve.qmd).
+curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE) # r-style: keep – base R in webR, readr would be a download
+curve <- curve[order(curve$r_ca), ]   # r-style: keep – base R in webR, dplyr would be a download
+curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p_cr2 < 0.05) # r-style: keep – as above
+axis_codes <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
+                "construction", "noop", "item_set", "cell_weight", "measure", "pred_form", "family")
+curve_key <- do.call(paste, c(unname(as.list(curve[axis_codes])), sep = "|"))
+
+# The spec label, in the field order of the submission helpers:
+#   outcome[_ca] ~ predictor(form) [+ copred] | estimator | sample | w:weights
+#     [construction, noop, items:item_set, cells:cell_weight, measure | family, se:rule]
+# Labels of July 2026 end in " | family" with no bracket, and anything older
+# ends after the weights; both carry the standard measurement settings of
+# their time. The inference rule is not part of the lookup, because every
+# point of the curve is classed by CR2 whatever rule a label names.
+# A label that cannot be read returns NA on every axis, and so matches nothing.
+label_pattern <- paste0("^([a-z]+)(_ca)? ~ ([a-z]+)\\(([a-z]+)\\)( \\+ [a-z]+)? \\| ([a-z_]+) \\| ",
+                        "([A-Za-z0-9_]+) \\| w:([a-z_]+)(.*)$")
+bracket_pattern <- paste0("^\\[([a-z]+), ([a-z_]+), items:([a-z]+), cells:([a-z]+), ([a-z0-9_]+) ",
+                          "\\| ([a-z]+), se:([a-z0-9_]+)\\]$")
+parse_one_label <- function(x) {
+  none <- setNames(rep(NA_character_, length(axis_codes)), axis_codes)
+  m <- regmatches(x, regexec(label_pattern, x))[[1]]
+  if (length(m) == 0) return(none)
+  rest <- trimws(m[10])
+  standard <- c(construction = "share", noop = "zero", item_set = "all", cell_weight = "unweighted",
+                measure = if (m[4] == "growth") "wb_growth" else "wb_nat")
+  tail <- if (!nzchar(rest)) {
+    c(standard, family = "gaussian")
+  } else if (grepl("^\\| [a-z]+$", rest)) {
+    c(standard, family = sub("^\\| ", "", rest))
+  } else {
+    b <- regmatches(rest, regexec(bracket_pattern, rest))[[1]]
+    if (length(b) == 0) return(none)
+    c(construction = b[2], noop = b[3], item_set = b[4], cell_weight = b[5], measure = b[6],
+      family = b[7])
+  }
+  c(outcome = m[2], predictor = m[4], copredictor = if (nzchar(m[6])) "other" else "none",
+    estimator = m[7], sample = m[8], weights = m[9], pred_form = m[5], tail)[axis_codes]
+}
+parse_labels <- function(spec_txt) {
+  parsed <- vapply(spec_txt, parse_one_label, character(length(axis_codes)), USE.NAMES = FALSE)   # r-style: keep – base R in webR
+  setNames(as.data.frame(t(parsed), stringsAsFactors = FALSE), axis_codes)
+}
+
+read_clean <- function(path) {
+  d <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  names(d) <- tolower(trimws(names(d)))   # tolerate "R", " r ", etc.
+  d$r <- suppressWarnings(as.numeric(d$r))   # r-style: keep – frozen reader of the class CSV
+  d[!is.na(d$r), , drop = FALSE]
+}
+
+# my_tag is the tag that submit_exploration() and report_result() print. It is
+# reduced exactly as .clean_tag() in the submission helpers reduces a nickname
+# (transliterated to ASCII, lower case, single hyphens, at most 24 characters),
+# so that a nickname typed as the participant first wrote it still matches.
+clean_my_tag <- function(x) {
+  if (length(x) == 0 || is.na(x[1])) return("")
+  x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x[1]))))
+  ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
+  if (!is.na(ascii)) x <- ascii
+  x <- gsub("^-+|-+$", "", gsub("[^a-z0-9]+", "-", tolower(x)))
+  gsub("-+$", "", substr(x, 1, 24))
+}
+
+html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
+fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.4f", p))
+
+# The class submits twice: an exploratory result while working the menu, and
+# a declared one after preregistering. The free-text spec field carries the
+# phase and the tag of the participant, "explore: [amber-otter-42] …", so
+# neither the form nor the sheet needs a column of its own for either. Rows
+# without a tag predate 2026-09-24, and rows without a phase predate
+# 2026-07-31 and were all declared; both still parse.
+prepare_class <- function(cls, my_tag = "") {
+  n <- nrow(cls)
+  spec_raw <- if ("spec" %in% names(cls)) as.character(cls$spec) else rep("", n)
+  spec_raw[is.na(spec_raw)] <- ""
+  ph <- ifelse(grepl("^explore:", spec_raw), "explored", "declared")
+  rest <- sub("^(explore|declared): ", "", spec_raw)
+  tg <- ifelse(grepl("^\\[[a-z0-9-]+\\] ", rest), sub("^\\[([a-z0-9-]+)\\] .*$", "\\1", rest),
+               NA_character_)
+  spec_txt <- sub("^\\[[a-z0-9-]+\\] ", "", rest)
+  axes <- parse_labels(spec_txt)
+  hit <- match(do.call(paste, c(unname(as.list(axes)), sep = "|")), curve_key)
+  p_hit <- curve$p_cr2[hit]
+  klass <- ifelse(is.na(hit), "off", ifelse(p_hit < 0.05, "sig", "ns"))
+  has_t <- all(c("t", "df") %in% names(cls))
+  t_txt <- if (has_t) ifelse(is.na(cls$t) | is.na(cls$df), "",
+                             paste0("<br/>t = ", cls$t, " on ", cls$df, " df")) else ""
+  tip <- paste0(
+    "<b>submission #", seq_len(n), " (", ph, ")</b>",
+    ifelse(is.na(tg), "", paste0("<br/>tag: ", tg)),
+    "<br/><b>claim-aligned r = ", sprintf("%.3f", cls$r), "</b>", t_txt,
+    ifelse(is.na(hit), "<br/>not on the curve of 864: no significance class",
+           paste0("<br/>on the curve: CR2 ", fmt_p(p_hit),
+                  ifelse(klass == "sig", " (circle)", " (cross)"))),
+    ifelse(nzchar(spec_txt), paste0("<br/>", html_text(spec_txt)), "")
+  )
+  # built apart from cls and bound to it, so that a column of the class CSV
+  # (it has one called n) can never stand in for a local value
+  extra <- data.frame(n_lab = paste0("#", seq_len(n)), phase = ph, tag = tg, spec_txt = spec_txt,
+                      rank = findInterval(cls$r, curve$r_ca), on_curve = !is.na(hit), p_cr2 = p_hit,
+                      klass = factor(klass, levels = c("sig", "ns", "off")),
+                      mine = nzchar(my_tag) & !is.na(tg) & tg == my_tag, tip = tip)
+  cbind(cls[setdiff(names(cls), names(extra))], extra)
+}
+
+shape_of <- c(sig = 1, ns = 4, off = 5)
+phase_col <- c(explored = green, declared = ink)
+
+draw_class_chart <- function(cls, my_tag = "") {
+  ylim_lo <- -0.65; ylim_hi <- 0.25
+  has_cls <- !is.null(cls) && nrow(cls) > 0
+  if (has_cls) {
+    mine <- cls$mine
+    sub_txt <- paste(nrow(cls), "class result(s) so far")
+    if (any(mine)) {
+      sub_txt <- paste0(sub_txt, "; tag ", my_tag, ": ", paste(cls$n_lab[mine], collapse = ", "))
+    } else if (nzchar(my_tag)) {
+      sub_txt <- paste0(sub_txt, "; no mark carries the tag ", my_tag, " yet")
+    }
+    caption <- c(
+      "Circles and crosses: the class of the matching specification on the curve under CR2 errors clustered by country (p < 0.05 or p ≥ 0.05).",
+      paste0(sum(cls$klass == "off"), " of ", nrow(cls), " submission(s) name a specification that is not on the curve of 864 and are drawn as diamonds, without a class."))
+    # a mark far above the band is almost certainly an un-recoded negative
+    # framing: stretch the axis so it stays visible for the debrief
+    ylim_hi <- max(ylim_hi, max(cls$r, na.rm = TRUE) + 0.06)
+    ylim_lo <- min(ylim_lo, min(cls$r, na.rm = TRUE) - 0.05)
+  } else {
+    sub_txt <- "No submissions yet – press Run Code to refresh"
+    caption <- "The curve: circles for p < 0.05 and crosses for p ≥ 0.05 under CR2 errors clustered by country."
+  }
+  # the canvas and the faint curve of 864 (tinyplot); the band above zero and
+  # the zero line sit under the curve, through the base graphics on which
+  # tinyplot draws, and the caption sits in the empty corner under the curve
+  tinyplot::tinyplot(
+    r_ca ~ rank, data = curve, type = "n", ylim = c(ylim_lo, ylim_hi), theme = "minimal",
+    main = "Class submissions", sub = sub_txt,
+    xlab = "Specifications of the curve, ranked by claim-aligned partial correlation",
+    ylab = "Partial correlation, claim-aligned"
+  )
+  usr <- graphics::par("usr")
+  graphics::rect(usr[1], 0, usr[2], usr[4], col = grDevices::adjustcolor("#a10000", 0.045), border = NA)
+  graphics::abline(h = 0, col = grey_mid, lwd = 0.8)
+  tinyplot::tinyplot(r_ca ~ rank, data = curve[curve$sig, ], pch = 1, col = plain, alpha = 0.25,
+                     cex = 0.6, add = TRUE)
+  tinyplot::tinyplot(r_ca ~ rank, data = curve[!curve$sig, ], pch = 4, col = plain, alpha = 0.12,
+                     cex = 0.6, add = TRUE)
+  # the caption is wrapped short, because the canvas of webR sets text wider
+  # than a desktop device does, and a long line runs off the plot
+  graphics::legend("bottomright", legend = strwrap(caption, width = 70), bty = "n", cex = 0.72,
+                   text.col = "#4f5b67", y.intersp = 1.3)
+  if (!has_cls) return(invisible(NULL))
+  # The marks are drawn point by point with the base graphics under tinyplot,
+  # which reads a size given to a single point as the scale of a bubble chart.
+  # The marks of the participant whose tag is typed into the live cell come
+  # first, as larger orange marks joined in the order of submission, so that
+  # the marks of the class sit on top.
+  if (any(mine)) {
+    graphics::lines(cls$rank[mine], cls$r[mine], col = orange, lwd = 2)
+    graphics::points(cls$rank[mine], cls$r[mine], pch = shape_of[as.character(cls$klass[mine])],
+                     col = orange, cex = 2.3, lwd = 2.6)
+  }
+  # colour gives the phase and shape the class on the curve; submissions that
+  # land on the same specification stack their numbers
+  graphics::points(cls$rank, cls$r, pch = shape_of[as.character(cls$klass)],
+                   col = phase_col[cls$phase], cex = 1.6, lwd = 2)
+  stack <- stats::ave(seq_len(nrow(cls)), cls$rank, FUN = seq_along)
+  graphics::text(cls$rank, cls$r + 0.035 + 0.035 * (stack - 1), cls$n_lab, col = ink, cex = 0.65)
+  graphics::legend("topleft", inset = c(0.01, 0.02), bty = "n", cex = 0.85, ncol = 3,
+                   legend = c("explored (Task 4)", "declared (Task 5)", "p < 0.05", "p ≥ 0.05",
+                              "not on the curve"),
+                   pch = c(15, 15, shape_of), col = c(green, ink, ink, ink, ink), pt.cex = 1.3,
+                   y.intersp = 1.4)
+  # tinyplot draws no hover tooltips, so the lines that a tooltip would hold
+  # are printed under the chart, one for each submission
+  cls$tip |>
+    gsub(pattern = "<br/>", replacement = "; ", fixed = TRUE) |>
+    gsub(pattern = "<[^>]+>", replacement = "") |>
+    gsub(pattern = "&lt;", replacement = "<", fixed = TRUE) |>
+    gsub(pattern = "&amp;", replacement = "&", fixed = TRUE) |>
+    writeLines()
+  invisible(NULL)
+}
+
+refresh_multiverse <- function(my_tag = "") {
+  my_tag <- clean_my_tag(my_tag)
+  cls <- NULL
+  if (nzchar(worker_url)) {
+    cls <- tryCatch({
+      download.file(paste0(worker_url, "?_=", as.numeric(Sys.time())),
+                    "class.csv", quiet = TRUE)
+      read_clean("class.csv")
+    }, error = function(e) NULL)
+  }
+  if (is.null(cls) && file.exists("data/class_results.csv")) {
+    cls <- tryCatch(read_clean("data/class_results.csv"), error = function(e) NULL)
+  }
+  if (!is.null(cls) && nrow(cls) > 0) cls <- prepare_class(cls, my_tag)
+  draw_class_chart(cls, my_tag)
+}
+```
+
+```{webr}
+#| label: live-multiverse
+#| autorun: true
+#| fig-width: 9
+#| fig-height: 5.6
+#| caption: "Press Run Code to refresh – pull the latest class results"
+my_tag <- ""   # your tag, e.g. "amber-otter-42", highlights your own marks
+refresh_multiverse(my_tag)
+```

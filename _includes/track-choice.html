@@ -1,0 +1,42 @@
+<!-- The format that a visitor last opened, shown as a navbar item on every
+     page of the site, so that someone who follows a link out of a format, into a
+     page that the formats share or into the companion, can find it again. A
+     page under tracks/<folder>/ records its folder in this browser only
+     (localStorage key "ar-track"); with no format opened yet, or with storage
+     blocked, nothing is shown. The facilitator chooses the format of a delivery
+     (../_planning/formats-2026-10-27.md), so there is no button that chooses one.
+     Links use the quarto:offset meta tag, so they work from pages at any depth.
+     Inline rather than a separate file for that reason. -->
+<script>
+(function () {
+  // The folders under tracks/, which _includes/next-delivery.qmd and the
+  // delivery block of _variables.yml name in the same way.
+  var TRACKS = {
+    "europeanisation-short": "Short session",
+    "europeanisation-one-day": "One-day workshop",
+    "europeanisation-extended": "Extended course",
+    "self-study": "Self-study"
+  };
+  var KEY = "ar-track";
+  var slug = null;
+  try {
+    var here = window.location.pathname.match(/\/tracks\/([a-z0-9-]+)\//);
+    if (here && TRACKS[here[1]]) window.localStorage.setItem(KEY, here[1]);
+    slug = window.localStorage.getItem(KEY);
+  } catch (e) { return; }
+  if (!slug || !TRACKS[slug]) return;
+  var meta = document.querySelector('meta[name="quarto:offset"]');
+  var base = meta ? meta.getAttribute("content") : "./";
+  var nav = document.querySelector("#navbarCollapse .navbar-nav.ms-auto, #navbarCollapse .navbar-nav");
+  if (!nav) return;
+  var li = document.createElement("li");
+  li.className = "nav-item";
+  var a = document.createElement("a");
+  a.className = "nav-link";
+  a.href = base + "tracks/" + slug + "/index.html";
+  a.title = "The format that you opened last";
+  a.innerHTML = '<i class="bi bi-signpost-split" aria-hidden="true"></i> <span class="menu-text">Your format: ' + TRACKS[slug] + "</span>";
+  li.appendChild(a);
+  nav.appendChild(li);
+})();
+</script>

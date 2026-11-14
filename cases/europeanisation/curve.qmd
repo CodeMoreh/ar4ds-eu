@@ -1,0 +1,198 @@
+---
+title: "Specification curve"
+engine: knitr
+bibliography: [../../references.bib, ../../references-new.bib]
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+# The charts are drawn by assets/chart/multiverse.js from payloads built in
+# R/europeanisation/_chart_multiverse.R; the live class chart over the same
+# curve is on class-results.qmd. Every number in the prose is read from the data
+# files of the case study, here and in the chunk that opens the section on
+# inference.
+source("../../R/europeanisation/_chart_multiverse.R")
+
+menu      <- readr::read_csv("data/menu_options.csv", show_col_types = FALSE)
+curve     <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+curve_neg <- readr::read_csv("data/spec_curve_negative.csv", show_col_types = FALSE)
+marks     <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
+
+words <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")[n]
+below <- \(d) mean(d$r_ca < 0)
+below_sig <- \(d, p = d$p_cr2) mean(d$r_ca < 0 & p < 0.05)
+n_curve <- nrow(curve)
+n_of <- \(axis_code, d = curve) insight::n_unique(d[[axis_code]])
+unemp <- datawizard::data_filter(curve, predictor == "unemp")
+ref <- datawizard::data_filter(curve, is_reference)
+ref_rank <- sum(curve$r_ca < ref$r_ca)
+by_est <- datawizard::data_summary(curve, below_sig = mean(r_ca < 0 & p_cr2 < 0.05), by = "estimator")
+est_share <- \(e) mv_pct(by_est$below_sig[by_est$estimator == e])
+an <- mv_marks(marks, curve$r_ca)
+mark <- \(id, col) an[[col]][an$id == id]
+```
+
+The specification curve below holds `r format(n_curve, big.mark = ",")` justifiable analyses of the claim that "*poor economic performances … decrease positive dimensions of EU framing*" (Teney 2016, p. 619), read as a claim about change within countries, namely that the citizens of a member state frame the EU less in positive terms than before when its economy deteriorates. Each analysis is a specification, one complete set of answers to the decisions that an analyst has to take, fitted on the `r curve$n_cells[1]` country-years of the course panel. The curve crosses the options that the [specification menu](menu.qmd) keeps for this claim. They are `r words(n_of("outcome"))` positive scales; unemployment in `r words(n_of("measure", unemp))` published series and `r words(n_of("pred_form", unemp))` forms, or GDP growth; the other economic measure left out or held fixed; country and year fixed effects or country fixed effects alone; `r words(n_of("noop"))` rules for respondents who mention nothing; `r words(n_of("item_set"))` item sets; and cells as interviewed or weighted. Every specification uses all `r curve$n_countries[1]` member states, counts each country-year once, scores a scale as the share of mentions and fits a linear model. The [decision map](menu.qmd#map) sets out every decision of the menu, including the options that are not on the curve, with the reason for each.
+
+```{r}
+#| label: chart-claim
+#| output: asis
+notes_claim <- paste(
+  "Each mark is one specification: a circle for p &lt; 0.05 and a cross for p &ge; 0.05 under errors clustered by country (CR2, Satterthwaite df).",
+  "The tags mark the five reanalysts of the robustness study and the design of the original study refitted without its education interactions (OA design), each placed on the degrees of freedom of its own inference.",
+  "Click or tap a tag to hold its details open, and click again to release it.",
+  "<i>Colour by</i> colours the marks by one decision and adds rows under the curve that show where the specifications using each option fall in the ranking;",
+  "<i>Show only</i> keeps the specifications that use one option and fades the rest.",
+  "Hover over or tap a mark for its details, or focus the chart and use the arrow keys."
+)
+src_claim <- paste(
+  'Data: <a href="data/spec_curve_codebook.html">data/spec_curve.csv</a> and',
+  '<a href="data/reference_marks_codebook.html">data/reference_marks.csv</a>, with their codebooks.'
+)
+cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+  id = "mv-claim",
+  payload = mv_payload(curve, menu, marks, file = "spec-curve-claim.csv"),
+  title = "Specification curve of the claim",
+  sub = sprintf("%s specifications of the %s positive scales, with %s reference results",
+                format(n_curve, big.mark = ","), words(n_of("outcome")), words(nrow(marks))),
+  notes = notes_claim, src = src_claim
+))
+```
+
+Of the `r format(n_curve, big.mark = ",")` specifications, `r mv_pct(below(curve))` lie below zero, in the direction of the claim, and `r mv_pct(below_sig(curve))` lie below zero with p < 0.05; `r if (any(curve$r_ca > 0 & curve$p_cr2 < 0.05)) "some" else "none"` lie above zero with p < 0.05. The estimator divides the result. Below zero with p < 0.05 are `r est_share("fe_country")` of the specifications with country fixed effects alone and `r est_share("fe_twoway")` of those with country and year fixed effects, which compare each country with itself after the change that all member states shared in a year has been removed. The reproduced specification of Task 3, the design of reanalyst C6HJR, has r = `r mv_minus(ref$r_ca)`, with `r ref_rank` of the `r format(n_curve, big.mark = ",")` specifications further below zero, and its CR2 p of `r sprintf("%.4f", ref$p_cr2)`, just above the threshold, makes it a cross.
+
+## Reading the curve {#the-specification-curve}
+
+Each mark is one specification, and the marks are ranked by their claim-aligned partial correlation, from the strongest support for the claim on the left to the weakest on the right. The partial correlation is the correlation of the outcome and the predictor once the fixed effects and any adjustment have been removed from both, which puts specifications with different scales and predictors on one footing. It is computed as $r = t/\sqrt{t^2 + df}$ from the conventional t and the residual degrees of freedom of each fit, which run from `r min(curve$df)` to `r max(curve$df)` on this curve. The claim expects positive framing to fall as unemployment rises and to rise with growth, so the sign of every growth result is reversed. A value below zero is then in the direction of the claim whatever the predictor, and the shaded band above zero holds the results that run against it.
+
+The shape of a mark gives its significance class at the 5% level, an open circle for p < 0.05 and a cross for p ≥ 0.05. The p-value comes from errors clustered by country with the CR2 correction, tested on Satterthwaite degrees of freedom, the rule that the [module on panel data](../../companion/panel-data.qmd#sec-inference) sets out: a conventional test would treat the `r curve$n_cells[1]` country-years as independent, although the residuals of a country correlate from one year to the next and a few countries carry most of the variation in unemployment, and under it `r mv_pct(below_sig(curve, curve$p_conv))` of the specifications would lie below zero with p < 0.05, against `r mv_pct(below_sig(curve))` under CR2. The Satterthwaite degrees of freedom say how many countries effectively carry the information, between `r sprintf("%.1f", min(curve$df_cr2))` and `r sprintf("%.1f", max(curve$df_cr2))` on this curve, and the test changes only the class of a mark and never its height; converting a clustered t would inflate every correlation without any change in the estimate, one of the pitfalls that the [conversion lesson](index.qmd#sec-task) takes apart.
+
+Choosing a decision under *Colour by* colours the marks by the option that each specification uses and adds a row for each option under the curve, with a tick at the rank of every specification that uses it, so that an option which pushes results towards one end of the curve shows as a bunched row. *Show only* keeps the specifications that use one option, fades the rest, and reports how many are shown, the share below zero and the share below zero with p < 0.05. Hovering over or tapping a mark, or focusing the chart and pressing the arrow keys, opens a pop-up with the full recipe of the specification, including a plain description of what its estimator compares. The button above the chart downloads the data behind it, with the option codes that `try_spec()` takes as arguments.
+
+Section 3 of [R on the country-year panel](../../companion/intro-r.qmd#sec-speccurve) builds a curve of this kind from the data. [Section 5 of the multiverse module](../../companion/multiverse.qmd#sec-reading) explains why the share of points below zero describes this set of analyses and is not the probability that the claim is true, and the [section on inference](#inference) below sets out what a test on the whole curve can add.
+
+## Reference marks {#reference-marks}
+
+Six tagged marks come from outside the curve: the five reanalyses of this claim recorded in the robustness study of SCORE (Multi100; Aczel et al. 2026), and the design of the original author (OA), tagged OA design. Each is drawn as an ordinary mark in ink, at the end of a thin line to a tag that holds its pop-up open when clicked, so that its neighbours on the curve stay visible. Each result is placed on the degrees of freedom of its own inference, for the reasons that the [background page](index.qmd#sec-recorded) gives: the recorded values of KQXUE and C6HJR stand on their residual degrees of freedom, which count country-years, and those of KEVF1 and 018OL on Satterthwaite degrees of freedom, which count cells rather than respondents; PRL47, which reported no degrees of freedom, is placed on the Satterthwaite degrees of freedom of a refit of its design on the rebuilt respondent file, `r mv_df(mark("PRL47", "df_placement"))`; and the mark of OA is a refit of the published design without its interactions with education, whose slope is the average over the education bands as in the five reanalyses, on its own `r mv_df(mark("OA", "df_placement"))` Satterthwaite degrees of freedom, the model with the interactions being taken up in the [module on multilevel models](../../companion/multilevel.qmd#sec-claim2).
+
+The shape of a reference mark follows the rule of the curve wherever the file gives a CR2 check of the design on the country-year cells, as it does for C6HJR, for KQXUE and, through the analogue of its design with country fixed effects, for KEVF1; the designs of OA, PRL47 and 018OL cannot be fitted on those cells, so their shapes follow the p-value as reported. Four of the six results come from outside the menu of the curve, with other units, another construct or a narrower sample, and their pop-ups say which, giving also, as a teaching aside, the value of each result on the `r ref$df` degrees of freedom of the two-way design, the common denominator that the [conversion lesson](index.qmd#sec-recorded) uses to show how much of the spread between the six comes from the choice of degrees of freedom.
+
+```{r}
+#| label: tbl-marks
+#| tbl-cap: !expr 'sprintf("The six reference marks: the statistic as reported, the statistic that is placed (for OA, the refit of its design without the education interactions), the degrees of freedom on which each is placed and their source, the placed partial correlation, the number of specifications on the curve that lie further below zero, the value on %d degrees of freedom, and the shape of the mark. Source: `data/reference_marks.csv`.", ref$df)'
+an |>
+  dplyr::arrange(.data$rank) |>
+  dplyr::transmute(
+    Mark = sub(" ", "\u00a0", .data$tag),
+    `As reported` = sprintf("%s\u00a0=\u00a0%s", .data$statistic_type,
+                            sub("^-", "−", as.character(.data$statistic_recorded))),
+    `Placed statistic` = sprintf("%s = %s", .data$statistic_type,
+                                 sub("^-", "−", sprintf("%.2f", .data$statistic_placement))),
+    `Placed on (df)` = mv_df(.data$df_placement),
+    Source = .data$df_basis,
+    `Placed r` = mv_minus(.data$r_placement),
+    `Further below zero` = .data$rank,
+    r_233 = mv_minus(.data$r_233),
+    Shape = .data$shape
+  ) |>
+  dplyr::rename_with(\(x) sprintf("r on %d df", ref$df), "r_233") |>
+  tinytable::tt() |>
+  tinytable::style_tt(j = c(1, 2, 5, 9), align = "l") |>
+  tinytable::style_tt(j = c(3, 4, 6, 7, 8), align = "r")
+```
+
+## The negative scales {#negative-scales}
+
+The first hypothesis of the original study also expects negative framing of the EU to increase as the national economy deteriorates. The chart below tests that half of the hypothesis on the `r words(n_of("outcome", curve_neg))` negative scales, the communitarian and libertarian shares and their composite, crossed with the same options as the curve of the claim. The negative scales are reverse-coded, so that a value below zero is again in the direction of the hypothesis. This chart is not part of the curve of the claim, which concerns the positive dimensions only, and its results are not independent of that curve. The shares of a respondent sum to one, and the communitarian scale contains the item 'unemployment', which ties the outcome to the predictor by its content.
+
+```{r}
+#| label: chart-negative
+#| output: asis
+notes_neg <- paste(
+  "Each mark is one specification of a negative scale, reverse-coded: a circle for p &lt; 0.05 and a cross for p &ge; 0.05 under errors clustered by country (CR2, Satterthwaite df).",
+  "<i>Colour by</i>, <i>Show only</i>, the pop-ups and the arrow keys work as on the chart of the claim."
+)
+src_neg <- 'Data: <a href="data/spec_curve_codebook.html">data/spec_curve_negative.csv</a>, with its codebook.'
+cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+  id = "mv-negative",
+  payload = mv_payload(curve_neg, menu, reversed = TRUE, file = "spec-curve-negative.csv",
+                       target = "hypothesis"),
+  title = "Specification curve of the negative scales",
+  sub = sprintf("%s specifications of the %s negative scales, reverse-coded",
+                format(nrow(curve_neg), big.mark = ","), words(n_of("outcome", curve_neg))),
+  notes = notes_neg, src = src_neg, assets = FALSE
+))
+```
+
+Of these `r format(nrow(curve_neg), big.mark = ",")` specifications, `r mv_pct(below(curve_neg))` lie below zero and `r mv_pct(below_sig(curve_neg))` lie below zero with p < 0.05. The [codebook of the two curves](data/spec_curve_codebook.md) explains why the negative composite repeats much of the positive result when respondents who mention nothing are scored zero.
+
+## Inference on the curve {#inference}
+
+```{r}
+#| label: setup-inference
+#| include: false
+curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive")
+cells <- readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE)
+
+# fixed decimals and a true minus sign; pct() takes values already in per cent and
+# rounds halves up, as the specification menu does, so that the pages agree
+num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
+pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
+
+ref <- datawizard::data_filter(curve, is_reference)
+share_below <- 100 * mean(curve$supports)
+share_sig <- 100 * mean(curve$supports & curve$sig)
+share_cr1 <- 100 * mean(curve$supports & curve$p_cr1 < 0.05)
+share_conv <- 100 * mean(curve$supports & curve$p_conv < 0.05)
+n_resp <- sum(cells$n_cy)
+fk <- \(ax) forks$share[forks$axis == ax]
+# the four decisions that barely move the curve, taken together
+minor <- sum(forks$share[forks$axis %in% c("noop", "measure", "pred_form", "cell_weight")])
+```
+
+The curve of the claim in this course holds `r nrow(curve)` specifications fitted to the 270 country-years of the course panel (`data/spec_curve.csv`), every one of them a defensible way of asking whether national unemployment or growth moves the positive framing of the EU, and it forms the backdrop of the class chart on the [Class results](class-results.qmd) page. Each point on it is placed by its partial correlation and classed by a test of its own, with errors clustered by country under the CR2 correction and Satterthwaite degrees of freedom. This reading explains the inferential logic that governs a design of that kind: why the curve as a whole is reported descriptively, why its points cannot be counted as so many independent tests, why a single formal test of the whole curve can nonetheless be designed, why such a test belongs at the level of the country-year, and how its result would be read.
+
+### Description and inference {#the-two-jobs-of-the-curve}
+
+A multiverse analysis, in the sense given to the term by Steegen and colleagues, is a descriptive exercise: identify every defensible way of turning raw data into a test of the claim, run all of them, and display the resulting distribution instead of a single hand-picked estimate [@SteegenEtAl2016IncreasingTransparencyMultiverse]. Nothing in that founding formulation involves a joint hypothesis test. The founding paper reports grids of estimates and p-values and asks the reader to see how conclusions shift across the grid, and its contribution is transparency about analytical contingency. The inferential layer arrived later and separately, under the name 'specification curve analysis', when Simonsohn, Simmons and Nelson supplemented the descriptive curve with a formal question, whether a curve like this could have arisen from data in which the effect does not exist, and with a resampling method for answering it [@SimonsohnEtAl2020SpecificationCurveAnalysis]. The two layers can be used separately, and the largest robustness exercise yet conducted in the social sciences chose to use only the descriptive one. The robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness] reported the dispersion of its 504 reanalyses in explicitly exploratory terms, with no inferential statistics anywhere in the paper.
+
+This course follows that precedent for the curve as a whole. The curve, the decomposition of its variance by decision and the placement of the five reanalyses and of the original study on it are descriptive throughout, even though every point carries its own test. A single permutation-based test of the whole curve could supplement them, fixed in its design before it runs and confined to the country-year level, and the sections below set out that design. The course has designed the test and has not run it, so what follows is also a guide to reading such a test when you meet one in published work.
+
+### Estimates and tests {#estimates-and-tests}
+
+The descriptive curve invites vote counting. With `r pct(share_below)` of the specifications below zero, and `r pct(share_sig)` below zero with p < 0.05 under CR2 errors clustered by country, against the 2.5% that chance alone would put there if each specification were a separate test of a true null, the count can look as though it settles the question. It cannot, because the specifications are not independent of one another. All `r nrow(curve)` results come from the same 270 country-years, which are averaged from the same `r format(n_resp, big.mark = ",")` respondents and analysed `r nrow(curve)` times in slightly different ways. If the panel happens, by sampling accident alone, to contain a negative-looking alignment between unemployment and positive framing, then most specifications will detect that same accident together, and the points on the curve rise and fall together because every one of them is fitted to the same data. Even the test that classes them rests every time on the same 27 countries, so that the few countries which dominate one clustered standard error dominate those of its neighbours as well. If unemployment and framing were in fact unrelated (a true null hypothesis), the share of specifications in the significant class would therefore have no known distribution. It could be 10% or 70%, and no formula can say which, because the correlations among hundreds of overlapping specifications cannot be derived mathematically [@SimonsohnEtAl2020SpecificationCurveAnalysis].
+
+Every individual point of the curve still has its own inference, an estimate with a standard error and a p-value, which on this curve rests on standard errors clustered by country with the CR2 correction of @BellMcCaffrey2002BiasReductionStandard, tested on Satterthwaite degrees of freedom in the form of @PustejovskyTipton2018SmallsampleMethodsClusterrobust, the rule that the [module on panel data](../../companion/panel-data.qmd#sec-inference) sets out. The rule matters: under conventional errors, which treat the 270 country-years as independent, `r pct(share_conv)` of the specifications would lie below zero with p < 0.05, under the standard clustered errors (CR1) on 26 degrees of freedom `r pct(share_cr1)`, and under CR2 `r pct(share_sig)`. The Satterthwaite degrees of freedom fall as the variation that identifies the slope concentrates in a few countries, Greece and Spain above all, and on this curve they run from `r num(min(curve$df_cr2), 1)` to `r num(max(curve$df_cr2), 1)`, with a median of `r num(stats::median(curve$df_cr2), 1)`, so that a t of `r num(stats::qt(0.975, 26), 2)`, which clears 5% on 26 degrees of freedom, has to reach `r num(stats::qt(0.975, round(stats::median(curve$df_cr2))), 2)` on `r round(stats::median(curve$df_cr2))`; @ImbensKolesar2016RobustStandardErrors show that tests of this kind keep their stated error rate with few or unbalanced clusters where the standard clustered test does not.
+
+The reproduced specification of Task 3, with its conventional t of `r num(ref$t)` on `r ref$df` degrees of freedom, has a CR2 t of `r num(ref$t_cr2)` on `r num(ref$df_cr2, 1)` Satterthwaite degrees of freedom and a p-value of `r num(ref$p_cr2, 4)`, so that under the rule of the course it lies below zero but, by a narrow margin, is not significant at 5%; under CR1 errors on 26 degrees of freedom the same estimate has p = `r num(ref$p_cr1)`, and under conventional errors p = `r num(ref$p_conv, 4)`. The threshold itself means here what it usually means. Each test draws on 270 country-years, with residual degrees of freedom between `r min(curve$df)` and `r max(curve$df)` in the conventional fit and far fewer once the errors are clustered by the 27 countries, so a coefficient has to be large relative to the variation among countries before it clears 5%, whereas a respondent-level model that treats hundreds of thousands of rows as independent, although they share a predictor that takes only 270 values, makes almost any coefficient significant.
+
+What is missing is a warranted statement about the curve as a whole. The gap matters because analytical flexibility is the mechanism by which false positives are produced. Simmons, Nelson and Simonsohn's demonstration that undisclosed flexibility "allows presenting anything as significant" is the same arithmetic read in the opposite direction [@SimmonsEtAl2011FalsePositivePsychology]. A multiverse inverts the disclosure problem, putting every fork on display rather than hiding it in a garden of unreported paths [@GelmanLoken2014StatisticalCrisisScience], but display alone does not turn a set of correlated results into a body of evidence with known error rates.
+
+### The permutation test {#the-permutation-test}
+
+The solution that Simonsohn and colleagues adapted is among the oldest ideas in statistics: if the sampling distribution of a quantity cannot be derived, generate it by rearranging the data so that the null hypothesis is true by construction [@Fisher1935DesignExperiments; @Ernst2004PermutationMethods]. Here the null hypothesis is that national economic performance and EU framing are unrelated, and the rearrangement that makes it true is a within-country permutation of the macroeconomic series. Each country keeps its own ten-year history of unemployment and growth and its own outcome data, but the assignment of those values to years is shuffled, jointly for the two series so that they keep their mutual correlation, and the alignment between economic conditions and framing is thereby destroyed. On each such rearrangement the `r nrow(curve)` specifications of the curve are refitted, each is classed by the same CR2 test, and the curve is summarised by three numbers: the median claim-aligned partial correlation, the share of specifications below zero with CR2 p < 0.05, and an aggregate z following Stouffer's rule, which converts the p-value of each specification into a z score, sums those scores and divides by the square root of their number. Five hundred rearrangements give five hundred versions of what this curve looks like when nothing is going on. The observed curve is set beside them, and its rank in that set is the p-value.
+
+The construction deals with the dependence problem set out in the previous section. Every null draw refits the same specifications on the same panel, so every null curve has the same correlation structure that made the observed curve impossible to test by analytical means, and the dependence is reproduced inside the reference distribution instead of being assumed away. For this reason curve-level permutation has become the standard inferential test for large specification exercises, including well-known applied examples [@OrbenPrzybylski2019AssociationAdolescentWellbeing; @RohrerEtAl2017ProbingBirthOrderEffects]. The two tests answer different questions and do not replace each other. The CR2 test asks whether one specification could have produced its slope by chance, given how the countries vary, and the permutation asks whether the whole curve could have taken its shape by chance.
+
+The test also has limits. The permutation destroys temporal alignment, and with it any year-to-year persistence in the predictor, so the null hypothesis that it builds in is 'no association at any alignment', which a sceptic could note is subtly stronger than 'no causal effect'. Two series that trend together can lead the test to reject such a null without any causal connection between them, which is why the two-way specifications of the curve, which remove the change common to every country in a given year, matter for interpretation. It is also why the result of the test is a statement about alignment beyond chance and never about causation, so the estimand questions of Part 2 still apply however small the p-value.
+
+### The level of the identifying variation {#where-the-identifying-variation-lives}
+
+The design confines this test to the country-year level, and the main reason is substantive. The predictor in this study varies only between country-years: the respondents observed in a given country and year, `r format(n_resp, big.mark = ",")` of them across the panel, share one value of the unemployment rate. All the information in the data about the alignment of unemployment with EU framing therefore comes from 270 pairings, one for each country-year cell, in every specification and at every level of analysis. A multiverse of respondent-level models refitted under each of 500 permutations would test the same 270-cell alignment, since the respondent-level rows are, from the point of view of the null hypothesis, an elaborate disaggregation of the same evidence, and it would do so at several hundred times the computational cost, with the added numerical problems of mixed models fitted by maximum likelihood many thousands of times. Such a multiverse would be worth building as a description, because it would show how the size of standardised effects, and their conversion to a common metric, depend on the unit of analysis, a point that the [module on multilevel models](../../companion/multilevel.qmd) and the conversion lesson of the [background page](index.qmd#sec-conversion) take up. It would have essentially nothing further to contribute to the question 'is the alignment distinguishable from chance?', because it contains no additional identifying variation with which to answer it.
+
+This is also the reply to the objection that the original study modelled individuals, so that a test confined to country-year aggregates excludes the kind of model that the original study used: the respondent-level designs are represented in the description, as reference marks placed on the curve on the degrees of freedom of their own inference, and the permutation layer asks a single question about a single alignment, at the level at which that alignment is observed.
+
+### Reading the five hundred draws {#how-many-draws-and-how-to-read-the-result}
+
+The design fixes five hundred permutations in advance, and the consequences for interpretation are mechanical. A permutation p-value is computed with the observed statistic included in its own reference distribution, Phipson and Smyth's correction, which guarantees that an estimated p can never be exactly zero [@PhipsonSmyth2010PermutationPValues], so with B = 500 the smallest attainable two-sided value is $2/(B + 1)$, roughly 0.004. Monte Carlo error, the random error that comes from using a finite number of permutations, follows the binomial rule: an estimated p near 0.05 has a standard error of about $\sqrt{0.05 \times 0.95 / 500} \approx 0.01$. Both facts bear on how a result should be read. A reported p of 0.03 or 0.08 should be treated as 'near the conventional threshold, with one point of Monte Carlo noise either way'. The CR2 test that classes each point carries no error of this kind, since it is computed in closed form, but its threshold is a convention all the same, and a point lying just above or below 5%, as the reproduced specification does, should not be read as a different finding from its neighbours. The choice of B trades that noise against computation in a way that has been formalised for the bootstrap and applies to the permutation unchanged [@DavidsonMacKinnon2000BootstrapTests]. Had finer resolution been needed, a larger B would be fixed in advance. For a supplementary test whose role is calibration rather than discovery, this resolution is sufficient, and its cost, hours of computation against days for a respondent-level equivalent, is proportionate.
+
+### Without the test {#without-the-test}
+
+The conclusions of the day are built so that they would lose nothing if the test were never run. Four of them are claims about the composition of analytical variation. The first is the decomposition of the curve, in which the estimator carries `r pct(fk("estimator"))` of the variance of the claim-aligned partial correlations and the predictor `r pct(fk("predictor"))`, while the rule for respondents who mention nothing, the published series, the predictor form and the cell weighting together carry `r pct(minor)`. The second is the placement of the five reanalyses of the robustness study and of the original study among the `r nrow(curve)` specifications, the third the set of options that left the curve and what each would do to it, which the [decision map](menu.qmd#map) lays out, and the fourth the reading of the recorded dispersion as, in large part, a product of the conversion to a common scale, and for the rest a multiverse of different questions rather than of different analyses of one question [@AuspurgBruderl2021HasCredibilitySocial; @LundbergEtAl2021WhatYourEstimand]. All four are established by listing the specifications and decomposing their variance, with no null distribution involved. The distinction between same-conclusion and same-number robustness is likewise descriptive vocabulary [@AczelEtAl2026InvestigatingAnalyticalRobustness]. The permutation test would answer one narrow supplementary question, whether a curve this claim-consistent could plausibly arise when nothing is going on. Fixing that test in advance, at the level where its identifying variation is found, with a resolution stated before anything runs and in a form that is cheap to reproduce, would add a calibration that the descriptive layers cannot supply, while the conclusions of the day rest on the layers that need no simulation to be understood [@SteegenEtAl2016IncreasingTransparencyMultiverse; @DelGiudiceGangestad2021TravelersGuideMultiverse].

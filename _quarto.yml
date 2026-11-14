@@ -53,35 +53,19 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - text: Case study
+      # The formats are reached from the Formats section of the opening page,
+      # and each has a docked sidebar (_sidebar.yml) that lists its pages and the
+      # tools that it uses, the browser lab and the cheatsheet among them.
+      - href: cases/europeanisation/index.qmd
+        text: Background
+      - text: Multiverse
         menu:
-          - href: cases/europeanisation/index.qmd
-            text: "Background"
-          - href: cases/europeanisation/exercise.qmd
-            text: "Exercise"
-          - href: cases/europeanisation/lab.qmd
-            text: "Browser lab"
           - href: cases/europeanisation/menu.qmd
             text: "Specification menu"
-          - href: cases/europeanisation/map.qmd
-            text: "Decision map"
-          - href: cases/europeanisation/multiverse.qmd
-            text: "Multiverse"
-          - href: cases/europeanisation/cheatsheet.qmd
-            text: "Cheatsheet"
-      # Each format has a docked sidebar (_sidebar.yml) and a slides page that
-      # embeds its deck; the decks themselves are not in the navbar.
-      - text: Formats
-        menu:
-          - href: tracks/europeanisation-short/index.qmd
-            text: "Short session"
-          - href: tracks/europeanisation-one-day/index.qmd
-            text: "One-day workshop"
-          - href: tracks/europeanisation-extended/index.qmd
-            text: "Extended course"
-          - text: "---"
-          - href: tracks/self-study/index.qmd
-            text: "Self-study"
+          - href: cases/europeanisation/curve.qmd
+            text: "Specification curve"
+          - href: cases/europeanisation/class-results.qmd
+            text: "Class results"
       - text: Companion
         menu:
           - href: companion/index.qmd
@@ -139,9 +123,8 @@ website:
       - href: references.qmd
         text: References
     right:
-      # The pages that every case study shares live on the umbrella site
-      - href: "https://codemoreh.github.io/ar4ds/setup.html"
-        text: Setup
+      # The umbrella site, which holds the pages that every case study shares;
+      # the item of the last-opened format joins it (_includes/track-choice.html)
       - href: "https://codemoreh.github.io/ar4ds/"
         text: AR4DS
 
@@ -163,6 +146,8 @@ format:
     theme: cosmo
     css: styles.css
     toc: true
+    # The format that a visitor last opened, as a navbar item on every page
+    include-after-body: _includes/track-choice.html
 
 execute:
   freeze: auto

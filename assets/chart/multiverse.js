@@ -1,5 +1,5 @@
 /*
-  Interactive specification curve for the multiverse page of a case study.
+  Interactive specification curve for the Specification curve page of a case study.
 
   mvChart(id, D) draws one curve into the element with that id, which carries
   the markup of assets/chart/multiverse.template.html. D is the payload built

@@ -1,7 +1,7 @@
 ################################################################################
 # Title        : _chart_multiverse.R
 # Purpose      : Builds the interactive specification curves of the
-#                multiverse page of the case study: the payload of one curve (the specifications ranked by
+#                Specification curve page of the case study: the payload of one curve (the specifications ranked by
 #                the claim-aligned partial correlation, the option of every
 #                decision, the plain-language labels of the menu and the
 #                reference marks with the lines of their pop-ups) and the raw
@@ -13,7 +13,7 @@
 #                so that the course depends on no file outside this repository.
 # Author       : Chris Moreh
 # Last updated : 2026-10-26
-# Sourced by   : cases/europeanisation/multiverse.qmd
+# Sourced by   : cases/europeanisation/curve.qmd
 ################################################################################
 
 # The decisions that vary on the two curves, in the order of the "Colour by"
