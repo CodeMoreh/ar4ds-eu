@@ -20,12 +20,12 @@ A brief history, because the vocabulary is a mess and knowing which word came fr
 ::: {.small}
 Rohrer, Hullman and Gelman ask what a multiverse is *for*, and name three uses, "as a tool for reflection and critique, as a persuasive tool, as a serious inferential tool"; it "fails as a persuasive tool when researchers disagree about which variations should be included in the analysis", and "fails as a serious inferential tool when the included analyses do not target a coherent estimand" [@RohrerEtAl2026WhatsMultiverseGood, p. 1]
 
-- **Enumerate**: cross every option of every decision. Complete and mechanical, and the set fills with specifications that nobody would defend, so that the spread stops meaning anything. Our fourteen decisions multiplied out give about **`r fmt_n(n_full_menu)`** specifications, each testable under several inference rules
+- **Enumerate**: cross every option of every decision. Complete and mechanical, and the set fills with specifications that nobody would defend, so that the spread stops meaning anything. Our fourteen decisions multiplied out give about **`r format(n_full_menu, big.mark = ",")`** specifications, each testable under several inference rules
 - **Curate**: keep only what you would defend in print, for an estimand that you have named. The set becomes a claim of its own, which a sceptic can attack option by option, so the reasons go beside the curve
 :::
 
 ::: {.fragment .small}
-The curve of the claim is a curated **`r fmt_n(nrow(spec_curve))`**: every option was asked whether it answers *this* claim in a justifiable way, because "there is nothing in the distribution of estimates per se that tells us which is the true effect" [@YoungCumberworth2025MultiverseAnalysisComputational, p. 119]
+The curve of the claim is a curated **`r format(nrow(spec_curve), big.mark = ",")`**: every option was asked whether it answers *this* claim in a justifiable way, because "there is nothing in the distribution of estimates per se that tells us which is the true effect" [@YoungCumberworth2025MultiverseAnalysisComputational, p. 119]
 :::
 
 ::: notes
@@ -38,7 +38,7 @@ The question that organises the current debate is the one that Rohrer, Hullman a
 #| label: spec-curve
 #| fig-width: 9.5
 #| fig-height: 4.3
-# Copied from _segments/europeanisation/_p4-classchart.qmd (chunk spec-curve).
+# Copied from ../slides/_segments/case/_p4-classchart.qmd (chunk spec-curve).
 # The curve of the claim, the chart that the Specification curve page draws, minus the
 # hover: the specifications ranked by the claim-aligned partial r and classed
 # by CR2 errors clustered by country, with the reproduced specification
@@ -50,7 +50,7 @@ spec_base() +
 ```
 
 ::: {.small}
-- The curve of the claim: **`r fmt_n(nrow(spec_curve))`** specifications of the three positive scales – unemployment or GDP growth, two fixed-effects designs, and the measurement options that the review keeps
+- The curve of the claim: **`r format(nrow(spec_curve), big.mark = ",")`** specifications of the three positive scales – unemployment or GDP growth, two fixed-effects designs, and the measurement options that the review keeps
 - **`r fmt_pct(share_below(spec_curve))`** below zero, **`r fmt_pct(share_sig(spec_curve))`** below zero with CR2 p < 0.05, and the claim-aligned partial r runs from **`r fmt_num(min(spec_curve$r_ca))` to +`r fmt_num(max(spec_curve$r_ca))`**
 :::
 
@@ -59,7 +59,7 @@ The dots of the class are on the [Class results]({{< var live-results-url >}}) p
 :::
 
 ::: {.src}
-cases/europeanisation/data/spec_curve.csv: the height of a mark is the partial r of the conventional fit, its shape the class under CR2 errors clustered by country, on Satterthwaite df.
+data/spec_curve.csv: the height of a mark is the partial r of the conventional fit, its shape the class under CR2 errors clustered by country, on Satterthwaite df.
 :::
 
 ::: notes

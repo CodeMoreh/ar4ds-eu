@@ -8,14 +8,14 @@ bibliography: [../references.bib, ../references-new.bib]
 #| label: setup
 #| include: false
 # The committed files that the build writes
-panel <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
-measures <- readr::read_csv("../cases/europeanisation/data/macro/predictor_measures.csv", show_col_types = FALSE)
-by_edu <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy_edu.csv", show_col_types = FALSE)
+panel <- readr::read_csv("../data/europeanisation_cy.csv", show_col_types = FALSE)
+measures <- readr::read_csv("../data/macro/predictor_measures.csv", show_col_types = FALSE)
+by_edu <- readr::read_csv("../data/europeanisation_cy_edu.csv", show_col_types = FALSE)
 ```
 
 This module of the [companion curriculum](index.qmd) is about the work between a download and a model: reading the raw files of a survey, selecting the respondents or the events that a study analyses, recoding the answers into the variables that its paper describes, building the measures that the models need, turning the data into the unit on which the model is fitted, and checking the result against a target that you did not compute yourself.
 
-The code of the build is taken from the preparation scripts of the workspace and from the pipeline of the case study, the numbered scripts in `R/europeanisation/` that write its data files, rearranged as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown and not run on this page, which is built without those files; what each step produces is shown from the files that the course committed, which the same steps wrote. The second script of the workspace was run on the respondent file on 27 October 2026 and printed the comparison that section 2.7 quotes. The build ends with a comparison of your file with the committed one, so that a rebuild on your own machine either reproduces the file of the course or says where it differs.
+The code of the build is taken from the preparation scripts of the workspace and from the pipeline of the case study, the numbered scripts in `R/` that write its data files, rearranged as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown and not run on this page, which is built without those files; what each step produces is shown from the files that the course committed, which the same steps wrote. The second script of the workspace was run on the respondent file on 27 October 2026 and printed the comparison that section 2.7 quotes. The build ends with a comparison of your file with the committed one, so that a rebuild on your own machine either reproduces the file of the course or says where it differs.
 
 ## 1. The steps of a build {#sec-steps}
 
@@ -43,7 +43,7 @@ Three rules hold throughout. The raw files stay in a folder outside the workspac
 
 ## 2. The country-year panel from the Eurobarometer {#sec-europeanisation}
 
-The original author (OA) of the Europeanisation and the economy case study [@Teney2016DoesEUEconomic] scored the answers of the respondents of sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled them within their countries and waves, with two economic series merged by country and year. The course panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], and every page of the one-day workshop starts from it. The workspace rebuilds it from the raw waves with two scripts: `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first rebuilds the respondent file of the course from your own GESIS downloads and checks the result against the course build. The second rebuilds the country-year panel that is distributed with the course, to machine precision, and then builds the panel by education band on which the section on the education gap of [Multilevel models](multilevel.qmd#sec-claim2) rests.
+The original author (OA) of the Europeanisation and the economy case study [@Teney2016DoesEUEconomic] scored the answers of the respondents of sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled them within their countries and waves, with two economic series merged by country and year. The course panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], and every page of the day format starts from it. The workspace rebuilds it from the raw waves with two scripts: `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first rebuilds the respondent file of the course from your own GESIS downloads and checks the result against the course build. The second rebuilds the country-year panel that is distributed with the course, to machine precision, and then builds the panel by education band.
 
 If you have not downloaded the sixteen files, everything here can still be read, because what the scripts print is quoted on the page; nothing that reads the respondent file can be run.
 
@@ -76,7 +76,7 @@ A missing file stops the script with the study number to fetch. The two studies 
 
 **It harmonises Germany and the United Kingdom**, which the survey samples as two regions each, into one country each, and keeps the twenty-seven member states of the period.
 
-**It codes the respondent characteristics as the published models code them.** Sex as a female indicator. Education as the age at which full-time schooling finished, with the two codings that the [section on the education gap](multilevel.qmd#sec-claim2) of the module on multilevel models offers: the published three bands, which replace "still studying" with the current age of the respondent and cut at 16 and 20, and a four-band version that keeps the students as a band of their own. Occupation collapsed into the eight groups of the published models, with the unemployed as their own group. Urbanisation in three categories. Left–right placement on its ten-point scale, missing in the four waves that did not ask it. The step is one call of `dplyr::mutate()` on the stacked waves:
+**It codes the respondent characteristics as the published models code them.** Sex as a female indicator. Education as the age at which full-time schooling finished, in two codings: the published three bands, which replace "still studying" with the current age of the respondent and cut at 16 and 20, and a four-band version that keeps the students as a band of their own. Occupation collapsed into the eight groups of the published models, with the unemployed as their own group. Urbanisation in three categories. Left–right placement on its ten-point scale, missing in the four waves that did not ask it. The step is one call of `dplyr::mutate()` on the stacked waves:
 
 ```{r}
 #| label: eu-characteristics
@@ -185,7 +185,7 @@ About six per cent of respondents mentioned none of the thirteen items, and a sh
 
 ### 2.5 From respondents to country-years {#sec-aggregate}
 
-The course panel averages every respondent in a country-year with the same weight, which the course calls 'as interviewed'. The post-stratification weight that GESIS supplies with each file, which corrects a national sample to its population, is the other choice, and the script computes both means so that the two can be compared in the [section on weights](multilevel.qmd#sec-weights-cells) of the module on multilevel models. It also records the count of respondents in each cell, which is used by a precision weight at the next stage.
+The course panel averages every respondent in a country-year with the same weight, which the course calls 'as interviewed'. The post-stratification weight that GESIS supplies with each file, which corrects a national sample to its population, is the other choice, and the script computes both means so that the two can be compared, as the decision [Cell weighting](../menu.qmd#cell-weighting) of the specification menu does. It also records the count of respondents in each cell, which is used by a precision weight at the next stage.
 
 ```{r}
 #| label: eu-aggregate
@@ -249,7 +249,7 @@ A reproducible data pipeline, in the sense used in this course, is one in which 
 
 ### 2.8 The panel by education band {#sec-edu}
 
-The last section of the script builds a second panel, one row per country, year and education band, with the same six scales and the number of respondents behind each mean. It is the aggregate that the section on the education gap of [Multilevel models](multilevel.qmd#sec-claim2) uses to ask whether unemployment narrows the gap between the high- and the low-educated. Unlike the respondent file, it can be committed and shared, because a cell mean over at least `r min(by_edu$n)` people, and in half of the cells more than `r floor(stats::median(by_edu$n))`, reveals nothing about any of them. Its `r format(nrow(by_edu), big.mark = ",")` rows are `cases/europeanisation/data/europeanisation_cy_edu.csv`, and the rebuild reproduces them to machine precision.
+The last section of the script builds a second panel, one row per country, year and education band, with the same six scales and the number of respondents behind each mean. It is the aggregate on which the second hypothesis of the paper, whether unemployment narrows the gap between the high- and the low-educated, can be tested. Unlike the respondent file, it can be committed and shared, because a cell mean over at least `r min(by_edu$n)` people, and in half of the cells more than `r floor(stats::median(by_edu$n))`, reveals nothing about any of them. Its `r format(nrow(by_edu), big.mark = ",")` rows are `data/europeanisation_cy_edu.csv`, and the rebuild reproduces them to machine precision.
 
 ::: {.callout-tip}
 ## Try it

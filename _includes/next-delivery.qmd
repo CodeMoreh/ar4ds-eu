@@ -19,7 +19,7 @@
 # CI, where the workflow installs knitr, rmarkdown, yaml and the two packages that
 # the chunk of index.qmd calls (readr and datawizard).
 
-find_variables_file <- function() {
+find_variables_file <- function() {  # r-style: approved
   candidates <- c("_variables.yml", "../_variables.yml", "../../_variables.yml")
   hits <- candidates[file.exists(candidates)]
   if (length(hits)) hits[[1]] else NA_character_
@@ -36,12 +36,12 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     tolower(as.character(delivery[["active"]])) == "true"
 
   if (is_active) {
-    field <- function(x) {
+    field <- function(x) {  # r-style: approved
       if (is.null(x)) return(NA_character_)
       x <- as.character(x)
       if (!nzchar(x)) NA_character_ else x
     }
-    present <- function(...) {
+    present <- function(...) {  # r-style: approved
       vals <- c(...)
       vals[!is.na(vals)]
     }
@@ -52,9 +52,9 @@ if (!is.na(vars_path) && requireNamespace("yaml", quietly = TRUE)) {
     # written to a page that does not exist. The link is relative to the
     # including page, and index.qmd at the site root is the only one.
     track_labels <- c(
-      "europeanisation-one-day"  = "one-day workshop",
-      "europeanisation-extended" = "Extended course",
-      "self-study"         = "self-study route"
+      "short"       = "short format",
+      "day"         = "day format",
+      "independent" = "independent format"
     )
 
     date <- field(delivery[["date"]])

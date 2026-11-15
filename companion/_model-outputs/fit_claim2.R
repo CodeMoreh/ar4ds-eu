@@ -18,10 +18,10 @@
 #               aggregate summary; no respondent record leaves this script.
 # Reads:        the respondent file, through _load_respondents.R (licensed,
 #               local only)
-#               cases/europeanisation/data/europeanisation_cy_edu.csv
+#               data/europeanisation_cy_edu.csv
 # Writes:       companion/_model-outputs/claim2_fits.csv
 # Author:       Chris Moreh
-# Last updated: 2026-09-09
+# Last updated: 2026-11-15
 ###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 
@@ -42,7 +42,7 @@ ind <- ind |>
 
 DIMS <- c("cosmo", "util", "comm", "lib")
 
-tidy_terms <- function(est, se, stat, p, terms, keep) {
+tidy_terms <- function(est, se, stat, p, terms, keep) {  # r-style: approved
   tibble::tibble(term = terms, estimate = est, se = se, statistic = stat, p = p) |>
     dplyr::filter(term %in% keep)
 }
@@ -57,7 +57,7 @@ keep <- c("munemp", "mgrowth", "edu3mid", "edu3high",
 # that the course and the reanalyses of the robustness study use. The respondents who named
 # nothing are disproportionately low-educated, so the rule bears on the
 # education gap and on its interaction, and the page shows both.
-fit_published <- function(y, data, rule) {
+fit_published <- function(y, data, rule) {  # r-style: approved
   f <- reformulate(c("female", "mage", "ses", "urban",
                      "edu3 * munemp", "edu3 * mgrowth",
                      "(1 | cntry)", "(1 | cyw)"), response = y)
@@ -77,7 +77,7 @@ published <- dplyr::bind_rows(
 
 # --- 2. the same interaction under country and year fixed effects ----------------
 # Under both no-opinion rules, as above.
-fit_fe <- function(y, data, rule) {
+fit_fe <- function(y, data, rule) {  # r-style: approved
   f <- as.formula(paste(y, "~ female + mage + ses + urban + edu3 * munemp + edu3 * mgrowth | cntry + year"))
   m <- fixest::feols(f, data = data, vcov = ~cy)
   ct <- fixest::coeftable(m)
@@ -92,7 +92,7 @@ fe_resp <- dplyr::bind_rows(
 )
 
 # --- 3. the aggregate route on the education-band panel --------------------------
-edu <- readr::read_csv("cases/europeanisation/data/europeanisation_cy_edu.csv", show_col_types = FALSE) |>
+edu <- readr::read_csv("data/europeanisation_cy_edu.csv", show_col_types = FALSE) |>
   datawizard::data_modify(edu3 = factor(edu3, levels = c("low", "mid", "high")),
          munemp  = unemp - mean(unemp),
          mgrowth = growth - mean(growth))

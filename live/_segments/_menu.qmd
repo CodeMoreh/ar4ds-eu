@@ -4,7 +4,7 @@
 #| include: false
 # The respondent counts, the share who mentioned nothing and the adult
 # population of each country-year, from the weights file of the case study
-pw_short <- readr::read_csv("../cases/europeanisation/data/teney_panel_weights.csv", show_col_types = FALSE)
+pw_short <- readr::read_csv("../data/teney_panel_weights.csv", show_col_types = FALSE)
 ```
 
 ## The specification menu {#the-specification-menu .smaller}
@@ -20,11 +20,11 @@ Fourteen decisions stand between the panel and a verdict on the claim, in three 
 :::
 
 ::: {.fragment .small .fs-90}
-Every option of every decision was asked whether it is a justifiable way of answering *this* claim. The options that are cross into the **`r fmt_n(nrow(spec_curve))` specifications** of the curve of the claim, and the [specification menu]({{< var site-url >}}cases/europeanisation/menu.html) gives the reason for each option that is not.
+Every option of every decision was asked whether it is a justifiable way of answering *this* claim. The options that are cross into the **`r format(nrow(spec_curve), big.mark = ",")` specifications** of the curve of the claim, and the [specification menu]({{< var site-url >}}menu.html) gives the reason for each option that is not.
 :::
 
 ::: {.src}
-@LundbergEtAl2021WhatYourEstimand; the specification menu and the [decision map]({{< var site-url >}}cases/europeanisation/menu.html#map) of the course site.
+@LundbergEtAl2021WhatYourEstimand; the specification menu and the [decision map]({{< var site-url >}}menu.html#map) of the course site.
 :::
 
 ::: notes
@@ -45,7 +45,7 @@ Six of the fourteen belong to survey methodology:
 :::
 
 ::: {.src}
-The [specification menu]({{< var site-url >}}cases/europeanisation/menu.html), sections The question and Measurement; `cases/europeanisation/data/teney_panel_weights.csv`.
+The [specification menu]({{< var site-url >}}menu.html), sections The question and Measurement; `data/teney_panel_weights.csv`.
 :::
 
 ::: notes
@@ -82,7 +82,7 @@ The Estimator moves the results most, and you met it before the break. Two-way f
 - **Every try starts from the reproduced specification**, the model of C6HJR, whichever analyst you reproduced: `mcosmo`; share of mentions; World Bank unemployment, raw; no adjustment; two-way fixed effects; all 270 country-years, each counted once; no mention scored zero; all 13 items; cells as interviewed; a linear model; CR2 errors clustered by country
 - **One decision at a time**, the others held, so that when a dot moves you can say what moved it. An option that is off the curve is refused by `try_spec()`, with the reason and the page that teaches it
 - **Claim alignment**: every scale on the curve is a positive framing, so below zero is the direction of the claim for unemployment; for GDP growth the sign is reversed, because the claim expects framing to rise with growth. The helpers do it for you
-- **The curve of `r fmt_n(nrow(spec_curve))`** keeps the options that answer the same question in a justifiable way, and the options that answer another question are taught beside it
+- **The curve of `r format(nrow(spec_curve), big.mark = ",")`** keeps the options that answer the same question in a justifiable way, and the options that answer another question are taught beside it
 :::
 
 ::: notes

@@ -14,47 +14,47 @@ load <- datawizard::data_read("_model-outputs/efa_loadings.csv", verbose = FALSE
 phi  <- datawizard::data_read("_model-outputs/efa_factor_corr.csv", verbose = FALSE)
 cfa  <- datawizard::data_read("_model-outputs/cfa_fit.csv", verbose = FALSE)
 rel  <- datawizard::data_read("_model-outputs/scale_reliability.csv", verbose = FALSE)
-pct <- function(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)
-num <- function(x, d = 2) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
+pct <- function(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)  # r-style: approved
+num <- function(x, d = 2) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)  # r-style: approved
 n_resp <- prev$n_respondents[1]
 
 scale_order <- c("cosmopolitan", "utilitarian", "communitarian", "libertarian")
 item_order  <- prev |> datawizard::data_modify(scale = factor(scale, scale_order)) |> datawizard::data_arrange("scale") |> dplyr::pull(item)
-tet_r <- function(a, b) tet$tetrachoric[tet$item == a & tet$with == b]
+tet_r <- function(a, b) tet$tetrachoric[tet$item == a & tet$with == b]  # r-style: approved
 
 l4 <- load |> datawizard::data_filter(solution == "4-factor")
 l2 <- load |> datawizard::data_filter(solution == "2-factor")
-ld <- function(item, f, sol = l4) sol[[f]][sol$item == item]
+ld <- function(item, f, sol = l4) sol[[f]][sol$item == item]  # r-style: approved
 phi4 <- phi |> datawizard::data_filter(solution == "4-factor")
 phi2 <- phi |> datawizard::data_filter(solution == "2-factor")
-fit <- function(m, col) cfa[[col]][cfa$model == m]
-alpha <- function(s) rel$ordinal_alpha[rel$scale == s]
+fit <- function(m, col) cfa[[col]][cfa$model == m]  # r-style: approved
+alpha <- function(s) rel$ordinal_alpha[rel$scale == s]  # r-style: approved
 # the caption of the loadings table, built here because a colon inside a YAML
 # !expr string is read as a mapping
 # section 9: the outcome decisions of the curve, from the files written by the course
 # pipeline; every fit there is on country-year aggregates
-curve <- readr::read_csv("../cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
-neg <- readr::read_csv("../cases/europeanisation/data/spec_curve_negative.csv", show_col_types = FALSE)
-forks <- readr::read_csv("../cases/europeanisation/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+curve <- readr::read_csv("../data/spec_curve.csv", show_col_types = FALSE)
+neg <- readr::read_csv("../data/spec_curve_negative.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive")
-devs <- readr::read_csv("../cases/europeanisation/data/menu_deviations.csv", show_col_types = FALSE) |>
+devs <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive", axis == "construction")
-dev_rows <- readr::read_csv("../cases/europeanisation/data/menu_deviations_rows.csv.gz", show_col_types = FALSE)
-pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
-below_sig <- \(d) 100 * mean(d$supports & d$sig)
-fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
-dv <- \(op, col) devs[[col]][devs$option == op]
+dev_rows <- readr::read_csv("../data/menu_deviations_rows.csv.gz", show_col_types = FALSE)
+pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)  # r-style: approved
+below_sig <- \(d) 100 * mean(d$supports & d$sig)  # r-style: approved
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]  # r-style: approved
+dv <- \(op, col) devs[[col]][devs$option == op]  # r-style: approved
 # the reproduced specification, with the frame set and the item set left free
-at_ref <- \(d) d |>
+at_ref <- \(d) d |>  # r-style: approved
   dplyr::filter(predictor == "unemp", copredictor == "none", estimator == "fe_twoway",
          noop == "zero", cell_weight == "unweighted", measure == "wb_nat", pred_form == "raw")
-r_at <- \(d, out, items = "all") at_ref(d) |>
+r_at <- \(d, out, items = "all") at_ref(d) |>  # r-style: approved
   dplyr::filter(outcome == out, item_set == items) |>
   dplyr::pull(r_ca)
 count_ref <- at_ref(dev_rows) |>
   datawizard::data_filter(axis == "construction", option == "count", outcome == "mcosmo", item_set == "all")
 # cell means at the standard measurement settings, share and count side by side
-cell_wide <- datawizard::data_read("../cases/europeanisation/data/teney_panel_measurement.csv", verbose = FALSE) |>
+cell_wide <- datawizard::data_read("../data/teney_panel_measurement.csv", verbose = FALSE) |>
   datawizard::data_filter(item_set == "all", noop == "zero", cell_weight == "unweighted",
          outcome %in% c("mcosmo", "mpos", "mneg")) |>
   tidyr::pivot_wider(id_cols = c(cntry, year), names_from = c(construction, outcome),
@@ -68,12 +68,12 @@ cap_efa4 <- sprintf("The four-factor exploratory solution (minimum residual, obl
 # sections 10 and 11: the respondents who mention nothing, from the files of the
 # course panel and the curve, with percentages through pp(), which rounds halves
 # up as the specification menu does
-cy  <- datawizard::data_read("../cases/europeanisation/data/europeanisation_cy.csv", verbose = FALSE)
-pw  <- datawizard::data_read("../cases/europeanisation/data/teney_panel_weights.csv", verbose = FALSE)
-me  <- datawizard::data_read("../cases/europeanisation/data/teney_panel_measurement.csv", verbose = FALSE)
-mi  <- datawizard::data_read("../cases/europeanisation/data/spec_grid_mi.csv", verbose = FALSE)
-dg  <- datawizard::data_read("../cases/europeanisation/data/mi_diagnostics.csv", verbose = FALSE)
-noop_devs <- readr::read_csv("../cases/europeanisation/data/menu_deviations.csv", show_col_types = FALSE) |>
+cy  <- datawizard::data_read("../data/europeanisation_cy.csv", verbose = FALSE)
+pw  <- datawizard::data_read("../data/teney_panel_weights.csv", verbose = FALSE)
+me  <- datawizard::data_read("../data/teney_panel_measurement.csv", verbose = FALSE)
+mi  <- datawizard::data_read("../data/spec_grid_mi.csv", verbose = FALSE)
+dg  <- datawizard::data_read("../data/mi_diagnostics.csv", verbose = FALSE)
+noop_devs <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive", axis == "noop")
 noop_rows <- dev_rows |>
   datawizard::data_filter(curve == "positive", axis == "noop")
@@ -93,7 +93,7 @@ noop_t_cl <- fixest::coeftable(m_noop, vcov = ~cntry)["unemp", "t value"]
 
 # the reproduced specification under each rule: zero and drop from the curve,
 # split and the two imputations from their comparison with the zero twin
-ref_spec <- \(d) d |>
+ref_spec <- \(d) d |>  # r-style: approved
   dplyr::filter(outcome == "mcosmo", predictor == "unemp", copredictor == "none",
          estimator == "fe_twoway", item_set == "all", cell_weight == "unweighted",
          measure == "wb_nat", pred_form == "raw")
@@ -105,7 +105,7 @@ spec <- dplyr::bind_rows(
 ) |>
   datawizard::data_modify(rule = factor(rule, c("zero", "drop", "split", "mi_mice", "mi_amelia"))) |>
   datawizard::data_arrange("rule")
-sp <- \(rl, col) spec[[col]][spec$rule == rl]
+sp <- \(rl, col) spec[[col]][spec$rule == rl]  # r-style: approved
 
 # the rules across the curve; each deviation off the curve is set beside both of
 # its twins (zero and drop), so the specifications are counted once each
@@ -142,7 +142,7 @@ band <- purrr::map(seq(-0.6, 0.3, by = 0.05), \(d) {
 delta_zero <- -weighted.mean(ans$m_ans, ans$n_noop)
 ```
 
-In the Europeanisation and the economy case study, every outcome on the [specification menu](../cases/europeanisation/menu.qmd) is built from one survey question, and the six scales that the full menu offers as its frame set are six ways of adding up the answers to it, of which the curve of the claim keeps the three positive ones. The menu treats the choice among them as a decision about what the claim is about, and the choice of scoring rule, a share of a respondent's own mentions or a count of the items in the set, as a second decision of the same kind. It does not, however, show the instrument itself. This module of the [companion curriculum](index.qmd) takes the thirteen answer options apart: how often each is named, how the answers to them hang together, how many dimensions they hold, whether those dimensions are the four that the original author (OA) of the case study built and the course inherits, how far a scale of two items can be trusted as a measure, and what becomes of the respondents who name none of the thirteen. The subject is measurement rather than modelling. Nothing here changes which scales the course uses, for reasons that are given in section 8, but the module should leave you knowing more about the numbers before you choose one.
+In the Europeanisation and the economy case study, every outcome on the [specification menu](../menu.qmd) is built from one survey question, and the six scales that the full menu offers as its frame set are six ways of adding up the answers to it, of which the curve of the claim keeps the three positive ones. The menu treats the choice among them as a decision about what the claim is about, and the choice of scoring rule, a share of a respondent's own mentions or a count of the items in the set, as a second decision of the same kind. It does not, however, show the instrument itself. This module of the [companion curriculum](index.qmd) takes the thirteen answer options apart: how often each is named, how the answers to them hang together, how many dimensions they hold, whether those dimensions are the four that the original author (OA) of the case study built and the course inherits, how far a scale of two items can be trusted as a measure, and what becomes of the respondents who name none of the thirteen. The subject is measurement rather than modelling. Nothing here changes which scales the course uses, for reasons that are given in section 8, but the module should leave you knowing more about the numbers before you choose one.
 
 The tables of sections 1 to 9 are read from files that were written before the page was built. The respondent-level records are GESIS-licensed and are not distributed with the course, so the analyses were run once, on the facilitator's machine, by `companion/_model-outputs/fit_measurement.R`, and only aggregate tables were committed: item prevalences, a correlation matrix, eigenvalues, loadings and fit indices. The correlation matrix is enough to repeat every exploratory step below without the microdata, and the [Try it](#try-it) at the end of the module does so.
 
@@ -227,6 +227,7 @@ Read as a count of dimensions, the figure suggests two with a possible third, an
 
 Exploratory factor analysis asks which underlying dimensions, unconstrained by any prior assignment, best reproduce the correlations among the items, and reports for each item how strongly it belongs to each dimension. The solutions below were extracted by minimum-residual factoring from the tetrachoric matrix and rotated obliquely, which allows the dimensions to correlate with one another as substantive dimensions of an attitude generally do. @tbl-efa4 gives the four-factor solution, with the assignment made in the original paper beside each item, and loadings below 0.30 blanked so that the structure can be read at a glance; the two-factor solution follows in prose.
 
+<!-- r-style: skip -->
 ```{r}
 #| label: tbl-efa4
 #| tbl-cap: !expr cap_efa4
@@ -282,31 +283,31 @@ The two composites are the most reliable constructs on the menu, at `r num(alpha
 
 ## 8. Consequences for the menu {#sec-menu}
 
-When the results are set against the theory of section 2, the valence axis is recovered in full, and the first division among the items is between praise and blame. The materialist axis is recovered on the negative side, where the communitarian and libertarian items come apart exactly as the paper assigns them, and not on the positive side, where the items divide into the benefits that the Union delivers (peace, democracy, prosperity, social protection) and the mobility and diversity it permits (freedom to travel, cultural diversity), a line that cuts across the utilitarian and cosmopolitan scales. The second sentence of the first hypothesis, "the effect is stronger on the materialist dimensions", is thereby left as a comparison in which one of the two materialist scales is supported by the data and the other is a theoretical grouping that the data do not reproduce. The claim card that the analysts of the robustness study received contained the first sentence only, so none of the five reanalyses tested the comparison. This course does not test it either: the [background page](../cases/europeanisation/index.qmd#sec-questions) sets out the sentence of the paper from which the claim was taken, and the [multiverse module](multiverse.qmd) and the exercise page of each format explain why choosing which sentence to replicate is itself the first specification decision.
+When the results are set against the theory of section 2, the valence axis is recovered in full, and the first division among the items is between praise and blame. The materialist axis is recovered on the negative side, where the communitarian and libertarian items come apart exactly as the paper assigns them, and not on the positive side, where the items divide into the benefits that the Union delivers (peace, democracy, prosperity, social protection) and the mobility and diversity it permits (freedom to travel, cultural diversity), a line that cuts across the utilitarian and cosmopolitan scales. The second sentence of the first hypothesis, "the effect is stronger on the materialist dimensions", is thereby left as a comparison in which one of the two materialist scales is supported by the data and the other is a theoretical grouping that the data do not reproduce. The claim card that the analysts of the robustness study received contained the first sentence only, so none of the five reanalyses tested the comparison. This course does not test it either: the [background page](../background.qmd#sec-questions) sets out the sentence of the paper from which the claim was taken, and the [multiverse module](multiverse.qmd) and the exercise page of each format explain why choosing which sentence to replicate is itself the first specification decision.
 
 The full menu keeps the four published scales and the two composites as its frame set, in the knowledge of what the analyses on this page show about each of them. The published scales are the vocabulary of the claim under test and of the five reanalyses, and comparability with both is worth more to a replication exercise than a structure that fits a little better on the data it was read from. The two negative scales are, in any case, recovered by the data item for item. The composites were added by the course, and they have the strongest support in the items: the valence split is the first thing the eigenvalues show, the two-factor solution is clean, and the composites are the most reliable scales on the menu. The curve of the claim keeps three of the six, the cosmopolitan and utilitarian scales and the positive composite, because the claim names the positive dimensions, and section 9 explains where the three negative scales went. The page argues against treating the assignment of items to scales as a further fork of the multiverse. Which items make up 'cosmopolitan framing' is a question about the validity of a measure of a named construct, and the evidence above is the right kind of evidence for it. Which construct the claim is about is a separate matter, so a menu that offered alternative groupings as options would be asking participants to settle by choice a question that the item analyses have already addressed.
 
-The scoring rule is a different kind of decision, one about the question itself, since whether a respondent's answers enter as a share of their own mentions or as a count of the items in the set changes what 'more cosmopolitan framing' means, and no analysis of the items can settle it. The [specification menu](../cases/europeanisation/menu.qmd#level-estimand) presents the three rules as a decision about the question, and section 9 sets out why the count and the rate left the curve.
+The scoring rule is a different kind of decision, one about the question itself, since whether a respondent's answers enter as a share of their own mentions or as a count of the items in the set changes what 'more cosmopolitan framing' means, and no analysis of the items can settle it. The [specification menu](../menu.qmd#level-estimand) presents the three rules as a decision about the question, and section 9 sets out why the count and the rate left the curve.
 
 ## 9. The outcome on the curve {#sec-curve-outcome}
 
-When the course asked of every option on its menu whether it is a justifiable way of answering the claim, read as a claim about change within countries over time, three of the decisions made on this page came out in a way that the full menu does not show. The [decision map](../cases/europeanisation/menu.qmd#map) lays out every option of every decision, on the curve and off it, and the [specification menu](../cases/europeanisation/menu.qmd) gives the reasoning for each; this section takes the three that concern the construction of the outcome. The numbers come from the curve of the claim (`cases/europeanisation/data/spec_curve.csv`), the curve of the negative scales (`cases/europeanisation/data/spec_curve_negative.csv`) and the comparison of every option of the full menu with its twins on the curve (`cases/europeanisation/data/menu_deviations.csv`), all fitted on country-year aggregates and classed, like every point of the curve, by CR2 errors clustered by country with Satterthwaite degrees of freedom.
+When the course asked of every option on its menu whether it is a justifiable way of answering the claim, read as a claim about change within countries over time, three of the decisions made on this page came out in a way that the full menu does not show. The [decision map](../menu.qmd#map) lays out every option of every decision, on the curve and off it, and the [specification menu](../menu.qmd) gives the reasoning for each; this section takes the three that concern the construction of the outcome. The numbers come from the curve of the claim (`data/spec_curve.csv`), the curve of the negative scales (`data/spec_curve_negative.csv`) and the comparison of every option of the full menu with its twins on the curve (`data/menu_deviations.csv`), all fitted on country-year aggregates and classed, like every point of the curve, by CR2 errors clustered by country with Satterthwaite degrees of freedom.
 
 ### The negative scales {#sec-negative}
 
-The claim under test names the positive dimensions of framing, and the hypothesis from which it was taken has a second half, that poor economic performance increases the negative ones [@Teney2016DoesEUEconomic, p. 621]. The communitarian and libertarian scales and the negative composite answer that second half on a curve of their own, made of the same `r nrow(neg)` specifications and drawn by the [Specification curve page](../cases/europeanisation/curve.qmd#negative-scales) beside the curve of the claim: `r pp(below_sig(neg))` of its specifications lie in the direction of the hypothesis with CR2 p < 0.05, against `r pp(below_sig(curve))` on the curve of the claim. The two curves are not independent confirmations, for the reasons given under [Frame set](../cases/europeanisation/menu.qmd#frame-set) in the specification menu and in the [multiverse module](multiverse.qmd#sec-europeanisation). Reversed so that it points the way of the claim, the negative composite is the positive composite plus the rate of saying nothing, and once the mean of each country is removed the two correlate at `r num(cor(cell_wide$pos_within, cell_wide$neg_within))` across the 270 country-years. The communitarian scale contains the item 'unemployment', which ties the outcome to the predictor by content, and at the reproduced specification its claim-aligned partial correlation is `r num(r_at(neg, "mcomm"), 3)` with all thirteen items and `r num(r_at(neg, "mcomm", "un"), 3)` without that one. The libertarian scale moves little with the economy, `r pp(below_sig(dplyr::filter(neg, outcome == "mlib")))` of its specifications lying in the direction of the hypothesis with CR2 p < 0.05 against `r pp(below_sig(dplyr::filter(neg, outcome == "mcomm")))` of the communitarian ones.
+The claim under test names the positive dimensions of framing, and the hypothesis from which it was taken has a second half, that poor economic performance increases the negative ones [@Teney2016DoesEUEconomic, p. 621]. The communitarian and libertarian scales and the negative composite answer that second half on a curve of their own, made of the same `r nrow(neg)` specifications and drawn by the [Specification curve page](../curve.qmd#negative-scales) beside the curve of the claim: `r pp(below_sig(neg))` of its specifications lie in the direction of the hypothesis with CR2 p < 0.05, against `r pp(below_sig(curve))` on the curve of the claim. The two curves are not independent confirmations, for the reasons given under [Frame set](../menu.qmd#frame-set) in the specification menu and in the [multiverse module](multiverse.qmd#sec-europeanisation). Reversed so that it points the way of the claim, the negative composite is the positive composite plus the rate of saying nothing, and once the mean of each country is removed the two correlate at `r num(cor(cell_wide$pos_within, cell_wide$neg_within))` across the 270 country-years. The communitarian scale contains the item 'unemployment', which ties the outcome to the predictor by content, and at the reproduced specification its claim-aligned partial correlation is `r num(r_at(neg, "mcomm"), 3)` with all thirteen items and `r num(r_at(neg, "mcomm", "un"), 3)` without that one. The libertarian scale moves little with the economy, `r pp(below_sig(dplyr::filter(neg, outcome == "mlib")))` of its specifications lying in the direction of the hypothesis with CR2 p < 0.05 against `r pp(below_sig(dplyr::filter(neg, outcome == "mcomm")))` of the communitarian ones.
 
 ### Count and rate {#sec-count}
 
-The paper scores each scale as a share of the mentions of the respondent, and the curve keeps that rule because the claim concerns how citizens frame the EU, a matter of composition; the section [Scoring rule](../cases/europeanisation/menu.qmd#scoring-rule) of the specification menu gives the reasoning. A count of the items of the scale that a respondent mentions measures how much the respondent says about the EU in that register, and across the 270 country-years it mostly tracks how much respondents say about the EU at all: the cosmopolitan count correlates at `r num(cor(cell_wide$count_mcosmo, cell_wide$total))` with the mean number of items that respondents in the cell mention, the cosmopolitan share at `r num(cor(cell_wide$share_mcosmo, cell_wide$total))`, and the two versions of the same scale with each other at only `r num(cor(cell_wide$share_mcosmo, cell_wide$count_mcosmo))`. The count is the construct used by the reanalysts KEVF1 and 018OL, and the per-item rate, the count divided by the number of items in the scale, answers the same question about volume, since dividing by a constant leaves the test and the partial correlation of a linear model unchanged. Swapped into the `r dv("count", "n_pairs")` specifications of the curve, the count leaves `r pp(dv("count", "below_zero"))` of them below zero but only `r pp(dv("count", "below_zero_sig"))` below zero with CR2 p < 0.05, against `r pp(below_sig(curve))` on the curve itself, and it changes the class of `r pp(dv("count", "class_changes"))` of the pairs. At the reproduced specification the claim-aligned partial correlation falls from `r num(r_at(curve, "mcosmo"), 3)` with the share to `r num(count_ref$r_ca_dev, 3)` with the count, with a CR2 p-value of `r num(count_ref$p_dev, 2)`.
+The paper scores each scale as a share of the mentions of the respondent, and the curve keeps that rule because the claim concerns how citizens frame the EU, a matter of composition; the section [Scoring rule](../menu.qmd#scoring-rule) of the specification menu gives the reasoning. A count of the items of the scale that a respondent mentions measures how much the respondent says about the EU in that register, and across the 270 country-years it mostly tracks how much respondents say about the EU at all: the cosmopolitan count correlates at `r num(cor(cell_wide$count_mcosmo, cell_wide$total))` with the mean number of items that respondents in the cell mention, the cosmopolitan share at `r num(cor(cell_wide$share_mcosmo, cell_wide$total))`, and the two versions of the same scale with each other at only `r num(cor(cell_wide$share_mcosmo, cell_wide$count_mcosmo))`. The count is the construct used by the reanalysts KEVF1 and 018OL, and the per-item rate, the count divided by the number of items in the scale, answers the same question about volume, since dividing by a constant leaves the test and the partial correlation of a linear model unchanged. Swapped into the `r dv("count", "n_pairs")` specifications of the curve, the count leaves `r pp(dv("count", "below_zero"))` of them below zero but only `r pp(dv("count", "below_zero_sig"))` below zero with CR2 p < 0.05, against `r pp(below_sig(curve))` on the curve itself, and it changes the class of `r pp(dv("count", "class_changes"))` of the pairs. At the reproduced specification the claim-aligned partial correlation falls from `r num(r_at(curve, "mcosmo"), 3)` with the share to `r num(count_ref$r_ca_dev, 3)` with the count, with a CR2 p-value of `r num(count_ref$p_dev, 2)`.
 
 ### The item set {#sec-item-set}
 
-Both item sets stay on the curve, as the section [Item set](../cases/europeanisation/menu.qmd#item-set) of the specification menu explains: the thirteen items are the published measure, and the set without 'unemployment' removes a content overlap between outcome and predictor, since the item enters the denominator of every share and a rise in its mentions lowers every other share mechanically. The original paper removes the item from the communitarian scale in a robustness check [@Teney2016DoesEUEconomic, p. 633, fn. 5], and the course set drops it from every denominator. On the curve of the claim `r pp(below_sig(dplyr::filter(curve, item_set == "all")))` of the specifications with all thirteen items lie below zero with CR2 p < 0.05, against `r pp(below_sig(dplyr::filter(curve, item_set == "un")))` of those without the item; the decision carries `r pp(fk("item_set"))` of the variance of the curve, moving it alone changes the class of `r pp(fk("item_set", "crossing_rate"))` of the pairs of specifications that differ in nothing else, and at the reproduced specification the claim-aligned partial correlation moves from `r num(r_at(curve, "mcosmo"), 3)` to `r num(r_at(curve, "mcosmo", "un"), 3)`. The difference between the two sets is the part of the result that the overlap carries, and the curve keeps both so that the size of that part stays visible.
+Both item sets stay on the curve, as the section [Item set](../menu.qmd#item-set) of the specification menu explains: the thirteen items are the published measure, and the set without 'unemployment' removes a content overlap between outcome and predictor, since the item enters the denominator of every share and a rise in its mentions lowers every other share mechanically. The original paper removes the item from the communitarian scale in a robustness check [@Teney2016DoesEUEconomic, p. 633, fn. 5], and the course set drops it from every denominator. On the curve of the claim `r pp(below_sig(dplyr::filter(curve, item_set == "all")))` of the specifications with all thirteen items lie below zero with CR2 p < 0.05, against `r pp(below_sig(dplyr::filter(curve, item_set == "un")))` of those without the item; the decision carries `r pp(fk("item_set"))` of the variance of the curve, moving it alone changes the class of `r pp(fk("item_set", "crossing_rate"))` of the pairs of specifications that differ in nothing else, and at the reproduced specification the claim-aligned partial correlation moves from `r num(r_at(curve, "mcosmo"), 3)` to `r num(r_at(curve, "mcosmo", "un"), 3)`. The difference between the two sets is the part of the result that the overlap carries, and the curve keeps both so that the size of that part stays visible.
 
 ## 10. Respondents who mention nothing {#sec-noop}
 
-The [specification menu](../cases/europeanisation/menu.qmd) has a decision called **respondents who mention nothing** with five options, and this section and the next explain why it is there. Of the `r format(n_all, big.mark = ",")` respondents, `r format(n_noop, big.mark = ",")` (`r pp(100 * n_noop / n_all)`) answered the question of section 1 by mentioning none of the thirteen items, so that on every framing scale their score is zero divided by zero. The original paper and its five reanalyses resolved that in two different ways, mostly without saying so, and the people concerned are not a random slice of the sample. The curve of the claim keeps both of the two common rules, scoring the silent respondents zero and leaving them out, and the other three options are taught here beside the two rules.
+The [specification menu](../menu.qmd) has a decision called **respondents who mention nothing** with five options, and this section and the next explain why it is there. Of the `r format(n_all, big.mark = ",")` respondents, `r format(n_noop, big.mark = ",")` (`r pp(100 * n_noop / n_all)`) answered the question of section 1 by mentioning none of the thirteen items, so that on every framing scale their score is zero divided by zero. The original paper and its five reanalyses resolved that in two different ways, mostly without saying so, and the people concerned are not a random slice of the sample. The curve of the claim keeps both of the two common rules, scoring the silent respondents zero and leaving them out, and the other three options are taught here beside the two rules.
 
 The survey records two further codes for a respondent who ticks nothing, "other (spontaneous)" and "don't know", and the `r format(n_noop, big.mark = ",")` split three ways: `r format(n_dk, big.mark = ",")` said they did not know, `r format(n_oth, big.mark = ",")` gave an answer that was not on the list, and `r format(n_bl, big.mark = ",")` have no tick of any kind. These are three different kinds of respondent. Someone who says the EU means something that the list did not anticipate has an opinion. Someone who says they do not know may have none, or may have one they would rather not state. A blank row may be a refusal, an omission by the interviewer or a coding gap, and the file does not say which.
 
@@ -319,7 +320,7 @@ Whether that matters depends on who the silent respondents are, and on which com
 ```{r}
 #| label: tbl-noop-countries
 #| echo: false
-#| tbl-cap: "The four highest and four lowest no-opinion rates, each averaged over the years of its country. Source: `cases/europeanisation/data/teney_panel_weights.csv`."
+#| tbl-cap: "The four highest and four lowest no-opinion rates, each averaged over the years of its country. Source: `data/teney_panel_weights.csv`."
 tinytable::tt(
   by_c |> dplyr::slice(c(1:4, (dplyr::n() - 3):dplyr::n())) |>
     dplyr::transmute(Country = cntry, `No opinion` = pp(100 * rate))) |>
@@ -331,14 +332,14 @@ tinytable::tt(
 
 The menu has three deterministic rules, which code every silent respondent in the same way without fitting a model, and each is a statement about what the silent respondents mean. **Zero** treats them as people with no framing of any kind, which is the convention of the course panel and of the reproduced specification. **Drop** treats them as people who did not answer the question, which is what the code of OA did. **Split** takes the three codes at their word: "don't know" and blank are dropped as non-response, and "other" is kept at zero on the reasoning that an answer off the list is still an answer that contains no cosmopolitan content. The rules change the cell means before any model is fitted, and the average cosmopolitan cell mean is `r num(mean(me$value[me$construction == "share" & me$item_set == "all" & me$noop == "zero" & me$cell_weight == "unweighted" & me$outcome == "mcosmo"]), 3)` under zero and `r num(mean(me$value[me$construction == "share" & me$item_set == "all" & me$noop == "drop" & me$cell_weight == "unweighted" & me$outcome == "mcosmo"]), 3)` under drop.
 
-The rules also change the question. Under zero the estimand is the average framing among everyone interviewed, with silence counted as no framing, and the cell mean then equals the share among those who answered multiplied by the proportion who answered, so that the rate of saying nothing enters every scale. Under drop it is the average framing among people who have a framing at all, which suits the share as a measure, since a respondent with no mentions has no share, at the cost of conditioning on answering. Those are different populations, so by the test that is applied in the [specification menu](../cases/europeanisation/menu.qmd#what-each-decision-commits-you-to) the no-opinion rule is an estimand decision. It is classed with measurement on the menu because that is where the decision is made in practice, at the moment the outcome column is built, and a participant who meets it there should know that it also changes the estimand. Both rules stay on the curve, zero because the reproduction task rests on it and drop because it matches the construct and the code of the original study. Split stays off it, since its construct is no clearer than that of either rule and its results lie close to theirs.
+The rules also change the question. Under zero the estimand is the average framing among everyone interviewed, with silence counted as no framing, and the cell mean then equals the share among those who answered multiplied by the proportion who answered, so that the rate of saying nothing enters every scale. Under drop it is the average framing among people who have a framing at all, which suits the share as a measure, since a respondent with no mentions has no share, at the cost of conditioning on answering. Those are different populations, so by the test that is applied in the [specification menu](../menu.qmd#what-each-decision-commits-you-to) the no-opinion rule is an estimand decision. It is classed with measurement on the menu because that is where the decision is made in practice, at the moment the outcome column is built, and a participant who meets it there should know that it also changes the estimand. Both rules stay on the curve, zero because the reproduction task rests on it and drop because it matches the construct and the code of the original study. Split stays off it, since its construct is no clearer than that of either rule and its results lie close to theirs.
 
 Across the curve, the rule moves the share of specifications that lie below zero with CR2 p < 0.05 by a few points and the median correlation by a few hundredths:
 
 ```{r}
 #| label: tbl-noop-levels
 #| echo: false
-#| tbl-cap: "The no-opinion rules across the curve of the claim. Zero and drop are the two halves of the curve; split and the two imputations are swapped into the specifications to which they apply, the imputations only at the standard measurement settings. Sources: `cases/europeanisation/data/menu_deviations.csv` and `cases/europeanisation/data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The no-opinion rules across the curve of the claim. Zero and drop are the two halves of the curve; split and the two imputations are swapped into the specifications to which they apply, the imputations only at the standard measurement settings. Sources: `data/menu_deviations.csv` and `data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   noop_lev |>
     datawizard::data_modify(option = factor(option, c("zero", "drop", "split", "mi_mice", "mi_amelia"),
@@ -360,7 +361,7 @@ For the reproduced specification, the coefficient on unemployment for cosmopolit
 ```{r}
 #| label: tbl-noop-spec
 #| echo: false
-#| tbl-cap: "The reproduced C6HJR specification under each treatment of the respondents who mentioned nothing. Zero is the reproduced result; the imputed variants are tested by their clustered t pooled over ten imputations, since the imputation tier holds no CR2 test. Sources: `cases/europeanisation/data/spec_curve.csv` and `cases/europeanisation/data/menu_deviations_rows.csv.gz`."
+#| tbl-cap: "The reproduced C6HJR specification under each treatment of the respondents who mentioned nothing. Zero is the reproduced result; the imputed variants are tested by their clustered t pooled over ten imputations, since the imputation tier holds no CR2 test. Sources: `data/spec_curve.csv` and `data/menu_deviations_rows.csv.gz`."
 tinytable::tt(
   spec |>
     dplyr::transmute(Rule = c(zero = "zero (robustness study, course panel)", drop = "drop (original paper)",
@@ -386,7 +387,7 @@ Two engines are run on the case study, because they come from different traditio
 ```{r}
 #| label: tbl-mi
 #| echo: false
-#| tbl-cap: "The reproduced specification under multiple imputation, pooled over ten imputations by Rubin's rules, with conventional and with clustered errors. The fraction of missing information is the share of the uncertainty about the coefficient that is due to the silent respondents. Source: `cases/europeanisation/data/spec_grid_mi.csv`."
+#| tbl-cap: "The reproduced specification under multiple imputation, pooled over ten imputations by Rubin's rules, with conventional and with clustered errors. The fraction of missing information is the share of the uncertainty about the coefficient that is due to the silent respondents. Source: `data/spec_grid_mi.csv`."
 tinytable::tt(
   mi_spec |>
     datawizard::data_select(select = c("engine", "se", "estimate", "statistic", "fmi")) |>
@@ -418,8 +419,8 @@ Nothing in the observed data can distinguish missing at random from missing not 
 #| echo: false
 #| fig-width: 7
 #| fig-height: 3.8
-#| fig-cap: "The partial correlation of cosmopolitan framing with unemployment, two-way fixed effects, when every silent respondent is assigned the answered mean of their cell plus δ. Zero on the horizontal axis is the drop rule; the dashed line marks the average δ of the zero rule, and the burgundy point the zero rule itself, which applies a different δ to each cell. Sources: `cases/europeanisation/data/teney_panel_measurement.csv`, `cases/europeanisation/data/teney_panel_weights.csv` and `cases/europeanisation/data/spec_curve.csv`."
-minus <- function(x) gsub("-", "−", format(x), fixed = TRUE)
+#| fig-cap: "The partial correlation of cosmopolitan framing with unemployment, two-way fixed effects, when every silent respondent is assigned the answered mean of their cell plus δ. Zero on the horizontal axis is the drop rule; the dashed line marks the average δ of the zero rule, and the burgundy point the zero rule itself, which applies a different δ to each cell. Sources: `data/teney_panel_measurement.csv`, `data/teney_panel_weights.csv` and `data/spec_curve.csv`."
+minus <- function(x) gsub("-", "−", format(x), fixed = TRUE)  # r-style: approved
 ggplot2::ggplot(band, ggplot2::aes(delta, r)) +
   ggplot2::geom_vline(xintercept = 0, colour = "#848c94", linewidth = 0.4) +
   ggplot2::geom_vline(xintercept = delta_zero, colour = "#0e3b6a", linewidth = 0.5, linetype = 2) +
@@ -458,9 +459,9 @@ A second exercise stays closer to the menu. Fit the four-factor solution with a 
 Three exercises on the respondents who mention nothing use the files of sections 10 and 11.
 
 1. From `teney_panel_weights.csv`, plot the no-opinion rate against the unemployment rate across the 270 cells and describe the pattern in one sentence. Which mechanism does it rule out? Then remove the country means from both variables and plot again. What changes, and why does the second plot matter more for the curve of the claim?
-2. Find your preregistered specification in `cases/europeanisation/data/spec_curve.csv` and its twin under the other rule, which differs only in `noop`. Then look up its split twin in `cases/europeanisation/data/menu_deviations_rows.csv.gz` (`axis == "noop"`, `option == "split"`). Which rule is the split rule closest to, and why would you expect that from what it does with the three kinds of silent respondent?
+2. Find your preregistered specification in `data/spec_curve.csv` and its twin under the other rule, which differs only in `noop`. Then look up its split twin in `data/menu_deviations_rows.csv.gz` (`axis == "noop"`, `option == "split"`). Which rule is the split rule closest to, and why would you expect that from what it does with the three kinds of silent respondent?
 3. Rewrite the estimand statement for the zero rule and for the drop rule. Which word changes?
 
 ## Sources and provenance {#sec-sources}
 
-The question wording, the assignment of items to the four scales and the share rule are taken from the original paper of the Europeanisation case study [@Teney2016DoesEUEconomic, pp. 623 and 625], and its removal of the unemployment item as a robustness check from its fifth footnote. Every number in sections 1 to 8 was computed by `companion/_model-outputs/fit_measurement.R` on the respondent-level rebuild of the sixteen GESIS waves that the [module on panel data](panel-data.qmd#sec-sources) describes, with the tetrachoric correlations and the exploratory solutions from the psych package and the confirmatory models from lavaan, and only the aggregate tables it writes are committed: the prevalences, the tetrachoric matrix, the eigenvalues with their parallel-analysis benchmark, the loadings and factor correlations of the two exploratory solutions, the fit indices and standardised loadings of the three confirmatory models, and the reliability table. The numbers of sections 10 and 11 come from files written by the course pipeline into `cases/europeanisation/data/`: the counts of the respondents who mention nothing and the cell means under each rule (`teney_panel_weights.csv` and `teney_panel_measurement.csv`, by `R/europeanisation/07_measurement_panels.R`), the imputations, run with the mice and Amelia packages (`spec_grid_mi.csv` and `mi_diagnostics.csv`, by `08_mi_tier.R`), and the curve with the comparison of each option with its twins (`spec_curve.csv`, `menu_deviations.csv` and `menu_deviations_rows.csv.gz`, by `09_spec_curve.R` and `11_menu_deviations.R`). The respondent-level file is never distributed with the course, and the [data sources module](data-sources.qmd#sec-gesis) explains the registration route to the raw data.
+The question wording, the assignment of items to the four scales and the share rule are taken from the original paper of the Europeanisation case study [@Teney2016DoesEUEconomic, pp. 623 and 625], and its removal of the unemployment item as a robustness check from its fifth footnote. Every number in sections 1 to 8 was computed by `companion/_model-outputs/fit_measurement.R` on the respondent-level rebuild of the sixteen GESIS waves that the [module on panel data](panel-data.qmd#sec-sources) describes, with the tetrachoric correlations and the exploratory solutions from the psych package and the confirmatory models from lavaan, and only the aggregate tables it writes are committed: the prevalences, the tetrachoric matrix, the eigenvalues with their parallel-analysis benchmark, the loadings and factor correlations of the two exploratory solutions, the fit indices and standardised loadings of the three confirmatory models, and the reliability table. The numbers of sections 10 and 11 come from files written by the course pipeline into `data/`: the counts of the respondents who mention nothing and the cell means under each rule (`teney_panel_weights.csv` and `teney_panel_measurement.csv`, by `R/07_measurement_panels.R`), the imputations, run with the mice and Amelia packages (`spec_grid_mi.csv` and `mi_diagnostics.csv`, by `08_mi_tier.R`), and the curve with the comparison of each option with its twins (`spec_curve.csv`, `menu_deviations.csv` and `menu_deviations_rows.csv.gz`, by `09_spec_curve.R` and `11_menu_deviations.R`). The respondent-level file is never distributed with the course, and the [data sources module](data-sources.qmd#sec-gesis) explains the registration route to the raw data.

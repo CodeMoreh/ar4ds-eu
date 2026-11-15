@@ -13,7 +13,7 @@
 #               residuals and of the bounds of the share, prior sensitivity
 #               by power-scaling (priorsense) and the computational checks;
 #               only summaries and thinned draws leave the script.
-# Reads:        cases/europeanisation/data/europeanisation_cy.csv
+# Reads:        data/europeanisation_cy.csv
 # Writes:       companion/_model-outputs/bayes_panel_summary.csv
 #               companion/_model-outputs/bayes_panel_prior_draws.csv
 #               companion/_model-outputs/bayes_panel_ppc.csv
@@ -24,7 +24,7 @@
 #               companion/_model-outputs/bayes_panel_versions.txt
 #               (and the fitted models as fit_panel_*.rds, which git ignores)
 # Author:       Claude for CM
-# Last updated: 2026-11-06
+# Last updated: 2026-11-15
 ################################################################################
 
 set.seed(20261106)
@@ -34,7 +34,7 @@ out <- "companion/_model-outputs/"
 # country (unemp_within), which leaves the slope of a model with country
 # intercepts unchanged and keeps a country slope from standing in for a
 # difference of level between countries
-europeanisation <- readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE) |>
+europeanisation <- readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE) |>
   datawizard::demean(select = "unemp", by = "cntry") |>
   dplyr::mutate(year_f = factor(year))
 

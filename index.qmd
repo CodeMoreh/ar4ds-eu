@@ -29,9 +29,9 @@ verdict alone, as on the background page and in the decks. -->
 #| include: false
 # Numbers quoted on the page, read from the committed data files of the case study;
 # negative values carry a true minus sign.
-e_curve <- readr::read_csv("cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
-e_analysts <- readr::read_csv("cases/europeanisation/data/analysts5.csv", show_col_types = FALSE)
-e_cells <- nrow(readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE))
+e_curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
+e_analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
+e_cells <- nrow(readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE))
 e_spec <- format(nrow(e_curve), big.mark = ",")
 e_r <- sub("^-", "\u2212", formatC(c(max(e_analysts$r), min(e_analysts$r)), format = "f", digits = 3))
 ```
@@ -46,11 +46,11 @@ Hands-on training in {{< var workshop.format >}}
 # Europeanisation and the economy {#europeanisation-and-the-economy .unnumbered .unlisted}
 
 ::: {.home-lead}
-This site teaches reproduction, robustness and replication in R on one published claim, together with the reanalyses that the claim received in a many-analyst study and the replication that tested it with new data. It is part of Applied Replication for Data Skills (AR4DS), which teaches the same exercise on four case studies.
+This site, part of Applied Replication for Data Skills (AR4DS), teaches reproduction, robustness and replication in R on one published claim, together with the reanalyses that the claim received in a many-analyst study and the replication that tested it with new data.
 :::
 
 ::: {.home-cta}
-[Formats](#formats) [Read the background](cases/europeanisation/index.qmd)
+[Formats](#formats) [Read the background](background.qmd)
 :::
 
 :::::
@@ -76,7 +76,7 @@ A sociological paper of 2016 asked, from the Eurobarometer surveys of the years 
 The background page tells the story in four parts: the original study, its data and the selections behind them, SCORE and its robustness study [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], the five reanalysts, and the comparison of their results. The case study teaches the aggregation of repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r e_spec` specifications, on a panel of `r e_cells` country-years built from the Eurobarometer surveys and shipped with the workspace.
 
 ::: {.home-cta}
-[Read the background](cases/europeanisation/index.qmd)
+[Read the background](background.qmd)
 :::
 
 ::::
@@ -112,13 +112,13 @@ A replication on later Eurobarometer waves was judged not successful.
 ## Formats {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-The facilitator of a course chooses its format, and the link that you receive for a course leads to it, as does the card of each format below. Each format is an ordered route through the pages of this site, with a sidebar that lists its parts and the tools that it uses, a slides page, and links at the foot of every page to the part before and the part after. The one-day workshop works on the country-year panel alone, while the third day of the Extended course takes the respondents within it.
+The facilitator of a course chooses its format, and the link that you receive for a course leads to it, as does the card of each format below. Each format is an ordered route through the pages of this site, with a sidebar that lists its parts and the tools that it uses, a slides page, and links at the foot of every page to the part before and the part after.
 :::
 
 :::: {.home-grid}
 
 ::: {.home-track .home-reveal}
-### [Short session](tracks/europeanisation-short/index.qmd) {.unnumbered .unlisted}
+### [Short](tracks/short/index.qmd) {.unnumbered .unlisted}
 
 [Two halves, with R inside the slides]{.home-meta}
 
@@ -126,7 +126,7 @@ Three hours on the claim and its five reanalyses, with nothing to install and no
 :::
 
 ::: {.home-track .home-reveal}
-### [One-day workshop](tracks/europeanisation-one-day/index.qmd) {.unnumbered .unlisted}
+### [Day](tracks/day/index.qmd) {.unnumbered .unlisted}
 
 [Four parts, in the workspace]{.home-meta}
 
@@ -134,15 +134,7 @@ The claim and the credibility of social science, with the record of the paper in
 :::
 
 ::: {.home-track .home-reveal}
-### [Extended course](tracks/europeanisation-extended/index.qmd) {.unnumbered .unlisted}
-
-[Three days, built around the workshop]{.home-meta}
-
-A first day on open research and the tools, the same for every case study, the workshop as the second day, and a third day on the methods of the case study, from the panel to the respondents within it, which ends with a report of your own, written in Quarto and kept under Git.
-:::
-
-::: {.home-track .home-reveal}
-### [Self-study](tracks/self-study/index.qmd) {.unnumbered .unlisted}
+### [Independent](tracks/independent/index.qmd) {.unnumbered .unlisted}
 
 [At your own pace, in R]{.home-meta}
 
@@ -160,7 +152,7 @@ The case study for a reader who works alone, in R on your own machine, with the 
 ## The exercise {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-The one-day workshop, the Extended course, whose second day is the workshop, and the self-study route work through the same five tasks in the workspace, and the short session takes three of them in its deck. The decisions that the tasks ask for fall into three groups: those about the question that the analysis answers, those about how the variables are measured, and those about the model, how it is fitted and how its uncertainty is judged.
+The day and independent formats work through the same five tasks in the workspace, and the short format takes three of them in its deck. The decisions that the tasks ask for fall into three groups: those about the question that the analysis answers, those about how the variables are measured, and those about the model, how it is fitted and how its uncertainty is judged.
 :::
 
 :::: {.home-reveal}
@@ -168,7 +160,7 @@ The one-day workshop, the Extended course, whose second day is the workshop, and
 <details>
 <summary><span class="home-n">Task 1</span>The setup check</summary>
 
-Check that your tools work before the rest of the work depends on them: the check script of the workspace, or the setup cell of the deck in the short session.
+Check that your tools work before the rest of the work depends on them: the check script of the workspace, or the setup cell of the deck in the short format.
 
 </details>
 
@@ -182,27 +174,27 @@ Meet the country-year panel, write the estimand statement behind the claim, and 
 <details>
 <summary><span class="home-n">Task 3</span>The reproduction</summary>
 
-Choose one of the five analysts and reproduce the value recorded in the robustness study for that analyst, from the data behind it. Three of the five fitted their models on means of countries or of cells, and their results come back to the third decimal from files that the browser lab already holds, which is why the one-day workshop reproduces one of these three. The other two worked on respondents, whose files only a GESIS account can give.
+Choose one of the five analysts and reproduce the value recorded in the robustness study for that analyst, from the data behind it. Three of the five fitted their models on means of countries or of cells, and their results come back to the third decimal from files that the browser lab already holds, which is why the exercise reproduces one of these three. The other two worked on respondents, whose files only a GESIS account can give.
 
 </details>
 
 <details>
 <summary><span class="home-n">Task 4</span>The menu</summary>
 
-Work through the decisions that lie between the data and a result, try alternatives one change at a time, and send one exploration to the class chart. The [decision map](cases/europeanisation/menu.qmd#map) lays every decision out.
+Work through the decisions that lie between the data and a result, try alternatives one change at a time, and send one exploration to the class chart. The [decision map](menu.qmd#map) lays every decision out.
 
 </details>
 
 <details>
 <summary><span class="home-n">Task 5</span>Declaration and report</summary>
 
-Declare one specification in a short preregistration, run it, report it, and find where it sits among the `r e_spec` specifications of the [curve of the claim](cases/europeanisation/curve.qmd).
+Declare one specification in a short preregistration, run it, report it, and find where it sits among the `r e_spec` specifications of the [curve of the claim](curve.qmd).
 
 </details>
 
 ::::
 
-The exercise page of each format sets out its tasks in full, with the tool in which each is done: the [short session](tracks/europeanisation-short/exercise.qmd), the [one-day workshop](tracks/europeanisation-one-day/exercise.qmd), the [Extended course](tracks/europeanisation-extended/exercise.qmd) and the [self-study route](tracks/self-study/exercise.qmd).
+The exercise page of each format sets out its tasks in full, with the tool in which each is done: the [short](tracks/short/exercise.qmd), [day](tracks/day/exercise.qmd) and [independent](tracks/independent/exercise.qmd) formats.
 
 :::::
 ::::::
@@ -224,21 +216,21 @@ The main aim of the course is to introduce technical skills for modern empirical
 <details id="running-the-analyses">
 <summary>Running the analyses</summary>
 
-The exercise is done in R. The one-day workshop, the Extended course and the self-study route do it in the workspace on your own machine, which the [setup page](https://codemoreh.github.io/ar4ds/setup.html) on the AR4DS site installs in plain steps, and the short session in its deck, whose slides run R inside the browser. The [browser lab](cases/europeanisation/lab.qmd), a page that holds every task with the data in place and nothing installed, is the fallback. The respondent files behind the panel come from the GESIS archive, under a free account and terms that do not allow them to be passed on, so the Extended course, whose third day works on the respondents, asks each participant to download [the Eurobarometer files](https://codemoreh.github.io/ar4ds/setup.html#the-eurobarometer-files-for-the-individual-level-work) under an account of their own.
+The exercise is done in R. The day and independent formats do it in the workspace on your own machine, with R, Quarto and an IDE installed by the steps of the [setup page](https://codemoreh.github.io/ar4ds/setup.html) on the AR4DS site, and the short format in its deck, whose slides run R inside the browser. The [browser lab](lab.qmd), a page that holds every task with the data in place and nothing installed, is the fallback.
 
 </details>
 
 <details>
 <summary>The companion</summary>
 
-The [companion](companion/index.qmd) holds the teaching material of the course on this case study, in three groups: tools, data and sharing, and methods. Every module keeps its own page and stands on its own, so you can read one for the skill that it covers or take it in the place that a format gives it. A single day has room for the exercise and very little else, which is why the workshop points to the modules rather than working through them, while the Extended course teaches some of them as sessions and the self-study route is built out of them.
+The [companion](companion/index.qmd) holds the teaching material of the course on this case study, in three groups: tools, data and sharing, and methods. Every module keeps its own page and stands on its own, so you can read one for the skill that it covers or take it in the place that a format gives it.
 
 </details>
 
 <details>
 <summary>SCORE</summary>
 
-The claim comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication, and the exercise follows the design of its robustness study. The AR4DS site describes [the programme and the record of the four case studies of the course](https://codemoreh.github.io/ar4ds/score.html), and its page on [the robustness article](https://codemoreh.github.io/ar4ds/robustness-article.html) explains how the results of the analysts were placed on one scale and compared.
+The claim comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication, and the exercise follows the design of its robustness study. The AR4DS site describes [the programme](https://codemoreh.github.io/ar4ds/score.html), and its page on [the robustness article](https://codemoreh.github.io/ar4ds/robustness-article.html) explains how the results of the analysts were placed on one scale and compared.
 
 </details>
 
@@ -253,7 +245,7 @@ The claim comes from the work of SCORE, a programme that put claims from publish
 ## Getting started {.unnumbered .home-reveal}
 
 ::: {.home-intro .home-reveal}
-The short session needs nothing installed, because its deck runs R inside the browser. The one-day workshop, the Extended course and the self-study route work in the workspace, with R, Quarto and an IDE installed beforehand, and in the workshop the deck shows each step with its output. The browser lab holds every task as the fallback.
+The short format needs nothing installed, because its deck runs R inside the browser. The day and independent formats work in the workspace, with R, Quarto and an IDE installed beforehand, and in the day format the deck shows each step with its output. The browser lab holds every task as the fallback.
 :::
 
 :::: {.home-steps .home-reveal}
@@ -267,13 +259,13 @@ Install R, Quarto and an IDE (Positron, RStudio, VS Code, etc.), following the s
 ::: {.home-step}
 ### The workspace {.unnumbered .unlisted}
 
-Download the workspace of the case study as a zip file, open it in your IDE and run the check script. The report of the workspace, with the output of every chunk, is published on [a site of its own](https://codemoreh.github.io/ar4ds-eu-workspace/). [Download the workspace](https://codemoreh.github.io/ar4ds/setup.html#the-workspace)
+Download the workspace of the case study as a zip file, open it in your IDE and run the check script. The report of the workspace, with the output of every chunk, is published on [a site of its own](https://codemoreh.github.io/ar4ds-eu-workspace/). [Download the workspace]({{< var cases.europeanisation.workspace-zip >}})
 :::
 
 ::: {.home-step}
 ### The browser lab {.unnumbered .unlisted}
 
-The lab holds every task of the exercise in the browser, with nothing to install, and is the fallback when a machine or an installation fails on the day. [Open the browser lab](cases/europeanisation/lab.qmd)
+The lab holds every task of the exercise in the browser, with nothing to install, and is the fallback when a machine or an installation fails on the day. [Open the browser lab](lab.qmd)
 :::
 
 ::::

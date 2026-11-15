@@ -7,7 +7,7 @@
 #| fig-height: 7
 # The data × analysis matrix of the glossary, with the definition of each cell
 # in its words, drawn by repeatability_matrix() of the setup segment
-# (_segments/europeanisation/_setup.qmd), as on the one-day deck
+# (../slides/_segments/case/_setup.qmd), as on the deck of the day format
 repeatability_matrix()
 ```
 
@@ -46,9 +46,9 @@ The robustness study of SCORE, known as Multi100, took one claim from each of a 
 #| label: forest5
 #| fig-width: 9.5
 #| fig-height: 4.1
-# Copied from _segments/europeanisation/_p1-robustness.qmd (chunk forest5).
-# The five analysts of the robustness study on the same claim (cases/europeanisation/data/reference_marks.csv, with
-# the software and document format from cases/europeanisation/data/analysts5.csv), each placed on
+# Copied from ../slides/_segments/case/_p1-robustness.qmd (chunk forest5).
+# The five analysts of the robustness study on the same claim (data/reference_marks.csv, with
+# the software and document format from data/analysts5.csv), each placed on
 # the degrees of freedom of its own inference; an open circle marks the value
 # in the record of the robustness study where it differs, which is PRL47 alone, converted on
 # its respondent count. C6HJR highlighted. The label shows the software and
@@ -86,11 +86,11 @@ ggplot2::ggplot(fa, ggplot2::aes(r_placement, lab)) +
 
 ::: {.small}
 - All five estimates negative, with partial *r* from **`r fmt_num(min(five_r), 2)` to `r fmt_num(max(five_r), 2)`** on the degrees of freedom of each inference, and one of the five not significant even by the errors of its own model
-- The robustness study recorded PRL47 at *r* = `r fmt_num(mark_of("PRL47", "r_recorded"))` (open circle), because its *z* was converted on `r fmt_n(analysts5$n[analysts5$analyst_id == "PRL47"])` respondents
+- The robustness study recorded PRL47 at *r* = `r fmt_num(mark_of("PRL47", "r_recorded"))` (open circle), because its *z* was converted on `r format(analysts5$n[analysts5$analyst_id == "PRL47"], big.mark = ",")` respondents
 :::
 
 ::: {.src}
-Task 2 results as recorded in the public dataset of the robustness study (osf.io/q5h2c); PRL47 placed on the `r fmt_num(mark_of("PRL47", "df_placement"), 1)` Satterthwaite df of a course refit of its design (cases/europeanisation/data/reference_marks.csv).
+Task 2 results as recorded in the public dataset of the robustness study (osf.io/q5h2c); PRL47 placed on the `r fmt_num(mark_of("PRL47", "df_placement"), 1)` Satterthwaite df of a course refit of its design (data/reference_marks.csv).
 :::
 
 ::: notes

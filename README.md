@@ -1,6 +1,6 @@
 # AR4DS – Europeanisation and the economy
 
-The site of the Europeanisation and the economy case study of Applied Replication for Data Skills (AR4DS), a course in reproduction, robustness and replication in R taught on published claims. Facilitator: [Chris Moreh](https://chrismoreh.com). The site deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>; the other case studies and the pages that every case study shares are on the [AR4DS site](https://codemoreh.github.io/ar4ds/).
+The site of the Europeanisation and the economy case study of Applied Replication for Data Skills (AR4DS), a course in reproduction, robustness and replication in R taught on published claims. Facilitator: [Chris Moreh](https://chrismoreh.com). The site deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>; the pages shared by the whole course are on the [AR4DS site](https://codemoreh.github.io/ar4ds/).
 
 The case study is a claim from a study of how Europeans frame the European Union (Teney, 2016, *European Sociological Review*): poor national economic performance lowers the positive framing of the EU. Five analysts reanalysed the claim for the robustness study (Multi100) of SCORE (Alipourfard et al., 2021), published in *Nature* (Aczel et al., 2026), and a preregistered replication tested it on later Eurobarometer waves. The data are Eurobarometer microdata from GESIS, which require a registration and may not be redistributed, so the course aggregates them to a panel of 270 country-years.
 
@@ -8,35 +8,36 @@ The case study is a claim from a study of how Europeans frame the European Union
 
 | Format | Folder | Taught in |
 |---|---|---|
-| Short session, in two halves | `tracks/europeanisation-short/` | the live deck, whose cells run R in the browser, with the browser lab as the fallback |
-| One-day workshop, in four parts | `tracks/europeanisation-one-day/` | the workspace, with the deck showing each step and serving, with the browser lab, as the fallback |
-| Extended course, three days built around the workshop | `tracks/europeanisation-extended/` | the workspace, with the deck and the browser lab as the fallback on the day of the workshop |
-| Self-study | `tracks/self-study/` | the workspace |
+| Short, in two halves | `tracks/short/` | the live deck, whose cells run R in the browser, with the browser lab as the fallback |
+| Day, in four parts | `tracks/day/` | the workspace, with the deck showing each step and serving, with the browser lab, as the fallback |
+| Independent, in five stages | `tracks/independent/` | the workspace |
+| Long, three days built around the day format | `tracks/long/` | kept in the repository and left out of the build, with the four decks of its third day |
 
-Each format is reached from the opening page and has a docked sidebar (`_sidebar.yml`) that lists its pages in teaching order, its exercise page among them, and the tools that it uses, and a slides page that embeds its deck: the live decks of the short session and of the one-day workshop in `live/`, whose cells run R in the browser, or the full deck of the self-study route in `slides/`, assembled from `slides/_segments/europeanisation/`. The run sheet of the facilitator, with the timings, is `facilitator/europeanisation-guide.qmd`.
+Each format is reached from the opening page and has a docked sidebar (`_sidebar.yml`) that lists its pages in teaching order, its exercise page among them, and the tools that it uses, and a slides page that embeds its deck: the live decks of the short and day formats, `live/short.qmd` and `live/day.qmd`, whose cells run R in the browser, or the full deck of the independent format, `slides/full.qmd`, assembled from `slides/_segments/case/`. The run sheet of the facilitator, with the timings, is `facilitator/guide.qmd`, which is left out of the build like the rest of `facilitator/`.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
 | `index.qmd` | The home page |
-| `cases/europeanisation/` | The background page, the browser lab, the specification menu with the decision map, the specification curve with the reading on inference, the class results, the cheatsheet, the parts that the exercise pages of the formats include (`_exercise-*.qmd`), and `data/` with a codebook for every file |
+| `background.qmd`, `menu.qmd`, `curve.qmd`, `class-results.qmd`, `lab.qmd`, `cheatsheet.qmd` | The background page, the specification menu with the decision map, the specification curve with the reading on inference, the class results, the browser lab and the cheatsheet |
+| `_includes/` | The parts that the exercise pages of the formats include (`_exercise-*.qmd`), the helpers of the browser lab and the live decks (`_lab-helpers.qmd`), the download of the workspace (`_workspace.qmd`), and the scripts of the opening page and of the navbar item of the last-opened format |
 | `tracks/` | The formats |
-| `slides/` | The full deck of the self-study route and the decks of day 3 of the Extended course, with their segments, of which the live deck of the workshop shares many |
-| `live/` | The live decks of the short session and of the one-day workshop, whose slides carry the cells of the browser lab, with the segments of their own in `live/_segments/` |
-| `companion/` | The modules of the companion, written on the data of the case study; `_model-outputs/` holds the scripts and aggregate outputs behind them |
-| `R/europeanisation/` | The pipeline that builds the data files of the case study; `R/europeanisation/README.md` gives the order |
-| `data-raw/europeanisation/` | The archived Eurostat tables that the pipeline reads |
-| `data/` | The published estimates of the 29 teams of Silberzahn et al. (2018), with their codebook |
-| `facilitator/` | The run sheet and the notes on the formats, rendered but not linked; the setup note of the class-results pipeline and the code of its Cloudflare Worker, which the sites of all the case studies use |
-| `resources.qmd` | Readings, records and tools |
+| `slides/` | The full deck of the independent format, with its segments in `slides/_segments/case/`, of which the live deck of the day format shares many, and the four decks of the third day of the long format with their segments in `slides/_segments/day-3/`, left out of the build |
+| `live/` | The live decks of the short and day formats, whose slides carry the cells of the browser lab, with the segments of their own in `live/_segments/` |
+| `companion/` | The modules of the companion, written on the data of the case study; `_model-outputs/` holds the scripts and aggregate outputs behind them. Multilevel models and Bayesian estimation stay in the repository and are left out of the build |
+| `R/` | The pipeline that builds the data files of the case study; `R/README.md` gives the order |
+| `data-raw/` | The archived Eurostat tables that the pipeline reads |
+| `data/` | The data of the case study, each file with its codebook, and the published estimates of the 29 teams of Silberzahn et al. (2018) |
+| `facilitator/` | The run sheet and the notes on the formats, left out of the build; the setup note of the class-results pipeline and the code of its Cloudflare Worker, which every site of the course uses |
+| `resources.qmd` | Readings, records, tools and the references of the site |
 | `_variables.yml` | Site variables and the next-delivery block |
 
 The downloadable workspace of the case study is the repository [`CodeMoreh/ar4ds-eu-workspace`](https://github.com/CodeMoreh/ar4ds-eu-workspace), and the browser lab carries the same helper functions. Participants who build the panel from the raw files download the Eurobarometer waves from GESIS themselves, because the licence forbids redistribution.
 
 ## The data
 
-The case study keeps its data in `cases/europeanisation/data/`, each file with a codebook beside it.
+The case study keeps its data in `data/`, each file with a codebook beside it.
 
 | File | What it is |
 |---|---|

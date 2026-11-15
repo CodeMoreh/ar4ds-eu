@@ -9,49 +9,49 @@ bibliography: [../references.bib, ../references-new.bib]
 #| include: false
 # pct_eu() takes values already in per cent and rounds halves up, as the
 # specification menu does, so that the pages agree
-eu_curve <- readr::read_csv("../cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
-forks <- readr::read_csv("../cases/europeanisation/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+eu_curve <- readr::read_csv("../data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive")
-devs <- readr::read_csv("../cases/europeanisation/data/menu_deviations.csv", show_col_types = FALSE) |>
+devs <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive")
-eu_menu <- readr::read_csv("../cases/europeanisation/data/menu_options.csv", show_col_types = FALSE)
-periods <- readr::read_csv("../cases/europeanisation/data/display_periods.csv", show_col_types = FALSE)
-loo <- readr::read_csv("../cases/europeanisation/data/display_loo.csv", show_col_types = FALSE)
-bailout <- readr::read_csv("../cases/europeanisation/data/display_bailout.csv", show_col_types = FALSE)
-cnames <- readr::read_csv("../cases/europeanisation/data/display_country_means.csv", show_col_types = FALSE) |>
+eu_menu <- readr::read_csv("../data/menu_options.csv", show_col_types = FALSE)
+periods <- readr::read_csv("../data/display_periods.csv", show_col_types = FALSE)
+loo <- readr::read_csv("../data/display_loo.csv", show_col_types = FALSE)
+bailout <- readr::read_csv("../data/display_bailout.csv", show_col_types = FALSE)
+cnames <- readr::read_csv("../data/display_country_means.csv", show_col_types = FALSE) |>
   datawizard::data_select(select = c("cntry", "country"))
 
 # fixed decimals and a true minus sign
-num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
-pct_eu <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
-minus <- \(x) gsub("-", "−", format(x), fixed = TRUE)
+num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")  # r-style: approved
+pct_eu <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")  # r-style: approved
+minus <- \(x) gsub("-", "−", format(x), fixed = TRUE)  # r-style: approved
 
 # shares of a set of curve rows below zero, and below zero with CR2 p < 0.05
-below <- \(d) 100 * mean(d$supports)
-below_sig <- \(d) 100 * mean(d$supports & d$sig)
-fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
-dv <- \(ax, op, col) devs[[col]][devs$axis == ax & devs$option == op & devs$rule == "cr2"]
+below <- \(d) 100 * mean(d$supports)  # r-style: approved
+below_sig <- \(d) 100 * mean(d$supports & d$sig)  # r-style: approved
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]  # r-style: approved
+dv <- \(ax, op, col) devs[[col]][devs$axis == ax & devs$option == op & devs$rule == "cr2"]  # r-style: approved
 eu_ref <- eu_curve |> datawizard::data_filter(is_reference)
 twoway <- eu_curve |> datawizard::data_filter(estimator == "fe_twoway")
 country <- eu_curve |> datawizard::data_filter(estimator == "fe_country")
 
 # the displays of section 8.5: the reproduced specification and its country twin
-is_ref_spec <- \(d) d$outcome == "mcosmo" & d$predictor == "unemp" & d$copredictor == "none" &
+is_ref_spec <- \(d) d$outcome == "mcosmo" & d$predictor == "unemp" & d$copredictor == "none" &  # r-style: approved
   d$pred_form == "raw"
-per_ref <- \(smp, col) periods[[col]][is_ref_spec(periods) & periods$estimator == "fe_twoway" &
+per_ref <- \(smp, col) periods[[col]][is_ref_spec(periods) & periods$estimator == "fe_twoway" &  # r-style: approved
                                         periods$sample == smp]
 per_unemp <- periods |> datawizard::data_filter(predictor == "unemp")
 loo_two <- loo |> datawizard::data_filter(estimator == "fe_twoway", left_out != "none")
 loo_cty <- loo |> datawizard::data_filter(estimator == "fe_country", left_out != "none")
-vs <- \(cc) loo_two$variation_share[loo_two$left_out == cc]
-ba <- \(grp, col) bailout[[col]][bailout$outcome == "mcosmo" & bailout$predictor == "unemp" &
+vs <- \(cc) loo_two$variation_share[loo_two$left_out == cc]  # r-style: approved
+ba <- \(grp, col) bailout[[col]][bailout$outcome == "mcosmo" & bailout$predictor == "unemp" &  # r-style: approved
                                    bailout$estimator == "fe_twoway" & bailout$group == grp]
 design_label <- c(fe_twoway = "Two-way fixed effects", fe_country = "Country fixed effects")
 ```
 
 This module of the [companion curriculum](index.qmd) works on the Europeanisation and the economy case study.
 
-The module is about the method that the course teaches, the multiverse or specification curve: where the idea came from, what it is claimed to do, and the arguments that are now being made against it. The course has you run one. You fix a specification in a preregistration, fit it, and read your result against the `r nrow(eu_curve)` specifications of the curve of the claim on the [Class results page](../cases/europeanisation/class-results.qmd). The method is under live debate in 2025–26, the objections to it are serious, and the aim of the module is that you can take a position in that debate.
+The module is about the method that the course teaches, the multiverse or specification curve: where the idea came from, what it is claimed to do, and the arguments that are now being made against it. The course has you run one. You fix a specification in a preregistration, fit it, and read your result against the `r nrow(eu_curve)` specifications of the curve of the claim on the [Class results page](../class-results.qmd). The method is under live debate in 2025–26, the objections to it are serious, and the aim of the module is that you can take a position in that debate.
 
 ## 1. Origins {#sec-origins}
 
@@ -59,7 +59,7 @@ The founding statement is a 2016 paper by Steegen, Tuerlinckx, Gelman and Vanpae
 
 The multiverse of the original paper was *customised for critique*: the alternative datasets were choices that the original authors of the target study "might themselves have considered", drawn from their own prior publications. It was therefore a post-mortem on the flexibility of one team rather than a general survey of the ways in which the question could be answered, and the distinction matters again in section 2. Steegen and colleagues also place the idea in an older lineage that runs through perturbation and sensitivity analysis in economics and Bayesian statistics; what the 2016 paper added to that lineage was the demand that the whole distribution of results be shown.
 
-The modelling side was developed separately as **specification curve analysis** [@SimonsohnEtAl2020SpecificationCurveAnalysis], which enumerates the defensible ways of specifying a test, estimates all of them, plots the estimates in order and, in its full form, tests the curve as a whole against a null distribution built by permutation, that is, by reshuffling the data so that any true effect is removed; the Specification curve page of the course uses this display. A distinct strand kept the data and the question fixed and varied the *analysts*, from the 29 teams of the red-card study [@SilberzahnEtAl2018ManyAnalystsOne] and the 73 teams of @BreznauEtAl2022ObservingManyResearchers to the 457 reanalysts of the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], among whose hundred claims is the claim of the Europeanisation case study, with its five reanalysts presented on the [background page](../cases/europeanisation/index.qmd#sec-reanalysts); the [meta-analysis module](meta-analysis.qmd#sec-crowds) reads the two earlier studies in detail. A further strand proposes Bayesian hierarchical models for aggregating such data [@HoogeveenEtAl2020ImprovingStatisticalAnalysis]. The course combines the strands: the curve of the claim is a model multiverse, and the five analysts of the robustness study and the class chart are a many-analysts layer beside it, meant to be read against it.
+The modelling side was developed separately as **specification curve analysis** [@SimonsohnEtAl2020SpecificationCurveAnalysis], which enumerates the defensible ways of specifying a test, estimates all of them, plots the estimates in order and, in its full form, tests the curve as a whole against a null distribution built by permutation, that is, by reshuffling the data so that any true effect is removed; the Specification curve page of the course uses this display. A distinct strand kept the data and the question fixed and varied the *analysts*, from the 29 teams of the red-card study [@SilberzahnEtAl2018ManyAnalystsOne] and the 73 teams of @BreznauEtAl2022ObservingManyResearchers to the 457 reanalysts of the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], among whose hundred claims is the claim of the Europeanisation case study, with its five reanalysts presented on the [background page](../background.qmd#sec-reanalysts); the [meta-analysis module](meta-analysis.qmd#sec-crowds) reads the two earlier studies in detail. A further strand proposes Bayesian hierarchical models for aggregating such data [@HoogeveenEtAl2020ImprovingStatisticalAnalysis]. The course combines the strands: the curve of the claim is a model multiverse, and the five analysts of the robustness study and the class chart are a many-analysts layer beside it, meant to be read against it.
 
 ## 2. Three purposes {#sec-purposes}
 
@@ -67,7 +67,7 @@ Rohrer, Hullman and Gelman ask the question that organises the current debate, w
 
 The three purposes impose different rules for building the set of specifications. A multiverse built for critique may mix analyses that answer slightly different questions, since its aim is to show that researchers plausibly disagree about the question, and "it may be perfectly sensible to include analyses with different estimands as long as it is plausible that researchers may try out different estimands" [@RohrerEtAl2026WhatsMultiverseGood, p. 6]. The same set cannot then be read as inference about one quantity. Hullman puts the condition in a companion blog post: "what kinds of equivalence are needed will also depend on your goal in using a multiverse" [@Hullman2026WhatMultiverseGood].
 
-The course builds its artefacts to different rules for that reason. The [specification menu](../cases/europeanisation/menu.qmd) of fourteen decisions, the [decision map](../cases/europeanisation/menu.qmd#map) and the class chart serve reflection, since they make visible how much a result depends on decisions that look arbitrary from outside, and they show options that answer other questions beside those that answer the claim. The curve of `r nrow(eu_curve)` is built to the standard that inference would require and is used to persuade: every specification on it is meant to answer the claim as the course reads it, and the two decisions that leave two estimands on it, the estimator and the predictor, are named as such, and section 8 reads the curve against the arguments of sections 3 to 5.
+The course builds its artefacts to different rules for that reason. The [specification menu](../menu.qmd) of fourteen decisions, the [decision map](../menu.qmd#map) and the class chart serve reflection, since they make visible how much a result depends on decisions that look arbitrary from outside, and they show options that answer other questions beside those that answer the claim. The curve of `r nrow(eu_curve)` is built to the standard that inference would require and is used to persuade: every specification on it is meant to answer the claim as the course reads it, and the two decisions that leave two estimands on it, the estimator and the predictor, are named as such, and section 8 reads the curve against the arguments of sections 3 to 5.
 
 ::: {.callout-tip}
 ## Try it
@@ -107,22 +107,22 @@ Hullman gives a further reason why this literacy will matter more. Building a mu
 
 ## 8. The Europeanisation curve {#sec-europeanisation}
 
-The Europeanisation case study shows the debate on a curve of `r nrow(eu_curve)` specifications, built from a menu of fourteen decisions, on which the strength of the evidence depends on the decisions. Its claim, from a paper of 2016 [@Teney2016DoesEUEconomic], is that "poor national economic performances significantly decrease positive EU-framing dimensions". The subsections below read the arguments of sections 3 to 5 against that curve, and the last sets out the displays that the course keeps beside it. The section is a companion to [the inference reading](../cases/europeanisation/curve.qmd#inference) of the case study, which covers one narrow question, namely what a test of the curve as a whole can and cannot establish.
+The Europeanisation case study shows the debate on a curve of `r nrow(eu_curve)` specifications, built from a menu of fourteen decisions, on which the strength of the evidence depends on the decisions. Its claim, from a paper of 2016 [@Teney2016DoesEUEconomic], is that "poor national economic performances significantly decrease positive EU-framing dimensions". The subsections below read the arguments of sections 3 to 5 against that curve, and the last sets out the displays that the course keeps beside it. The section is a companion to [the inference reading](../curve.qmd#inference) of the case study, which covers one narrow question, namely what a test of the curve as a whole can and cannot establish.
 
 ### 8.1 Pruning a menu of fourteen decisions {#sec-eu-pruning}
 
 The Europeanisation case study applied the test of Auspurg, and the stricter standard that Rohrer and colleagues set for a multiverse used for inference, to its own menu: every option of every decision was asked whether it is a justifiable way of answering the claim as the course reads it, and the options that failed left the curve without leaving the course. Three of her categories reappeared. The pooled estimator, fitted without country effects, falls in her first category, and so do the conventional standard errors of the fixed-effects designs, which treat the ten years of a country as independent, so the curve keeps the two fixed-effects designs and classes every point by CR2 errors clustered by country with Satterthwaite degrees of freedom, as the [module on panel data](panel-data.qmd#sec-inference) explains; the four restricted samples are versions of her second category, and the findings that they carry are kept in the displays of section 8.5; and her fourth category, measurement nonequivalence, described the outcome axis of the full menu, on which six framing scales of different scope stood in for 'EU framing'.
 
-The four scales of the paper are shares of one instrument that sum to one for each respondent who mentions anything, so that a confirmation of the claim on a negative scale largely counts the result on the positive scales a second time, which is why the curve keeps the three positive scales that the claim names, scored as shares, and the negative scales have a curve of their own, as [the measurement module](measurement.qmd#sec-negative) works through and the section on the frame set of the [specification menu](../cases/europeanisation/menu.qmd#frame-set) records.
+The four scales of the paper are shares of one instrument that sum to one for each respondent who mentions anything, so that a confirmation of the claim on a negative scale largely counts the result on the positive scales a second time, which is why the curve keeps the three positive scales that the claim names, scored as shares, and the negative scales have a curve of their own, as [the measurement module](measurement.qmd#sec-negative) works through and the section on the frame set of the [specification menu](../menu.qmd#frame-set) records.
 
-@fig-off-curve shows what each option that left the curve does when it is swapped into every specification of the curve with everything else held as it was. The reason recorded for each, in the list of options that the specification menu draws on (`cases/europeanisation/data/menu_options.csv`), is one of three: the option answers another question, it answers this question less well because an assumption that it needs fails on these data, or it is a check of an answer that the curve already holds.
+@fig-off-curve shows what each option that left the curve does when it is swapped into every specification of the curve with everything else held as it was. The reason recorded for each, in the list of options that the specification menu draws on (`data/menu_options.csv`), is one of three: the option answers another question, it answers this question less well because an assumption that it needs fails on these data, or it is a check of an answer that the curve already holds.
 
 ```{r}
 #| label: fig-off-curve
 #| echo: false
 #| fig-width: 7.5
 #| fig-height: 5
-#| fig-cap: !expr 'paste0("Options that left the curve of the claim, each swapped into the specifications of the curve to which it applies: the share of the refitted specifications that lie below zero with p < 0.05. The vertical line marks the curve itself (", pct_eu(below_sig(eu_curve)), "). Each option is tested under the rule that fits it: CR2 errors with Satterthwaite degrees of freedom for linear models fitted by least squares and for the within–between model, and errors clustered by country on 26 degrees of freedom for random effects, the beta family and the imputed variants. The two imputation engines cover 24 specifications; the count stands for the rate, whose t and partial correlation are identical. Sources: `cases/europeanisation/data/menu_deviations.csv`, `cases/europeanisation/data/menu_options.csv`.")'
+#| fig-cap: !expr 'paste0("Options that left the curve of the claim, each swapped into the specifications of the curve to which it applies: the share of the refitted specifications that lie below zero with p < 0.05. The vertical line marks the curve itself (", pct_eu(below_sig(eu_curve)), "). Each option is tested under the rule that fits it: CR2 errors with Satterthwaite degrees of freedom for linear models fitted by least squares and for the within–between model, and errors clustered by country on 26 degrees of freedom for random effects, the beta family and the imputed variants. The two imputation engines cover 24 specifications; the count stands for the rate, whose t and partial correlation are identical. Sources: `data/menu_deviations.csv`, `data/menu_options.csv`.")'
 judgement_label <- c(other_question = "answers another question",
                      weaker_answer = "answers this question less well",
                      check = "a check of an answer on the eu_curve")
@@ -149,7 +149,7 @@ Read against Auspurg, the pruning changes the picture in the direction that her 
 ::: {.callout-tip}
 ## Try it
 
-Pick one decision of the [specification menu](../cases/europeanisation/menu.qmd) and write Auspurg's case for pruning it. Which of her four nonequivalence categories applies, and what would the curve look like if the decision were fixed at its best-justified option? Then write the case for keeping it, in Rohrer, Hullman and Gelman's terms: which purpose does varying this decision serve? The estimator and the sample are the two decisions where both cases are strong. Compare what you have written with the reason that the menu gives for each option.
+Pick one decision of the [specification menu](../menu.qmd) and write Auspurg's case for pruning it. Which of her four nonequivalence categories applies, and what would the curve look like if the decision were fixed at its best-justified option? Then write the case for keeping it, in Rohrer, Hullman and Gelman's terms: which purpose does varying this decision serve? The estimator and the sample are the two decisions where both cases are strong. Compare what you have written with the reason that the menu gives for each option.
 :::
 
 ### 8.2 One correct analysis on the curve of the claim {#sec-eu-lakens}
@@ -168,7 +168,7 @@ The decomposition supports a more modest reading, in which it *locates* where th
 
 The rule of section 5 applies directly to the curve of the case study. The share of the specifications of the Europeanisation case study that support its claim – `r pct_eu(below(eu_curve))` below zero on the curve of `r nrow(eu_curve)`, `r pct_eu(below_sig(eu_curve))` below zero with CR2 p < 0.05 – is a description of a curated set of analyses, not the probability that the claim is true.
 
-When the course quotes these shares, they describe the curve that you are looking at, and the [inference reading](../cases/europeanisation/curve.qmd#inference) exists to police the boundary between that description and any claim about evidence. For the permutation test designed in that reading, this means that a probabilistic device, the permutation p-value, is applied to an object that the current literature says should be read possibilistically. The reading explains what the test licenses under its sharp null, the hypothesis that the effect is zero in every unit, and this module adds a warning about everything that the test does not license.
+When the course quotes these shares, they describe the curve that you are looking at, and the [inference reading](../curve.qmd#inference) exists to police the boundary between that description and any claim about evidence. For the permutation test designed in that reading, this means that a probabilistic device, the permutation p-value, is applied to an object that the current literature says should be read possibilistically. The reading explains what the test licenses under its sharp null, the hypothesis that the effect is zero in every unit, and this module adds a warning about everything that the test does not license.
 
 Rohrer and colleagues also observe that a multiverse persuades only under a precondition: "This can only work if the results are fairly unambiguous across specifications" [@RohrerEtAl2026WhatsMultiverseGood, p. 3]. On the curve of the claim the direction of the association meets that precondition, but the strength of the evidence does not, since whether a specification clears the 5% threshold depends mainly on the estimator: `r pct_eu(below_sig(country))` of the specifications with country effects alone lie below zero with CR2 p < 0.05, against `r pct_eu(below_sig(twoway))` of the two-way ones, and the reproduced specification itself has a CR2 p-value of `r num(eu_ref$p_cr2)`. The curve can therefore persuade a reader that the association runs in the direction of the claim within countries, and it leaves open whether the evidence is strong once the changes common to all of Europe are removed, which is a question about the estimand as much as about the data; the threshold itself is referred to the variation of the countries by the CR2 test, as the [module on panel data](panel-data.qmd#sec-inference) explains. If you ever build a multiverse to defend a result of your own, this is the precondition to check before you lean on it.
 
@@ -177,7 +177,7 @@ The class chart of the Europeanisation case study is a many-analysts demonstrati
 ::: {.callout-tip}
 ## Try it
 
-Open [the Class results page](../cases/europeanisation/class-results.qmd) and find the black mark for the specification that you declared in Task 5 (or the reproduced specification, if you did not submit one). First read its neighbourhood possibilistically: what is the full range of aligned estimates among specifications that differ from yours on exactly one decision? Then catch yourself the moment you start counting – 'most of my neighbours agree with me' – and write one sentence on what that count would and would not establish, given how this universe was built.
+Open [the Class results page](../class-results.qmd) and find the black mark for the specification that you declared in Task 5 (or the reproduced specification, if you did not submit one). First read its neighbourhood possibilistically: what is the full range of aligned estimates among specifications that differ from yours on exactly one decision? Then catch yourself the moment you start counting – 'most of my neighbours agree with me' – and write one sentence on what that count would and would not establish, given how this universe was built.
 :::
 
 ### 8.5 Heterogeneity and influence {#sec-heterogeneity}
@@ -191,7 +191,7 @@ The four sample restrictions of the menu of the Europeanisation case study left 
 #| echo: false
 #| fig-width: 8
 #| fig-height: 4
-#| fig-cap: "The 36 core specifications of the curve on the full panel and on each half of it, by design. Open circles have CR2 p < 0.05 and crosses p ≥ 0.05; the lines join the fits of one specification, and the burgundy line is the reproduced specification and its twin with country effects alone. The vertical axis is the claim-aligned partial correlation, so below zero is the direction of the claim. Source: `cases/europeanisation/data/display_periods.csv`."
+#| fig-cap: "The 36 core specifications of the curve on the full panel and on each half of it, by design. Open circles have CR2 p < 0.05 and crosses p ≥ 0.05; the lines join the fits of one specification, and the burgundy line is the reproduced specification and its twin with country effects alone. The vertical axis is the claim-aligned partial correlation, so below zero is the direction of the claim. Source: `data/display_periods.csv`."
 per_plot <- periods |>
   datawizard::data_modify(design = factor(design_label[estimator], design_label),
          period = factor(sample, c("all", "y2004_2008", "y2009_2013"),
@@ -223,7 +223,7 @@ For the reproduced specification the slope is `r num(per_ref("all", "b"), 5)` on
 #| echo: false
 #| fig-width: 8
 #| fig-height: 6.2
-#| fig-cap: "The slope of the cosmopolitan share on unemployment with one country left out at a time, under each design. Open circles have CR2 p < 0.05 and crosses p ≥ 0.05; the burgundy line marks the slope on all 27 countries. Countries are ordered by the two-way slope without them. Source: `cases/europeanisation/data/display_loo.csv`."
+#| fig-cap: "The slope of the cosmopolitan share on unemployment with one country left out at a time, under each design. Open circles have CR2 p < 0.05 and crosses p ≥ 0.05; the burgundy line marks the slope on all 27 countries. Countries are ordered by the two-way slope without them. Source: `data/display_loo.csv`."
 country_order <- loo_two |>
   dplyr::left_join(cnames, by = c("left_out" = "cntry")) |>
   datawizard::data_arrange("-b") |>
@@ -256,7 +256,7 @@ Leaving out one country moves the two-way slope between `r num(min(loo_two$b), 5
 ```{r}
 #| label: tbl-bailout
 #| echo: false
-#| tbl-cap: "Slopes on unemployment in the eight bailout countries (Cyprus, Greece, Hungary, Ireland, Latvia, Portugal, Romania, Spain), in the other nineteen, and the difference between the two, estimated in one model on all 270 cells with an interaction. CR2 p-values in brackets, on Satterthwaite degrees of freedom. Source: `cases/europeanisation/data/display_bailout.csv`."
+#| tbl-cap: "Slopes on unemployment in the eight bailout countries (Cyprus, Greece, Hungary, Ireland, Latvia, Portugal, Romania, Spain), in the other nineteen, and the difference between the two, estimated in one model on all 270 cells with an interaction. CR2 p-values in brackets, on Satterthwaite degrees of freedom. Source: `data/display_bailout.csv`."
 bailout |>
   datawizard::data_filter(predictor == "unemp") |>
   datawizard::data_modify(cell = paste0(num(b, 5), " (", num(p_cr2), ")")) |>
@@ -281,4 +281,4 @@ Read together, the three displays suggest that the association between unemploym
 
 ## Sources and further reading {#sec-sources}
 
-The debate read here: @GanslmeierVlandas2025EstimatingExtentSources and the reply by @Auspurg2025RobustnessBetterAssessed; @RohrerEtAl2026WhatsMultiverseGood with the companion post by @Hullman2026WhatMultiverseGood; and @LakensEtAl2026ThereOnlyOne. The origins: @SteegenEtAl2016IncreasingTransparencyMultiverse, @GelmanLoken2014StatisticalCrisisScience and @SimonsohnEtAl2020SpecificationCurveAnalysis, with a framework for judging which analytic decisions are equivalent in @DelGiudiceGangestad2021TravelersGuideMultiverse. The many-analysts strand: @SilberzahnEtAl2018ManyAnalystsOne, @BreznauEtAl2022ObservingManyResearchers and @AczelEtAl2026InvestigatingAnalyticalRobustness, and, for the diagnosis that many disagreements between analysts are disagreements about the estimand, @AuspurgBruderl2021HasCredibilitySocial. The book-length guide is @YoungCumberworth2025MultiverseAnalysisComputational, the tools are @SarmaEtAl2023MultiverseMultiplexingAlternative and @SarmaEtAl2024MilliwaysTamingMultiverses, and the classroom design is @HeymanVanpaemel2022MultiverseAnalysesClassroom. Quotations from the PsyArXiv preprints are cited by the pagination of the preprints. The numbers on this page are computed when it is built from files that the pipeline of the Europeanisation case study writes: the curve `cases/europeanisation/data/spec_curve.csv` and its decomposition `spec_curve_forks.csv`, the comparison of every option with its twins on the curve in `menu_deviations.csv`, the reasons in `menu_options.csv`, and the displays `display_periods.csv`, `display_loo.csv` and `display_bailout.csv`, which the [codebook of the displays](../cases/europeanisation/data/displays_codebook.md) describes.
+The debate read here: @GanslmeierVlandas2025EstimatingExtentSources and the reply by @Auspurg2025RobustnessBetterAssessed; @RohrerEtAl2026WhatsMultiverseGood with the companion post by @Hullman2026WhatMultiverseGood; and @LakensEtAl2026ThereOnlyOne. The origins: @SteegenEtAl2016IncreasingTransparencyMultiverse, @GelmanLoken2014StatisticalCrisisScience and @SimonsohnEtAl2020SpecificationCurveAnalysis, with a framework for judging which analytic decisions are equivalent in @DelGiudiceGangestad2021TravelersGuideMultiverse. The many-analysts strand: @SilberzahnEtAl2018ManyAnalystsOne, @BreznauEtAl2022ObservingManyResearchers and @AczelEtAl2026InvestigatingAnalyticalRobustness, and, for the diagnosis that many disagreements between analysts are disagreements about the estimand, @AuspurgBruderl2021HasCredibilitySocial. The book-length guide is @YoungCumberworth2025MultiverseAnalysisComputational, the tools are @SarmaEtAl2023MultiverseMultiplexingAlternative and @SarmaEtAl2024MilliwaysTamingMultiverses, and the classroom design is @HeymanVanpaemel2022MultiverseAnalysesClassroom. Quotations from the PsyArXiv preprints are cited by the pagination of the preprints. The numbers on this page are computed when it is built from files that the pipeline of the Europeanisation case study writes: the curve `data/spec_curve.csv` and its decomposition `spec_curve_forks.csv`, the comparison of every option with its twins on the curve in `menu_deviations.csv`, the reasons in `menu_options.csv`, and the displays `display_periods.csv`, `display_loo.csv` and `display_bailout.csv`, which the [codebook of the displays](../data/displays_codebook.md) describes.

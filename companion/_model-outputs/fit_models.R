@@ -8,7 +8,7 @@
 #               GESIS-licensed person-level rebuild of 416,698 respondents,
 #               held only on the machine of the facilitator and never in a
 #               repository)
-#               cases/europeanisation/data/europeanisation_cy.csv (the committed panel)
+#               data/europeanisation_cy.csv (the committed panel)
 # Writes:       companion/_model-outputs/*.txt (captured model summaries:
 #               aggregate statistical output only, no microdata)
 #               companion/_model-outputs/cosmo_dist.csv (counts of the
@@ -27,7 +27,7 @@ outdir <- "companion/_model-outputs"
 source("companion/_model-outputs/_load_respondents.R")
 person <- ind |>
   as.data.frame()  # r-style: keep – WeMix::mix() takes a plain data frame
-europeanisation <- readr::read_csv("cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
+europeanisation <- readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE)
 
 # --- 1. logistic GLM – mentions at least one cosmopolitan meaning ----------- #
 m_logit <- glm(I(cosmo > 0) ~ unemp, family = binomial(), data = person)

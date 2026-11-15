@@ -5,23 +5,28 @@ project:
   # every folder of that name at any depth, including the licensed microdata
   # under _planning/ and the workspaces.
   resources:
-    - /cases/*/data/
     - /data/
     - /assets/
   render:
     - "*.qmd"
     - "data/*.md"
-    - "cases/**/*.qmd"
-    - "cases/*/data/*.md"
     - "tracks/**/*.qmd"
     - "companion/*.qmd"
     - "slides/*.qmd"
     - "live/*.qmd"
     - "!_planning/**"
     - "!_planning_data/**"
-    # Rendered but left out of the navbar: the run sheet of the facilitator,
-    # which also holds the notes on the formats
-    - "facilitator/europeanisation-guide.qmd"
+    # Kept in the repository and left out of the build until they are vetted:
+    # the long format, the four decks of its third day, the two modules that
+    # only that day teaches, and the run sheets of the facilitator
+    - "!tracks/long/"
+    - "!slides/panel-data.qmd"
+    - "!slides/multilevel.qmd"
+    - "!slides/bayesian.qmd"
+    - "!slides/report.qmd"
+    - "!companion/multilevel.qmd"
+    - "!companion/bayesian.qmd"
+    - "!facilitator/"
 
 # The docked sidebars of the formats live in their own file.
 metadata-files:
@@ -56,15 +61,15 @@ website:
       # The formats are reached from the Formats section of the opening page,
       # and each has a docked sidebar (_sidebar.yml) that lists its pages and the
       # tools that it uses, the browser lab and the cheatsheet among them.
-      - href: cases/europeanisation/index.qmd
+      - href: background.qmd
         text: Background
       - text: Multiverse
         menu:
-          - href: cases/europeanisation/menu.qmd
+          - href: menu.qmd
             text: "Specification menu"
-          - href: cases/europeanisation/curve.qmd
+          - href: curve.qmd
             text: "Specification curve"
-          - href: cases/europeanisation/class-results.qmd
+          - href: class-results.qmd
             text: "Class results"
       - text: Companion
         menu:
@@ -76,6 +81,10 @@ website:
           # of this site take them to the case study
           - href: "https://codemoreh.github.io/ar4ds/tools/r.html"
             text: "Getting started with R"
+          - href: "https://codemoreh.github.io/ar4ds/tools/r-further.html"
+            text: "Getting started with R, part 2"
+          - href: "https://codemoreh.github.io/ar4ds/tools/r-functions.html"
+            text: "Getting started with R, part 3"
           - href: companion/intro-r.qmd
             text: "R on the country-year panel"
           - href: "https://codemoreh.github.io/ar4ds/tools/ide.html"
@@ -100,22 +109,16 @@ website:
           - text: "Methods"
           - href: companion/panel-data.qmd
             text: "Panel data"
-          - href: companion/multilevel.qmd
-            text: "Multilevel models"
           - href: companion/dags.qmd
             text: "Causal graphs and adjustment sets"
           - href: companion/measurement.qmd
             text: "The items behind the scales"
-          - href: companion/bayesian.qmd
-            text: "Bayesian estimation"
           - href: companion/meta-analysis.qmd
             text: "Meta-analysis"
           - href: companion/multiverse.qmd
             text: "The multiverse and its critics"
       - href: resources.qmd
         text: Resources
-      - href: references.qmd
-        text: References
     right:
       # The umbrella site, which holds the pages that every case study shares;
       # the item of the last-opened format joins it (_includes/track-choice.html)

@@ -4,7 +4,7 @@
 #| include: false
 # The course panel under the name that the lab and the modules give it, for
 # the two slides of code behind the menu
-europeanisation <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
+europeanisation <- readr::read_csv("../data/europeanisation_cy.csv", show_col_types = FALSE)
 ```
 
 ## The data work {#the-data-work .smaller}
@@ -21,7 +21,7 @@ datawizard::data_filter(europeanisation, bailout == 0)
 europeanisation <- datawizard::data_modify(europeanisation, unemp_c = unemp - mean(unemp))
 # the scale variant of 018OL, the cell means rescaled to 0–1 (lab, Task 3)
 o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
-# cell means from the respondents (pipeline, R/europeanisation/15_analyst_panels.R)
+# cell means from the respondents (pipeline, R/15_analyst_panels.R)
 kqxue_resp |>
   datawizard::data_summary(cosmo = mean(cosmo), n = length(cosmo), by = c("cntry", "year"))
 # claim alignment, the sign of a growth slope reversed (module R on the country-year panel)

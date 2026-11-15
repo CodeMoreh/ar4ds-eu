@@ -10,10 +10,10 @@
 #               cluster identifiers. A script that needs a different scoring
 #               rule builds it from the items itself.
 # Author:       Chris Moreh
-# Last updated: 2026-11-07
+# Last updated: 2026-11-15
 # Sourced by:   fit_measurement.R, fit_person_anchor.R, fit_person_multilevel.R,
 #               fit_person_years.R, fit_models.R, fit_claim2.R and
-#               R/europeanisation/13_reference_marks.R
+#               R/13_reference_marks.R
 ###############################################################################
 # The file lives outside every repository. The default is the private folder
 # of the workspace on the facilitator's machine; a participant running these
@@ -33,7 +33,7 @@ if (!file.exists(.respondents_path))
                lib   = paste0("it", c(10, 11)))
 .items13 <- unlist(.items, use.names = FALSE)
 
-.panel <- readr::read_csv(file.path(.root, "cases/europeanisation/data/europeanisation_cy.csv"), show_col_types = FALSE) |>
+.panel <- readr::read_csv(file.path(.root, "data/europeanisation_cy.csv"), show_col_types = FALSE) |>
   datawizard::data_select(select = c("cntry", "year", "unemp", "growth", "bailout"))
 
 ind <- readRDS(.respondents_path) |>

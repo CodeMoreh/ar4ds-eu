@@ -4,7 +4,7 @@
 ::: {.small}
 Two jobs that a curve can do:
 
-- **Description** – map how the estimate moves across every defensible choice. That is what the curve of `r fmt_n(nrow(spec_curve))` does, and what the robustness study did for its 504 reanalyses, with no inferential statistics anywhere in its paper
+- **Description** – map how the estimate moves across every defensible choice. That is what the curve of `r format(nrow(spec_curve), big.mark = ",")` does, and what the robustness study did for its 504 reanalyses, with no inferential statistics anywhere in its paper
 - **Inference** – ask whether the curve *as a whole* is surprising if there were no association at all. A different and harder job, which most published curves never attempt
 :::
 
@@ -24,7 +24,7 @@ A curve does two jobs, and they detach cleanly. The first is description: showin
 
 ::: {.small}
 - Every specification reuses the **same 270 country-years**, so the estimates share their noise: '`r fmt_pct(share_sig(spec_curve))` below zero with CR2 p < 0.05' **describes** the curve and is not a p-value for the claim. Clustered errors allow for the years of one country within each fit, and clustering does not make the fits independent of one another
-- A test of the whole curve has to build its own null: **shuffle the unemployment and growth series of each country in time**, jointly, refit all `r fmt_n(nrow(spec_curve))` specifications, repeat **B = 500** times, and set the observed curve among the 500 null curves
+- A test of the whole curve has to build its own null: **shuffle the unemployment and growth series of each country in time**, jointly, refit all `r format(nrow(spec_curve), big.mark = ",")` specifications, repeat **B = 500** times, and set the observed curve among the 500 null curves
 - With B = 500 the smallest reportable p is 2/(B + 1) ≈ 0.004, a floor set by the number of draws, and near p = 0.05 the Monte Carlo error is about ±0.01, so p = 0.04 and p = 0.06 are the same finding
 - [A DESIGN, NOT YET RUN]{.highlight bg-colour="#ffe3b3"}, fixed before it runs, which is the position that a preregistration puts you in
 :::
@@ -34,7 +34,7 @@ A curve does two jobs, and they detach cleanly. The first is description: showin
 :::
 
 ::: {.src}
-@SimonsohnEtAl2020SpecificationCurveAnalysis; @PhipsonSmyth2010PermutationPValues; the [reading on the specification curve]({{< var site-url >}}cases/europeanisation/curve.html#inference), which sets out the design in full.
+@SimonsohnEtAl2020SpecificationCurveAnalysis; @PhipsonSmyth2010PermutationPValues; the [reading on the specification curve]({{< var site-url >}}curve.html#inference), which sets out the design in full.
 :::
 
 ::: notes
@@ -87,9 +87,9 @@ A badly reasoned analysis that is preregistered is still badly reasoned; the pre
 ::::
 
 ::: {.fragment .small}
-Today you explored and said so: the chart labels every dot of the class **exploratory**. Task 5 of the one-day workshop on this case study adds the declaration, one specification fixed before it runs, with a reason that a causal graph supports, because "in the absence of preregistration, researchers may as well determine what is equivalent based on whether or not it supports their result" [@RohrerEtAl2026WhatsMultiverseGood, p. 5]
+Today you explored and said so: the chart labels every dot of the class **exploratory**. Task 5 of the exercise adds the declaration, one specification fixed before it runs, with a reason that a causal graph supports, because "in the absence of preregistration, researchers may as well determine what is equivalent based on whether or not it supports their result" [@RohrerEtAl2026WhatsMultiverseGood, p. 5]
 :::
 
 ::: notes
-So where does preregistration fit? It settles a limited set of things, and the two columns matter equally. On the left: that your specification was not chosen because of its result, that your rule for support was fixed before you had a result, and that a reader can tell what you intended from what you changed. No other device provides those guarantees. On the right, what it does not settle: whether the specification was any good, whether it estimates the quantity that your question implies, or whether its assumptions hold. A badly reasoned analysis that is preregistered is still badly reasoned, with a timestamp on it. [advance] Today you explored, and the chart says so on every dot. The one-day workshop adds the other half, a specification declared before it runs, with a reason from a causal graph: the declaration protects the choice, and the reasoning justifies it.
+So where does preregistration fit? It settles a limited set of things, and the two columns matter equally. On the left: that your specification was not chosen because of its result, that your rule for support was fixed before you had a result, and that a reader can tell what you intended from what you changed. No other device provides those guarantees. On the right, what it does not settle: whether the specification was any good, whether it estimates the quantity that your question implies, or whether its assumptions hold. A badly reasoned analysis that is preregistered is still badly reasoned, with a timestamp on it. [advance] Today you explored, and the chart says so on every dot. Task 5 of the exercise adds the other half, a specification declared before it runs, with a reason from a causal graph: the declaration protects the choice, and the reasoning justifies it.
 :::

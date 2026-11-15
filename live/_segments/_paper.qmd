@@ -4,7 +4,7 @@
 #| include: false
 # The course panel, 270 country-years rebuilt from the GESIS waves; n_cy counts
 # the respondents behind each cell, those who mentioned nothing included
-panel_short <- readr::read_csv("../cases/europeanisation/data/europeanisation_cy.csv", show_col_types = FALSE)
+panel_short <- readr::read_csv("../data/europeanisation_cy.csv", show_col_types = FALSE)
 ```
 
 ## The question and the items {#the-question-and-the-items .smaller}
@@ -36,7 +36,7 @@ The data are the Standard Eurobarometer, the survey of the European Commission: 
 
 ::: {.small}
 - **16 waves, 2004–2013**, the crisis decade, in the **27** member states of the time; OA modelled about **390,000** respondents in three levels, respondents in country-waves in countries
-- The course works on the **country-year panel**: the four scales averaged within each country and year, **`r nrow(panel_short)` country-years** built from **`r fmt_n(sum(panel_short$n_cy))`** respondents, with the national **unemployment rate** and **GDP growth** beside them
+- The course works on the **country-year panel**: the four scales averaged within each country and year, **`r nrow(panel_short)` country-years** built from **`r format(sum(panel_short$n_cy), big.mark = ",")`** respondents, with the national **unemployment rate** and **GDP growth** beside them
 :::
 
 ::: {.fs-70}
@@ -46,7 +46,7 @@ The data are the Standard Eurobarometer, the survey of the European Commission: 
 | `mcosmo`, `mutil`, `mcomm`, `mlib` | the four framing scales, averaged in the cell, 0–1 |
 | `mpos`, `mneg` | the two composites: all positive items, all negative items |
 | `unemp`, `growth` | national unemployment rate and GDP growth, World Bank series |
-| `n_cy` | the respondents behind the cell, from `r fmt_n(min(panel_short$n_cy))` to `r fmt_n(max(panel_short$n_cy))` |
+| `n_cy` | the respondents behind the cell, from `r format(min(panel_short$n_cy), big.mark = ",")` to `r format(max(panel_short$n_cy), big.mark = ",")` |
 | `bailout` | 1 if an EU/IMF assistance programme was running |
 :::
 
@@ -55,7 +55,7 @@ The panel addresses the **contextual** question, whether the framing of a countr
 :::
 
 ::: {.src}
-@Teney2016DoesEUEconomic [pp. 622–625]; `cases/europeanisation/data/europeanisation_cy.csv`, with its codebook.
+@Teney2016DoesEUEconomic [pp. 622–625]; `data/europeanisation_cy.csv`, with its codebook.
 :::
 
 ::: notes

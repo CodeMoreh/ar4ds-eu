@@ -4,7 +4,7 @@
 ::: {.none}
 Nine decisions vary on the curve: outcome, predictor, series, predictor form, adjustment, estimator, no-opinion rule, item set and cell weighting
 
-**Which decision moves the estimates most across the `r fmt_n(nrow(spec_curve))` specifications?**
+**Which decision moves the estimates most across the `r format(nrow(spec_curve), big.mark = ",")` specifications?**
 
 Write your guess, hold it, and send it when I say go.
 :::
@@ -19,10 +19,10 @@ Before I show you the answer, commit to a guess. You have made these choices you
 #| label: fork-importance
 #| fig-width: 10
 #| fig-height: 4
-# Copied from _segments/europeanisation/_p4-forks.qmd (chunk fork-importance); the
+# Copied from ../slides/_segments/case/_p4-forks.qmd (chunk fork-importance); the
 # last line calls patchwork::wrap_plots(), because this deck includes no
 # segment that loads patchwork, whose + method the original relies on.
-# Two readings of each decision on the curve (cases/europeanisation/data/spec_curve_forks.csv): the
+# Two readings of each decision on the curve (data/spec_curve_forks.csv): the
 # share of the variance of the claim-aligned partial r that its main effect
 # carries, and the share of pairs, differing only in that decision, whose two
 # members fall in different classes under CR2. Ordered by the share
@@ -67,7 +67,7 @@ patchwork::wrap_plots(p_share, p_cross, nrow = 1)
 :::
 
 ::: {.src}
-cases/europeanisation/data/spec_curve_forks.csv: main-effect shares of the variance over the curve, and class changes under CR2 errors clustered by country. The [decision map]({{< var site-url >}}cases/europeanisation/menu.html#map) shows where each decision is made.
+data/spec_curve_forks.csv: main-effect shares of the variance over the curve, and class changes under CR2 errors clustered by country. The [decision map]({{< var site-url >}}menu.html#map) shows where each decision is made.
 :::
 
 ::: notes
@@ -80,9 +80,9 @@ The estimator carries the largest share of the variation on the curve, about for
 #| label: spec-overlay
 #| fig-width: 9.5
 #| fig-height: 4.3
-# Copied from _segments/europeanisation/_p4-classchart.qmd (chunk spec-overlay).
+# Copied from ../slides/_segments/case/_p4-classchart.qmd (chunk spec-overlay).
 # The panel of the class-chart slide, with the six reference results
-# (cases/europeanisation/data/reference_marks.csv) placed as the chart at the top of the Multiverse
+# (data/reference_marks.csv) placed as the chart at the top of the Multiverse
 # page places them: each on the degrees of freedom of its own inference, in
 # ink, its shape from the CR2 check where the design can be refitted on
 # the country-year cells and from the p-value as reported where it cannot.
@@ -93,11 +93,11 @@ spec_base() +
 
 ::: {.small}
 - Each result sits on the degrees of freedom of its own inference, the original study by a refit of its design without its education interactions, tagged OA design; four of the six come from outside the menu, and nobody was wrong
-- On the curve `r sum(spec_curve$r_ca > 0)` of the `r fmt_n(nrow(spec_curve))` specifications lie above zero, all of them GDP growth on the cosmopolitan scale and `r if (any(spec_curve$r_ca > 0 & spec_curve$sig)) "some" else "none"` with CR2 p < 0.05; off the curve, pooled OLS changes the sign in `r fmt_pct(dev_of("pooled_cl", "sign_changes"))` of its pairs and the sample without the bailout countries in `r fmt_pct(dev_of("no_bailout", "sign_changes"))`
+- On the curve `r sum(spec_curve$r_ca > 0)` of the `r format(nrow(spec_curve), big.mark = ",")` specifications lie above zero, all of them GDP growth on the cosmopolitan scale and `r if (any(spec_curve$r_ca > 0 & spec_curve$sig)) "some" else "none"` with CR2 p < 0.05; off the curve, pooled OLS changes the sign in `r fmt_pct(dev_of("pooled_cl", "sign_changes"))` of its pairs and the sample without the bailout countries in `r fmt_pct(dev_of("no_bailout", "sign_changes"))`
 :::
 
 ::: {.src}
-cases/europeanisation/data/reference_marks.csv, spec_curve_forks.csv and menu_deviations.csv; OA and PRL47 on the Satterthwaite df of a course refit of each design.
+data/reference_marks.csv, spec_curve_forks.csv and menu_deviations.csv; OA and PRL47 on the Satterthwaite df of a course refit of each design.
 :::
 
 ::: notes
