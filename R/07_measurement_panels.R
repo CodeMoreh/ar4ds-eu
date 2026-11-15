@@ -72,8 +72,9 @@ cells <- person |>
     # how many of the 13 items the respondents of a cell mention on average:
     # what a count-built outcome tracks and a share-built one does not
     mean_items = mean(n_all),
-    # Kish's effective sample size of a weighted mean, (sum w)^2 / sum w^2
-    n_eff   = sum(w1, na.rm = TRUE)^2 / sum(w1^2, na.rm = TRUE),  # r-style: PENDING – Kish effective sample size; no package found
+    # Kish's effective sample size of a weighted mean, n / deffK(w), on the positive
+    # weights: a zero weight changes neither n_eff nor deffK(), which warns about it
+    n_eff   = sum(w1 > 0, na.rm = TRUE) / PracTools::deffK(w1[!is.na(w1) & w1 > 0]),
     n_noop  = sum(n_all == 0),
     n_dk    = sum(noop_type == "dk"),
     n_other = sum(noop_type == "other"),
@@ -133,8 +134,8 @@ aggregate_cells <- function(d, cell_weight) {  # r-style: approved
     dplyr::summarise(dplyr::across(dplyr::all_of(outcomes),
                                    \(x) stats::weighted.mean(x, .w, na.rm = TRUE)),
                      n_cell = dplyr::n(),
-                     # Kish's effective sample size of the cell mean
-                     n_eff_cell = sum(.w, na.rm = TRUE)^2 / sum(.w^2, na.rm = TRUE),  # r-style: PENDING – Kish effective sample size; no package found
+                     # Kish's effective sample size of the cell mean, on the positive weights
+                     n_eff_cell = sum(.w > 0, na.rm = TRUE) / PracTools::deffK(.w[!is.na(.w) & .w > 0]),
                      .by = c(cntry, year))
 }
 
