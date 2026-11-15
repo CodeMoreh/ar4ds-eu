@@ -314,6 +314,19 @@ The Stata code written by OA divides the number of mentions in each framing clus
 
 Whether that matters depends on who the silent respondents are, and on which comparison the analysis makes. They are older, more often women, and across the `r nrow(pw)` cells the no-opinion rate correlates at `r num(r_noop_unemp, 2)` with the unemployment rate and at `r num(r_noop_cosmo, 2)` with the cosmopolitan scale. The rate also differs sharply between countries: it runs at `r pp(100 * by_c$rate[1])` in `r by_c$cntry[1]` and `r pp(100 * by_c$rate[2])` in `r by_c$cntry[2]` against `r pp(100 * by_c$rate[nrow(by_c)])` in `r by_c$cntry[nrow(by_c)]`. Those correlations are dominated by stable differences between countries, which the fixed-effects designs of the curve remove. Within countries, net of the movement common to all of them in a year, the rate falls slightly as unemployment rises (`r num(noop_b, 4)` per point of unemployment, t = `r num(noop_t, 1)` with conventional errors and `r num(noop_t_cl, 2)` with errors clustered by country), so that scoring the silent as zero pulls the slopes of the curve a little towards zero rather than in the direction of the claim.
 
+@tbl-noop-countries lists the four highest and the four lowest rates, each averaged over the years of its country.
+
+```{r}
+#| label: tbl-noop-countries
+#| echo: false
+#| tbl-cap: "The four highest and four lowest no-opinion rates, each averaged over the years of its country. Source: `cases/europeanisation/data/teney_panel_weights.csv`."
+tinytable::tt(
+  by_c |> dplyr::slice(c(1:4, (dplyr::n() - 3):dplyr::n())) |>
+    dplyr::transmute(Country = cntry, `No opinion` = pp(100 * rate))) |>
+  tinytable::style_tt(j = 2, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
 ### The three rules {#sec-noop-rules}
 
 The menu has three deterministic rules, which code every silent respondent in the same way without fitting a model, and each is a statement about what the silent respondents mean. **Zero** treats them as people with no framing of any kind, which is the convention of the course panel and of the reproduced specification. **Drop** treats them as people who did not answer the question, which is what the code of OA did. **Split** takes the three codes at their word: "don't know" and blank are dropped as non-response, and "other" is kept at zero on the reasoning that an answer off the list is still an answer that contains no cosmopolitan content. The rules change the cell means before any model is fitted, and the average cosmopolitan cell mean is `r num(mean(me$value[me$construction == "share" & me$item_set == "all" & me$noop == "zero" & me$cell_weight == "unweighted" & me$outcome == "mcosmo"]), 3)` under zero and `r num(mean(me$value[me$construction == "share" & me$item_set == "all" & me$noop == "drop" & me$cell_weight == "unweighted" & me$outcome == "mcosmo"]), 3)` under drop.

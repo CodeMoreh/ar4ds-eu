@@ -354,18 +354,18 @@ dev_rows <- readr::read_csv("../cases/europeanisation/data/menu_deviations_rows.
   datawizard::data_filter(curve == "positive", axis == "weights")
 # percentages round halves up, as the specification menu does; pct() takes a
 # proportion and pc() a value already in per cent
-pc <- \(x) paste0(formatC(floor(x * 10^1 + 0.5) / 10^1, format = "f", digits = 1), "%")
-pct <- \(x) pc(100 * x)
-pc_small <- \(x) if (x < 0.1) "less than 0.1%" else pc(x)
-num <- \(x, d = 3) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
-sig <- \(x) gsub("-", "−", formatC(x, format = "g", digits = 3), fixed = TRUE)
-fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
-dv <- \(op, col) devs[[col]][devs$option == op]
-below_sig <- \(d) 100 * mean(d$supports & d$sig)
+pc <- \(x) paste0(formatC(floor(x * 10^1 + 0.5) / 10^1, format = "f", digits = 1), "%")  # r-style: approved
+pct <- \(x) pc(100 * x)  # r-style: approved
+pc_small <- \(x) if (x < 0.1) "less than 0.1%" else pc(x)  # r-style: approved
+num <- \(x, d = 3) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)  # r-style: approved
+sig <- \(x) gsub("-", "−", formatC(x, format = "g", digits = 3), fixed = TRUE)  # r-style: approved
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]  # r-style: approved
+dv <- \(op, col) devs[[col]][devs$option == op]  # r-style: approved
+below_sig <- \(d) 100 * mean(d$supports & d$sig)  # r-style: approved
 
 # the reproduced specification and its twin with design-weighted cells, as they
 # stand on the curve, and the same two under each regression weight
-ref_spec <- \(d) d |>
+ref_spec <- \(d) d |>  # r-style: approved
   dplyr::filter(outcome == "mcosmo", predictor == "unemp", copredictor == "none",
          estimator == "fe_twoway", noop == "zero", item_set == "all",
          measure == "wb_nat", pred_form == "raw")
@@ -375,7 +375,7 @@ c6hjr <- dplyr::bind_rows(
   dev_rows |> ref_spec() |>
     dplyr::transmute(cell_weight, reg_weight = option, b = b_dev, t = t_dev, df = df_dev, p = p_dev, r = r_ca_dev)
 )
-cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]
+cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]  # r-style: approved
 ```
 
 Every Eurobarometer respondent arrives with a post-stratification weight, W1, which the models of the respondents above have so far ignored. In this case study weights enter at two levels, inside each country-year and across the country-years, and the specification menu has a decision at each: the **cell weighting** decides, with two options, how the respondents of a country-year are averaged, and the decision **whose average** decides, with four, how much each country-year counts in the regression. Between them the two decisions cover three different questions, which are settled at two different levels of the analysis and are justified by different arguments, and only one of the three changes what the analysis is estimating.
@@ -400,7 +400,7 @@ Of the other weights in the file, W3 ("WEIGHT GERMANY") and W4 ("WEIGHT UNITED K
 A Eurobarometer file contains several weight variables, and they are not interchangeable. Choosing the wrong one changes the question being answered, and no warning appears in the output. Using a European weight and then averaging countries double-counts population size; using a national weight and then pooling respondents across countries gives you an average over *respondents*, which is an artefact of how many interviews each country happened to get. Whenever a survey provides more than one weight, read the codebook before choosing, because the choice among them is, in effect, the choice between a country-level and a person-level estimand.
 :::
 
-No model of OA uses a weight, as the [background page](../cases/europeanisation/index.qmd#sec-selection) notes from the code of the paper. Of the five analysts of the robustness study, KQXUE and 018OL averaged the respondents of each cell without weights, and PRL47, who modelled the respondents in Stata, built a survey weight for every wave but used it only in descriptive checks, so that the weight never entered a model. In the code of KQXUE two lines settle the whole weighting question by default:
+No model of OA uses a weight, as the [background page](../cases/europeanisation/index.qmd#sec-selection) notes from the code of the paper. Of the five analysts of the robustness study, KQXUE and 018OL averaged the respondents of each cell without weights. In the code of KQXUE two lines settle the whole weighting question by default:
 
 ```stata
 collapse cosmo util, by(cntry year)    // unweighted country-year means
@@ -486,21 +486,7 @@ Across the curve the population weight leaves `r pc(dv("pop", "below_zero"))` of
 
 When asked what the EU means to them, `r format(sum(pw$n_noop), big.mark = ",")` respondents, `r pct(sum(pw$n_noop) / sum(pw$n_cy))` of the sample, mentioned nothing at all, and how they are scored is a decision that no weight can change. The course panel follows the reanalyst C6HJR in scoring them **0** on all four framing scales, so that a person with no opinion enters the data as a person with no cosmopolitan framing, while the code of the original paper dropped those respondents; the section [Respondents who mention nothing](measurement.qmd#sec-noop) of the module on the items behind the scales sets out what each rule assumes and which analysts took it.
 
-That would be a defensible convention if the no-opinion rate were the same everywhere, but it differs widely between countries.
-
-```{r}
-#| label: tbl-noop
-#| echo: false
-#| tbl-cap: "The four highest and four lowest no-opinion rates."
-tinytable::tt(
-  pw |> dplyr::summarise(rate = mean(noop_rate), .by = cntry) |>
-    datawizard::data_arrange("-rate") |> dplyr::slice(c(1:4, (dplyr::n() - 3):dplyr::n())) |>
-    dplyr::transmute(Country = cntry, `No opinion` = pct(rate))) |>
-  tinytable::style_tt(j = 2, align = "r") |>
-  tinytable::style_tt(fontsize = 0.8)
-```
-
-An eight-fold difference in the rate of a response coded as a substantive zero is a measurement problem that no weight will fix, since the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the silent respondents are dropped or scored zero belongs with the measurement decisions of the [specification menu](../cases/europeanisation/menu.qmd), and the curve keeps both rules.
+Scoring the silent respondents zero would be a defensible convention if the no-opinion rate were the same everywhere, but the rate differs widely between countries, as the [table of the four highest and four lowest rates](measurement.qmd#tbl-noop-countries) in that section shows. An eight-fold difference in the rate of a response coded as a substantive zero is a measurement problem that no weight will fix, since the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the silent respondents are dropped or scored zero belongs with the measurement decisions of the [specification menu](../cases/europeanisation/menu.qmd), and the curve keeps both rules.
 
 ### Weights in models of the respondents {#sec-weights-respondents}
 
