@@ -41,28 +41,15 @@ n_complete <- years_real |>
 n_complete <- format(n_complete$estimate, big.mark = ",")
 ```
 
-This module of the [companion curriculum](index.qmd) works at the level of the individual respondent, where the claim of the Europeanisation and the economy case study was first tested. The case study takes its claim from a study by the original author (OA), who reported that poor national economic performance lowers the positive framing of the European Union and fitted that claim to sixteen waves of Eurobarometer respondents with a multilevel model [@Teney2016DoesEUEconomic]; the [background page](../cases/europeanisation/index.qmd) tells it in full. The respondents are licensed by GESIS and cannot be shipped, so the module shows the saved output of the models that were fitted once on the licensed file, and above each output the code that fits the same model in the workspace, on the file of respondents that you build there from your own downloads. The module opens with the vocabularies in which different disciplines name the same models, and it meets the module on [panel data](panel-data.qmd), the treatment of the same data at the level of the country-year, at the within–between model of section 4. It assumes the first three sections of the panel module, on the linear model and clustered standard errors.
+This module of the [companion curriculum](index.qmd) works at the level of the individual respondent, where the claim of the Europeanisation and the economy case study was first tested. The case study takes its claim from a study by the original author (OA), who reported that poor national economic performance lowers the positive framing of the European Union and fitted that claim to sixteen waves of Eurobarometer respondents with a multilevel model [@Teney2016DoesEUEconomic]; the [background page](../cases/europeanisation/index.qmd) tells it in full. The respondents are licensed by GESIS and cannot be shipped, so the module shows the saved output of the models that were fitted once on the licensed file, and above each output the code that fits the same model in the workspace, on the file of respondents that you build there from your own downloads. The models themselves are taught in full by the module on [multilevel models](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html) of the Immigration and trust case study, whose respondents of the European Social Survey ship with the course, and this module keeps from that treatment what the Europeanisation case study needs, with a link at each step to the section of the Immigration module that teaches it in full. It meets the module on [panel data](panel-data.qmd), the treatment of the same data at the level of the country-year, at the within–between model of section 4, and it assumes the first three sections of the panel module, on the linear model and clustered standard errors. Section 8 sets out the weights of the case study, the survey weights of the Eurobarometer within each country-year and the weights of the country-years in a regression, the subjects of two decisions of the [specification menu](../cases/europeanisation/menu.qmd).
 
 ## 1. The vocabularies {#sec-vocabularies}
 
-The models of this module go by different names in different disciplines, and a participant who learnt the models in one discipline can fail to recognise them in the vocabulary of another. Sociologists and education researchers speak of multilevel or hierarchical linear models, with pupils nested in schools or respondents in countries as the standard examples [@RaudenbushBryk2002HierarchicalLinearModels; @SnijdersBosker2012MultilevelAnalysisIntroduction], and of contextual effects when an attribute of the group bears on its members. Political scientists meet the same models through time-series cross-section (TSCS) data, a few countries observed over many years [@BeckKatz1995WhatNotTimeseries], and through comparative surveys repeated over time [@Fairbrother2013TwoMultilevelModeling; @Schmidt-CatranFairbrother2016RandomEffectsMultilevel]. Econometricians speak of panel data, of fixed and random effects and of the within and between estimators [@Wooldridge2010EconometricAnalysisCross], while psychologists and biostatisticians speak of mixed or mixed-effects models, with random intercepts and random slopes for subjects and items [@PinheiroBates2000MixedEffectsModelsSPLUS; @DeBruineBarr2021UnderstandingMixedeffectsModels]. @Fairbrother2013TwoMultilevelModeling [p. 119] gives three of the names in one breath, multilevel models "(also known as mixed, random effects or hierarchical linear models)", and @tbl-vocabularies sets the terms side by side, row by row, so that a reader trained in any of these traditions can find the terms of their own.
+The models of this module go by different names in different disciplines – multilevel or hierarchical linear models in sociology and education, multilevel models of time-series cross-section and comparative survey data in political science, panel data with fixed and random effects in econometrics, and mixed models in psychology and biostatistics – and a participant who learnt the models in one discipline can fail to recognise them in the vocabulary of another. [Section 1 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-vocabularies) sets the terms of the four traditions side by side, row by row, with the standard texts of each, so that a reader trained in any of these traditions can find the terms of their own.
 
-| | Sociology and education | Political science | Econometrics | Psychology and biostatistics |
-|:--|:--|:--|:--|:--|
-| The model | multilevel model, hierarchical linear model | multilevel model of TSCS data or of comparative longitudinal survey data | random-effects model, unobserved effects model | mixed model, linear mixed-effects model |
-| The data | respondents (level 1) in countries (level 2), pupils in schools | country-years in countries; respondents in country-years in countries | panel data, units $i$ observed in periods $t$ | repeated measures, longitudinal or clustered data, subjects crossed with items |
-| An intercept for each group, drawn from a distribution | random intercept, level-2 residual | random intercept | random effect, an unobserved effect assumed to be uncorrelated with the predictors | random intercept, random effect |
-| An intercept for each group, estimated as a parameter | fixed effects, country dummies | unit fixed effects, country dummies | fixed effects, the within estimator, least squares dummy variables | fixed-effects model for clustered data |
-| The coefficients shared by all groups | fixed part, fixed effects | coefficients, fixed effects | slope parameters | fixed effects |
-| A slope that varies across groups | random slope, random coefficient, modelled by a cross-level interaction | random coefficients | random coefficient model | random slope |
-| The predictor split into the group mean and the departure from it | group-mean centring, within-group and between-group effects, contextual effect | within and between effects, cross-sectional and longitudinal relationships | the between and the within estimator, the Mundlak device, correlated random effects | person-mean or cluster-mean centring, within-person and between-person effects |
-| The share of the variance between groups | intraclass correlation, variance partition coefficient | intraclass correlation | the share of the unit effect in the variance of the composite error | intraclass correlation |
+Two of the terms change their meaning between the traditions, and both matter for this case study. The first is 'fixed effects'. In econometrics, and in the sociology that follows it [@Allison2009FixedEffectsRegression; @Halaby2004PanelModelsSociological], a fixed effect is an intercept for each group estimated as a parameter, the country dummies of the [panel module](panel-data.qmd#sec-fe), while in the multilevel and mixed-model traditions the fixed effects are the coefficients shared by all groups, the fixed part of the model as against its random part, a clash that @GelmanHill2007DataAnalysisUsing [p. 245] record: "[f]ixed effects are usually defined as varying coefficients that are not themselves modeled", while "'fixed-effects models' sometimes refer to regressions in which coefficients do not vary by group (so that they are fixed, not random)". The two senses meet in this case study. OA writes of the national indicators that they "are, therefore, included as fixed effects at Level 2 in the models" [@Teney2016DoesEUEconomic, p. 625], in the multilevel sense, since the model has random intercepts for countries and survey waves and no country dummies at all, whereas KQXUE and C6HJR, two of the analysts in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], used fixed effects in the econometric sense, an intercept for each country.
 
-: The same models under the names that four traditions use, row by row. A term can mean one thing in one column and another thing in the next, above all 'fixed effects'. {#tbl-vocabularies}
-
-Two terms of the table change their meaning between the columns, and both matter for this case study. The first is 'fixed effects'. In econometrics, and in the sociology that follows it [@Allison2009FixedEffectsRegression; @Halaby2004PanelModelsSociological], a fixed effect is an intercept for each group estimated as a parameter, the country dummies of the [panel module](panel-data.qmd#sec-fe), while in the multilevel and mixed-model traditions the fixed effects are the coefficients shared by all groups, the fixed part of the model as against its random part, a clash that @GelmanHill2007DataAnalysisUsing [p. 245] record: "[f]ixed effects are usually defined as varying coefficients that are not themselves modeled", while "'fixed-effects models' sometimes refer to regressions in which coefficients do not vary by group (so that they are fixed, not random)". The two senses meet in this case study. OA writes of the national indicators that they "are, therefore, included as fixed effects at Level 2 in the models" [@Teney2016DoesEUEconomic, p. 625], in the multilevel sense, since the model has random intercepts for countries and survey waves and no country dummies at all, whereas KQXUE and C6HJR, two of the analysts in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], used fixed effects in the econometric sense, an intercept for each country.
-
-The second term is 'random effects'. In a multilevel model a random effect is a group intercept or slope drawn from a distribution whose variance the model estimates, while in econometrics the term names, above all, an assumption about such effects, that they are uncorrelated with the predictors, as @Wooldridge2010EconometricAnalysisCross [p. 286] explains and [section 5 of the panel module](panel-data.qmd#sec-random-effects) sets out. @HamakerMuthen2020FixedRandomEffects [p. 365] show that the concern of econometricians about fixed against random effects and the concern of the multilevel literature about how to centre a predictor "are actually addressing the same underlying issue", the issue that section 4 takes up.
+The second term is 'random effects'. In a multilevel model a random effect is a group intercept or slope drawn from a distribution whose variance the model estimates, while in econometrics the term names, above all, an assumption about such effects, that they are uncorrelated with the predictors, as @Wooldridge2010EconometricAnalysisCross [p. 286] explains and [section 5 of the panel module](panel-data.qmd#sec-random-effects) sets out. @HamakerMuthen2020FixedRandomEffects [p. 365] show that the concern of econometricians about fixed against random effects and the concern of the multilevel literature about how to centre a predictor "are actually addressing the same underlying issue", the issue that section 4 takes up. [Section 6 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-fixed-random) sets random intercepts and fixed effects side by side on the respondents of the European Social Survey.
 
 This module follows where it can the advice of @GelmanHill2007DataAnalysisUsing [p. 246], which is to "avoid the terms 'fixed' and 'random' entirely, and focus on the description of the model itself (for example, varying intercepts and constant slopes)". It keeps 'fixed effects' for the econometric sense and writes 'the coefficients of the fixed part' for the multilevel one. In R the distinction is written into the syntax. `fixest::feols(y ~ x | cntry)` gives each country an intercept of its own, estimated as a parameter, while `lme4::lmer(y ~ x + (1 | cntry))` draws the country intercepts from a distribution and estimates its variance. Inside `lmer()`, `(1 + x | cntry)` lets the slope of `x` vary by country as well, `(1 | cntry) + (1 | cntry:year)` nests country-years in countries, and `(1 | cntry) + (1 | year)` crosses countries with years.
 
@@ -70,51 +57,15 @@ This module follows where it can the advice of @GelmanHill2007DataAnalysisUsing 
 
 A claim about the effect of a context can be read at two levels. In the Europeanisation case study the claim is about countries, and it asks whether the people of a country frame the EU less positively when their national economy performs badly. The same words license a second reading. Perhaps unemployed *people* frame the EU differently, so that a country with more of them shows a lower average without anything having changed for anyone else. The first reading is **contextual**, in that living through high unemployment changes how everyone frames the EU, and the second is **compositional**, in that the mix of people changes while each person frames the EU as before, and a country-year panel cannot separate the two readings, because it contains no people.
 
-Reading an association among aggregates as if it held among individuals is the problem of ecological inference set out by @Robinson1950EcologicalCorrelationsBehavior, and @Fairbrother2013TwoMultilevelModeling [p. 122] warns that an analysis of aggregated survey data "risks committing an ecological fallacy in which aggregate-level relationships are erroneously assumed also to hold for the individual units on which the pre-aggregated data were collected". The multilevel model is the standard way of keeping both levels in one analysis: the respondents enter it as individuals, and the country-years and countries as the contexts in which the respondents answered. Section 6 uses it to ask how much of the national association the composition of the respondents could account for.
+Reading an association among aggregates as if it held among individuals is the problem of ecological inference set out by @Robinson1950EcologicalCorrelationsBehavior, and [section 2 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-why) takes the problem up for a claim made about individuals. The multilevel model is the standard way of keeping both levels in one analysis: the respondents enter it as individuals, and the country-years and countries as the contexts in which the respondents answered. Section 6 uses it to ask how much of the national association the composition of the respondents could account for.
 
 ## 3. The multilevel model {#sec-multilevel}
 
-Every model of the panel module was fitted at the level of the country-year, whereas OA worked with individual respondents, and so does this section, on `r n_resp` respondents rebuilt from the sixteen GESIS waves. A **multilevel model** fits the respondents directly while representing the nesting explicitly: respondents within country-years, and country-years within countries. Written at its three levels, with $i$ indexing respondents, the model reads
-
-$$ y_{i(ct)} = \pi_{ct} + \varepsilon_{ict} \qquad\qquad \text{(respondents around the mean of their cell)} $$
-$$ \pi_{ct} = \alpha_c + \beta x_{ct} + r_{ct} \qquad \text{(cell means moved by unemployment)} $$
-$$ \alpha_c = \gamma_0 + v_c \qquad\qquad\quad \text{(countries around the grand mean)} $$
-
-or, substituted into one line,
+Every model of the panel module was fitted at the level of the country-year, whereas OA worked with individual respondents, and so does this section, on `r n_resp` respondents rebuilt from the sixteen GESIS waves. A **multilevel model** fits the respondents directly while representing the nesting explicitly: respondents within country-years, and country-years within countries. With $i$ indexing respondents, $c$ countries and $t$ years, and $x_{ct}$ the unemployment rate of each country-year, the model reads
 
 $$ y_{ict} = \gamma_0 + \beta x_{ct} + v_c + r_{ct} + \varepsilon_{ict} $$
 
-with $v_c \sim N(0, \sigma_v^2)$, $r_{ct} \sim N(0, \sigma_r^2)$ and $\varepsilon_{ict} \sim N(0, \sigma_\varepsilon^2)$. Three variance components now share the noise: $\sigma_v^2$ for durable differences between countries, $\sigma_r^2$ for the departures of country-years from their country, and $\sigma_\varepsilon^2$ for differences between people inside a cell. The fixed part, $\gamma_0 + \beta x_{ct}$, is shared by everyone, and the random part is a sum of draws at each level. This is the random-effects model of the [panel module](panel-data.qmd#sec-random-effects) generalised, and `(1 | group)` in the notation of `lmer()` declares each random intercept. OA describes the same structure with the survey wave as the middle level: "citizens (Level 1; N: 390,373) are sampled within 16 EB waves (Level 2) that repeatedly took place within the 27 EU countries (Level 3)" [@Teney2016DoesEUEconomic, p. 623]. @fig-ml-structure draws the structure on a small simulated example.
-
-```{r}
-#| label: fig-ml-structure
-#| fig-width: 8
-#| fig-height: 4
-#| fig-cap: "The three levels of the multilevel model, illustrated with simulated data: three countries, two survey years each, fourteen respondents in each cell. Respondents (grey points) scatter around the mean of their country-year cell (red bars), the variation between persons. Cell means scatter around the level of their own country (solid blue line), which is the country-year component. And the levels of the countries scatter around the grand mean (dashed line), the country component. A multilevel model estimates one variance for each of those three kinds of scatter."
-#| code-fold: true
-set.seed(11)
-countries <- c("Country A", "Country B", "Country C")
-country_eff <- c(-0.08, 0.02, 0.09)
-toy_cells <- tidyr::expand_grid(country = countries, year = c("2008", "2009")) |>
-  dplyr::mutate(cell_mu = 0.5 + rep(country_eff, each = 2) + rnorm(6, 0, 0.045)) # r-style: keep – data_modify() draws the random numbers twice and so changes the figure
-toy <- toy_cells |>
-  dplyr::slice(rep(1:6, each = 14)) |>
-  dplyr::mutate(y = cell_mu + rnorm(84, 0, 0.09)) # r-style: keep – as above
-country_means <- toy_cells |>
-  datawizard::data_summary(mu = mean(cell_mu), by = "country")
-ggplot2::ggplot(toy, ggplot2::aes(year, y)) +
-  ggplot2::geom_hline(yintercept = mean(toy_cells$cell_mu), linetype = "dashed",
-                      colour = "grey40") +
-  ggplot2::geom_hline(data = country_means, ggplot2::aes(yintercept = mu),
-                      colour = "#0e3b6a", linewidth = 0.7) +
-  ggplot2::geom_jitter(width = 0.12, height = 0, colour = "grey65", size = 1.4) +
-  ggplot2::stat_summary(fun = mean, geom = "crossbar", width = 0.4,
-                        colour = "#a10000", linewidth = 0.5) +
-  ggplot2::facet_grid(cols = ggplot2::vars(country)) +
-  ggplot2::labs(x = NULL, y = "framing score") +
-  ggplot2::theme_minimal(base_size = 12) +
-  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
-```
+with $v_c \sim N(0, \sigma_v^2)$, $r_{ct} \sim N(0, \sigma_r^2)$ and $\varepsilon_{ict} \sim N(0, \sigma_\varepsilon^2)$. Three variance components now share the noise: $\sigma_v^2$ for durable differences between countries, $\sigma_r^2$ for the departures of country-years from their country, and $\sigma_\varepsilon^2$ for differences between people inside a cell. The fixed part, $\gamma_0 + \beta x_{ct}$, is shared by everyone, and the random part is a sum of draws at each level. This is the random-effects model of the [panel module](panel-data.qmd#sec-random-effects) generalised, and `(1 | group)` in the notation of `lmer()` declares each random intercept. OA describes the structure with the survey wave as the middle level: "citizens (Level 1; N: 390,373) are sampled within 16 EB waves (Level 2) that repeatedly took place within the 27 EU countries (Level 3)" [@Teney2016DoesEUEconomic, p. 623]. [Section 3 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-levels) writes the model at each of its three levels and draws the structure on a small simulated example.
 
 ::: {.callout-note}
 ## How the outputs of this section were produced
@@ -175,7 +126,7 @@ The slope barely moves (`r insight::format_value(real_unemp$value[real_unemp$mod
 
 ### Random slopes {#sec-slopes}
 
-The multilevel framework adds something new once more than the intercept is allowed to vary. A **random slope** lets each country have its own unemployment coefficient, drawn from a distribution whose spread is estimated,
+A **random slope** lets each country have its own unemployment coefficient, drawn from a distribution whose spread is estimated, as [section 8 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-slopes) explains in full,
 
 $$ y_{ict} = \gamma_0 + (\beta + b_c)\, x_{ct} + v_c + r_{ct} + \varepsilon_{ict}, \qquad b_c \sim N(0, \sigma_b^2) $$
 
@@ -243,15 +194,15 @@ tibble::tibble(component = c("between countries", "between country-years", "betw
 var_real <- sd_real^2
 ```
 
-Variation between people accounts for far more than either of the other components, about `r insight::format_value(100 * var_real[["person"]] / sum(var_real), digits = 0)`% of the total. The share of the variance that lies between the groups is what multilevel modellers call the intraclass correlation, and here it is `r insight::format_value(100 * (var_real[["cntry"]] + var_real[["cy"]]) / sum(var_real), digits = 1)`% for countries and country-years together. The small share reflects the shape of the outcome at this level. A respondent who mentions two things and finds one of them cosmopolitan scores exactly one half, so the score is bounded, takes only a few values, and its scatter within any cell is enormous compared with the differences between cells. That is also why so many respondents add so little precision to the estimate for a predictor at the level of the country-year.
+Variation between people accounts for far more than either of the other components, about `r insight::format_value(100 * var_real[["person"]] / sum(var_real), digits = 0)`% of the total. The share of the variance that lies between the groups is what multilevel modellers call the intraclass correlation, which [section 4 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-variance) sets out, and here it is `r insight::format_value(100 * (var_real[["cntry"]] + var_real[["cy"]]) / sum(var_real), digits = 1)`% for countries and country-years together. The small share reflects the shape of the outcome at this level. A respondent who mentions two things and finds one of them cosmopolitan scores exactly one half, so the score is bounded, takes only a few values, and its scatter within any cell is enormous compared with the differences between cells. That is also why so many respondents add so little precision to the estimate for a predictor at the level of the country-year.
 
-Whenever the predictor is measured at a higher level, a sample size counted in persons suggests a precision that the design does not have. The number of higher-level units sets the limit, and 27 countries are few. Simulating multilevel models of country data, @BryanJenkins2016MultilevelModellingCountry [p. 3] conclude that "[w]ith large sample sizes of individuals within each country but only a small number of countries, analysts can reliably estimate individual-level effects but estimates of parameters summarizing country effects are likely to be unreliable", and @Stegmueller2013HowManyCountries [p. 748] finds that with few countries "maximum likelihood estimates and confidence intervals can be severely biased, especially in models including cross-level interactions". The [panel module](panel-data.qmd#sec-inference) makes the same point for the country-year panel, where CR2 errors with Satterthwaite degrees of freedom count how many of the 27 countries effectively carry the information.
+Whenever the predictor is measured at a higher level, a sample size counted in persons suggests a precision that the design does not have. The number of higher-level units sets the limit, and 27 countries are few. The Immigration module sets out what simulation studies of multilevel models find about so few countries in [section 5](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-model) and how the rules of inference count the countries in [section 10](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-few-countries), and the [panel module](panel-data.qmd#sec-inference) makes the same point for the country-year panel, where CR2 errors with Satterthwaite degrees of freedom count how many of the 27 countries effectively carry the information.
 
 ## 4. The within–between model {#sec-rewb}
 
-The [panel module](panel-data.qmd#sec-within-between) fits the within–between model on the 270 country-years and reads it as an econometrician would, as the device of @Mundlak1978PoolingTimeSeries that reproduces the fixed-effects slope inside a random-effects model; the code and the numbers of the fit are there. Read from the multilevel side, the same fit is a two-level model in which the country-years are the units at level 1 and the countries the units at level 2 [@Fairbrother2013TwoMultilevelModeling, p. 121], the unemployment rate of a country-year is a level-1 predictor, and the within–between model enters it centred on the mean of its country, together with that mean as a predictor at level 2. Centring within clusters, as the multilevel literature calls the step, is in the words of @HamakerMuthen2020FixedRandomEffects [p. 371] "arguably the gold standard in the multilevel literature at this point", because it yields the slope within the clusters however the clusters differ, where the coefficient on the uncentred predictor of a random-intercept model blends the two slopes when they differ [@RaudenbushBryk2002HierarchicalLinearModels, p. 139], as the random-intercept slope of the panel turned out to do.
+The [panel module](panel-data.qmd#sec-within-between) fits the within–between model on the 270 country-years and reads it as an econometrician would, as the device of @Mundlak1978PoolingTimeSeries that reproduces the fixed-effects slope inside a random-effects model; the code and the numbers of the fit are there. Read from the multilevel side, the same fit is a two-level model in which the country-years are the units at level 1 and the countries the units at level 2 [@Fairbrother2013TwoMultilevelModeling, p. 121], the unemployment rate of a country-year is a level-1 predictor, and the within–between model enters it centred on the mean of its country, together with that mean as a predictor at level 2. Centring within clusters yields the slope within the clusters however the clusters differ, whereas the coefficient on the uncentred predictor of a random-intercept model blends the two slopes when they differ [@RaudenbushBryk2002HierarchicalLinearModels, p. 139], as the random-intercept slope of the panel turned out to do. [Section 7 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-within-between) treats the model in full, on a predictor measured for each respondent.
 
-The difference between the two slopes has a reading of its own in the multilevel tradition, as a contextual effect, which Raudenbush and Bryk measure as the between slope minus the within slope, $\beta_c = \beta_b - \beta_w$, "the expected difference in the outcomes between two students who have the same individual SES, but who attend schools differing by one unit in mean SES" (p. 141). On the panel that difference is the coefficient on the country mean in the Mundlak form, positive and different from zero under every test that the panel module applies: the expected difference in cosmopolitan framing between two country-years with the same unemployment rate in countries whose average rates over the decade differ by one point, a comparison across countries that a claim about change within them does not ask for. @BellEtAl2019FixedRandomEffects [p. 1057] read the Hausman test of the panel module in the same terms, as a test of whether there is a contextual effect.
+The difference between the two slopes, the between slope minus the within slope, has a reading of its own in the multilevel tradition, as what Raudenbush and Bryk call a contextual effect (p. 141). On the panel that difference is the coefficient on the country mean in the Mundlak form, positive and different from zero under every test that the panel module applies: the expected difference in cosmopolitan framing between two country-years with the same unemployment rate in countries whose average rates over the decade differ by one point, a comparison across countries that a claim about change within them does not ask for.
 
 With respondents in the model the decomposition takes one step more. @Fairbrother2013TwoMultilevelModeling [p. 124] observes that the usual model for comparative surveys repeated over time, with respondents in country-years in countries and a single coefficient on a variable of the country-year, "effectively assumes that the cross-sectional and longitudinal relationships between x and y are the same", and he proposes to split such a variable into the mean of each country and the departure of each country-year from it, both entered beside the characteristics of the respondents, together with a term for time. The published model of OA, to which the next section turns, has the single coefficient of the first form, and section 7 shows what a term for the years does to it.
 
@@ -385,9 +336,223 @@ In the workspace, fit the published model of section 5 again with `ses` removed 
 Finally, take the decomposition of section 4 to the respondents, as Fairbrother proposes. Join the mean unemployment of each country over the decade to `person`, for example from `datawizard::demean(panel, select = "unemp", by = "cntry")` on the course panel that `prep/02_scales_and_panel.R` reads in as `panel`, replace `munemp` by the country mean and the departure from it, add `(1 | year)`, and set the slope of the departure beside the two-way slope of the panel.
 :::
 
-## 8. Survey weights {#sec-weights}
+## 8. Weights {#sec-weights}
 
-Every Eurobarometer respondent arrives with a post-stratification weight, W1, which aligns each national sample with its population on sex, age, region and size of community, and the models of the respondents above have so far ignored it. Whether to use it is a decision of the same kind as the choice of a design, and the [weights module](weighting.qmd) takes that decision apart: what the three kinds of weight on the specification menu are, which of them changes the estimand, how the survey package and WeMix fit a weighted model, why the same weighted multilevel model returns different numbers in different software, and what the two Stata analysts of the robustness study did about the survey weights. The fits with design weights, the pooled `svyglm()` and the two-level WeMix model set beside the unweighted two-level model of section 3, are in the [section on estimation](weighting.qmd#sec-estimation) of that module.
+```{r}
+#| label: weights-values
+#| include: false
+# the panel of weights and the files of the curve and of its deviations, which
+# only this section reads
+pw <- datawizard::data_read("../cases/europeanisation/data/teney_panel_weights.csv", verbose = FALSE)
+cy <- datawizard::data_read("../cases/europeanisation/data/europeanisation_cy.csv", verbose = FALSE)
+curve <- readr::read_csv("../cases/europeanisation/data/spec_curve.csv", show_col_types = FALSE)
+forks <- readr::read_csv("../cases/europeanisation/data/spec_curve_forks.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive")
+devs <- readr::read_csv("../cases/europeanisation/data/menu_deviations.csv", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive", axis == "weights")
+dev_rows <- readr::read_csv("../cases/europeanisation/data/menu_deviations_rows.csv.gz", show_col_types = FALSE) |>
+  datawizard::data_filter(curve == "positive", axis == "weights")
+# percentages round halves up, as the specification menu does; pct() takes a
+# proportion and pc() a value already in per cent
+pc <- \(x) paste0(formatC(floor(x * 10^1 + 0.5) / 10^1, format = "f", digits = 1), "%")
+pct <- \(x) pc(100 * x)
+pc_small <- \(x) if (x < 0.1) "less than 0.1%" else pc(x)
+num <- \(x, d = 3) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
+sig <- \(x) gsub("-", "−", formatC(x, format = "g", digits = 3), fixed = TRUE)
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
+dv <- \(op, col) devs[[col]][devs$option == op]
+below_sig <- \(d) 100 * mean(d$supports & d$sig)
+
+# the reproduced specification and its twin with design-weighted cells, as they
+# stand on the curve, and the same two under each regression weight
+ref_spec <- \(d) d |>
+  dplyr::filter(outcome == "mcosmo", predictor == "unemp", copredictor == "none",
+         estimator == "fe_twoway", noop == "zero", item_set == "all",
+         measure == "wb_nat", pred_form == "raw")
+c6hjr <- dplyr::bind_rows(
+  curve |> ref_spec() |>
+    dplyr::transmute(cell_weight, reg_weight = "none", b, t = t_cr2, df = df_cr2, p = p_cr2, r = r_ca),
+  dev_rows |> ref_spec() |>
+    dplyr::transmute(cell_weight, reg_weight = option, b = b_dev, t = t_dev, df = df_dev, p = p_dev, r = r_ca_dev)
+)
+cw <- \(cell, reg, col) c6hjr[[col]][c6hjr$cell_weight == cell & c6hjr$reg_weight == reg]
+```
+
+Every Eurobarometer respondent arrives with a post-stratification weight, W1, which the models of the respondents above have so far ignored. In this case study weights enter at two levels, inside each country-year and across the country-years, and the specification menu has a decision at each: the **cell weighting** decides, with two options, how the respondents of a country-year are averaged, and the decision **whose average** decides, with four, how much each country-year counts in the regression. Between them the two decisions cover three different questions, which are settled at two different levels of the analysis and are justified by different arguments, and only one of the three changes what the analysis is estimating.
+
+| | Level | The argument for it | Does it change the estimand? |
+|:--|:--|:--|:--|
+| **Survey weighting** | inside a country-year cell | The achieved sample is not a miniature of the country, so weight the respondents before averaging them | No. It makes the cell mean a better estimate of the same quantity |
+| **Precision weighting** | across cells | A cell mean built on more interviews is measured more precisely, so let it count for more | No. It is an efficiency argument about estimating the same slope |
+| **Population weighting** | across cells | The claim is about Europeans, not about countries, so a country should count in proportion to how many people live in it | **Yes.** The slope now describes a different average |
+
+: The three decisions that are grouped under the word 'weight' in this analysis. {#tbl-three}
+
+The first is a *measurement* decision, because it changes how well the number in the cell estimates the thing it names. The second is a decision about *the model*, which changes the efficiency of the fit and leaves the target alone. The third is a decision about *the question*: it changes whose average the coefficient describes, and two analysts who resolve it differently are answering different questions. When all three go under the one word 'weighting', a change of question can be reported as though it were a technical robustness check. The curve of the claim keeps the unweighted regression and both ways of building the cell means, and this section gives the reasons. What a survey weight is, the strata and clusters of a survey design and the standard errors that follow such a design are taught in full by the module on [weights and survey design](https://codemoreh.github.io/ar4ds-cohabitation/companion/weighting.html) of the Cohabitation and marriage case study.
+
+### The weights of the Eurobarometer {#sec-weights-eurobarometer}
+
+The weighting scheme of the Eurobarometer is documented in the weighting overview of the GESIS Eurobarometer Data Service [@GESISWeightingOverview], and the data file for every wave labels its weights plainly. The basic one is **W1, "WEIGHT RESULT FROM TARGET"**, which is the variable `w1` in the rebuilt person file. It is a pure post-stratification weight (*redressment*, in the vocabulary of the Eurobarometer). An iterative procedure adjusts the weights to one margin after another until each national sample matches the known distribution of its population by sex, age, region (NUTS 2) and size of locality, while keeping the real number of cases in each country. W1 makes each national sample representative *of its own country*, and it does not rescale countries against one another. GESIS supplies no design weight for the unequal chances of selection that depend on the size of a household, as the [background page](../cases/europeanisation/index.qmd#sec-eurobarometer) quotes from its documentation.
+
+Of the other weights in the file, W3 ("WEIGHT GERMANY") and W4 ("WEIGHT UNITED KINGDOM") combine the separately drawn East/West German and Great Britain/Northern Ireland samples into united national totals, the same splits that are merged by the DE and GB recodes in the course codebook. The long W5–W30 series ("WEIGHT EU6" through "WEIGHT EU27", euro zone in and out) add the population-size scaling needed when similarly sized national samples must stand for populations as different as those of Malta and Germany, and **WEX** ("WEIGHT EXTRA POPULATION 15+") extrapolates results to the actual population aged fifteen and over. For a question about the within-country association between framing and unemployment, W1 is the natural choice, and it is the natural weight to offer in any person-level universe of specifications built from this menu.
+
+::: {.callout-important title="Choosing among Eurobarometer weights"}
+A Eurobarometer file contains several weight variables, and they are not interchangeable. Choosing the wrong one changes the question being answered, and no warning appears in the output. Using a European weight and then averaging countries double-counts population size; using a national weight and then pooling respondents across countries gives you an average over *respondents*, which is an artefact of how many interviews each country happened to get. Whenever a survey provides more than one weight, read the codebook before choosing, because the choice among them is, in effect, the choice between a country-level and a person-level estimand.
+:::
+
+No model of OA uses a weight, as the [background page](../cases/europeanisation/index.qmd#sec-selection) notes from the code of the paper. Of the five analysts of the robustness study, KQXUE and 018OL averaged the respondents of each cell without weights, and PRL47, who modelled the respondents in Stata, built a survey weight for every wave but used it only in descriptive checks, so that the weight never entered a model. In the code of KQXUE two lines settle the whole weighting question by default:
+
+```stata
+collapse cosmo util, by(cntry year)    // unweighted country-year means
+xtreg cosmo unemployment, fe           // = the within estimator of section 4 of Panel data
+```
+
+The `collapse` command averages every respondent equally, so the survey weights are gone before any model is fitted, and each cell then counts equally in `xtreg` whether 300 people or 3,000 stand behind it. That is the choice which the `n_cell` option of the menu, set out below, switches on and off. (For Stata users: `xtreg, fe` after `xtset cntry_num year` is the within estimator of `plm` in R.)
+
+### Weights within the cells {#sec-weights-cells}
+
+Applying W1 changes the country-year means by a small but not negligible amount. Across the `r nrow(pw)` cells, the largest change to the cosmopolitan scale is `r sig(max(abs(pw$w_mcosmo - cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))])))` on a 0–1 scale whose mean is about 0.51, and the weighted and unweighted cell means correlate at `r round(cor(pw$w_mcosmo, cy$mcosmo[match(paste(pw$cntry, pw$year), paste(cy$cntry, cy$year))]), 4)`. Because the two versions move together, the choice almost never changes a result. On the curve of the claim the cell weighting carries `r pc_small(fk("cell_weight"))` of the variance of the claim-aligned partial correlation, and moving it alone changes whether a specification lies below zero with CR2 p < 0.05 in `r pc(fk("cell_weight", "crossing_rate"))` of the pairs. Both options stay on the curve, the design-weighted mean as the better estimator of a national quantity in principle, and the mean of the respondents as interviewed because it is the one that the original study and the course panel use.
+
+Weighting improves representativeness at a cost in precision. When respondents have unequal weights, the weighted mean is less precise than an unweighted mean of the same number of interviews, because a few heavily weighted cases contribute a disproportionate share of the estimate. Kish's **effective sample size**, the number of interviews divided by the design effect of the weights, is the standard way of saying how much precision is left:
+
+$$n_\text{eff} = \frac{\left(\sum_i w_i\right)^2}{\sum_i w_i^2}$$
+
+For a cell where every weight is equal, $n_\text{eff} = n$. As the weights spread out, it falls. In this panel the median cell has $n = `r median(pw$n_cy)`$ interviews and $n_\text{eff} = `r round(median(pw$n_eff))`$, a design effect (the ratio of $n$ to $n_\text{eff}$) of `r round(median(pw$deff), 2)`; the worst cell loses `r pct(1 - 1 / max(pw$deff))` of its sample to the weighting. The practical consequence is that if you are going to weight cells by their precision, $n_\text{eff}$ is the right variable and $n$ is an approximation to it.
+
+### Weights across the cells {#sec-weights-across}
+
+Once you have `r nrow(pw)` country-year means, you have to decide how much each one counts in the regression. There are four candidate answers, and each makes a different claim.
+
+```{r}
+#| label: tbl-candidates
+#| echo: false
+#| tbl-cap: "The four regression weights on the menu."
+tinytable::tt(
+  tibble::tibble(
+    Setting = c("`none`", "`n_cell`", "`n_eff`", "`pop`"),
+    `What it weights by` = c("nothing; every cell counts once",
+      "respondents interviewed", "effective sample size",
+      "adult population of the country that year"),
+    `The claim it makes` = c(
+      "The claim is about countries. Malta and Germany are two observations",
+      "Cells measured on more interviews are more reliable evidence",
+      "The same argument, using the precision that the weighting actually leaves",
+      "The claim is about Europeans. A German counts as much as a Maltese"),
+    Kind = c("estimand: the average country", "precision", "precision",
+             "estimand: the average European"))) |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+The precision weights rest on an assumption about why the cell means scatter around the fitted line. If they scattered mainly because each is measured with sampling error, the cells built on more interviews would be the more reliable evidence, and weighting by their sample size would estimate the same slope more efficiently. On these data the assumption fails. Across the 270 cells the sampling variance of a cell mean of the cosmopolitan share averages 0.000103, against a residual variance of 0.00141 in the reproduced model, so that about 7% of the variation that the model leaves unexplained is sampling noise, and the rest is genuine variation between country-years that a larger sample would not have reduced. Under those conditions efficient weights are close to equal. Weights that run from `r format(min(pw$n_cy), big.mark = ",")` to `r format(max(pw$n_cy), big.mark = ",")` respondents therefore buy little precision, and what they mostly do is shift weight towards the years in which two survey waves were fielded and towards the countries with the largest samples.
+
+It is tempting to treat the respondent count (`n_cy` in the panel, `n_cell` on the menu) as a size variable, on the reasoning that bigger countries get bigger samples. They do not, or not by much. Eurobarometer fields roughly a thousand interviews in each member state whatever its size, with smaller allocations for the smallest states and a larger one for Germany. So across this panel:
+
+- the respondent count runs from `r min(pw$n_cy)` to `r max(pw$n_cy)`, a ratio of **`r round(max(pw$n_cy) / min(pw$n_cy), 1)` to 1**;
+- the adult population runs from `r format(min(pw$pop_15plus), big.mark = ",")` to `r format(max(pw$pop_15plus), big.mark = ",")`, a ratio of **`r round(max(pw$pop_15plus) / min(pw$pop_15plus))` to 1**;
+- and the two correlate at only `r round(cor(pw$n_cy, pw$pop_15plus), 2)` across the `r nrow(pw)` cells.
+
+Weighting by `n_cell` therefore does *not* make the analysis representative of the European population. It gives better-measured cells more say in the fit, which is a different and much weaker claim. If you want the average European, you have to weight by population and state that you have done so.
+
+@tbl-c6hjr shows the reproduced specification (cosmopolitan framing on raw World Bank unemployment, two-way fixed effects, all years, no adjustment, respondents who mention nothing scored zero) fitted under all eight combinations of the two ways of building the cell means and the four regression weights.
+
+```{r}
+#| label: tbl-c6hjr
+#| echo: false
+#| tbl-cap: "The reproduced specification under every weighting choice. The first two rows stand on the curve of the claim; the first is the reproduced C6HJR result. The t is the coefficient divided by its CR2 standard error, clustered by country, df are its Satterthwaite degrees of freedom, and p is the CR2 p-value that classes the curve. Sources: `cases/europeanisation/data/spec_curve.csv` and `cases/europeanisation/data/menu_deviations_rows.csv.gz`."
+tinytable::tt(
+  c6hjr |>
+    dplyr::arrange(factor(reg_weight, c("none", "n_cell", "n_eff", "pop")),
+            factor(cell_weight, c("unweighted", "design"))) |>
+    dplyr::transmute(`Cell mean` = dplyr::if_else(cell_weight == "design", "design-weighted", "as interviewed"),
+              `Regression weight` = reg_weight,
+              b = num(b, 5), `CR2 t` = num(t, 2), df = num(df, 1), `CR2 p` = num(p), r = num(r, 3))) |>
+  tinytable::style_tt(j = 3:7, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+Every row lies below zero, so no weighting choice reverses the direction of the association, but its strength and the verdict on it change. The partial correlation runs from `r num(max(c6hjr$r), 3)` to `r num(min(c6hjr$r), 3)` across eight versions of a specification that any methods section would describe in the same sentence, and the two kinds of weight pull in **opposite directions**. Precision weighting by the respondent count weakens the result, from a CR2 t of `r num(cw("unweighted", "none", "t"), 2)` to `r num(cw("unweighted", "n_cell", "t"), 2)` and from a p of `r num(cw("unweighted", "none", "p"))` to `r num(cw("unweighted", "n_cell", "p"))`. Population weighting strengthens the coefficient against its standard error, to t = `r num(cw("unweighted", "pop", "t"), 2)`, but the test becomes no more decisive, with p = `r num(cw("unweighted", "pop", "p"))`, because the Satterthwaite degrees of freedom fall from `r num(cw("unweighted", "none", "df"), 1)` to `r num(cw("unweighted", "pop", "df"), 1)`. A weight in proportion to population hands most of the information to the few largest countries, and the degrees of freedom count how few of them are left carrying it. An analyst who reasons "I should weight, because weighting is more careful" without saying which argument they are making could end up with either.
+
+Kish's correction changes almost nothing. With cells as interviewed, `n_eff` and `n_cell` are the same weight, because a cell mean that uses no survey weights has an effective sample size equal to its number of respondents, and with design-weighted cells they give CR2 t values of `r num(cw("design", "n_eff", "t"), 2)` and `r num(cw("design", "n_cell", "t"), 2)`. $n_\text{eff}$ is the correct precision weight, but the design effects in this panel are small enough that choosing it over `n_cell` does not change the conclusion.
+
+The same holds across the curve. Swapped into every one of its `r nrow(curve)` specifications, the respondent weight leaves `r pc(dv("n_cell", "below_zero_sig"))` of them below zero with CR2 p < 0.05 and the effective sample size `r pc(dv("n_eff", "below_zero_sig"))`, against `r pc(below_sig(curve))` on the curve itself, and each changes the class of `r pc(dv("n_cell", "class_changes"))` of the pairs. The curve keeps only the unweighted fit, because the precision weights rest on an argument that the error structure of these data does not support, and the population weight, which the next subsection takes up, answers another question.
+
+### The average European {#sec-average-european}
+
+Weighting by adult population changes the quantity to the average European, in which the largest member state counts `r round(max(pw$pop_15plus) / min(pw$pop_15plus))` times as much as the smallest. That is a defensible estimand, the one that a reader interested in the climate of opinion in the Union as a whole would want, but it is not the estimand of the claim. The claim concerns how a national economy shapes the framing of its citizens, so its unit is the member state, and the unweighted fit, in which Malta counts as much as Germany, is what a claim about national economies asks for. A result about the average European can therefore neither confirm nor undermine a result about the average member state, and it belongs in an analysis with its own estimand statement rather than among the robustness checks of the claim.
+
+Across the curve the population weight leaves `r pc(dv("pop", "below_zero"))` of the specifications below zero, slightly more than the curve itself, but only `r pc(dv("pop", "below_zero_sig"))` below zero with CR2 p < 0.05, and it changes the class of `r pc(dv("pop", "class_changes"))` of the pairs. The fall in significance most probably reflects the weight itself, which lets a few large countries dominate the fit and leaves fewer countries to carry the evidence, while at the reproduced specification, as @tbl-c6hjr shows, the same weight strengthens the result. The two estimands diverge in ways that a single specification does not reveal, which is a further reason for reporting the population-weighted analysis on its own terms.
+
+### The denominator {#sec-denominator}
+
+When asked what the EU means to them, `r format(sum(pw$n_noop), big.mark = ",")` respondents, `r pct(sum(pw$n_noop) / sum(pw$n_cy))` of the sample, mentioned nothing at all, and how they are scored is a decision that no weight can change. The course panel follows the reanalyst C6HJR in scoring them **0** on all four framing scales, so that a person with no opinion enters the data as a person with no cosmopolitan framing, while the code of the original paper dropped those respondents; the section [Respondents who mention nothing](measurement.qmd#sec-noop) of the module on the items behind the scales sets out what each rule assumes and which analysts took it.
+
+That would be a defensible convention if the no-opinion rate were the same everywhere, but it differs widely between countries.
+
+```{r}
+#| label: tbl-noop
+#| echo: false
+#| tbl-cap: "The four highest and four lowest no-opinion rates."
+tinytable::tt(
+  pw |> dplyr::summarise(rate = mean(noop_rate), .by = cntry) |>
+    datawizard::data_arrange("-rate") |> dplyr::slice(c(1:4, (dplyr::n() - 3):dplyr::n())) |>
+    dplyr::transmute(Country = cntry, `No opinion` = pct(rate))) |>
+  tinytable::style_tt(j = 2, align = "r") |>
+  tinytable::style_tt(fontsize = 0.8)
+```
+
+An eight-fold difference in the rate of a response coded as a substantive zero is a measurement problem that no weight will fix, since the weights correct the composition of the respondents and leave the scoring of their answers untouched. Whether the silent respondents are dropped or scored zero belongs with the measurement decisions of the [specification menu](../cases/europeanisation/menu.qmd), and the curve keeps both rules.
+
+### Weights in models of the respondents {#sec-weights-respondents}
+
+The models of the respondents can carry W1 as well. In R, design-based estimation is the job of the survey package [@Lumley2004AnalysisComplexSurvey]. You declare the design once – weights and, where the data supply them, clusters and strata – and then every estimator in the package takes it into account, as [section 3 of the Cohabitation module](https://codemoreh.github.io/ar4ds-cohabitation/companion/weighting.html#sec-design) shows for a survey that supplies all three. The rebuilt person file holds no identifiers of the primary sampling units, so the design here declares the weights alone:
+
+```{r}
+#| label: code-svyglm
+#| eval: false
+des <- survey::svydesign(ids = ~1, weights = ~w1, data = person)   # weights only; the file has no primary sampling unit (PSU) ids
+m_svy <- survey::svyglm(s_cosmo ~ unemp, design = des)
+summary(m_svy)
+```
+
+```{r}
+#| label: out-svyglm
+#| echo: false
+writeLines(readLines(file.path("_model-outputs", "svyglm.txt")))
+```
+
+The W1-weighted pooled slope is +0.0001 with t = 0.8, which is no association at all, and its sign is the opposite of the one that the claim predicts. The weights have corrected the *representation* of the sample, but they cannot correct a mis-specified model, and this is the pooled estimator of [section 3 of Panel data](panel-data.qmd#sec-pooled) again, blending within-country and between-country variation across 27 countries. The output also shows that `svyglm()` reports design-robust (linearised) standard errors by default.
+
+A weighted multilevel model is a harder problem, because it needs a weight at each level, the country and then the respondent within the country, while surveys publish one all-in weight per person. The standard answer, **pseudo-maximum-likelihood**, weights the contribution of each level to the likelihood [@Rabe-HeskethSkrondal2006MultilevelModellingComplex] and leaves open how the weights of the lower level are scaled, a choice that can move the variance estimates noticeably [@Carle2009FittingMultilevelModels], as [section 9 of the Cohabitation module](https://codemoreh.github.io/ar4ds-cohabitation/companion/weighting.html#sec-other-models) explains. Because implementations differ in those choices, **the same weighted multilevel model can return different numbers in different software**, and knowing which convention you are running is part of reporting the model.
+
+The `weights` argument of `lmer()` is *not* a survey-weights argument. It treats weights as precision weights, a different quantity entirely, and if you pass it `w1` it returns answers that are inconsistent with the sample design, without any warning. The `mixed` command in Stata accepts probability weights (`[pw = ...]`) and implements pseudo-maximum-likelihood with its own scaling options (`pwscale()`), and the R package that follows the conventions of Stata is **WeMix** [@BaileyEtAl2023WeMixWeightedMixed], which takes one weight column per level. In our own comparative survey work it has reproduced to three decimals the coefficients of the fixed part of weighted `mixed` models in Stata, which makes it the tool of choice when a published Stata result needs re-implementing in R.
+
+On the data of this case study, the two-level model of [section 3](#sec-levels) fitted with WeMix, with the W1 weights at the respondent level and a constant weight of 1 at the country level, reproduces the common 'weights at level 1 only' scenario:
+
+```{r}
+#| label: code-wemix
+#| eval: false
+person <- person |>
+  datawizard::data_modify(w_lvl2 = 1)   # unit weight at the country level – weighting at level 1 only
+m_wemix <- WeMix::mix(s_cosmo ~ unemp + (1 | cntry), data = person,
+                      weights = c("w1", "w_lvl2"))
+summary(m_wemix)
+```
+
+```{r}
+#| label: out-wemix
+#| echo: false
+writeLines(readLines(file.path("_model-outputs", "wemix_2lvl.txt")))
+```
+
+Compare this with the unweighted two-level fit of [section 3](#sec-levels), and read the comparison carefully, because the two fits differ in more than the weights. The weighted slope, −0.0049, is almost the same as the unweighted −0.0048, so the W1 weights barely move the estimate, and the association between framing and unemployment is not an artefact of who is over- or under-represented within national samples. The standard errors, though, are 0.0015 here against 0.0002 there, and they are not comparable at a glance. Most of that gap comes from the *variance estimator*, since WeMix reports design-linearised (robust) standard errors while `lmer()` reports model-based ones, so two settings changed between the outputs and only one of them is the weighting. The rule of the specification menu, one decision at a time, applies here too: before attributing a difference to the weights, make sure that every other setting, the variance estimator included, is the same in both fits.
+
+::: {.callout-tip}
+## Try it
+
+1. Pick any specification from the curve (`cases/europeanisation/data/spec_curve.csv`) and look up its twins under the three regression weights in `cases/europeanisation/data/menu_deviations_rows.csv.gz` (`axis == "weights"`). Write one sentence per weight, the unweighted fit included, stating what the coefficient is the average *of*.
+2. Three of those four sentences describe the same quantity, and two of them give the same number. Which, and why?
+3. The `no_bailout` sample and the `pop` weight both change the population that the claim is about, and neither stands on the curve of the claim. One of them is conventionally reported as a robustness check and the other as a modelling choice. Should either be?
+:::
 
 ## 9. Bounded outcomes {#sec-glm}
 
@@ -614,7 +779,7 @@ claim2 |>
   tinytable::tt()
 ```
 
-The multilevel literature adds a caution about the standard error of such a term. @HeisigSchaeffer2019WhyYouShould [p. 258] argue that "multilevel models involving cross-level interactions should always include random slopes on the lower-level components of those interactions", because without them the test of the interaction is "severely anti-conservative", and the warning of Stegmueller about cross-level interactions with few countries, quoted in section 3, applies to the same term. The published model tests its interactions with random intercepts only. A footnote of the paper reports that "[r]andom slopes models show similar regression coefficients to the random intercept model" [@Teney2016DoesEUEconomic, p. 631, n. 3], but similar coefficients say nothing about the standard errors on which the verdict depends, so a random slope for education across countries is one of the decisions that a reanalysis of this claim has to make.
+The multilevel literature adds a caution about the standard error of such a term. @HeisigSchaeffer2019WhyYouShould [p. 258] argue that "multilevel models involving cross-level interactions should always include random slopes on the lower-level components of those interactions", because without them the test of the interaction is "severely anti-conservative", and @Stegmueller2013HowManyCountries [p. 748] finds that with few countries "maximum likelihood estimates and confidence intervals can be severely biased, especially in models including cross-level interactions", a warning that applies to the same term. The published model tests its interactions with random intercepts only. A footnote of the paper reports that "[r]andom slopes models show similar regression coefficients to the random intercept model" [@Teney2016DoesEUEconomic, p. 631, n. 3], but similar coefficients say nothing about the standard errors on which the verdict depends, so a random slope for education across countries is one of the decisions that a reanalysis of this claim has to make. [Section 9 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-interactions) shows on the respondents of the European Social Survey what a random slope of the lower-level variable does to the test of two cross-level interactions.
 
 **A replication exercise of your own.** The pieces for a second exercise in the style of the first are all on this page: a claim card, an estimand statement, a public dataset on which the aggregate design runs in the browser lab or the workspace, the respondent file for anyone who built it, and the published values of OA to reproduce. The menu is smaller than the one for the first claim, and each of its decisions is one that you can defend or not: the frame set, the scoring rule, the rule for the respondents who named nothing, the coding of education (the published three bands, or four bands that keep students separate), the estimator (random intercepts, fixed effects, or cells), the random part (random intercepts alone, or a random slope for education across countries), the sample, the weight, and whether growth enters beside unemployment. Fix one specification in a preregistration, as in Task 5, then run it and set the interaction that you get against the rows of the table above. The table already shows that two of those decisions, the design and the rule for the respondents who named nothing, decide whether the claim is found.
 
@@ -628,6 +793,6 @@ Then put the interaction to the respondents themselves. Adding `edu3:munemp + ed
 
 ## Sources and further reading {#sec-sources}
 
-The specification is the published Table 3, Model 1, of OA with its cross-level interactions dropped, taken from the Stata code that the author provided to the SCORE dossier [@Teney2016DoesEUEconomic]. Every model of the respondents was fitted once, locally, on the respondent file that the workspace builds from the sixteen GESIS waves, which is never committed and never redistributed; [the data sources module](data-sources.qmd#sec-gesis) explains that regime. The saved outputs of sections 3 and 9 come from `fit_models.R`, the numbers of the three random structures of section 3 from `fit_person_multilevel.R`, the published model of section 5 and the prevalence gradient of section 6 from `fit_person_anchor.R`, the fits with terms for the years of section 7 from `fit_person_years.R`, the fits of the second claim in section 10 from `fit_claim2.R`, and the refits of the published design from `R/europeanisation/13_reference_marks.R`, all in the folder `companion/_model-outputs/` but the last. The models in the live code of the page are fitted when the page is built, on the panel and the panel by education band, both of which ship with the site.
+The specification is the published Table 3, Model 1, of OA with its cross-level interactions dropped, taken from the Stata code that the author provided to the SCORE dossier [@Teney2016DoesEUEconomic]. Every model of the respondents was fitted once, locally, on the respondent file that the workspace builds from the sixteen GESIS waves, which is never committed and never redistributed; [the data sources module](data-sources.qmd#sec-gesis) explains that regime. The saved outputs of sections 3, 8 and 9 come from `fit_models.R`, the numbers of the three random structures of section 3 from `fit_person_multilevel.R`, the published model of section 5 and the prevalence gradient of section 6 from `fit_person_anchor.R`, the fits with terms for the years of section 7 from `fit_person_years.R`, the fits of the second claim in section 10 from `fit_claim2.R`, and the refits of the published design from `R/europeanisation/13_reference_marks.R`, all in the folder `companion/_model-outputs/` but the last. The models in the live code of the page are fitted when the page is built, on the panel and the panel by education band, both of which ship with the site, and the numbers of section 8 come from the panel of weights, `teney_panel_weights.csv`, and from the files of the curve and of its deviations, all in `cases/europeanisation/data/` and written by the pipeline in `R/europeanisation/`.
 
-The vocabularies of section 1 come from the standard texts of each tradition: @RaudenbushBryk2002HierarchicalLinearModels and @SnijdersBosker2012MultilevelAnalysisIntroduction for sociology and education, @BeckKatz1995WhatNotTimeseries, @Fairbrother2013TwoMultilevelModeling and @Schmidt-CatranFairbrother2016RandomEffectsMultilevel for comparative data in political science and sociology, @Wooldridge2010EconometricAnalysisCross for econometrics, and @PinheiroBates2000MixedEffectsModelsSPLUS, @DeBruineBarr2021UnderstandingMixedeffectsModels, @HamakerMuthen2020FixedRandomEffects and @McNeishKelley2019FixedEffectsModels for psychology and biostatistics, with @GelmanHill2007DataAnalysisUsing on the conflicting definitions of fixed and random effects. The models are fitted with lme4 and lmerTest [@BatesEtAl2015FittingLinearMixedeffects; @KuznetsovaEtAl2017LmerTestPackageTests], fixest [@BergeEtAl2026FastUserfriendlyEconometrics], glmmTMB [@BrooksEtAl2017GlmmTMBBalancesSpeed] and ordbetareg [@Kubinec2023OrderedBetaRegression]. The within–between model is argued for by @BellJones2015ExplainingFixedEffects and @BellEtAl2019FixedRandomEffects, and the cautions about few countries and cross-level interactions are those of @BryanJenkins2016MultilevelModellingCountry, @Stegmueller2013HowManyCountries and @HeisigSchaeffer2019WhyYouShould.
+The vocabularies of the four traditions, with the standard texts of each, are set side by side in [section 1 of the Immigration module](https://codemoreh.github.io/ar4ds-immigration/companion/multilevel.html#sec-vocabularies), and @GelmanHill2007DataAnalysisUsing record the conflicting definitions of fixed and random effects; for learning the models from the start, @SnijdersBosker2012MultilevelAnalysisIntroduction and Gelman and Hill are the textbooks. The models are fitted with lme4 and lmerTest [@BatesEtAl2015FittingLinearMixedeffects; @KuznetsovaEtAl2017LmerTestPackageTests], fixest [@BergeEtAl2026FastUserfriendlyEconometrics], glmmTMB [@BrooksEtAl2017GlmmTMBBalancesSpeed] and ordbetareg [@Kubinec2023OrderedBetaRegression], and the weighted models of section 8 with the survey package [@Lumley2004AnalysisComplexSurvey] and WeMix [@BaileyEtAl2023WeMixWeightedMixed]. The within–between model is argued for by @BellJones2015ExplainingFixedEffects and @BellEtAl2019FixedRandomEffects, and the cautions about few countries and cross-level interactions are those of @BryanJenkins2016MultilevelModellingCountry, @Stegmueller2013HowManyCountries and @HeisigSchaeffer2019WhyYouShould. @Rabe-HeskethSkrondal2006MultilevelModellingComplex and @Carle2009FittingMultilevelModels treat weights in multilevel models, and the weighting overview of the GESIS Eurobarometer Data Service [@GESISWeightingOverview] documents the weights of the Eurobarometer.

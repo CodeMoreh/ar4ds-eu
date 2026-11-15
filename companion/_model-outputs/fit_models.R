@@ -1,10 +1,9 @@
 ###############################################################################
-# Title:        The exhibit models of the multilevel, Bayesian and weights modules
+# Title:        The exhibit models of the multilevel and Bayesian modules
 # Purpose:      Fit the person-level and Bayesian exhibit models whose printed
-#               summaries companion/multilevel.qmd, companion/bayesian.qmd
-#               and companion/weighting.qmd display verbatim, and capture each
-#               summary in a text file of this folder. These are illustrative
-#               single fits for teaching.
+#               summaries companion/multilevel.qmd and companion/bayesian.qmd
+#               display verbatim, and capture each summary in a text file of
+#               this folder. These are illustrative single fits for teaching.
 # Reads:        the respondent file, through _load_respondents.R (the
 #               GESIS-licensed person-level rebuild of 416,698 respondents,
 #               held only on the machine of the facilitator and never in a
@@ -19,7 +18,7 @@
 #               summaries can be printed again without sampling; gitignored,
 #               since they embed data)
 # Author:       Chris Moreh
-# Last updated: 2026-10-26
+# Last updated: 2026-11-15
 ###############################################################################
 
 options(width = 88)
