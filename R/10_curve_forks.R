@@ -38,14 +38,14 @@ curves <- list(
 varying <- c("outcome", "predictor", "measure", "pred_form", "copredictor", "estimator",
              "noop", "item_set", "cell_weight")
 
-eta_shares <- function(d) {  # r-style: approved
+eta_shares <- function(d) {
   fml <- stats::as.formula(paste("r_ca ~", paste(varying, collapse = " + ")))
   e <- effectsize::eta_squared(stats::aov(fml, data = d), partial = FALSE, verbose = FALSE)
   tibble::tibble(axis = c(e$Parameter, "interactions"), share = 100 * c(e$Eta2, 1 - sum(e$Eta2)))
 }
 
 # every pair of specifications that agree on all axes but `a`
-pairs_on <- function(d, a) {  # r-style: approved
+pairs_on <- function(d, a) {
   base <- d |>
     datawizard::data_modify(class_cr2 = supports & p_cr2 < 0.05,
                             class_conv = supports & p_conv < 0.05)
@@ -63,7 +63,7 @@ pairs_on <- function(d, a) {  # r-style: approved
     datawizard::data_filter(lev_1 < lev_2)
 }
 
-crossing <- function(d) {  # r-style: approved
+crossing <- function(d) {
   purrr::map(varying, \(a) {
     p <- pairs_on(d, a)
     tibble::tibble(axis = a, n_options = dplyr::n_distinct(c(p$lev_1, p$lev_2)), n_pairs = nrow(p),

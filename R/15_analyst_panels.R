@@ -170,7 +170,7 @@ kqxue <- kqxue_resp |>
   datawizard::data_summary(cosmo = mean(cosmo), n = length(cosmo), by = c("cntry", "year")) |>
   dplyr::left_join(kqxue_once, by = c("cntry", "year")) |>
   dplyr::left_join(slice_kqxue, by = c("cntry", "year")) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(cntry, year) |>
   datawizard::data_select(select = c("cntry", "year", "cosmo", "n", "cosmo_once", "n_once", "unemp"))
 
@@ -192,7 +192,7 @@ o18 <- resp |>
   dplyr::rename(year_fieldwork = year, year = year_018ol) |>
   dplyr::mutate(wave = paste("EB", eb)) |>
   dplyr::left_join(slice_018ol, by = c("cntry", "year")) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(cntry, wave) |>
   datawizard::data_select(select = c("cntry", "wave", "year", "year_fieldwork", "pos", "n", "unemp"))
 
@@ -236,7 +236,7 @@ stopifnot("KQXUE does not reproduce t = -7.169 on 242 df" =
           "018OL does not reproduce t = -1.206 on 396.9 df" =
             round(repro$t[3], 3) == -1.206 && round(repro$df[3], 1) == 396.9)
 
-# r-style: keep – readr writes the bytes that the site and the workspace compare
+# readr writes the bytes that the site and the workspace compare
 readr::write_csv(kqxue, out_path("analyst_KQXUE.csv"))
 readr::write_csv(o18, out_path("analyst_018OL.csv"))
 

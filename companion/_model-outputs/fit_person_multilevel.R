@@ -29,7 +29,7 @@ specs <- list(
 
 summarise_fit <- function(m, label) {
   p  <- summary(m)$coefficients
-  vc <- as.data.frame(lme4::VarCorr(m))  # r-style: keep – the VarCorr method lists the variance components as rows
+  vc <- as.data.frame(lme4::VarCorr(m))
   dplyr::bind_rows(
     tibble::tibble(model = label, kind = "fixed", term = rownames(p),
            value = p[, "Estimate"], se = p[, "Std. Error"],

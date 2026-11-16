@@ -41,14 +41,14 @@ stopifnot(!anyNA(pair_rows$idx), nrow(curve) == 864)
 
 pairs <- pair_rows |>
   datawizard::data_modify(key = paste(axis, option, rule, sep = "|")) |>
-  split(~key) |> # r-style: keep – a list named by key is what the map reads
+  split(~key) |>
   purrr::map(\(d) list(i = d$idx, r = round(d$r_ca_dev, 4), s = as.integer(d$p_dev < 0.05)))
 
 # the cells and countries left by the two series that do not cover the panel
 coverage <- pair_rows |>
   datawizard::data_filter(option %in% c("es_1574_tips", "es_growth")) |>
   dplyr::distinct(option, n_cells_dev, n_countries_dev) |>
-  split(~option) |> # r-style: keep – as above
+  split(~option) |>
   purrr::map(\(d) list(cells = d$n_cells_dev[1], countries = d$n_countries_dev[1]))
 
 curve_js <- curve |>
@@ -684,31 +684,31 @@ pw <- readr::read_csv("data/teney_panel_weights.csv", show_col_types = FALSE)
 
 # fixed decimals and a true minus sign; percentages round halves up, as the
 # decision map does, so that the map and the text print the same figures
-num <- \(x, d = 3) sub("^-", "−", formatC(x, format = "f", digits = d))  # r-style: approved
-pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")  # r-style: approved
-pe <- \(p) if (p < 0.0001) "p < 0.0001" else paste("p =", formatC(p, format = "f", digits = if (p < 0.001) 4 else 3))  # r-style: approved
+num <- \(x, d = 3) sub("^-", "−", formatC(x, format = "f", digits = d))
+pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
+pe <- \(p) if (p < 0.0001) "p < 0.0001" else paste("p =", formatC(p, format = "f", digits = if (p < 0.001) 4 else 3))
 
 # shares of a set of curve rows below zero, and below zero with CR2 p < 0.05
-below <- \(d) 100 * mean(d$r_ca < 0)  # r-style: approved
-sig <- \(d) 100 * mean(d$r_ca < 0 & d$p_cr2 < 0.05)  # r-style: approved
-sig_rule <- \(col) 100 * mean(curve$r_ca < 0 & curve[[col]] < 0.05)  # r-style: approved
+below <- \(d) 100 * mean(d$r_ca < 0)
+sig <- \(d) 100 * mean(d$r_ca < 0 & d$p_cr2 < 0.05)
+sig_rule <- \(col) 100 * mean(curve$r_ca < 0 & curve[[col]] < 0.05)
 
 # one value from the fork table, the option table or the reproduced specification;
-# the filters inside these functions are those of dplyr, because they name the
-# arguments of the function, which the datawizard verbs cannot see
-fk <- \(axis, col = "share") forks[[col]][forks$axis == axis]  # r-style: approved
-dv <- \(option, col, rule = NULL, which = "positive") {  # r-style: approved
+# the filters inside these functions are those of dplyr, whose !! tells the
+# arguments option and rule apart from the columns of the same names
+fk <- \(axis, col = "share") forks[[col]][forks$axis == axis]
+dv <- \(option, col, rule = NULL, which = "positive") {
   d <- dplyr::filter(deviations, curve == which, option == !!option)
   if (!is.null(rule)) d <- dplyr::filter(d, rule == !!rule)
   d[[col]][1]
 }
-rd <- \(option, col, rule = NULL) {  # r-style: approved
+rd <- \(option, col, rule = NULL) {
   d <- dplyr::filter(ref_rows, option == !!option)
   if (!is.null(rule)) d <- dplyr::filter(d, rule == !!rule)
   d[[col]][1]
 }
-bwv <- \(outcome, predictor, col) bw[[col]][bw$outcome == outcome & bw$predictor == predictor]  # r-style: approved
-inf <- \(est, rule, col) inference[[col]][inference$estimator == est & inference$inference == rule]  # r-style: approved
+bwv <- \(outcome, predictor, col) bw[[col]][bw$outcome == outcome & bw$predictor == predictor]
+inf <- \(est, rule, col) inference[[col]][inference$estimator == est & inference$inference == rule]
 
 # the questions fixed by the four decisions about the question that vary on the curve, and
 # whether the measurement decisions and the form split each one across classes

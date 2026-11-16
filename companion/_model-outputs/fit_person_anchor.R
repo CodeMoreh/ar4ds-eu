@@ -53,7 +53,7 @@ fit_one <- function(y) {
   fixed <- tibble::tibble(outcome = y, term = rownames(fx),
                   estimate = fx[, "Estimate"], se = fx[, "Std. Error"],
                   t = fx[, "t value"])
-  vc <- as.data.frame(lme4::VarCorr(m))  # r-style: keep – the VarCorr method lists the variance components as rows
+  vc <- as.data.frame(lme4::VarCorr(m))
   rand <- tibble::tibble(outcome = y, component = c(vc$grp, "residual_sd"),
                  sd = c(vc$sdcor, sigma(m)))
   list(fixed = fixed, random = rand[!duplicated(rand$component), ])

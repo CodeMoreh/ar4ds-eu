@@ -8,7 +8,7 @@
 ```{webr}
 #| setup: true
 #| exercise: reproduce
-europeanisation <- utils::read.csv(file.path(.data_dir, "europeanisation_cy.csv")) # r-style: keep – readr would add 4 MB to the download
+europeanisation <- utils::read.csv(file.path(.data_dir, "europeanisation_cy.csv"))
 ```
 
 ::: {.fs-90}
@@ -93,7 +93,7 @@ Now you work, on the question at the heart of reproducibility: given the data an
 
 ```{webr}
 #| autorun: false
-kqxue <- utils::read.csv("data/analyst_KQXUE.csv") # r-style: keep – readr would add 4 MB to the download
+kqxue <- utils::read.csv("data/analyst_KQXUE.csv")
 datawizard::data_peek(kqxue)
 ```
 
@@ -141,7 +141,7 @@ KQXUE built a panel of its own, which the course rebuilt from the Stata code tha
 
 ```{webr}
 #| autorun: false
-o18ol <- utils::read.csv("data/analyst_018OL.csv") # r-style: keep – readr would add 4 MB to the download
+o18ol <- utils::read.csv("data/analyst_018OL.csv")
 o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
 ```
 

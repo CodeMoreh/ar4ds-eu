@@ -46,7 +46,7 @@ inputs <- curve_inputs()
 stat_cols <- c("b", "se", "t", "df", "r", "r_ca", "p_conv", "t_cr1", "p_cr1", "t_cr2", "df_cr2",
                "p_cr2", "supports", "sig", "n_cells", "n_countries", "is_reference")
 
-build_curve <- function(outcomes) {  # r-style: approved
+build_curve <- function(outcomes) {
   menu <- curve_menu(outcomes)
   purrr::map(seq_len(nrow(menu)), \(i) fit_linear(menu[i, ], inputs)) |>
     purrr::list_rbind() |>

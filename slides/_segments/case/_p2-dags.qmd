@@ -21,7 +21,7 @@ coll <- ggdag::dagify(C ~ X + Y, Y ~ X,
 # for the indirect path through the mediator, which is part of the total effect
 # rather than bias. The accent is passed per panel; green is constant so the eye
 # learns 'green = the effect I want, coloured = the path I must reason about'.
-gg <- function(d, ttl, cap, accent = d_red) {  # r-style: approved
+gg <- function(d, ttl, cap, accent = d_red) {
   td <- ggdag::tidy_dagitty(d)
   ggdag::update_dag_data(td) <- dplyr::mutate(ggdag::pull_dag_data(td),
     edge_kind = dplyr::if_else(name == "X" & to == "Y", "causal", "other"))
@@ -132,7 +132,7 @@ The scatter here has a strong correlation, an r of about nought point six. Befor
 # (red), so the naive X -> Y estimate is biased. RIGHT: adjusting for Z (boxed)
 # blocks the back-door (greyed), leaving the green causal path clean. Reuses
 # `conf` from the mini-dags chunk.
-path_panel <- function(adjust_z = FALSE) {  # r-style: approved
+path_panel <- function(adjust_z = FALSE) {
   td <- ggdag::tidy_dagitty(conf)
   ggdag::update_dag_data(td) <- dplyr::mutate(ggdag::pull_dag_data(td),
     edge_kind = dplyr::if_else(name == "X" & to == "Y", "causal",

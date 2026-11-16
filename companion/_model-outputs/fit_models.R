@@ -26,7 +26,7 @@ outdir <- "companion/_model-outputs"
 
 source("companion/_model-outputs/_load_respondents.R")
 person <- ind |>
-  as.data.frame()  # r-style: keep – WeMix::mix() takes a plain data frame
+  as.data.frame()
 europeanisation <- readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE)
 
 # --- 1. logistic GLM – mentions at least one cosmopolitan meaning ----------- #

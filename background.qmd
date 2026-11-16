@@ -8,7 +8,7 @@ bibliography: [references.bib, references-new.bib]
 #| label: setup
 #| include: false
 # Fixed decimals and a true minus sign, for every number shown in a table
-fmt <- function(x, digits = 3) {  # r-style: approved
+fmt <- function(x, digits = 3) {
   sprintf(paste0("%.", digits, "f"), x) |>
     sub(pattern = "^-", replacement = "−")
 }
@@ -18,9 +18,9 @@ marks <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
 inference <- readr::read_csv("data/display_inference.csv", show_col_types = FALSE)
 
 # one value from the reference marks or the inference table, for inline use
-mark <- \(id, col) marks[[col]][marks$id == id]  # r-style: approved
-inf <- \(est, rule, col) inference[[col]][inference$estimator == est & inference$inference == rule]  # r-style: approved
-p2 <- \(p) if (p < 0.001) "< 0.001" else sprintf("%.3f", p)  # r-style: approved
+mark <- \(id, col) marks[[col]][marks$id == id]
+inf <- \(est, rule, col) inference[[col]][inference$estimator == est & inference$inference == rule]
+p2 <- \(p) if (p < 0.001) "< 0.001" else sprintf("%.3f", p)
 ```
 
 The case study on which the whole course is built is a single claim from a paper on how citizens of the European Union understood the EU during the economic crisis, published in the *European Sociological Review* by the original author (OA) [@Teney2016DoesEUEconomic]. The claim went through every kind of check that the SCORE programme ran on published research, among them a reanalysis by five independent analysts in its robustness study [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], one of whom, analyst C6HJR, is the facilitator of this course. The exercises, on separate pages that depend on your track, begin where this page ends, and the boxes that open on a click hold evidence that a reader may want to check, but the argument can be followed without them.

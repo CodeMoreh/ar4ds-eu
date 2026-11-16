@@ -61,7 +61,7 @@ checks <- list(
 
 flag_names <- c("sig", "supports_claim", "supports", "baseline", "is_reference", "positive_outcome")
 
-compare_one <- function(file, keys) {  # r-style: approved
+compare_one <- function(file, keys) {
   committed <- datawizard::data_read(file.path(committed_dir, file), verbose = FALSE)
   rebuilt   <- datawizard::data_read(out_path(file), verbose = FALSE)
   joined <- dplyr::inner_join(committed, rebuilt, by = keys, suffix = c("_c", "_r"),
@@ -70,7 +70,7 @@ compare_one <- function(file, keys) {  # r-style: approved
   num   <- shared[purrr::map_lgl(shared, \(v) is.numeric(committed[[v]]))]
   flags <- intersect(flag_names, shared)
   other <- setdiff(shared, c(num, flags))
-  pair  <- \(v) list(joined[[paste0(v, "_c")]], joined[[paste0(v, "_r")]])  # r-style: approved
+  pair  <- \(v) list(joined[[paste0(v, "_c")]], joined[[paste0(v, "_r")]])
   diffs <- purrr::map_dbl(num, \(v) {
     p <- pair(v)
     d <- abs(p[[1]] - p[[2]])
@@ -80,7 +80,7 @@ compare_one <- function(file, keys) {  # r-style: approved
     p <- pair(v)
     sum(is.na(p[[1]]) != is.na(p[[2]]))
   })
-  differs <- \(v) {  # r-style: approved
+  differs <- \(v) {
     p <- pair(v)
     sum(!(p[[1]] == p[[2]] | (is.na(p[[1]]) & is.na(p[[2]]))), na.rm = TRUE)
   }
@@ -96,7 +96,7 @@ compare_one <- function(file, keys) {  # r-style: approved
 
 # a file is compared only when both builds hold it: a stage may be rebuilt on
 # its own, and a new file has no committed copy until it is first accepted
-both    <- \(x) file.exists(out_path(x$file)) && file.exists(file.path(committed_dir, x$file))  # r-style: approved
+both    <- \(x) file.exists(out_path(x$file)) && file.exists(file.path(committed_dir, x$file))
 present <- purrr::keep(checks, both)
 skipped <- purrr::map_chr(purrr::discard(checks, both), "file")
 if (length(skipped) > 0) print(tibble::tibble(not_compared = skipped), n = Inf)

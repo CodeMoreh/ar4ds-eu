@@ -68,10 +68,10 @@ resp <- ind |>
     ses = factor(ses, levels = c("manual", "self_employed", "manager", "white_collar",
                                  "house_person", "unemployed", "retired", "student")))
 
-oa_data  <- \(d) datawizard::data_modify(  # r-style: approved
+oa_data  <- \(d) datawizard::data_modify(
   d, edu3 = factor(edu3, levels = c("low", "mid", "high")),
   urban = factor(urban, levels = c("large_town", "rural", "small_town")))
-prl_data <- \(d) datawizard::data_modify(  # r-style: approved
+prl_data <- \(d) datawizard::data_modify(
   d, edu3 = factor(edu3, levels = c("mid", "low", "high")),
   urban = factor(urban, levels = c("small_town", "rural", "large_town")))
 
@@ -93,7 +93,7 @@ refits <- tibble::tribble(
                                                   crisis_d + (1 | cntry) + (1 | cyw)
 )
 
-fit_refit <- function(refit_id, design, rule, formula) {  # r-style: approved
+fit_refit <- function(refit_id, design, rule, formula) {
   # dplyr::filter(), because the condition names an argument of this function
   d <- dplyr::filter(resp, rule == "zero" | k > 0)
   d <- if (design == "OA") oa_data(d) else prl_data(datawizard::data_filter(d, !is.na(u_lfs)))
@@ -118,7 +118,7 @@ datawizard::data_write(refit_res, "companion/_model-outputs/reference_refits.csv
 
 ## ---- the cluster checks on the cells -------------------------------------------------
 
-std <- \(d) datawizard::data_filter(d, outcome == "mcosmo" & predictor == "unemp" &  # r-style: approved
+std <- \(d) datawizard::data_filter(d, outcome == "mcosmo" & predictor == "unemp" &
                                      pred_form == "raw" & copredictor == "none" &
                                      item_set == "all" & cell_weight == "unweighted")
 p_c6hjr <- datawizard::data_filter(curve, is_reference)$p_cr2
@@ -150,7 +150,7 @@ kevf1_fit <- fit_linear(kevf1_row, inputs, d = kevf1_cells)
 oa  <- datawizard::data_filter(refit_res, refit_id == "OA_no_interactions")
 oa_int <- datawizard::data_filter(refit_res, refit_id == "OA_published")
 prl <- datawizard::data_filter(refit_res, refit_id == "PRL47_B8_fixed_slopes")
-rec <- \(id, col) an[[col]][an$analyst_id == id]  # r-style: approved
+rec <- \(id, col) an[[col]][an$analyst_id == id]
 p_reported <- c(KQXUE = "0.000", C6HJR = "0.00015", KEVF1 = ".0000000277", PRL47 = "0.000",
                 `018OL` = "0.228")
 

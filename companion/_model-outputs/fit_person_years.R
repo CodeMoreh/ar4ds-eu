@@ -50,7 +50,7 @@ fits <- tidyr::expand_grid(outcome = c("cosmo", "lib"), design = names(designs))
                         data = person, REML = FALSE,
                         control = lme4::lmerControl(calc.derivs = FALSE))
     fx <- summary(m)$coefficients[c("munemp", "mgrowth"), ]
-    vc <- as.data.frame(lme4::VarCorr(m))  # r-style: keep – the VarCorr method lists the variance components as rows
+    vc <- as.data.frame(lme4::VarCorr(m))
     dplyr::bind_rows(
       tibble::tibble(outcome = outcome, design = design, kind = "fixed", term = rownames(fx),
                      estimate = fx[, "Estimate"], se = fx[, "Std. Error"],

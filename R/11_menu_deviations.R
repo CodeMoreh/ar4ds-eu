@@ -54,7 +54,7 @@ level_of <- c(outcome = "estimand", predictor = "estimand", copredictor = "estim
               cell_weight = "measurement", measure = "measurement", pred_form = "estimation",
               family = "estimation", se = "inference")
 
-empty_fit <- \(rule) tibble::tibble(rule = rule, r_dev = NA_real_, b_dev = NA_real_,  # r-style: approved
+empty_fit <- \(rule) tibble::tibble(rule = rule, r_dev = NA_real_, b_dev = NA_real_,
                                     t_dev = NA_real_, df_dev = NA_real_, p_dev = NA_real_,
                                     n_cells_dev = NA_integer_, n_countries_dev = NA_integer_)
 
@@ -62,13 +62,13 @@ empty_fit <- \(rule) tibble::tibble(rule = rule, r_dev = NA_real_, b_dev = NA_re
 ## The t and p of a coefficient under a supplied variance come from
 ## lmtest::coeftest() (Zeileis and Hothorn 2002, R News), with the df stated.
 
-fit_dev_linear <- function(row) {  # r-style: approved
+fit_dev_linear <- function(row) {
   s <- fit_linear(row, inputs)
   tibble::tibble(rule = "cr2", r_dev = s$r, b_dev = s$b, t_dev = s$t_cr2, df_dev = s$df_cr2,
                  p_dev = s$p_cr2, n_cells_dev = s$n_cells, n_countries_dev = s$n_countries)
 }
 
-fit_dev_re <- function(row) {  # r-style: approved
+fit_dev_re <- function(row) {
   d <- spec_data(row, inputs)
   rhs <- paste(rhs_terms(row), collapse = " + ")
   m <- plm::plm(stats::as.formula(paste("y ~", rhs)), data = d, index = c("cntry", "year"),
@@ -87,7 +87,7 @@ fit_dev_re <- function(row) {  # r-style: approved
                  n_cells_dev = nrow(d), n_countries_dev = G)
 }
 
-fit_dev_rewb <- function(row) {  # r-style: approved
+fit_dev_rewb <- function(row) {
   # the within-between split of Bell and Jones (2015): each predictor as the
   # deviation from its country mean (_within) and the country mean (_between)
   d <- spec_data(row, inputs) |>
@@ -106,7 +106,7 @@ fit_dev_rewb <- function(row) {  # r-style: approved
                  n_cells_dev = nrow(d), n_countries_dev = dplyr::n_distinct(d$cntry))
 }
 
-fit_dev_beta <- function(row) {  # r-style: approved
+fit_dev_beta <- function(row) {
   d <- spec_data(row, inputs)
   dummies <- switch(row$estimator, fe_twoway = " + factor(cntry) + factor(year)",
                     fe_country = " + factor(cntry)")
@@ -124,7 +124,7 @@ fit_dev_beta <- function(row) {  # r-style: approved
                  p_dev = clus[["Pr(>|t|)"]], n_cells_dev = nrow(d), n_countries_dev = G)
 }
 
-fit_dev_mi <- function(row) {  # r-style: approved
+fit_dev_mi <- function(row) {
   engine <- if (row$noop == "mi_mice") "mice_pmm" else "amelia_emb"
   hit <- mi |>
     dplyr::filter(engine == !!engine, outcome == row$outcome, copredictor == row$copredictor,
@@ -137,7 +137,7 @@ fit_dev_mi <- function(row) {  # r-style: approved
                  n_cells_dev = conv$n, n_countries_dev = 27L)
 }
 
-safely_fit <- function(f, rules) {  # r-style: approved
+safely_fit <- function(f, rules) {
   \(row) tryCatch(f(row), error = \(e) purrr::map(rules, empty_fit) |> purrr::list_rbind())
 }
 
@@ -145,9 +145,9 @@ safely_fit <- function(f, rules) {  # r-style: approved
 ## `applies` picks the twins on the curve; `swap` turns twin keys into the
 ## keys of the deviation; `fit` refits one deviation.
 
-std_measure <- \(d) d$predictor == "unemp" & d$measure == "wb_nat" & d$pred_form == "raw" &  # r-style: approved
+std_measure <- \(d) d$predictor == "unemp" & d$measure == "wb_nat" & d$pred_form == "raw" &
   d$item_set == "all" & d$cell_weight == "unweighted"
-set_axis <- \(a, v) \(k) dplyr::mutate(k, !!a := v)  # r-style: approved
+set_axis <- \(a, v) \(k) dplyr::mutate(k, !!a := v)
 
 off_curve <- tibble::tribble(
   ~axis,          ~option,         ~applies,                     ~swap,                              ~fit,
@@ -173,10 +173,10 @@ off_curve <- tibble::tribble(
   "family",       "beta",          \(d) rep(TRUE, nrow(d)),       set_axis("family", "beta"),         safely_fit(fit_dev_beta, "beta_cr1_g1")
 )
 
-twin_cols <- \(d) dplyr::select(d, dplyr::all_of(axis_codes), r_ca_twin = r_ca, p_twin = p_cr2,  # r-style: approved
+twin_cols <- \(d) dplyr::select(d, dplyr::all_of(axis_codes), r_ca_twin = r_ca, p_twin = p_cr2,
                                 p_twin_cr1 = p_cr1)
 
-run_off_curve <- function(curve, def) {  # r-style: approved
+run_off_curve <- function(curve, def) {
   twins <- dplyr::filter(curve, def$applies(curve))
   keys  <- twins |> datawizard::data_select(select = axis_codes) |> def$swap()
   specs <- dplyr::distinct(keys)
@@ -193,7 +193,7 @@ run_off_curve <- function(curve, def) {  # r-style: approved
 
 ## ---- the inference rules that are not on the curve, without refits ---------------
 
-run_se <- function(curve) {  # r-style: approved
+run_se <- function(curve) {
   rules <- tibble::tribble(~opt, ~t_col, ~p_col,
                            "conventional", "t", "p_conv",
                            "cr1_g1", "t_cr1", "p_cr1")
@@ -210,7 +210,7 @@ run_se <- function(curve) {  # r-style: approved
 
 ## ---- the options kept on the curve: pairs within it --------------------------------
 
-run_kept <- function(curve) {  # r-style: approved
+run_kept <- function(curve) {
   base <- curve |>
     dplyr::mutate(pair_measure = dplyr::if_else(
       predictor == "unemp" & measure == "wb_nat" & pred_form == "raw", "wb",
@@ -253,7 +253,7 @@ rows <- purrr::imap(curves, \(curve, nm) {
                 p_twin, p_twin_cr1, r_ca_dev, p_dev, b_dev, t_dev, df_dev, n_cells_dev,
                 n_countries_dev)
 
-# r-style: keep – datawizard::data_write() cannot write a gzip-compressed CSV
+# datawizard::data_write() cannot write a gzip-compressed CSV
 readr::write_csv(rows, out_path("menu_deviations_rows.csv.gz"))
 
 ## ---- the rate: the count over a constant ---------------------------------------------
@@ -262,7 +262,7 @@ rate_check <- purrr::imap(curves, \(curve, nm) {
   purrr::map(seq_len(nrow(curve)), \(i) {
     k_count <- curve[i, axis_codes] |> datawizard::data_modify(construction = "count")
     k_rate  <- curve[i, axis_codes] |> datawizard::data_modify(construction = "rate")
-    fit_conv <- \(k) {  # r-style: approved
+    fit_conv <- \(k) {
       d <- spec_data(k, inputs)
       fe <- if (k$estimator == "fe_twoway") " | cntry + year" else " | cntry"
       m <- fixest::feols(stats::as.formula(paste0("y ~ ", paste(rhs_terms(k), collapse = " + "), fe)),
@@ -319,7 +319,7 @@ rate_rows <- summ |>
   datawizard::data_modify(option = "rate", rule = "identical_to_count")
 
 deviations <- dplyr::bind_rows(summ, rate_rows, fixed) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(curve, factor(level, c("estimand", "measurement", "estimation", "inference")),
                  axis, dplyr::desc(on_curve), option, rule)
 

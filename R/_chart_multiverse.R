@@ -46,21 +46,21 @@ mv_menu_relation <- tibble::tribble(
 # ---- formatting ----------------------------------------------------------------
 # An en-dash in ranges and a typographic minus for negative numbers, in text
 # that the data files write with hyphens.
-mv_pct <- \(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)  # r-style: approved
-mv_df <- \(x) sub("\\.0$", "", sprintf("%.1f", x))  # r-style: approved
-mv_clean <- \(x) x |>  # r-style: approved
+mv_pct <- \(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)
+mv_df <- \(x) sub("\\.0$", "", sprintf("%.1f", x))
+mv_clean <- \(x) x |>
   stringr::str_replace_all("(?<=\\d)-(?=\\d)", "–") |>
   stringr::str_replace_all("(?<![\\w.])-(?=[0-9.])", "−") |>
   stringr::str_replace_all("whose CR2 p is p_cluster_check", "whose CR2 p gives the shape of this mark") |>
   stringr::str_replace_all("p_cr2", "CR2 p") |>
   stringr::str_replace_all("p_cluster_check", "the CR2 check") |>
   stringr::str_replace_all("se_natural", "The standard error")
-mv_p_label <- \(p) dplyr::if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))  # r-style: approved
+mv_p_label <- \(p) dplyr::if_else(p < 0.001, "p < 0.001", sprintf("p = %.3f", p))
 
 # ---- the labels of the menu ------------------------------------------------------
 # The options of one decision that occur on a curve, in the order of
 # data/menu_options.csv, with their plain-language labels.
-mv_levels <- function(curve, options, axis_code) {  # r-style: approved
+mv_levels <- function(curve, options, axis_code) {
   lev <- options |>
     dplyr::filter(.data$axis == axis_code, .data$option %in% curve[[axis_code]]) |>
     dplyr::select("option", "label", "phrase")
@@ -74,7 +74,7 @@ mv_levels <- function(curve, options, axis_code) {  # r-style: approved
 # follows the rule of the curve where the file gives the CR2 check of the
 # design on the country-year cells, and the p-value as reported where the
 # design cannot be fitted on those cells.
-mv_marks <- function(marks, curve_r) {  # r-style: approved
+mv_marks <- function(marks, curve_r) {
   n <- length(curve_r)
   marks |>
     dplyr::left_join(mv_menu_relation, by = "id") |>
@@ -129,7 +129,7 @@ mv_marks <- function(marks, curve_r) {  # r-style: approved
 # All from data/. curve: one of spec_curve.csv or
 # spec_curve_negative.csv; options: menu_options.csv; marks: reference_marks.csv
 # or NULL.
-mv_payload <- function(curve, options, marks = NULL, reversed = FALSE, file = "spec-curve.csv",  # r-style: approved
+mv_payload <- function(curve, options, marks = NULL, reversed = FALSE, file = "spec-curve.csv",
                        ref_text = "The reproduced specification of Task 3", target = "claim") {
   curve <- curve |>
     dplyr::arrange(.data$r_ca) |>
@@ -186,7 +186,7 @@ mv_payload <- function(curve, options, marks = NULL, reversed = FALSE, file = "s
 # path from the page to the root of the site, for reading the template and for
 # the links to the script and the styles, which the first chart of a page
 # carries.
-mv_chart_html <- function(id, payload, title, sub, notes, src, assets = TRUE, root = "./") {  # r-style: approved
+mv_chart_html <- function(id, payload, title, sub, notes, src, assets = TRUE, root = "./") {
   template <- readr::read_file(file.path(root, "assets/chart/multiverse.template.html")) |>
     sub(pattern = "(?s)^\\s*<!--.*?-->\\s*", replacement = "", perl = TRUE)
   json <- jsonlite::toJSON(payload, auto_unbox = TRUE, digits = NA)

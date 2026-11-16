@@ -13,7 +13,6 @@ format:
         - tinyplot
         - fixest
         - parameters
-        - htmltools
         - gt
 resources:
   - data/europeanisation_cy.csv
@@ -60,7 +59,7 @@ Keep this tab open. Your work stays in this page until you refresh – there is 
 # .data_dir names that folder for the helpers of the next block, which read
 # the curve and the menu from it.
 .data_dir <- "data"
-europeanisation <- utils::read.csv("data/europeanisation_cy.csv") # r-style: keep – readr would add 4 MB to the download
+europeanisation <- utils::read.csv("data/europeanisation_cy.csv")
 ```
 
 {{< include _includes/_lab-helpers.qmd >}}
@@ -271,7 +270,7 @@ Now specify the graph. The five committed arrows are live; the arguable ones are
 
 ```{webr}
 #| autorun: false
-my_dag <- dagify( # r-style: keep – the dagify() of this page; the workspace calls ggdag::dagify()
+my_dag <- dagify(
   # The path of interest, and the two common causes (country and year)
   # that two-way fixed effects absorb.
   framing      ~ unemployment,
@@ -309,7 +308,7 @@ Then ask for the adjustment set of the graph that you have just written.
 
 ```{webr}
 #| autorun: false
-adjustmentSets(my_dag) # r-style: keep – the function of this page, which reads the answers of dagitty
+adjustmentSets(my_dag)
 ```
 
 With the five committed arrows the minimal adjustment set is `{ country, year }`, which is what a two-way fixed-effects model absorbs. An adjustment set is a set of variables that, once adjusted for, blocks every non-causal path from unemployment to framing, and it is minimal when no variable can be dropped from it without reopening one of those paths. The two-way fixed-effects model of analyst C6HJR, one of the three that you can reproduce in Task 3, therefore makes the same identification claim as the graph you have just written, while the model of KQXUE adjusts for the country alone and the random intercepts of 018OL adjust for neither in this sense.
@@ -344,7 +343,7 @@ The robustness study recorded **t = −3.804** (df = 233, N = 270).
 ```{webr}
 #| setup: true
 #| exercise: reproduce
-europeanisation <- utils::read.csv("data/europeanisation_cy.csv") # r-style: keep – readr would add 4 MB to the download
+europeanisation <- utils::read.csv("data/europeanisation_cy.csv")
 ```
 
 The first step centres the unemployment rate on its grand mean. The cell prints nothing, since it only adds the column `unemp_c` to `europeanisation`.
@@ -425,7 +424,7 @@ Run this cell first. It loads the panel of KQXUE as `kqxue`, one row per country
 
 ```{webr}
 #| autorun: false
-kqxue <- utils::read.csv("data/analyst_KQXUE.csv") # r-style: keep – readr would add 4 MB to the download
+kqxue <- utils::read.csv("data/analyst_KQXUE.csv")
 datawizard::data_peek(kqxue)
 ```
 
@@ -471,7 +470,7 @@ Run the first two cells below before the model. The first loads the file of 018O
 
 ```{webr}
 #| autorun: false
-o18ol <- utils::read.csv("data/analyst_018OL.csv") # r-style: keep – readr would add 4 MB to the download
+o18ol <- utils::read.csv("data/analyst_018OL.csv")
 ```
 
 The model needs two packages that the page does not load at the start, `lme4` and `lmerTest`, so the second cell downloads them into your browser, about 32 MB, which can take a minute on a slow connection. Later runs start at once.

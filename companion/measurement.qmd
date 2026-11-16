@@ -14,21 +14,21 @@ load <- datawizard::data_read("_model-outputs/efa_loadings.csv", verbose = FALSE
 phi  <- datawizard::data_read("_model-outputs/efa_factor_corr.csv", verbose = FALSE)
 cfa  <- datawizard::data_read("_model-outputs/cfa_fit.csv", verbose = FALSE)
 rel  <- datawizard::data_read("_model-outputs/scale_reliability.csv", verbose = FALSE)
-pct <- function(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)  # r-style: approved
-num <- function(x, d = 2) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)  # r-style: approved
+pct <- function(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)
+num <- function(x, d = 2) gsub("-", "−", formatC(x, digits = d, format = "f"), fixed = TRUE)
 n_resp <- prev$n_respondents[1]
 
 scale_order <- c("cosmopolitan", "utilitarian", "communitarian", "libertarian")
 item_order  <- prev |> datawizard::data_modify(scale = factor(scale, scale_order)) |> datawizard::data_arrange("scale") |> dplyr::pull(item)
-tet_r <- function(a, b) tet$tetrachoric[tet$item == a & tet$with == b]  # r-style: approved
+tet_r <- function(a, b) tet$tetrachoric[tet$item == a & tet$with == b]
 
 l4 <- load |> datawizard::data_filter(solution == "4-factor")
 l2 <- load |> datawizard::data_filter(solution == "2-factor")
-ld <- function(item, f, sol = l4) sol[[f]][sol$item == item]  # r-style: approved
+ld <- function(item, f, sol = l4) sol[[f]][sol$item == item]
 phi4 <- phi |> datawizard::data_filter(solution == "4-factor")
 phi2 <- phi |> datawizard::data_filter(solution == "2-factor")
-fit <- function(m, col) cfa[[col]][cfa$model == m]  # r-style: approved
-alpha <- function(s) rel$ordinal_alpha[rel$scale == s]  # r-style: approved
+fit <- function(m, col) cfa[[col]][cfa$model == m]
+alpha <- function(s) rel$ordinal_alpha[rel$scale == s]
 # the caption of the loadings table, built here because a colon inside a YAML
 # !expr string is read as a mapping
 # section 9: the outcome decisions of the curve, from the files written by the course
@@ -40,15 +40,15 @@ forks <- readr::read_csv("../data/spec_curve_forks.csv", show_col_types = FALSE)
 devs <- readr::read_csv("../data/menu_deviations.csv", show_col_types = FALSE) |>
   datawizard::data_filter(curve == "positive", axis == "construction")
 dev_rows <- readr::read_csv("../data/menu_deviations_rows.csv.gz", show_col_types = FALSE)
-pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)  # r-style: approved
-below_sig <- \(d) 100 * mean(d$supports & d$sig)  # r-style: approved
-fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]  # r-style: approved
-dv <- \(op, col) devs[[col]][devs$option == op]  # r-style: approved
+pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
+below_sig <- \(d) 100 * mean(d$supports & d$sig)
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
+dv <- \(op, col) devs[[col]][devs$option == op]
 # the reproduced specification, with the frame set and the item set left free
-at_ref <- \(d) d |>  # r-style: approved
+at_ref <- \(d) d |>
   dplyr::filter(predictor == "unemp", copredictor == "none", estimator == "fe_twoway",
          noop == "zero", cell_weight == "unweighted", measure == "wb_nat", pred_form == "raw")
-r_at <- \(d, out, items = "all") at_ref(d) |>  # r-style: approved
+r_at <- \(d, out, items = "all") at_ref(d) |>
   dplyr::filter(outcome == out, item_set == items) |>
   dplyr::pull(r_ca)
 count_ref <- at_ref(dev_rows) |>
@@ -93,7 +93,7 @@ noop_t_cl <- fixest::coeftable(m_noop, vcov = ~cntry)["unemp", "t value"]
 
 # the reproduced specification under each rule: zero and drop from the curve,
 # split and the two imputations from their comparison with the zero twin
-ref_spec <- \(d) d |>  # r-style: approved
+ref_spec <- \(d) d |>
   dplyr::filter(outcome == "mcosmo", predictor == "unemp", copredictor == "none",
          estimator == "fe_twoway", item_set == "all", cell_weight == "unweighted",
          measure == "wb_nat", pred_form == "raw")
@@ -105,7 +105,7 @@ spec <- dplyr::bind_rows(
 ) |>
   datawizard::data_modify(rule = factor(rule, c("zero", "drop", "split", "mi_mice", "mi_amelia"))) |>
   datawizard::data_arrange("rule")
-sp <- \(rl, col) spec[[col]][spec$rule == rl]  # r-style: approved
+sp <- \(rl, col) spec[[col]][spec$rule == rl]
 
 # the rules across the curve; each deviation off the curve is set beside both of
 # its twins (zero and drop), so the specifications are counted once each
@@ -227,7 +227,6 @@ Read as a count of dimensions, the figure suggests two with a possible third, an
 
 Exploratory factor analysis asks which underlying dimensions, unconstrained by any prior assignment, best reproduce the correlations among the items, and reports for each item how strongly it belongs to each dimension. The solutions below were extracted by minimum-residual factoring from the tetrachoric matrix and rotated obliquely, which allows the dimensions to correlate with one another as substantive dimensions of an attitude generally do. @tbl-efa4 gives the four-factor solution, with the assignment made in the original paper beside each item, and loadings below 0.30 blanked so that the structure can be read at a glance; the two-factor solution follows in prose.
 
-<!-- r-style: skip -->
 ```{r}
 #| label: tbl-efa4
 #| tbl-cap: !expr cap_efa4
@@ -420,7 +419,7 @@ Nothing in the observed data can distinguish missing at random from missing not 
 #| fig-width: 7
 #| fig-height: 3.8
 #| fig-cap: "The partial correlation of cosmopolitan framing with unemployment, two-way fixed effects, when every silent respondent is assigned the answered mean of their cell plus δ. Zero on the horizontal axis is the drop rule; the dashed line marks the average δ of the zero rule, and the burgundy point the zero rule itself, which applies a different δ to each cell. Sources: `data/teney_panel_measurement.csv`, `data/teney_panel_weights.csv` and `data/spec_curve.csv`."
-minus <- function(x) gsub("-", "−", format(x), fixed = TRUE)  # r-style: approved
+minus <- function(x) gsub("-", "−", format(x), fixed = TRUE)
 ggplot2::ggplot(band, ggplot2::aes(delta, r)) +
   ggplot2::geom_vline(xintercept = 0, colour = "#848c94", linewidth = 0.4) +
   ggplot2::geom_vline(xintercept = delta_zero, colour = "#0e3b6a", linewidth = 0.5, linetype = 2) +

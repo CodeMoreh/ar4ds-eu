@@ -53,9 +53,9 @@ grey_mid <- "#8a929a"
 # The backdrop is the curve of 864, ranked by the claim-aligned partial
 # correlation and classed by CR2 errors clustered by country, as on the chart
 # of the Specification curve page (curve.qmd).
-curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE) # r-style: keep – base R in webR, readr would be a download
-curve <- curve[order(curve$r_ca), ]   # r-style: keep – base R in webR, dplyr would be a download
-curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p_cr2 < 0.05) # r-style: keep – as above
+curve <- read.csv("data/spec_curve.csv", stringsAsFactors = FALSE)
+curve <- curve[order(curve$r_ca), ]
+curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p_cr2 < 0.05)
 axis_codes <- c("outcome", "predictor", "copredictor", "estimator", "sample", "weights",
                 "construction", "noop", "item_set", "cell_weight", "measure", "pred_form", "family")
 curve_key <- do.call(paste, c(unname(as.list(curve[axis_codes])), sep = "|"))
@@ -72,7 +72,7 @@ label_pattern <- paste0("^([a-z]+)(_ca)? ~ ([a-z]+)\\(([a-z]+)\\)( \\+ [a-z]+)? 
                         "([A-Za-z0-9_]+) \\| w:([a-z_]+)(.*)$")
 bracket_pattern <- paste0("^\\[([a-z]+), ([a-z_]+), items:([a-z]+), cells:([a-z]+), ([a-z0-9_]+) ",
                           "\\| ([a-z]+), se:([a-z0-9_]+)\\]$")
-parse_one_label <- function(x) {  # r-style: approved
+parse_one_label <- function(x) {
   none <- setNames(rep(NA_character_, length(axis_codes)), axis_codes)
   m <- regmatches(x, regexec(label_pattern, x))[[1]]
   if (length(m) == 0) return(none)
@@ -92,15 +92,15 @@ parse_one_label <- function(x) {  # r-style: approved
   c(outcome = m[2], predictor = m[4], copredictor = if (nzchar(m[6])) "other" else "none",
     estimator = m[7], sample = m[8], weights = m[9], pred_form = m[5], tail)[axis_codes]
 }
-parse_labels <- function(spec_txt) {  # r-style: approved
-  parsed <- vapply(spec_txt, parse_one_label, character(length(axis_codes)), USE.NAMES = FALSE)   # r-style: keep – base R in webR
+parse_labels <- function(spec_txt) {
+  parsed <- vapply(spec_txt, parse_one_label, character(length(axis_codes)), USE.NAMES = FALSE)
   setNames(as.data.frame(t(parsed), stringsAsFactors = FALSE), axis_codes)
 }
 
-read_clean <- function(path) {  # r-style: approved
+read_clean <- function(path) {
   d <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   names(d) <- tolower(trimws(names(d)))   # tolerate "R", " r ", etc.
-  d$r <- suppressWarnings(as.numeric(d$r))   # r-style: keep – frozen reader of the class CSV
+  d$r <- suppressWarnings(as.numeric(d$r))
   d[!is.na(d$r), , drop = FALSE]
 }
 
@@ -108,7 +108,7 @@ read_clean <- function(path) {  # r-style: approved
 # reduced exactly as .clean_tag() in the submission helpers reduces a nickname
 # (transliterated to ASCII, lower case, single hyphens, at most 24 characters),
 # so that a nickname typed as the participant first wrote it still matches.
-clean_my_tag <- function(x) {  # r-style: approved
+clean_my_tag <- function(x) {
   if (length(x) == 0 || is.na(x[1])) return("")
   x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x[1]))))
   ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
@@ -117,8 +117,8 @@ clean_my_tag <- function(x) {  # r-style: approved
   gsub("-+$", "", substr(x, 1, 24))
 }
 
-html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)  # r-style: approved
-fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.4f", p))  # r-style: approved
+html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
+fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.4f", p))
 
 # The class submits twice: an exploratory result while working the menu, and
 # a declared one after preregistering. The free-text spec field carries the
@@ -126,7 +126,7 @@ fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.4f", p))  
 # neither the form nor the sheet needs a column of its own for either. Rows
 # without a tag predate 2026-09-24, and rows without a phase predate
 # 2026-07-31 and were all declared; both still parse.
-prepare_class <- function(cls, my_tag = "") {  # r-style: approved
+prepare_class <- function(cls, my_tag = "") {
   n <- nrow(cls)
   spec_raw <- if ("spec" %in% names(cls)) as.character(cls$spec) else rep("", n)
   spec_raw[is.na(spec_raw)] <- ""
@@ -163,7 +163,7 @@ prepare_class <- function(cls, my_tag = "") {  # r-style: approved
 shape_of <- c(sig = 1, ns = 4, off = 5)
 phase_col <- c(explored = green, declared = ink)
 
-draw_class_chart <- function(cls, my_tag = "") {  # r-style: approved
+draw_class_chart <- function(cls, my_tag = "") {
   ylim_lo <- -0.65; ylim_hi <- 0.25
   has_cls <- !is.null(cls) && nrow(cls) > 0
   if (has_cls) {
@@ -238,7 +238,7 @@ draw_class_chart <- function(cls, my_tag = "") {  # r-style: approved
   invisible(NULL)
 }
 
-refresh_multiverse <- function(my_tag = "") {  # r-style: approved
+refresh_multiverse <- function(my_tag = "") {
   my_tag <- clean_my_tag(my_tag)
   cls <- NULL
   if (nzchar(worker_url)) {

@@ -10,7 +10,7 @@ bibliography: [../references.bib, ../references-new.bib]
 # A causal graph drawn from the coordinates stored in a dagitty object, with
 # ggplot2 alone, without ggdag. Observed nodes are filled boxes, latent ones
 # outlined; arrows are shortened at both ends so that they stop at the boxes.
-dag_plot <- function(g, gap = 0.3) {  # r-style: approved
+dag_plot <- function(g, gap = 0.3) {
   xy <- dagitty::coordinates(g)
   nodes <- tibble::tibble(name = names(xy$x), x = unname(xy$x), y = unname(xy$y)) |>
     dplyr::mutate(latent = name %in% dagitty::latents(g))
@@ -70,7 +70,6 @@ A **collider** is a common effect of two variables. Left alone, it blocks the pa
 
 The Europeanisation case study is observational: a panel of 270 country-years, in which countries and years differ in ways that may move both the unemployment rate and how people frame the EU. This section draws the graph of the case study, derives the adjustment set from it, fits the models that the graph prescribes and the ones that it does not, and shows what country and year fixed effects can and cannot absorb. Its graphs are written with the ggdag package, as formulas, rather than as the dagitty text of section 2; both produce the same dagitty object, and the same questions can be put to either. Every chunk runs when the page is built, from the shipped `data/europeanisation_cy.csv`, and the setup chunk below loads the packages and data of the section.
 
-<!-- r-style: skip -->
 ```{r}
 #| label: setup-europeanisation
 #| message: false

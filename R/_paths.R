@@ -22,8 +22,8 @@ private_dir <- Sys.getenv("COURSE_PRIVATE_DIR", unset = "../_planning_data")
 # the single raw seam: the sixteen GESIS scientific-use files
 raw_dir     <- Sys.getenv("EB_RAW_DIR", unset = file.path(private_dir, "raw"))
 
-out_path  <- function(...) file.path(out_dir, ...)  # r-style: approved
-work_path <- function(...) file.path(work_dir, ...)  # r-style: approved
+out_path  <- function(...) file.path(out_dir, ...)
+work_path <- function(...) file.path(work_dir, ...)
 
 # the respondent file is GESIS-derived microdata: it stays in the private folder
 person_file <- file.path(private_dir, "person_level.rds")

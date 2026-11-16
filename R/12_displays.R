@@ -48,9 +48,9 @@ reference <- standard |>
   datawizard::data_filter(outcome == "mcosmo" & predictor == "unemp" & pred_form == "raw" &
                             copredictor == "none")
 
-with_class <- \(d) d |>  # r-style: approved
+with_class <- \(d) d |>
   dplyr::mutate(r_ca = r * align_factor(outcome, predictor), supports = r_ca < 0, sig = p_cr2 < 0.05)
-fit_rows <- \(rows) purrr::map(seq_len(nrow(rows)), \(i) fit_linear(rows[i, ], inputs)) |>  # r-style: approved
+fit_rows <- \(rows) purrr::map(seq_len(nrow(rows)), \(i) fit_linear(rows[i, ], inputs)) |>
   purrr::list_rbind() |>
   dplyr::bind_cols(rows) |>
   with_class()
@@ -98,7 +98,7 @@ country_means <- panel |>
                    bailout = as.integer(any(bailout == 1)),
                    dplyr::across(dplyr::all_of(scale_cols), mean), .by = cntry) |>
   dplyr::rename_with(\(n) paste0(n, "_mean"), dplyr::all_of(scale_cols)) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(cntry)
 
 ## ---- (b) periods ---------------------------------------------------------------------
@@ -117,7 +117,7 @@ loo_rows <- dplyr::bind_rows(datawizard::data_filter(reference, estimator == "fe
 
 # the share of the variation in the predictor, net of the fixed effects of the
 # design, that each country holds
-variation_share <- function(row) {  # r-style: approved
+variation_share <- function(row) {
   d <- spec_data(row, inputs)
   fe <- if (row$estimator == "fe_twoway") "x ~ 1 | cntry + year" else "x ~ 1 | cntry"
   xt <- stats::resid(fixest::feols(stats::as.formula(fe), data = d))

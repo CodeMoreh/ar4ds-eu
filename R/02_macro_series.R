@@ -35,7 +35,7 @@ dir.create(out_path("macro"), showWarnings = FALSE, recursive = TRUE)
 ## "\TIME_PERIOD" appended; the rest are years padded with spaces. Values carry
 ## observation flags after a space ("10.7 b") and ":" marks a missing cell.
 
-read_eurostat <- function(path) {  # r-style: approved
+read_eurostat <- function(path) {
   raw  <- readr::read_tsv(path, col_types = readr::cols(.default = "c"),
                           progress = FALSE)
   dims <- strsplit(sub("\\\\.*$", "", names(raw)[1]), ",")[[1]]
@@ -57,7 +57,7 @@ lfs   <- read_eurostat("data-raw/eurostat/lfsa_urgan.tsv.gz")
 
 # dplyr verbs, because the conditions arrive through ... and the values name
 # the arguments analyst and series
-pick <- function(tab, analyst, series, ...) {  # r-style: approved
+pick <- function(tab, analyst, series, ...) {
   tab |>
     dplyr::filter(freq == "A", ...) |>
     dplyr::transmute(analyst_id = analyst, series = series, geo, year, unemp = value)
@@ -90,7 +90,7 @@ analyst_unemp <- series |>
                        series = "World Bank SL.UEM.TOTL.NE.ZS",
                        cntry, year, unemp)
   ) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(analyst_id, cntry, year)
 
 datawizard::data_write(analyst_unemp, out_path("macro", "analyst_unemployment.csv"),
@@ -123,7 +123,7 @@ measures <- analyst_unemp |>
                               cntry, year, value = growth),
     growth_es
   ) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(predictor, measure, cntry, year)
 
 datawizard::data_write(measures, out_path("macro", "predictor_measures.csv"),

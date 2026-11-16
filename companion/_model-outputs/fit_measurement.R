@@ -60,7 +60,7 @@ n <- nrow(X)
 ## ---- prevalence -------------------------------------------------------------------
 
 prevalence <- items |>
-  datawizard::data_modify(share_mentioning = colMeans(X)[var],  # r-style: keep – the 0/1 items as a matrix
+  datawizard::data_modify(share_mentioning = colMeans(X)[var],
          n_respondents = n)
 datawizard::data_write(prevalence, file.path(out, "items_prevalence.csv"), verbose = FALSE)
 
@@ -68,7 +68,7 @@ datawizard::data_write(prevalence, file.path(out, "items_prevalence.csv"), verbo
 
 tet <- psych::tetrachoric(X, correct = 0.5)$rho
 dimnames(tet) <- list(items$item, items$item)
-tet_long <- as.data.frame(tet) |>  # r-style: keep – the matrix as a frame, before it is made long
+tet_long <- as.data.frame(tet) |>
   datawizard::data_modify(item = rownames(tet)) |>
   tidyr::pivot_longer(-item, names_to = "with", values_to = "tetrachoric")
 datawizard::data_write(tet_long, file.path(out, "items_tetrachoric.csv"), verbose = FALSE)
@@ -115,7 +115,7 @@ models <- list(
     positive =~ it1 + it2 + it3 + it4 + it5 + it6 + it7
     negative =~ it9 + it10 + it11 + it12 + it13 + it14"
 )
-d_items <- as.data.frame(X)  # r-style: keep – lavaan reads the items from a plain data frame
+d_items <- as.data.frame(X)
 fits <- purrr::imap(models, \(m, nm) {
   fit <- lavaan::cfa(m, data = d_items, ordered = names(d_items), estimator = "WLSMV", std.lv = TRUE)
   fm <- lavaan::fitMeasures(fit, c("chisq.scaled", "df.scaled", "cfi.scaled", "tli.scaled",
@@ -149,7 +149,7 @@ reliability <- purrr::imap(scales, \(v, nm) {
   # from psych::alpha(), which reads a correlation matrix as one
   tibble::tibble(scale = nm, items = length(v), mean_tetrachoric = mean(r[lower.tri(r)]),
                  ordinal_alpha = psych::alpha(r, warnings = FALSE)$total$std.alpha,
-                 mean_prevalence = mean(colMeans(X[, v])))  # r-style: keep – the 0/1 items as a matrix
+                 mean_prevalence = mean(colMeans(X[, v])))
 }) |> purrr::list_rbind()
 datawizard::data_write(reliability, file.path(out, "scale_reliability.csv"), verbose = FALSE)
 

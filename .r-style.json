@@ -1,3 +1,394 @@
 {
-  "namespaces": "always"
+  "namespaces": "always",
+  "approved": [
+    ".check_choices",
+    ".class_line",
+    ".class_tag",
+    ".clean_tag",
+    ".copred_term",
+    ".est_lab",
+    ".flip",
+    ".fmt_p",
+    ".key_of",
+    ".lookup",
+    ".main_term",
+    ".new_tag",
+    ".on_menu",
+    ".or_list",
+    ".page_ref",
+    ".print_result",
+    ".refuse",
+    ".result",
+    ".spec_line",
+    ".submit",
+    ".validate",
+    "adjustmentSets",
+    "aggregate_cells",
+    "align_factor",
+    "alpha",
+    "at_ref",
+    "ba",
+    "bailout_of",
+    "below",
+    "below_sig",
+    "both",
+    "build_curve",
+    "build_model",
+    "build_outcome",
+    "bwv",
+    "clean_my_tag",
+    "compare_one",
+    "crossing",
+    "curve_inputs",
+    "curve_menu",
+    "cw",
+    "dag_plot",
+    "dagify",
+    "dev_of",
+    "differs",
+    "draw_class_chart",
+    "dv",
+    "edu_harmonise",
+    "empty_fit",
+    "est_share",
+    "eta_shares",
+    "field",
+    "find_variables_file",
+    "fit",
+    "fit_cells",
+    "fit_conv",
+    "fit_dev_beta",
+    "fit_dev_linear",
+    "fit_dev_mi",
+    "fit_dev_re",
+    "fit_dev_rewb",
+    "fit_fe",
+    "fit_linear",
+    "fit_one",
+    "fit_published",
+    "fit_refit",
+    "fit_rows",
+    "fk",
+    "fmt",
+    "fmt_num",
+    "fmt_p",
+    "fmt_pct",
+    "fork_of",
+    "gg",
+    "html_text",
+    "inf",
+    "inference_of",
+    "is_ref_spec",
+    "keep_rows",
+    "ld",
+    "mark",
+    "mark_layer",
+    "mark_of",
+    "minus",
+    "mv_chart_html",
+    "mv_clean",
+    "mv_df",
+    "mv_levels",
+    "mv_marks",
+    "mv_p_label",
+    "mv_payload",
+    "mv_pct",
+    "my_experiments",
+    "n_of",
+    "num",
+    "oa_data",
+    "opts_of",
+    "out_path",
+    "p2",
+    "pair",
+    "pairs_on",
+    "parse_labels",
+    "parse_one_label",
+    "path_panel",
+    "pc",
+    "pc_small",
+    "pct",
+    "pct_eu",
+    "pe",
+    "per_ref",
+    "period_of",
+    "pick",
+    "pp",
+    "prep_sample",
+    "prepare_class",
+    "prereg",
+    "present",
+    "print.simple_dag_sets",
+    "prl_data",
+    "r_at",
+    "rd",
+    "read_clean",
+    "read_eurostat",
+    "read_wave",
+    "rec",
+    "ref_display",
+    "ref_spec",
+    "refresh_multiverse",
+    "repeatability_matrix",
+    "report_result",
+    "rhs_terms",
+    "run_engine",
+    "run_kept",
+    "run_off_curve",
+    "run_se",
+    "run_spec",
+    "safely_fit",
+    "set_axis",
+    "set_vars",
+    "share_below",
+    "share_sig",
+    "shown",
+    "sig",
+    "sig_rule",
+    "sp",
+    "spec_base",
+    "spec_data",
+    "std",
+    "std_measure",
+    "submit_exploration",
+    "summarise_fit",
+    "tet_r",
+    "theme_slide",
+    "tidy_approach",
+    "tidy_terms",
+    "to_panel",
+    "to_scale",
+    "try_spec",
+    "twin_cols",
+    "variation_share",
+    "vs",
+    "with_class",
+    "with_composites",
+    "words",
+    "work_path"
+  ],
+  "keep": [
+    {
+      "file": "class-results.qmd",
+      "code": "curve <- read.csv(\"data/spec_curve.csv\", stringsAsFactors = FALSE)",
+      "reason": "base R in webR, readr would be a download"
+    },
+    {
+      "file": "class-results.qmd",
+      "code": "curve <- curve[order(curve$r_ca), ]",
+      "reason": "base R in webR, dplyr would be a download"
+    },
+    {
+      "file": "class-results.qmd",
+      "code": "curve <- transform(curve, rank = seq_len(nrow(curve)), sig = p_cr2 < 0.05)",
+      "reason": "as above"
+    },
+    {
+      "file": "class-results.qmd",
+      "code": "parsed <- vapply(spec_txt, parse_one_label, character(length(axis_codes)), USE.NAMES = FALSE)",
+      "reason": "base R in webR"
+    },
+    {
+      "file": "class-results.qmd",
+      "code": "d$r <- suppressWarnings(as.numeric(d$r))",
+      "reason": "frozen reader of the class CSV"
+    },
+    {
+      "file": "curve.qmd",
+      "code": "cat(mv_chart_html(",
+      "reason": "an asis chunk writes its raw HTML block through cat()"
+    },
+    {
+      "file": "curve.qmd",
+      "code": "cat(mv_chart_html(",
+      "reason": "an asis chunk writes its raw HTML block through cat()"
+    },
+    {
+      "file": "lab.qmd",
+      "code": "europeanisation <- utils::read.csv(\"data/europeanisation_cy.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "lab.qmd",
+      "code": "my_dag <- dagify(",
+      "reason": "the dagify() of this page; the workspace calls ggdag::dagify()"
+    },
+    {
+      "file": "lab.qmd",
+      "code": "adjustmentSets(my_dag)",
+      "reason": "the function of this page, which reads the answers of dagitty"
+    },
+    {
+      "file": "lab.qmd",
+      "code": "europeanisation <- utils::read.csv(\"data/europeanisation_cy.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "lab.qmd",
+      "code": "kqxue <- utils::read.csv(\"data/analyst_KQXUE.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "lab.qmd",
+      "code": "o18ol <- utils::read.csv(\"data/analyst_018OL.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "menu.qmd",
+      "code": "split(~key) |>",
+      "reason": "a list named by key is what the map reads"
+    },
+    {
+      "file": "menu.qmd",
+      "code": "split(~option) |>",
+      "reason": "as above"
+    },
+    {
+      "file": "companion/multilevel.qmd",
+      "code": "as.data.frame() |>",
+      "reason": "drops the print method of parameters, so that the table shows plain columns"
+    },
+    {
+      "file": "live/day.qmd",
+      "code": "europeanisation <- utils::read.csv(file.path(.data_dir, \"europeanisation_cy.csv\"))",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "live/short.qmd",
+      "code": "europeanisation <- utils::read.csv(file.path(.data_dir, \"europeanisation_cy.csv\"))",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "R/08_mi_tier.R",
+      "code": "meth[c(parts, \"age\", \"female\")] <- \"pmm\"",
+      "reason": "the method vector of mice"
+    },
+    {
+      "file": "R/14_dag_answers.R",
+      "code": "readr::write_csv(answers, out_path(\"dag_answers.csv\"))",
+      "reason": "datawizard::data_write() writes other bytes"
+    },
+    {
+      "file": "_includes/next-delivery.qmd",
+      "code": "cat(paste(out, collapse = \"\\n\"))",
+      "reason": "an asis chunk writes its Markdown through cat()"
+    },
+    {
+      "file": "_includes/_lab-helpers.qmd",
+      "code": ".curve   <- utils::read.csv(file.path(.data_dir, \"spec_curve.csv\"), stringsAsFactors = FALSE)",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "_includes/_lab-helpers.qmd",
+      "code": ".options <- utils::read.csv(file.path(.data_dir, \"menu_options.csv\"), stringsAsFactors = FALSE,",
+      "reason": "as above"
+    },
+    {
+      "file": "_includes/_lab-helpers.qmd",
+      "code": "row <- data.frame(stats::setNames(ch, sub(\"^my_\", \"\", names(ch))),",
+      "reason": "prints as the plain table of my_experiments()"
+    },
+    {
+      "file": "_includes/_lab-helpers.qmd",
+      "code": ".dag_answers <- utils::read.csv(file.path(.data_dir, \"dag_answers.csv\"), stringsAsFactors = FALSE,",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "companion/_model-outputs/bayes_panel.R",
+      "code": "value = as.vector(t(yrep_prior[seq(80, 4000, by = 80), ]))),",
+      "reason": "a draws-by-cells matrix flattened row by row"
+    },
+    {
+      "file": "companion/_model-outputs/fit_measurement.R",
+      "code": "datawizard::data_modify(share_mentioning = colMeans(X)[var],",
+      "reason": "the 0/1 items as a matrix"
+    },
+    {
+      "file": "companion/_model-outputs/fit_measurement.R",
+      "code": "tet_long <- as.data.frame(tet) |>",
+      "reason": "the matrix as a frame, before it is made long"
+    },
+    {
+      "file": "companion/_model-outputs/fit_measurement.R",
+      "code": "d_items <- as.data.frame(X)",
+      "reason": "lavaan reads the items from a plain data frame"
+    },
+    {
+      "file": "companion/_model-outputs/fit_measurement.R",
+      "code": "mean_prevalence = mean(colMeans(X[, v])))",
+      "reason": "the 0/1 items as a matrix"
+    },
+    {
+      "file": "companion/_model-outputs/fit_models.R",
+      "code": "as.data.frame()",
+      "reason": "WeMix::mix() takes a plain data frame"
+    },
+    {
+      "file": "companion/_model-outputs/fit_person_anchor.R",
+      "code": "vc <- as.data.frame(lme4::VarCorr(m))",
+      "reason": "the VarCorr method lists the variance components as rows"
+    },
+    {
+      "file": "companion/_model-outputs/fit_person_multilevel.R",
+      "code": "vc <- as.data.frame(lme4::VarCorr(m))",
+      "reason": "the VarCorr method lists the variance components as rows"
+    },
+    {
+      "file": "companion/_model-outputs/fit_person_years.R",
+      "code": "vc <- as.data.frame(lme4::VarCorr(m))",
+      "reason": "the VarCorr method lists the variance components as rows"
+    },
+    {
+      "file": "live/_segments/_handson-reproduction-live.qmd",
+      "code": "europeanisation <- utils::read.csv(file.path(.data_dir, \"europeanisation_cy.csv\"))",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "live/_segments/_handson-reproduction-live.qmd",
+      "code": "kqxue <- utils::read.csv(\"data/analyst_KQXUE.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "live/_segments/_handson-reproduction-live.qmd",
+      "code": "o18ol <- utils::read.csv(\"data/analyst_018OL.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "live/_segments/_p2-handson2-live.qmd",
+      "code": "my_dag <- dagify(",
+      "reason": "the dagify() of the helpers of the deck; the workspace calls ggdag::dagify()"
+    },
+    {
+      "file": "live/_segments/_p2-handson2-live.qmd",
+      "code": "adjustmentSets(my_dag)",
+      "reason": "reads the answers of dagitty from a table"
+    },
+    {
+      "file": "live/_segments/_p3-handson3-live.qmd",
+      "code": "europeanisation <- utils::read.csv(file.path(.data_dir, \"europeanisation_cy.csv\"))",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "live/_segments/_p3-handson3-live.qmd",
+      "code": "kqxue <- utils::read.csv(\"data/analyst_KQXUE.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    },
+    {
+      "file": "live/_segments/_p3-handson3-live.qmd",
+      "code": "o18ol <- utils::read.csv(\"data/analyst_018OL.csv\")",
+      "reason": "readr would add 4 MB to the download"
+    }
+  ],
+  "skip": [
+    {
+      "file": "companion/dags.qmd",
+      "block": "# Four significant figures, so the statistic recorded for C6HJR in the robustness study prints as -3.804 rather than",
+      "reason": "a block shown or quoted on the page, left out of the checks"
+    },
+    {
+      "file": "companion/measurement.qmd",
+      "block": "`Factor 1` = show(F1), `Factor 2` = show(F2), `Factor 3` = show(F3), `Factor 4` = show(F4),",
+      "reason": "a block shown or quoted on the page, left out of the checks"
+    }
+  ]
 }

@@ -66,7 +66,7 @@ reg_wts    <- c("none", "n_cell", "n_eff", "pop")
 ## 416,698 rows, fifty times over, would cost more than it could return for a
 ## covariate that is there only as context.
 parts <- c("cosmo", "util", "comm", "lib")
-with_composites <- \(d) datawizard::data_modify(d, pos = pmin(cosmo + util, 1),  # r-style: approved
+with_composites <- \(d) datawizard::data_modify(d, pos = pmin(cosmo + util, 1),
                                                  neg = pmin(comm + lib, 1))
 
 imp_dat <- person |>
@@ -85,7 +85,7 @@ n_miss <- sum(!imp_dat$answered)
 
 mice_dat <- datawizard::data_select(imp_dat, exclude = c("cell", "answered"))
 meth <- mice::make.method(mice_dat)
-meth[c(parts, "age", "female")] <- "pmm"  # r-style: keep – the method vector of mice
+meth[c(parts, "age", "female")] <- "pmm"
 pred <- mice::make.predictorMatrix(mice_dat)
 imp_mice <- mice::mice(mice_dat, m = M_IMP, maxit = 5, method = meth,
                        predictorMatrix = pred, printFlag = FALSE)
@@ -115,7 +115,7 @@ amelia_sets <- purrr::map(am$imputations, \(d) {
 
 ## ---- from completed respondent files to cell panels ------------------------------
 
-to_panel <- function(d) {  # r-style: approved
+to_panel <- function(d) {
   d |>
     dplyr::summarise(dplyr::across(dplyr::all_of(unname(scales)), mean), n_cell = dplyr::n(),
                      .by = c(cntry, year)) |>
@@ -130,7 +130,7 @@ to_panel <- function(d) {  # r-style: approved
 }
 
 # dplyr::filter(), because the bailout condition names the argument d
-prep_sample <- function(d, s) {  # r-style: approved
+prep_sample <- function(d, s) {
   switch(s,
     all        = d,
     y2004_2008 = dplyr::filter(d, year <= 2008),
@@ -144,7 +144,7 @@ prep_sample <- function(d, s) {  # r-style: approved
 ## the outcome, and the growth arm shares the outcome panel, so its imputed
 ## variant would follow from the same completed files.
 
-fit_cells <- function(panel) {  # r-style: approved
+fit_cells <- function(panel) {
   grid <- tidyr::expand_grid(copredictor = c("none", "other"), sample = samples,
                              estimator = estimators, reg_weight = reg_wts) |>
     datawizard::data_filter(!(estimator == "re" & reg_weight != "none"))
@@ -197,7 +197,7 @@ fit_cells <- function(panel) {  # r-style: approved
 ## returns the total variance t, the df and the fraction of missing
 ## information fmi.
 
-run_engine <- function(sets, engine) {  # r-style: approved
+run_engine <- function(sets, engine) {
   purrr::imap(sets, \(d, i) fit_cells(to_panel(d)) |> dplyr::mutate(imp = i)) |>
     purrr::list_rbind() |>
     dplyr::summarise(pool = list(mice::pool.scalar(estimate, std_error^2, n = mean(df) + 1, k = 1)),

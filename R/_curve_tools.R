@@ -21,11 +21,11 @@
 #               small-sample adjustment of fixest (CR1), t on G - 1 df; and CR2
 #               errors clustered by country with Satterthwaite df, the rule
 #               that classes the curve.
-#               The datawizard verbs evaluate their expressions outside the
-#               calling function, so they cannot see its arguments (data_filter()
-#               returns a broken frame and data_modify() an error when an
-#               expression names row$...); the functions below that filter or
-#               build columns from their arguments therefore use dplyr.
+#               The functions below that filter or build columns from their
+#               arguments use dplyr: data_modify() and data_summary() of
+#               datawizard do not find the arguments of the calling
+#               function, and data_filter() finds such arguments only since
+#               datawizard 1.5.0.
 # Author:       Chris Moreh
 # Last updated: 2026-11-15
 # Sourced by:   R/09_spec_curve.R, R/10_curve_forks.R,
@@ -46,7 +46,7 @@ k_items <- list(all = c(mcosmo = 5, mutil = 2, mcomm = 4, mlib = 2, mpos = 7, mn
                 un  = c(mcosmo = 5, mutil = 2, mcomm = 3, mlib = 2, mpos = 7, mneg = 5))
 
 # the curve: one outcome set crossed with the options that the review keeps
-curve_menu <- function(outcomes) {  # r-style: approved
+curve_menu <- function(outcomes) {
   dplyr::bind_rows(
     tidyr::expand_grid(predictor = "unemp", measure = unemp_series, pred_form = c("raw", "log")),
     tibble::tibble(predictor = "growth", measure = "wb_growth", pred_form = "raw")) |>
@@ -61,11 +61,11 @@ curve_menu <- function(outcomes) {  # r-style: approved
 
 # claim alignment: negative scales are read reversed, and the claim expects
 # the opposite sign for growth, so that r_ca < 0 is the direction of the claim
-align_factor <- function(outcome, predictor) {  # r-style: approved
+align_factor <- function(outcome, predictor) {
   dplyr::if_else(outcome %in% negative_scales, -1, 1) * dplyr::if_else(predictor == "growth", -1, 1)
 }
 
-curve_inputs <- function() {  # r-style: approved
+curve_inputs <- function() {
   panel <- datawizard::data_read("data/europeanisation_cy.csv", verbose = FALSE)
   wts   <- datawizard::data_read(out_path("teney_panel_weights.csv"), verbose = FALSE)
   list(
@@ -83,7 +83,7 @@ curve_inputs <- function() {  # r-style: approved
   )
 }
 
-prep_sample <- function(d, s, bailout) {  # r-style: approved
+prep_sample <- function(d, s, bailout) {
   switch(s,
     all        = d,
     y2004_2008 = dplyr::filter(d, year <= 2008),
@@ -95,7 +95,7 @@ prep_sample <- function(d, s, bailout) {  # r-style: approved
 }
 
 # the cells of one specification, with y, x, copred and the regression weight w
-spec_data <- function(row, inputs) {  # r-style: approved
+spec_data <- function(row, inputs) {
   cons <- if (row$construction == "rate") "count" else row$construction
   k <- if (row$construction == "rate") k_items[[row$item_set]][[row$outcome]] else 1
   inputs$meas |>
@@ -112,11 +112,11 @@ spec_data <- function(row, inputs) {  # r-style: approved
                   copred = if (row$predictor == "unemp") wb_growth else wb_unemp,
                   w = switch(row$weights, none = 1, n_cell = n_cell, n_eff = n_eff_cell,
                              pop = as.numeric(pop_15plus))) |>
-    # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+    # dplyr::arrange() sorts in the C locale on every machine
     dplyr::arrange(cntry, year)
 }
 
-rhs_terms <- function(row) c("x", if (row$copredictor == "other") "copred")  # r-style: approved
+rhs_terms <- function(row) c("x", if (row$copredictor == "other") "copred")
 
 # A linear fit (fixed effects or pooled) under the three kinds of inference.
 # The conventional and CR1 tests come from fixest, whose clustered p-values use
@@ -129,7 +129,7 @@ rhs_terms <- function(row) c("x", if (row$copredictor == "other") "copred")  # r
 # directly. r is the conversion rule of the robustness study (standard_correlation_coefficient.R
 # in marton-balazs-kovacs/multi100 on GitHub), r = t / sqrt(t^2 + df), which
 # effectsize::t_to_r() computes identically.
-fit_linear <- function(row, inputs, d = spec_data(row, inputs)) {  # r-style: approved
+fit_linear <- function(row, inputs, d = spec_data(row, inputs)) {
   rhs <- rhs_terms(row)
   fe  <- switch(row$estimator, fe_twoway = " | cntry + year", fe_country = " | cntry",
                 pooled_cl = "")

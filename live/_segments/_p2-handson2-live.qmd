@@ -113,7 +113,7 @@ The committed arrows are live and the arguable ones commented out: take the `#` 
 ```{webr}
 #| autorun: false
 #| max-lines: 8
-my_dag <- dagify( # r-style: keep – the dagify() of the helpers of the deck; the workspace calls ggdag::dagify()
+my_dag <- dagify(
   # The path of interest, and the two common causes (country and year)
   # that two-way fixed effects absorb.
   framing      ~ unemployment,
@@ -151,7 +151,7 @@ my_dag <- dagify( # r-style: keep – the dagify() of the helpers of the deck; t
 ::: {.fs-90}
 ```{webr}
 #| autorun: false
-adjustmentSets(my_dag) # r-style: keep – reads the answers of dagitty from a table
+adjustmentSets(my_dag)
 ```
 :::
 

@@ -57,7 +57,7 @@ counts <- c(mcosmo = "n_cosmo", mutil = "n_util", mcomm = "n_comm",
 
 # the summaries carry the respondent-level names, and to_scale() maps each to
 # the name of its scale in place, so the column order holds
-to_scale <- function(prefix, lookup) {  # r-style: approved
+to_scale <- function(prefix, lookup) {
   \(n) paste0(prefix, names(lookup)[match(sub(paste0("^", prefix), "", n), lookup)])
 }
 
@@ -88,7 +88,7 @@ cells <- person |>
 panel_w <- cells |>
   dplyr::left_join(pop, by = c("cntry", "year")) |>
   datawizard::data_modify(noop_rate = n_noop / n_cy, deff = n_cy / n_eff) |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(cntry, year) |>
   dplyr::select(cntry, year, dplyr::starts_with("w_"), dplyr::starts_with("c_"),
                 dplyr::starts_with("wc_"), n_cy, mean_items, n_eff, deff, n_noop, n_dk, n_other,
@@ -101,7 +101,7 @@ datawizard::data_write(panel_w, out_path("teney_panel_weights.csv"), verbose = F
 ## type are put on common names; each variant then keeps the respondents that
 ## its no-opinion rule allows, builds the outcome and averages within cells.
 
-set_vars <- function(d, item_set) {  # r-style: approved
+set_vars <- function(d, item_set) {
   if (item_set == "all") {
     d |> dplyr::transmute(cntry, year, w1, den = n_all, noop_type,
                           mcosmo = n_cosmo, mutil = n_util, mcomm = n_comm, mlib = n_lib,
@@ -114,21 +114,21 @@ set_vars <- function(d, item_set) {  # r-style: approved
   }
 }
 
-keep_rows <- function(d, noop) {  # r-style: approved
+keep_rows <- function(d, noop) {
   switch(noop,
     zero  = d,
     drop  = datawizard::data_filter(d, den > 0),
     split = datawizard::data_filter(d, den > 0 | noop_type == "other"))
 }
 
-build_outcome <- function(d, construction) {  # r-style: approved
+build_outcome <- function(d, construction) {
   if (construction == "share") {
     d |> dplyr::mutate(dplyr::across(dplyr::all_of(outcomes), \(x) dplyr::if_else(x == 0, 0, x / den)))
   } else d
 }
 
 # dplyr verbs, because the weight depends on the argument cell_weight
-aggregate_cells <- function(d, cell_weight) {  # r-style: approved
+aggregate_cells <- function(d, cell_weight) {
   d |>
     dplyr::mutate(.w = if (cell_weight == "design") w1 else 1) |>
     dplyr::summarise(dplyr::across(dplyr::all_of(outcomes),
@@ -155,7 +155,7 @@ measurement <- variants |>
                                     })) |>
   tidyr::unnest(cells) |>
   datawizard::data_to_long(select = outcomes, names_to = "outcome", values_to = "value") |>
-  # r-style: keep – dplyr::arrange() sorts in the C locale on every machine
+  # dplyr::arrange() sorts in the C locale on every machine
   dplyr::arrange(construction, item_set, noop, cell_weight, outcome, cntry, year)
 
 datawizard::data_write(measurement, out_path("teney_panel_measurement.csv"), verbose = FALSE)

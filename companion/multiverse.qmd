@@ -22,29 +22,29 @@ cnames <- readr::read_csv("../data/display_country_means.csv", show_col_types = 
   datawizard::data_select(select = c("cntry", "country"))
 
 # fixed decimals and a true minus sign
-num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")  # r-style: approved
-pct_eu <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")  # r-style: approved
-minus <- \(x) gsub("-", "−", format(x), fixed = TRUE)  # r-style: approved
+num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
+pct_eu <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
+minus <- \(x) gsub("-", "−", format(x), fixed = TRUE)
 
 # shares of a set of curve rows below zero, and below zero with CR2 p < 0.05
-below <- \(d) 100 * mean(d$supports)  # r-style: approved
-below_sig <- \(d) 100 * mean(d$supports & d$sig)  # r-style: approved
-fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]  # r-style: approved
-dv <- \(ax, op, col) devs[[col]][devs$axis == ax & devs$option == op & devs$rule == "cr2"]  # r-style: approved
+below <- \(d) 100 * mean(d$supports)
+below_sig <- \(d) 100 * mean(d$supports & d$sig)
+fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
+dv <- \(ax, op, col) devs[[col]][devs$axis == ax & devs$option == op & devs$rule == "cr2"]
 eu_ref <- eu_curve |> datawizard::data_filter(is_reference)
 twoway <- eu_curve |> datawizard::data_filter(estimator == "fe_twoway")
 country <- eu_curve |> datawizard::data_filter(estimator == "fe_country")
 
 # the displays of section 8.5: the reproduced specification and its country twin
-is_ref_spec <- \(d) d$outcome == "mcosmo" & d$predictor == "unemp" & d$copredictor == "none" &  # r-style: approved
+is_ref_spec <- \(d) d$outcome == "mcosmo" & d$predictor == "unemp" & d$copredictor == "none" &
   d$pred_form == "raw"
-per_ref <- \(smp, col) periods[[col]][is_ref_spec(periods) & periods$estimator == "fe_twoway" &  # r-style: approved
+per_ref <- \(smp, col) periods[[col]][is_ref_spec(periods) & periods$estimator == "fe_twoway" &
                                         periods$sample == smp]
 per_unemp <- periods |> datawizard::data_filter(predictor == "unemp")
 loo_two <- loo |> datawizard::data_filter(estimator == "fe_twoway", left_out != "none")
 loo_cty <- loo |> datawizard::data_filter(estimator == "fe_country", left_out != "none")
-vs <- \(cc) loo_two$variation_share[loo_two$left_out == cc]  # r-style: approved
-ba <- \(grp, col) bailout[[col]][bailout$outcome == "mcosmo" & bailout$predictor == "unemp" &  # r-style: approved
+vs <- \(cc) loo_two$variation_share[loo_two$left_out == cc]
+ba <- \(grp, col) bailout[[col]][bailout$outcome == "mcosmo" & bailout$predictor == "unemp" &
                                    bailout$estimator == "fe_twoway" & bailout$group == grp]
 design_label <- c(fe_twoway = "Two-way fixed effects", fe_country = "Country fixed effects")
 ```

@@ -28,8 +28,8 @@ graph functions read the answers of dagitty from a table.
 # the third, of 018OL, which the lab installs when its cell first runs and the
 # live decks load when they open. The workspace fits the same specifications
 # live, with their CR2 test (clubSandwich), and returns the same numbers.
-.curve   <- utils::read.csv(file.path(.data_dir, "spec_curve.csv"), stringsAsFactors = FALSE) # r-style: keep – readr would add 4 MB to the download
-.options <- utils::read.csv(file.path(.data_dir, "menu_options.csv"), stringsAsFactors = FALSE, # r-style: keep – as above
+.curve   <- utils::read.csv(file.path(.data_dir, "spec_curve.csv"), stringsAsFactors = FALSE)
+.options <- utils::read.csv(file.path(.data_dir, "menu_options.csv"), stringsAsFactors = FALSE,
                             encoding = "UTF-8")
 .course_url <- "https://codemoreh.github.io/ar4ds-eu"
 
@@ -71,18 +71,18 @@ if (nrow(.curve) != 864 ||
        call. = FALSE)
 .curve_keys <- purrr::exec(paste, !!!unname(as.list(.curve[.axis_codes])), sep = "|")
 
-.est_lab <- function(e) c(  # r-style: approved
+.est_lab <- function(e) c(
   fe_twoway  = "two-way fixed effects (country + year)",
   fe_country = "country fixed effects")[[e]]
 .se_lab <- "CR2 errors clustered by country, Satterthwaite df"
 
 # The term for the claim-carrying predictor as it appears in a formula:
 # log(unemp) when the log form is chosen, else the bare variable name.
-.main_term <- function(ch) {  # r-style: approved
+.main_term <- function(ch) {
   if (ch$my_predictor == "unemp" && ch$my_pred_form == "log") "log(unemp)"
   else ch$my_predictor
 }
-.copred_term <- function(ch) if (identical(ch$my_predictor, "unemp")) "growth" else "unemp"  # r-style: approved
+.copred_term <- function(ch) if (identical(ch$my_predictor, "unemp")) "growth" else "unemp"
 
 # --- validation ------------------------------------------------------------
 # Two entry points into the same rules. .validate() takes a named list, which
@@ -106,21 +106,21 @@ if (nrow(.curve) != 864 ||
   "menu.qmd#whose-average"  = "Specification menu",
   "menu.qmd#cell-weighting" = "Specification menu",
   "menu.qmd#outcome-family" = "Specification menu")
-.page_ref <- function(path) {  # r-style: approved
+.page_ref <- function(path) {
   title <- if (path %in% names(.page_titles)) .page_titles[[path]] else path
   sprintf("%s, %s/%s", title, .course_url, sub(".qmd", ".html", path, fixed = TRUE))
 }
-.or_list <- function(x) {  # r-style: approved
+.or_list <- function(x) {
   q <- paste0("\"", x, "\"")
   if (length(q) == 1) q else paste(paste(q[-length(q)], collapse = ", "), "or", q[length(q)])
 }
 # two older option codes that labels and calls may still use, mapped to the rows that hold their reasons
 .legacy <- c("se:clustered" = "cr1", "weights:n_cy" = "n_cell")
 
-.on_menu <- function(k, v) is.character(v) && length(v) == 1 && !is.na(v) && v %in% .menu[[k]]  # r-style: approved
+.on_menu <- function(k, v) is.character(v) && length(v) == 1 && !is.na(v) && v %in% .menu[[k]]
 
-.refuse <- function(k, v, ch, as_args) {  # r-style: approved
-  shown <- function(a) if (as_args) a else paste0("my_", a)  # r-style: approved
+.refuse <- function(k, v, ch, as_args) {
+  shown <- function(a) if (as_args) a else paste0("my_", a)
   axis  <- sub("^my_", "", k)
   keep  <- if (k == "my_measure" && isTRUE(ch$my_predictor %in% names(.measures_for)))
     .measures_for[[ch$my_predictor]] else .menu[[k]]
@@ -150,8 +150,8 @@ if (nrow(.curve) != 864 ||
   stop(paste(msg, collapse = "\n"), call. = FALSE)
 }
 
-.validate <- function(ch, as_args = FALSE) {  # r-style: approved
-  shown <- function(a) if (as_args) a else paste0("my_", a)  # r-style: approved
+.validate <- function(ch, as_args = FALSE) {
+  shown <- function(a) if (as_args) a else paste0("my_", a)
   # the co-predictor may also be named by its variable, growth or unemp
   if (identical(ch$my_copredictor, .copred_term(ch)))
     ch <- utils::modifyList(ch, list(my_copredictor = "other"))
@@ -168,7 +168,7 @@ if (nrow(.curve) != 864 ||
   ch
 }
 
-.check_choices <- function() {  # r-style: approved
+.check_choices <- function() {
   need <- names(.menu)
   missing <- purrr::discard(need, \(k) exists(k))
   if (length(missing) > 0)
@@ -182,9 +182,9 @@ if (nrow(.curve) != 864 ||
 }
 
 # --- the curve -------------------------------------------------------------
-.key_of <- function(ch) paste(unlist(ch[paste0("my_", .axis_codes)]), collapse = "|")  # r-style: approved
+.key_of <- function(ch) paste(unlist(ch[paste0("my_", .axis_codes)]), collapse = "|")
 
-.lookup <- function(ch) {  # r-style: approved
+.lookup <- function(ch) {
   i <- match(.key_of(ch), .curve_keys)
   if (is.na(i))
     stop("That specification passed the checks but is not among the 864 on the curve. This should not happen; tell the facilitator which call you ran.",
@@ -195,7 +195,7 @@ if (nrow(.curve) != 864 ||
 # One result in the form that the printout and the submission use: the
 # conventional fit (b, se, t, df, r), the claim-aligned r, the CR2 test with its
 # Satterthwaite df, and the placement among the 864.
-.result <- function(ch) {  # r-style: approved
+.result <- function(ch) {
   hit <- .lookup(ch)
   list(b = hit$b, se = hit$se, t = hit$t, df = hit$df, n = hit$n_cells, r = hit$r,
        r_ca = hit$r_ca, p_cr2 = hit$p_cr2, df_cr2 = hit$df_cr2,
@@ -207,7 +207,7 @@ if (nrow(.curve) != 864 ||
 # so a growth slope is reported with its sign flipped; the negative framings,
 # which are not on the curve, were reverse-coded the same way. The r_ca column
 # of the curve is r times this factor.
-.flip <- function(ch)  # r-style: approved
+.flip <- function(ch)
   (if (ch$my_outcome %in% .neg_framings) -1 else 1) *
   (if (ch$my_predictor == "growth") -1 else 1)
 
@@ -215,7 +215,7 @@ if (nrow(.curve) != 864 ||
 # decisions about the question, then in brackets the scoring rule, the
 # measurement decisions and the decisions about the model, with the inference
 # rule last.
-.spec_line <- function(ch) {  # r-style: approved
+.spec_line <- function(ch) {
   neg <- ch$my_outcome %in% .neg_framings
   paste0(ch$my_outcome, if (neg) "_ca" else "", " ~ ", ch$my_predictor, "(", ch$my_pred_form, ")",
          if (ch$my_copredictor == "other") paste0(" + ", .copred_term(ch)) else "",
@@ -225,9 +225,9 @@ if (nrow(.curve) != 864 ||
 }
 
 # four decimals, so that a p just above 0.05 never prints as 0.050
-.fmt_p <- function(p) if (p < 0.001) "< 0.001" else sprintf("= %.4f", p)  # r-style: approved
+.fmt_p <- function(p) if (p < 0.001) "< 0.001" else sprintf("= %.4f", p)
 
-.class_line <- function(res) {  # r-style: approved
+.class_line <- function(res) {
   below <- res$r_ca < 0
   sig   <- res$p_cr2 < 0.05
   if (below && sig) "below zero and significant under CR2 (p < 0.05), in the direction of the claim"
@@ -236,7 +236,7 @@ if (nrow(.curve) != 864 ||
   else "above zero and not significant under CR2"
 }
 
-.print_result <- function(ch, res, lead = NULL, aligned = TRUE) {  # r-style: approved
+.print_result <- function(ch, res, lead = NULL, aligned = TRUE) {
   fl <- if (aligned) .flip(ch) else 1
   writeLines(c(
     lead,
@@ -264,7 +264,7 @@ if (nrow(.curve) != 864 ||
 assign("log", NULL, envir = .tried)
 assign("last", NULL, envir = .tried)
 
-try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "none",  # r-style: approved
+try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "none",
                      estimator = "fe_twoway", sample = "all", weights = "none",
                      construction = "share", noop = "zero", item_set = "all",
                      cell_weight = "unweighted", measure = NULL,
@@ -278,7 +278,7 @@ try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "non
   res <- .result(ch)
   .print_result(ch, res, lead = "")
   fl  <- .flip(ch)
-  row <- data.frame(stats::setNames(ch, sub("^my_", "", names(ch))), # r-style: keep – prints as the plain table of my_experiments()
+  row <- data.frame(stats::setNames(ch, sub("^my_", "", names(ch))),
                     b = fl * res$b, t = fl * res$t, r_aligned = res$r_ca, p_cr2 = res$p_cr2,
                     stringsAsFactors = FALSE)
   assign("log", purrr::list_rbind(list(.tried$log, row)), envir = .tried)
@@ -289,7 +289,7 @@ try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "non
 # The running log of everything try_spec() has looked up. Only the decisions
 # that varied are shown; the constant ones are those of the reproduced
 # specification or of every call.
-my_experiments <- function() {  # r-style: approved
+my_experiments <- function() {
   d <- .tried$log
   if (is.null(d)) {
     writeLines("Nothing tried yet – call try_spec() at least once.")
@@ -309,7 +309,7 @@ my_experiments <- function() {  # r-style: approved
   invisible(show)
 }
 
-submit_exploration <- function(nickname = NULL) {  # r-style: approved
+submit_exploration <- function(nickname = NULL) {
   if (is.null(.tried$last))
     stop("Nothing to submit – call try_spec() first, ending with the specification you want on the chart.",
          call. = FALSE)
@@ -320,7 +320,7 @@ submit_exploration <- function(nickname = NULL) {  # r-style: approved
 
 # --- Task 5: the declared helpers ------------------------------------------
 
-prereg <- function() {  # r-style: approved
+prereg <- function() {
   ch <- .check_choices()
   writeLines(c(
     "DECLARED – your preregistered specification, fixed before you run it:",
@@ -346,7 +346,7 @@ prereg <- function() {  # r-style: approved
   invisible(ch)
 }
 
-build_model <- function(formula, estimator) {  # r-style: approved
+build_model <- function(formula, estimator) {
   ch <- .check_choices()
   if (missing(formula) || !inherits(formula, "formula"))
     stop("The first argument must be a formula: outcome ~ predictor terms, unquoted.",
@@ -372,7 +372,7 @@ build_model <- function(formula, estimator) {  # r-style: approved
   structure(list(choices = ch, formula = formula, estimator = estimator), class = "spec_ticket")
 }
 
-run_spec <- function(spec) {  # r-style: approved
+run_spec <- function(spec) {
   if (missing(spec) || !inherits(spec, "spec_ticket"))
     stop("Pass the object that build_model() returned, e.g. run_spec(my_model).", call. = FALSE)
   now <- .check_choices()
@@ -406,7 +406,7 @@ run_spec <- function(spec) {  # r-style: approved
 assign("tag", NULL, envir = .tag_env)
 
 # A fresh tag, drawn without touching the random-number stream of the session.
-.new_tag <- function() {  # r-style: approved
+.new_tag <- function() {
   had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   if (had_seed) old_seed <- get(".Random.seed", envir = globalenv())
   on.exit(if (had_seed) assign(".Random.seed", old_seed, envir = globalenv())
@@ -417,7 +417,7 @@ assign("tag", NULL, envir = .tag_env)
 
 # A nickname reduced to lower-case ASCII letters, digits and single hyphens,
 # at most 24 characters – the only form that the class chart parses.
-.clean_tag <- function(x) {  # r-style: approved
+.clean_tag <- function(x) {
   # iconv on Windows turns these into "?": the Romanian comma-below letters and the eszett
   x <- gsub("ß", "ss", chartr("ȘșȚț", "SsTt", trimws(as.character(x)[1])))
   ascii <- suppressWarnings(iconv(x, to = "ASCII//TRANSLIT"))
@@ -432,7 +432,7 @@ assign("tag", NULL, envir = .tag_env)
 
 # The tag of this session: the nickname if one is given, otherwise the tag
 # already drawn, otherwise a fresh one. Returns the tag and the one it replaced.
-.class_tag <- function(nickname = NULL) {  # r-style: approved
+.class_tag <- function(nickname = NULL) {
   stored <- .tag_env$tag
   tag <- if (!is.null(nickname)) .clean_tag(nickname) else if (!is.null(stored)) stored else .new_tag()
   assign("tag", tag, envir = .tag_env)
@@ -443,7 +443,7 @@ assign("tag", NULL, envir = .tag_env)
 # the free-text spec label, and all fourteen decisions are written into that
 # label; the form, its fields and the collection pipeline are frozen
 # infrastructure. The numbers are those of the conventional fit, claim-aligned.
-.submit <- function(ch, res, phase, lead, nickname = NULL) {  # r-style: approved
+.submit <- function(ch, res, phase, lead, nickname = NULL) {
   fl <- .flip(ch)
   b <- fl * res$b; tv <- fl * res$t; r <- res$r_ca
   tg <- .class_tag(nickname)
@@ -487,7 +487,7 @@ assign("tag", NULL, envir = .tag_env)
                  df = res$df, n = res$n, r = r, url = url))
 }
 
-report_result <- function(nickname = NULL) {  # r-style: approved
+report_result <- function(nickname = NULL) {
   ch <- .check_choices()
   .submit(ch, .result(ch), "declared",
           "Your declared submission (claim-aligned, straight from your preregistration):",
@@ -509,7 +509,7 @@ report_result <- function(nickname = NULL) {  # r-style: approved
 # site does not send them. Any other graph goes to dagitty in the downloadable
 # workspace. The table arrives with the including page through its
 # `resources:` list, in the folder named by .data_dir.
-.dag_answers <- utils::read.csv(file.path(.data_dir, "dag_answers.csv"), stringsAsFactors = FALSE, # r-style: keep – readr would add 4 MB to the download
+.dag_answers <- utils::read.csv(file.path(.data_dir, "dag_answers.csv"), stringsAsFactors = FALSE,
                                 na.strings = "NA")
 .dag_elsewhere <- c(
   "This page holds the adjustment sets that dagitty gives for the graph of the cell",
@@ -521,7 +521,7 @@ report_result <- function(nickname = NULL) {  # r-style: approved
 # accepts it, and not used, because this page does not draw the graph. The
 # arrows, sorted, are the key under which data/dag_answers.csv holds the
 # answers for the graph.
-dagify <- function(..., exposure = NULL, outcome = NULL, coords = NULL) {  # r-style: approved
+dagify <- function(..., exposure = NULL, outcome = NULL, coords = NULL) {
   e <- purrr::map(list(...), \(f) {
     child <- all.vars(f[[2]])
     parent <- all.vars(f[[3]])
@@ -537,7 +537,7 @@ dagify <- function(..., exposure = NULL, outcome = NULL, coords = NULL) {  # r-s
 
 # The minimal adjustment sets for the total effect of the exposure on the
 # outcome, as dagitty::adjustmentSets() returns them, read from the table
-adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect = "total", ...) {  # r-style: approved
+adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect = "total", ...) {
   rows <- .dag_answers[.dag_answers$arrows %in% x$key &
                          .dag_answers$exposure %in% paste(exposure, collapse = ", ") &
                          .dag_answers$outcome %in% paste(outcome, collapse = ", ") &
@@ -549,7 +549,7 @@ adjustmentSets <- function(x, exposure = x$exposure, outcome = x$outcome, effect
   structure(strsplit(rows$answer[rows$item > 0], ", ", fixed = TRUE), class = "simple_dag_sets")
 }
 
-print.simple_dag_sets <- function(x, ...) {  # r-style: approved
+print.simple_dag_sets <- function(x, ...) {
   if (!length(x)) {
     writeLines("(no set of these variables closes every backdoor path)")
   } else {

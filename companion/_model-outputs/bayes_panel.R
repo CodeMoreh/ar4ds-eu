@@ -130,7 +130,7 @@ yrep_prior <- brms::posterior_predict(fit_prior)
 slope_prior <- brms::as_draws_df(fit_prior, variable = "b_unemp_within")$b_unemp_within
 prior_draws <- dplyr::bind_rows(
   tibble::tibble(quantity = "cell_mean", draw = rep(seq(80, 4000, by = 80), each = ncol(yrep_prior)),
-                 value = as.vector(t(yrep_prior[seq(80, 4000, by = 80), ]))),  # r-style: keep – a draws-by-cells matrix flattened row by row
+                 value = as.vector(t(yrep_prior[seq(80, 4000, by = 80), ]))),
   tibble::tibble(quantity = "rise_10", draw = seq_along(slope_prior), value = 10 * 100 * slope_prior)
 ) |>
   dplyr::mutate(value = round(value, 4))

@@ -64,7 +64,7 @@ dim_idx <- list(cosmo = c(1, 3, 5, 6, 7), util = c(2, 4),
 
 # harmonised four-band education from the GESIS recode; 'no full-time
 # education' (11) folds into the lowest band
-edu_harmonise <- function(x, scheme) {  # r-style: approved
+edu_harmonise <- function(x, scheme) {
   x <- as.numeric(x)
   if (scheme == "cat11") {
     dplyr::case_when(x %in% c(1, 2, 11) ~ "le15", x %in% 3:6 ~ "e16_19",
@@ -77,7 +77,7 @@ edu_harmonise <- function(x, scheme) {  # r-style: approved
   }
 }
 
-read_wave <- function(w) {  # r-style: approved
+read_wave <- function(w) {
   # 14 items, then OTHER (spontaneous) and DK at the two following positions,
   # a layout that holds in all 16 files under both naming schemes
   items <- if (w$items_style == "v") {
@@ -94,8 +94,8 @@ read_wave <- function(w) {  # r-style: approved
     dplyr::mutate(dplyr::across(c(dplyr::starts_with("it"), oth, dk), \(x) as.numeric(x)))
   vals <- unique(na.omit(unlist(d[c(paste0("it", 1:14), "oth", "dk")])))
   stopifnot("framing items not coded 0/1" = all(vals %in% c(0, 1)))
-  # dplyr::mutate() and dplyr::filter(), because the expressions name the
-  # argument w and the vector eu27, which datawizard verbs cannot see from here
+  # dplyr::mutate(), because the expressions name the argument w, which
+  # datawizard::data_modify() does not find inside a function
   d |>
     dplyr::mutate(cntry = as.character(cntry),
                   cntry = datawizard::recode_values(cntry, recode = list(DE = c("DE-E", "DE-W"),

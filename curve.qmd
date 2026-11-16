@@ -23,18 +23,18 @@ curve     <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 curve_neg <- readr::read_csv("data/spec_curve_negative.csv", show_col_types = FALSE)
 marks     <- readr::read_csv("data/reference_marks.csv", show_col_types = FALSE)
 
-words <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")[n]  # r-style: approved
-below <- \(d) mean(d$r_ca < 0)  # r-style: approved
-below_sig <- \(d, p = d$p_cr2) mean(d$r_ca < 0 & p < 0.05)  # r-style: approved
+words <- \(n) c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")[n]
+below <- \(d) mean(d$r_ca < 0)
+below_sig <- \(d, p = d$p_cr2) mean(d$r_ca < 0 & p < 0.05)
 n_curve <- nrow(curve)
-n_of <- \(axis_code, d = curve) insight::n_unique(d[[axis_code]])  # r-style: approved
+n_of <- \(axis_code, d = curve) insight::n_unique(d[[axis_code]])
 unemp <- datawizard::data_filter(curve, predictor == "unemp")
 ref <- datawizard::data_filter(curve, is_reference)
 ref_rank <- sum(curve$r_ca < ref$r_ca)
 by_est <- datawizard::data_summary(curve, below_sig = mean(r_ca < 0 & p_cr2 < 0.05), by = "estimator")
-est_share <- \(e) mv_pct(by_est$below_sig[by_est$estimator == e])  # r-style: approved
+est_share <- \(e) mv_pct(by_est$below_sig[by_est$estimator == e])
 an <- mv_marks(marks, curve$r_ca)
-mark <- \(id, col) an[[col]][an$id == id]  # r-style: approved
+mark <- \(id, col) an[[col]][an$id == id]
 ```
 
 The specification curve below holds `r format(n_curve, big.mark = ",")` justifiable analyses of the claim that "*poor economic performances … decrease positive dimensions of EU framing*" (Teney 2016, p. 619), read as a claim about change within countries, namely that the citizens of a member state frame the EU less in positive terms than before when its economy deteriorates. Each analysis is a specification, one complete set of answers to the decisions that an analyst has to take, fitted on the `r curve$n_cells[1]` country-years of the course panel. The curve crosses the options that the [specification menu](menu.qmd) keeps for this claim. They are `r words(n_of("outcome"))` positive scales; unemployment in `r words(n_of("measure", unemp))` published series and `r words(n_of("pred_form", unemp))` forms, or GDP growth; the other economic measure left out or held fixed; country and year fixed effects or country fixed effects alone; `r words(n_of("noop"))` rules for respondents who mention nothing; `r words(n_of("item_set"))` item sets; and cells as interviewed or weighted. Every specification uses all `r curve$n_countries[1]` member states, counts each country-year once, scores a scale as the share of mentions and fits a linear model. The [decision map](menu.qmd#map) sets out every decision of the menu, including the options that are not on the curve, with the reason for each.
@@ -54,7 +54,7 @@ src_claim <- paste(
   'Data: <a href="data/spec_curve_codebook.html">data/spec_curve.csv</a> and',
   '<a href="data/reference_marks_codebook.html">data/reference_marks.csv</a>, with their codebooks.'
 )
-cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+cat(mv_chart_html(
   id = "mv-claim",
   payload = mv_payload(curve, menu, marks, file = "spec-curve-claim.csv"),
   title = "Specification curve of the claim",
@@ -118,7 +118,7 @@ notes_neg <- paste(
   "<i>Colour by</i>, <i>Show only</i>, the pop-ups and the arrow keys work as on the chart of the claim."
 )
 src_neg <- 'Data: <a href="data/spec_curve_codebook.html">data/spec_curve_negative.csv</a>, with its codebook.'
-cat(mv_chart_html(   # r-style: keep – an asis chunk writes its raw HTML block through cat()
+cat(mv_chart_html(
   id = "mv-negative",
   payload = mv_payload(curve_neg, menu, reversed = TRUE, file = "spec-curve-negative.csv",
                        target = "hypothesis"),
@@ -143,8 +143,8 @@ cells <- readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE)
 
 # fixed decimals and a true minus sign; pct() takes values already in per cent and
 # rounds halves up, as the specification menu does, so that the pages agree
-num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")  # r-style: approved
-pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")  # r-style: approved
+num <- \(x, d = 3) sprintf(paste0("%.", d, "f"), x) |> sub(pattern = "^-", replacement = "−")
+pct <- \(x, d = 1) paste0(formatC(floor(x * 10^d + 0.5) / 10^d, format = "f", digits = d), "%")
 
 ref <- datawizard::data_filter(curve, is_reference)
 share_below <- 100 * mean(curve$supports)
@@ -152,7 +152,7 @@ share_sig <- 100 * mean(curve$supports & curve$sig)
 share_cr1 <- 100 * mean(curve$supports & curve$p_cr1 < 0.05)
 share_conv <- 100 * mean(curve$supports & curve$p_conv < 0.05)
 n_resp <- sum(cells$n_cy)
-fk <- \(ax) forks$share[forks$axis == ax]  # r-style: approved
+fk <- \(ax) forks$share[forks$axis == ax]
 # the four decisions that barely move the curve, taken together
 minor <- sum(forks$share[forks$axis %in% c("noop", "measure", "pred_form", "cell_weight")])
 ```

@@ -58,4 +58,4 @@ answers <- purrr::imap(added, \(extra, graph) {
 }) |>
   purrr::list_rbind()
 
-readr::write_csv(answers, out_path("dag_answers.csv"))  # r-style: keep – datawizard::data_write() writes other bytes
+readr::write_csv(answers, out_path("dag_answers.csv"))
