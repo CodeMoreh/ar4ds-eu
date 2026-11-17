@@ -43,8 +43,11 @@ webROjs = {
     await webR.init();
 
     // Install provided list of packages
-    // Ensure webR default repo is included
-    data.packages.repos.push("https://repo.r-wasm.org")
+    // AR4DS: the default webR repository is added only when the page names no
+    // repository of its own, so that a page that names one takes every package
+    // from it. Quarto Live adds the default one in every case; this line is
+    // changed again after an update of the extension.
+    if (data.packages.repos.length === 0) data.packages.repos.push("https://repo.r-wasm.org")
     await data.packages.pkgs.map((pkg) => () => {
       statusText.textContent = `Downloading package: ${pkg}`;
       return webR.evalRVoid(`

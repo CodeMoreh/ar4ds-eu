@@ -16,7 +16,13 @@ concurrency:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    env:
+      # The copy of CRAN of the package date of the course, as binaries for
+      # this version of Ubuntu. The R setup hands the first address to renv as
+      # its repository, so the versions of renv.lock install as binaries.
+      RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-11-17
+      CRAN: https://packagemanager.posit.co/cran/2026-11-17
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -29,7 +35,7 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
-          version: "1.9.36"
+          version: "1.11.9"
 
       # index.qmd runs with freeze: false so the next-delivery toggle in
       # _variables.yml re-evaluates on every render; that one page therefore
