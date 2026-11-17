@@ -921,20 +921,6 @@ A justification of this kind makes a specification defensible, because it connec
 
 ---
 
-## Preregistration {#preregistering-your-choice}
-
-Fix your specification in a preregistration **before you run it**, by completing the preregistration block of your report before you add the model-fitting code; that is what stops you picking the path that happens to give the answer you want. In the workspace the block sits in Task 5 of the report skeleton (`index.qmd`), and `prereg()`, run before the model code, prints the declaration that the rendered report keeps above the cells that fit the specification; on the [Browser lab](lab.qmd) page, which has no render step, the completed block copied into your notes is your preregistration. The template is the OSF "Preregistration Template from AsPredicted.org" shortened to five fields.
-
----
-
-## Reporting a result {#reporting-your-result}
-
-After running your model, `report_result()` reads your preregistered choices, builds the specification label with your choices in it and prints a link to the class-results form with your result already filled in, on the claim-aligned scale; open it and press Send, and your result appears on the live [class chart]({{< var live-results-url >}}). In the workspace the helper is defined in `R/spec_tools.R`, which the report and the working script both source, and on the [Browser lab](lab.qmd) page it is already loaded.
-
-Each submission carries the t and the df of the conventional fit and the descriptive partial correlation that the helper computes from them, $r = t / \sqrt{t^2 + df}$, the conversion rule of @AczelEtAl2026InvestigatingAnalyticalRobustness and the one that the curve uses for its vertical axis, and the chart places the submission by that correlation. The class of a submission, significant at 5% or not, is read by looking its specification up in the curve, so that every point on the class chart is classed by the same CR2 test as the curve.
-
----
-
 ## Justifying each decision {#what-each-decision-commits-you-to}
 
 A decision can carry almost none of the variance on the curve and still decide whether *your* result clears p = 0.05, because significance is a property of one specification and variance is a property of the whole set. The rule for respondents who mention nothing carries `r pct(fk("noop"))` of the variance and changes the class of `r pct(fk("noop", "crossing_rate"))` of the pairs; the predictor form carries `r pct(fk("pred_form"), 2)` and changes `r pct(fk("pred_form", "crossing_rate"))`. Fix the question by fixing the four decisions about it that vary on the curve, leave the measurement decisions and the form free, and `r sum(questions$straddle)` of the `r nrow(questions)` questions still contain both a specification below zero with CR2 p < 0.05 and one that is not, which is why you fix your specification in the preregistration before you run it.
