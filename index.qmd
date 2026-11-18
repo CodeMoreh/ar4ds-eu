@@ -18,7 +18,7 @@ below; a package that the chunk starts to use has to be added there too.
 The page uses the custom layout of the opening pages of the AR4DS sites: every
 section is a fenced div with a home- class (styled in style/home.css), and the
 format cards, the tasks and all the text are ordinary Markdown below. The
-claim and the verdicts of the reproduction and the replication come from
+claim and the verdict of the replication come from
 D:\ACADEMIC\TEACHING\AR4DS\_planning\score-teney-outcomes.md and the data
 contract of the CLAUDE.md of this site; the other numbers are read from the
 committed data files by the chunk below. The replication is given by its
@@ -27,13 +27,10 @@ verdict alone, as on the background page and in the decks. -->
 ```{r}
 #| label: numbers
 #| include: false
-# Numbers quoted on the page, read from the committed data files of the case study;
-# negative values carry a true minus sign.
+# Numbers quoted on the page, read from the committed data files of the case study
 e_curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
-e_analysts <- readr::read_csv("data/analysts5.csv", show_col_types = FALSE)
 e_cells <- nrow(readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE))
 e_spec <- format(nrow(e_curve), big.mark = ",")
-e_r <- sub("^-", "\u2212", formatC(c(max(e_analysts$r), min(e_analysts$r)), format = "f", digits = 3))
 ```
 
 :::::: {.home-hero}
@@ -46,7 +43,7 @@ Hands-on training in {{< var workshop.format >}}
 # Europeanisation and the economy {#europeanisation-and-the-economy .unnumbered .unlisted}
 
 ::: {.home-lead}
-This site, part of Applied Replication for Data Skills (AR4DS), teaches reproduction, robustness and replication in R on one published claim, together with the reanalyses that the claim received in a many-analyst study and the replication that tested it with new data.
+Applied Replication for Data Skills (AR4DS) is a course that introduces technical skills for modern empirical data analysis through an applied 'replication' exercise. This site presents one of its case studies, built around a single published claim, its reanalysis by five independent analysts and its replication with new data.
 :::
 
 ::: {.home-cta}
@@ -60,7 +57,47 @@ This site, part of Applied Replication for Data Skills (AR4DS), teaches reproduc
 {{< include _includes/next-delivery.qmd >}}
 :::
 
-:::::: {.home-section .home-alt #case}
+:::::: {.home-section .home-alt #about}
+::::: {.home-wrap .home-case}
+
+:::: {.home-reveal}
+
+## The course {#the-course .unnumbered}
+
+::: {.home-intro}
+The main aim of the course is to introduce technical skills for modern empirical data analysis: finding the data and code of a study in an online repository, working with code so that another person (or your future self) can reproduce your steps, fixing your analytical choices in a preregistration before you run the analysis, and writing a live report that combines code and text.
+:::
+
+The claim at the centre of the exercise comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication. The exercise follows the design of its robustness study [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness] on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared. The AR4DS site describes [the programme](https://codemoreh.github.io/ar4ds/score.html), and its page on [the robustness article](https://codemoreh.github.io/ar4ds/robustness-article.html) explains how the results of the analysts were placed on one scale and compared.
+
+::::
+
+:::: {.home-rs .home-reveal}
+
+::: {.home-r}
+### Reproduction {.unnumbered .unlisted}
+
+Participants choose one of the three reanalyses fitted on aggregate data and repeat it step by step, recovering the recorded test statistic to the third decimal and establishing why the analysts arrived at such different estimates.
+:::
+
+::: {.home-r}
+### Robustness {.unnumbered .unlisted}
+
+Participants then work through the analytical decisions that lie between the data and a result, trying alternative specifications one change at a time, locating each result on a specification curve of `r e_spec` defensible analyses and – in the day and independent formats – declaring one specification in a short preregistration before it is run.
+:::
+
+::: {.home-r}
+### Replication {.unnumbered .unlisted}
+
+The course then sets the claim against its replication on fourteen later Eurobarometer waves, judged not successful by SCORE, and considers what a failed replication can and cannot establish about the original result.
+:::
+
+::::
+
+:::::
+::::::
+
+:::::: {.home-section #case}
 ::::: {.home-wrap .home-case}
 
 :::: {.home-reveal}
@@ -68,12 +105,10 @@ This site, part of Applied Replication for Data Skills (AR4DS), teaches reproduc
 ## The case study {#the-case .unnumbered}
 
 ::: {.home-intro}
-A sociological paper of 2016 asked, from the Eurobarometer surveys of the years 2004 to 2013, whether the economic crisis changed how citizens of the European Union frame the Union. One sentence of its abstract became the claim that the course works on.
+The case study is built around an article published in the *European Sociological Review* in 2016, which drew on Eurobarometer surveys conducted between 2004 and 2013 to examine whether the economic crisis had changed the meanings that citizens attach to the European Union, or what its author calls 'EU framing'. One sentence of its abstract, in the form given to the analysts of the robustness study, became the claim tested in the course:
 :::
 
 > "... poor economic performances ... decrease positive dimensions of EU framing" [@Teney2016DoesEUEconomic, p. 619]
-
-The case study teaches the aggregation of repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r e_spec` specifications, on a panel of `r e_cells` country-years built from the Eurobarometer surveys and shipped with the workspace.
 
 ::: {.home-cta}
 [Read the background](background.qmd)
@@ -84,21 +119,15 @@ The case study teaches the aggregation of repeated cross-sections into a panel, 
 :::: {.home-rs .home-reveal}
 
 ::: {.home-r}
-### Reproduction {.unnumbered .unlisted}
+### Methods {.unnumbered .unlisted}
 
-Two attempts to reproduce the published result from the original materials did not succeed.
+The aggregation of repeated cross-sections into a panel, fixed and random effects and the within–between model, inference with few clusters, and a multiverse of `r e_spec` specifications.
 :::
 
 ::: {.home-r}
-### Robustness {.unnumbered .unlisted}
+### Data {.unnumbered .unlisted}
 
-All five analysts of the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness] concluded that the data support the claim, while the partial correlations recorded for their results run from `r e_r[1]` to `r e_r[2]`.
-:::
-
-::: {.home-r}
-### Replication {.unnumbered .unlisted}
-
-A replication on later Eurobarometer waves was judged not successful.
+A panel of `r e_cells` country-years built from the Eurobarometer surveys and shipped with the workspace. The respondent files behind it come from the GESIS archive, under a free account and terms that do not allow them to be passed on.
 :::
 
 ::::
@@ -106,7 +135,7 @@ A replication on later Eurobarometer waves was judged not successful.
 :::::
 ::::::
 
-:::::: {.home-section #formats}
+:::::: {.home-section .home-alt #formats}
 ::::: {.home-wrap}
 
 ## Formats {.unnumbered .home-reveal}
@@ -146,7 +175,7 @@ The case study for a reader who works alone, in R on your own machine, with the 
 :::::
 ::::::
 
-:::::: {.home-section .home-alt #exercise}
+:::::: {.home-section #exercise}
 ::::: {.home-wrap}
 
 ## The exercise {.unnumbered .home-reveal}
@@ -195,39 +224,6 @@ Declare one specification in a short preregistration, run it, report it, and fin
 ::::
 
 The exercise page of each format sets out its tasks in full, with the tool in which each is done: the [short](tracks/short/exercise.qmd), [day](tracks/day/exercise.qmd) and [independent](tracks/independent/exercise.qmd) formats.
-
-:::::
-::::::
-
-:::::: {.home-section #about}
-::::: {.home-wrap}
-
-## The course {.unnumbered .home-reveal}
-
-:::: {.home-reveal}
-
-<details>
-<summary>What the course teaches</summary>
-
-The main aim of the course is to introduce technical skills for modern empirical data analysis: finding the data and code of a study in an online repository, working with code so that another person (or your future self) can reproduce your steps, fixing your analytical choices in a preregistration before you run the analysis, and writing a live report that combines code and text. The exercise follows the design of the robustness study on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared.
-
-</details>
-
-<details>
-<summary>The companion</summary>
-
-The [companion](companion/index.qmd) holds the teaching material of the course on this case study, in three groups: tools, data and sharing, and methods. Every module keeps its own page and stands on its own, so you can read one for the skill that it covers or take it in the place that a format gives it.
-
-</details>
-
-<details>
-<summary>SCORE</summary>
-
-The claim comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication. The AR4DS site describes [the programme](https://codemoreh.github.io/ar4ds/score.html), and its page on [the robustness article](https://codemoreh.github.io/ar4ds/robustness-article.html) explains how the results of the analysts were placed on one scale and compared.
-
-</details>
-
-::::
 
 :::::
 ::::::
