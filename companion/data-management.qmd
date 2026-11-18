@@ -13,22 +13,22 @@ measures <- readr::read_csv("../data/macro/predictor_measures.csv", show_col_typ
 by_edu <- readr::read_csv("../data/europeanisation_cy_edu.csv", show_col_types = FALSE)
 ```
 
-This module of the [companion curriculum](index.qmd) is about the work between a download and a model: reading the raw files of a survey, selecting the respondents or the events that a study analyses, recoding the answers into the variables that its paper describes, building the measures that the models need, turning the data into the unit on which the model is fitted, and checking the result against a target that you did not compute yourself.
+Between a download and a model lie the tasks examined in turn in this module of the [companion curriculum](index.qmd): reading the raw survey files, selecting the respondents or the events that a study analyses, recoding the answers into the variables described in its paper, building the measures that the models need, turning the data into the unit on which the model is fitted, and checking the result against a target that you did not compute yourself.
 
-The code of the build is taken from the preparation scripts of the workspace and from the pipeline of the case study, the numbered scripts in `R/` that write its data files, rearranged as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown and not run on this page, which is built without those files; what each step produces is shown from the files that the course committed, which the same steps wrote. The second script of the workspace was run on the respondent file on 27 October 2026 and printed the comparison that section 2.7 quotes. The build ends with a comparison of your file with the committed one, so that a rebuild on your own machine either reproduces the file of the course or says where it differs.
+The code of the build is drawn from the preparation scripts in the workspace and from the pipeline of the Europeanisation and the economy case study, the numbered scripts in `R/` that write its data files, and is rearranged here as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown but not run on this page, which is built without those files, and the output of each step is shown from the files committed by the course, themselves written by the same steps. The second workspace script was run on the respondent file on 27 October 2026, printing the comparison quoted in section 2.7. The build ends by comparing your file with the committed one, which allows a rebuild on your own machine either to reproduce the course file or to report where the two differ.
 
 ## 1. The steps of a build {#sec-steps}
 
-Whatever the survey, a build from raw files goes through the same six steps, in this order.
+Whatever the survey, a build from raw files passes through the same six steps, in the following order.
 
-1. **Read** the raw files, with their labels where they have them (Stata and SPSS files carry the wording of each question and answer) or by the column positions that a setup file gives where they have none (fixed-width text).
-2. **Select** the rows that the study analyses: its countries, rounds or waves, respondents and events, by the rules that the paper states.
-3. **Recode** the answers into the variables that the paper describes: reversed scales, groups, indicators that take the value 0 or 1, dates, and the codes for refusals and non-answers turned into missing values.
-4. **Derive** the measures that the models need and that no single question gives: a scale built from several items, the length of a union, the party in government on the day of an interview.
+1. **Read** the raw files, with their labels where the files include them (Stata and SPSS files hold the wording of each question and answer), or by the column positions given in a setup file where labels are absent (fixed-width text).
+2. **Select** the rows analysed in the study: its countries, rounds or waves, respondents and events, by the rules stated in the paper.
+3. **Recode** the answers into the variables described in the paper: reversed scales, groups, indicators taking the value 0 or 1, dates, and the codes for refusals and non-answers turned into missing values.
+4. **Derive** the measures that the models need and that no single question provides: a scale built from several items, the length of a union, the party in government on the day of an interview.
 5. **Reshape or aggregate** the rows into the unit on which the model is fitted: one row per respondent, one row per month in which an event could happen, one row per country and year.
-6. **Check** the result against a target: the counts of the paper, the file of the course, the checksum of a file.
+6. **Check** the result against a target: the counts reported in the paper, the course file, the checksum of a file.
 
-Three rules hold throughout. The raw files stay in a folder outside the workspace and are never edited; every change is made by the code, so that a reader can see it. The code meets the raw files in one place, a folder named at the top of the script, so that someone else can point the same code at their own copy. And files derived from licensed microdata go into a folder that git ignores, from the first day.
+Three rules apply throughout. The raw files are kept in a folder outside the workspace and never edited, and every change is made by the code, where a reader can see it. The code reaches the raw files through a single place, a folder named at the top of the script, which allows someone else to point the same code at their own copy. Files derived from licensed microdata, finally, are written from the first day into a folder ignored by git.
 
 | | Europeanisation |
 |---|---|
@@ -43,21 +43,21 @@ Three rules hold throughout. The raw files stay in a folder outside the workspac
 
 ## 2. The country-year panel from the Eurobarometer {#sec-europeanisation}
 
-The original author (OA) of the Europeanisation and the economy case study [@Teney2016DoesEUEconomic] scored the answers of the respondents of sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled them within their countries and waves, with two economic series merged by country and year. The course panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], and every page of the day format starts from it. The workspace rebuilds it from the raw waves with two scripts: `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first rebuilds the respondent file of the course from your own GESIS downloads and checks the result against the course build. The second rebuilds the country-year panel that is distributed with the course, to machine precision, and then builds the panel by education band.
+In the paper on which the case study is built, the original author [@Teney2016DoesEUEconomic] scored the answers of respondents in sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled the respondents' scores within their countries and waves, with two economic series merged by country and year. The course panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness], and every page of the day format starts from it. The workspace rebuilds the panel from the raw waves with two scripts, `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first script rebuilds the course respondent file from your own GESIS downloads and checks the result against the course build, while the second rebuilds the country-year panel distributed with the course, to machine precision, before building the panel by education band.
 
-If you have not downloaded the sixteen files, everything here can still be read, because what the scripts print is quoted on the page; nothing that reads the respondent file can be run.
+If you have not downloaded the sixteen files, everything here can still be read, because the output printed by the scripts is quoted on the page, but nothing that reads the respondent file can be run.
 
 ::: {.callout-warning}
 ## Licensed microdata {#the-file-you-are-about-to-build-is-licensed-microdata}
 
-The GESIS terms of use apply to everything that the first script writes. The respondent file stays in `data_private/`, which is kept out of version control by the `.gitignore` file in the workspace. It is never uploaded, shared, or opened in a session that an AI assistant can read, because the terms prohibit processing the data with AI systems. It is deleted when the project ends. The aggregates distributed with the course are subject to none of these restrictions, and the second script shows where the line between the two falls.
+The GESIS terms of use apply to everything written by the first script. The respondent file stays in `data_private/`, a folder kept out of version control by the `.gitignore` file in the workspace. The file is never uploaded, shared, or opened in a session that an AI assistant can read, because the terms prohibit processing the data with AI systems, and it is deleted when the project ends. The aggregates distributed with the course are subject to none of these restrictions, and the second script shows where the line between the two kinds of file falls.
 :::
 
 ### 2.1 The respondent file {#sec-build}
 
-`prep/01_build_respondents.R` is written to be run as a whole: set the folder that holds the sixteen files at the top, then source the script. It does five things, and it prints a report at the end.
+`prep/01_build_respondents.R` is written to be run as a whole: set the folder that holds the sixteen files at the top, then source the script, which performs five tasks and prints a report at the end.
 
-**It checks the files.** The script contains an inventory of the sixteen studies: the file name under which GESIS serves each study, the study number, the wave, the year to which the course assigns the wave, where the battery of the question starts, the column of the design weight, and the MD5 checksum of the file from which the course panel was built. The first rows read:
+**It checks the files.** The script contains an inventory of the sixteen studies, recording for each the file name under which GESIS serves it, the study number, the wave, the year to which the course assigns the wave, the position at which the battery of the question starts, the column of the design weight, and the MD5 checksum of the file from which the course panel was built. The first rows of the inventory read:
 
 ```{r}
 #| label: eu-inventory
@@ -70,13 +70,13 @@ inventory <- tibble::tribble(
 )
 ```
 
-A missing file stops the script with the study number to fetch. The two studies that GESIS serves zipped, ZA4506 and ZA4744, are unpacked beside their archives. The checksum of every file is compared with the inventory, and the report says, file by file, whether yours is byte for byte identical to the one that the course used. The comparison makes the rest of the course reproducible on your own machine. If the sixteen checksums match, every number on this site can be rebuilt from your folder.
+A missing file stops the script, which names the study number to fetch, and the two studies served zipped by GESIS, ZA4506 and ZA4744, are unpacked beside their archives. The checksum of every file is compared with the inventory, the report stating, file by file, whether yours is byte for byte identical to the one used by the course. This comparison makes the rest of the course reproducible on your own machine, in the sense that every number on this site can be rebuilt from your folder if the sixteen checksums match.
 
-**It finds the question in each file.** The battery on what the EU means occupies sixteen adjacent columns in every file, fourteen items followed by "other" and "don't know", but the position of those columns differs. In the twelve older files the columns are numbered (`v63` to `v78` in EB 61.0, `v105` onwards in EB 62.0) and in the four newest they are named after the question (`qa12_1` to `qa12_16` in EB 76.3). The inventory records the start of the block or the question stem for each wave, and the script reads the sixteen columns by that rule and checks that every value is 0 or 1. The respondent characteristics are found differently, by their variable labels rather than their positions, because the occupation item in particular moves from wave to wave. If a label pattern matches two variables, the script stops instead of picking one.
+**It finds the question in each file.** The battery on what the EU means occupies sixteen adjacent columns in every file, fourteen items followed by "other" and "don't know", although the position of those columns differs from file to file. In the twelve older files the columns are numbered (`v63` to `v78` in EB 61.0, `v105` onwards in EB 62.0), whereas in the four newest the columns are named after the question (`qa12_1` to `qa12_16` in EB 76.3). The inventory records the start of the block or the question stem for each wave, and the script reads the sixteen columns by that rule, checking that every value is 0 or 1. The respondent characteristics are located differently, by their variable labels rather than by their positions, since the occupation item in particular moves from wave to wave, and where a label pattern matches two variables, the script stops instead of picking one.
 
-**It harmonises Germany and the United Kingdom**, which the survey samples as two regions each, into one country each, and keeps the twenty-seven member states of the period.
+**It harmonises Germany and the United Kingdom**, each sampled by the survey as two regions, into one country each, and retains the twenty-seven member states of the period.
 
-**It codes the respondent characteristics as the published models code them.** Sex as a female indicator. Education as the age at which full-time schooling finished, in two codings: the published three bands, which replace "still studying" with the current age of the respondent and cut at 16 and 20, and a four-band version that keeps the students as a band of their own. Occupation collapsed into the eight groups of the published models, with the unemployed as their own group. Urbanisation in three categories. Left–right placement on its ten-point scale, missing in the four waves that did not ask it. The step is one call of `dplyr::mutate()` on the stacked waves:
+**It codes the respondent characteristics as the published models code them.** Sex is coded as a female indicator, and education as the age at which full-time schooling finished, in two codings: the published three bands, which replace "still studying" with the current age of the respondent and cut at 16 and 20, and a four-band version that keeps the students as a band of their own. Occupation is collapsed into the eight groups of the published models, with the unemployed forming a group of their own, and urbanisation into three categories, while left–right placement remains on its ten-point scale, missing in the four waves that did not include the item. The whole step consists of a single call of `dplyr::mutate()` on the stacked waves:
 
 ```{r}
 #| label: eu-characteristics
@@ -113,7 +113,7 @@ respondents <- respondents |>
   datawizard::data_select(exclude = c("gender", "occ"))
 ```
 
-**It compares the result with the course files.** The number of respondents in every country-year is checked against the committed panel, and the counts of respondents who named none of the thirteen items, split into those who said "don't know", those who gave another answer and those who left the question blank, are checked against the committed cell file. When the checksums match, all 270 cells match on both counts. On a folder holding the sixteen files that the course used, the printed report looks like this:
+**It compares the result with the course files.** The number of respondents in every country-year is checked against the committed panel, and the counts of respondents who named none of the thirteen items, divided into those who said "don't know", those who gave another answer and those who left the question blank, are checked against the committed cell file. When the checksums match, all 270 cells agree on both counts, and on a folder holding the sixteen files used by the course the printed report takes the following form:
 
 ```
  study  eb   year rows_eu27 identical_to_course_file
@@ -133,7 +133,7 @@ respondents <- respondents |>
 Every check passed: your file is the one from which the course panel was built.
 ```
 
-The respondent file then holds `r format(sum(panel$n_cy), big.mark = ",")` rows and 31 columns, the respondents of the 270 country-years.
+The respondent file then comprises `r format(sum(panel$n_cy), big.mark = ",")` rows and 31 columns, covering the respondents in the 270 country-years.
 
 ::: {.callout-tip}
 ## Try it
@@ -143,7 +143,7 @@ Run the script and read the report. Then open `data_private/build_report.csv` an
 
 ### 2.2 Which items form which scale {#sec-items}
 
-`prep/02_scales_and_panel.R` is written to be read from the top and run a section at a time. It makes the measurement decisions of the course explicit one at a time, in the order in which the pipeline needs them. The published paper assigns the thirteen scored items to four scales, cosmopolitan, utilitarian, communitarian and libertarian, and the course adds the positive and the negative composite. The script states the assignment as four vectors of item names, since at this point a scale is no more than a list:
+`prep/02_scales_and_panel.R` is written to be read from the top and run a section at a time, making the measurement decisions of the course explicit one by one, in the order in which the pipeline requires them. The published paper assigns the thirteen scored items to four scales, cosmopolitan, utilitarian, communitarian and libertarian, to which the course adds the positive and the negative composite. The script expresses the assignment as four vectors of item names, since at this point a scale is no more than a list:
 
 ```{r}
 #| label: eu-items
@@ -158,11 +158,11 @@ items <- c(items, list(pos = c(items$cosmo, items$util), neg = c(items$comm, ite
 items13 <- c(items$pos, items$neg)
 ```
 
-The euro item (`it8`) is kept in the respondent file and never scored, as in the paper. The [measurement module](measurement.qmd) tests whether the data agree with the assignment.
+The euro item (`it8`) is kept in the respondent file and never scored, as in the paper, and whether the data agree with the assignment is tested in the [measurement module](measurement.qmd).
 
 ### 2.3 Three scoring rules {#sec-scoring}
 
-The answers of a respondent to a set of items can become one number in more than one way, and the full menu of the course offers three: the share, which is the published rule and divides the mentions of items in the set by the total of the respondent; the count, which is the number of items in the set that were mentioned; and the per-item rate, which divides the count by the number of items in the set. The script computes all three for every scale, side by side, from the same item columns, adding a count (`c_`), a share (`s_`) and a rate (`r_`) for one scale at a time with `purrr::reduce()`:
+A respondent's answers to a set of items can be turned into a single number in more than one way, and the full menu of the course offers three: the share, which is the published rule and divides the mentions of items in the set by the respondent's total; the count, which is the number of items in the set that were mentioned; and the per-item rate, which divides the count by the number of items in the set. The script computes all three for every scale, side by side, from the same item columns, adding a count (`c_`), a share (`s_`) and a rate (`r_`) for one scale at a time with `purrr::reduce()`:
 
 ```{r}
 #| label: eu-scoring
@@ -177,15 +177,15 @@ scored <- names(items) |>
                            n_all = datawizard::row_sums(dplyr::pick(dplyr::all_of(items13)))))
 ```
 
-The share is compositional, meaning that the four scales sum to one for anyone who mentioned anything. The count measures how many items were mentioned, and its four scales have no such constraint. That is why the specification menu treats the rule as a decision about what the outcome is rather than about how it is measured, and the curve of the claim keeps only the share, for the reasons that the [measurement module](measurement.qmd#sec-count) gives.
+The share is compositional, meaning that the four scales sum to one for anyone who mentioned anything, whereas the count measures how many items were mentioned, its four scales being subject to no such constraint. It is for this reason that the specification menu treats the rule as a decision about what the outcome is rather than about how it is measured, while the curve of the claim retains only the share, for the reasons given in the [measurement module](measurement.qmd#sec-count).
 
 ### 2.4 The respondent who named nothing {#sec-noop}
 
-About six per cent of respondents mentioned none of the thirteen items, and a share has no denominator for them. The code of the original study drops them, since a division by a total of zero leaves them missing, while the course panel scores them zero on every scale, and the script does the same (the `if_else()` above); the curve of the claim keeps both rules. The section [Respondents who mention nothing](measurement.qmd#sec-noop) of the module on the items behind the scales sets out the alternatives to scoring the silent respondents zero, which are dropping them, splitting them by their codes, or imputing their shares. The first script keeps the "don't know", "other" and blank codes apart because the three groups are different people, and treating them alike is itself a decision.
+About six per cent of respondents mentioned none of the thirteen items, and for these respondents a share has no denominator. The original author's code drops them, since a division by a total of zero leaves their scores missing, whereas the course panel scores them zero on every scale, as does the script (the `if_else()` above), and the curve of the claim retains both rules. The alternatives to scoring the silent respondents zero, namely dropping them, splitting them by their codes or imputing their shares, are set out in the module on the items behind the scales, in the section [Respondents who mention nothing](measurement.qmd#sec-noop). The first script keeps the "don't know", "other" and blank codes apart, because the three groups are made up of different people, and treating the three groups alike is itself a decision.
 
 ### 2.5 From respondents to country-years {#sec-aggregate}
 
-The course panel averages every respondent in a country-year with the same weight, which the course calls 'as interviewed'. The post-stratification weight that GESIS supplies with each file, which corrects a national sample to its population, is the other choice, and the script computes both means so that the two can be compared, as the decision [Cell weighting](../menu.qmd#cell-weighting) of the specification menu does. It also records the count of respondents in each cell, which is used by a precision weight at the next stage.
+The course panel averages every respondent in a country-year with the same weight, an approach called 'as interviewed' in the course. The other choice is the post-stratification weight supplied by GESIS with each file, which corrects a national sample to its population, and the script computes both means so that the two can be compared, as the decision [Cell weighting](../menu.qmd#cell-weighting) in the specification menu does. The script also records the number of respondents in each cell, a count used by a precision weight at the next stage.
 
 ```{r}
 #| label: eu-aggregate
@@ -203,11 +203,11 @@ cells <- scored |>
   dplyr::rename_with(\(x) sub("^mc_", "c_m", x), dplyr::starts_with("mc_"))
 ```
 
-This is the step at which the licensed microdata become an aggregate that may be shared: from here on, every row is a country-year, and the smallest mean in the panel rests on `r format(min(panel$n_cy), big.mark = ",")` respondents.
+It is at this step that the licensed microdata become an aggregate that may be shared, every row from here on being a country-year and the smallest mean in the panel resting on `r format(min(panel$n_cy), big.mark = ",")` respondents.
 
 ### 2.6 The macro series {#sec-merge}
 
-The unemployment rate and the growth series join the panel by country and year. The script merges them from the file that contains every series offered by the menu, `predictor_measures.csv`, which is distributed with the course so that the merge works offline; the [data sources module](data-sources.qmd#sec-worldbank) shows the call of the `WDI` package that fetches the same World Bank indicators live. A live fetch can differ in the last decimals because the Bank revises past years, so the course records which release of each series it used. This step reads only committed files, so this page runs it and compares the result with the two columns of the panel:
+The unemployment rate and the growth series are joined to the panel by country and year, the script merging them from `predictor_measures.csv`, the file that contains every series offered by the menu and is distributed with the course so that the merge works offline. The call of the `WDI` package that fetches the same World Bank indicators live is shown in the [data sources module](data-sources.qmd#sec-worldbank). A live fetch can differ in the last decimals because the Bank revises past years, and the course therefore records which release of each series it used. Since this step reads only committed files, this page runs it and compares the result with the two columns of the panel:
 
 ```{r}
 #| label: eu-merge
@@ -224,11 +224,11 @@ panel |>
                    growth = max(abs(growth_panel - growth_merged)))
 ```
 
-The two series agree with the panel exactly in all 270 country-years. The bailout indicator is not merged from any file. It is coded by rule from the record of assistance programmes, and the codebook states the rule.
+The two series agree exactly with the panel in all 270 country-years. The bailout indicator is not merged from any file, being coded instead by rule from the record of assistance programmes, with the rule stated in the codebook.
 
 ### 2.7 Does it reproduce the panel? {#sec-reproduce}
 
-The rebuilt panel is compared column by column with the panel distributed with the course. On the file from which the course was built, the six as-interviewed scale means, the respondent counts and the two macro series agree to machine precision, and so do the design-weighted and the count-built means in the cell file:
+The rebuilt panel is compared, column by column, with the panel distributed with the course, and on the file from which the course was built the six as-interviewed scale means, the respondent counts and the two macro series agree to machine precision, as do the design-weighted and the count-built means in the cell file:
 
 ```
  column max_abs_difference
@@ -243,13 +243,13 @@ The rebuilt panel is compared column by column with the panel distributed with t
  growth 0.000000e+00
 ```
 
-A difference of five parts in a hundred million billion is the rounding of floating-point arithmetic, not a difference in the data.
+A difference of five parts in a hundred million billion reflects the rounding of floating-point arithmetic and implies no difference in the data.
 
-A reproducible data pipeline, in the sense used in this course, is one in which anyone with the same sixteen files and this script gets the same 270 rows, and can alter any decision above and find out what changes in the panel.
+A reproducible data pipeline, in the sense used in this course, is one in which anyone with the same sixteen files and this script obtains the same 270 rows, and can alter any of the decisions above and find out what changes in the panel.
 
 ### 2.8 The panel by education band {#sec-edu}
 
-The last section of the script builds a second panel, one row per country, year and education band, with the same six scales and the number of respondents behind each mean. It is the aggregate on which the second hypothesis of the paper, whether unemployment narrows the gap between the high- and the low-educated, can be tested. Unlike the respondent file, it can be committed and shared, because a cell mean over at least `r min(by_edu$n)` people, and in half of the cells more than `r floor(stats::median(by_edu$n))`, reveals nothing about any of them. Its `r format(nrow(by_edu), big.mark = ",")` rows are `data/europeanisation_cy_edu.csv`, and the rebuild reproduces them to machine precision.
+The last section of the script builds a second panel of `r format(nrow(by_edu), big.mark = ",")` rows, `data/europeanisation_cy_edu.csv`, with one row per country, year and education band, the same six scales and the number of respondents behind each mean, and the rebuild reproduces this panel to machine precision. This is the aggregate on which the second hypothesis of the paper, concerning whether unemployment narrows the gap between the high- and the low-educated, can be tested. Unlike the respondent file, the panel by education band can be committed and shared, because a cell mean computed over at least `r min(by_edu$n)` people, and in half of the cells over more than `r floor(stats::median(by_edu$n))`, reveals nothing about any one of the people behind it.
 
 ::: {.callout-tip}
 ## Try it
@@ -259,4 +259,4 @@ Change the scoring rule in section 2.3 from the share to the count for the cosmo
 
 ## 3. Beyond the case study {#sec-beyond}
 
-The six steps of section 1 recur in most survey work, and the build of section 2 shows them in one of their shapes, many waves aggregated into a panel. The [section of the R module on other formats](intro-r.qmd#sec-formats) has the functions for the file formats, and the [data sources module](data-sources.qmd) the routes by which the raw files arrive. Three habits from this build apply to any project. Keep an inventory of the files that you read, with their versions and checksums, in the script itself, so that the data on which a result rests are stated where the result is computed. Check every build against a target that you did not compute, a count printed in the paper or a file that someone else built, and write the check into the script so that it runs every time. And keep the licensed and the shareable in different folders from the first day, with the ignore rule written before the first file is downloaded.
+The six steps of section 1 recur in most survey work, and the build presented in section 2 shows them in one of their possible shapes, with many waves aggregated into a panel. The functions for the file formats are presented in the [section of the R module on other formats](intro-r.qmd#sec-formats), and the routes by which the raw files arrive in the [data sources module](data-sources.qmd). Three habits followed in this build apply to any project. Keep an inventory of the files that you read, with their versions and checksums, in the script itself, so that the data on which a result rests are stated where the result is computed. Check every build against a target that you did not compute, a count printed in the paper or a file that someone else built, and write the check into the script so that it runs every time. And keep the licensed and the shareable in different folders from the first day, with the ignore rule written before the first file is downloaded.
