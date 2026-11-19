@@ -3,8 +3,13 @@
 
 .home-hero {
   position: relative; overflow: hidden; color: #eef3f8;
-  background: #16202c url("hex-bkg.svg") center / cover no-repeat;
+  background: #16202c url("hex-bkg.svg") center / cover no-repeat fixed;
   padding: clamp(56px, 10vw, 128px) clamp(16px, 6vw, 96px) clamp(48px, 8vw, 100px);
+}
+/* On the opening page the navbar carries the background of the banner,
+   both fixed to the window, so that the two read as one surface */
+body:has(.home-hero) #quarto-header .navbar {
+  background: #16202c url("hex-bkg.svg") center / cover no-repeat fixed !important;
 }
 .home-hero .home-inner { max-width: 980px; }
 .home-eyebrow {
