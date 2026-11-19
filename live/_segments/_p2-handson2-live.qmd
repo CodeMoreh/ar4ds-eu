@@ -67,9 +67,7 @@ The panel is already loaded in the deck as europeanisation, as it is in your rep
 #| max-lines: 3
 #| fig-width: 9.5
 #| fig-height: 4
-# tinyplot draws on the graphics of base R (McDermott, Arel-Bundock and
-# Zeileis, tinyplot, CRAN, doi:10.32614/CRAN.package.tinyplot): the lines
-# first, one panel per country, then the points added on top
+# the lines first, one panel per country, then the points added on top
 tinyplot::tinyplot(
   mcosmo ~ year, facet = ~cntry, data = europeanisation, type = "l", col = "grey55",
   facet.args = list(ncol = 6), xaxb = c(2004, 2008, 2013), theme = "minimal",
@@ -138,8 +136,8 @@ my_dag <- dagify(
 
   exposure = "unemployment",
   outcome  = "framing",
-  # Coordinates for all seven nodes; the three not currently wired up are
-  # simply ignored, so this block never needs editing.
+  # Coordinates of all seven nodes; those of a node that no arrow names are
+  # ignored.
   coords = list(
     x = c(unemployment = 0, framing = 3, country = 1, year = 2,
           growth = 0.9, bailout = 1.5, politicisation = 3),

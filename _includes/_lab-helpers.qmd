@@ -15,19 +15,14 @@ graph functions read the answers of dagitty from a table.
 ```{webr}
 #| include: false
 #| autorun: true
-# Lab machinery – the specification menu, its validation, and the helpers of
-# Tasks 4 and 5: try_spec(), my_experiments(), submit_exploration(), prereg(),
-# build_model(), run_spec() and report_result(). Every result is read from the
-# curve of 864 specifications in spec_curve.csv, and every option that is
-# not on the curve is refused with the reason recorded in menu_options.csv;
-# both files arrive with the page through its `resources:` list, in the folder
-# that the setup cell of the including page names as .data_dir (data/ in the
-# lab and in the live decks). These helpers fit no
-# model in the browser: the estimation packages of a page serve the three
-# reproductions of Task 3, fixest for two of them and lme4 and lmerTest for
-# the third, of 018OL, which the lab installs when its cell first runs and the
-# live decks load when they open. The workspace fits the same specifications
-# live, with their CR2 test (clubSandwich), and returns the same numbers.
+# The specification menu, its validation, and the helpers of Tasks 4 and 5:
+# try_spec(), my_experiments(), submit_exploration(), prereg(), build_model(),
+# run_spec() and report_result(). Every result is read from the curve of 864
+# specifications in spec_curve.csv, and every option off the curve is refused
+# with the reason recorded in menu_options.csv; both files arrive through the
+# `resources:` list of the including page, in the folder .data_dir. No model is
+# fitted here; the workspace fits the same specifications live, with their CR2
+# test, and returns the same numbers.
 .curve   <- utils::read.csv(file.path(.data_dir, "spec_curve.csv"), stringsAsFactors = FALSE)
 .options <- utils::read.csv(file.path(.data_dir, "menu_options.csv"), stringsAsFactors = FALSE,
                             encoding = "UTF-8")
@@ -67,7 +62,7 @@ graph functions read the answers of dagitty from a table.
 
 if (nrow(.curve) != 864 ||
     !all(purrr::map_lgl(.axis_codes, \(a) all(.curve[[a]] %in% .menu[[paste0("my_", a)]]))))
-  stop("The curve of 864 specifications did not load as expected. Reload the page.",
+  stop("The curve of 864 specifications did not load: reload the page.",
        call. = FALSE)
 .curve_keys <- purrr::exec(paste, !!!unname(as.list(.curve[.axis_codes])), sep = "|")
 
@@ -131,11 +126,11 @@ if (nrow(.curve) != 864 ||
   look <- if (paste0(axis, ":", v) %in% names(.legacy)) .legacy[[paste0(axis, ":", v)]] else v
   row  <- .options[.options$axis == axis & .options$option == look & !.options$on_curve, ]
   msg <- if (nrow(row) == 1) c(
-    sprintf("%s = \"%s\" (%s) is not on the curve of 864 specifications, so it has no result here.",
+    sprintf("%s = \"%s\" (%s) is not on the curve of 864 specifications.",
             shown(axis), v, row$label),
     paste0("  Why: ", row$reason),
     if (axis == "se")
-      "  Inference is fixed: every result on the curve is tested by CR2 errors clustered by country with Satterthwaite df, and the printout gives the conventional t beside it.",
+      "  Inference is fixed: CR2 errors clustered by country, Satterthwaite df; the printout also gives the conventional t.",
     paste0("  Where it is taught: ", .page_ref(row$taught_on)),
     map,
     sprintf("  To stay on the curve, choose %s = %s.", shown(axis), .or_list(keep))
@@ -143,7 +138,7 @@ if (nrow(.curve) != 864 ||
     sprintf("%s = \"%s\" is not an option on the menu.", shown(axis), v),
     sprintf("  On the curve: %s.", paste(.menu[[k]], collapse = " | ")),
     if (any(.options$axis == axis & !.options$on_curve))
-      sprintf("  Off the curve, refused with the reason why: %s.",
+      sprintf("  Off the curve: %s.",
               paste(.options$option[.options$axis == axis & !.options$on_curve], collapse = " | ")),
     map
   )
@@ -158,7 +153,7 @@ if (nrow(.curve) != 864 ||
   bad <- purrr::discard(names(.menu), \(k) .on_menu(k, ch[[k]]))
   if (length(bad) > 0) .refuse(bad[1], ch[[bad[1]]], ch, as_args)
   if (ch$my_predictor == "growth" && ch$my_pred_form == "log")
-    stop(sprintf("GDP growth enters raw only – it takes negative values, so its log is undefined. Use %s = \"raw\".",
+    stop(sprintf("GDP growth takes negative values and enters raw only: use %s = \"raw\".",
                  shown("pred_form")), call. = FALSE)
   if (!ch$my_measure %in% .measures_for[[ch$my_predictor]])
     stop(sprintf("%s = \"%s\" is a series for %s; with %s = \"%s\" choose %s = %s.",
@@ -173,10 +168,10 @@ if (nrow(.curve) != 864 ||
   missing <- purrr::discard(need, \(k) exists(k))
   if (length(missing) > 0)
     stop("Not declared yet: ", paste(missing, collapse = ", "),
-         ". Fill in every choice in the preregistration cell and run it first.",
+         ". Fill in every choice of the preregistration cell and run it.",
          call. = FALSE)
   if (!exists("claim_align"))
-    stop("Also declare claim_align <- TRUE (the course convention) in the preregistration cell.",
+    stop("claim_align not declared: add claim_align <- TRUE to the preregistration cell.",
          call. = FALSE)
   .validate(purrr::set_names(purrr::map(need, \(k) get(k)), need))
 }
@@ -187,7 +182,7 @@ if (nrow(.curve) != 864 ||
 .lookup <- function(ch) {
   i <- match(.key_of(ch), .curve_keys)
   if (is.na(i))
-    stop("That specification passed the checks but is not among the 864 on the curve. This should not happen; tell the facilitator which call you ran.",
+    stop("The specification passed the checks but is not among the 864 on the curve: reload the page.",
          call. = FALSE)
   .curve[i, ]
 }
@@ -252,7 +247,7 @@ if (nrow(.curve) != 864 ||
     sprintf("  Placement: %.0f%% of the 864 specifications on the curve have a more negative claim-aligned r",
             100 * res$placement),
     if (aligned && ch$my_predictor == "growth")
-      "  (growth: b, t and r are shown with their signs flipped, because the claim expects framing to rise with growth)",
+      "  (growth: b, t and r with their signs flipped, since the claim expects framing to rise with growth)",
     if (!aligned)
       "  (claim_align = FALSE: shown on the original scale; the class chart receives the claim-aligned values)",
     paste0("  (", res$source, ")")))
@@ -292,7 +287,7 @@ try_spec <- function(outcome = "mcosmo", predictor = "unemp", copredictor = "non
 my_experiments <- function() {
   d <- .tried$log
   if (is.null(d)) {
-    writeLines("Nothing tried yet – call try_spec() at least once.")
+    writeLines("Nothing tried yet: call try_spec() first.")
     return(invisible(NULL))
   }
   axes   <- sub("^my_", "", names(.menu))
@@ -301,7 +296,7 @@ my_experiments <- function() {
     datawizard::data_select(select = c(varied, "b", "t", "r_aligned", "p_cr2")) |>
     datawizard::data_modify(b = signif(b, 3), t = round(t, 2), r_aligned = round(r_aligned, 3),
                             p_cr2 = round(p_cr2, 4))
-  writeLines(sprintf("Specifications you have tried (%d):\n", nrow(d)))
+  writeLines(sprintf("Specifications tried (%d):\n", nrow(d)))
   print(show, row.names = FALSE)
   writeLines(sprintf("\nSpread of claim-aligned r: %.3f to %.3f  |  below zero and significant under CR2: %d of %d",
                      min(d$r_aligned), max(d$r_aligned),
@@ -311,10 +306,10 @@ my_experiments <- function() {
 
 submit_exploration <- function(nickname = NULL) {
   if (is.null(.tried$last))
-    stop("Nothing to submit – call try_spec() first, ending with the specification you want on the chart.",
+    stop("Nothing to submit: call try_spec() first; the last specification tried is the one submitted.",
          call. = FALSE)
   .submit(.tried$last$ch, .tried$last$res, "explore",
-          "Your exploratory submission (claim-aligned, the last specification you tried):",
+          "Exploratory submission, claim-aligned (the last specification tried):",
           nickname)
 }
 
@@ -323,12 +318,12 @@ submit_exploration <- function(nickname = NULL) {
 prereg <- function() {
   ch <- .check_choices()
   writeLines(c(
-    "DECLARED – your preregistered specification, fixed before you run it:",
+    "DECLARED – the preregistered specification, fixed before it is run:",
     "",
     "  The question",
     paste("    outcome    :", ch$my_outcome),
     paste0("    predictor  : ", ch$my_predictor,
-           if (ch$my_predictor == "growth") " (claim-expected sign flipped automatically)"),
+           if (ch$my_predictor == "growth") " (sign flipped to align with the claim)"),
     paste("    adjusted   :", if (ch$my_copredictor == "other") .copred_term(ch) else "nothing"),
     paste("    estimator  :", .est_lab(ch$my_estimator)),
     paste("    sample     :", ch$my_sample, "   whose average:", ch$my_weights),
@@ -340,9 +335,7 @@ prereg <- function() {
     paste("    form:", ch$my_pred_form, "  family:", ch$my_family, "  inference:", .se_lab),
     paste("  claim_align:", isTRUE(claim_align)),
     "",
-    "These choices are now fixed for the rest of the session – the later",
-    "cells read them from the preregistration cell. Copy that cell into your",
-    "notes: it is your preregistration record, made before you see the result."))
+    "build_model(), run_spec() and report_result() read these choices."))
   invisible(ch)
 }
 
@@ -353,20 +346,20 @@ build_model <- function(formula, estimator) {
          call. = FALSE)
   lhs <- all.vars(formula[[2]])
   if (!identical(lhs, ch$my_outcome))
-    stop(sprintf("The outcome in your formula is '%s' but you preregistered '%s'. The preregistration is binding, so change the formula to match it.",
+    stop(sprintf("The formula has the outcome '%s'; the preregistration declares '%s'. Change the formula to match.",
                  deparse(formula[[2]]), ch$my_outcome), call. = FALSE)
   want <- c(.main_term(ch), if (ch$my_copredictor == "other") .copred_term(ch))
   got  <- attr(terms(formula), "term.labels")
   if (!setequal(got, want))
-    stop(sprintf("Right-hand side mismatch: you wrote { %s } but your preregistration implies { %s }.%s",
+    stop(sprintf("Right-hand side { %s } does not match the preregistered { %s }.%s",
                  paste(got, collapse = ", "), paste(want, collapse = ", "),
                  if (.main_term(ch) == "log(unemp)" && !"log(unemp)" %in% got)
-                   " You preregistered the log form – write log(unemp) in the formula." else ""),
+                   " The preregistration declares the log form: write log(unemp)." else ""),
          call. = FALSE)
   if (missing(estimator) || !identical(estimator, ch$my_estimator))
-    stop(sprintf("estimator = \"%s\" does not match your preregistered \"%s\".",
+    stop(sprintf("estimator = \"%s\" does not match the preregistered \"%s\".",
                  if (missing(estimator)) "" else estimator, ch$my_estimator), call. = FALSE)
-  writeLines(c("Model accepted – it matches your preregistration:",
+  writeLines(c("Model accepted, matching the preregistration:",
                paste0("  ", deparse(formula), ", estimated by ", .est_lab(estimator)),
                "  Run it with run_spec(my_model)."))
   structure(list(choices = ch, formula = formula, estimator = estimator), class = "spec_ticket")
@@ -377,11 +370,11 @@ run_spec <- function(spec) {
     stop("Pass the object that build_model() returned, e.g. run_spec(my_model).", call. = FALSE)
   now <- .check_choices()
   if (!identical(spec$choices, now))
-    stop("The preregistration cell has changed since you built this model – rerun prereg() and build_model() so they agree.",
+    stop("The preregistration cell has changed since build_model(): rerun prereg() and build_model().",
          call. = FALSE)
   ch  <- spec$choices
   res <- .result(ch)
-  .print_result(ch, res, "Your preregistered specification, read from the curve of 864 specifications:",
+  .print_result(ch, res, "Preregistered specification, read from the curve of 864:",
                 aligned = isTRUE(claim_align))
 }
 
@@ -470,19 +463,16 @@ assign("tag", NULL, envir = .tag_env)
             b, res$se, tv, round(res$df), res$n, r),
     paste0("  Class: ", .class_line(res)),
     "",
-    "Open the link below (or copy the URL) – the form opens with every field",
-    "pre-filled; just press Send.",
+    "Open the address below and press Send: every field of the form is filled in.",
     "",
     url))
   writeLines(c(
     "",
-    sprintf("Your marks on the class chart carry the tag %s%s.", tg$tag,
-            if (!is.null(tg$replaced)) sprintf(" (it replaces %s)", tg$replaced) else ""),
-    "Type it into the my_tag line of the live cell on the Class results page,",
-    sprintf("%s/class-results.html, to highlight them.", .course_url),
-    "Both of your submissions share it while this page stays open; after a reload,",
-    sprintf("bring it back with nickname = \"%s\". To choose your own, pass a", tg$tag),
-    "nickname rather than your name, because the chart is public."))
+    sprintf("Tag on the class chart: %s%s.", tg$tag,
+            if (!is.null(tg$replaced)) sprintf(" (replaces %s)", tg$replaced) else ""),
+    sprintf("Typed into the my_tag line of %s/class-results.html, it highlights your marks.", .course_url),
+    sprintf("Both submissions carry it until the page reloads; after a reload, pass nickname = \"%s\".", tg$tag),
+    "To choose another, pass nickname = \"...\" (a nickname, not your name: the chart is public)."))
   invisible(list(spec = spec_label, tag = tg$tag, b = b, se = res$se, statistic = tv,
                  df = res$df, n = res$n, r = r, url = url))
 }
@@ -490,7 +480,7 @@ assign("tag", NULL, envir = .tag_env)
 report_result <- function(nickname = NULL) {
   ch <- .check_choices()
   .submit(ch, .result(ch), "declared",
-          "Your declared submission (claim-aligned, straight from your preregistration):",
+          "Declared submission, claim-aligned (from the preregistration):",
           nickname)
 }
 ```
@@ -498,24 +488,20 @@ report_result <- function(nickname = NULL) {
 ```{webr}
 #| include: false
 #| autorun: true
-# Graph machinery for Task 2. dagify() reads a graph from one formula per
-# arrow, written effect ~ cause as ggdag::dagify() reads it in the workspace.
-# adjustmentSets() prints the answer of dagitty from dag_answers.csv:
-# R/14_dag_answers.R in the course repository computes it with
-# dagitty for every combination of the arrows in the graph cell of Task 2.
-# dagitty itself cannot run in the browser, because it reaches its graph
-# algorithms through a JavaScript engine that a browser grants only to a page
-# served with cross-origin isolation headers (COOP and COEP), and the course
-# site does not send them. Any other graph goes to dagitty in the downloadable
-# workspace. The table arrives with the including page through its
-# `resources:` list, in the folder named by .data_dir.
+# The graph helpers of Task 2. dagify() reads one formula per arrow, written
+# effect ~ cause as ggdag::dagify() reads it in the workspace. adjustmentSets()
+# prints the answer of dagitty from dag_answers.csv, computed by
+# R/14_dag_answers.R for every combination of the arrows of the graph cell of
+# Task 2: dagitty cannot run on this site, which does not send the
+# cross-origin isolation headers (COOP and COEP) that its JavaScript engine
+# needs. The table arrives through the `resources:` list of the including
+# page, in the folder .data_dir.
 .dag_answers <- utils::read.csv(file.path(.data_dir, "dag_answers.csv"), stringsAsFactors = FALSE,
                                 na.strings = "NA")
 .dag_elsewhere <- c(
-  "This page holds the adjustment sets that dagitty gives for the graph of the cell",
-  "with any of its commented arrows switched on. For another graph or another",
-  "question, use the downloadable workspace, where R/dag_starter.R builds the graph",
-  "and dagitty answers whatever you ask of it.")
+  "No stored answer for this graph. The page holds the adjustment sets of the graph",
+  "of the cell with any of its commented arrows switched on; for any other graph,",
+  "use dagitty in the workspace (R/dag_starter.R).")
 
 # A graph from one formula per arrow. coords is accepted, as ggdag::dagify()
 # accepts it, and not used, because this page does not draw the graph. The

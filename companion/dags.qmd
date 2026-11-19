@@ -76,8 +76,7 @@ The Europeanisation case study is observational, resting on a panel of 270 count
 #| warning: false
 set.seed(20260730)
 
-# Four significant figures, so the statistic recorded for C6HJR in the robustness study prints as -3.804 rather than
-# being rounded down to three by the default settings of the tibble printer.
+# four significant figures, so that the recorded t of C6HJR prints as -3.804
 options(width = 88, pillar.sigfig = 4)
 
 europeanisation <- readr::read_csv("../data/europeanisation_cy.csv", show_col_types = FALSE)
@@ -90,8 +89,7 @@ pp <- \(x) sprintf("%.1f%%", floor(x * 10 + 0.5) / 10)
 below_sig <- \(d) 100 * mean(d$supports & d$sig)
 fk <- \(ax, col = "share") forks[[col]][forks$axis == ax]
 
-# Nodes are drawn as rounded boxes rather than circles: a circle wide enough to
-# hold "unemployment" without clipping would swamp a four-node graph.
+# nodes drawn as rounded boxes, which hold "unemployment" without clipping
 node_box <- function() {
   ggplot2::geom_label(ggplot2::aes(label = name), fill = "#00205b", colour = "white",
              size = 3.2, fontface = "bold", linewidth = 0,
@@ -145,8 +143,7 @@ The rule against conditioning on a collider teaches a second lesson when the out
 
 ```{r}
 #| label: collider-sim-regression
-# Seeded here rather than only at the top, so the chunk stands alone if you
-# copy it out and so an edit upstream cannot shift these numbers.
+# seeded in the chunk, so that it gives the same numbers on its own
 set.seed(20260730)
 
 made_up <- tibble::tibble(

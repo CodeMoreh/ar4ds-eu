@@ -81,9 +81,8 @@ The first fit declares only the country level, which is too few levels for these
 #| label: code-two-level
 #| eval: false
 # in the workspace, after prep/02_scales_and_panel.R, which leaves the scored
-# respondents in scored and the World Bank series in macro; dplyr rather than
-# datawizard::data_join(), which may reorder rows, because the subsample of
-# section 9 depends on the order of the rows
+# respondents in scored and the World Bank series in macro; the join keeps the
+# order of the rows, on which the subsample of section 9 depends
 person <- dplyr::left_join(scored, macro, by = c("cntry", "year"))
 
 m_two <- lmerTest::lmer(s_cosmo ~ unemp + (1 | cntry), data = person)

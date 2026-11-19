@@ -54,8 +54,8 @@ The R engine downloads into your browser when you open this page (a minute or so
 #| edit: false
 #| autorun: true
 #| output: false
-# Runs by itself once the engine is ready: the country-year panel as
-# `europeanisation`, and the folder from which the helpers read their files.
+# The country-year panel as `europeanisation`, and the folder from which the
+# helpers read their files
 .data_dir <- "data"
 europeanisation <- utils::read.csv("data/europeanisation_cy.csv")
 ```
@@ -281,8 +281,8 @@ my_dag <- dagify(
 
   exposure = "unemployment",
   outcome  = "framing",
-  # Coordinates for all seven nodes; the three not currently wired up are
-  # simply ignored, so this block never needs editing.
+  # Coordinates of all seven nodes; those of a node that no arrow names are
+  # ignored.
   coords = list(
     x = c(unemployment = 0, framing = 3, country = 1, year = 2,
           growth = 0.9, bailout = 1.5, politicisation = 3),
@@ -502,7 +502,7 @@ This task is **exploratory**. Try several specifications and find out which choi
 
 ```{webr}
 #| autorun: false
-# Nothing changed – this is the reproduced specification, the model of C6HJR in Task 3.
+# The reproduced specification, the model of C6HJR in Task 3
 try_spec()
 ```
 
