@@ -44,8 +44,7 @@ Each submission is placed by the partial correlation that it carries, computed f
 # Google Sheet; when the Worker is unreachable the chart falls back to the
 # committed data/class_results.csv, or to the backdrop alone. Base R
 # throughout, apart from tinyplot (McDermott, Arel-Bundock and Zeileis,
-# tinyplot, CRAN, doi:10.32614/CRAN.package.tinyplot), so that participants
-# download almost nothing else.
+# tinyplot, CRAN, doi:10.32614/CRAN.package.tinyplot).
 worker_url <- "https://class-results.chris-moreh.workers.dev/"
 
 plain <- "#1f5fa8"
@@ -124,12 +123,11 @@ clean_my_tag <- function(x) {
 html_text <- function(x) gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE)
 fmt_p <- function(p) ifelse(p < 0.001, "p &lt; 0.001", sprintf("p = %.4f", p))
 
-# The class submits twice: an exploratory result while working the menu, and
-# a declared one after preregistering. The free-text spec field carries the
-# phase and the tag of the participant, "explore: [amber-otter-42] …", so
-# neither the form nor the sheet needs a column of its own for either. Rows
-# without a tag predate 2026-09-24, and rows without a phase predate
-# 2026-07-31 and were all declared; both still parse.
+# Each participant submits an exploratory and a declared result. The free-text
+# spec field carries the phase and the tag of the participant, "explore:
+# [amber-otter-42] …", so neither the form nor the sheet needs a column of
+# its own for either. Rows without a tag predate 2026-09-24, and rows without a
+# phase predate 2026-07-31 and were all declared; both still parse.
 prepare_class <- function(cls, my_tag = "") {
   n <- nrow(cls)
   spec_raw <- if ("spec" %in% names(cls)) as.character(cls$spec) else rep("", n)
@@ -182,7 +180,7 @@ draw_class_chart <- function(cls, my_tag = "") {
       "Circles and crosses: the class of the matching specification on the curve under CR2 errors clustered by country (p < 0.05 or p ≥ 0.05).",
       paste0(sum(cls$klass == "off"), " of ", nrow(cls), " submission(s) name a specification that is not on the curve of 864 and are drawn as diamonds, without a class."))
     # a mark far above the band is almost certainly an un-recoded negative
-    # framing: stretch the axis so it stays visible for the debrief
+    # framing: the axis stretches so that it stays visible
     ylim_hi <- max(ylim_hi, max(cls$r, na.rm = TRUE) + 0.06)
     ylim_lo <- min(ylim_lo, min(cls$r, na.rm = TRUE) - 0.05)
   } else {
