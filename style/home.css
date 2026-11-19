@@ -3,14 +3,24 @@
 
 .home-hero {
   position: relative; overflow: hidden; color: #eef3f8;
-  background: #16202c url("hex-bkg.svg") center / cover no-repeat fixed;
+  background: #16202c url("hex-bkg.svg") center / cover no-repeat;
   padding: clamp(56px, 10vw, 128px) clamp(16px, 6vw, 96px) clamp(48px, 8vw, 100px);
 }
-/* On the opening page the navbar carries the background of the banner,
-   both fixed to the window, so that the two read as one surface */
-body:has(.home-hero) #quarto-header .navbar {
-  background: #16202c url("hex-bkg.svg") center / cover no-repeat fixed !important;
+/* On the opening page the navbar has no background of its own and sits on
+   the top of the banner. The header scrolls away with the page instead of
+   hiding and returning, so that no strip opens above the banner; the
+   announcement stays above the banner, whatever its height. Quarto gives
+   the first block of the page a top padding of 14px through
+   #quarto-content > *, which the last rule replaces with room for the navbar. */
+body:has(.home-hero) { padding-top: 0 !important; }
+body:has(.home-hero) #quarto-header { position: relative; transform: none !important; }
+body:has(.home-hero) #quarto-header > .navbar {
+  position: absolute; top: 100%; left: 0; right: 0; background: transparent !important;
 }
+body:has(.home-hero) #quarto-header > .navbar:has(.navbar-collapse.show, .navbar-collapse.collapsing) {
+  background: #16202c !important;
+}
+#quarto-content > .home-hero { padding-top: calc(62px + clamp(16px, 3vw, 36px)); }
 .home-hero .home-inner { max-width: 980px; }
 .home-eyebrow {
   text-transform: uppercase; letter-spacing: .14em; font-size: .8rem;
