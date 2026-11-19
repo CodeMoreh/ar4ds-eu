@@ -98,7 +98,7 @@ $$ y_{ict} = \gamma_0 + (\beta + b_c)\, x_{ct} + v_c + r_{ct} + \varepsilon_{ict
 ::: {.small}
 - The standard deviation of the country slopes, `r fmt_num(real_sd$value[real_sd$model == "slopes" & real_sd$term == "cntry: unemp"], 5)`, is larger than the size of the average slope, `r fmt_num(real_unemp$value[real_unemp$model == "slopes"], 5)`: the countries do not share one slope
 - The df of the average slope fall to about `r round(real_unemp$df[real_unemp$model == "slopes"])`, because the evidence for the average is the 27 countries
-- Two analysts of the robustness study of SCORE [Multi100\; @AczelEtAl2026InvestigatingAnalyticalRobustness] worked at this level. KEVF1 reported t = `r fmt_num(kevf1$statistic, 3)` on about `r round(kevf1$df1)` Satterthwaite df, converted to r = `r fmt_num(kevf1$r, 3)`; PRL47 reported z = `r fmt_num(prl47$statistic, 3)`, with the `r format(prl47$n, big.mark = ",")` respondents standing in for the df, converted to r = `r fmt_num(prl47$r, 4)`
+- Two analysts of the SCORE robustness study [@AczelEtAl2026InvestigatingAnalyticalRobustness] worked at this level. KEVF1 reported t = `r fmt_num(kevf1$statistic, 3)` on about `r round(kevf1$df1)` Satterthwaite df, converted to r = `r fmt_num(kevf1$r, 3)`; PRL47 reported z = `r fmt_num(prl47$statistic, 3)`, with the `r format(prl47$n, big.mark = ",")` respondents standing in for the df, converted to r = `r fmt_num(prl47$r, 4)`
 :::
 
 ::: {.fragment .small}
