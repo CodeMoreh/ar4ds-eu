@@ -1,6 +1,6 @@
 # Codebook: the reference marks
 
-The multiverse chart of the course marks six results that come from outside the curve: the design of the original study (Teney 2016, *European Sociological Review*; the original author, OA, from here on) and the five reanalyses of the same claim recorded in the robustness study of SCORE (Multi100; Aczel et al. 2026). `reference_marks.csv` places each of them on the scale of the curve, the partial correlation, and keeps beside it what the record says and why the two may differ. It is written by `R/13_reference_marks.R`. Two of the six placements rest on refits of a respondent-level design, whose aggregate results are kept in `companion/_model-outputs/reference_refits.csv`. Neither file holds any respondent-level data.
+The multiverse chart of the course marks six results that come from outside the curve: the design of the original study (Teney 2016, *European Sociological Review*; the original author, OA, from here on) and the five reanalyses of the same claim recorded in the SCORE robustness study (Aczel et al. 2026). `reference_marks.csv` places each of them on the scale of the curve, the partial correlation, and keeps beside it what the record says and why the two may differ. It is written by `R/13_reference_marks.R`. Two of the six placements rest on refits of a respondent-level design, whose aggregate results are kept in `companion/_model-outputs/reference_refits.csv`. Neither file holds any respondent-level data.
 
 ## How each result is placed
 
