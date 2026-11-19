@@ -49,7 +49,7 @@ Between deliveries the landing page advertises no upcoming delivery. Scheduling 
 **Scheduling.**
 
 - [ ] Fill the `delivery:` block in `_variables.yml` (date, venue or platform, event, mode, registration URL), set `track` to `short`, `day` or `independent`, and set `active: 'true'`. Re-render and push, and the landing page shows a "Next delivery" callout. Set `active: 'false'` again afterwards.
-- [ ] Decide recording. If recording: talk segments only, announced at the start of each recorded stretch, paused for hands-on and chat-heavy segments. Nothing in the day depends on the recording either way.
+- [ ] Decide recording. If recording: talk segments only, announced at the start of each recorded stretch, paused for hands-on segments. Nothing in the day depends on the recording either way.
 - [ ] Optionally create the preregistration mirror form from `../_planning/prereg-form-spec.md` and paste its URL into `_variables.yml`. The preregistration block is the primary record and the form only a backup, so skipping the form loses nothing.
 
 **Resetting, after a workshop.**
@@ -89,14 +89,14 @@ The page "Before the day" or "Before the course" of each format lists these step
 - [ ] **Browser lab cold load**: open the live page of `lab.qmd` in a private window on the connection typical of the venue; time the load of the webR engine; run the cells of Task 1 and the cells of all three analysts in Task 3. The cell of 018OL that installs lme4 and lmerTest downloads about 32 MB, so time that too.
 - [ ] **The live results loop** (full setup and checks in `facilitator/live-results-setup.md`): submit one anonymous test row through the Form in a private window, confirm that it reaches the Sheet and that the Worker returns the sheet as CSV, press *Run Code* on the live [Class results]({{< var live-results-url >}}) page and find the test mark. Then delete the test row.
 - [ ] **The preregistration loop**: complete the preregistration cell of the deck or the browser lab with a dummy specification, run `prereg()`, `build_model()` and `run_spec()`, and check the output. If the mirror form exists, submit one dummy row and delete it.
-- [ ] Prepare the catch-up card, the help document and the day plan (texts below) as snippets ready to paste.
+- [ ] Prepare the catch-up card and the day plan (texts below) as snippets ready to paste.
 - [ ] Charge everything; sign a second device in to the meeting as a participant, to check what the class sees.
 
 ## Opening the room {#opening-the-virtual-room--30-minutes-before}
 
-- [ ] Open the meeting early; enable chat for everyone; check that breakout rooms are available (they are optional – nothing depends on them).
-- [ ] Seed the chat with the site URL, the URL of the deck, the browser-lab URL, the cheatsheet URL and the day plan with its times (the standing order if the host drops: "follow the day plan; finish the current task or take the break early; I will rejoin").
-- [ ] Post the interaction key: "green circle = working; STUCK = I need help; answers to quizzes: type but hold until I say go".
+- [ ] Open the meeting early; check that breakout rooms are available (they are optional – nothing depends on them).
+- [ ] Put the site URL, the URL of the deck, the browser-lab URL, the cheatsheet URL and the day plan with its times on the screen as people arrive, with the standing order if the host drops: "follow the day plan; finish the current task or take the break early; I will rejoin".
+- [ ] Say that a raised hand brings help at any point, for a question or for a machine that is stuck.
 - [ ] Share the deck, whose cells I run for each step; keep the specification menu with its decision map and the Class results page ready in other tabs.
 - [ ] If recording: announce it now and state what is and is not recorded.
 
@@ -132,7 +132,7 @@ The one-day deck lifts no optional run into its main flow (`core-runs: []`), and
 
 **The decks.** The decks are assembled from segments: the full deck of the self-study route and the live deck of the workshop share the segments in `slides/_segments/case/`, and the live deck adds its own in `live/_segments/`, among them the hands-on slides that carry the cells of the browser lab. A deck is a list of `{{< include >}}` lines with its own agenda, aims and part dividers. In the segment files, every slide of an optional run is marked with `.deepdive` and a `run` attribute (`methods` or `multiverse`). A deck lists the runs that belong to its main flow under `core-runs:` in its YAML, and `slides/core-runs.lua` strips the `.deepdive` mark from those headings, so `nav-tools.html` neither hides them on the `d` key nor badges them as optional. A run that is not listed stays optional: it is hidden in lean mode and has the escape-hatch link on its first slide. The segment files contain R chunks with labels, and knitr refuses a duplicate label, so each deck includes each segment at most once. Edit the segment files for content, or the deck file for order and framing, and render the deck on its own (`quarto render live/day.qmd`). A change to a segment needs every deck that includes it rendered again (`grep -l "europeanisation/_x.qmd" slides/*.qmd live/*.qmd`). The project render fails at its final move step on this machine, so decks are rendered one at a time.
 
-**The short session.** The short session is three hours in two halves, with no Task 2 at the keyboard (the estimand statement is a held answer), no Task 5, and one submission to the class chart, the explored analysis of Task 4. Its deck, `live/short.qmd`, carries the cells of Tasks 1, 3 and 4 on its slides through the Quarto Live extension, so that the class and the facilitator work inside one deck, with the browser lab as the fallback. It is not assembled from the segments of the one-day deck: it is a custom set of slides in `live/_segments/`, one segment for each block of the run, with the clock of the block in a comment at the head of the segment, so that an event can edit the deck block by block and set its own title and subtitle in the YAML. It lives in a folder of its own, with `live/_metadata.yml` keyed `live-revealjs`, because the `format: revealjs` key of the metadata of `slides/` would render it twice (root notes, Gotchas). The reproduction offers the three analysts of the lab: the deck loads the two packages of 018OL when it is opened, and on the lab route its cell downloads them, about 32 MB, which the track page says. The helpers of the lab (`try_spec()` and the rest) are one file, `_includes/_lab-helpers.qmd`, included by the lab and by the deck. The first delivery proposed is the ESRA–WAPOR conference of July 2027 in Paris, for an audience of survey researchers, which is why the menu is taught with its survey decisions first and two slides show the easystats code behind the course. The [run sheet](#run-sheet-short) gives the clock.
+**The short session.** The short session is three hours in two halves, with no Task 2 at the keyboard (each participant writes the estimand statement in their notes), no Task 5, and one submission to the class chart, the explored analysis of Task 4. Its deck, `live/short.qmd`, carries the cells of Tasks 1, 3 and 4 on its slides through the Quarto Live extension, so that the class and the facilitator work inside one deck, with the browser lab as the fallback. It is not assembled from the segments of the one-day deck: it is a custom set of slides in `live/_segments/`, one segment for each block of the run, with the clock of the block in a comment at the head of the segment, so that an event can edit the deck block by block and set its own title and subtitle in the YAML. It lives in a folder of its own, with `live/_metadata.yml` keyed `live-revealjs`, because the `format: revealjs` key of the metadata of `slides/` would render it twice (root notes, Gotchas). The reproduction offers the three analysts of the lab: the deck loads the two packages of 018OL when it is opened, and on the lab route its cell downloads them, about 32 MB, which the track page says. The helpers of the lab (`try_spec()` and the rest) are one file, `_includes/_lab-helpers.qmd`, included by the lab and by the deck. The first delivery proposed is the ESRA–WAPOR conference of July 2027 in Paris, for an audience of survey researchers, which is why the menu is taught with its survey decisions first and two slides show the easystats code behind the course. The [run sheet](#run-sheet-short) gives the clock.
 
 **The deck of the workshop.** The one-day workshop and day 2 of the Extended course run on `live/day.qmd`, a live deck with the content of the plain deck that it replaced. The hands-on slides of the live deck carry the cells of the browser lab: Task 1 and the warm-up, Task 2, the three reproductions of Task 3, Task 4, the placement and Task 5. The participants work in the workspace; I run each step on the deck, and each hands-on slide names, in one line, the chunk or the file of the workspace in which the step lives. A participant whose installation fails opens the deck in a tab of their own and works in its cells, or in the browser lab. The deck loads the packages of every task when it opens, lme4 and lmerTest included, so that no cell downloads during the day. It lives in `live/` beside the deck of the short session, and both decks include the helpers of the lab, with the graph functions of Task 2, from `_includes/_lab-helpers.qmd`.
 
@@ -144,7 +144,7 @@ The one-day deck lifts no optional run into its main flow (`core-runs: []`), and
 
 ## Run sheet – the short session {#run-sheet-short}
 
-The short session runs on `live/short.qmd`, a deck written for it whose slides carry the cells of the tasks, as two halves of eighty and ninety minutes with a break of ten. It has no Task 2 at the keyboard (the estimand statement is a held answer), no Task 5, and one submission to the class chart, the explored analysis of Task 4; the reproduction offers C6HJR, KQXUE and 018OL, one slide each, and Hands-on 2 takes three slides (the reference call, two variations, the submission). Participants run the cells on their own machines while the facilitator drives the same deck on the projector; the browser lab holds the same tasks as a page of the site, for anyone whose deck will not load. In a room the held answers go on cards or a shared pad named on the first slide, and the class chart stays on the projector from Task 4 to the close. Ask participants to open the deck the evening before on the machine they bring, so that the browser holds its files, and carry a phone hotspot. Clear the results Sheet before the session.
+The short session runs on `live/short.qmd`, a deck written for it whose slides carry the cells of the tasks, as two halves of eighty and ninety minutes with a break of ten. It has no Task 2 at the keyboard (each participant writes the estimand statement in their notes), no Task 5, and one submission to the class chart, the explored analysis of Task 4; the reproduction offers C6HJR, KQXUE and 018OL, one slide each, and Hands-on 2 takes three slides (the reference call, two variations, the submission). Participants run the cells on their own machines while the facilitator drives the same deck on the projector; the browser lab holds the same tasks as a page of the site, for anyone whose deck will not load. The class chart stays on the projector from Task 4 to the close. Ask participants to open the deck the evening before on the machine they bring, so that the browser holds its files, and carry a phone hotspot. Clear the results Sheet before the session.
 
 ::: {.callout-warning}
 **Draft clock times for CM to adjust**, here for the morning slot of the ESRA–WAPOR short courses, 09:00–12:00 Paris time, Monday 19 July 2027.
@@ -163,8 +163,8 @@ The short session runs on `live/short.qmd`, a deck written for it whose slides c
 | 0:00 | Welcome, what you do not need (5′) | The two halves; nothing to install. "Open the deck now; R is loading inside it." | Open the deck in a tab. | Late arrivals: the address stays on the screen. |
 | 0:05 | Three kinds of repetition and the robustness study (20′) | The matrix; what an analyst received, the two tasks, the common scale; the five results one row at a time, with the open circle of PRL47. | Listen; run the Task 1 cell on the second slide once the deck has loaded. | A deck that will not load: another browser, then the browser lab, then the shared screen. |
 | 0:25 | The paper and its record (15′) | The question and the items, the scales and the panel, the model and the claim, the record in SCORE. | Listen; ask. | The replication by its verdict only. |
-| 0:40 | The estimand statement (10′) | Five analysts, five questions; the held statement: "write it, hold it, go". | Write one sentence; send on "go". | Never compressed. |
-| 0:50 | Hands-on 1: the reproduction (20′) | Drive C6HJR on the shared screen; circulate; then the held answer, analyst and value. | Choose C6HJR, KQXUE or 018OL; fill the gaps; reach the value on record. | Ask for a split among the three analysts, so that the held answers show three values; on the lab route the cell of 018OL downloads 32 MB. |
+| 0:40 | The estimand statement (10′) | Five analysts, five questions; the estimand statement. | Write one sentence in their notes. | Never compressed. |
+| 0:50 | Hands-on 1: the reproduction (20′) | Drive C6HJR on the shared screen; circulate. | Choose C6HJR, KQXUE or 018OL; fill the gaps; reach the value on record. | Ask for a split among the three analysts; on the lab route the cell of 018OL downloads 32 MB. |
 | 1:10 | Why the numbers differ (10′) | The same t within an analyst and different between; three models; conventional, CR1 and CR2 on one estimate. | Listen. | The point to land: the estimate never moves, only the test. |
 | 1:20 | Break (10′) | The break slide. | Break. | – |
 
@@ -176,14 +176,14 @@ The short session runs on `live/short.qmd`, a deck written for it whose slides c
 | 0:10 | The code behind the menu (5′) | The datawizard verbs and `demean()`; `model_parameters()` and `t_to_r()`. | Listen. | Two slides; this is not a lesson in R. |
 | 0:15 | Hands-on 2: the menu (20′) | "Three or four tries, one decision at a time; `my_experiments()`; submit the one you would defend." Keep the Class results page on the projector and press Run Code as the dots land. | `try_spec()`; `my_experiments()`; `submit_exploration()`. | Say twice that this is exploration. |
 | 0:35 | The multiverse and the class chart (10′) | Where the idea comes from; enumeration and curation; the dots of the class against the curve of 864. | Watch. | – |
-| 0:45 | The bet, the decomposition, the five on the curve, the placement (15′) | The bet before the reveal; the fork chart; the reference marks; the held placement: "rerun yours, read the placement, hold it, go". | Bet; read the placement; send on "go". | The bet comes before the reveal. Without a submission, the reproduced specification: 67%. |
+| 0:45 | The bet, the decomposition, the five on the curve, the placement (15′) | The bet before the reveal; the fork chart; the reference marks; the placement: "rerun yours and read the placement". | Bet; read the placement. | The bet comes before the reveal. Without a submission, the reproduced specification: 67%. |
 | 1:00 | Reading a curve, the critics, preregistration (15′) | Description and inference; not 864 tests, the permutation design; the pruning critique and one correct analysis; what preregistration settles. | Think; argue. | The target answer: "we cannot say until we know what chance produces on these dependent data". |
 | 1:15 | Replication with new data (5′) | The verdict of the SCORE replication; the three Rs on this paper. | Listen. | The verdict only. |
 | 1:20 | Close (10′) | What you take with you; where to go on the site; questions. | Questions. | End on time. |
 
 ### Cutting order and never cut {#cuts-short}
 
-For a slot of two and a half hours, cut in this order: the slide on where the idea of the multiverse comes from; the critics to one slide; the three models to one; the record in SCORE at speed; the code behind the menu to one slide. **Never cut:** the five results, the held estimand statement, the reproduction and its held answer, Task 4 with the class chart, the bet before the decomposition, and robustness against replicability on this paper.
+For a slot of two and a half hours, cut in this order: the slide on where the idea of the multiverse comes from; the critics to one slide; the three models to one; the record in SCORE at speed; the code behind the menu to one slide. **Never cut:** the five results, the estimand statement, the reproduction, Task 4 with the class chart, the bet before the decomposition, and robustness against replicability on this paper.
 
 ---
 
@@ -195,7 +195,7 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 |---|---|---|---|---|
 | 0:00 | Welcome, the plan, the aims, what you do not need (6′) | "Open your workspace in your IDE now; if your installation failed, open the deck in a tab and leave it to load." | Open the workspace, or the deck. | – |
 | 0:06 | Talk: credibility (18′) | Claims and checking; false positives and forking paths; incentives; the red-card study, with the grouping of the teams by response distribution as the thread for the day. | Listen. | Say "hold on to that grouping". |
-| 0:24 | Talk: the vocabulary (12′) | The matrix; repeatability and credibility; the quick check; open research. | Chat waterfall. | – |
+| 0:24 | Talk: the vocabulary (12′) | The matrix; repeatability and credibility; the quick check; open research. | Call out the answers. | – |
 | 0:36 | Talk: the robustness study from the inside (16′) | What an analyst received, the two tasks, the common scale; the five-analyst forest one row at a time, with the open circle of PRL47. | Watch the reveal. | The open circle is where the conversion lesson starts – one sentence now. |
 | 0:52 | Talk: the paper and its record in SCORE (16′) | The four framing scales, the model of the OA, the claim card with Model 1 and Model 2; the attempts to reproduce and to replicate; the five free-phase questions. | Listen; ask. | The SCORE replication is given by its verdict only. |
 | 1:08 | The workspace and the deck, then Task 1 (22′ and the break) | Setup task: the check script in the workspace, the three cells on the deck. | Task 1 and the warm-up. | Anyone whose check fails moves to the deck or the browser lab. |
@@ -205,7 +205,7 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
 | 0:00 | Talk: estimands and Lundberg (18′) | The red-card contrast; four estimands; Lundberg's three steps. | Listen; ask. | – |
-| 0:18 | Talk: the causal-graph crash course and *Revenons à nos moutons* (33′) | The three roles, open and closed paths, total and direct effects, selection and feedback; the estimand waterfall; why draw the graph without identification; the half-built graph. | Type an estimand; hold; send on "go". | The estimand waterfall is never compressed. |
+| 0:18 | Talk: the causal-graph crash course and *Revenons à nos moutons* (33′) | The three roles, open and closed paths, total and direct effects, selection and feedback; the estimand statement, which each participant writes in Task 2 of the report; why draw the graph without identification; the half-built graph. | Write the estimand statement. | The estimand statement is never compressed. |
 | 0:51 | Hands-on 2: Task 2 (24′) | Run the cells of Hands-on 2 on the deck; circulate; read two or three of the sentences on fixed effects aloud. | Panel, estimand, graph, the two sentences on fixed effects. | **Trigger at 1:08:** finish the graph over lunch. |
 | 1:15 | Lunch | Post the return time. | Lunch. | – |
 
@@ -213,11 +213,11 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 
 | Rel. | Segment | What I do | What participants do | Watch out for |
 |---|---|---|---|---|
-| 0:00 | Re-entry and the constrained task (10′) | Roll-call; paste the catch-up card. The four Task 2 instructions verbatim, what each assumes, and the three analyses that can be reproduced, with one line on the panel of Hands-on 2. | Rejoin; choose an analyst. | Do not wait past 0:05; the card lets stragglers catch up. |
-| 0:10 | Hands-on 3: Task 3 (20′) | Drive the cells of one analyst on the deck; buddy-chunk any STUCK. Then the waterfall: "type the analyst and the value, hold, go". | Choose C6HJR, KQXUE or 018OL; run its chunk in the workspace, or fill the gaps in the deck; reach the value on record. | The deck loads the packages of 018OL when it opens; on the lab route its cell downloads 32 MB, so say so before people start. Wait until most have a number before "go". |
+| 0:00 | Re-entry and the constrained task (10′) | Roll-call; the catch-up card on screen. The four Task 2 instructions verbatim, what each assumes, and the three analyses that can be reproduced, with one line on the panel of Hands-on 2. | Rejoin; choose an analyst. | Do not wait past 0:05; the card lets stragglers catch up. |
+| 0:10 | Hands-on 3: Task 3 (20′) | Drive the cells of one analyst on the deck; buddy-chunk anyone who is stuck. | Choose C6HJR, KQXUE or 018OL; run its chunk in the workspace, or fill the gaps in the deck; reach the value on record. | The deck loads the packages of 018OL when it opens; on the lab route its cell downloads 32 MB, so say so before people start. Wait until most have a number. |
 | 0:30 | Reproducibility, analytical choice and the three models (12′) | The same t within an analyst, different t between them; fixed effects for country and year, for country alone, random intercepts; the table of conventional, CR1 and CR2 tests. | Listen; ask. | The point to land: the estimate never moves, only the test. |
 | 0:42 | What a reproduction needs (10′) | Data, code and versions; the revised Eurostat value of Portugal 2013; the slips in three pipelines and what each does to the t. | Listen; ask. | Say plainly that one of the three slips is mine. |
-| 0:52 | Hands-on 3b: reading deposited code (18′) | Point each group to its deposit; read four or five checks aloud after "go". | Find the line; write one check; hold; send. | If the OSF is slow, show the three lines on my screen (`task2.do` lines 440–456; the line of the Rmd that sets `YEA`; the April 2025 comment). |
+| 0:52 | Hands-on 3b: reading deposited code (18′) | Point each group to its deposit. | Find the line; write one check. | If the OSF is slow, show the three lines on my screen (`task2.do` lines 440–456; the line of the Rmd that sets `YEA`; the April 2025 comment). |
 | 1:10 | Break | Break slide; remind them to keep the reproduction in their notes. | Break. | – |
 
 ### Part 4 – Robustness (110′)
@@ -228,13 +228,13 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 | 0:10 | The methodological tutorial (10′, optional) | The core: outcome, claim alignment, estimators and fixed effects; the rest as time allows. | Listen; ask. | The compressible segment. |
 | 0:20 | Hands-on 4: Task 4 (18′) | Run the cells of Hands-on 4 on the deck, then keep the Class results page shared; press *Run Code* as the exploratory dots land. | `try_spec()` three or four times; `my_experiments()`; `submit_exploration()`. | Everyone submits an exploratory dot. Say twice that this is exploration. |
 | 0:38 | Your own small multiverse and the multiverse tutorial (8′, part optional) | Where the idea comes from; the garden; filters; enumeration and curation; purposes; decomposition; reading a curve. | Listen. | – |
-| 0:46 | Class chart, the bet, the decomposition, the reference results (14′) | The bet waterfall FIRST; then the fork importance; the reference results under three conversions; the sign changes. | Bet; watch the reveals. | The bet must come before the reveal. |
-| 1:00 | Your own percentile (5′) | Waterfall of placements. | Read the placement; hold; send. | Without a submission, use the reproduced specification: 67%. |
-| 1:05 | What the curve leaves out and inference literacy (12′) | The four points; description and inference; dependence; the permutation design; the discussion beat. | Think; argue in the chat. | The target answer: "we cannot say until we know what chance produces on these dependent data". |
+| 0:46 | Class chart, the bet, the decomposition, the reference results (14′) | The bet FIRST; then the fork importance; the reference results under three conversions; the sign changes. | Bet; watch the reveals. | The bet must come before the reveal. |
+| 1:00 | Your own percentile (5′) | The placement: "rerun the specification that you submitted and read your placement". | Read the placement. | Without a submission, use the reproduced specification: 67%. |
+| 1:05 | What the curve leaves out and inference literacy (12′) | The four points; description and inference; dependence; the permutation design; the discussion beat. | Think; argue. | The target answer: "we cannot say until we know what chance produces on these dependent data". |
 | 1:17 | Replication with new data (5′) | The verdict of the SCORE replication again, and the decisions that a replication fixes in advance, the fifteenth answer category among them. | Listen. | The verdict only; the figures of the replication stay off the slides. |
 | 1:22 | Critics, one correct analysis, what preregistration settles (6′) | The three positions; the one correct analysis and how anyone would identify it; the two columns of preregistration. | Listen. | – |
 | 1:28 | Archiving and the public record (4′) | Archiving and registering, with the preregistration of the robustness study; the three OSF addresses; the templates; the eight AsPredicted questions. | Listen. | If time is short, one slide. |
-| 1:32 | Hands-on 5: the preregistration and the declared run (15′) | Synchronous: complete the block, run `prereg()`, type "declared"; count aloud; move on at about 80% or at 8′. Then build, run, `report_result()`. | Declare, build, run, submit. | Never cut the declaration. |
+| 1:32 | Hands-on 5: the preregistration and the declared run (15′) | Each participant completes the block, runs `prereg()` and renders the report, or copies the cell in the deck, before running anything; then build, run, `report_result()`. | Declare, build, run, submit. | Never cut the declaration. |
 | 1:47 | Close and feedback (3′) | Two points from the literature; what you take with you. | Feedback. | End on time. |
 
 ### Cutting order and never cut {#cuts-one-day}
@@ -244,7 +244,7 @@ For a slot of two and a half hours, cut in this order: the slide on where the id
 - **Part 3** – trigger 0:30: the three reproduced models in one slide. Trigger 0:52: Hands-on 3b on my screen.
 - **Part 4** – trigger 0:10: the methodological tutorial stays off, or keeps its core slides (outcome, claim alignment, estimators, what fixed effects adjust for). Trigger 0:20: Task 4 shortens to two `try_spec()` calls and a submission – but everybody still submits. Trigger 0:38: skip the multiverse tutorial, keep "what the curve leaves out". Trigger 1:17: the replication and the critics in one slide each.
 
-**Never cut:** the five-analyst reveal; the estimand waterfall; the half-built graph and its adjustment set; the reproduction waterfall; the table of CR2 tests; the Task 4 submission; the bet before the decomposition; the preregistration moment.
+**Never cut:** the five-analyst reveal; the estimand statement; the half-built graph and its adjustment set; the reproduction; the table of CR2 tests; the Task 4 submission; the bet before the decomposition; the preregistration.
 
 ---
 
@@ -292,34 +292,30 @@ The self-study track runs without a facilitator, and each stage page gives the t
 
 ## Online and in-person cue sheet {#online--in-person-cue-sheet}
 
-The materials are identical online and in person. What changes is how people answer, flag trouble and pair up.
+The materials are identical online and in person. What changes is how people ask for help, receive links and pair up.
 
 | Beat | Online | In person |
 |---|---|---|
-| Quiz and waterfall answers | type in the chat, hold until "go" | write on paper, hands up on "go" |
-| Working or stuck | green circle or "STUCK" in the chat | green or red sticky notes |
+| Stuck | a raised hand in the call, or the microphone | a raised hand |
 | Roll-call | "raise hand" | visual sweep |
-| Pair moments | breakout rooms if available; a chat variant otherwise | table pairs |
+| Pair moments | breakout rooms if available | table pairs |
 | Rescues | buddy-chunk on the shared screen | the facilitator circulates |
 | The live chart | everyone opens the Class results page themselves | projector and own laptops |
-| Form links | pasted in the chat | QR codes on the slides |
-| Breaks | countdown slide and "back at :xx" in the chat | countdown slide and spoken |
+| Form links | on the shared screen | QR codes on the slides |
 
 ---
 
-## Chat protocols and ready-to-paste texts {#chat-protocols-and-ready-to-paste-texts}
+## Help and ready-to-paste texts {#chat-protocols-and-ready-to-paste-texts}
 
-**Waterfall:** "Type your answer now but DON'T send – hold it. … Go." Holding the answers back keeps each one independent of the others. For Task 3 the answer is the analyst and the value, for example `KQXUE t = -7.169`, so that the wall of identical values appears once for each analyst.
-
-**Help:** a STUCK in the chat is the first flag. The help document, a shared editable document whose link goes into the chat at the start, is the second place to look and the place where errors get pasted. Check it at the minutes that the run sheet names. Rescues run in the main room by buddy-chunk.
+**Help:** a raised hand is the flag, for a question or for a machine that is stuck. Rescues run in the main room by buddy-chunk.
 
 **Silent class:** wait 20 seconds, then take reactions as the minimal response, and name one or two people gently. Two substantive answers from twenty participants are enough to proceed.
 
-**Catch-up card (paste at the start of Part 3):**
+**Catch-up card (on screen at the start of Part 3):**
 
-> Just back? You missed nothing you can't recover: (1) if Task 2 is unfinished, keep your estimand statement and come back to it later; (2) Task 3 is the reproduction – choose C6HJR, KQXUE or 018OL, in your workspace or, if your installation failed, in the deck, which has a hint and a full solution for each, and the values on record are −3.804, −7.169 and −1.206; (3) flag STUCK and I'll come to you.
+> Just back? You missed nothing you can't recover: (1) if Task 2 is unfinished, keep your estimand statement and come back to it later; (2) Task 3 is the reproduction – choose C6HJR, KQXUE or 018OL, in your workspace or, if your installation failed, in the deck, which has a hint and a full solution for each, and the values on record are −3.804, −7.169 and −1.206; (3) raise your hand and I'll come to you.
 
-**Facilitator-drop standing order (seeded in the chat at the start):**
+**Facilitator-drop standing order (on the screen at the start):**
 
 > If I drop off the call: keep going. The day plan (link) has the timings – finish the current task or take the break early. I will rejoin as soon as I can.
 
@@ -335,7 +331,7 @@ The materials are identical online and in person. What changes is how people ans
 | **The live chart fails** | Rung 1: `class-results.qmd` falls back to the committed `data/class_results.csv`. Rung 2: pull the Sheet CSV, commit, re-render locally and share my screen. Rung 3: the static curve of 864 and the reference results are enough for the debrief. |
 | **The OSF is slow or unreachable** | Show the dossier and the deposits on my screen. The data never depend on the OSF, because they ship with the browser lab and the workspace. |
 | **"How long should this take?"** | Every fit on the 270-row panel is effectively instantaneous: `feols` with two-way or country fixed effects under 0.01 s; `try_spec()` in the workspace, CR2 test included, about 1 s for the first call, which loads the packages, and under 0.1 s after it; `try_spec()` in the browser lab instant, since it reads the curve that ships with the page. A participant who is waiting is waiting for a package download: the browser lab fetches its packages, about 24 MB, once when the page opens, a long moment on poor wifi, and nothing after that, because the Task 2 graph reads its adjustment sets from a table that ships with the page; the first run in the workspace installs the whole package set once. Ask what it is stuck on before assuming that the model is the problem. |
-| **My connection drops** | The standing order in the chat. |
+| **My connection drops** | The standing order shown at the start. |
 | **Recording objections** | Recording is optional, so stop it. |
 
 ---
