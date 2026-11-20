@@ -1,6 +1,6 @@
 # Codebook: `europeanisation_cy_edu.csv`
 
-The workshop panel split by education band: one row per country, year and band, 810 rows (27 countries × 10 years × 3 bands). It is built from the respondent file by section 6 of `prep/02_scales_and_panel.R`, and it is the aggregate used in the individual-level extension of the workshop to ask whether national unemployment narrows the gap between the high- and the low-educated in the way they frame the EU. Every row is a mean over at least 43 respondents and most rows over several hundred, so the file is released under CC BY 4.0, like `europeanisation_cy.csv`.
+The country-year panel split by education band: one row per country, year and band, 810 rows (27 countries × 10 years × 3 bands). It is built from the respondent file by section 6 of `prep/02_scales_and_panel.R`, and it is the aggregate used in the workshop's individual-level extension to ask whether national unemployment narrows the gap between the high- and the low-educated in the way they frame the EU. Every row is a mean over at least 43 respondents and most rows over several hundred, so the file is released under CC BY 4.0, like `europeanisation_cy.csv`.
 
 ## Variables
 

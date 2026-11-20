@@ -1,6 +1,6 @@
 # AR4DS – Europeanisation and the economy
 
-The site of the Europeanisation and the economy case study of Applied Replication for Data Skills (AR4DS), a workshop in reproduction, robustness and replication in R taught on published claims. Facilitator: [Chris Moreh](https://chrismoreh.com). The site deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>; the pages shared by the whole workshop are on the [AR4DS site](https://codemoreh.github.io/ar4ds/).
+The website of the Europeanisation and the economy case study of Applied Replication for Data Skills (AR4DS), a workshop in reproduction, robustness and replication in R taught on published claims. Facilitator: [Chris Moreh](https://chrismoreh.com). It deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>; the pages shared by the whole workshop are on the [AR4DS site](https://codemoreh.github.io/ar4ds/).
 
 The case study is a claim from a study of how Europeans frame the European Union (Teney, 2016, *European Sociological Review*): poor national economic performance lowers the positive framing of the EU. Five analysts reanalysed the claim for the SCORE robustness study, published in *Nature* (Aczel et al., 2026), within the SCORE programme (Alipourfard et al., 2021), and a preregistered replication in the SCORE replicability study tested it on later Eurobarometer waves. The data are Eurobarometer microdata from GESIS, which require a registration and may not be redistributed, so the workshop aggregates them to a panel of 270 country-years.
 
@@ -29,9 +29,9 @@ Each format is reached from the opening page and has a docked sidebar (`_sidebar
 | `R/` | The pipeline that builds the data files of the case study; `R/README.md` gives the order |
 | `data-raw/` | The archived Eurostat tables that the pipeline reads |
 | `data/` | The data of the case study, each file with its codebook, and the published estimates of the 29 teams of Silberzahn et al. (2018) |
-| `facilitator/` | The run sheet and the notes on the formats, left out of the build; the setup note of the class-results pipeline and the code of its Cloudflare Worker, which every site of the workshop uses |
-| `resources.qmd` | Readings, records, tools and the references of the site |
-| `_variables.yml` | Site variables and the next-delivery block |
+| `facilitator/` | The run sheet and the notes on the formats, left out of the build; the setup note of the class-results pipeline and the code of its Cloudflare Worker, which every case study uses |
+| `resources.qmd` | Readings, records, tools and the list of references |
+| `_variables.yml` | Variables read by the pages, and the next-delivery block |
 
 The downloadable workspace of the case study is the repository [`CodeMoreh/ar4ds-eu-workspace`](https://github.com/CodeMoreh/ar4ds-eu-workspace), and the browser lab carries the same helper functions. Participants who build the panel from the raw files download the Eurobarometer waves from GESIS themselves, because the licence forbids redistribution.
 
@@ -45,7 +45,7 @@ The case study keeps its data in `data/`, each file with a codebook beside it.
 | `teney_panel_measurement.csv`, `teney_panel_weights.csv`, `macro/` | The panel under every measurement variant, the weighting panel, and the unemployment, growth and population series |
 | `rep_data.csv` | The file that analyst C6HJR submitted to the robustness study, kept for provenance and for the exercise on the background page |
 
-The files around the curve of the claim are `spec_curve.csv` (one row for each specification of the curve, with its estimate on the scale of the claim, its test and the partial correlation used by the robustness study), `menu_options.csv` (every option of the menu, on the curve or off it, with the reason for its place and the page that teaches it; written by hand, and read by the menu, the decision map and the helpers that refuse an option off the curve), `menu_deviations.csv` (each option set beside its twins on the curve), `reference_marks.csv` (the published result and the five reanalyses placed on the scale of the curve), `analysts5.csv` (the five analyses of the robustness study as recorded, with the workshop refit of each), the `display_*.csv` files of the teaching displays, and `class_results.csv` (the fallback of the live class chart when its feed cannot be reached).
+The files around the curve of the claim are `spec_curve.csv` (one row for each specification of the curve, with its estimate on the scale of the claim, its test and the partial correlation used by the robustness study), `menu_options.csv` (every option of the menu, on the curve or off it, with the reason for its place and the page that teaches it; written by hand, and read by the menu, the decision map and the helpers that refuse an option off the curve), `menu_deviations.csv` (each option set beside its twins on the curve), `reference_marks.csv` (the published result and the five reanalyses placed on the scale of the curve), `analysts5.csv` (the five analyses of the robustness study as recorded, with the workshop's refit of each), the `display_*.csv` files of the teaching displays, and `class_results.csv` (the fallback of the live class chart when its feed cannot be reached).
 
 **OSF nodes of the case study.** The workshop fetches from [osf.io/6zqct](https://osf.io/6zqct), the facilitator's personal extended fork of the official archival component of the robustness study for analyst C6HJR, [osf.io/8rtwe](https://osf.io/8rtwe). The full SCORE dossier on the paper is [osf.io/h7432](https://osf.io/h7432).
 

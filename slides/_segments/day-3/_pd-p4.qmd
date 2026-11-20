@@ -49,7 +49,7 @@ Bell and Jones propose a more informative answer than picking a winner between f
 # Left: the 27 country means with the slope across them
 # (data/display_country_means.csv). Right: each country-year
 # as a deviation from the means of its own country, with the slope within
-# countries (the workshop panel)
+# countries (the country-year panel)
 within_pts <- datawizard::demean(europeanisation, select = c("unemp", "mcosmo"), by = "cntry")
 p_between <- ggplot2::ggplot(country_means, ggplot2::aes(unemp_mean, mcosmo_mean)) +
   ggplot2::geom_abline(intercept = mean(country_means$mcosmo_mean) - bw_cosmo$b_between * mean(country_means$unemp_mean),

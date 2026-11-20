@@ -12,23 +12,23 @@ execute:
 ---
 
 ::: {.callout-note}
-**This document is for the facilitator's eyes only.** It is rendered with the site but left out of the navbar, so nothing on the site links to it. It holds the run sheets, the answer keys, the crib facts and the contingency ladders of the full-day format of the Europeanisation and the economy case study (`live/day.qmd`), which works on aggregate data only and is taught in the workspace, with the web slides showing each step, and the sessions of the multi-day format, whose second day is the full-day format. The pages of a format give the participants no times, and every time is here. The slides, the browser lab, the class chart and the other notes on the formats are in the section on [the slides and the pipeline](#decks-and-pipeline).
+**This document is for the facilitator's eyes only.** It is rendered with the workshop's website but left out of the navbar, so no other page links to it. It holds the run sheets, the answer keys, the crib facts and the contingency ladders of the full-day format of the Europeanisation and the economy case study (`live/day.qmd`), which works on aggregate data only and is taught in the workspace, with the web slides showing each step, and the sessions of the multi-day format, whose second day is the workshop. The pages of a format give the participants no times, and every time is here. The slides, the browser lab, the class chart and the other notes on the formats are in the section on [the slides and the pipeline](#decks-and-pipeline).
 :::
 
 ---
 
 ## The formats {#the-three-formats}
 
-The facilitator chooses the format; participants do not choose, and the home page describes the formats without offering a choice. Each track is an ordered route through the pages of the site, reached from the Formats section of the home page, with a docked sidebar of its own (`_sidebar.yml`) that lists its exercise page and its tools, and a slides page embedding the slides on which it runs. Name the track of a delivery in `delivery.track` of `_variables.yml`, and the callout of the home page links it. The decisions behind the formats, and the order in which their material was built, are in `formats-2026-10-27.md` in the planning folder beside the AR4DS sites (`../_planning/`).
+The facilitator chooses the format; participants do not choose, and the home page describes the formats without offering a choice. Each track is an ordered route through the pages of the workshop's website, reached from the Formats section of the home page, with a docked sidebar of its own (`_sidebar.yml`) that lists its exercise page and its tools, and a slides page embedding the slides on which it runs. Name the track of a delivery in `delivery.track` of `_variables.yml`, and the callout of the home page links it. The decisions behind the formats, and the order in which their material was built, are in `formats-2026-10-27.md` in the planning folder beside the AR4DS sites (`../_planning/`).
 
 | Format | Track | What it holds | Slides |
 |---|---|---|---|
 | Part-day | `tracks/short/` | Two halves of eighty and ninety minutes, with the cells of the tasks on the slides: the three Rs and the SCORE robustness study (Aczel et al. 2026), the paper and its record, the estimand statement, the reproduction of C6HJR, KQXUE or 018OL, the three models and few clusters; then the menu with its survey decisions first, the code behind the menu, Task 4 and the class chart, the multiverse and the curve of 864, reading a curve, the critics and preregistration, and the replication by its verdict | `live/short.qmd`, web slides written for the session |
 | Full-day | `tracks/day/` | Four parts: the claim and credibility, the estimand and the causal graph, the reproduction, and robustness with Tasks 4 and 5 | `live/day.qmd`, web slides whose hands-on slides carry the cells of the five tasks |
-| Multi-day | `tracks/long/` | Day 1 open research and the tools, the same for every case study; day 2 the full-day format; day 3 the methods of the case study and the report of each participant | the slide decks of day 1 on the AR4DS site, `live/day.qmd` on day 2, and the slide decks of day 3 |
+| Multi-day | `tracks/long/` | Day 1 open research and the tools, the same for every case study; day 2 the workshop; day 3 the methods of the case study and the report of each participant | the slide decks of day 1 on the AR4DS site, `live/day.qmd` on day 2, and the slide decks of day 3 |
 | Self-taught | `tracks/independent/` | Five stages, from credibility and the three Rs to a project of your own | the full slide deck, `slides/full.qmd` |
 
-The full-day format works on aggregate data only. The participants do the tasks in the workspace, in their IDE, while I run each step on the web slides, whose cells run R in the browser; the slides and the browser lab carry the work of anyone whose installation fails. The parts of the full-day format are of unequal length: the reproduction is the shortest, and robustness the longest, because it holds the two tasks with submissions. The clock times below are drafts; set them for the delivery and paste them into the day plan and the joining instructions, because the pages of the participants give no times.
+The workshop works on aggregate data only. The participants do the tasks in the workspace, in their IDE, while I run each step on the web slides, whose cells run R in the browser; the slides and the browser lab carry the work of anyone whose installation fails. The workshop's parts are of unequal length: the reproduction is the shortest, and robustness the longest, because it holds the two tasks with submissions. The clock times below are drafts; set them for the delivery and paste them into the day plan and the joining instructions, because the pages of the participants give no times.
 
 | Segment | Clock (GMT, draft) |
 |---|---|
@@ -54,7 +54,7 @@ Between deliveries the landing page advertises no upcoming delivery. Scheduling 
 
 **Resetting, after a workshop.**
 
-- [ ] Export the responses Sheet (File → Download → CSV) and commit it as a date-stamped snapshot (for example `data/class_results_2026-11-06.csv`); refresh `data/class_results.csv` as `facilitator/live-results-setup.md` describes if you want the archived class visible on the site.
+- [ ] Export the responses Sheet (File → Download → CSV) and commit it as a date-stamped snapshot (for example `data/class_results_2026-11-06.csv`); refresh `data/class_results.csv` as `facilitator/live-results-setup.md` describes if you want the archived class visible on the workshop's website.
 - [ ] Clear (or archive to a second tab) the old rows in the live Sheet so that the chart opens almost empty for the next class. **Do not touch the Form, the Worker, or the field schema.** The pipeline works, and only the rows change from one class to the next.
 
 ---
@@ -77,14 +77,14 @@ The page "Before the day" or "Before the workshop" of each format lists these st
 
 ## The week before
 
-- [ ] Send joining instructions: the before-the-day page of the track, the links of the slides used on the day and of the browser lab with the instruction to open the slides or the lab once, and the [background page](../background.qmd) as the pre-reading. For the full-day and multi-day formats add the setup page, with the request to run `R/check_setup.R` until it reports no failure, and the module Getting started with R; for the multi-day format add the download of the Eurobarometer files.
+- [ ] Send joining instructions: the before-the-day page of the track, the links of the slides used on the day and of the browser lab with the instruction to open the slides or the lab once, and the [background page](../background.qmd) as the pre-reading. For the workshop and the multi-day format add the setup page, with the request to run `R/check_setup.R` until it reports no failure, and the module Getting started with R; for the multi-day format add the download of the Eurobarometer files.
 - [ ] Confirm that the four Task 2 instructions on the Part 3 slide "Task 2 of the robustness study" match your own Task 2 report (copy in `../_planning/osf_source/moreh_rep_vAPR2025/`), which is the source that the slide quotes.
 - [ ] Check that the three OSF deposits of Hands-on 3b load logged out (osf.io/vycgd, osf.io/nz7ka, osf.io/6zqct), and that osf.io/h7432 shows the five components of the robustness study.
 - [ ] Click once through the tab switching of Part 4 (slides, the specification menu with its decision map, the Class results page, the reading on inference of the Specification curve page, and back), so that the order is familiar on the day.
 
 ## The night before
 
-- [ ] Render the site and push; if the site is published, confirm that the Pages build completes on GitHub Actions.
+- [ ] Render the workshop's website and push; if it is published, confirm that the Pages build completes on GitHub Actions.
 - [ ] **Cold load of the slides**: open the web slides `live/day.qmd` in a private window on the connection typical of the venue; time the wait until its cells show Run Code, a wait that includes the packages of every task; run the cells of Hands-on 1 and of one analyst of Hands-on 3, the cells that I drive on the day.
 - [ ] **Browser lab cold load**: open the live page of `lab.qmd` in a private window on the connection typical of the venue; time the load of the webR engine; run the cells of Task 1 and the cells of all three analysts in Task 3. The cell of 018OL that installs lme4 and lmerTest downloads about 32 MB, so time that too.
 - [ ] **The live results loop** (full setup and checks in `facilitator/live-results-setup.md`): submit one anonymous test row through the Form in a private window, confirm that it reaches the Sheet and that the Worker returns the sheet as CSV, press *Run Code* on the live [Class results]({{< var live-results-url >}}) page and find the test mark. Then delete the test row.
@@ -94,7 +94,7 @@ The page "Before the day" or "Before the workshop" of each format lists these st
 
 ## Opening the room {#opening-the-virtual-room--30-minutes-before}
 
-- [ ] Put the site URL, the URL of the slides, the browser-lab URL, the cheatsheet URL and the day plan with its times on the screen as people arrive.
+- [ ] Put the URL of the workshop's website, the URL of the slides, the browser-lab URL, the cheatsheet URL and the day plan with its times on the screen as people arrive.
 - [ ] Say that a raised hand brings help at any point, for a question or for a machine that is stuck.
 - [ ] Share the slides, whose cells I run for each step; keep the specification menu with its decision map and the Class results page ready in other tabs.
 - [ ] If recording: announce it now and state what is and is not recorded.
@@ -143,7 +143,7 @@ The slides of the full-day format lift no optional run into their main flow (`co
 
 ## Run sheet – the part-day format {#run-sheet-short}
 
-The part-day format runs on `live/short.qmd`, slides written for it that carry the cells of the tasks, as two halves of eighty and ninety minutes with a break of ten. It has no Task 2 at the keyboard (each participant writes the estimand statement in their notes), no Task 5, and one submission to the class chart, the explored analysis of Task 4; the reproduction offers C6HJR, KQXUE and 018OL, one slide each, and Hands-on 2 takes three slides (the reference call, two variations, the submission). Participants run the cells on their own machines while the facilitator drives the same slides on the projector; the browser lab holds the same tasks as a page of the site, for anyone whose slides will not load. The class chart stays on the projector from Task 4 to the close. Ask participants to open the slides the evening before on the machine they bring, so that the browser holds its files, and carry a phone hotspot. Clear the results Sheet before the session.
+The part-day format runs on `live/short.qmd`, slides written for it that carry the cells of the tasks, as two halves of eighty and ninety minutes with a break of ten. It has no Task 2 at the keyboard (each participant writes the estimand statement in their notes), no Task 5, and one submission to the class chart, the explored analysis of Task 4; the reproduction offers C6HJR, KQXUE and 018OL, one slide each, and Hands-on 2 takes three slides (the reference call, two variations, the submission). Participants run the cells on their own machines while the facilitator drives the same slides on the projector; the browser lab holds the same tasks as a page of the workshop's website, for anyone whose slides will not load. The class chart stays on the projector from Task 4 to the close. Ask participants to open the slides the evening before on the machine they bring, so that the browser holds its files, and carry a phone hotspot. Clear the results Sheet before the session.
 
 ::: {.callout-warning}
 **Draft clock times for CM to adjust**, here for the morning slot of the ESRA–WAPOR short courses, 09:00–12:00 Paris time, Monday 19 July 2027.
@@ -178,7 +178,7 @@ The part-day format runs on `live/short.qmd`, slides written for it that carry t
 | 0:45 | The bet, the decomposition, the five on the curve, the placement (15′) | The bet before the reveal; the fork chart; the reference marks; the placement: "rerun yours and read the placement". | Bet; read the placement. | The bet comes before the reveal. Without a submission, the reproduced specification: 67%. |
 | 1:00 | Reading a curve, the critics, preregistration (15′) | Description and inference; not 864 tests, the permutation design; the pruning critique and one correct analysis; what preregistration settles. | Think; argue. | The target answer: "we cannot say until we know what chance produces on these dependent data". |
 | 1:15 | Replication with new data (5′) | The verdict of the SCORE replicability study; the three Rs on this paper. | Listen. | The verdict only. |
-| 1:20 | Close (10′) | What you take with you; where to go on the site; questions. | Questions. | End on time. |
+| 1:20 | Close (10′) | What you take with you; where to go on the workshop's website; questions. | Questions. | End on time. |
 
 ### Cutting order and never cut {#cuts-short}
 
@@ -266,7 +266,7 @@ Each session of the first and the third days has a slide deck of its own, writte
 | 5. Positron | `slides/ide.qmd` | `tools/ide.qmd` on the AR4DS site, `companion/ide.qmd` | 45′ |
 | 6. Quarto | `slides/quarto.qmd` | `tools/quarto.qmd` on the AR4DS site | 60′ |
 
-**Day 2 – The full-day format**, run as in its own run sheet above. After the first day, Part 1 can take credibility and the robustness study at speed and give the time to Task 1 and Task 2. The day ends with the start of the build, as the section "Before day 3" on the day-2 page sets out: each participant puts the sixteen files in one folder beside the workspace, sources `prep/01_build_respondents.R` before leaving and reports any check that fails, with `data_private/build_report.csv`.
+**Day 2 – The workshop**, run as in its own run sheet above. After the first day, Part 1 can take credibility and the robustness study at speed and give the time to Task 1 and Task 2. The day ends with the start of the build, as the section "Before day 3" on the day-2 page sets out: each participant puts the sixteen files in one folder beside the workspace, sources `prep/01_build_respondents.R` before leaving and reports any check that fails, with `data_private/build_report.csv`.
 
 **Day 3 – The methods and your report.**
 
@@ -332,12 +332,12 @@ The self-taught format runs without a facilitator, and each stage page gives the
 ## Expected numbers {#answer-keys-and-expected-numbers}
 
 - Warm-up of Task 1: 1 = reproducibility (a failed attempt is still reproducibility); 2 = the grey area between reproducibility and robustness, argued both ways; 3 = replicability; 4 = generalisability.
-- **Task 3, C6HJR** (`europeanisation_cy.csv`, two-way fixed effects, conventional errors): b = −0.00347, SE = 0.00091, **t = −3.804**, df = 233, N = 270. Its conventional p is 0.0002, but under the rule of the workshop, CR2 errors clustered by country on 9.8 Satterthwaite df, p = 0.0504 (CR1 on 26 df 0.029; `data/display_inference.csv`): not significant at 5% under that rule. Never call it significant without naming the errors.
+- **Task 3, C6HJR** (`europeanisation_cy.csv`, two-way fixed effects, conventional errors): b = −0.00347, SE = 0.00091, **t = −3.804**, df = 233, N = 270. Its conventional p is 0.0002, but under the workshop's rule, CR2 errors clustered by country on 9.8 Satterthwaite df, p = 0.0504 (CR1 on 26 df 0.029; `data/display_inference.csv`): not significant at 5% under that rule. Never call it significant without naming the errors.
 - **Task 3, KQXUE** (`analyst_KQXUE.csv`, country fixed effects, conventional errors): b = −0.00736, SE = 0.00103, **t = −7.169**, df = 242, N = 270, CI from −0.00938 to −0.00533, as in the write-up of the analyst. With `cosmo_once` (EB 62.0 counted once) t = −7.166. On the Eurostat series as retrieved in 2026, in which Portugal 2013 reads 13.0 rather than 12.9, t = −7.172; the file uses the December 2023 vintage.
 - **Task 3, 018OL** (`analyst_018OL.csv`, random intercepts for country, year and wave, Satterthwaite df): on the outcome rescaled to 0–1, b = −0.00203, SE = 0.00169, **t = −1.206**, df = 396.9, N = 420, as in the knitted output of the analyst; on the raw cell means b = −0.00072, SE = 0.00060, with the same t and df. With the year of the fieldwork for EB 79.3, t = −1.606. The default `parameters::model_parameters()` reports the residual df (414); `ci_method = "satterthwaite"` gives 396.9.
 - **Hands-on 3b**: KQXUE, `task2.do`, `append using` the temporary file of EB 62.0 on two consecutive lines (441 and 442); 018OL, the line of the R Markdown file that sets `YEA` from the first four characters of the file name, commented "year of data collection"; C6HJR, the comment `# APRIL 2025 - Mistake in dataset here` in the corrected script of the fork. Good checks: no file read twice; one wave per fieldwork period with its expected count; counts by year and country; two builds compared cell by cell.
 - The curve (`data/spec_curve.csv`): 864 specifications; 98.1% below zero; 77.2% below zero with CR2 p < 0.05 (conventional 90.3%, CR1 80.1%); claim-aligned r from −0.589 to +0.116, median −0.314. Country fixed effects 92.6% below zero with CR2 p < 0.05, two-way 61.8%.
-- Few clusters (`display_inference.csv`): two-way fixed effects t = −3.80 on 233 df conventional, −2.31 on 26 df with CR1 (p = 0.029), −2.23 on 9.8 df with CR2 (p = 0.0504); country fixed effects on the workshop panel t = −6.87 on 242 df, −3.62 on 26 df, −3.51 on 8.5 df (p = 0.0072). Within and between (`display_between_within.csv`): −0.0056 within, +0.0041 across the 27 country means (p = 0.31), difference p = 0.024.
+- Few clusters (`display_inference.csv`): two-way fixed effects t = −3.80 on 233 df conventional, −2.31 on 26 df with CR1 (p = 0.029), −2.23 on 9.8 df with CR2 (p = 0.0504); country fixed effects on the country-year panel t = −6.87 on 242 df, −3.62 on 26 df, −3.51 on 8.5 df (p = 0.0072). Within and between (`display_between_within.csv`): −0.0056 within, +0.0041 across the 27 country means (p = 0.31), difference p = 0.024.
 - Reference results (`data/reference_marks.csv`), each placed on the degrees of freedom of its own inference, with the number of the 864 further below zero: KEVF1 −0.452 (147); KQXUE −0.419 (214); OA −0.385 (267, the refit of its design without the education interactions, t = −8.39 on 403.9 Satterthwaite df); C6HJR −0.242 (583); PRL47 −0.176 (740); 018OL −0.060 (833). The robustness study recorded PRL47 at −0.006, its z converted on 394,575 respondents.
 - Fork importance (`spec_curve_forks.csv`), share of the variance: estimator 41.5%, predictor 16.9, outcome 9.0, adjustment 4.3, item set 3.1, no-opinion rule 0.9, series 0.1, cell weighting 0.0, form 0.0, interactions 24.1.
 - Placement of the reproduced specification (for participants without their own submission): 67%, with 583 of the 864 further below zero.

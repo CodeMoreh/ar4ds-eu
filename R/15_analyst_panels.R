@@ -4,7 +4,7 @@
 #               aggregate files on which the Task 2 results of analysts KQXUE
 #               and 018OL reproduce exactly, so that Task 3 of the exercise
 #               can offer three reproductions on aggregate data (C6HJR
-#               on the workshop panel, and these two). Each file follows the
+#               on the country-year panel, and these two). Each file follows the
 #               deposited code of its analyst step by step, slips included:
 #               - KQXUE (task2.do, osf.io/vycgd): every wave, EB 62.0 appended
 #                 twice, the Turkish Cypriot sample pooled into Cyprus and

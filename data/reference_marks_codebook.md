@@ -1,6 +1,6 @@
 # Codebook: the reference marks
 
-The multiverse chart of the workshop marks six results that come from outside the curve: the design of the original study (Teney 2016, *European Sociological Review*; the original author, OA, from here on) and the five reanalyses of the same claim recorded in the SCORE robustness study (Aczel et al. 2026). `reference_marks.csv` places each of them on the scale of the curve, the partial correlation, and keeps beside it what the record says and why the two may differ. It is written by `R/13_reference_marks.R`. Two of the six placements rest on refits of a respondent-level design, whose aggregate results are kept in `companion/_model-outputs/reference_refits.csv`. Neither file holds any respondent-level data.
+The workshop's multiverse chart marks six results that come from outside the curve: the design of the original study (Teney 2016, *European Sociological Review*; the original author, OA, from here on) and the five reanalyses of the same claim recorded in the SCORE robustness study (Aczel et al. 2026). `reference_marks.csv` places each of them on the scale of the curve, the partial correlation, and keeps beside it what the record says and why the two may differ. It is written by `R/13_reference_marks.R`. Two of the six placements rest on refits of a respondent-level design, whose aggregate results are kept in `companion/_model-outputs/reference_refits.csv`. Neither file holds any respondent-level data.
 
 ## How each result is placed
 
@@ -27,7 +27,7 @@ A test statistic becomes a partial correlation through r = t / sqrt(t^2 + df). T
 | `r_233` | `statistic_placement` converted on 233 df |
 | `b_natural`, `se_natural`, `b_unit` | The slope in the units of its outcome, its standard error and the unit, where the record or the paper reports the slope. For OA they are those of the refit without the interactions, the slope averaged over the education bands; for C6HJR the slope and standard error are those of the reproduced specification, which reproduces the recorded t exactly |
 | `p_recorded` | The p-value as reported, as text, because two analysts reported "0.000" and the paper reports a threshold |
-| `p_cluster_check` | Where the design can be fitted on the country-year cells, the p-value of the workshop refit of that design under the rule of the curve (CR2 errors clustered by country with Satterthwaite df); empty where it cannot |
+| `p_cluster_check` | Where the design can be fitted on the country-year cells, the p-value of the workshop's refit of that design under the rule of the curve (CR2 errors clustered by country with Satterthwaite df); empty where it cannot |
 | `note` | What the record does not show: the value reported before cleaning, the refit behind a placement, and what the refit could not reproduce |
 
 ## The six marks

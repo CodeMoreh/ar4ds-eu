@@ -42,7 +42,7 @@ curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 ref <- datawizard::data_filter(curve, is_reference)
 ```
 
-This page holds the exercise of the workshop, Tasks 1 to 5, on a copy of R that runs inside your browser, with the data already in place. It is the fallback when the slides do not load or an installation fails, and it gives the same numbers as the slides and the downloadable workspace.
+This page holds the workshop's exercise, Tasks 1 to 5, on a copy of R that runs inside your browser, with the data already in place. It is the fallback when the slides do not load or an installation fails, and it gives the same numbers as the slides and the downloadable workspace.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
@@ -540,7 +540,7 @@ try_spec(noop = "drop")  # leave out the respondents who mentioned no frame
 try_spec(measure = "es_2064_pop")  # a Eurostat unemployment series instead of the World Bank one
 ```
 
-The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. `try_spec()` refuses an option that is off the curve, gives the reason and names the page of the workshop that teaches it. Run the cell, then edit it to try others, such as `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`. The [decision map](menu.qmd#map) sets out every decision and its options.
+The menu holds more options than the curve, which keeps only the options that answer this claim in a justifiable way. `try_spec()` refuses an option that is off the curve, gives the reason and names the workshop's page that teaches it. Run the cell, then edit it to try others, such as `sample = "no_bailout"`, `weights = "pop"`, `construction = "count"`, `family = "beta"` or `outcome = "mneg"`. The [decision map](menu.qmd#map) sets out every decision and its options.
 
 ```{webr}
 #| autorun: false
@@ -591,7 +591,7 @@ submit_exploration()
 
 Preregistration means setting out your choice in a plan **before** you know what it does, which stops you from quietly picking the specification that happens to give the answer you wanted. On this page the plan is the cell below: every later cell reads your choices from it, and `build_model()` refuses code that departs from them. Its numbered fields follow the preregistration template of AsPredicted in a shortened form, and field 2 also stands in for the prior-knowledge section of the template for secondary data (van den Akker et al. 2021).
 
-Make one choice on each decision of the [specification menu](menu.qmd), complete the dotted lines, then run the cell. `claim_align <- TRUE` is the workshop convention, applied automatically: the claim expects framing to rise with GDP growth, so the sign of a growth slope is flipped, and 'supports the claim' reads as a negative sign for everyone.
+Make one choice on each decision of the [specification menu](menu.qmd), complete the dotted lines, then run the cell. `claim_align <- TRUE` is the workshop's convention, applied automatically: the claim expects framing to rise with GDP growth, so the sign of a growth slope is flipped, and 'supports the claim' reads as a negative sign for everyone.
 
 ```{webr}
 #| autorun: false
@@ -627,7 +627,7 @@ my_pred_form    <- "raw"          # raw | log   (growth: raw only; centring or z
 my_family       <- "gaussian"     # gaussian   (a linear model of the cell means)
 my_se           <- "cr2"          # cr2   (fixed: CR2 errors clustered by country)
 
-claim_align     <- TRUE           # the workshop convention, applied automatically
+claim_align     <- TRUE           # the workshop's convention, applied automatically
 
 # 4. Why these controls, in one DAG-grounded sentence: .......................
 # 5. Supported if the claim-aligned coefficient is negative with CR2

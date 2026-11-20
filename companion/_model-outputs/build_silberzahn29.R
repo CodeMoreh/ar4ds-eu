@@ -1,7 +1,7 @@
 ################################################################################
 # Title:        Silberzahn et al. (2018) – the 29 teams' effect estimates
-# Purpose:      Turn the published crowdsourcing results into the committed
-#               copy of the workshop, from which the slides rebuild Figure 3 of
+# Purpose:      Turn the published crowdsourcing results into the workshop's
+#               committed copy, from which the slides rebuild Figure 3 of
 #               the paper from numbers rather than reproduce the image.
 # Reads:        osf.io/gvm2z, component "Results: Data", file
 #               "Crowdsourcing Effects in OR with Subgroups.csv" (public;

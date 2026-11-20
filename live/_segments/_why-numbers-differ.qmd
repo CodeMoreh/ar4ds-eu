@@ -44,7 +44,7 @@ The three models that the class reproduced are the three estimators that the men
 ## Twenty-seven clusters {#twenty-seven-clusters .smaller}
 
 ::: {.small}
-| Test | Two-way fixed effects (C6HJR) | Country fixed effects, on the workshop panel |
+| Test | Two-way fixed effects (C6HJR) | Country fixed effects, on the country-year panel |
 |:--|:--|:--|
 | Conventional | t = `r fmt_num(inference_of("conventional", "t"), 2)` on `r inference_of("conventional", "df")` df, p = `r fmt_num(inference_of("conventional", "p"), 4)` | t = `r fmt_num(disp_inference$t[disp_inference$estimator == "fe_country" & disp_inference$inference == "conventional"], 2)` on `r disp_inference$df[disp_inference$estimator == "fe_country" & disp_inference$inference == "conventional"]` df |
 | Clustered by country, CR1 | t = `r fmt_num(inference_of("cr1_g1", "t"), 2)` on 26 df, p = `r fmt_num(inference_of("cr1_g1", "p"), 3)` | t = `r fmt_num(disp_inference$t[disp_inference$estimator == "fe_country" & disp_inference$inference == "cr1_g1"], 2)` on 26 df |
@@ -60,5 +60,5 @@ The estimate is the same in every row; only the test changes. The years of one c
 :::
 
 ::: notes
-Now the question that conventional errors avoid. Both reproduced t-values treat each row as independent evidence, but the years of one country resemble each other. Clustering by country allows any pattern of correlation within a country, and the evidence then rests on twenty-seven countries rather than two hundred and seventy rows. With so few clusters, of very unequal weight, the usual clustered test is still too generous, so the workshop uses the CR2 correction, with Satterthwaite degrees of freedom that count how many countries effectively carry the information, fewer than ten here. Read my row: the same estimate goes from a p of two in ten thousand to just above point zero five. Read the row of the design of KQXUE on the workshop panel: it stays significant under every test. [advance] The estimate never moves, only the test does, and the CR2 test classes every point of the curve.
+Now the question that conventional errors avoid. Both reproduced t-values treat each row as independent evidence, but the years of one country resemble each other. Clustering by country allows any pattern of correlation within a country, and the evidence then rests on twenty-seven countries rather than two hundred and seventy rows. With so few clusters, of very unequal weight, the usual clustered test is still too generous, so the workshop uses the CR2 correction, with Satterthwaite degrees of freedom that count how many countries effectively carry the information, fewer than ten here. Read my row: the same estimate goes from a p of two in ten thousand to just above point zero five. Read the row of the design of KQXUE on the country-year panel: it stays significant under every test. [advance] The estimate never moves, only the test does, and the CR2 test classes every point of the curve.
 :::

@@ -1,6 +1,6 @@
 # Codebook: `eb_respondents.rds`
 
-**This file is not distributed.** It is derived from sixteen Eurobarometer scientific-use files that GESIS licenses to each user individually, and it is built on your own machine by `prep/01_build_respondents.R` in the workspace from the files you downloaded under your own GESIS account. The [data sources module](../companion/data-sources.html#sec-gesis) explains the download and the terms of use, and the [data management module](../companion/data-management.html) explains the build. The file is stored in `data_private/`, which is excluded from version control in the workspace. This codebook is published so that the respondent-level outputs on the workshop site can be read by anyone, whether or not they hold the file.
+**This file is not distributed.** It is derived from sixteen Eurobarometer scientific-use files that GESIS licenses to each user individually, and it is built on your own machine by `prep/01_build_respondents.R` in the workspace from the files you downloaded under your own GESIS account. The [data sources module](../companion/data-sources.html#sec-gesis) explains the download and the terms of use, and the [data management module](../companion/data-management.html) explains the build. The file is stored in `data_private/`, which is excluded from version control in the workspace. This codebook is published so that the respondent-level outputs on the workshop's website can be read by anyone, whether or not they hold the file.
 
 One row per respondent interviewed in one of the twenty-seven member states of the period, in the sixteen waves: 416,698 rows, 31 columns. The GESIS terms of use apply to every row: no redistribution, no publication of individual cases, no processing by AI systems.
 
@@ -56,7 +56,7 @@ The euro item (`it8`) is kept in the file but not scored in any of the scales us
 
 | File | Rows | What |
 |---|---:|---|
-| `europeanisation_cy.csv` | 270 | The workshop panel: as-interviewed cell means of the six scales, respondent counts, the macro series |
+| `europeanisation_cy.csv` | 270 | The country-year panel: as-interviewed cell means of the six scales, respondent counts, the macro series |
 | `europeanisation_cy_edu.csv` | 810 | The same means by country, year and education band (`edu3`), with the respondent count behind each |
 | `teney_panel_weights.csv` | 270 | Design-weighted and count-built cell means, effective sample sizes, no-opinion counts, population denominators |
 | `teney_panel_measurement.csv` | 38,880 | Cell means under every combination of scoring rule, item set, no-opinion rule and cell weighting |
