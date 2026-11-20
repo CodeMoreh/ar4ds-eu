@@ -5,7 +5,7 @@ Part 2
 :::
 
 ::: notes
-Part two takes the problem of the first session, few clusters of unequal weight, and asks what a Bayesian model does about it. The CR2 test repairs the standard errors after the fit. A Bayesian model has no such repair: the dependence of the years of a country has to be written into the model, and a posterior predictive check tells us whether it has been. The model of the first part fails that check. The part ends with a model whose errors persist from year to year, and with your second run, which fits the frequentist twin of that model.
+Part 2 takes the problem of the first session, few clusters of unequal weight, and asks what a Bayesian model does about it. The CR2 test repairs the standard errors after the fit, while a Bayesian model has no such repair, so the dependence among the years of a country has to be written into the model, and a posterior predictive check tells us whether it has been. The model of Part 1 fails that check, and the part ends with a model whose errors persist from year to year and with your second run, which fits the frequentist twin of that model.
 :::
 
 ## The dependence of the years {#the-dependence-of-the-years .smaller}
@@ -45,7 +45,7 @@ bayes_ppc_draws |>
 ::::
 
 ::: notes
-A model that passes its computational checks may still fail to describe the data. The test is to let the fitted model generate new datasets and compare them with the real one on a statistic that matters, and Bayesian Data Analysis states the principle: replicated data should look like the observed data. The statistic here is the persistence of the residuals, the correlation of the first session, about a half in the data. Look at the top left. The model with one slope replicates a persistence near zero, slightly negative, and not one of its datasets reaches the observed value, because a model with independent errors cannot produce a country that stays above the expected value year after year. Only the two models in the bottom row, in which the errors persist from year to year, reproduce the persistence in the data. The two panels with a slope for each country belong to the third part, and we come back to them there.
+A model that passes its computational checks may still fail to describe the data. The test is to let the fitted model generate new datasets and compare them with the real one on a statistic that matters, a principle stated in Bayesian Data Analysis: replicated data should look like the observed data. The statistic here is the persistence of the residuals, the correlation of the first session, about a half in the data. In the top left panel, the model with one slope replicates a persistence near zero, slightly negative, and not one of its datasets reaches the observed value, because a model with independent errors cannot produce a country that stays above its expected value year after year. Only the two models in the bottom row, whose errors persist from year to year, reproduce the persistence in the data, and the two panels with a slope for each country belong to Part 3.
 :::
 
 ## Persistent errors {#persistent-errors .smaller}
@@ -59,7 +59,7 @@ $$ e_{ct} = \phi\, e_{c,t-1} + \varepsilon_{ct}, \qquad \varepsilon_{ct} \sim N(
 :::
 
 ::: notes
-The failed check names the next model. Let the error of each year carry a fraction phi of the error of the year before, a first-order autoregressive process within each country, with a prior on phi centred on no persistence. The posterior puts phi at about three quarters, and the model passes the check. The slope moves as well as widening, because the likelihood now compares each year with what the year before predicts, so the information comes more from changes from one year to the next than from the level of a year against the decade mean of its country.
+The failed check names the next model, in which the error of each year carries a fraction phi of the error of the year before, a first-order autoregressive process within each country, with a prior on phi centred on no persistence. The posterior puts phi at about three quarters, and the model passes the check. The slope moves as well as widening, because the likelihood now compares each year with what the year before predicts, so that the information comes more from changes from one year to the next than from the level of a year against the decade mean of its country.
 :::
 
 ## Hands-on 2 – Persistence held fixed {#hands-on-2-persistence-held-fixed .smaller}
@@ -80,5 +80,5 @@ The failed check names the next model. Let the error of each year carry a fracti
 :::
 
 ::: notes
-The frequentist twin of the model with persistent errors runs in a second, so you can do by hand what the posterior does by averaging. Fit the two-way regression by generalised least squares, with the persistence held at a value of your choice, and note the slope and its standard error. At nought you get the least-squares slope of the reproduced specification. As you raise the value towards one, the comparison shifts from the level of each year against the decade mean of its country towards the change from one year to the next, and the slope moves towards zero while its standard error grows. Then write two sentences: which of these comparisons is the claim, as the paper states it, about, and what does the posterior of phi, about three quarters, say about the choice between them? [state the time]
+The frequentist twin of the model with persistent errors runs in a second, so that you can do by hand what the posterior does by averaging. Fit the two-way regression by generalised least squares, with the persistence held at a value of your choice, and note the slope and its standard error; at nought you obtain the least-squares slope of the reproduced specification. As the value rises towards one, the comparison shifts from the level of each year against the decade mean of its country towards the change from one year to the next, and the slope moves towards zero while its standard error grows. Then write two sentences, on which of these comparisons the claim, as the paper states it, concerns, and on what the posterior of phi, about three quarters, says about the choice between them.
 :::

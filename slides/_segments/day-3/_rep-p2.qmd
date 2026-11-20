@@ -5,7 +5,7 @@ Part 2
 :::
 
 ::: notes
-Part two is the report itself. It is short: one section, in four parts, written around the analysis that you declared. What makes it a report rather than a page of notes is that every number in it is computed when it renders, from the same run as the output beside it, so that the text cannot fall out of step with the analysis. I show you what the four parts are and how to compute the numbers, and then you write.
+Part 2 is the report itself, one short section in four parts, written around the analysis that you declared. What makes it a report rather than a page of notes is that every number in it is computed when it renders, from the same run as the output beside it, so that the text cannot fall out of step with the analysis. I show you the four parts and how to compute the numbers, and then you write.
 :::
 
 ## What the report contains {#what-the-report-contains .smaller}
@@ -28,7 +28,7 @@ The SCORE dossier of the paper, osf.io/h7432; the replication as Part 4 of the f
 :::
 
 ::: notes
-Here is what goes into the report, and in this order. First the result with its uncertainty, under the errors that you declared: the slope, its t, and the CR2 p-value on its Satterthwaite degrees of freedom, exactly as the helper of Task 5 prints them. Second, its place on the curve of the claim, the share of the specifications whose claim-aligned correlation is more negative than yours. Third, any departure from your declaration, with the reason, or a plain sentence that there was none, because a departure reported with its reason is part of a good report, and a hidden one is not. Fourth, what the replication adds. The new waves gave a positive coefficient, not significant. Your result says what the original panel supports under your choices, the replication what happened when the question was put to later surveys, and the report needs both.
+The report holds four parts, in this order. The first is the result with its uncertainty, under the errors that you declared: the slope, its t, and the CR2 p-value on its Satterthwaite degrees of freedom, as the helper of Task 5 prints them. The second is its place on the curve of the claim, the share of the specifications whose claim-aligned correlation is more negative than yours. The third is any departure from your declaration, with the reason, or a plain sentence that there was none, since a departure reported with its reason belongs in a good report and a hidden one does not. The fourth is what the replication adds: the new waves gave a positive coefficient, not significant, so that your result says what the original panel supports under your choices and the replication what happened when the question was put to later surveys, and the report needs both.
 :::
 
 ## Numbers in the report {#numbers-in-the-report .smaller}
@@ -53,7 +53,7 @@ on `r knitr::inline_expr('sprintf("%.1f", result$df_cr2)')` Satterthwaite degree
 :::
 
 ::: notes
-The numbers come from your run of the declared specification. In the chunk labelled run-spec, write result, arrow, in front of the call. The helper prints exactly what it printed yesterday, and it also hands back every number of its printout, so you can keep them. In the text, inline code does the rest: a backtick, the letter r, and an expression, and when the report renders, the expression is replaced by its value. Use sprintf for the decimals, as the report does elsewhere, because the setup chunk of the report tells R to print four digits, and an inline slope would come out rounded to four decimal places. [advance] Result holds more than the slide uses: the placement, the claim-aligned correlation and the count of country-years. If you declared growth, mind the signs: the printout flips them for the claim, and the stored slope keeps the sign of the fit.
+The numbers come from your run of the declared specification. In the chunk labelled `run-spec`, write `result <-` in front of the call: the helper prints what it printed yesterday and also returns every number of its printout, which you can keep. In the text, inline code does the rest, a backtick, the letter r and an expression, which the render replaces by its value. Use `sprintf()` for the decimals, as the report does elsewhere, because the setup chunk of the report sets R to four digits, and an inline slope would otherwise come out rounded to four decimal places. [advance] `result` holds more than the slide uses, the placement, the claim-aligned correlation and the count of country-years. If you declared growth, mind the signs, since the printout reverses them for the claim while the stored slope keeps the sign of the fit.
 :::
 
 ## Hands-on 2 – Writing the report {#hands-on-2-writing-the-report .smaller}
@@ -70,5 +70,5 @@ Your IDE previews the report with Ctrl+Shift+K. An inline expression that fails 
 :::
 
 ::: notes
-Your turn, and this is the longest stretch of the afternoon. Start with the smallest change, your own name in the header, and commit it, so that the loop of part one becomes a habit. Then keep the result of the helper in the chunk run-spec. Then the section: a heading after the paragraph about a second declared specification, and the first part, the result with its test, with every number as inline code. Render it, read it as a reader would, and commit. Then the other three parts, each followed by a render and a commit with a message that says what it adds. [advance] If a render fails, read the message from the top, where the first lines say where it stopped, and I will come round. [state the time]
+This is the longest stretch of the afternoon. Start with the smallest change, your own name in the header, and commit it, so that the loop of Part 1 becomes a habit. Then keep the result of the helper in the chunk `run-spec`, and write the section, a heading after the paragraph about a second declared specification and the first part, the result with its test, with every number as inline code. Render it, read it as a reader would, and commit. Then write the other three parts, each followed by a render and a commit with a message that says what it adds. [advance] If a render fails, read the message from the top, where the first lines say where it stopped, and I will come round.
 :::

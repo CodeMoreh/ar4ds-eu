@@ -5,7 +5,7 @@ Part 3
 :::
 
 ::: notes
-Part three makes the report into a record that someone else can trust. Two habits do most of the work. A render from a clean session shows that the report makes everything that it uses, so that it would run on anyone's machine. And a history of small commits, each with a message that says what changed, shows how the analysis reached its final form, including any step away from what you declared. Publishing the report on the web comes at the end, for those who want it.
+Part 3 makes the report into a record that someone else can trust, through two habits. A render from a clean session shows that the report makes everything that it uses, so that it would run on anyone's machine, and a history of small commits, each with a message that says what changed, shows how the analysis reached its final form, including any step away from what you declared. Publishing the report on the web comes at the end, for those who want it.
 :::
 
 ## A render from a clean session {#a-render-from-a-clean-session .smaller}
@@ -25,7 +25,7 @@ Quarto documents, sections 3 and 11, on the AR4DS website: codemoreh.github.io/a
 :::
 
 ::: notes
-The objects in your console exist only in your session, and a render never uses them. Quarto starts a fresh R process for every render, runs every chunk from the top and throws the process away at the end, so a report that renders is a report whose chunks make everything that it uses. The test is cheap: restart R, so that the Variables pane empties, and render from a terminal. In this IDE workspace the render takes the three codebooks in the data folder along with the report, so do not be surprised by four files in the log. If it fails, the message tells you where: the line that begins Quitting from gives the lines of the chunk and its label. [advance] In practice, almost every failure comes from one of three things: something made in the console and never in the report, a path that exists only on your machine, or a package that your session had loaded but your code never names.
+The objects in your console exist only in your session, and a render never uses them. Quarto starts a fresh R process for every render, runs every chunk from the top and discards the process at the end, so a report that renders is a report whose chunks make everything that it uses. The test is cheap: restart R, so that the Variables pane empties, and render from a terminal. In this IDE workspace the render takes the three codebooks in the data folder along with the report, so the log lists four files. If the render fails, the line that begins with "Quitting from" gives the lines of the chunk and its label. [advance] In practice almost every failure comes from one of three things, an object made in the console and never in the report, a path that exists only on your machine, or a package loaded in your session but never named by your code.
 :::
 
 ## A history of the analysis {#a-history-of-the-analysis .smaller}
@@ -42,7 +42,7 @@ Git and GitHub for reproducible research, sections 2 and 5, on the AR4DS website
 :::
 
 ::: notes
-A history is only as useful as its messages. A commit should hold one change, and its message should say what the change does, written as if it completed the sentence: this commit will. The example on the slide is one decision of the menu, and its message names it. When two changes end up in one file, the diff editor can stage one of them on its own, so that each commit still records one thing. Notice what the history does for your declaration. Your first commit holds the preregistration block as you declared it. If you change that block later, for any reason, the change is a commit with a date, and anyone can read it, and part three of your report is the place to say what changed and why. The Timeline gives you the history of one file at a glance.
+A history is only as useful as its messages. A commit should hold one change, with a message that says what the change does, written as if it completed the sentence "this commit will", and the example on the slide names one decision of the menu. When two changes end up in one file, the diff editor can stage one of them on its own, so that each commit still records one thing. The history also protects your declaration. Your first commit holds the preregistration block as you declared it, so that any later change to the block, for whatever reason, is a dated commit that anyone can read, and part 3 of your report is the place to say what changed and why. The Timeline gives the history of one file at a glance.
 :::
 
 ## Hands-on 3 – The clean render and the history {#hands-on-3-the-clean-render-and-the-history .smaller}
@@ -59,7 +59,7 @@ Swap with a neighbour: could they say, from your history alone, what you declare
 :::
 
 ::: notes
-Your turn. Restart R and check that the Variables pane is empty. Render from a terminal, then preview, and compare every number of your section with the last render. If something breaks, it is almost always one of the three causes on the slide about the clean render: fix it in the report, not in the console, render again, and commit the fix with a message that says what was wrong. Then open the Timeline of the report and read your own history from the top. [state the time] [advance] Last, swap with a neighbour and read each other's histories. Could your neighbour say, from the messages alone, what you declared, what you found and whether you departed from your declaration? If not, write fuller messages from now on.
+Restart R and check that the Variables pane is empty. Render from a terminal, then preview, and compare every number of your section with the last render. If something breaks, it is almost always one of the three causes on the slide about the clean render, so fix it in the report, not in the console, render again, and commit the fix with a message that says what was wrong. Then open the Timeline of the report and read your own history from the top. [advance] Last, swap with a neighbour and read each other's histories, asking whether the messages alone say what each of you declared, what you found and whether you departed from your declaration, and write fuller messages from now on if they do not.
 :::
 
 ## Publishing the report {#publishing-the-report .smaller .deepdive run="publish"}
@@ -79,7 +79,7 @@ The workflow, the README and the LICENSE of the IDE workspace; Git and GitHub fo
 :::
 
 ::: notes
-Publishing is optional, and it is the step that turns your repository into something that other people can read. With everything committed, the button under the message box reads Publish Branch. It asks you to let Positron sign in to GitHub, creates the repository there and pushes your history. The IDE workspace already carries a small workflow that renders the report on GitHub and publishes it as a web page. Switch it on once, in the settings of the repository under Pages, by choosing GitHub Actions as the source. From then on every push renders your report again, with your own results, and the page follows. [advance] Public means public in the strongest sense, so think before you publish. The country-year data of the workspace are released under an open licence, so they may go. The respondent file never may, and the gitignore keeps its folder out.
+Publishing is optional, and it turns your repository into something that other people can read. With everything committed, the button under the message box reads Publish Branch, which asks you to let Positron sign in to GitHub, creates the repository there and pushes your history. The IDE workspace already carries a small workflow that renders the report on GitHub and publishes it as a web page, switched on once in the settings of the repository, under Pages, by choosing GitHub Actions as the source; from then on every push renders your report again, with your own results, and the page follows. [advance] A published report is public, so think before you publish. The country-year data of the IDE workspace are released under an open licence and may go, while the respondent file never may, and the `.gitignore` keeps its folder out.
 :::
 
 ## Hands-on 4 – Publishing {#hands-on-4-publishing .smaller .deepdive run="publish"}
@@ -92,5 +92,5 @@ Publishing is optional, and it is the step that turns your repository into somet
 :::
 
 ::: notes
-For those who want to publish, here are the steps in order. Commit everything first, because Publish Branch appears only when nothing is waiting. Sign in to GitHub when Positron asks. On the page of your new repository, open the settings, then Pages, and choose GitHub Actions as the source. Then commit one more small change and sync it, which runs the workflow with Pages switched on. When it has finished, your report is at your own github dot io address, under the name of the repository. If the page does not appear, tell me, and we can read the log of the run together. [state the time]
+For those who want to publish, these are the steps in order. Commit everything first, because Publish Branch appears only when nothing is waiting, and sign in to GitHub when Positron asks. On the page of your new repository, open the settings, then Pages, and choose GitHub Actions as the source. Then commit one more small change and sync it, which runs the workflow with Pages switched on, and when it has finished, your report is at your own github.io address, under the name of the repository. If the page does not appear, raise your hand, and we can read the log of the run together.
 :::
