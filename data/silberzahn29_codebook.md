@@ -49,9 +49,9 @@ to an odds ratio, and its uncertainty was converted along with it.
 
 Teams 21 and 27 have intervals that run far past the right edge of any readable
 plot (up to 11.5 and 78.7). The published figure truncates both at 5 and marks
-them with an asterisk; the version in the deck does the same and notes the truncation.
+them with an asterisk; the version on the slides does the same and notes the truncation.
 
-## What the deck uses it for
+## What the slides use it for {#what-the-deck-uses-it-for}
 
 - **Part 1**, before SCORE: Figure 3 of the paper, rebuilt with every team and
   its interval, grouped by distribution family. Silberzahn and colleagues ran the first many-analysts

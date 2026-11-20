@@ -225,7 +225,7 @@ Google has changed its anonymous-form and sharing behaviour before, so verify on
 - [ ] **Clear test rows** from the Sheet so the class starts with an empty chart (delete the test data rows; keep the header row).
 - [ ] Confirm room wifi allows outbound HTTPS to `docs.google.com` and `*.workers.dev` (already in the night-before checklists of the run sheets of the case studies, `facilitator/guide.qmd` here and `facilitator/housing-guide.qmd` on the site of the Housing and racial bias case study).
 
-If the morning test fails, you still have two fallbacks (section 8) and the static "The class multiverse" slide in the deck always works.
+If the morning test fails, you still have two fallbacks (section 8) and the static "The class multiverse" slide always works.
 
 ------------------------------------------------------------------------
 

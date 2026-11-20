@@ -7,7 +7,7 @@ format:
     webr:
       # The packages that the helpers of the lab and the cells of the hands-on
       # slides call. lme4 and lmerTest serve the mixed model of 018OL and load
-      # with the deck, so that no cell downloads during the session (in the lab
+      # with the slides, so that no cell downloads during the session (in the lab
       # the cell of 018OL fetches them on its first run, about 32 MB). The
       # runtime adds evaluate, knitr and htmltools itself; gt is left out,
       # because no slide prints a formatted table and it adds 12 to 23 seconds
@@ -21,8 +21,8 @@ format:
         - lmerTest
       repos:
         - https://codemoreh.github.io/ar4ds-wasm
-# The six files that the cells and the helpers read, fetched into the browser when the deck
-# opens; the runtime drops the leading ../ of each path, so inside the browser
+# The six files that the cells and the helpers read, fetched into the browser when the slides
+# open; the runtime drops the leading ../ of each path, so inside the browser
 # they sit under data/, the folder that the setup cell below
 # names as .data_dir.
 resources:
@@ -35,20 +35,20 @@ resources:
 live:
   show-hints: true
   show-solutions: true
-# The runs that core-runs.lua would lift into the main flow. This deck has no
-# optional run and no deck map: every slide is shown.
+# The runs that core-runs.lua would lift into the main flow. These slides have no
+# optional run and no `deck:` map: every slide is shown.
 core-runs: []
-# THE DECK OF THE PART-DAY FORMAT, AND HOW TO ADAPT IT FOR AN EVENT
+# THE SLIDES OF THE PART-DAY FORMAT, AND HOW TO ADAPT THEM FOR AN EVENT
 #
-# - The deck of the part-day format, with the tasks of the browser lab on the
-#   slides themselves: R loads inside the deck through the
+# - The slides of the part-day format, with the tasks of the browser lab on the
+#   slides themselves: R loads inside the slides through the
 #   Quarto Live extension, and the hands-on slides carry the cells of Task 1,
 #   Task 3 (C6HJR, KQXUE and 018OL, with their hints and solutions, one
-#   slide each) and Task 4, on three slides, and the placement cell. The facilitator and the class work inside one deck; the
+#   slide each) and Task 4, on three slides, and the placement cell. The facilitator and the class work inside the same slides; the
 #   browser lab stays the fallback.
-# - The folder. A live deck cannot share slides/ with the plain decks, because
-#   the `format: revealjs` key of slides/_metadata.yml renders it twice (root
-#   notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
+# - The folder. Web slides cannot share slides/ with the plain slides, because
+#   the `format: revealjs` key of slides/_metadata.yml renders them twice (root
+#   notes, Gotchas), so they live in live/, whose _metadata.yml carries the
 #   shared options under `live-revealjs`, with the paths into slides/ and
 #   style/ adjusted.
 # - The includes below are the run of the session, one segment for each block
@@ -57,8 +57,8 @@ core-runs: []
 #   head of each segment; to shorten, reorder or swap a block, edit the include
 #   lines and the clock comments. The two half dividers carry the ids that the
 #   pages of the track link. The helpers of the lab,
-#   try_spec() and the rest with the graph functions of Task 2, which this deck
-#   does not call, are one file, ../_includes/_lab-helpers.qmd,
+#   try_spec() and the rest with the graph functions of Task 2, which these slides
+#   do not call, are one file, ../_includes/_lab-helpers.qmd,
 #   included after the setup cell that names the data folder.
 # - The title and the subtitle in the YAML above name the course and the
 #   format; an event sets its own (for the ESRA–WAPOR short course of July
@@ -75,7 +75,7 @@ core-runs: []
 ```{webr}
 #| include: false
 #| autorun: true
-# The setup of the deck, run once the engine is ready. .data_dir is the folder
+# The setup of the slides, run once the engine is ready. .data_dir is the folder
 # in which the files of the resources list arrive inside the browser: the
 # runtime drops the leading ../ of their paths, so from the working directory
 # of R they sit under data/. europeanisation is the course panel, the
@@ -92,7 +92,7 @@ First half
 :::
 
 ::: notes
-The first half. I start with the vocabulary of three kinds of repetition, from the glossary that the SCORE programme published, and with the robustness study from the inside, because I was one of the five analysts who reanalysed the claim that we work on. Then the paper itself: the survey question behind it, the scales, the panel that this deck has loaded in your browser, the model and the claim, and what SCORE found when it tried to reproduce and to replicate the study. You write the question that the claim answers, in one sentence, in your notes. And before the break you reproduce the result that one of two analysts recorded, to the third decimal, and find out why your number is exactly that number and why the other group has another one.
+The first half. I start with the vocabulary of three kinds of repetition, from the glossary that the SCORE programme published, and with the robustness study from the inside, because I was one of the five analysts who reanalysed the claim that we work on. Then the paper itself: the survey question behind it, the scales, the panel that these slides have loaded in your browser, the model and the claim, and what SCORE found when it tried to reproduce and to replicate the study. You write the question that the claim answers, in one sentence, in your notes. And before the break you reproduce the result that one of two analysts recorded, to the third decimal, and find out why your number is exactly that number and why the other group has another one.
 :::
 
 {{< include _segments/_three-rs.qmd >}}

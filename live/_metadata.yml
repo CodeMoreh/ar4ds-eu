@@ -1,22 +1,22 @@
-# Metadata of the live decks of the case study, the decks of live/ whose slides carry
+# Metadata of the web slides of the case study, the slides of live/ that carry
 # cells that run R in the browser through the Quarto Live extension
 # (format live-revealjs). A copy of slides/_metadata.yml with its format key
 # changed and the two paths into slides/ adjusted: the `format: revealjs` key
-# of that file would render a live deck twice, the plain copy winning (root
-# notes, Gotchas), which is why the live decks have a folder of their own.
+# of that file would render the web slides twice, the plain copy winning (root
+# notes, Gotchas), which is why the web slides have a folder of their own.
 # Theme and title-slide partial in ../style/ (relative to live/), the
 # navigation script and the core-runs filter in ../slides/, embed-resources
 # false (site build), echo off for clean slides. Keep the two files in step
 # when the shared options change.
 #
-# The event line names the course, which every deck shares; the subtitle of a
-# deck names its format.
+# The event line names the course, which all the slides share; the subtitle of
+# a slide deck names its format.
 
 author: "Chris Moreh"
 event: "Applied replication for data skills, a CodeMoreh course"
 
 # Citations resolve against the project bibliography; rendered citations link
-# to the scrollable References slide at the end of the deck. references-new.bib
+# to the scrollable References slide at the end of the slides. references-new.bib
 # is the staging file for entries not yet in the facilitator's Zotero library –
 # once they are imported and moved into references.bib, this second entry can go.
 bibliography:
@@ -29,7 +29,7 @@ format:
     # Pinned source footers name the author outside the brackets, so they open
     # with a bare `@Key`. Pandoc's example-list syntax claims exactly that
     # shape – a citation at the start of a block is read as a list marker and
-    # silently replaced by a number – and the deck has no example lists to
+    # silently replaced by a number – and the slides have no example lists to
     # lose. Turning the extension off is what makes `@Key.` a citation.
     from: markdown-example_lists
     fig-align: center
@@ -113,7 +113,7 @@ format:
     slide-number: false          # nav-tools.html prints a named readout instead
     preview-links: true
     embed-resources: false
-    # The deck's four parts ARE four horizontal reveal stacks, so 'vertical'
+    # The four parts of the slides ARE four horizontal reveal stacks, so 'vertical'
     # here (reveal's default mode) would put part-to-part jumps on the left and
     # right arrows. It is kept LINEAR instead, because a presentation clicker
     # sends the right arrow and a clicker that skips a whole part mid-sentence

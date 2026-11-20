@@ -1,18 +1,18 @@
 <script>
 /* ------------------------------------------------------------------ *
-   Navigating a 146-slide deck from the front of a room.
+   Navigating 146 slides from the front of a room.
 
    Four things live here, none of which reveal.js gives you by default.
 
    1. OPTIONAL DEPTH IS A SWITCH, NOT A LABEL. The tutorial runs are marked
       `.deepdive` in the source. `?depth=0` in the address opens the lean
-      deck; the `d` key toggles them live, mid-delivery. Hidden slides leave
-      the deck entirely - they are skipped by every navigation key and drop
+      slides; the `d` key toggles them live, mid-delivery. Hidden slides leave
+      the slides entirely - they are skipped by every navigation key and drop
       out of the slide count, so the position readout stays truthful.
 
    2. A POSITION READOUT THAT NAMES WHERE YOU ARE. "72/146" tells a
       facilitator nothing. This prints the part, the position inside it, the
-      position overall, and a badge saying which version of the deck is on
+      position overall, and a badge saying which version of the slides is on
       the projector - full, lean, or full-and-inside-an-optional-run.
       In lean mode a burgundy dot appears on the two slides an optional run
       sits between, so hidden material announces itself rather than having to
@@ -36,7 +36,7 @@
      `data-visibility="hidden"` looks like the right mechanism and is not:
      reveal acts on it once, in its own setup pass, by deleting the node. Set
      the attribute afterwards and reveal ignores it - the slide stays in the
-     deck, every key still walks into it, and only the labels change. So the
+     slides, every key still walks into it, and only the labels change. So the
      nodes come out here, each leaving a comment behind to mark its place, and
      go back into that exact slot when the runs are switched on again. */
   var stash = [];
@@ -59,7 +59,7 @@
   }
 
   /* Slides reveal can stop on: leaves of the stack tree, not the stacks
-     themselves. Queried live, so a caller that needs the FULL deck must run
+     themselves. Queried live, so a caller that needs the FULL slides must run
      before hideRuns() has taken anything out. */
   function allLeaves() {
     return Array.prototype.slice.call(
@@ -118,7 +118,7 @@
 
   /* ---- position readout ---------------------------------------------- */
 
-  /* The deck's horizontal stacks are the four parts plus the front matter.
+  /* The horizontal stacks of the slides are the four parts plus the front matter.
      A stack's name is the h1 on its title slide; the front matter has none. */
   function stackName(h) {
     var stacks = document.querySelectorAll(".reveal .slides > section");
@@ -175,7 +175,7 @@
 
   /* The ordinary slides immediately either side of an optional run. In lean
      mode the run itself is out of the DOM, so these two are the only places
-     where the deck can say "there is more here if you want it" - hence the
+     where the slides can say "there is more here if you want it" - hence the
      burgundy dot on the readout. Cached from boot, when every slide is still
      present; afterwards the neighbours are all that survive to be matched. */
   var seams = null;
@@ -214,7 +214,7 @@
       }) : [];
     var vPos = inPart.indexOf(cur) + 1;
 
-    /* Second line: which version of the deck is on the projector, and - when
+    /* Second line: which version of the slides is on the projector, and - when
        the slide on screen belongs to an optional run - where inside it. In
        lean mode a burgundy dot marks the two slides that an optional run used
        to sit between, so its absence is visible from the front of the room. */
@@ -317,7 +317,7 @@
     if (e.key === "d") {
       depthOn = !depthOn;
       applyDepth();
-      flash(depthOn ? "full deck" : "lean deck");
+      flash(depthOn ? "full slides" : "lean slides");
     } else if (e.key === "g") {
       openJump();
       e.preventDefault();

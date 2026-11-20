@@ -8,7 +8,7 @@ format:
       # The packages that the helpers of the lab and the cells of the hands-on
       # slides call: tinyplot for the figure of Task 2, and fixest, parameters,
       # lme4 and lmerTest for the three reproductions of Task 3, which load
-      # with the deck so that no cell downloads during the day. The runtime
+      # with the slides so that no cell downloads during the day. The runtime
       # adds evaluate, knitr and htmltools itself, and insight arrives with
       # datawizard and parameters; gt is left out, because no slide prints a
       # formatted table and it adds 12 to 23 seconds to the first opening.
@@ -23,7 +23,7 @@ format:
       repos:
         - https://codemoreh.github.io/ar4ds-wasm
 # The six files that the cells and the helpers read, fetched into the browser
-# when the deck opens; the runtime drops the leading ../ of each path, so
+# when the slides open; the runtime drops the leading ../ of each path, so
 # inside the browser they sit under data/, the folder
 # that the setup cell below names as .data_dir.
 resources:
@@ -36,14 +36,14 @@ resources:
 live:
   show-hints: true
   show-solutions: true
-# Optional runs that this deck includes in its main flow (core-runs.lua
+# Optional runs that these slides include in their main flow (core-runs.lua
 # strips their .deepdive mark); the others stay on the d toggle. The runs of
-# this deck are "methods" and "multiverse", both in Part 4.
+# these slides are "methods" and "multiverse", both in Part 4.
 core-runs: []
-# THE DECK OF THE FULL-DAY FORMAT
+# THE SLIDES OF THE FULL-DAY FORMAT
 #
-# - The deck of the full-day format, with the tasks of the browser lab on its hands-on
-#   slides: R loads inside the deck through the Quarto Live extension, and the
+# - The slides of the full-day format, with the tasks of the browser lab on their hands-on
+#   slides: R loads inside the slides through the Quarto Live extension, and the
 #   hands-on slides carry the cells of Task 1 and the warm-up, Task 2 (the
 #   panel, the figure by country, the estimand and the causal graph), Task 3
 #   (C6HJR, KQXUE and 018OL, one slide each, with their hints and solutions),
@@ -52,17 +52,17 @@ core-runs: []
 #   Task 5 (the preregistration cell, prereg(), the model, the run and the
 #   report). The participants do the tasks in the workspace, in their IDE,
 #   while the facilitator runs each step on these slides; a participant whose
-#   installation fails works in the cells of the deck, or in the browser lab,
+#   installation fails works in the cells of the slides, or in the browser lab,
 #   which holds the same tasks as a page. Each hands-on slide names, in one
 #   line, the chunk or the file in which its step lives in the workspace.
-# - The folder. A live deck cannot share slides/ with the plain decks, because
-#   the `format: revealjs` key of slides/_metadata.yml renders it twice (root
-#   notes, Gotchas), so it lives in live/, whose _metadata.yml carries the
+# - The folder. Web slides cannot share slides/ with the plain slides, because
+#   the `format: revealjs` key of slides/_metadata.yml renders them twice (root
+#   notes, Gotchas), so they live in live/, whose _metadata.yml carries the
 #   shared options under `live-revealjs`.
-# - The segments, in the order of the plain deck of the full-day format. The segments
-#   that the full deck of the self-taught format includes as well stay in
+# - The segments, in the order of the plain slides of the full-day format. The segments
+#   that the full slide deck of the self-taught format includes as well stay in
 #   ../slides/_segments/case/ and are included from there; the
-#   segments of this deck alone are in _segments/, among them the hands-on
+#   segments of these slides alone are in _segments/, among them the hands-on
 #   slides with cells (_p1-handson1-live.qmd, _p2-handson2-live.qmd,
 #   _p3-handson3-live.qmd, _p3-handson4-live.qmd, _p4-percentile-live.qmd and
 #   _p4-moment-live.qmd), whose cells are those of the browser lab,
@@ -71,7 +71,7 @@ core-runs: []
 #   ../_includes/_lab-helpers.qmd, included after the setup cell
 #   that names the data folder.
 # - The part dividers and the first slide of each hands-on run keep the ids of
-#   the plain deck, which the part pages of the full-day format link.
+#   the plain slides, which the part pages of the full-day format link.
 # - No duration goes on any slide or into any note.
 ---
 
@@ -83,7 +83,7 @@ core-runs: []
 ```{webr}
 #| include: false
 #| autorun: true
-# The setup of the deck, run once the engine is ready. .data_dir is the folder
+# The setup of the slides, run once the engine is ready. .data_dir is the folder
 # in which the six files of the resources list arrive inside the browser: the
 # runtime drops the leading ../ of their paths, so from the working directory
 # of R they sit under data/. europeanisation is the
@@ -112,11 +112,11 @@ You leave with a reproduced result, an estimand and a causal graph, and two dots
 :::
 
 ::: {.todaymeta .fs-80}
-Work in the workspace, in your IDE (Positron, RStudio, VS Code, etc.); this deck shows every step
+Work in the workspace, in your IDE (Positron, RStudio, VS Code, etc.); these slides show every step
 :::
 
 ::: notes
-Welcome. A full day in four parts. The first part sets out why social science is argued about at all, what 'replication' names, the SCORE robustness study, and the paper that we work on all day, with what SCORE found when it tried to reproduce and to replicate it. The second goes inside the claim of that paper and asks the question underneath the models: what quantity the claim is about, and what a causal graph commits you to. In the third you reproduce one of three recorded results, and the three models behind them lead straight into the problem of few clusters. The fourth part is robustness: the menu of decisions taken apart one by one, the multiverse that those decisions generate, read on the class chart, and the single analysis that you declare before you run it. You work in your workspace all day, and this deck shows every step with its output.
+Welcome. A full day in four parts. The first part sets out why social science is argued about at all, what 'replication' names, the SCORE robustness study, and the paper that we work on all day, with what SCORE found when it tried to reproduce and to replicate it. The second goes inside the claim of that paper and asks the question underneath the models: what quantity the claim is about, and what a causal graph commits you to. In the third you reproduce one of three recorded results, and the three models behind them lead straight into the problem of few clusters. The fourth part is robustness: the menu of decisions taken apart one by one, the multiverse that those decisions generate, read on the class chart, and the single analysis that you declare before you run it. You work in your workspace all day, and these slides show every step with its output.
 :::
 
 ## Two kinds of aim {.smaller}
@@ -158,7 +158,7 @@ Part 1
 :::
 
 ::: notes
-Part one. First, briefly, why social science is argued about at all, including the red-card study, in which twenty-nine teams analysed one dataset and disagreed. Then the matrix that separates reproducing from replicating, and the robustness study, in which five analysts reanalysed the claim that we work on today. Then the paper itself, its claim, and what SCORE found when it tried to reproduce and to replicate it. We end on the workspace and this deck, and on getting everybody running before the break.
+Part one. First, briefly, why social science is argued about at all, including the red-card study, in which twenty-nine teams analysed one dataset and disagreed. Then the matrix that separates reproducing from replicating, and the robustness study, in which five analysts reanalysed the claim that we work on today. Then the paper itself, its claim, and what SCORE found when it tried to reproduce and to replicate it. We end on the workspace and these slides, and on getting everybody running before the break.
 :::
 
 {{< include ../slides/_segments/case/_p1-credibility.qmd >}}
