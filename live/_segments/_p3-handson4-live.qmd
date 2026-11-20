@@ -1,6 +1,6 @@
 <!-- Hands-on 4 in the full-day format, the slide of
 ../slides/_segments/case/_p3-handson4.qmd with the cells of Task 4
-of the browser lab on the seven slides after it: the reproduced
+of the webR workspace on the seven slides after it: the reproduced
 specification, the six single decisions two to a slide, an option off the
 curve, every argument, and the log with the submission. -->
 ## Hands-on 4 – Exploring the menu {#hands-on-4-work-the-menu .smaller}
@@ -15,7 +15,7 @@ curve, every argument, and the log with the submission. -->
 :::
 
 ::: {.fs-80}
-**In the workspace:** Task 4 of `index.qmd`, from the chunk `try-baseline` to the chunk `submit-exploration`, or the section on Task 4 of `working_script.R`.
+**In the IDE workspace:** Task 4 of `index.qmd`, from the chunk `try-baseline` to the chunk `submit-exploration`, or the section on Task 4 of `working_script.R`.
 :::
 
 ::: {.fragment .small}
@@ -33,7 +33,7 @@ Right. This is where you get your hands properly dirty, and I want to be explici
 :::
 
 ::: {.fs-80}
-**In the workspace:** the chunk `try-baseline` of `index.qmd`, where each call fits the model on your machine.
+**In the IDE workspace:** the chunk `try-baseline` of `index.qmd`, where each call fits the model on your machine.
 :::
 
 ```{webr}
@@ -43,14 +43,14 @@ try_spec()
 ```
 
 ::: notes
-I start where every try starts, with the reproduced specification. The cell calls try underscore spec with no arguments, which is my own model, and every argument defaults to it, so changing one thing means changing one argument. [run it] The printout gives the slope with its conventional standard error and t, the claim-aligned partial r, the p-value of the test that classes every point on the curve, the class of the result and its placement among the eight hundred and sixty-four. The test clusters the errors by country with the CR2 correction, on nine point eight Satterthwaite degrees of freedom, and under it this specification is not significant at five per cent, with a p of point zero five zero four. In the slides the result is read from the curve, which loaded with the data; in your workspace try underscore spec fits the model and gives the same numbers.
+I start where every try starts, with the reproduced specification. The cell calls try underscore spec with no arguments, which is my own model, and every argument defaults to it, so changing one thing means changing one argument. [run it] The printout gives the slope with its conventional standard error and t, the claim-aligned partial r, the p-value of the test that classes every point on the curve, the class of the result and its placement among the eight hundred and sixty-four. The test clusters the errors by country with the CR2 correction, on nine point eight Satterthwaite degrees of freedom, and under it this specification is not significant at five per cent, with a p of point zero five zero four. In the slides the result is read from the curve, which loaded with the data; in your IDE workspace try underscore spec fits the model and gives the same numbers.
 :::
 
 ## Hands-on 4 – The question {#hands-on-4-the-question .smaller .output-8}
 
 ::: {.fs-80}
 Each cell changes one decision and holds the others; the first four change the question, here the outcome scale and the estimator.\
-**In the workspace:** the chunk `try-one-at-a-time` of `index.qmd`, whose six calls are the cells of this slide and the next two.
+**In the IDE workspace:** the chunk `try-one-at-a-time` of `index.qmd`, whose six calls are the cells of this slide and the next two.
 :::
 
 ::: {.fs-80}
@@ -75,7 +75,7 @@ One decision at a time, the others held, so that when a number moves you can say
 
 ::: {.fs-80}
 GDP growth in place of unemployment, with the signs flipped so that below zero stays the direction of the claim, and growth held fixed beside unemployment.\
-**In the workspace:** the chunk `try-one-at-a-time` of `index.qmd`.
+**In the IDE workspace:** the chunk `try-one-at-a-time` of `index.qmd`.
 :::
 
 ::: {.fs-80}
@@ -100,7 +100,7 @@ The next two change the measure of the economy. The first measures it by GDP gro
 
 ::: {.fs-80}
 The same question, measured otherwise: the respondents who mentioned no frame left out instead of scored zero, and a Eurostat series of unemployment.\
-**In the workspace:** the chunk `try-one-at-a-time` of `index.qmd`.
+**In the IDE workspace:** the chunk `try-one-at-a-time` of `index.qmd`.
 :::
 
 ::: {.fs-80}
@@ -128,7 +128,7 @@ The menu holds more options than the curve, which keeps only the options that an
 :::
 
 ::: {.fs-80}
-**In the workspace:** the chunk `try-off-curve` of `index.qmd`, marked `error: true` so that the refusal does not stop the render.
+**In the IDE workspace:** the chunk `try-off-curve` of `index.qmd`, marked `error: true` so that the refusal does not stop the render.
 :::
 
 ```{webr}
@@ -145,7 +145,7 @@ The menu holds more options than the curve, which keeps only the options that an
 
 ::: {.fs-80}
 The full set of arguments, each with the reproduced specification as its default and the options of the menu in the comment beside it.\
-**In the workspace:** calls of your own, written after the chunk `try-off-curve` of `index.qmd` or in the console.
+**In the IDE workspace:** calls of your own, written after the chunk `try-off-curve` of `index.qmd` or in the console.
 :::
 
 ::: {.fs-70}
@@ -176,14 +176,14 @@ try_spec(
 :::
 
 ::: notes
-Here is the full set of arguments in one call, each with the reproduced specification as its default and the options of the menu in the comment beside it, in the three groups of the menu: the question, measurement and the model. This is the cell to edit when you design a try of your own. Change two or three of the lines, run it, and the printout has the same lines as before. [run it] The last argument, the inference rule, is fixed: every result on the curve is tested by CR2 errors clustered by country. In your workspace you write such calls yourself, after the chunk of the refused option or in the console, and each one fits the model on your machine.
+Here is the full set of arguments in one call, each with the reproduced specification as its default and the options of the menu in the comment beside it, in the three groups of the menu: the question, measurement and the model. This is the cell to edit when you design a try of your own. Change two or three of the lines, run it, and the printout has the same lines as before. [run it] The last argument, the inference rule, is fixed: every result on the curve is tested by CR2 errors clustered by country. In your IDE workspace you write such calls yourself, after the chunk of the refused option or in the console, and each one fits the model on your machine.
 :::
 
 ## Hands-on 4 – The submission {#hands-on-4-the-submission .smaller .output-8}
 
 ::: {.fs-80}
 `my_experiments()` lists every try; rerun the one that you would defend and **submit it**: the cell prints your tag, such as `amber-otter-42`, and the link to the form, and your dot joins the [Class results]({{< var live-results-url >}}) page.\
-**In the workspace:** the chunks `my-experiments` and `submit-exploration` of `index.qmd`, with the tag in the file `.class-tag`.
+**In the IDE workspace:** the chunks `my-experiments` and `submit-exploration` of `index.qmd`, with the tag in the file `.class-tag`.
 :::
 
 ```{webr}
@@ -197,5 +197,5 @@ submit_exploration()
 ```
 
 ::: notes
-When you have three or four tries, print the log. my underscore experiments lists the tries side by side, with only the decisions that you varied, the small multiverse that you have just built. Then rerun whichever one you can argue for best, so that it is your last try, and submit it. [run both] The cell prints your submission line, a link to a form with every field filled in, and a tag, which marks your dot on the class chart; press Send in the form, and the dot appears on the Class results page within seconds, labelled exploratory because you chose it after looking. In your workspace the tag is kept in a file, so that both of your submissions carry it. [keep the Class results page on the shared screen and press Run Code as the dots land]
+When you have three or four tries, print the log. my underscore experiments lists the tries side by side, with only the decisions that you varied, the small multiverse that you have just built. Then rerun whichever one you can argue for best, so that it is your last try, and submit it. [run both] The cell prints your submission line, a link to a form with every field filled in, and a tag, which marks your dot on the class chart; press Send in the form, and the dot appears on the Class results page within seconds, labelled exploratory because you chose it after looking. In your IDE workspace the tag is kept in a file, so that both of your submissions carry it. [keep the Class results page on the shared screen and press Run Code as the dots land]
 :::

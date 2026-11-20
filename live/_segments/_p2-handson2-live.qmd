@@ -1,8 +1,8 @@
 <!-- Hands-on 2 in the full-day format, the slide of
 ../slides/_segments/case/_p2-handson2.qmd with the cells of Task 2
-of the browser lab on the four slides after it: the panel, the figure by
+of the webR workspace on the four slides after it: the panel, the figure by
 country, the estimand statement and the causal graph. The graph cells call
-the dagify() and adjustmentSets() of the helpers of the lab
+the dagify() and adjustmentSets() of the helpers of the webR workspace
 (../_includes/_lab-helpers.qmd), which read the answers of
 dagitty from dag_answers.csv. -->
 ## Hands-on 2 – The panel, the estimand and the causal graph {#hands-on-2-meet-the-panel-draw-the-graph .smaller}
@@ -16,7 +16,7 @@ dagitty from dag_answers.csv. -->
 :::
 
 ::: {.fs-80}
-**In the workspace:** Task 2 of `index.qmd`, from the chunk `count-data` to the chunk `adjustment-set`, with the graph in `R/dag_starter.R`.
+**In the IDE workspace:** Task 2 of `index.qmd`, from the chunk `count-data` to the chunk `adjustment-set`, with the graph in `R/dag_starter.R`.
 :::
 
 ::: {.fragment .small}
@@ -35,7 +35,7 @@ Your turn, and this is the piece that people tell me afterwards changed how they
 
 ::: {.fs-80}
 The first cell lists the columns of `europeanisation`, with the type and the first values of each; the second counts countries, years and rows.\
-**In the workspace:** the chunk `count-data` of `index.qmd`.
+**In the IDE workspace:** the chunk `count-data` of `index.qmd`.
 :::
 
 ```{webr}
@@ -58,7 +58,7 @@ The panel is already loaded in the slides as europeanisation, as it is in your r
 ## Hands-on 2 – Framing by country {#hands-on-2-framing-by-country .smaller .output-figure}
 
 ::: {.fs-80}
-**In the workspace:** the chunk `fig-cosmo-trend` of `index.qmd`, which draws the same figure.
+**In the IDE workspace:** the chunk `fig-cosmo-trend` of `index.qmd`, which draws the same figure.
 :::
 
 ::: {.fs-80}
@@ -93,7 +93,7 @@ Before fitting anything, say what you are trying to estimate, in words. A templa
 :::
 
 ::: {.fs-80}
-**In the workspace:** the estimand statement in the callout "Task 2, continued" of `index.qmd`, with its gaps in brackets.
+**In the IDE workspace:** the estimand statement in the callout "Task 2, continued" of `index.qmd`, with its gaps in brackets.
 :::
 
 ::: notes
@@ -104,7 +104,7 @@ The second piece is the estimand, which you have already written once, on the sl
 
 ::: {.fs-80}
 The committed arrows are live and the arguable ones commented out: take the `#` off any that you believe, run the graph, then its adjustment set.\
-**In the workspace:** `R/dag_starter.R`, then the chunks `dag` and `adjustment-set` of `index.qmd`.
+**In the IDE workspace:** `R/dag_starter.R`, then the chunks `dag` and `adjustment-set` of `index.qmd`.
 :::
 
 ::: {.fs-70}
@@ -154,5 +154,5 @@ adjustmentSets(my_dag)
 :::
 
 ::: notes
-The third piece is the graph, the same graph as the DAG starter script of your workspace, written as one R formula per arrow: effect on the left of the tilde, cause on the right, so framing tilde unemployment is the arrow from unemployment to framing. The five committed arrows are live, and the arguable ones are commented out, one claim per line. [run both] With the committed arrows the adjustment set is country and year, which is what a two-way fixed-effects model absorbs. [uncomment the growth pair; run both] With growth as a confounder the set becomes country, growth and year, because a slump varies within a country over time and fixed effects cannot reach it. That is a real finding about the design, so do not go hunting for a bug in your code. The bailout pair is a mediator, and the set does not grow.
+The third piece is the graph, the same graph as the DAG starter script of your IDE workspace, written as one R formula per arrow: effect on the left of the tilde, cause on the right, so framing tilde unemployment is the arrow from unemployment to framing. The five committed arrows are live, and the arguable ones are commented out, one claim per line. [run both] With the committed arrows the adjustment set is country and year, which is what a two-way fixed-effects model absorbs. [uncomment the growth pair; run both] With growth as a confounder the set becomes country, growth and year, because a slump varies within a country over time and fixed effects cannot reach it. That is a real finding about the design, so do not go hunting for a bug in your code. The bailout pair is a mediator, and the set does not grow.
 :::

@@ -1,6 +1,6 @@
 <!--
-The helpers of the browser lab, in one file included by three documents: the
-lab itself, lab.qmd, and the two sets of web slides,
+The helpers of the webR workspace, in one file included by three documents: the
+webR workspace itself, lab.qmd, and the two sets of web slides,
 live/short.qmd and live/day.qmd, whose
 hands-on slides run the same cells. The first cell holds the menu and the
 helpers of Tasks 4 and 5, the second the graph functions of Task 2. The
@@ -21,7 +21,7 @@ graph functions read the answers of dagitty from a table.
 # specifications in spec_curve.csv, and every option off the curve is refused
 # with the reason recorded in menu_options.csv; both files arrive through the
 # `resources:` list of the including page, in the folder .data_dir. No model is
-# fitted here; the workspace fits the same specifications live, with their CR2
+# fitted here; the IDE workspace fits the same specifications live, with their CR2
 # test, and returns the same numbers.
 .curve   <- utils::read.csv(file.path(.data_dir, "spec_curve.csv"), stringsAsFactors = FALSE)
 .options <- utils::read.csv(file.path(.data_dir, "menu_options.csv"), stringsAsFactors = FALSE,
@@ -382,7 +382,7 @@ run_spec <- function(spec) {
 # "explore: [amber-otter-42] …", so that the participant can find their own
 # circles on the class chart. The tag rides in the free-text label because the
 # form and its fields are frozen infrastructure. The same functions sit in
-# R/spec_tools.R of the workspace, which keeps the tag in a file; here it lasts
+# R/spec_tools.R of the IDE workspace, which keeps the tag in a file; here it lasts
 # for the browser session, and a nickname passed to either submission function
 # sets it or brings it back after a reload.
 .tag_words <- list(
@@ -489,7 +489,7 @@ report_result <- function(nickname = NULL) {
 #| include: false
 #| autorun: true
 # The graph helpers of Task 2. dagify() reads one formula per arrow, written
-# effect ~ cause as ggdag::dagify() reads it in the workspace. adjustmentSets()
+# effect ~ cause as ggdag::dagify() reads it in the IDE workspace. adjustmentSets()
 # prints the answer of dagitty from dag_answers.csv, computed by
 # R/14_dag_answers.R for every combination of the arrows of the graph cell of
 # Task 2: dagitty cannot run on the workshop's website, which does not send the
@@ -501,7 +501,7 @@ report_result <- function(nickname = NULL) {
 .dag_elsewhere <- c(
   "No stored answer for this graph. The page holds the adjustment sets of the graph",
   "of the cell with any of its commented arrows switched on; for any other graph,",
-  "use dagitty in the workspace (R/dag_starter.R).")
+  "use dagitty in the IDE workspace (R/dag_starter.R).")
 
 # A graph from one formula per arrow. coords is accepted, as ggdag::dagify()
 # accepts it, and not used, because this page does not draw the graph. The

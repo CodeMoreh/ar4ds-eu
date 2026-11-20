@@ -8,9 +8,9 @@ The case study is a claim from a study of how Europeans frame the European Union
 
 | Format | Folder | Taught in |
 |---|---|---|
-| Part-day, in two halves | `tracks/short/` | the web slides, whose cells run R in the browser, with the browser lab as the fallback |
-| Full-day, in four parts | `tracks/day/` | the workspace, with the web slides showing each step and serving, with the browser lab, as the fallback |
-| Self-taught, in five stages | `tracks/independent/` | the workspace |
+| Part-day, in two halves | `tracks/short/` | the web slides, whose cells run R in the browser, with the webR workspace as the fallback |
+| Full-day, in four parts | `tracks/day/` | the IDE workspace, with the web slides showing each step and serving, with the webR workspace, as the fallback |
+| Self-taught, in five stages | `tracks/independent/` | the IDE workspace |
 | Multi-day, three days built around the full-day format | `tracks/long/` | kept in the repository and left out of the build, with the four slide decks of its third day |
 
 Each format is reached from the opening page and has a docked sidebar (`_sidebar.yml`) that lists its pages in teaching order, its exercise page among them, and the tools that it uses, and a slides page that embeds its slides: the web slides of the part-day and full-day formats, `live/short.qmd` and `live/day.qmd`, whose cells run R in the browser, or the full slide deck of the self-taught format, `slides/full.qmd`, assembled from `slides/_segments/case/`. The run sheet of the facilitator, with the timings, is `facilitator/guide.qmd`, which is left out of the build like the rest of `facilitator/`.
@@ -20,11 +20,11 @@ Each format is reached from the opening page and has a docked sidebar (`_sidebar
 | Path | What it is |
 |---|---|
 | `index.qmd` | The home page |
-| `background.qmd`, `menu.qmd`, `curve.qmd`, `class-results.qmd`, `lab.qmd`, `cheatsheet.qmd` | The background page, the specification menu with the decision map, the specification curve with the reading on inference, the class results, the browser lab and the cheatsheet |
-| `_includes/` | The parts that the exercise pages of the formats include (`_exercise-*.qmd`), the helpers of the browser lab and the web slides (`_lab-helpers.qmd`), the download of the workspace (`_workspace.qmd`), and the scripts of the opening page and of the navbar item of the last-opened format |
+| `background.qmd`, `menu.qmd`, `curve.qmd`, `class-results.qmd`, `lab.qmd`, `cheatsheet.qmd` | The background page, the specification menu with the decision map, the specification curve with the reading on inference, the class results, the webR workspace and the cheatsheet |
+| `_includes/` | The parts that the exercise pages of the formats include (`_exercise-*.qmd`), the helpers of the webR workspace and the web slides (`_lab-helpers.qmd`), the download of the IDE workspace (`_workspace.qmd`), and the scripts of the opening page and of the navbar item of the last-opened format |
 | `tracks/` | The formats |
 | `slides/` | The full slide deck of the self-taught format, with its segments in `slides/_segments/case/`, of which the web slides of the full-day format share many, and the four slide decks of the third day of the multi-day format, whose segments are in `slides/_segments/day-3/`, left out of the build |
-| `live/` | The web slides of the part-day and full-day formats, which carry the cells of the browser lab, with the segments of their own in `live/_segments/` |
+| `live/` | The web slides of the part-day and full-day formats, which carry the cells of the webR workspace, with the segments of their own in `live/_segments/` |
 | `companion/` | The modules of the companion, written on the data of the case study; `_model-outputs/` holds the scripts and aggregate outputs behind them. Multilevel models and Bayesian estimation stay in the repository and are left out of the build |
 | `R/` | The pipeline that builds the data files of the case study; `R/README.md` gives the order |
 | `data-raw/` | The archived Eurostat tables that the pipeline reads |
@@ -33,7 +33,7 @@ Each format is reached from the opening page and has a docked sidebar (`_sidebar
 | `resources.qmd` | Readings, records, tools and the list of references |
 | `_variables.yml` | Variables read by the pages, and the next-delivery block |
 
-The downloadable workspace of the case study is the repository [`CodeMoreh/ar4ds-eu-workspace`](https://github.com/CodeMoreh/ar4ds-eu-workspace), and the browser lab carries the same helper functions. Participants who build the panel from the raw files download the Eurobarometer waves from GESIS themselves, because the licence forbids redistribution.
+The IDE workspace of the case study is the repository [`CodeMoreh/ar4ds-eu-workspace`](https://github.com/CodeMoreh/ar4ds-eu-workspace), and the webR workspace carries the same helper functions. Participants who build the panel from the raw files download the Eurobarometer waves from GESIS themselves, because the licence forbids redistribution.
 
 ## The data
 

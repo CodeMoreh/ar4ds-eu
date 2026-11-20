@@ -15,7 +15,7 @@ by_edu <- readr::read_csv("../data/europeanisation_cy_edu.csv", show_col_types =
 
 Between a download and a model lie the tasks examined in turn in this module of the [companion curriculum](index.qmd): reading the raw survey files, selecting the respondents or the events that a study analyses, recoding the answers into the variables described in its paper, building the measures that the models need, turning the data into the unit on which the model is fitted, and checking the result against a target that you did not compute yourself.
 
-The code of the build is drawn from the preparation scripts in the workspace and from the pipeline of the Europeanisation and the economy case study, the numbered scripts in `R/` that write its data files, and is rearranged here as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown but not run on this page, which is built without those files, and the output of each step is shown from the files committed by the workshop, themselves written by the same steps. The second workspace script was run on the respondent file on 27 October 2026, printing the comparison quoted in section 2.7. The build ends by comparing your file with the committed one, which allows a rebuild on your own machine either to reproduce the workshop's file or to report where the two differ.
+The code of the build is drawn from the preparation scripts in the IDE workspace and from the pipeline of the Europeanisation and the economy case study, the numbered scripts in `R/` that write its data files, and is rearranged here as a sequence of steps that you can run one at a time in your IDE. Code that reads a raw or licensed file is shown but not run on this page, which is built without those files, and the output of each step is shown from the files committed by the workshop, themselves written by the same steps. The second workspace script was run on the respondent file on 27 October 2026, printing the comparison quoted in section 2.7. The build ends by comparing your file with the committed one, which allows a rebuild on your own machine either to reproduce the workshop's file or to report where the two differ.
 
 ## 1. The steps of a build {#sec-steps}
 
@@ -28,7 +28,7 @@ Whatever the survey, a build from raw files passes through the same six steps, i
 5. **Reshape or aggregate** the rows into the unit on which the model is fitted: one row per respondent, one row per month in which an event could happen, one row per country and year.
 6. **Check** the result against a target: the counts reported in the paper, the workshop's file, the checksum of a file.
 
-Three rules apply throughout. The raw files are kept in a folder outside the workspace and never edited, and every change is made by the code, where a reader can see it. The code reaches the raw files through a single place, a folder named at the top of the script, which allows someone else to point the same code at their own copy. Files derived from licensed microdata, finally, are written from the first day into a folder ignored by git.
+Three rules apply throughout. The raw files are kept in a folder outside the IDE workspace and never edited, and every change is made by the code, where a reader can see it. The code reaches the raw files through a single place, a folder named at the top of the script, which allows someone else to point the same code at their own copy. Files derived from licensed microdata, finally, are written from the first day into a folder ignored by git.
 
 | | Europeanisation |
 |---|---|
@@ -36,21 +36,21 @@ Three rules apply throughout. The raw files are kept in a folder outside the wor
 | Unit of the analysis file | Country-year |
 | Size | `r nrow(panel)` country-years from `r format(sum(panel$n_cy), big.mark = ",")` respondents |
 | Target of the check | The committed panel, to the precision of floating-point arithmetic |
-| Code in the workshop | `prep/01_build_respondents.R` and `prep/02_scales_and_panel.R` in the workspace |
+| Code in the workshop | `prep/01_build_respondents.R` and `prep/02_scales_and_panel.R` in the IDE workspace |
 | Who may receive the result | The panel, anyone; the respondent file, nobody |
 
 : The build at a glance.
 
 ## 2. The country-year panel from the Eurobarometer {#sec-europeanisation}
 
-In the paper on which the case study is built, the original author [@Teney2016DoesEUEconomic] scored the answers of respondents in sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled the respondents' scores within their countries and waves, with two economic series merged by country and year. The country-year panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the SCORE robustness study [@AczelEtAl2026InvestigatingAnalyticalRobustness], and every page in the full-day format starts from it. The workspace rebuilds the panel from the raw waves with two scripts, `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first script rebuilds the workshop's respondent file from your own GESIS downloads and checks the result against the workshop's build, while the second rebuilds the country-year panel distributed with the workshop, to machine precision, before building the panel by education band.
+In the paper on which the case study is built, the original author [@Teney2016DoesEUEconomic] scored the answers of respondents in sixteen Eurobarometer waves to the question on what the European Union means to them into four framing scales, and modelled the respondents' scores within their countries and waves, with two economic series merged by country and year. The country-year panel, `europeanisation_cy.csv`, averages the same respondents into 270 country-years, as analyst C6HJR did in the SCORE robustness study [@AczelEtAl2026InvestigatingAnalyticalRobustness], and every page in the full-day format starts from it. The IDE workspace rebuilds the panel from the raw waves with two scripts, `prep/01_build_respondents.R`, which you run once, and `prep/02_scales_and_panel.R`, which you read and run step by step. The first script rebuilds the workshop's respondent file from your own GESIS downloads and checks the result against the workshop's build, while the second rebuilds the country-year panel distributed with the workshop, to machine precision, before building the panel by education band.
 
 If you have not downloaded the sixteen files, everything here can still be read, because the output printed by the scripts is quoted on the page, but nothing that reads the respondent file can be run.
 
 ::: {.callout-warning}
 ## Licensed microdata {#the-file-you-are-about-to-build-is-licensed-microdata}
 
-The GESIS terms of use apply to everything written by the first script. The respondent file stays in `data_private/`, a folder kept out of version control by the `.gitignore` file in the workspace. The file is never uploaded, shared, or opened in a session that an AI assistant can read, because the terms prohibit processing the data with AI systems, and it is deleted when the project ends. The aggregates distributed with the workshop are subject to none of these restrictions, and the second script shows where the line between the two kinds of file falls.
+The GESIS terms of use apply to everything written by the first script. The respondent file stays in `data_private/`, a folder kept out of version control by the `.gitignore` file in the IDE workspace. The file is never uploaded, shared, or opened in a session that an AI assistant can read, because the terms prohibit processing the data with AI systems, and it is deleted when the project ends. The aggregates distributed with the workshop are subject to none of these restrictions, and the second script shows where the line between the two kinds of file falls.
 :::
 
 ### 2.1 The respondent file {#sec-build}

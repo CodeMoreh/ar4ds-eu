@@ -232,7 +232,7 @@ stopifnot("KQXUE does not reproduce t = -7.169 on 242 df" =
           "018OL does not reproduce t = -1.206 on 396.9 df" =
             round(repro$t[3], 3) == -1.206 && round(repro$df[3], 1) == 396.9)
 
-# readr writes the bytes that the site and the workspace compare
+# readr writes the bytes that the site and the IDE workspace compare
 readr::write_csv(kqxue, out_path("analyst_KQXUE.csv"))
 readr::write_csv(o18, out_path("analyst_018OL.csv"))
 

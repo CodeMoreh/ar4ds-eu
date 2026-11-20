@@ -16,14 +16,14 @@
 #               R/13_reference_marks.R
 ###############################################################################
 # The file lives outside every repository: by default in the private folder of
-# the local copy of the workspace, elsewhere through EB_RESPONDENTS. Paths are
+# the local copy of the IDE workspace, elsewhere through EB_RESPONDENTS. Paths are
 # relative to the project root; a script run from elsewhere sets EB_COURSE_ROOT.
 .root <- Sys.getenv("EB_COURSE_ROOT", unset = ".")
 .respondents_path <- Sys.getenv("EB_RESPONDENTS",
                                 unset = file.path(.root, "../ar4ds-eu-workspace/data_private/eb_respondents.rds"))
 if (!file.exists(.respondents_path))
   stop("respondent file not found at '", .respondents_path,
-       "': build it with prep/01_build_respondents.R in the workspace, or set ",
+       "': build it with prep/01_build_respondents.R in the IDE workspace, or set ",
        "EB_RESPONDENTS to its path", call. = FALSE)
 
 .items <- list(cosmo = paste0("it", c(1, 3, 5, 6, 7)),

@@ -1,13 +1,13 @@
 ##############################################################################
 # Title:        14_dag_answers.R
-# Purpose:      The answers that the causal-graph task of the browser lab
+# Purpose:      The answers that the causal-graph task of the webR workspace
 #               prints (Task 2), computed with dagitty (Textor et al. 2016,
 #               International Journal of Epidemiology) for every graph to
-#               which the graph cell of the lab leads: the five committed
+#               which the graph cell of the webR workspace leads: the five committed
 #               arrows with any combination of the five arguable arrows that
 #               the cell leaves commented out, 32 graphs in all. For each
 #               graph, the minimal adjustment sets for the total effect of
-#               unemployment on framing. The lab reads these answers because
+#               unemployment on framing. The webR workspace reads these answers because
 #               dagitty cannot run there: its graph algorithms need a
 #               JavaScript engine that a browser grants only to a page served
 #               with cross-origin isolation headers, which the workshop's website
@@ -36,7 +36,7 @@ added <- purrr::map(0:length(commented), \(k) utils::combn(commented, k, simplif
 
 # One block per graph, one row per minimal set, in the order in which dagitty
 # returns them. A graph without a valid set would keep one row with item 0,
-# which the lab tells apart from a graph missing from the table (no graph of
+# which the webR workspace tells apart from a graph missing from the table (no graph of
 # the task has one). dplyr::mutate(): datawizard does not find the arguments
 # of the lambda.
 answers <- purrr::imap(added, \(extra, graph) {

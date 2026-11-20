@@ -35,7 +35,7 @@ The reference specification is the reproduced one: `mcosmo` on raw unemployment 
 | `n_cells`, `n_countries` | The country-years and countries in the fit: 270 and 27 everywhere on the two curves |
 | `is_reference` | TRUE for the reproduced specification only; FALSE throughout the negative curve, which has no reference |
 
-The CR2 test is computed in closed form, so it carries no simulation error, and any copy of the fit on the same cells returns the stored p-value exactly; the helpers of the workspace refit every specification that way and warn if the result departs from the file. At the reference cell the CR2 t is −2.230 on 9.8 Satterthwaite df, with p = 0.0504: the reproduced specification lies just above the threshold of 5% and is not significant under the workshop's rule, while CR1 on 26 df gives p = 0.029 and conventional errors p = 0.0002.
+The CR2 test is computed in closed form, so it carries no simulation error, and any copy of the fit on the same cells returns the stored p-value exactly; the helpers of the IDE workspace refit every specification that way and warn if the result departs from the file. At the reference cell the CR2 t is −2.230 on 9.8 Satterthwaite df, with p = 0.0504: the reproduced specification lies just above the threshold of 5% and is not significant under the workshop's rule, while CR1 on 26 df gives p = 0.029 and conventional errors p = 0.0002.
 
 ## What the curves show
 

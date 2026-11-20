@@ -5,7 +5,7 @@ engine: knitr
 format:
   live-revealjs:
     webr:
-      # The packages that the helpers of the lab and the cells of the hands-on
+      # The packages that the helpers of the webR workspace and the cells of the hands-on
       # slides call: tinyplot for the figure of Task 2, and fixest, parameters,
       # lme4 and lmerTest for the three reproductions of Task 3, which load
       # with the slides so that no cell downloads during the day. The runtime
@@ -42,7 +42,7 @@ live:
 core-runs: []
 # THE SLIDES OF THE FULL-DAY FORMAT
 #
-# - The slides of the full-day format, with the tasks of the browser lab on their hands-on
+# - The slides of the full-day format, with the tasks of the webR workspace on their hands-on
 #   slides: R loads inside the slides through the Quarto Live extension, and the
 #   hands-on slides carry the cells of Task 1 and the warm-up, Task 2 (the
 #   panel, the figure by country, the estimand and the causal graph), Task 3
@@ -50,11 +50,11 @@ core-runs: []
 #   Task 4 (the reproduced specification, the six single decisions, an option
 #   off the curve, every argument, and the submission), the placement, and
 #   Task 5 (the preregistration cell, prereg(), the model, the run and the
-#   report). The participants do the tasks in the workspace, in their IDE,
+#   report). The participants do the tasks in the IDE workspace, in their IDE,
 #   while the facilitator runs each step on these slides; a participant whose
-#   installation fails works in the cells of the slides, or in the browser lab,
+#   installation fails works in the cells of the slides, or in the webR workspace,
 #   which holds the same tasks as a page. Each hands-on slide names, in one
-#   line, the chunk or the file in which its step lives in the workspace.
+#   line, the chunk or the file in which its step lives in the IDE workspace.
 # - The folder. Web slides cannot share slides/ with the plain slides, because
 #   the `format: revealjs` key of slides/_metadata.yml renders them twice (root
 #   notes, Gotchas), so they live in live/, whose _metadata.yml carries the
@@ -65,8 +65,8 @@ core-runs: []
 #   segments of these slides alone are in _segments/, among them the hands-on
 #   slides with cells (_p1-handson1-live.qmd, _p2-handson2-live.qmd,
 #   _p3-handson3-live.qmd, _p3-handson4-live.qmd, _p4-percentile-live.qmd and
-#   _p4-moment-live.qmd), whose cells are those of the browser lab,
-#   ../lab.qmd. The helpers of the lab, try_spec() and
+#   _p4-moment-live.qmd), whose cells are those of the webR workspace,
+#   ../lab.qmd. The helpers of the webR workspace, try_spec() and
 #   the rest with the graph functions of Task 2, are one file,
 #   ../_includes/_lab-helpers.qmd, included after the setup cell
 #   that names the data folder.
@@ -112,11 +112,11 @@ You leave with a reproduced result, an estimand and a causal graph, and two dots
 :::
 
 ::: {.todaymeta .fs-80}
-Work in the workspace, in your IDE (Positron, RStudio, VS Code, etc.); these slides show every step
+Work in the IDE workspace, in your IDE (Positron, RStudio, VS Code, etc.); these slides show every step
 :::
 
 ::: notes
-Welcome. A full day in four parts. The first part sets out why social science is argued about at all, what 'replication' names, the SCORE robustness study, and the paper that we work on all day, with what SCORE found when it tried to reproduce and to replicate it. The second goes inside the claim of that paper and asks the question underneath the models: what quantity the claim is about, and what a causal graph commits you to. In the third you reproduce one of three recorded results, and the three models behind them lead straight into the problem of few clusters. The fourth part is robustness: the menu of decisions taken apart one by one, the multiverse that those decisions generate, read on the class chart, and the single analysis that you declare before you run it. You work in your workspace all day, and these slides show every step with its output.
+Welcome. A full day in four parts. The first part sets out why social science is argued about at all, what 'replication' names, the SCORE robustness study, and the paper that we work on all day, with what SCORE found when it tried to reproduce and to replicate it. The second goes inside the claim of that paper and asks the question underneath the models: what quantity the claim is about, and what a causal graph commits you to. In the third you reproduce one of three recorded results, and the three models behind them lead straight into the problem of few clusters. The fourth part is robustness: the menu of decisions taken apart one by one, the multiverse that those decisions generate, read on the class chart, and the single analysis that you declare before you run it. You work in your IDE workspace all day, and these slides show every step with its output.
 :::
 
 ## Two kinds of aim {.smaller}
@@ -158,7 +158,7 @@ Part 1
 :::
 
 ::: notes
-Part one. First, briefly, why social science is argued about at all, including the red-card study, in which twenty-nine teams analysed one dataset and disagreed. Then the matrix that separates reproducing from replicating, and the robustness study, in which five analysts reanalysed the claim that we work on today. Then the paper itself, its claim, and what SCORE found when it tried to reproduce and to replicate it. We end on the workspace and these slides, and on getting everybody running before the break.
+Part one. First, briefly, why social science is argued about at all, including the red-card study, in which twenty-nine teams analysed one dataset and disagreed. Then the matrix that separates reproducing from replicating, and the robustness study, in which five analysts reanalysed the claim that we work on today. Then the paper itself, its claim, and what SCORE found when it tried to reproduce and to replicate it. We end on the IDE workspace and these slides, and on getting everybody running before the break.
 :::
 
 {{< include ../slides/_segments/case/_p1-credibility.qmd >}}

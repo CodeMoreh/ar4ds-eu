@@ -31,19 +31,19 @@ A claim about the effect of a context can be read at two levels. The claim of th
 :::
 
 ::: {.src}
-data/eb_respondents_codebook.md; prep/01_build_respondents.R and prep/02_scales_and_panel.R in the workspace.
+data/eb_respondents_codebook.md; prep/01_build_respondents.R and prep/02_scales_and_panel.R in the IDE workspace.
 :::
 
 ::: notes
-This is the file behind the session. You built it yesterday evening from the sixteen Eurobarometer files that you downloaded under your own GESIS account, and the build checked every file against the copy from which the country-year panel was made. More than four hundred thousand people, one row each, with the fourteen items of the question on what the EU means to a respondent, the weight that GESIS supplies, and the characteristics that the published model uses. The second script of the workspace turns the items into the six scales and rebuilds the panel from your respondents, which is the first thing that we do in the hands-on. The terms of GESIS forbid passing the file on, publishing individual cases or processing the file with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs saved from scripts run once on the licensed file.
+This is the file behind the session. You built it yesterday evening from the sixteen Eurobarometer files that you downloaded under your own GESIS account, and the build checked every file against the copy from which the country-year panel was made. More than four hundred thousand people, one row each, with the fourteen items of the question on what the EU means to a respondent, the weight that GESIS supplies, and the characteristics that the published model uses. The second script of the IDE workspace turns the items into the six scales and rebuilds the panel from your respondents, which is the first thing that we do in the hands-on. The terms of GESIS forbid passing the file on, publishing individual cases or processing the file with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs saved from scripts run once on the licensed file.
 :::
 
 ## Hands-on 1 – The respondent file {#hands-on-1-the-respondent-file .smaller}
 
 ::: {.small}
-**In the workspace**, with the file that you built after day 2:
+**In the IDE workspace**, with the file that you built after day 2:
 
-1. Open the workspace in your IDE. The build left `data_private/eb_respondents.rds` and the report of its checks, `data_private/build_report.csv`
+1. Open the IDE workspace in your IDE. The build left `data_private/eb_respondents.rds` and the report of its checks, `data_private/build_report.csv`
 2. Run `prep/02_scales_and_panel.R` section by section. It scores the items into the scales, as `scored`, and checks the panel rebuilt from your file against `data/europeanisation_cy.csv`
 3. Join the unemployment rate to the respondents:
 
@@ -53,11 +53,11 @@ This is the file behind the session. You built it yesterday evening from the six
 :::
 
 ::: {.fragment .small}
-The file stays in `data_private/`, which the workspace keeps out of Git. Without the file, follow this hands-on and the next one on the slides.
+The file stays in `data_private/`, which the IDE workspace keeps out of Git. Without the file, follow this hands-on and the next one on the slides.
 :::
 
 ::: notes
-Open the workspace. The file that you built yesterday evening is in data private, with the report of its checks beside it, and if a check failed and you have not told me yet, tell me now. Then run the second script section by section. It reads your file, scores the items into the scales under the zero rule, and rebuilds the panel from your respondents, and its comparison with the country-year panel should show no difference beyond machine precision. Last, one join adds the unemployment rate to every respondent, and the result, person, is the data for the rest of the session. If you work in RStudio, check that its assistant is switched off, as the README of the workspace explains. [advance] Without the file, follow this hands-on and the next one on the slides: every number on the slides comes from the same file, fitted once on my machine.
+Open the IDE workspace. The file that you built yesterday evening is in data private, with the report of its checks beside it, and if a check failed and you have not told me yet, tell me now. Then run the second script section by section. It reads your file, scores the items into the scales under the zero rule, and rebuilds the panel from your respondents, and its comparison with the country-year panel should show no difference beyond machine precision. Last, one join adds the unemployment rate to every respondent, and the result, person, is the data for the rest of the session. If you work in RStudio, check that its assistant is switched off, as the README of the workspace explains. [advance] Without the file, follow this hands-on and the next one on the slides: every number on the slides comes from the same file, fitted once on my machine.
 :::
 
 ## Levels and evidence {#levels-and-evidence .smaller}
@@ -141,7 +141,7 @@ The variance components say where the variation in framing lies. Almost all of i
 ## Hands-on 2 – Three random structures {#hands-on-2-three-random-structures .smaller}
 
 ::: {.small}
-**In the workspace**, with `person` from Hands-on 1:
+**In the IDE workspace**, with `person` from Hands-on 1:
 
 1. Fit the slope with countries alone, then with the country-years declared as well, and read the `df` column of each against the table of levels and evidence:
 

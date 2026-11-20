@@ -30,7 +30,7 @@ You do all of this; participants do nothing except open the pre-filled link that
 
 Why the Worker exists: a browser will only read a remote file if that file is served with an `Access-Control-Allow-Origin` (CORS) header. Google Sheets does **not** reliably send that header to a third-party site like `codemoreh.github.io`, and the URL it does serve redirects across origins, which browsers block. The Worker is a tiny relay that you control: the browser talks to the Worker, the Worker fetches the Sheet server-to-server (no browser, no CORS on that hop), and hands the CSV back with the right header. This removes the single biggest live-demo risk. It is \~20 lines and runs free.
 
-**Design note (prereg + format).** This system handles the **results** submissions only. The `spec` field carries the phase and a participant tag in front of the specification, `explore: [amber-otter-42] …` or `declared: [amber-otter-42] …`, and `class-results.qmd` parses both, so the Form and the Sheet need no column for either. The tag is drawn by the submission helpers (or set with their `nickname` argument), is shared by both submissions of a participant, and lets participants highlight their own circles through the `my_tag` line of the live cell; rows without a tag or without a phase, from earlier deliveries, still parse. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `class-results.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the workspace the preregistration block is rendered in the report, and in the browser lab participants complete the same block and copy it into their notes), so that a participant never has to submit a preregistration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `../_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
+**Design note (prereg + format).** This system handles the **results** submissions only. The `spec` field carries the phase and a participant tag in front of the specification, `explore: [amber-otter-42] …` or `declared: [amber-otter-42] …`, and `class-results.qmd` parses both, so the Form and the Sheet need no column for either. The tag is drawn by the submission helpers (or set with their `nickname` argument), is shared by both submissions of a participant, and lets participants highlight their own circles through the `my_tag` line of the live cell; rows without a tag or without a phase, from earlier deliveries, still parse. Each participant submits twice through the same Form, once in Task 4 with `submit_exploration()` and once in Task 5 with `report_result()`. Both helpers put the phase in front of the spec label (`explore:` or `declared:`), and the live chart in `class-results.qmd` reads that prefix, drawing an open circle for an explored specification and a filled circle for a declared one. Preregistration is kept off it (in the IDE workspace the preregistration block is rendered in the report, and in the webR workspace participants complete the same block and copy it into their notes), so that a participant never has to submit a preregistration and a result separately. If you would rather make prereg fully digital and timestamped too, the optional mirror form specified in `../_planning/prereg-form-spec.md` does that on a Sheet of its own and never touches this pipeline.
 
 ------------------------------------------------------------------------
 
@@ -160,7 +160,7 @@ wrangler deploy
 
 ## 4. Step 3 – wire the IDs into the repo
 
-There are four edits. All four places already hold the live values – the Worker URL in `class-results.qmd`, the Form ID and entry codes in the `.submit()` helper of the browser lab and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
+There are four edits. All four places already hold the live values – the Worker URL in `class-results.qmd`, the Form ID and entry codes in the `.submit()` helper of the webR workspace and of the template, and the form link in `_variables.yml` – so these edits are needed again only if the Form or the Worker is recreated.
 
 1.  **`class-results.qmd`** – in the `live-multiverse-setup` cell, set:
 
@@ -177,7 +177,7 @@ There are four edits. All four places already hold the live values – the Worke
                r = "entry.777777")
     ```
 
-3.  **The template repo** (`CodeMoreh/ar4ds-eu-workspace`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, the folder `ar4ds-eu-workspace` beside this site.)
+3.  **The template repo** (`CodeMoreh/ar4ds-eu-workspace`, the separate repo that participants copy) – make the **same** edit to the `.submit()` helper in its `R/spec_tools.R` so participants who use the IDE workspace get working links too. (That file is gitignored from this repo; edit it in its own checkout, the folder `ar4ds-eu-workspace` beside this site.)
 
     [**ACTUAL: I CAN'T LOCATE THAT !!!**]{.underline}
 
@@ -283,7 +283,7 @@ Every case study submits through the Form, Sheet and Worker of sections 2 to 4 u
 | Housing | `explore: [amber-otter-42] housing comparison=white population=replies uncoded=drop model=lpm adjust=none` | `cases/housing/class-results.qmd`, which reads only the rows with `housing` after the tag |
 | Immigration, Cohabitation | `explore: [tag] immigration <spec>`, `explore: [tag] cohabitation <spec>` | the Class results page of each case study, once it exists |
 
-The word of each case study is `cases.<slug>.results-word` in `_variables.yml`, and the submission helpers of the case study (its browser lab and `R/spec_tools.R` in its workspace) write it into every label. A `declared:` label has the same shape.
+The word of each case study is `cases.<slug>.results-word` in `_variables.yml`, and the submission helpers of the case study (its webR workspace and `R/spec_tools.R` in its IDE workspace) write it into every label. A `declared:` label has the same shape.
 
 The cost falls on the Europeanisation chart, which reads every row of the Sheet, because its reading of the submissions is frozen, and which would draw the rows of another case study as diamonds that match no specification. Before a delivery of any case study, clear the Sheet of the rows of earlier deliveries (select the data rows below the header of the tab "Form Responses 1" and delete them; the Form keeps working). The archived snapshot of a delivery (section 9) goes into the `data/class_results.csv` of the case study that ran it.
 
@@ -297,10 +297,10 @@ About twenty minutes, once per case study. It keeps the classes of different cas
 4. **Read the codes.** In the Form editor → ⋮ → **Get pre-filled link**, type `spec`, `b`, `se`, `t`, `df`, `n`, `r` into the seven boxes, Get link, Copy. From the link read the Form ID (between `/d/e/` and `/viewform`) and the seven `entry.NNN` codes, each followed by its recognisable value.
 5. **Deploy a second Worker.** Cloudflare dashboard → Workers & Pages → Create Worker, name it `class-results-housing`, Edit code, paste the whole of `facilitator/cloudflare-worker.js`, set `SHEET_ID` to the new Sheet ID, Deploy. Open the Worker URL: it should return the header row as CSV.
 6. **Wire the codes in, in four places**, each a single marked block:
-   - `R/spec_tools.R` of the workspace (`CodeMoreh/ar4ds-housing-workspace`, checked out in the folder `ar4ds-housing-workspace` beside the site) – the configuration block at the top: the Form ID and the seven entry codes (then commit and push the workspace repository, so that new downloads carry them);
-   - `cases/housing/lab.qmd` – the same block in the helper chunk of the browser lab;
+   - `R/spec_tools.R` of the IDE workspace (`CodeMoreh/ar4ds-housing-workspace`, checked out in the folder `ar4ds-housing-workspace` beside the site) – the configuration block at the top: the Form ID and the seven entry codes (then commit and push the workspace repository, so that new downloads carry them);
+   - `cases/housing/lab.qmd` – the same block in the helper chunk of the webR workspace;
    - `cases/housing/class-results.qmd` – the `worker_url` line of the live cell;
    - the public short link of the new Form (Send → link → Shorten URL), in place of `{{< var results-form-url >}}` on the cheatsheet of the case study, `cases/housing/cheatsheet.qmd`, which is the only page of the case study that prints it. Leave `results-form-url` in `_variables.yml` as it is: it belongs to the frozen pipeline of the Europeanisation case study.
-7. **Render and check.** Render the lab and the Class results page (`quarto render cases/housing/lab.qmd`, `quarto render cases/housing/class-results.qmd`), submit one test result from the lab, and press Run Code on the live chart: the test circle should appear. Delete the test row from the Sheet afterwards.
+7. **Render and check.** Render the webR workspace and the Class results page (`quarto render cases/housing/lab.qmd`, `quarto render cases/housing/class-results.qmd`), submit one test result from the webR workspace, and press Run Code on the live chart: the test circle should appear. Delete the test row from the Sheet afterwards.
 
 The word for the case study stays in the labels after the switch: it costs nothing, and it keeps the rows identifiable if two Sheets are ever merged.

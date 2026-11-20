@@ -757,7 +757,7 @@ Since almost every specification on the curve points in the direction of the cla
 
 : The decisions that vary on the curve of 864. The share of the variance is the share of the variance of the claim-aligned partial r that the decision carries as a main effect; the class changes are the share of pairs of specifications, differing only in that decision, whose members fall in different classes (below zero with CR2 p < 0.05, or not). The predictor pairs raw World Bank unemployment with World Bank growth. Source: `data/spec_curve_forks.csv`. {#tbl-forks}
 
-The numbers on this page are computed from the files written to `data/` by the workshop's pipeline, namely the curve in `data/spec_curve.csv` and the comparison of every option with its twins on the curve in `data/menu_deviations.csv`, while `data/menu_options.csv` records for every option its status and the one-sentence reason printed by the helpers in the browser lab and in the workspace when the option is off the curve.
+The numbers on this page are computed from the files written to `data/` by the workshop's pipeline, namely the curve in `data/spec_curve.csv` and the comparison of every option with its twins on the curve in `data/menu_deviations.csv`, while `data/menu_options.csv` records for every option its status and the one-sentence reason printed by the helpers in the webR workspace and in the IDE workspace when the option is off the curve.
 
 ## The question {#level-estimand}
 
@@ -893,7 +893,7 @@ The last column illustrates why the curve plots the descriptive partial correlat
 
 ## Admissible combinations {#admissibility}
 
-Not every combination of options exists, and the browser lab and the workspace warn you when you have combined two options that do not go together:
+Not every combination of options exists, and the webR workspace and the IDE workspace warn you when you have combined two options that do not go together:
 
 - **Published series ← predictor.** The unemployment series go with unemployment and the growth series with growth.
 - **Predictor form ← predictor.** GDP growth takes negative values and enters raw only.
@@ -905,7 +905,7 @@ Not every combination of options exists, and the browser lab and the workspace w
 
 ## Claim alignment {#the-claim-alignment-step}
 
-Every outcome on the curve is a positive framing, for which the claim predicts a **negative** coefficient on unemployment, and for unemployment specifications the partial correlation therefore needs no alignment, since below zero already is the direction of the claim. A single flip remains for the growth specifications, since when the predictor is GDP growth the claim predicts a **positive** coefficient on the positive framings, and the claim-aligned value therefore multiplies b, t and r by −1 (the lab applies this for you). After the flip, below zero means the direction of the claim for every specification on the curve, whatever it measures.
+Every outcome on the curve is a positive framing, for which the claim predicts a **negative** coefficient on unemployment, and for unemployment specifications the partial correlation therefore needs no alignment, since below zero already is the direction of the claim. A single flip remains for the growth specifications, since when the predictor is GDP growth the claim predicts a **positive** coefficient on the positive framings, and the claim-aligned value therefore multiplies b, t and r by −1 (the webR workspace applies this for you). After the flip, below zero means the direction of the claim for every specification on the curve, whatever it measures.
 
 The negative scales have a curve of their own, on which the alignment is reversed so that below zero is the direction of the other half of the first hypothesis, an increase in negative framing. Reversing the sign of r there is equivalent to reverse-coding the negative scale as 1 − y before fitting, which flips the sign of the coefficient and leaves its standard error, |t| and p-value untouched, alignment thus changing the direction in which the evidence is stated but nothing about the evidence itself.
 

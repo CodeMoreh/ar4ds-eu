@@ -1,5 +1,5 @@
 ---
-title: "Browser lab"
+title: "webR workspace"
 subtitle: "The exercise and its data, running in a browser tab"
 engine: knitr
 format:
@@ -42,7 +42,7 @@ curve <- readr::read_csv("data/spec_curve.csv", show_col_types = FALSE)
 ref <- datawizard::data_filter(curve, is_reference)
 ```
 
-This page holds the workshop's exercise, Tasks 1 to 5, on a copy of R that runs inside your browser, with the data already in place. It is the fallback when the slides do not load or an installation fails, and it gives the same numbers as the slides and the downloadable workspace.
+This page holds the workshop's exercise, Tasks 1 to 5, on a copy of R that runs inside your browser, with the data already in place. It is the fallback when the slides do not load or an installation fails, and it gives the same numbers as the slides and the IDE workspace.
 
 ::: {.callout-important icon="false"}
 ## While the R engine loads
@@ -290,7 +290,7 @@ my_dag <- dagify(
           growth = -1.0, bailout = -1.2, politicisation = -0.95)))
 ```
 
-Then ask for the adjustment set of the graph that you have just written. On this page `adjustmentSets()` prints the answer that dagitty, the R package for causal graphs, gave for every combination of the arrows in the cell ([codebook](data/dag_answers_codebook.md)), and any other graph gets a pointer to the workspace, where dagitty itself runs.
+Then ask for the adjustment set of the graph that you have just written. On this page `adjustmentSets()` prints the answer that dagitty, the R package for causal graphs, gave for every combination of the arrows in the cell ([codebook](data/dag_answers_codebook.md)), and any other graph gets a pointer to the IDE workspace, where dagitty itself runs.
 
 ```{webr}
 #| autorun: false
@@ -661,7 +661,7 @@ my_model <- build_model(______ ~ ______, estimator = "______")
 The formula uses the column names of `europeanisation`, with the outcome that you preregistered on the left of `~` and the predictor terms on the right. For a declaration of the reproduced specification it is `mcosmo ~ unemp`. With the log form it would be `mcosmo ~ log(unemp)`, and with a co-predictor `mcosmo ~ unemp + growth`. The estimator is the menu code itself, in quotes: `"fe_twoway"` or `"fe_country"`. You do not write the fixed-effects syntax here – the estimator code stands for it, and the cells of C6HJR and KQXUE in Task 3 showed what it expands to. Apart from the log form, the measurement decisions and the decisions about the model never appear in the formula. They select which version of the panel the result was computed on.
 :::
 
-When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration, with the numbers that the downloadable workspace gives when it fits the model on your own machine:
+When the model is accepted, run it. Every specification on the curve is pre-computed: the page loaded the results of all 864 with the data, and `run_spec()` picks the one that matches your declaration, with the numbers that the IDE workspace gives when it fits the model on your own machine:
 
 ```{webr}
 #| autorun: false
@@ -685,4 +685,4 @@ A second declaration is possible: edit the preregistration cell, rerun `prereg()
 
 ## Taking it home
 
-This page keeps nothing once it is refreshed. The same exercise is in the [downloadable workspace](https://github.com/CodeMoreh/ar4ds-eu-workspace), a folder that you open in your IDE and keep, and the [Git and GitHub](https://codemoreh.github.io/ar4ds/git-github.html) module shows how to put that work under version control and publish the rendered report.
+This page keeps nothing once it is refreshed. The same exercise is in the [IDE workspace](https://github.com/CodeMoreh/ar4ds-eu-workspace), a folder that you open in your IDE and keep, and the [Git and GitHub](https://codemoreh.github.io/ar4ds/git-github.html) module shows how to put that work under version control and publish the rendered report.

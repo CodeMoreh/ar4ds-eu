@@ -2,7 +2,7 @@
 ```{r}
 #| label: easystats-data
 #| include: false
-# The country-year panel under the name that the lab and the modules give it, for
+# The country-year panel under the name that the webR workspace and the modules give it, for
 # the two slides of code behind the menu
 europeanisation <- readr::read_csv("../data/europeanisation_cy.csv", show_col_types = FALSE)
 ```
@@ -10,16 +10,16 @@ europeanisation <- readr::read_csv("../data/europeanisation_cy.csv", show_col_ty
 ## The data work {#the-data-work .smaller}
 
 ::: {.small}
-The code behind the menu is the data half of **easystats**, the verbs of datawizard. Each line below runs in the lab, in the pipeline or in one of the workshop's modules, and its comment says where:
+The code behind the menu is the data half of **easystats**, the verbs of datawizard. Each line below runs in the webR workspace, in the pipeline or in one of the workshop's modules, and its comment says where:
 :::
 
 ::: {.fs-75}
 ```r
 # a sample: the country-years without an assistance programme (module Causal graphs)
 datawizard::data_filter(europeanisation, bailout == 0)
-# the predictor centred, as C6HJR centred it (lab, Task 3)
+# the predictor centred, as C6HJR centred it (webR workspace, Task 3)
 europeanisation <- datawizard::data_modify(europeanisation, unemp_c = unemp - mean(unemp))
-# the scale variant of 018OL, the cell means rescaled to 0–1 (lab, Task 3)
+# the scale variant of 018OL, the cell means rescaled to 0–1 (webR workspace, Task 3)
 o18ol <- datawizard::data_modify(o18ol, pos01 = datawizard::rescale(pos, to = c(0, 1)))
 # cell means from the respondents (pipeline, R/15_analyst_panels.R)
 kqxue_resp |>
@@ -52,7 +52,7 @@ Two slides of code, and this is not a lesson in R. The workshop does its data wo
 #| label: reading-a-model-fit
 #| echo: true
 #| message: false
-# the reproduced specification (module Panel data), read as Task 3 of the lab prints it
+# the reproduced specification (module Panel data), read as Task 3 of the webR workspace prints it
 m_twfe <- fixest::feols(mcosmo ~ unemp | cntry + year, data = europeanisation, vcov = "iid")
 print(parameters::model_parameters(m_twfe), digits = 5)
 ```
@@ -80,5 +80,5 @@ effectsize::t_to_r(-3.804, 233)
 :::
 
 ::: notes
-Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the lab prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the workshop calls clubSandwich directly. And the conversion of the robustness study is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
+Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the webR workspace prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the workshop calls clubSandwich directly. And the conversion of the robustness study is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
 :::

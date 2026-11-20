@@ -25,7 +25,7 @@ Quarto documents, sections 3 and 11, on the AR4DS website: codemoreh.github.io/a
 :::
 
 ::: notes
-The objects in your console exist only in your session, and a render never uses them. Quarto starts a fresh R process for every render, runs every chunk from the top and throws the process away at the end, so a report that renders is a report whose chunks make everything that it uses. The test is cheap: restart R, so that the Variables pane empties, and render from a terminal. In this workspace the render takes the three codebooks in the data folder along with the report, so do not be surprised by four files in the log. If it fails, the message tells you where: the line that begins Quitting from gives the lines of the chunk and its label. [advance] In practice, almost every failure comes from one of three things: something made in the console and never in the report, a path that exists only on your machine, or a package that your session had loaded but your code never names.
+The objects in your console exist only in your session, and a render never uses them. Quarto starts a fresh R process for every render, runs every chunk from the top and throws the process away at the end, so a report that renders is a report whose chunks make everything that it uses. The test is cheap: restart R, so that the Variables pane empties, and render from a terminal. In this IDE workspace the render takes the three codebooks in the data folder along with the report, so do not be surprised by four files in the log. If it fails, the message tells you where: the line that begins Quitting from gives the lines of the chunk and its label. [advance] In practice, almost every failure comes from one of three things: something made in the console and never in the report, a path that exists only on your machine, or a package that your session had loaded but your code never names.
 :::
 
 ## A history of the analysis {#a-history-of-the-analysis .smaller}
@@ -66,20 +66,20 @@ Your turn. Restart R and check that the Variables pane is empty. Render from a t
 
 ::: {.small}
 - With every change committed and no remote, the Source Control view offers **Publish Branch**. It asks to sign in to GitHub, so that Positron can create the repository there, and pushes your history to it
-- On GitHub, **Settings → Pages → Source: GitHub Actions**. From then on every push to `main` runs the workflow of the workspace, `.github/workflows/publish.yml`, which installs R and the packages, renders the report again and publishes it at `https://<your-username>.github.io/<repository>/`
+- On GitHub, **Settings → Pages → Source: GitHub Actions**. From then on every push to `main` runs the workflow of the IDE workspace, `.github/workflows/publish.yml`, which installs R and the packages, renders the report again and publishes it at `https://<your-username>.github.io/<repository>/`
 - After each new commit, **Sync Changes** pushes it, and the published report follows
 :::
 
 ::: {.fragment .small}
-A published report is public. The derived country-year data in `data/` are released under CC BY 4.0, as the `LICENSE` of the workspace states, while the Eurobarometer microdata stay under the terms of GESIS and never enter a repository.
+A published report is public. The derived country-year data in `data/` are released under CC BY 4.0, as the `LICENSE` of the IDE workspace states, while the Eurobarometer microdata stay under the terms of GESIS and never enter a repository.
 :::
 
 ::: {.src}
-The workflow, the README and the LICENSE of the workspace; Git and GitHub for reproducible research, sections 3 to 5.
+The workflow, the README and the LICENSE of the IDE workspace; Git and GitHub for reproducible research, sections 3 to 5.
 :::
 
 ::: notes
-Publishing is optional, and it is the step that turns your repository into something that other people can read. With everything committed, the button under the message box reads Publish Branch. It asks you to let Positron sign in to GitHub, creates the repository there and pushes your history. The workspace already carries a small workflow that renders the report on GitHub and publishes it as a web page. Switch it on once, in the settings of the repository under Pages, by choosing GitHub Actions as the source. From then on every push renders your report again, with your own results, and the page follows. [advance] Public means public in the strongest sense, so think before you publish. The country-year data of the workspace are released under an open licence, so they may go. The respondent file never may, and the gitignore keeps its folder out.
+Publishing is optional, and it is the step that turns your repository into something that other people can read. With everything committed, the button under the message box reads Publish Branch. It asks you to let Positron sign in to GitHub, creates the repository there and pushes your history. The IDE workspace already carries a small workflow that renders the report on GitHub and publishes it as a web page. Switch it on once, in the settings of the repository under Pages, by choosing GitHub Actions as the source. From then on every push renders your report again, with your own results, and the page follows. [advance] Public means public in the strongest sense, so think before you publish. The country-year data of the workspace are released under an open licence, so they may go. The respondent file never may, and the gitignore keeps its folder out.
 :::
 
 ## Hands-on 4 – Publishing {#hands-on-4-publishing .smaller .deepdive run="publish"}
