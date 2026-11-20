@@ -22,7 +22,7 @@ claim and the verdict of the replication come from
 D:\ACADEMIC\TEACHING\AR4DS\_planning\score-teney-outcomes.md and the data
 contract of the CLAUDE.md of this site; the other numbers are read from the
 committed data files by the chunk below. The replication is given by its
-verdict alone, as on the background page and in the decks. -->
+verdict alone, as on the background page and in the slides. -->
 
 ```{r}
 #| label: numbers
@@ -37,17 +37,19 @@ e_spec <- format(nrow(e_curve), big.mark = ",")
 ::::: {.home-inner .home-reveal}
 
 ::: {.home-eyebrow}
-Hands-on training in {{< var workshop.format >}}
+Case study: Europeanisation and the economy
 :::
 
-# Europeanisation and the economy {#europeanisation-and-the-economy .unnumbered .unlisted}
+# Applied Replication for Data Skills {#europeanisation-and-the-economy .unnumbered .unlisted}
 
 ::: {.home-lead}
-Applied Replication for Data Skills (AR4DS) is a course that introduces technical skills for modern empirical data analysis through an applied 'replication' exercise. This site presents one of its case studies, built around a single published claim, its reanalysis by five independent analysts and its replication with new data.
+Applied Replication for Data Skills (AR4DS) is a hands-on course that introduces social data science tools and statistical methods through the reanalysis of a published finding. The focal published finding comes from an article reanalysed as part of [SCORE (Systematizing Confidence in Open Research and Evidence)](https://www.cos.io/score), a large-scale, multi-method research initiative designed to improve the assessment of scientific credibility in the social and behavioural sciences. Operationalising scientific credibility as the 'repeatability' of research findings, SCORE subjected an initial selection of 600 academic publications to three tests: whether published results can be *reproduced* with the original data and code; to what extent a central finding is *robust* to alternative analytical choices; and whether the finding can be *replicated* using new data.
+
+On this site, the published finding is a claim of an analysis of Eurobarometer surveys conducted between 2004 and 2013, which asked whether the economic crisis had changed the meanings that citizens attach to the European Union [@Teney2016DoesEUEconomic].
 :::
 
 ::: {.home-cta}
-[Formats](#formats) [Read the background](background.qmd)
+[Formats](#formats) [Read the case background](background.qmd)
 :::
 
 :::::
@@ -68,7 +70,7 @@ Applied Replication for Data Skills (AR4DS) is a course that introduces technica
 The main aim of the course is to introduce technical skills for modern empirical data analysis: finding the data and code of a study in an online repository, working with code so that another person (or your future self) can reproduce your steps, fixing your analytical choices in a preregistration before you run the analysis, and writing a live report that combines code and text.
 :::
 
-The claim at the centre of the exercise comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication. The exercise follows the design of the SCORE robustness study [@AczelEtAl2026InvestigatingAnalyticalRobustness] on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared. The AR4DS site describes [the programme](https://codemoreh.github.io/ar4ds/score.html), and its page on [the robustness article](https://codemoreh.github.io/ar4ds/robustness-article.html) explains how the results of the analysts were placed on one scale and compared.
+The claim at the centre of the exercise comes from the work of SCORE, a programme that put claims from published social and behavioural research through reproduction, robustness checks and replication. The exercise follows the design of the SCORE robustness study [@AczelEtAl2026InvestigatingAnalyticalRobustness] on a smaller scale, with many analysts testing the same claim, each stating their analytical choices, and results reported in a form that allows them to be compared. The SCORE page of the AR4DS site describes [the programme and its robustness study](https://codemoreh.github.io/ar4ds/score.html), including how the results of the analysts were placed on [one scale](https://codemoreh.github.io/ar4ds/score.html#sec-scale) and compared.
 
 ::::
 
@@ -111,7 +113,7 @@ The case study is built around an article published in the *European Sociologica
 > "... poor economic performances ... decrease positive dimensions of EU framing" [@Teney2016DoesEUEconomic, p. 619]
 
 ::: {.home-cta}
-[Read the background](background.qmd)
+[Read the case background](background.qmd)
 :::
 
 ::::
@@ -175,86 +177,39 @@ The case study for a reader who works alone, in R on your own machine, with the 
 :::::
 ::::::
 
-:::::: {.home-section #exercise}
+:::::: {.home-section #companion}
 ::::: {.home-wrap}
-
-## The exercise {.unnumbered .home-reveal}
-
-::: {.home-intro .home-reveal}
-The full-day and self-taught formats work through the same five tasks in the workspace, and the part-day format takes three of them in its deck. The decisions that the tasks ask for fall into three groups: those about the question that the analysis answers, those about how the variables are measured, and those about the model, how it is fitted and how its uncertainty is judged.
-:::
 
 :::: {.home-reveal}
 
-<details>
-<summary><span class="home-n">Task 1</span>The setup check</summary>
+## Companion {#the-companion .unnumbered}
 
-Check that your tools work before the rest of the work depends on them: the check script of the workspace, or the setup cell of the deck in the part-day format.
+::: {.home-intro}
+The companion curriculum holds the modules that teach the skills around the exercise, in three groups: the tools with which an analysis is written, the data and the public records that allow others to find an analysis and run it again, and the statistical methods of the case study. Every module is written on the data of the case study, and none is required for the part-day and full-day formats, whose pages point to some modules as preparation before a session, to others as the slower companion of one of its parts, and to the rest as reading for afterwards. The self-taught format works through the modules in its stages, between the tasks of the exercise.
+:::
 
-</details>
-
-<details>
-<summary><span class="home-n">Task 2</span>The panel, the estimand and the graph</summary>
-
-Meet the country-year panel, write the estimand statement behind the claim, and finish the causal graph that goes with it. The graph shows what the fixed effects of a country-year panel do and do not absorb.
-
-</details>
-
-<details>
-<summary><span class="home-n">Task 3</span>The reproduction</summary>
-
-Choose one of the three analysts who fitted their models on means of countries or of cells, and reproduce the value recorded in the robustness study for that analyst, from the data behind it. The other two analysts worked on respondents, whose files only a GESIS account can give.
-
-</details>
-
-<details>
-<summary><span class="home-n">Task 4</span>The menu</summary>
-
-Work through the decisions that lie between the data and a result, try alternatives one change at a time, and send one exploration to the class chart. The [decision map](menu.qmd#map) lays every decision out.
-
-</details>
-
-<details>
-<summary><span class="home-n">Task 5</span>Preregistration</summary>
-
-Declare one specification in a short preregistration, run it, report it, and find where it sits among the `r e_spec` specifications of the [curve of the claim](curve.qmd).
-
-</details>
+::: {.home-cta}
+[Open the companion](companion/index.qmd)
+:::
 
 ::::
-
-The exercise page of each format sets out its tasks in full, with the tool in which each is done: the [part-day](tracks/short/exercise.qmd), [full-day](tracks/day/exercise.qmd) and [self-taught](tracks/independent/exercise.qmd) formats.
 
 :::::
 ::::::
 
-:::::: {.home-section .home-alt #start}
+:::::: {.home-section .home-alt #resources}
 ::::: {.home-wrap}
 
-## Getting started {.unnumbered .home-reveal}
+:::: {.home-reveal}
 
-::: {.home-intro .home-reveal}
-The part-day format needs nothing installed, because its deck runs R inside the browser. The full-day and self-taught formats work in the workspace, with R, Quarto and an IDE installed beforehand, and in the full-day format the deck shows each step with its output. The browser lab holds every task as the fallback.
+## Resources {#the-resources .unnumbered}
+
+::: {.home-intro}
+The Resources page gathers what a participant may want to return to: a glossary of the terms that the course keeps apart, the public records of the case study and of its reanalyses, the core readings on SCORE, estimands, the multiverse and preregistration, the documentation of the tools, and the full list of the works cited on the site. The glossary and the records serve as preparation before a session, and the readings and the documentation as a way into the methods afterwards.
 :::
 
-:::: {.home-steps .home-reveal}
-
-::: {.home-step}
-### R and an IDE {.unnumbered .unlisted}
-
-Install R, Quarto and an IDE (Positron, RStudio, VS Code, etc.), following the steps for your operating system; the [setup help](https://codemoreh.github.io/ar4ds/help.html) lists the problems that others have met. [Install and check](https://codemoreh.github.io/ar4ds/setup.html)
-:::
-
-::: {.home-step}
-### The workspace {.unnumbered .unlisted}
-
-Download the workspace of the case study as a zip file, open it in your IDE and run the check script. The report of the workspace, with the output of every chunk, is published on [a site of its own](https://codemoreh.github.io/ar4ds-eu-workspace/). [Download the workspace](tracks/day/before.qmd#the-workspace)
-:::
-
-::: {.home-step}
-### The browser lab {.unnumbered .unlisted}
-
-The lab holds every task of the exercise in the browser, with nothing to install, and is the fallback when a machine or an installation fails on the day. [Open the browser lab](lab.qmd)
+::: {.home-cta}
+[Open the resources](resources.qmd)
 :::
 
 ::::
@@ -276,17 +231,35 @@ The lab holds every task of the exercise in the browser, with nothing to install
 Lecturer in Sociology, Newcastle University
 :::
 
-<!-- The biography is quoted from chrismoreh.com (source: D:/GitHub/chrismoreh-source/index.qmd), as CM asked on 2026-10-25. -->
+<!-- The biography is shortened from chrismoreh.com (source: D:/GitHub/chrismoreh-source/index.qmd); CM cut its second paragraph on 2026-11-20. -->
 
 A social scientist interested in the political sociology of migration, mobility, ethnicity and nationalism.
-
-Hailing from Transylvania, trained in anthropology and sociology at [Eötvös Loránd University of Budapest](https://tatk.elte.hu/en/) and [Central European University](https://sociology.ceu.edu/), and with a PhD from [Northumbria University](https://www.northumbria.ac.uk/), I currently work as a Lecturer (Assistant Professor) in Sociology at [Newcastle University (UK)](https://www.ncl.ac.uk/gps/staff/profile/chrismoreh.html).
 
 I approach social research as a comparative, interdisciplinary and multimethodological endeavour. My work has combined ethnographic observation, document analysis, survey methods and statistical modelling.
 
 I'm enthusiastic about transparency and reproducibility in the social sciences, and my [pedagogical approach](https://www.ncl.ac.uk/mediav8/library/file-downloads/research-services/open-research/moreh.pdf) seeks to develop skills that facilitate open and credible research practices.
 
-[chrismoreh.com](https://chrismoreh.com)
+Find me at: [chrismoreh.com](https://chrismoreh.com)
+
+::::
+
+:::::
+::::::
+
+
+:::::: {.home-section .home-alt #ai}
+::::: {.home-wrap .home-about .home-ai}
+
+::: {.home-ai-icon .home-reveal role="img" aria-label="The icon of Claude Code"}
+:::
+
+:::: {.home-reveal}
+
+## AI disclosure {.unnumbered}
+
+The course grew out of a short session written for an open research conference at Newcastle University, which was built on my own reanalysis of one claim in the SCORE robustness study [@AczelEtAl2026InvestigatingAnalyticalRobustness]. Its extension into the present course, with several case studies from SCORE and formats of different lengths, was carried out with the help of Claude models developed by Anthropic, used through Claude Code. The models were used to improve the websites and to design the formats, to check the R code and to find errors and inconsistencies across the materials, and to draft sections of the text of the pages, the slides and the workspaces. Everything that the models produced is being checked by me for its accuracy and its language.
+
+AI assistants can also help participants during the course, with a piece of code that fails or as a partner in generating and testing ideas, used in a way that supports the work of the participant rather than replacing it, which means keeping the judgement of the analysis one's own and saying where the help came from. The module on [AI assistants](https://codemoreh.github.io/ar4ds/tools/ai.html) sets out how to use one in the IDE, and its section on [licensed data](https://codemoreh.github.io/ar4ds/tools/ai.html#sec-licensed) explains why the files of some case studies, such as the Eurobarometer surveys distributed by GESIS, may not be processed with an AI system at all.
 
 ::::
 
