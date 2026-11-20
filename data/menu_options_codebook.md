@@ -51,4 +51,4 @@ The prose columns avoid numbers that the data files hold, which the pages comput
 
 ## Editing
 
-Keep the existing columns and codes, and keep `reason` to one sentence. Every prose column is participant-facing, so it follows the workshop's writing conventions: British spelling, spaced en-dashes, double quotation marks for quotation and single ones for terms held at a distance, relative clauses written out in full, and no possessive on an institution or an artefact. A new option needs a row here, its fits in the deviation files, and a decision in the helpers about how to treat it.
+Keep the existing columns and codes, and keep `reason` to one sentence. Every prose column is participant-facing, so it follows the workshop's writing conventions: British spelling, spaced en-dashes, double quotation marks for quotation and single ones for terms held at a distance, relative clauses written out in full, no possessive on an institution or an artefact, and the possessive on the workshop where it reads more naturally than "of the workshop". A new option needs a row here, its fits in the deviation files, and a decision in the helpers about how to treat it.

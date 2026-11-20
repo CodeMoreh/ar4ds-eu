@@ -1,6 +1,6 @@
 # AR4DS – Europeanisation and the economy
 
-The website of the Europeanisation and the economy case study of Applied Replication for Data Skills (AR4DS), a workshop in reproduction, robustness and replication in R taught on published claims. Facilitator: [Chris Moreh](https://chrismoreh.com). It deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>; the pages shared by the whole workshop are on the [AR4DS site](https://codemoreh.github.io/ar4ds/).
+The website of the Europeanisation and the economy case study of Applied Replication for Data Skills (AR4DS), a workshop in reproduction, robustness and replication in R taught on published claims. Facilitator: [Chris Moreh](https://chrismoreh.com). It deploys to GitHub Pages at <https://codemoreh.github.io/ar4ds-eu/>; the pages shared by the whole workshop are on the [AR4DS website](https://codemoreh.github.io/ar4ds/).
 
 The case study is a claim from a study of how Europeans frame the European Union (Teney, 2016, *European Sociological Review*): poor national economic performance lowers the positive framing of the EU. Five analysts reanalysed the claim for the SCORE robustness study, published in *Nature* (Aczel et al., 2026), within the SCORE programme (Alipourfard et al., 2021), and a preregistered replication in the SCORE replicability study tested it on later Eurobarometer waves. The data are Eurobarometer microdata from GESIS, which require a registration and may not be redistributed, so the workshop aggregates them to a panel of 270 country-years.
 
