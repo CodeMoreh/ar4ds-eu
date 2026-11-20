@@ -34,8 +34,17 @@
   a.className = "nav-link";
   a.href = base + "tracks/" + slug + "/index.html";
   a.title = "The format that you opened last";
-  a.innerHTML = '<i class="bi bi-signpost-split" aria-hidden="true"></i> <span class="menu-text">Your format: ' + TRACKS[slug] + "</span>";
+  a.innerHTML = '<i class="bi bi-signpost-split" aria-hidden="true"></i> <span class="menu-text">' + TRACKS[slug] + "</span>";
   li.appendChild(a);
-  nav.appendChild(li);
+  nav.insertBefore(li, nav.firstChild);
+  // On the pages of a format, the same icon and name head its sidebar
+  var side = here && document.querySelector("#quarto-sidebar .sidebar-menu-container");
+  if (side) {
+    var label = document.createElement("a");
+    label.className = "track-sidebar-label";
+    label.href = base + "tracks/" + slug + "/index.html";
+    label.innerHTML = '<i class="bi bi-signpost-split" aria-hidden="true"></i> ' + TRACKS[slug];
+    side.insertBefore(label, side.firstChild);
+  }
 })();
 </script>

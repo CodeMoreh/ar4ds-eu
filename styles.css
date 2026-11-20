@@ -91,3 +91,36 @@ main .quarto-figure img[src*="assets/gesis/"] {
    all that it holds. */
 #quarto-bibliography { display: none; }
 #quarto-appendix:not(:has(> :not(#quarto-bibliography))) { display: none; }
+
+/* The footer on one line. Quarto keeps room for three blocks, of which only the
+   first holds text; on a narrow screen the link that reports an issue sits
+   beside the licence instead of below it. */
+.nav-footer { min-height: 0; padding-top: .55rem; padding-bottom: .55rem; align-items: center; }
+.nav-footer-center, .nav-footer-right { min-height: 0; }
+.nav-footer-right { display: none; }
+.nav-footer .nav-footer-left, .nav-footer .nav-footer-center { margin-bottom: 0; }
+/* the centre block opens with a non-breaking space, which would take a line of its own */
+.nav-footer .nav-footer-center { font-size: 0; }
+.nav-footer .nav-footer-center > * { font-size: .825rem; }
+.nav-footer .toc-actions { padding-top: 0; padding-bottom: 0; }
+.nav-footer .toc-actions ul { margin: 0; padding: 0; }
+@media (max-width: 767.98px) {
+  .nav-footer { flex-wrap: nowrap; gap: 1rem; }
+  .nav-footer .nav-footer-left, .nav-footer .nav-footer-center { flex: 0 1 auto; text-align: left; }
+}
+
+/* The format of the page, at the head of its sidebar (_includes/track-choice.html) */
+.track-sidebar-label {
+  display: block; margin: .2rem 0 .9rem; padding: .45rem .7rem; border-radius: 8px;
+  background: #0e3b6a; color: #fff !important; font-weight: 600; text-decoration: none;
+}
+.track-sidebar-label:hover { background: #16202c; }
+.track-sidebar-label .bi { color: #e0c080; margin-right: .3rem; }
+
+/* The boxes of the section "How you work" on the overview page of each format,
+   in the style of the steps of the opening page */
+.fmt-steps { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: .4rem 0 1.4rem; }
+.fmt-step { border-top: 3px solid #0e3b6a; padding-top: .8rem; }
+.fmt-step h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
+.fmt-step p { color: #5b6673; }
+.fmt-step .btn { margin: 0 .3rem .3rem 0; }

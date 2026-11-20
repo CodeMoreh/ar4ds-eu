@@ -151,11 +151,35 @@ body:has(.home-hero) #quarto-header > .navbar:has(.navbar-collapse.show, .navbar
 @media (max-width: 800px) { .home-about { grid-template-columns: 1fr; } }
 .home-portrait {
   aspect-ratio: 4 / 5; width: 100%; max-width: 340px;
-  background: #c9d3dd url("../assets/home/portrait-formal.jpg") center / cover no-repeat;
+  /* the formal portrait is drawn a little smaller than the frame and set on its
+     lower edge, so that the curve of the frame leaves the whole head in view;
+     the colour of the frame matches the background of the photograph */
+  background: #c9d3dd url("../assets/home/portrait-formal.jpg") 50% 100% / 86% auto no-repeat;
   border-radius: 40% 70% 6% 10% / 50% 80% 30% 45%;
   transition: border-radius 1s ease;
 }
-.home-portrait:hover { background-image: url("../assets/home/portrait-casual.jpg"); border-radius: 20% 80% 55% 35% / 55% 40% 60% 35%; }
+.home-portrait:hover {
+  background-image: url("../assets/home/portrait-casual.jpg"); background-size: cover; background-position: center;
+  border-radius: 20% 80% 55% 35% / 55% 40% 60% 35%;
+}
+
+/* the AI disclosure: the icon of Claude Code in a smaller column than the portrait */
+.home-about.home-ai { grid-template-columns: minmax(120px, 200px) minmax(0, 1fr); }
+.home-ai-icon {
+  aspect-ratio: 1; width: 100%; max-width: 200px; justify-self: center;
+  background: #fff url("../assets/home/claude-code.svg") center / 60% auto no-repeat;
+  border: 1px solid #dde3ea; border-radius: 50%; box-shadow: 0 1px 2px rgba(16, 32, 52, .06);
+}
+@media (max-width: 800px) {
+  .home-about.home-ai { grid-template-columns: 1fr; }
+  .home-ai-icon { max-width: 140px; justify-self: start; }
+}
+/* links in the lead of the banner, on its dark ground */
+.home-lead a { color: #e0c080; text-decoration-color: rgba(224, 192, 128, .5); }
+.home-lead a:hover { color: #fff; }
+
+/* the navbar of a case-study site links to the sections of the opening page */
+html:has(.home-hero) { scroll-behavior: smooth; }
 .home-role { color: #2a5d8f; font-weight: 600; margin-top: -.4rem; }
 
 /* reveal on scroll */

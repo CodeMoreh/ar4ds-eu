@@ -17,7 +17,7 @@ project:
     - "!_planning/**"
     - "!_planning_data/**"
     # Kept in the repository and left out of the build until they are vetted:
-    # the multi-day format, the four decks of its third day, the two modules that
+    # the multi-day format, the four slide decks of its third day, the two modules that
     # only that day teaches, and the run sheets of the facilitator
     - "!tracks/long/"
     - "!slides/panel-data.qmd"
@@ -33,7 +33,10 @@ metadata-files:
   - _sidebar.yml
 
 website:
-  title: "AR4DS – Europeanisation and the economy"
+  title: "AR4DS ②"
+  # No search box: the pages are read in the order of a workflow, and search
+  # would surface pages that are not meant to be found on their own
+  search: false
   site-url: "https://codemoreh.github.io/ar4ds-eu/"
   repo-url: "https://github.com/CodeMoreh/ar4ds-eu"
   repo-actions: [issue]
@@ -44,7 +47,7 @@ website:
   # Shown at the top of every page while the materials are being revised;
   # delete the block once they are stable. Not dismissable, so that it
   # appears on every page a visitor opens. It does not reach the reveal.js
-  # decks, which have no site navigation.
+  # slides, which have no site navigation.
   announcement:
     icon: exclamation-triangle
     dismissable: false
@@ -55,73 +58,21 @@ website:
   navbar:
     logo: assets/logo.png
     logo-alt: "CM logo"
-    left:
-      - href: index.qmd
-        text: Home
-      # The formats are reached from the Formats section of the opening page,
-      # and each has a docked sidebar (_sidebar.yml) that lists its pages and the
-      # tools that it uses, the browser lab and the cheatsheet among them.
-      - href: background.qmd
-        text: Background
-      - text: Multiverse
-        menu:
-          - href: menu.qmd
-            text: "Specification menu"
-          - href: curve.qmd
-            text: "Specification curve"
-          - href: class-results.qmd
-            text: "Class results"
-      - text: Companion
-        menu:
-          - href: companion/index.qmd
-            text: "Overview"
-          - text: "---"
-          - text: "Tools"
-          # The modules on the tools live on the umbrella site; the two pages
-          # of this site take them to the case study
-          - href: "https://codemoreh.github.io/ar4ds/tools/r.html"
-            text: "Getting started with R"
-          - href: "https://codemoreh.github.io/ar4ds/tools/r-further.html"
-            text: "Getting started with R, part 2"
-          - href: "https://codemoreh.github.io/ar4ds/tools/r-functions.html"
-            text: "Getting started with R, part 3"
-          - href: companion/intro-r.qmd
-            text: "R on the country-year panel"
-          - href: "https://codemoreh.github.io/ar4ds/tools/ide.html"
-            text: "Positron and other IDEs"
-          - href: companion/ide.qmd
-            text: "The workspace in the IDE"
-          - href: "https://codemoreh.github.io/ar4ds/tools/quarto.html"
-            text: "Quarto"
-          - href: "https://codemoreh.github.io/ar4ds/git-github.html"
-            text: "Git and GitHub"
-          - href: "https://codemoreh.github.io/ar4ds/tools/ai.html"
-            text: "AI assistants"
-          - text: "---"
-          - text: "Data and sharing"
-          - href: companion/data-sources.qmd
-            text: "Social science data sources"
-          - href: companion/data-management.qmd
-            text: "Building the analysis file"
-          - href: companion/repositories.qmd
-            text: "Reproducibility repositories"
-          - text: "---"
-          - text: "Methods"
-          - href: companion/panel-data.qmd
-            text: "Panel data"
-          - href: companion/dags.qmd
-            text: "Causal graphs and adjustment sets"
-          - href: companion/measurement.qmd
-            text: "Scale construction"
-          - href: companion/meta-analysis.qmd
-            text: "Meta-analysis"
-          - href: companion/multiverse.qmd
-            text: "The multiverse and its critics"
-      - href: resources.qmd
-        text: Resources
     right:
-      # The umbrella site, which holds the pages that every case study shares;
-      # the item of the last-opened format joins it (_includes/track-choice.html)
+      # Each item leads to a section of the opening page, which links the
+      # full pages. The format that a visitor opened last is added before the
+      # first item by _includes/track-choice.html. The pages of the Multiverse
+      # (specification menu, curve, class results) are linked from the sidebar
+      # of each format (_sidebar.yml).
+      - href: index.qmd#case
+        text: Case study
+      - href: index.qmd#formats
+        text: Formats
+      - href: index.qmd#companion
+        text: Companion
+      - href: index.qmd#resources
+        text: Resources
+      # The pages that every case study shares live on the umbrella site
       - href: "https://codemoreh.github.io/ar4ds/"
         text: AR4DS
 
