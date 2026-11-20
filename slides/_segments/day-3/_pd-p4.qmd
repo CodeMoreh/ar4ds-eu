@@ -37,7 +37,7 @@ $$ \bar{y}_{ct} = \beta_0 + \beta_W (x_{ct} - \bar{x}_{c\cdot}) + \beta_B\, \bar
 :::
 
 ::: notes
-Bell and Jones propose a more informative answer than picking a winner between fixed and random effects. Split unemployment into the average of each country over the decade and the departure of each year from that average, and give each part a slope of its own. The within slope is exactly the slope with country fixed effects, because separating out the variation between countries is what fixed effects do. The between slope is positive and imprecise. And the pooled slope of part one turns out to be a weighted blend of the two, two patterns of opposite sign averaged into something near zero. The difference between the slopes holds under our CR2 rule as well as under the errors of the model, so for this outcome the assumption of random effects fails under every test that the course applies, and Bell and colleagues read the Hausman test in exactly these terms, as a test of whether the two slopes differ.
+Bell and Jones propose a more informative answer than picking a winner between fixed and random effects. Split unemployment into the average of each country over the decade and the departure of each year from that average, and give each part a slope of its own. The within slope is exactly the slope with country fixed effects, because separating out the variation between countries is what fixed effects do. The between slope is positive and imprecise. And the pooled slope of part one turns out to be a weighted blend of the two, two patterns of opposite sign averaged into something near zero. The difference between the slopes holds under our CR2 rule as well as under the errors of the model, so for this outcome the assumption of random effects fails under every test that the workshop applies, and Bell and colleagues read the Hausman test in exactly these terms, as a test of whether the two slopes differ.
 :::
 
 ## Two associations {#two-associations .smaller}
@@ -49,7 +49,7 @@ Bell and Jones propose a more informative answer than picking a winner between f
 # Left: the 27 country means with the slope across them
 # (data/display_country_means.csv). Right: each country-year
 # as a deviation from the means of its own country, with the slope within
-# countries (the course panel)
+# countries (the workshop panel)
 within_pts <- datawizard::demean(europeanisation, select = c("unemp", "mcosmo"), by = "cntry")
 p_between <- ggplot2::ggplot(country_means, ggplot2::aes(unemp_mean, mcosmo_mean)) +
   ggplot2::geom_abline(intercept = mean(country_means$mcosmo_mean) - bw_cosmo$b_between * mean(country_means$unemp_mean),
@@ -114,5 +114,5 @@ Your last run of the session. First the CR2 test, one call to clubSandwich on th
 :::
 
 ::: notes
-That is the panel. The module Panel data is the reading for this session: it has the code behind every model that we fitted, and two tasks, one on the sign changes of pooled OLS and one on the within–between model with year dummies. If you want the same material written for sociologists, Allison's short book on fixed-effects regression and Halaby's review of panel models are the places to start, and Wooldridge is the reference for the econometrics. The next session leaves the country-years for the people inside them. The same models reappear in the vocabularies of four disciplines, and then we fit those models to the respondents, from the Eurobarometer files that you downloaded before the course, ending with the model of the original author.
+That is the panel. The module Panel data is the reading for this session: it has the code behind every model that we fitted, and two tasks, one on the sign changes of pooled OLS and one on the within–between model with year dummies. If you want the same material written for sociologists, Allison's short book on fixed-effects regression and Halaby's review of panel models are the places to start, and Wooldridge is the reference for the econometrics. The next session leaves the country-years for the people inside them. The same models reappear in the vocabularies of four disciplines, and then we fit those models to the respondents, from the Eurobarometer files that you downloaded before the workshop, ending with the model of the original author.
 :::

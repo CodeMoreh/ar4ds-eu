@@ -5,7 +5,7 @@ Part 3
 :::
 
 ::: notes
-Part three returns to the standard errors, now of the two-way design. Yesterday you met the CR2 test as the rule that classes every point of the curve. Today we look at why the course needs it. The years of one country resemble each other, and once the fixed effects have done their work, a handful of countries hold most of the variation that identifies the slope. With few clusters of such unequal weight, even the usual clustered test overstates the evidence.
+Part three returns to the standard errors, now of the two-way design. Yesterday you met the CR2 test as the rule that classes every point of the curve. Today we look at why the workshop needs it. The years of one country resemble each other, and once the fixed effects have done their work, a handful of countries hold most of the variation that identifies the slope. With few clusters of such unequal weight, even the usual clustered test overstates the evidence.
 :::
 
 ## Errors that persist {#errors-that-persist .smaller}
@@ -79,7 +79,7 @@ Clustering assumes that the countries bring similar amounts of information, and 
 ::: {.small}
 - **CR2** [@BellMcCaffrey2002BiasReductionStandard] enlarges the residuals of each country by the amount by which that country pulled the fit towards itself, since the residuals of a country that carries much of the variation come out too small
 - Its t is referred to **Satterthwaite degrees of freedom** [@PustejovskyTipton2018SmallsampleMethodsClusterrobust], which say how many clusters effectively carry the information: close to G − 1 when the clusters weigh alike, far fewer when a few of them dominate
-- The combination keeps the share of false rejections close to the 5% that the test promises [@ImbensKolesar2016RobustStandardErrors]. The wild cluster bootstrap is the resampling answer [@MacKinnonWebb2017WildBootstrapInference], and the course leaves it aside because its only implementation in R is no longer maintained
+- The combination keeps the share of false rejections close to the 5% that the test promises [@ImbensKolesar2016RobustStandardErrors]. The wild cluster bootstrap is the resampling answer [@MacKinnonWebb2017WildBootstrapInference], and the workshop leaves it aside because its only implementation in R is no longer maintained
 :::
 
 ```{.r}
@@ -93,7 +93,7 @@ companion/panel-data.qmd, section 4. The test needs the dummy-variable fit, beca
 :::
 
 ::: notes
-The remedy that the course uses is the CR2 correction of Bell and McCaffrey. The ordinary clustered formula takes the residuals of each country as they come out of the fit. But when one country carries much of the variation, the fit has already been pulled towards that country, so its residuals are too small, and the standard error with them. CR2 enlarges the residuals of each country by the amount by which that country pulled the fit. Its test then uses Satterthwaite degrees of freedom, which say how many countries effectively carry the information. Imbens and Kolesár recommend this combination for few and unequal clusters, because it keeps the false rejections near the promised five per cent. It takes one call to clubSandwich, on the dummy-variable fit, and it returns the p-value stored on the curve exactly, since nothing in it is random.
+The remedy that the workshop uses is the CR2 correction of Bell and McCaffrey. The ordinary clustered formula takes the residuals of each country as they come out of the fit. But when one country carries much of the variation, the fit has already been pulled towards that country, so its residuals are too small, and the standard error with them. CR2 enlarges the residuals of each country by the amount by which that country pulled the fit. Its test then uses Satterthwaite degrees of freedom, which say how many countries effectively carry the information. Imbens and Kolesár recommend this combination for few and unequal clusters, because it keeps the false rejections near the promised five per cent. It takes one call to clubSandwich, on the dummy-variable fit, and it returns the p-value stored on the curve exactly, since nothing in it is random.
 :::
 
 ## Three kinds of inference {#three-kinds-of-inference .smaller}

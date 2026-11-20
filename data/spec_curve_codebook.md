@@ -1,6 +1,6 @@
 # Codebook: the curve of the claim
 
-Four files describe the specification curve of the claim under test, "poor national economic performances significantly decrease positive EU-framing dimensions" (Teney 2016, *European Sociological Review*), read as a claim about change within countries over time: in the 27 member states of 2004–2013, when the economy of a country deteriorates, do its citizens frame the EU less in positive terms than they did before? The files are built by `R/09_spec_curve.R`, `R/10_curve_forks.R` and `R/11_menu_deviations.R` from the course panel and from the aggregate measurement panels in this folder. They contain only results computed on country-year aggregates.
+Four files describe the specification curve of the claim under test, "poor national economic performances significantly decrease positive EU-framing dimensions" (Teney 2016, *European Sociological Review*), read as a claim about change within countries over time: in the 27 member states of 2004–2013, when the economy of a country deteriorates, do its citizens frame the EU less in positive terms than they did before? The files are built by `R/09_spec_curve.R`, `R/10_curve_forks.R` and `R/11_menu_deviations.R` from the workshop panel and from the aggregate measurement panels in this folder. They contain only results computed on country-year aggregates.
 
 | File | Rows | What it holds |
 |:--|--:|:--|
@@ -16,7 +16,7 @@ Each curve crosses, for each of its three scales, the options that the review of
 
 The two fixed-effects designs are two estimands rather than two ways of estimating one. With year effects the comparison is change within a country relative to the common European path in that year; without them it is all change within a country, including the changes that every member state went through at once.
 
-The reference specification is the reproduced one: `mcosmo` on raw unemployment in the World Bank series, no adjustment, two-way fixed effects, the zero rule, all items and cells as interviewed. It gives b = −0.00347, t = −3.804 on 233 df and r = −0.242, the value that the reproduction task of the course targets.
+The reference specification is the reproduced one: `mcosmo` on raw unemployment in the World Bank series, no adjustment, two-way fixed effects, the zero rule, all items and cells as interviewed. It gives b = −0.00347, t = −3.804 on 233 df and r = −0.242, the value that the reproduction task of the workshop targets.
 
 ## Columns of the two curve files
 
@@ -35,7 +35,7 @@ The reference specification is the reproduced one: `mcosmo` on raw unemployment 
 | `n_cells`, `n_countries` | The country-years and countries in the fit: 270 and 27 everywhere on the two curves |
 | `is_reference` | TRUE for the reproduced specification only; FALSE throughout the negative curve, which has no reference |
 
-The CR2 test is computed in closed form, so it carries no simulation error, and any copy of the fit on the same cells returns the stored p-value exactly; the helpers of the workspace refit every specification that way and warn if the result departs from the file. At the reference cell the CR2 t is −2.230 on 9.8 Satterthwaite df, with p = 0.0504: the reproduced specification lies just above the threshold of 5% and is not significant under the rule of the course, while CR1 on 26 df gives p = 0.029 and conventional errors p = 0.0002.
+The CR2 test is computed in closed form, so it carries no simulation error, and any copy of the fit on the same cells returns the stored p-value exactly; the helpers of the workspace refit every specification that way and warn if the result departs from the file. At the reference cell the CR2 t is −2.230 on 9.8 Satterthwaite df, with p = 0.0504: the reproduced specification lies just above the threshold of 5% and is not significant under the rule of the workshop, while CR1 on 26 df gives p = 0.029 and conventional errors p = 0.0002.
 
 ## What the curves show
 

@@ -2,7 +2,7 @@
 ```{r}
 #| label: easystats-data
 #| include: false
-# The course panel under the name that the lab and the modules give it, for
+# The workshop panel under the name that the lab and the modules give it, for
 # the two slides of code behind the menu
 europeanisation <- readr::read_csv("../data/europeanisation_cy.csv", show_col_types = FALSE)
 ```
@@ -10,7 +10,7 @@ europeanisation <- readr::read_csv("../data/europeanisation_cy.csv", show_col_ty
 ## The data work {#the-data-work .smaller}
 
 ::: {.small}
-The code behind the menu is the data half of **easystats**, the verbs of datawizard. Each line below runs in the lab, in the pipeline or in a module of the course, and its comment says where:
+The code behind the menu is the data half of **easystats**, the verbs of datawizard. Each line below runs in the lab, in the pipeline or in a module of the workshop, and its comment says where:
 :::
 
 ::: {.fs-75}
@@ -42,7 +42,7 @@ europeanisation_wb <- datawizard::demean(europeanisation, select = "unemp", by =
 :::
 
 ::: notes
-Two slides of code, and this is not a lesson in R. The course does its data work with datawizard, the data half of the easystats framework, and these six lines are copied from where they run. A filter for a sample. A new column for the centred predictor, as I centred it, and another for the rescaled outcome of 018OL. Cell means from the respondents, grouped by country and year, as the panel of KQXUE was rebuilt. Claim alignment, which flips the sign of a growth slope. And demean, which gives the country mean of unemployment and the departure of each year from it in one call, the two columns of the within–between model. Three reasons for these verbs rather than dplyr: one framework from the data to the models, labels that survive the chain, and a help page that names the methods papers behind each verb.
+Two slides of code, and this is not a lesson in R. The workshop does its data work with datawizard, the data half of the easystats framework, and these six lines are copied from where they run. A filter for a sample. A new column for the centred predictor, as I centred it, and another for the rescaled outcome of 018OL. Cell means from the respondents, grouped by country and year, as the panel of KQXUE was rebuilt. Claim alignment, which flips the sign of a growth slope. And demean, which gives the country mean of unemployment and the departure of each year from it in one call, the two columns of the within–between model. Three reasons for these verbs rather than dplyr: one framework from the data to the models, labels that survive the chain, and a help page that names the methods papers behind each verb.
 :::
 
 ## Reading a model {#reading-a-model .smaller}
@@ -80,5 +80,5 @@ effectsize::t_to_r(-3.804, 233)
 :::
 
 ::: notes
-Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the lab prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the course calls clubSandwich directly. And the conversion of the robustness study is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
+Reading a model is the other half of easystats. The parameters package reads any fitted model into one table, and the lab prints it with five digits so that you can compare the t with the value on record: minus three point eight on two hundred and thirty-three degrees of freedom. The second block is the test that classes every point of the curve, one call to clubSandwich on the dummy-variable fit of the same model: the CR2 correction and the Satterthwaite degrees of freedom, fewer than ten here, with a p just above point zero five. The parameters package can ask for CR2 errors too, but it tests those errors on the residual degrees of freedom, so the workshop calls clubSandwich directly. And the conversion of the robustness study is one call to effectsize, with the degrees of freedom as its second argument, which is where the open circle of PRL47 went wrong.
 :::

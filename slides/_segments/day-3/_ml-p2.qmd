@@ -5,7 +5,7 @@ Part 2
 :::
 
 ::: notes
-Part two puts the respondents into the model. First the question of level: what a claim about countries can say about people. Then the respondent file, which you built from your own downloads after the workshop, and the step that turns it into the data of a model. Then three random structures fitted to the same four hundred thousand people. The three give the same slope and very different evidence for it, and the variance components explain why.
+Part two puts the respondents into the model. First the question of level: what a claim about countries can say about people. Then the respondent file, which you built from your own downloads after the second day, and the step that turns it into the data of a model. Then three random structures fitted to the same four hundred thousand people. The three give the same slope and very different evidence for it, and the variance components explain why.
 :::
 
 ## The level of analysis {#the-level-of-analysis .smaller}
@@ -24,9 +24,9 @@ A claim about the effect of a context can be read at two levels. The claim of th
 ## The respondent file {#the-respondent-file .smaller}
 
 ::: {.small}
-- `data_private/eb_respondents.rds`: `r format(sum(panel$n_cy), big.mark = ",")` respondents in sixteen waves, built after day 2 by `prep/01_build_respondents.R` from the files that you downloaded, and checked against the copy behind the course panel
+- `data_private/eb_respondents.rds`: `r format(sum(panel$n_cy), big.mark = ",")` respondents in sixteen waves, built after day 2 by `prep/01_build_respondents.R` from the files that you downloaded, and checked against the copy behind the workshop panel
 - One row for each respondent: the fourteen items of the question on what the EU means, the post-stratification weight `w1`, and the characteristics that the published model uses, sex, age, education, occupation and the type of community
-- `prep/02_scales_and_panel.R` scores the items into the six scales, with the zero rule for respondents who named nothing, and rebuilds the course panel from the scored respondents
+- `prep/02_scales_and_panel.R` scores the items into the six scales, with the zero rule for respondents who named nothing, and rebuilds the workshop panel from the scored respondents
 - The terms of GESIS allow no redistribution, no publication of individual cases and no processing by AI systems, so the slides show only the saved outputs of scripts that ran once on the licensed file
 :::
 
@@ -35,7 +35,7 @@ data/eb_respondents_codebook.md; prep/01_build_respondents.R and prep/02_scales_
 :::
 
 ::: notes
-This is the file behind the session. You built it yesterday evening from the sixteen Eurobarometer files that you downloaded under your own GESIS account, and the build checked every file against the copy from which the course panel was made. More than four hundred thousand people, one row each, with the fourteen items of the question on what the EU means to a respondent, the weight that GESIS supplies, and the characteristics that the published model uses. The second script of the workspace turns the items into the six scales and rebuilds the panel from your respondents, which is the first thing that we do in the hands-on. The terms of GESIS forbid passing the file on, publishing individual cases or processing the file with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs saved from scripts run once on the licensed file.
+This is the file behind the session. You built it yesterday evening from the sixteen Eurobarometer files that you downloaded under your own GESIS account, and the build checked every file against the copy from which the workshop panel was made. More than four hundred thousand people, one row each, with the fourteen items of the question on what the EU means to a respondent, the weight that GESIS supplies, and the characteristics that the published model uses. The second script of the workspace turns the items into the six scales and rebuilds the panel from your respondents, which is the first thing that we do in the hands-on. The terms of GESIS forbid passing the file on, publishing individual cases or processing the file with an AI system, which is why the workspace switches the assistants of Positron and VS Code off, and why my slides show only outputs saved from scripts run once on the licensed file.
 :::
 
 ## Hands-on 1 – The respondent file {#hands-on-1-the-respondent-file .smaller}
@@ -57,7 +57,7 @@ The file stays in `data_private/`, which the workspace keeps out of Git. Without
 :::
 
 ::: notes
-Open the workspace. The file that you built yesterday evening is in data private, with the report of its checks beside it, and if a check failed and you have not told me yet, tell me now. Then run the second script section by section. It reads your file, scores the items into the scales under the zero rule, and rebuilds the panel from your respondents, and its comparison with the course panel should show no difference beyond machine precision. Last, one join adds the unemployment rate to every respondent, and the result, person, is the data for the rest of the session. If you work in RStudio, check that its assistant is switched off, as the README of the workspace explains. [advance] Without the file, follow this hands-on and the next one on the slides: every number on the slides comes from the same file, fitted once on my machine.
+Open the workspace. The file that you built yesterday evening is in data private, with the report of its checks beside it, and if a check failed and you have not told me yet, tell me now. Then run the second script section by section. It reads your file, scores the items into the scales under the zero rule, and rebuilds the panel from your respondents, and its comparison with the workshop panel should show no difference beyond machine precision. Last, one join adds the unemployment rate to every respondent, and the result, person, is the data for the rest of the session. If you work in RStudio, check that its assistant is switched off, as the README of the workspace explains. [advance] Without the file, follow this hands-on and the next one on the slides: every number on the slides comes from the same file, fitted once on my machine.
 :::
 
 ## Levels and evidence {#levels-and-evidence .smaller}
@@ -88,7 +88,7 @@ real_unemp |>
 :::
 
 ::: notes
-Here are three fits to the same four hundred thousand people. With a random intercept for countries alone, the slope has a t of about minus twenty-five on almost four hundred thousand degrees of freedom, which looks like overwhelming evidence. But every respondent in a country-year shares one unemployment rate, so the model has counted people as if they were countries. Schmidt-Catran and Fairbrother describe exactly this: a variable of the country-year treated as a variable of the individual, with the degrees of freedom inflated and the standard errors deflated. Declare the country-year level as well, and the slope barely moves, but its standard error grows about four-fold and the degrees of freedom collapse to about two hundred and fifty, the scale of the cells. Once the error structure matches the data, modelling the people and modelling their cell means give much the same answer, which is why the course can teach the case study from the panel.
+Here are three fits to the same four hundred thousand people. With a random intercept for countries alone, the slope has a t of about minus twenty-five on almost four hundred thousand degrees of freedom, which looks like overwhelming evidence. But every respondent in a country-year shares one unemployment rate, so the model has counted people as if they were countries. Schmidt-Catran and Fairbrother describe exactly this: a variable of the country-year treated as a variable of the individual, with the degrees of freedom inflated and the standard errors deflated. Declare the country-year level as well, and the slope barely moves, but its standard error grows about four-fold and the degrees of freedom collapse to about two hundred and fifty, the scale of the cells. Once the error structure matches the data, modelling the people and modelling their cell means give much the same answer, which is why the workshop can teach the case study from the panel.
 :::
 
 ## Random slopes {#random-slopes .smaller}
