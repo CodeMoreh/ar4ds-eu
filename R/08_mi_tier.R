@@ -5,7 +5,7 @@
 #               share on every framing scale; the zero, drop and split rules
 #               settle that by fiat, while imputation treats the scales as
 #               missing and fills them from what is known about the
-#               respondent. Two engines are run so that the course can compare
+#               respondent. Two engines are run so that the workshop can compare
 #               them on the same case study. mice imputes the four base shares by
 #               fully conditional specification with predictive mean matching,
 #               which keeps imputed values inside the observed range of a

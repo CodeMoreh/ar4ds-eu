@@ -1,7 +1,7 @@
 ##############################################################################
 # Title:        07_measurement_panels.R
 # Purpose:      Builds, from the respondent file, the country-year quantities
-#               that the measurement decisions need and the course panel does
+#               that the measurement decisions need and the workshop panel does
 #               not carry. Two files result.
 #               teney_panel_weights.csv is wide: design-weighted and
 #               count-built cell means, Kish's effective sample size, the
@@ -162,7 +162,7 @@ datawizard::data_write(measurement, out_path("teney_panel_measurement.csv"), ver
 
 ## ---- checks -------------------------------------------------------------------
 ## The reference variant (share, all items, zero rule, cells as interviewed) is
-## the course panel itself, to machine precision.
+## the workshop panel itself, to machine precision.
 
 ref <- measurement |>
   datawizard::data_filter(construction == "share" & item_set == "all" & noop == "zero" &
@@ -177,7 +177,7 @@ stopifnot("the panel has not 270 cells in 27 countries" =
             nrow(panel_w) == 270 && dplyr::n_distinct(panel_w$cntry) == 27,
           "the long panel has the wrong size" =
             nrow(measurement) == nrow(variants) * length(outcomes) * 270,
-          "the reference variant does not reproduce the course panel" =
+          "the reference variant does not reproduce the workshop panel" =
             nrow(ref) == 1620 && max(abs(ref$value - ref$panel)) < 1e-12)
 
 tibble::tibble(median_deff = stats::median(panel_w$deff), max_deff = max(panel_w$deff),

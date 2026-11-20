@@ -24,7 +24,7 @@
 #               device of the conversion lesson, not a placement.
 #               p_cluster_check is, where the design can be fitted on the
 #               cells, the CR2 p-value (by country, Satterthwaite df) of the
-#               course refit of that design. Only aggregate results are written.
+#               workshop refit of that design. Only aggregate results are written.
 # Reads:        ../ar4ds-eu-workspace/data_private/eb_respondents.rds through
 #               companion/_model-outputs/_load_respondents.R (GESIS-derived,
 #               local only), data/analysts5.csv,
@@ -156,7 +156,7 @@ p_reported <- c(KQXUE = "0.000", C6HJR = "0.00015", KEVF1 = ".0000000277", PRL47
 
 marks <- tibble::tribble(
   ~id,     ~label,                                   ~unit,                                             ~design,
-  "OA",    "Original study design, without its education interactions (course refit)", "respondents (refit)", "respondents within country-waves within countries, individual controls, GDP growth; the education interactions of Table 3, model 1 left out",
+  "OA",    "Original study design, without its education interactions (workshop refit)", "respondents (refit)", "respondents within country-waves within countries, individual controls, GDP growth; the education interactions of Table 3, model 1 left out",
   "KQXUE", "KQXUE",                                  "country-year cells (270)",                        "country fixed effects, cosmopolitan share, Eurostat unemployment of the 20-64 population",
   "C6HJR", "C6HJR",                                  "country-year cells (270)",                        "country and year fixed effects, cosmopolitan share, World Bank unemployment",
   "KEVF1", "KEVF1",                                  "respondents",                                     "random intercepts for years within countries, count of the five cosmopolitan items, Eurostat tipsun20",
@@ -167,7 +167,7 @@ marks <- tibble::tribble(
     unit = dplyr::case_when(
       id == "KEVF1" ~ sprintf("respondents (%s)", format(rec("KEVF1", "n"), big.mark = ",")),
       id == "PRL47" ~ sprintf("respondents (%s)", format(rec("PRL47", "n"), big.mark = ",")),
-      id == "OA"    ~ sprintf("respondents (%s, course refit)", format(oa$respondents, big.mark = ",")),
+      id == "OA"    ~ sprintf("respondents (%s, workshop refit)", format(oa$respondents, big.mark = ",")),
       .default = unit),
     statistic_type = c("t", rec("KQXUE", "statistic_type"), rec("C6HJR", "statistic_type"),
                        rec("KEVF1", "statistic_type"), rec("PRL47", "statistic_type"),
@@ -183,9 +183,9 @@ marks <- tibble::tribble(
     # whose mark is the refit of its design without the interactions
     statistic_placement = c(oa$t, statistic_recorded[2:6]),
     df_placement = c(oa$df_satterthwaite, df_recorded[2:4], prl$df_satterthwaite, df_recorded[6]),
-    df_basis = c("Satterthwaite df of the course refit of the design without its interactions",
+    df_basis = c("Satterthwaite df of the workshop refit of the design without its interactions",
                  "residual df as recorded", "residual df as recorded",
-                 "Satterthwaite df as recorded", "Satterthwaite df of the course refit of the design",
+                 "Satterthwaite df as recorded", "Satterthwaite df of the workshop refit of the design",
                  "Satterthwaite df as recorded"),
     r_placement = effectsize::t_to_r(statistic_placement, df_placement)$r,
     r_233 = effectsize::t_to_r(statistic_placement, 233)$r,
@@ -197,15 +197,15 @@ marks <- tibble::tribble(
     p_recorded = c("< 0.001", p_reported[c("KQXUE", "C6HJR", "KEVF1", "PRL47", "018OL")]),
     p_cluster_check = c(NA, p_kqxue, p_c6hjr, kevf1_fit$p_cr2, NA, NA),
     note = c(
-      sprintf("The paper prints b = -0.00340 and t = -4.03, with no df, for the low-education band of a model with education interactions (Table 3, model 1); the robustness study recorded no effect size for the original study. The mark is the course refit of the design without the interactions, whose slope is the average over the education bands: b = %.5f, t = %.2f on %.1f Satterthwaite df and %s respondents. The refit with the interactions gives b = %.5f, t = %.2f on %.1f df; that model is taught in the module Multilevel models. On the respondent count the published t would give r = %.4f.",
+      sprintf("The paper prints b = -0.00340 and t = -4.03, with no df, for the low-education band of a model with education interactions (Table 3, model 1); the robustness study recorded no effect size for the original study. The mark is the workshop refit of the design without the interactions, whose slope is the average over the education bands: b = %.5f, t = %.2f on %.1f Satterthwaite df and %s respondents. The refit with the interactions gives b = %.5f, t = %.2f on %.1f df; that model is taught in the module Multilevel models. On the respondent count the published t would give r = %.4f.",
               oa$b, oa$t, oa$df_satterthwaite, format(oa$respondents, big.mark = ","),
               oa_int$b, oa_int$t, oa_int$df_satterthwaite, effectsize::t_to_r(-4.03, 335566)$r),
-      sprintf("Recorded t uses conventional errors. The course refit on the curve (own series es_2064_pop, drop rule, country fixed effects) has p_cr2 = %.4f; at the standard measurement settings p_cr2 = %.4f. No slope is in the record of the robustness study.",
+      sprintf("Recorded t uses conventional errors. The workshop refit on the curve (own series es_2064_pop, drop rule, country fixed effects) has p_cr2 = %.4f; at the standard measurement settings p_cr2 = %.4f. No slope is in the record of the robustness study.",
               p_kqxue, p_kqxue_panel),
       "Recorded t = -3.804 is the corrected build; the form reported -3.853. b and se are those of the reproduced specification, whose CR2 p is p_cluster_check.",
       sprintf("The recorded value is a cell-level quantity. p_cluster_check is the country fixed-effects analogue on the %d cells of the count that the series covers, in %d countries, b = %.4f, r = %.3f, under CR2 with Satterthwaite df, the rule of the curve.",
               kevf1_fit$n_cells, kevf1_fit$n_countries, kevf1_fit$b, kevf1_fit$r),
-      sprintf("Stata reported z = -3.594 without df; the robustness study converted on N. Placed on the %.1f Satterthwaite df of the course refit (b = %.5f, t = %.2f on %s respondents), which uses annual series and fixed slopes, without GDP per capita, the change in unemployment and the Candidate Countries wave.",
+      sprintf("Stata reported z = -3.594 without df; the robustness study converted on N. Placed on the %.1f Satterthwaite df of the workshop refit (b = %.5f, t = %.2f on %s respondents), which uses annual series and fixed slopes, without GDP per capita, the change in unemployment and the Candidate Countries wave.",
               prl$df_satterthwaite, prl$b, prl$t, format(prl$respondents, big.mark = ",")),
       "The estimate was reported as -0.00 on the log scale; the analyst ticked 'opposite direction' for a negative estimate. Country-wave cells share annual unemployment values, so the 396.9 df overstate the independent comparisons."
     )

@@ -10,7 +10,7 @@
 #                assets/chart/multiverse.css and the markup of one chart in
 #                assets/chart/multiverse.template.html. The design follows the
 #                chart of the blog post on the same claim, reimplemented here
-#                so that the course depends on no file outside this repository.
+#                so that the workshop depends on no file outside this repository.
 # Author       : Chris Moreh
 # Last updated : 2026-11-15
 # Sourced by   : curve.qmd
@@ -82,7 +82,7 @@ mv_marks <- function(marks, curve_r) {
       sg        = as.integer(dplyr::coalesce(.data$p_cluster_check, .data$p_num) < 0.05),
       tag       = dplyr::if_else(.data$id == "OA", "OA design", .data$id),
       title     = dplyr::case_when(
-        .data$id == "OA"    ~ "The design of the original study (2016), refitted by the course without its education interactions",
+        .data$id == "OA"    ~ "The design of the original study (2016), refitted by the workshop without its education interactions",
         .data$id == "C6HJR" ~ "Reanalyst C6HJR of the robustness study, the specification that you reproduce in Task 3",
         .data$id == "PRL47" ~ "Reanalyst PRL47 of the robustness study, model B8",
         .default            = paste("Reanalyst", .data$id, "of the robustness study")

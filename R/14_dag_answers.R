@@ -10,7 +10,7 @@
 #               unemployment on framing. The lab reads these answers because
 #               dagitty cannot run there: its graph algorithms need a
 #               JavaScript engine that a browser grants only to a page served
-#               with cross-origin isolation headers, which the course site
+#               with cross-origin isolation headers, which the workshop site
 #               does not send.
 # Reads:        nothing; the arrows are those of the graph cell of
 #               lab.qmd

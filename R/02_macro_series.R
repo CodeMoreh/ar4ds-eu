@@ -3,7 +3,7 @@
 # Purpose:      Assembles the unemployment series that the four Eurostat-using
 #               analysts of the robustness study merged, so that the measure axis can refit
 #               the menu on each of them rather than on the World Bank series
-#               that the course panel carries. Eurostat publishes unemployment
+#               that the workshop panel carries. Eurostat publishes unemployment
 #               broken down by age band, sex and unit, and the choice among
 #               those slices IS the predictor: each slice gives different
 #               country-year values, so the band is the identity of the

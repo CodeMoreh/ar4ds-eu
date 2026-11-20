@@ -68,7 +68,7 @@ datawizard::data_write(curve_neg, out_path("spec_curve_negative.csv"), verbose =
 
 ## ---- checks -------------------------------------------------------------------
 
-# the reference specification is the reproduction target of the course
+# the reference specification is the reproduction target of the workshop
 ref <- datawizard::data_filter(curve_pos, is_reference)
 stopifnot("the curves do not have 864 rows each" = nrow(curve_pos) == 864 && nrow(curve_neg) == 864,
           "there is not exactly one reference specification" = nrow(ref) == 1,

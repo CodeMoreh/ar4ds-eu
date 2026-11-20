@@ -52,7 +52,7 @@ keep <- c("munemp", "mgrowth", "edu3mid", "edu3high",
 # --- 1. the published model, interactions included ------------------------------
 # Twice: on the respondents who named at least one item, as the published Stata
 # code did by dividing by a mentions total with no zero guard (its level-1 N of
-# 390,373 is that count), and with the zero rule of the course panel, which
+# 390,373 is that count), and with the zero rule of the workshop panel, which
 # C6HJR, KEVF1 and 018OL also used. The respondents who named nothing are
 # disproportionately low-educated, so the rule bears on the education gap and
 # on its interaction.

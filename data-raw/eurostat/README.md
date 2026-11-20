@@ -1,6 +1,6 @@
 # Eurostat tables behind the unemployment and growth series
 
-Four of the five reanalysts in the SCORE robustness study (Aczel et al. 2026) merged an unemployment series from Eurostat; the fifth, analyst C6HJR, used the World Bank national estimate that the course panel carries. This folder holds the Eurostat tables that those four drew on, and the Eurostat growth table, so that `R/02_macro_series.R` can cut each series from the table as published rather than from a substitute.
+Four of the five reanalysts in the SCORE robustness study (Aczel et al. 2026) merged an unemployment series from Eurostat; the fifth, analyst C6HJR, used the World Bank national estimate that the workshop panel carries. This folder holds the Eurostat tables that those four drew on, and the Eurostat growth table, so that `R/02_macro_series.R` can cut each series from the table as published rather than from a substitute.
 
 ## Why an age band is part of the predictor
 

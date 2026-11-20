@@ -1,6 +1,6 @@
 ##############################################################################
 # Title:        12_displays.R
-# Purpose:      The tables behind the displays that keep in the course what
+# Purpose:      The tables behind the displays that keep in the workshop what
 #               the curve leaves out, at the standard measurement settings
 #               (shares of all 13 items, zero rule, cells as interviewed,
 #               World Bank series), each linear fit with the inference columns

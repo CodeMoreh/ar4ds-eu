@@ -34,7 +34,7 @@
               payload sorts the specifications from the largest value down,
               so that the strongest support still sits on the left (false)
 
-  Conventions set by the author of the course: one ranking for all
+  Conventions set by the author of the workshop: one ranking for all
   specifications; two significance classes at the 5% level (an open circle for
   p < 0.05, a cross for p >= 0.05, at the same footprint); translucent thin
   outlines; reference marks in ink with a thin line to a tag that holds the

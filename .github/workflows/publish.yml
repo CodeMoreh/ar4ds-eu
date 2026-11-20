@@ -18,7 +18,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04
     env:
-      # The copy of CRAN of the package date of the course, as binaries for
+      # The copy of CRAN of the package date of the workshop, as binaries for
       # this version of Ubuntu. The R setup hands the first address to renv as
       # its repository, so the versions of renv.lock install as binaries.
       RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-11-17
@@ -44,7 +44,7 @@ jobs:
       # and the two packages that the chunk of index.qmd calls (readr and
       # datawizard) are needed here. R is the version recorded in renv.lock,
       # and the packages come from the lockfile, at the versions of the package
-      # date of the course.
+      # date of the workshop.
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:

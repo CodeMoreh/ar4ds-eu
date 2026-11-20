@@ -9,7 +9,7 @@
 #               018OL models the mean of the same five. Covariates follow the
 #               reviewed wave mappings: W1 nation weight, D11 age, D10 gender,
 #               the GESIS education recode in four bands. Macro variables are
-#               joined from the course panel. No model is fitted here.
+#               joined from the workshop panel. No model is fitted here.
 #               The two closing codes of the battery, OTHER (spontaneous) and
 #               DK, travel with the items, because a respondent who mentions
 #               none of the 13 items is one of three different people: someone
@@ -154,7 +154,7 @@ ind <- ind |>
 dir.create(private_dir, showWarnings = FALSE)
 saveRDS(ind, person_file)
 
-## ---- validation: aggregation must reproduce the course panel ---------------
+## ---- validation: aggregation must reproduce the workshop panel -------------
 
 chk <- ind |>
   datawizard::data_summary(mcosmo = mean(cosmo), mutil = mean(util), mcomm = mean(comm),
