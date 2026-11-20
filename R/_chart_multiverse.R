@@ -69,11 +69,9 @@ mv_levels <- function(curve, options, axis_code) {
 }
 
 # ---- the reference marks ---------------------------------------------------------
-# Each mark is placed by rank among the specifications at r_placement, the
-# result converted on the degrees of freedom of its own inference. Its shape
-# follows the rule of the curve where the file gives the CR2 check of the
-# design on the country-year cells, and the p-value as reported where the
-# design cannot be fitted on those cells.
+# Each mark is placed by rank at r_placement, the result converted on the df of
+# its own inference. Its shape follows the CR2 check of the design on the cells
+# where the file gives one, and the p-value as reported where it does not.
 mv_marks <- function(marks, curve_r) {
   n <- length(curve_r)
   marks |>
@@ -182,10 +180,9 @@ mv_payload <- function(curve, options, marks = NULL, reversed = FALSE, file = "s
 }
 
 # ---- the HTML ------------------------------------------------------------------------
-# One chart as a raw HTML block for a chunk with `output: asis`. root is the
-# path from the page to the root of the site, for reading the template and for
-# the links to the script and the styles, which the first chart of a page
-# carries.
+# One chart as a raw HTML block for a chunk with `output: asis`. root is the path
+# from the page to the root of the site, for the template and for the links to
+# the script and the styles, which the first chart of a page carries.
 mv_chart_html <- function(id, payload, title, sub, notes, src, assets = TRUE, root = "./") {
   template <- readr::read_file(file.path(root, "assets/chart/multiverse.template.html")) |>
     sub(pattern = "(?s)^\\s*<!--.*?-->\\s*", replacement = "", perl = TRUE)

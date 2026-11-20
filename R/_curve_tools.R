@@ -118,17 +118,14 @@ spec_data <- function(row, inputs) {
 
 rhs_terms <- function(row) c("x", if (row$copredictor == "other") "copred")
 
-# A linear fit (fixed effects or pooled) under the three kinds of inference.
-# The conventional and CR1 tests come from fixest, whose clustered p-values use
-# t on G - 1 df (its default t.df = "min"). CR2 is the bias-reduced
-# linearisation of Bell and McCaffrey (2002) with the Satterthwaite df of
-# Pustejovsky and Tipton (2018, Journal of Business & Economic Statistics),
-# computed by clubSandwich on the same model fitted by lm() with the fixed
-# effects as dummies; parameters::model_parameters(vcov = "CR2") gives the same
-# standard error but tests it on the residual df, so clubSandwich is called
-# directly. r is the conversion rule of the robustness study (standard_correlation_coefficient.R
-# in marton-balazs-kovacs/multi100 on GitHub), r = t / sqrt(t^2 + df), which
-# effectsize::t_to_r() computes identically.
+# A linear fit (fixed effects or pooled) under three kinds of inference.
+# Conventional and CR1 from fixest, whose clustered p uses t on G - 1 df (its
+# default t.df = "min"). CR2: the bias-reduced linearisation of Bell and
+# McCaffrey (2002) with the Satterthwaite df of Pustejovsky and Tipton (2018),
+# by clubSandwich on the same model fitted by lm() with dummies;
+# parameters::model_parameters(vcov = "CR2") tests on the residual df instead.
+# r: the conversion rule of the robustness study (standard_correlation_coefficient.R
+# in marton-balazs-kovacs/multi100 on GitHub), as effectsize::t_to_r().
 fit_linear <- function(row, inputs, d = spec_data(row, inputs)) {
   rhs <- rhs_terms(row)
   fe  <- switch(row$estimator, fe_twoway = " | cntry + year", fe_country = " | cntry",

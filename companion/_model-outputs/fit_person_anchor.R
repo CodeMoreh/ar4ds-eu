@@ -1,5 +1,5 @@
 ###############################################################################
-# Title:        The published model of OA without its interactions, on the
+# Title:        The published model without its interactions, on the
 #               respondents
 # Purpose:      Fit the published specification of the Europeanisation case study with its
 #               cross-level interactions between the national rates and
@@ -7,8 +7,9 @@
 #               the zero rule, maximum likelihood) on the four framing scales,
 #               and write out its coefficients and variance components. The
 #               multilevel module shows the fixed part of the cosmopolitan
-#               model, and the multilevel deck of day 3 reads from it the
-#               effect of being unemployed and the slope of the national rate.
+#               model, and the slides of day 3 on multilevel models read from
+#               it the effect of being unemployed and the slope of the
+#               national rate.
 #
 #               Also measures the prevalence gradient: how much the share of
 #               unemployed respondents in a country-year rises with its
@@ -28,10 +29,9 @@
 ###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 
-# Reference categories are the published ones: manual workers for occupation,
-# large town for urbanisation, lowest band for education. Getting these wrong
-# does not change the macro slopes but makes every contrast unreadable against
-# the paper.
+# The reference categories of the paper (manual workers, large towns, the
+# lowest education band): others leave the macro slopes unchanged but no
+# contrast comparable with the paper.
 ind <- ind |>
   datawizard::data_modify(cyw   = paste(cntry, eb, sep = "_"),
          edu3  = factor(edu3, levels = c("low", "mid", "high")),

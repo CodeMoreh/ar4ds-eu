@@ -23,8 +23,8 @@
 #               r is the descriptive one of the conventional fit (Satterthwaite
 #               df for the within-between model, the z on the residual df for
 #               the beta family).
-#               Levels follow the menu: estimand, measurement, estimation and
-#               inference (the test).
+#               The column level holds the codes of the groups of the menu:
+#               estimand, measurement, estimation and inference (the test).
 # Reads:        data/spec_curve.csv,
 #               data/spec_curve_negative.csv,
 #               data/teney_panel_measurement.csv,

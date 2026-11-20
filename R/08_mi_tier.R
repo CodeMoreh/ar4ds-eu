@@ -55,16 +55,13 @@ samples    <- c("all", "y2004_2008", "y2009_2013", "no_bailout", "no_GR_ES")
 reg_wts    <- c("none", "n_cell", "n_eff", "pop")
 
 ## ---- the imputation data ---------------------------------------------------------
-## The four base shares are set to NA where the respondent mentioned nothing
-## and imputed; the two composites are their exact sums and are derived from
-## the completed parts. Imputing the composites directly fails: the
-## collinearity screen of mice drops an exact sum from the model and leaves it
-## unimputed, and either engine would otherwise draw composites that disagree
-## with their parts. Age and sex have a handful of missing values and are
-## imputed alongside; the 6,024 missing values of education become an
-## explicit "unknown" band instead, since a multinomial imputation model on
-## 416,698 rows, fifty times over, would cost more than it could return for a
-## covariate that is there only as context.
+## The four base shares are NA where the respondent mentioned nothing, and are
+## imputed; the two composites are their sums, derived from the completed
+## parts, because the collinearity screen of mice drops an exact sum from the
+## model and leaves it unimputed. Age and sex (a handful of missing values) are
+## imputed alongside; the 6,024 missing values of education form an "unknown"
+## band, a multinomial model on 416,698 rows fifty times over being too costly
+## for a covariate that is there only as context.
 parts <- c("cosmo", "util", "comm", "lib")
 with_composites <- \(d) datawizard::data_modify(d, pos = pmin(cosmo + util, 1),
                                                  neg = pmin(comm + lib, 1))
@@ -79,9 +76,8 @@ imp_dat <- person |>
 n_miss <- sum(!imp_dat$answered)
 
 ## ---- engine 1: mice, predictive mean matching ---------------------------------
-## Country and year enter as factors rather than the 270-level cell factor,
-## which pmm handles poorly as a predictor; the two main effects carry the
-## context.
+## Country and year enter as two factors: pmm handles the 270-level cell
+## factor poorly as a predictor.
 
 mice_dat <- datawizard::data_select(imp_dat, exclude = c("cell", "answered"))
 meth <- mice::make.method(mice_dat)
@@ -191,11 +187,9 @@ fit_cells <- function(panel) {
 }
 
 ## ---- Rubin's rules across the m fits -----------------------------------------------
-## mice::pool.scalar() pools one coefficient by Rubin's rules (Rubin 1987), with
-## the degrees of freedom of Barnard and Rubin (1999, Biometrika) for a
-## complete-data df of n - k, here the mean residual df of the m fits; it
-## returns the total variance t, the df and the fraction of missing
-## information fmi.
+## mice::pool.scalar(): Rubin's rules (Rubin 1987) with the df of Barnard and
+## Rubin (1999, Biometrika), on a complete-data df of n - k, here the mean
+## residual df of the m fits.
 
 run_engine <- function(sets, engine) {
   purrr::imap(sets, \(d, i) fit_cells(to_panel(d)) |> dplyr::mutate(imp = i)) |>
@@ -227,7 +221,7 @@ pooled <- dplyr::bind_rows(run_engine(mice_sets, "mice_pmm"), run_engine(amelia_
 
 datawizard::data_write(pooled, out_path("spec_grid_mi.csv"), verbose = FALSE)
 
-## ---- diagnostics for the imputation section of the items module ------------------
+## ---- diagnostics for the imputation section of Scale construction ----------------
 
 diag <- dplyr::bind_rows(
   tibble::tibble(engine = "mice_pmm", quantity = "imputed respondents", value = n_miss),

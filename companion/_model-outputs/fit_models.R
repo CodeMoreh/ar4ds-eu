@@ -46,8 +46,7 @@ writeLines(capture.output(summary(m_l2)), file.path(outdir, "lmer_2lvl.txt"))
 cat("lmer2  b_unemp =", round(lme4::fixef(m_l2)["unemp"], 5), "\n")
 
 # --- 4. three-level random intercepts – respondents in country-years in
-#        countries (the structure used in the original author's (OA) published
-#        model) --------------------------------------------------------------- #
+#        countries (the structure of the published model) --------------------- #
 m_l3 <- lmerTest::lmer(cosmo ~ unemp + (1 | cntry) + (1 | cntry:year), data = person)
 writeLines(capture.output(summary(m_l3)), file.path(outdir, "lmer_3lvl.txt"))
 cat("lmer3  b_unemp =", round(lme4::fixef(m_l3)["unemp"], 5), "\n")
@@ -88,9 +87,9 @@ saveRDS(m_brm, "../_planning_data/brms_panel.rds")
 cat("brms   b_unemp =", round(brms::fixef(m_brm)["unemp", "Estimate"], 5), "\n")
 
 # --- 9. Bayesian ordered beta regression (ordbetareg wraps brms) -------------
-#     Fitted on a 20,000-respondent random subsample: the ordered-beta
-#     likelihood on all 416,698 rows would sample for many hours, and the
-#     exhibit's purpose is the shape of the output, not a production estimate.
+#     On a random subsample of 20,000 respondents: on all 416,698 rows the
+#     ordered-beta likelihood would sample for many hours, and the exhibit
+#     shows the shape of the output, not a production estimate.
 set.seed(2026)
 person_sub <- dplyr::slice_sample(person, n = 20000)
 m_ord <- ordbetareg::ordbetareg(cosmo ~ unemp + (1 | cntry), data = person_sub,

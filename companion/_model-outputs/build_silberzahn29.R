@@ -1,8 +1,8 @@
 ################################################################################
 # Title:        Silberzahn et al. (2018) – the 29 teams' effect estimates
-# Purpose:      Turn the published crowdsourcing results into the workshop's
-#               committed copy, so the deck can rebuild the paper's Figure 3
-#               from numbers rather than reproduce the image.
+# Purpose:      Turn the published crowdsourcing results into the committed
+#               copy of the course, from which the slides rebuild Figure 3 of
+#               the paper from numbers rather than reproduce the image.
 # Reads:        osf.io/gvm2z, component "Results: Data", file
 #               "Crowdsourcing Effects in OR with Subgroups.csv" (public;
 #               fetched over the network, nothing licensed is involved)
@@ -23,10 +23,10 @@ raw <- src |>
   I() |>
   readr::read_csv(show_col_types = FALSE)
 
-# Two published forks, both worth naming on the slide: the response
-# distribution the team assumed, and how it handled the non-independence of
-# repeated players and referees. "misc" holds the two teams whose approach
-# (Dirichlet-process clustering, Tobit) sits outside the three families.
+# Two published forks: the response distribution assumed by the team, and its
+# treatment of the non-independence of repeated players and referees. "misc"
+# holds the two teams whose approach (Dirichlet-process clustering, Tobit)
+# sits outside the three families.
 sz <- raw |>
   dplyr::transmute(
     team          = Team,
@@ -40,8 +40,8 @@ sz <- raw |>
   ) |>
   datawizard::data_arrange(c("distribution", "or"))
 
-# The paper's own summary, as a guard: anything that moves here means the
-# source file changed under us.
+# The summary printed in the paper, as a guard: a failure means that the
+# source file has changed.
 stopifnot(
   nrow(sz) == 29,
   round(median(sz$or), 3) == 1.310,

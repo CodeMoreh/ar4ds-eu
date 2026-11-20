@@ -144,12 +144,10 @@ stopifnot("the two vintages of une_rt_a_h differ beyond Portugal 2013" =
             nrow(vintage_gap) == 1 && vintage_gap$cntry == "PT" && vintage_gap$year == 2013)
 
 ## ---- KQXUE: country-years ---------------------------------------------------
-## task2.do appends the temporary file of EB 62.0 twice (lines 441-442), so
-## every respondent of autumn 2004 counts twice in the 2004 means of the
-## fifteen older member states; EB 61.0 holds no sample of the newer states,
-## whose 2004 means are unchanged by the duplicate. A respondent who mentions
-## none of the thirteen items has a zero denominator, which Stata turns into a
-## missing share, so the collapse leaves that respondent out.
+## task2.do appends EB 62.0 twice (lines 441-442): every respondent of autumn
+## 2004 counts twice in the 2004 means of the fifteen older member states (EB
+## 61.0 holds no sample of the newer ones). A respondent with no mention has a
+## zero denominator, a missing share in Stata, and drops out of the collapse.
 
 kqxue_resp <- resp |>
   datawizard::data_modify(cntry = datawizard::recode_values(
@@ -199,13 +197,11 @@ o18 <- resp |>
 stopifnot("the 018OL file is not 420 complete cells" = nrow(o18) == 420 && !anyNA(o18))
 
 ## ---- the recorded statistics -------------------------------------------------
-## KQXUE fitted xtreg cosmo unemployment, fe: the within estimator with
-## conventional errors on 270 - 27 - 1 = 242 df, which a linear model with a
-## dummy for each country reproduces. 018OL fitted lmer() with random
-## intercepts for country, year and wave and read the Satterthwaite df of
-## lmerTest (Kuznetsova, Brockhoff and Christensen 2017, Journal of
-## Statistical Software); its rescaling of the outcome to 0-1 changes the
-## coefficient but neither t nor df.
+## KQXUE: xtreg cosmo unemployment, fe, the within estimator with conventional
+## errors on 270 - 27 - 1 = 242 df, as lm() with country dummies. 018OL: lmer()
+## with random intercepts for country, year and wave, Satterthwaite df of
+## lmerTest (Kuznetsova, Brockhoff and Christensen 2017); its rescaling of the
+## outcome to 0-1 changes the coefficient but neither t nor df.
 
 fit_kqxue <- stats::lm(cosmo ~ unemp + factor(cntry), data = kqxue)
 fit_kqxue_once <- stats::lm(cosmo_once ~ unemp + factor(cntry), data = kqxue)

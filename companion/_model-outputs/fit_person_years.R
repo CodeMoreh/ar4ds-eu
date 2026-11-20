@@ -9,7 +9,7 @@
 #               for each year, the structure that Schmidt-Catran and
 #               Fairbrother (2016) recommend for comparative longitudinal
 #               survey data, and once as a dummy for each year. The
-#               multilevel module and its deck set the unemployment slopes
+#               multilevel module and its slides set the unemployment slopes
 #               beside the two-way fixed-effects slope of the panel.
 # Reads:        the respondent file, through _load_respondents.R (licensed,
 #               local only; EB_RESPONDENTS gives its path)

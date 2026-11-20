@@ -1,6 +1,6 @@
 ###############################################################################
 # Title:        The thirteen EU-meaning items: dimensionality and the scales
-# Purpose:      Everything the measurement module displays about the framing
+# Purpose:      Everything that Scale construction displays about the framing
 #               instrument, computed once on the licensed respondent file and
 #               written as aggregate tables. Item prevalences; the tetrachoric
 #               correlations among the thirteen items; the eigenvalues of that

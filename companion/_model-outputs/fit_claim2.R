@@ -25,10 +25,9 @@
 ###############################################################################
 source("companion/_model-outputs/_load_respondents.R")
 
-# Reference categories as published: manual workers, large towns, the lowest
-# education band; macro predictors centred on their grand means so that the
-# main effect of unemployment is the slope at the reference band, which is how
-# the published table reads.
+# Reference categories as published (manual workers, large towns, the lowest
+# education band); macro predictors centred on their grand means, so that the
+# main effect of unemployment is the slope at the reference band, as published.
 ind <- ind |>
   datawizard::data_filter(!is.na(edu3), !is.na(ses), !is.na(urban), !is.na(age), !is.na(female)) |>
   datawizard::data_modify(edu3  = factor(edu3, levels = c("low", "mid", "high")),
@@ -51,12 +50,12 @@ keep <- c("munemp", "mgrowth", "edu3mid", "edu3high",
           "munemp:edu3mid", "munemp:edu3high", "mgrowth:edu3mid", "mgrowth:edu3high")
 
 # --- 1. the published model, interactions included ------------------------------
-# Twice: once on the respondents who named at least one item, which is what the
-# published Stata code did by dividing by a mentions total with no zero guard
-# (its level-1 N of 390,373 is exactly that count), and once with the zero rule
-# that the course and the reanalyses of the robustness study use. The respondents who named
-# nothing are disproportionately low-educated, so the rule bears on the
-# education gap and on its interaction, and the page shows both.
+# Twice: on the respondents who named at least one item, as the published Stata
+# code did by dividing by a mentions total with no zero guard (its level-1 N of
+# 390,373 is that count), and with the zero rule of the course panel, which
+# C6HJR, KEVF1 and 018OL also used. The respondents who named nothing are
+# disproportionately low-educated, so the rule bears on the education gap and
+# on its interaction.
 fit_published <- function(y, data, rule) {
   f <- reformulate(c("female", "mage", "ses", "urban",
                      "edu3 * munemp", "edu3 * mgrowth",
@@ -106,8 +105,8 @@ fe_cells <- purrr::map(DIMS, \(y) {
            level = "cell", n = nobs(m))
 }) |> purrr::list_rbind()
 
-# Interaction terms are named in whichever order the package chose; one name
-# per quantity so the page can join on it.
+# The order of the terms in the name of an interaction varies by package: one
+# name per quantity, for the join on the page.
 canon <- c("munemp" = "unemployment", "mgrowth" = "growth",
            "edu3mid" = "education: mid", "edu3high" = "education: high",
            "edu3mid:munemp" = "mid x unemployment", "munemp:edu3mid" = "mid x unemployment",

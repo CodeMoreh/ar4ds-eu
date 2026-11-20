@@ -2,7 +2,7 @@
 # Title:        Multilevel reference numbers from the real respondents
 # Purpose:      Capture the numbers behind the three fits that the module on
 #               multilevel models displays as captured text, written by
-#               fit_models.R, in a form that a page or a deck can read.
+#               fit_models.R, in a form that a page or a slide deck can read.
 #
 #               Three models, in the order in which the argument needs them:
 #               country level only, which counts every respondent as fresh

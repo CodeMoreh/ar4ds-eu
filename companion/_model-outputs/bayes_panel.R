@@ -30,19 +30,17 @@
 set.seed(20261106)
 out <- "companion/_model-outputs/"
 
-# Unemployment as the departure of each year from the decade mean of its
-# country (unemp_within), which leaves the slope of a model with country
-# intercepts unchanged and keeps a country slope from standing in for a
-# difference of level between countries
+# unemp_within, the departure of each year from the decade mean of its country:
+# the slope of a model with country intercepts is unchanged, and a country
+# slope cannot stand in for a difference of level between countries
 europeanisation <- readr::read_csv("data/europeanisation_cy.csv", show_col_types = FALSE) |>
   datawizard::demean(select = "unemp", by = "cntry") |>
   dplyr::mutate(year_f = factor(year))
 
 # --- Crossed random intercepts under the default priors ---------------------- #
-# The call and the seed of model 8 in fit_models.R, whose printed summary and
-# priors the module displays from brms_panel.txt and brms_priors.txt; the
-# same call returns the same draws, and this fit supplies the numbers that the
-# page quotes from them
+# The call and the seed of model 8 of fit_models.R, whose printout the module
+# shows (brms_panel.txt, brms_priors.txt): the same draws, and the numbers
+# that the page quotes
 fit_ri <- brms::brm(mcosmo ~ unemp + (1 | cntry) + (1 | year), data = europeanisation,
                     chains = 4, cores = 4, iter = 4000, seed = 2026, backend = "cmdstanr",
                     refresh = 0, silent = 2, file = paste0(out, "fit_panel_ri"), file_refit = "on_change")
@@ -92,10 +90,9 @@ twoway <- purrr::imap(formulas, \(f, name) {
 fits <- c(list(ri = fit_ri, prior = fit_prior), twoway)
 
 # --- Posterior summaries ----------------------------------------------------- #
-# Median, mean, sd and quantiles of each parameter; the probability of
-# direction, and the probability of a value beyond 0.001 in the direction of
-# the median, which for the slope is a fall of at least one point of share
-# for a rise of ten points of unemployment (bayestestR)
+# pd, the probability of direction, and p_beyond, of a value beyond 0.001 in
+# the direction of the median: for the slope, a fall of at least one point of
+# share per ten points of unemployment (bayestestR)
 params <- list(ri = c("b_unemp", "b_Intercept", "sd_cntry__Intercept", "sd_year__Intercept", "sigma"),
                prior = c("b_unemp_within", "sigma"),
                common = c("b_unemp_within", "sigma"),
@@ -120,9 +117,8 @@ summary_tab <- purrr::imap(params, \(vars, name) {
 readr::write_csv(summary_tab, paste0(out, "bayes_panel_summary.csv"))
 
 # --- Prior predictive check -------------------------------------------------- #
-# Cell means simulated from the priors alone (50 of the 4,000 draws, every
-# cell), and the change in the share for a rise of ten points of unemployment,
-# in points of share (every draw)
+# Cell means from the priors alone (50 of the 4,000 draws, every cell), and the
+# change in points of share per ten points of unemployment (every draw)
 # Seeded here as well as at the top, because a fit loaded from its file draws
 # no random numbers and would otherwise leave the stream elsewhere
 set.seed(20261106)
@@ -227,11 +223,10 @@ diagnostics <- purrr::imap(fits, \(fit, name) {
 readr::write_csv(diagnostics, paste0(out, "bayes_panel_diagnostics.csv"))
 
 # --- Prior sensitivity by power-scaling (Kallioinen et al.) ------------------ #
-# How far the posterior of each parameter moves when the prior or the
-# likelihood is raised to a power near 1, without refitting. For the models
-# with AR(1) residuals brms returns the log-likelihood of each country-year
-# given the other years of its country, so the likelihood column of those
-# models scales that conditional form; the prior column is exact for all.
+# How far each posterior moves when the prior or the likelihood is raised to a
+# power near 1, without refitting. With AR(1) residuals brms gives the
+# log-likelihood of a country-year given the other years of its country, so
+# the likelihood column scales that conditional form; the prior column is exact.
 sensitivity <- purrr::imap(params[c("common", "ar1", "slopes", "both")], \(vars, name) {
   priorsense::powerscale_sensitivity(twoway[[name]], variable = vars) |>
     tibble::as_tibble() |>

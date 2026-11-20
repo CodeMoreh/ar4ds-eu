@@ -21,11 +21,9 @@
 
 source("R/_paths.R")
 
-# The arrows of the graph cell, written "cause -> effect": the cell writes
-# them as formulas, effect ~ cause, so `framing ~ unemployment` is
-# "unemployment -> framing". The five committed arrows, then the five that the
-# cell leaves commented out, in its order. A change to the cell needs the same
-# change here.
+# The arrows of the graph cell as "cause -> effect" (the cell writes
+# effect ~ cause): the five committed, then the five commented out, in the
+# order of the cell. A change to the cell needs the same change here.
 committed <- c("unemployment -> framing", "country -> framing", "country -> unemployment",
                "year -> framing", "year -> unemployment")
 commented <- c("growth -> framing", "growth -> unemployment", "unemployment -> bailout",
@@ -36,12 +34,11 @@ roles <- list(exposure = "unemployment", outcome = "framing")
 added <- purrr::map(0:length(commented), \(k) utils::combn(commented, k, simplify = FALSE)) |>
   purrr::list_flatten()
 
-# One block of rows per graph, one row per minimal set, in the order in which
-# dagitty returns and prints them. A graph without any valid set would keep
-# one row with item 0, so that the lab can tell it apart from a graph that the
-# table does not hold; no graph of the task has one. dplyr::mutate(), because
-# the columns are built from the arguments of the lambda, which datawizard
-# cannot see.
+# One block per graph, one row per minimal set, in the order in which dagitty
+# returns them. A graph without a valid set would keep one row with item 0,
+# which the lab tells apart from a graph missing from the table (no graph of
+# the task has one). dplyr::mutate(): datawizard does not find the arguments
+# of the lambda.
 answers <- purrr::imap(added, \(extra, graph) {
   arrows <- c(committed, extra)
   dag <- dagitty::dagitty(paste0("dag {\n", paste(c(

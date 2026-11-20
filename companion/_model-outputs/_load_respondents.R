@@ -15,10 +15,9 @@
 #               fit_person_years.R, fit_models.R, fit_claim2.R and
 #               R/13_reference_marks.R
 ###############################################################################
-# The file lives outside every repository. The default is the private folder
-# of the workspace on the facilitator's machine; a participant running these
-# scripts sets EB_RESPONDENTS to their own copy. Paths are relative to the
-# project root; a script run from elsewhere sets EB_COURSE_ROOT first.
+# The file lives outside every repository: by default in the private folder of
+# the local copy of the workspace, elsewhere through EB_RESPONDENTS. Paths are
+# relative to the project root; a script run from elsewhere sets EB_COURSE_ROOT.
 .root <- Sys.getenv("EB_COURSE_ROOT", unset = ".")
 .respondents_path <- Sys.getenv("EB_RESPONDENTS",
                                 unset = file.path(.root, "../ar4ds-eu-workspace/data_private/eb_respondents.rds"))

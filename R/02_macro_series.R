@@ -97,7 +97,7 @@ datawizard::data_write(analyst_unemp, out_path("macro", "analyst_unemployment.cs
                        verbose = FALSE)
 
 ## ---- the same series keyed by measure, for the multiverse -----------------
-## The measure axis crosses the canonical menu with the series, so the series
+## The measure axis crosses the menu with the series, so the series
 ## are needed under names that describe the variable rather than the analyst
 ## who chose it. The Eurostat growth series carries no United Kingdom row:
 ## Eurostat has withdrawn UK national accounts, so choosing it costs a country.
