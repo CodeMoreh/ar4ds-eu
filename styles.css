@@ -92,21 +92,21 @@ main .quarto-figure img[src*="assets/gesis/"] {
 #quarto-bibliography { display: none; }
 #quarto-appendix:not(:has(> :not(#quarto-bibliography))) { display: none; }
 
-/* The footer on one line. Quarto keeps room for three blocks, of which only the
-   first holds text; on a narrow screen the link that reports an issue sits
-   beside the licence instead of below it. */
-.nav-footer { min-height: 0; padding-top: .55rem; padding-bottom: .55rem; align-items: center; }
-.nav-footer-center, .nav-footer-right { min-height: 0; }
-.nav-footer-right { display: none; }
-.nav-footer .nav-footer-left, .nav-footer .nav-footer-center { margin-bottom: 0; }
-/* the centre block opens with a non-breaking space, which would take a line of its own */
-.nav-footer .nav-footer-center { font-size: 0; }
-.nav-footer .nav-footer-center > * { font-size: .825rem; }
-.nav-footer .toc-actions { padding-top: 0; padding-bottom: 0; }
-.nav-footer .toc-actions ul { margin: 0; padding: 0; }
+/* The footer on one line: authorship and licence on the left, the tools that
+   build the pages in the centre, the source and the issue form on the right. The
+   link to report an issue that Quarto adds to the footer of some pages repeats the
+   one on the right, and is hidden; a narrow screen drops the centre. */
+.nav-footer { min-height: 0; padding-top: .55rem; padding-bottom: .55rem; align-items: center; flex-wrap: nowrap; gap: 1.2rem; }
+.nav-footer .nav-footer-left, .nav-footer .nav-footer-center, .nav-footer .nav-footer-right { min-height: 0; margin-bottom: 0; }
+.nav-footer .toc-actions { display: none; }
+.nav-footer p { margin: 0; }
+.nav-footer .nav-footer-right a { margin-left: 1.1rem; white-space: nowrap; text-decoration: none; }
+.nav-footer .nav-footer-right a:hover .ft-text { text-decoration: underline; }
 @media (max-width: 767.98px) {
-  .nav-footer { flex-wrap: nowrap; gap: 1rem; }
-  .nav-footer .nav-footer-left, .nav-footer .nav-footer-center { flex: 0 1 auto; text-align: left; }
+  .nav-footer .nav-footer-center { display: none; }
+  .nav-footer .nav-footer-left, .nav-footer .nav-footer-right { flex: 0 1 auto; text-align: left; }
+  .nav-footer .nav-footer-right .ft-text { display: none; }
+  .nav-footer .nav-footer-right a { font-size: 1.1rem; }
 }
 
 /* The format of the page, at the head of its sidebar (_includes/track-choice.html) */
