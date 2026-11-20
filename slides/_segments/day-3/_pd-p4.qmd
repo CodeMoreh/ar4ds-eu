@@ -5,7 +5,7 @@ Part 4
 :::
 
 ::: notes
-The last part sits between the two extremes of this session, pooled OLS, which ignores the countries, and fixed effects, which give each country an intercept of its own. Random effects keep a term for each country but treat it as a draw from a distribution, and the assumption that econometrics attaches to them fails on this panel. The within–between model shows why: it estimates the comparison within countries and the comparison between them side by side, and the two point in opposite directions. This is also where the session hands over to the next one, on multilevel models.
+The last part sits between the two extremes of the session, pooled OLS, which ignores the countries, and fixed effects, which give each country an intercept of its own. Random effects keep a term for each country but treat it as a draw from a distribution, and the assumption that econometrics attaches to them fails on this panel. The within–between model shows why, since it estimates the comparison within countries and the comparison between them side by side, and the two point in opposite directions. Here the session also hands over to the next one, on multilevel models.
 :::
 
 ## Random effects {#random-effects .smaller}
@@ -23,7 +23,7 @@ companion/panel-data.qmd, section 5.
 :::
 
 ::: notes
-Random effects keep a term for each country, but in place of twenty-seven intercepts they estimate one number, the variance of the country effects. The estimator subtracts a fraction of each country mean, theta, so it sits on a line that runs from pooled OLS, at nought, to fixed effects, at one. Here theta is about point eight, and the slope duly lands near the answer of country fixed effects. The price is an assumption, which in econometrics has become the meaning of the term: the country effects must be unrelated to the predictor. On this panel that is hard to believe, because the level of unemployment of a country is bound up with the same durable features that shape its view of Europe. The Hausman test agrees, but its classical form assumes away the persistence that part three found, so the next slide gives the comparison a form that our CR2 rule can test.
+Random effects keep a term for each country, but in place of twenty-seven intercepts they estimate one number, the variance of the country effects. The estimator subtracts a fraction theta of each country mean, so that it sits on a line running from pooled OLS, at nought, to fixed effects, at one. Here theta is about point eight, and the slope duly lands near that of country fixed effects. The price is an assumption, which in econometrics has become the meaning of the term, that the country effects are unrelated to the predictor. On this panel the assumption is hard to believe, because the level of unemployment of a country is bound up with the same durable features that shape its view of Europe. The Hausman test agrees, but its classical form assumes away the persistence found in Part 3, so the next slide gives the comparison a form that our CR2 rule can test.
 :::
 
 ## The within–between model {#the-within-between-model .smaller}
@@ -37,7 +37,7 @@ $$ \bar{y}_{ct} = \beta_0 + \beta_W (x_{ct} - \bar{x}_{c\cdot}) + \beta_B\, \bar
 :::
 
 ::: notes
-Bell and Jones propose a more informative answer than picking a winner between fixed and random effects. Split unemployment into the average of each country over the decade and the departure of each year from that average, and give each part a slope of its own. The within slope is exactly the slope with country fixed effects, because separating out the variation between countries is what fixed effects do. The between slope is positive and imprecise. And the pooled slope of part one turns out to be a weighted blend of the two, two patterns of opposite sign averaged into something near zero. The difference between the slopes holds under our CR2 rule as well as under the errors of the model, so for this outcome the assumption of random effects fails under every test that the workshop applies, and Bell and colleagues read the Hausman test in exactly these terms, as a test of whether the two slopes differ.
+Bell and Jones propose a more informative answer than picking a winner between fixed and random effects. Unemployment is split into the average of each country over the decade and the departure of each year from that average, and each part gets a slope of its own. The within slope is exactly the slope with country fixed effects, because separating out the variation between countries is what fixed effects do, while the between slope is positive and imprecise. The pooled slope of Part 1 turns out to be a weighted blend of the two, two patterns of opposite sign averaged into something near zero. The difference between the slopes holds under our CR2 rule as well as under the errors of the model, so for this outcome the assumption of random effects fails under every test that the workshop applies, and Bell and colleagues read the Hausman test in exactly these terms, as a test of whether the two slopes differ.
 :::
 
 ## Two associations {#two-associations .smaller}
@@ -78,7 +78,7 @@ patchwork::wrap_plots(p_between, p_within)
 :::
 
 ::: notes
-Here are the two associations. On the left each country is one point, its average unemployment over the decade against its average cosmopolitan share, and the line across them rises: the countries with more unemployment did not frame the EU in less cosmopolitan terms, if anything the reverse. On the right each country-year is a departure from the averages of its own country, and within countries the line falls. The two associations answer different questions. 'The effect of unemployment on EU framing' has a value within countries and a value between them, and choosing a model means choosing which of the two you ask about. The claim, as the curve reads it, is about change within countries. Anyone who wants the cross-national answer has it on the left, in the regression on the country means, and it lies outside the curve.
+On the left each country is one point, its average unemployment over the decade against its average cosmopolitan share, and the line across them rises, so the countries with more unemployment did not frame the EU in less cosmopolitan terms, if anything the reverse. On the right each country-year is a departure from the averages of its own country, and within countries the line falls. The two associations answer different questions, and choosing a model means choosing which of the two you ask about. The claim, as the curve reads it, is about change within countries, and the cross-national answer, on the left, comes from the regression on the country means, outside the curve.
 :::
 
 ## Hands-on 2 – Within and between {#hands-on-2-within-and-between .smaller}
@@ -103,7 +103,7 @@ Here are the two associations. On the left each country is one point, its averag
 :::
 
 ::: notes
-Your last run of the session. First the CR2 test, one call to clubSandwich on the dummy-variable fit, which should give you the t, the degrees of freedom and the p of the table to the last digit. Then the within–between model with lmer, using the two columns that demean made for you in the first hands-on, and check that the within slope equals the slope of the country design that you fitted then. Last, the step that joins the two halves of the session: add a dummy for each year to the pooled Mundlak regression. The year dummies remove the common European path, as the year effects did, so the coefficient on unemployment becomes the two-way slope. Then say in one sentence what the coefficient on the country mean compares in that design. [state the time]
+In this last run of the session, start with the CR2 test, one call to clubSandwich on the dummy-variable fit, which should give the t, the degrees of freedom and the p of the table to the last digit. Then fit the within–between model with `lmer()`, on the two columns made by `demean()` in the first hands-on, and check that the within slope equals the slope of the country design that you fitted then. The last step joins the two halves of the session: adding a dummy for each year to the pooled Mundlak regression removes the common European path, as the year effects did, so that the coefficient on unemployment becomes the two-way slope. Then say in one sentence what the coefficient on the country mean compares in that design.
 :::
 
 ## The reading and the next session {#the-reading-and-the-next-session .smaller}
@@ -114,5 +114,5 @@ Your last run of the session. First the CR2 test, one call to clubSandwich on th
 :::
 
 ::: notes
-That is the panel. The module Panel data is the reading for this session: it has the code behind every model that we fitted, and two tasks, one on the sign changes of pooled OLS and one on the within–between model with year dummies. If you want the same material written for sociologists, Allison's short book on fixed-effects regression and Halaby's review of panel models are the places to start, and Wooldridge is the reference for the econometrics. The next session leaves the country-years for the people inside them. The same models reappear in the vocabularies of four disciplines, and then we fit those models to the respondents, from the Eurobarometer files that you downloaded before the workshop, ending with the model of the original author.
+The module Panel data is the reading for this session, with the code behind every model that we fitted and two tasks, one on the sign changes of pooled OLS and one on the within–between model with year dummies. For the same material written for sociologists, the short book by Allison on fixed-effects regression and the review of panel models by Halaby are the places to start, and Wooldridge is the reference for the econometrics. The next session leaves the country-years for the people inside them: the same models reappear in the vocabularies of four disciplines, and we then fit them to the respondents, from the Eurobarometer files that you downloaded before the workshop, ending with the model of the original author.
 :::

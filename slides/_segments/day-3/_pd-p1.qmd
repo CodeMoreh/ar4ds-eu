@@ -5,7 +5,7 @@ Part 1
 :::
 
 ::: notes
-Part one starts at the level at which the workshop works, the country-year, and with the simplest model that can be fitted there. A straight line through 270 points looks like a reasonable first try, and the reasons for its failure tell us what every later model of this session is for. Its standard errors pretend that the 270 rows are independent, and its slope mixes two comparisons that the claim keeps apart. Clustered standard errors repair the first problem and leave the second as it was.
+Part 1 starts at the level at which the workshop works, the country-year, with the simplest model that can be fitted there. A straight line through two hundred and seventy points looks like a reasonable first try, and the reasons why it fails show what every later model of the session is for: its standard errors treat the two hundred and seventy rows as independent, and its slope mixes two comparisons that the claim keeps apart. Clustered standard errors repair the first problem and leave the second as it was.
 :::
 
 ## The country-year panel {#the-country-year-panel .smaller}
@@ -18,7 +18,7 @@ Part one starts at the level at which the workshop works, the country-year, and 
 :::
 
 ::: notes
-The panel that the workshop ships has 270 rows, and behind them stand more than four hundred thousand people interviewed in sixteen Eurobarometer waves. The original author, the OA, modelled those people directly, whereas the workshop averages them into one row for each country and year. For this claim the averaging loses almost nothing, because the predictor is a national figure: everyone interviewed in Germany in 2010 shares one unemployment rate. So the evidence about the slope comes from 270 pairings, however many people stand behind each pairing. Fairbrother makes a point about vocabulary here. The people are new in every wave, but the countries are observed again and again, and in that sense the data are a panel. What the averages cannot tell us is how individuals respond, and that is the subject of the next session.
+Behind the two hundred and seventy rows of the panel stand more than four hundred thousand people interviewed in sixteen Eurobarometer waves. The original author modelled those people directly, whereas the workshop averages them into one row for each country and year. For this claim the averaging loses little, because the predictor is a national figure, shared by everyone interviewed in Germany in 2010, so that the evidence about the slope comes from two hundred and seventy pairings, however many people stand behind each. Fairbrother makes a point about vocabulary here: the people are new in every wave, but the countries are observed again and again, and in that sense the data are a panel. What the averages cannot tell us is how individuals respond, which is the subject of the next session.
 :::
 
 ## Pooled OLS {#pooled-ols .smaller}
@@ -53,7 +53,7 @@ companion/panel-data.qmd, sections 2 and 3; data/europeanisation_cy.csv.
 :::
 
 ::: notes
-Here is the plainest model, one line through all 270 country-years. On a panel it is called pooled OLS, because it pools every country and every year into one cloud. Three functions in R fit it, lm, fixest and plm, and they agree to the last digit once fixest is asked for classical standard errors. That is a habit worth keeping: make different functions agree on a model that you understand before you change anything. Now read the result. The slope is close to zero, its t is about minus one, and the line explains almost none of the variation. Yet the value recorded for C6HJR, on exactly these rows, is a t of minus three point eight. The data are the same in both fits, so the difference comes from the structure of the model, and the rest of the session takes that structure apart.
+This is the plainest model, one line through all two hundred and seventy country-years, which on a panel is called pooled OLS, because it pools every country and every year into one cloud. Three functions in R fit it, `lm()`, fixest and plm, and they agree to the last digit once fixest is asked for classical standard errors, a habit worth keeping: make different functions agree on a model that you understand before you change anything. The slope is close to zero, its t about minus one, and the line explains almost none of the variation, while the value recorded for C6HJR on exactly these rows is a t of minus three point eight. The data are the same in both fits, so the difference comes from the structure of the model, which the rest of the session takes apart.
 :::
 
 ## Clustered standard errors {#clustered-standard-errors .smaller}
@@ -76,7 +76,7 @@ companion/panel-data.qmd, section 3.
 :::
 
 ::: notes
-The standard errors of that model assume that the 270 errors are independent, and they are not. The ten Danish rows share everything durable about Denmark, its institutions, its language, its standing view of Europe, and whatever the model leaves out about a country sits in the error, so the errors of one country move together. The first repair keeps the estimate and corrects its uncertainty. Cluster-robust standard errors let the errors inside each country be correlated in any pattern, and in fixest they take one argument. Cameron and Miller, whose guide is the standard reference, warn that default standard errors can greatly overstate precision in data of this kind. [advance] Here the standard error doubles and the t halves, because the 270 rows were never 270 independent pieces of evidence.
+The standard errors of that model assume that the two hundred and seventy errors are independent, and they are not. The ten Danish rows share everything durable about Denmark, its institutions, its language and its standing view of Europe, and whatever the model leaves out about a country sits in the error, so the errors of one country move together. The first repair keeps the estimate and corrects its uncertainty. Cluster-robust standard errors let the errors within each country be correlated in any pattern, and in fixest they take one argument; Cameron and Miller, whose guide is the standard reference, warn that default standard errors can greatly overstate precision in data of this kind. [advance] Here the standard error doubles and the t halves, because the two hundred and seventy rows were never two hundred and seventy independent pieces of evidence.
 :::
 
 ## The pooled slope {#the-pooled-slope .smaller}
@@ -96,5 +96,5 @@ companion/panel-data.qmd, section 3; data/menu_deviations.csv.
 :::
 
 ::: notes
-Clustering repairs the uncertainty, and that leaves the estimate itself as the problem. A pooled model absorbs no differences between countries, so its slope mixes two comparisons: what happens to framing when unemployment rises within a country, and how countries with high unemployment differ from countries with low unemployment. Nearly half of the variance of unemployment lies between the country means, and about two thirds of the variance of the outcome, so the cross-section weighs heavily in the blend. Nor is the blend a quirk of one specification. Swap pooled OLS into every specification of the curve, and about half of the fits land below zero, where nearly all of the curve lies, and in half of the pairs, the two fits fall on opposite sides of zero. [advance] That is why pooled OLS stays off the curve, and why part four estimates the two comparisons one at a time.
+Clustering repairs the uncertainty, which leaves the estimate itself as the problem. A pooled model absorbs no differences between countries, so its slope mixes two comparisons, how framing moves when unemployment rises within a country and how countries with high unemployment differ from countries with low unemployment. Nearly half of the variance of unemployment lies between the country means, and about two thirds of the variance of the outcome, so the cross-section weighs heavily in the blend. The blend is not a quirk of one specification either. Swapped into every specification of the curve, pooled OLS puts about half of its fits below zero, where nearly all of the curve lies, and in half of the pairs the two fits fall on opposite sides of zero. [advance] Pooled OLS therefore stays off the curve, and Part 4 estimates the two comparisons one at a time.
 :::
